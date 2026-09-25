@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- TV banner (320x180dp, 16:9): the logo plate set between a fork and a knife. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="320dp"
+    android:height="180dp"
+    android:viewportWidth="320"
+    android:viewportHeight="180">
+    <path
+        android:fillColor="@color/background"
+        android:pathData="M0,0h320v180h-320z" />
+    <!-- Fork -->
+    <path
+        android:fillColor="@color/plate_rim"
+        android:pathData="M64,38h3v24h-3z M70.5,38h3v24h-3z M77,38h3v24h-3z
+            M64,60h16v6c0,4 -2,7 -5,8v68h-6v-68c-3,-1 -5,-4 -5,-8z" />
+    <!-- Knife -->
+    <path
+        android:fillColor="@color/plate_rim"
+        android:pathData="M244,38c7,3 10,18 10,42h-4v62h-6z" />
+    <!-- Plate rim -->
+    <path
+        android:fillColor="@color/plate_rim"
+        android:pathData="M160,28a62,62 0,1 1,0 124a62,62 0,1 1,0 -124z" />
+    <!-- Plate well -->
+    <path
+        android:fillColor="@color/plate_well"
+        android:pathData="M160,45a45,45 0,1 1,0 90a45,45 0,1 1,0 -90z" />
+    <!-- Play button -->
+    <path
+        android:fillColor="@color/accent"
+        android:pathData="M150,72L180,90L150,108z" />
+</vector>

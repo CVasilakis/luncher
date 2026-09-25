@@ -1,0 +1,22 @@
+# Gradle / Kotlin
+.gradle/
+.kotlin/
+build/
+
+# Machine-specific
+local.properties
+*.iml
+.idea/
+.DS_Store
+.claude/settings.local.json
+
+# Build outputs and native build dirs
+*.apk
+*.aab
+/captures/
+.externalNativeBuild/
+.cxx/
+
+# Signing keys: never commit
+*.jks
+*.keystore

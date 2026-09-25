@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Luncher logo: a plate seen from above with a play button (media) on it. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+    <path
+        android:fillColor="@color/background"
+        android:pathData="M0,0h48v48h-48z" />
+    <!-- Plate rim -->
+    <path
+        android:fillColor="@color/plate_rim"
+        android:pathData="M24,6a18,18 0,1 1,0 36a18,18 0,1 1,0 -36z" />
+    <!-- Plate well -->
+    <path
+        android:fillColor="@color/plate_well"
+        android:pathData="M24,11a13,13 0,1 1,0 26a13,13 0,1 1,0 -26z" />
+    <!-- Play button -->
+    <path
+        android:fillColor="@color/accent"
+        android:pathData="M20.5,17.5L31,24L20.5,30.5z" />
+</vector>
