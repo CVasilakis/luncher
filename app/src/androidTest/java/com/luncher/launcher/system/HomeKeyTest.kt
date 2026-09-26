@@ -18,6 +18,7 @@ class HomeKeyTest {
 
     private val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
     private val disabledHomes = mutableListOf<String>()
+    private var tvSetupCompleteBefore: String? = null
 
     /**
      * Another home app (e.g. the stock launcher, whose HOME filter has a higher priority) keeps
@@ -44,6 +45,29 @@ class HomeKeyTest {
         disabledHomes.forEach { device.executeShellCommand("pm enable $it") }
     }
 
+    /**
+     * Android TV 8.0 and 8.1 (API 26, 27) ignore the Home key until the TV setup wizard has set
+     * tv_user_setup_complete ("Not starting activity because user setup is in progress"). Real
+     * TVs have it set, but the emulator images never run that wizard. [restoreTvSetupComplete]
+     * puts back the value it had.
+     */
+    @Before
+    fun markTvSetupComplete() {
+        val value = device.executeShellCommand("settings get secure $TV_SETUP_COMPLETE").trim()
+        if (value == "1") return
+        tvSetupCompleteBefore = value
+        device.executeShellCommand("settings put secure $TV_SETUP_COMPLETE 1")
+    }
+
+    @After
+    fun restoreTvSetupComplete() {
+        when (val value = tvSetupCompleteBefore) {
+            null -> return
+            "null" -> device.executeShellCommand("settings delete secure $TV_SETUP_COMPLETE")
+            else -> device.executeShellCommand("settings put secure $TV_SETUP_COMPLETE $value")
+        }
+    }
+
     @Test
     fun homeKey_returnsToLuncherFromAnotherApp() {
         device.executeShellCommand("am start -W -a android.settings.SETTINGS")
@@ -65,5 +89,6 @@ class HomeKeyTest {
         const val LUNCHER = "com.luncher.launcher"
         const val TIMEOUT_MS = 10_000L
         const val MAX_OTHER_HOMES = 5
+        const val TV_SETUP_COMPLETE = "tv_user_setup_complete"
     }
 }

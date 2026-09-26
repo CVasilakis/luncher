@@ -1,0 +1,151 @@
+# The instrumented tiers (docs/TESTING.md) on Android TV and Google TV emulators, one emulator per
+# job, set up with android-tv-wsl-dev-tools as its CI.md describes. Started by hand only (Actions →
+# Instrumented tests → Run workflow): emulator runs take many times the Actions minutes of the JVM
+# tiers, and a private repository's minutes are limited.
+#
+# The choices are the tools' tested images from Luncher's minSdk (25) on, named like the AVDs
+# create-avd.sh makes: tv_api<level> for Android TV, gtv_api<level> for Google TV.
+name: Instrumented tests
+
+on:
+  workflow_dispatch:
+    inputs:
+      emulators:
+        description: Emulators to test on
+        type: choice
+        default: required
+        options:
+          - required                               # the five in docs/TESTING.md
+          - all-android-tv
+          - all-google-tv
+          - all
+          - tv_api25
+          - tv_api26
+          - tv_api27
+          - tv_api28
+          - tv_api29
+          - tv_api30
+          - tv_api31
+          - tv_api33
+          - tv_api34
+          - tv_api36
+          - gtv_api30
+          - gtv_api31
+          - gtv_api33
+          - gtv_api34
+          - gtv_api36
+
+permissions:
+  contents: read
+
+jobs:
+  connected-tests:
+    name: ${{ matrix.avd }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        avd: ${{ fromJSON(
+          inputs.emulators == 'required' && '["tv_api25", "tv_api28", "tv_api30", "tv_api33", "tv_api36"]' ||
+          inputs.emulators == 'all-android-tv' && '["tv_api25", "tv_api26", "tv_api27", "tv_api28", "tv_api29", "tv_api30", "tv_api31", "tv_api33", "tv_api34", "tv_api36"]' ||
+          inputs.emulators == 'all-google-tv' && '["gtv_api30", "gtv_api31", "gtv_api33", "gtv_api34", "gtv_api36"]' ||
+          inputs.emulators == 'all' && '["tv_api25", "tv_api26", "tv_api27", "tv_api28", "tv_api29", "tv_api30", "tv_api31", "tv_api33", "tv_api34", "tv_api36", "gtv_api30", "gtv_api31", "gtv_api33", "gtv_api34", "gtv_api36"]' ||
+          format('["{0}"]', inputs.emulators)) }}
+    env:
+      AVD: ${{ matrix.avd }}
+    steps:
+      - uses: actions/checkout@v7                  # Luncher first: it empties the workspace
+      - uses: actions/checkout@v7
+        with:
+          repository: CVasilakis/android-tv-wsl-dev-tools
+          ref: v1.1.0
+          path: .android-tv-wsl-dev-tools
+      # adb too: the tools find it in the SDK by themselves, but the failure steps call it by name.
+      - name: Put the tools and adb on PATH
+        run: |
+          echo "$GITHUB_WORKSPACE/.android-tv-wsl-dev-tools/bin" >> "$GITHUB_PATH"
+          echo "$ANDROID_HOME/platform-tools" >> "$GITHUB_PATH"
+      - name: Tell the system image from the AVD name
+        run: |
+          echo "API=${AVD##*_api}" >> "$GITHUB_ENV"
+          case "$AVD" in
+            gtv_*) echo "TAG=google-tv" >> "$GITHUB_ENV" ;;
+            *)     echo "TAG=android-tv" >> "$GITHUB_ENV" ;;
+          esac
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-provider: basic                    # see jvm-tests.yml
+          cache-read-only: true                    # the JVM tests workflow keeps the cache
+
+      # The emulator needs ~7.2 GB free to create the AVD's data partition, and after installing a
+      # system image of 3 GB or more the runner has about that or less (API 26 and 27 were 65 MB
+      # short). These preinstalled toolchains aren't used here.
+      - name: Free disk space for the system image and the emulator
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/.ghcup /usr/local/share/boost \
+            /opt/hostedtoolcache/CodeQL "$ANDROID_HOME/ndk"
+          df -h /
+
+      - name: Let the runner user open /dev/kvm
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Install the emulator's system library
+        run: sudo apt-get update && sudo apt-get install -y libpulse0
+      # The TV images of API 26-30 (Android TV and Google TV) are under android-sdk-preview-license,
+      # which the runner image doesn't accept. sdkmanager's output is mostly progress bars, so it's shown only on failure.
+      - name: Install the emulator and the system image
+        run: |
+          sdkmanager="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          yes 2> /dev/null | "$sdkmanager" --licenses > /dev/null   # yes: "Broken pipe" once it's done
+          "$sdkmanager" "emulator" "platform-tools" "system-images;android-$API;$TAG;x86" \
+            > "$RUNNER_TEMP/sdkmanager.log" || { cat "$RUNNER_TEMP/sdkmanager.log"; exit 1; }
+
+      - name: Boot the emulator
+        run: |
+          google_tv=()
+          if [ "$TAG" = google-tv ]; then google_tv=(--google-tv); fi
+          create-avd.sh --api "$API" "${google_tv[@]}" --if-missing "$AVD"
+          serial="$(start-emulator.sh "$AVD" -no-snapshot-save)"
+          echo "ANDROID_SERIAL=$serial" >> "$GITHUB_ENV"
+      - name: Run the instrumented tests
+        run: ./gradlew connectedDebugAndroidTest
+
+      - name: Show the emulator's log and the free disk space
+        if: failure()
+        run: |
+          cat "${TMPDIR:-/tmp}/emulator-$AVD.log" || true
+          df -h /
+      # adb can fail without a message (AGP's test engine once got exit code 255 while the
+      # emulator's log showed it running normally). adb's own server log records its side.
+      - name: Show what adb sees, and the end of adb's server log
+        if: failure()
+        run: |
+          timeout 15 adb devices -l || true
+          adb_log="${TMPDIR:-/tmp}/adb.$(id -u).log"
+          tail -n 100 "$adb_log" || true
+          mkdir -p app/build
+          cp "$adb_log" app/build/adb-server.log || true
+      - name: Save the device log
+        if: failure()
+        run: timeout 30 adb logcat -d > app/build/logcat.txt || true
+      - name: Upload the test reports, the device log and adb's server log
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: connected-test-reports-${{ matrix.avd }}
+          path: |
+            app/build/reports/androidTests/connected/
+            app/build/outputs/androidTest-results/connected/
+            app/build/logcat.txt
+            app/build/adb-server.log
+          retention-days: 7
+          if-no-files-found: ignore

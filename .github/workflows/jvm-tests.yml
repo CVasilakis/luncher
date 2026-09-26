@@ -1,0 +1,51 @@
+# The JVM tiers (docs/TESTING.md) and the minified release build, on every push to main, every
+# pull request, and by hand (Actions → JVM tests → Run workflow).
+name: JVM tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# A newer push to the same branch or pull request makes an older run pointless.
+concurrency:
+  group: jvm-tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  jvm-tests:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 21                         # Robolectric's API 36 framework needs 21
+      - uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-provider: basic                    # MIT; the default "enhanced" one is proprietary
+                                                   # and may be charged for on private repositories
+      - name: Cache Robolectric's Android framework
+        uses: actions/cache@v6
+        with:
+          path: ~/.m2/repository/org/robolectric
+          key: robolectric-${{ hashFiles('gradle/libs.versions.toml') }}
+
+      - name: Run the JVM tiers and build the release APK
+        run: ./gradlew :domain:test :app:testDebugUnitTest :app:verifyRoborazziDebug assembleRelease
+
+      - name: Upload the test reports and screenshot diffs
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: jvm-test-reports
+          path: |
+            domain/build/reports/tests/
+            app/build/reports/tests/
+            app/build/outputs/roborazzi/
+          retention-days: 7

@@ -106,7 +106,7 @@ across reboots). Its package depends on the Android version:
 | Emulator | Stock launcher |
 |---|---|
 | API 25 (Android 7.1) | `com.google.android.leanbacklauncher` |
-| API 28 (Android 9), API 30 (Android 11), API 33 (Android 13), API 36 (Android 16) | `com.google.android.tvlauncher` |
+| API 26 (Android 8.0) and newer | `com.google.android.tvlauncher` |
 | Google TV, every level (API 30–36) | `com.google.android.apps.tv.launcherx` |
 
 ```bash
@@ -120,3 +120,14 @@ the stock launcher first, or wipe the emulator's data (android-tv-wsl-dev-tools'
 `start-emulator.sh -wipe-data`, or "Wipe Data" in Android Studio's Device Manager). While the stock
 launcher is enabled, Luncher appears in its app row (with its banner) and can be opened like any
 app. Home seems to do nothing while Luncher is already in front, because Luncher is the home screen.
+
+On the API 26 and 27 (Android 8.0 and 8.1) Android TV emulators, Home does nothing at all, whoever
+the home app is: Android ignores it until the TV setup wizard has set `tv_user_setup_complete`, and
+these images never run that wizard (logcat: "Not starting activity because user setup is in
+progress"). android-tv-wsl-dev-tools' `start-emulator.sh` sets it after the boot. On an emulator
+started another way, set it by hand; `HomeKeyTest` sets it for its run when it's missing, and
+restores it afterwards, so it works on any device:
+
+```bash
+adb shell settings put secure tv_user_setup_complete 1
+```

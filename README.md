@@ -75,5 +75,6 @@ Tests: [`TESTING.md`](docs/TESTING.md) (`./gradlew :domain:test :app:testDebugUn
 | [`domain/`](domain/README.md) | Pure Kotlin module: the launcher's models, rules and ports (no Android). |
 | [`gradle/`](gradle/README.md) | Version catalog and Gradle wrapper. |
 | [`docs/`](docs/README.md) | Project-wide guides: architecture and testing. |
+| [`.github/`](.github/README.md) | GitHub Actions workflows that run the tests. |
 | [`AGENTS.md`](AGENTS.md) | Guidance for coding agents. |
 | `build.gradle.kts`, `settings.gradle.kts`, `gradle.properties`, `gradlew*` | Standard Gradle project files. |

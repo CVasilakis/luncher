@@ -80,12 +80,11 @@ the result on the emulator (focus, screenshot, `adb logcat -b crash`).
 - **No machine-specific measurements in docs.** How long a boot, build, test run or key press
   takes depends on the host, so describe it relatively ("slower", "faster than a cold boot").
   Sizes, RAM needs and counts are fine.
-- **No personal information in tracked files:** no names, e-mail addresses, usernames or absolute
-  home paths (write `~` or `/home/<user>`), no machine-specific config. The one exception is the
-  link to the android-tv-wsl-dev-tools repository, whose address contains the owner's username. `local.properties` stays git-ignored.
-- **Never commit** build outputs, `.gradle/`, `.kotlin/`, signing keys or keystores.
-- Downloads can be large (the emulator is ~354 MB, a system image ~700 MB). Ask before
-  triggering big SDK downloads.
+- **Paths in docs use `~`**, never an absolute home path, so examples work on any machine.
+- **Never commit** build outputs, `.gradle/`, `.kotlin/`, `local.properties`, signing keys or
+  keystores.
+- Downloads are large (sizes in android-tv-wsl-dev-tools' `SETUP.md`). Ask before triggering big
+  SDK downloads.
 
 ## Commit messages
 
@@ -137,10 +136,13 @@ Each of these fixes a real problem. The reasons are in the linked file; read the
 - In the emulator window, Esc and F1 don't reach Android; Back is Ctrl+Backspace, Home Ctrl+H, Menu Ctrl+M.
   `remote.sh` (android-tv-wsl-dev-tools) is a TV remote in the terminal.
 - Luncher is only the home screen while the stock launcher is disabled
-  (`adb shell pm disable-user --user 0 com.google.android.leanbacklauncher`; on API 28, 30, 33 and
-  36 it's `com.google.android.tvlauncher`, on the Google TV images
+  (`adb shell pm disable-user --user 0 com.google.android.leanbacklauncher`; from API 26 on it's
+  `com.google.android.tvlauncher`, on the Google TV images
   `com.google.android.apps.tv.launcherx`). `set-home-activity` and the home chooser don't work on
   these images: the stock launcher's HOME filter has a higher priority.
+- On the API 26 and 27 Android TV emulators, the Home key does nothing until
+  `tv_user_setup_complete` is set; `start-emulator.sh` sets it, otherwise
+  `adb shell settings put secure tv_user_setup_complete 1` ([`app/README.md`](app/README.md#luncher-as-the-home-screen)).
 - Instrumented tests run on the `tv_api25`, `tv_api28`, `tv_api30`, `tv_api33` and `tv_api36` emulators
   ([`TESTING.md`](docs/TESTING.md#on-several-android-versions)). From API 30 on, `dumpsys input` shows
   no key codes.

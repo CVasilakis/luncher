@@ -79,7 +79,8 @@ outside a broken Back looks the same as a working one.
   (`app/src/test/java/com/luncher/launcher/TvDevice.kt`): 960×540 dp at xhdpi, landscape, TV UI
   mode, D-pad, no touch.
 - **Leave the device as you found it.** Instrumented tests that change system state restore it;
-  e.g. `HomeKeyTest` disables other home apps so Luncher is home, and re-enables them afterwards.
+  e.g. `HomeKeyTest` disables other home apps so Luncher is home, and marks the TV setup complete
+  so API 26 and 27 act on Home; afterwards it re-enables the apps and restores the setting.
 
 ## Screenshot tests
 
@@ -138,6 +139,13 @@ and `app/build/reports/androidTests/connected/debug/`. How many run at once is u
 emulator takes ~2 GB of RAM on API 25 and 28 and ~3–3.4 GB on 30, 33 and 36, so all five need
 ~13 GB. With less, boot them in batches (e.g. 25 and 36, then 28, 30 and 33) or one at a time, stopping each with `adb -s <serial> emu kill` before the next.
 The API 36 image also takes 8.2 GB of disk.
+
+## In CI
+
+GitHub Actions runs the JVM tiers on every push to `main` and every pull request. The
+instrumented tiers run only when started by hand: on the five emulators above, on every Android TV
+or Google TV emulator from API 25 on, or on one. Which workflow does what, and why:
+[`.github/README.md`](../.github/README.md).
 
 ## Rules
 
