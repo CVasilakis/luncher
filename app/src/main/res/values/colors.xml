@@ -4,6 +4,8 @@
     <color name="accent">#FFFF7043</color>
     <color name="text_primary">#FFFFFFFF</color>
     <color name="text_secondary">#B3FFFFFF</color>
+    <!-- Tile of an app without a banner. -->
+    <color name="home_tile_card">#FF26303B</color>
     <color name="plate_rim">#FFECEFF3</color>
     <color name="plate_well">#FFCFD6DF</color>
 </resources>

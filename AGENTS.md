@@ -36,6 +36,9 @@ adb logcat -b crash                              # crashes
 adb emu kill                                     # stop the emulator (with several devices: adb -s <serial> emu kill)
 ```
 
+After changing a device setting by hand (e.g. disabling the stock launcher), wait 30 s before
+`adb emu kill`, or the change is lost ([why](app/README.md#luncher-as-the-home-screen)).
+
 **Boot one emulator at a time** for test runs, to spare the host's resources: boot one, run the
 tests, stop it, then start the next.
 

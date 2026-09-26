@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Android TV's overscan margin, plus room for the focused tile's zoom. -->
+    <dimen name="home_padding_horizontal">48dp</dimen>
+    <dimen name="home_padding_vertical">32dp</dimen>
+    <!-- Between tiles; more than a tile grows when it zooms, so neighbors never overlap. -->
+    <dimen name="home_tile_gap">24dp</dimen>
+    <dimen name="home_tile_frame">3dp</dimen>
+</resources>

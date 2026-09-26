@@ -11,14 +11,14 @@ small and frugal enough to run well on very weak devices.
 - reorder apps
 - a few settings
 
-**Status:** early. The project builds, installs and runs as the home screen on an Android TV
-emulator; the home screen itself is still a placeholder ([`app/README.md`](app/README.md#current-state)).
+**Status:** early. The home screen shows the TV apps as a grid of banners and opens them; none of
+the goals above exists yet ([`app/README.md`](app/README.md#current-state)).
 
 | | |
 |---|---|
 | Package | `com.luncher.launcher` |
 | Supported Android versions | Android TV 5.1 (API 22) and newer |
-| Release APK size | ~22 KB |
+| Release APK size | ~30 KB |
 
 ## Documentation
 

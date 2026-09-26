@@ -23,22 +23,52 @@ app/
     │   ├── LuncherApplication.kt     holds the AppGraph (tests may replace it); `Activity.graph`
     │   ├── AppGraph.kt               composition root: creates adapters (lazily); open for test fakes
     │   ├── home/
-    │   │   └── HomeActivity.kt       the home screen
+    │   │   ├── HomeActivity.kt       the home screen: reads the apps, shows them, opens them
+    │   │   ├── AppTilesView.kt       places the tiles where the domain's TileLayout says; scrolls
+    │   │   ├── AppTileView.kt        one app: its image, focus frame and zoom
+    │   │   └── BannerImages.kt       adapter: draws an app's Banner into a bitmap of the tile's size
     │   └── apps/
     │       └── PackageManagerInstalledApps.kt   InstalledApps port on PackageManager
     └── res/
+        ├── animator/home_tile_focus.xml   zoom of the focused tile
         ├── drawable/
         │   ├── banner.xml            TV banner, 320×180 dp (plate between a fork and a knife)
         │   └── ic_launcher.xml       app icon (plate with a play button)
         ├── layout/home_activity.xml
-        └── values/                   colors, strings, theme
+        └── values/                   colors, dimensions, strings, theme
 ```
 
 ## Current state
 
-`HomeActivity` is a placeholder home screen: it shows the app name and the number of installed TV
-apps (activities with `MAIN` + `LEANBACK_LAUNCHER`, from the `InstalledApps` port), re-counted in
-`onResume`.
+The home screen shows the installed TV apps (activities with `MAIN` + `LEANBACK_LAUNCHER`) as a
+grid of banners, sorted by name, five per row; OK opens the focused app. Hiding, reordering,
+custom banners, wallpapers and settings don't exist yet.
+
+## The home screen
+
+Each part does one job, so a new arrangement or image source changes one of them:
+
+| Part | Job |
+|---|---|
+| `homeApps` (`:domain`) | which apps show, in which order |
+| `TileLayout` (`:domain`) | where each tile goes and how big it is; `TileGrid` is the only one so far |
+| `AppTilesView` | lays tiles out where the `TileLayout` says, and scrolls to the focused one. `createLayout` is the only place that picks the arrangement. |
+| `bannerFor` (`:domain`) | which image a tile shows |
+| `BannerImages` | draws that image into a bitmap of the tile's size |
+| `AppTileView` | draws that bitmap, the focus frame and zoom |
+| `HomeActivity` | reads the apps in `onResume`; when they changed, creates tiles for new apps and drops those of removed ones |
+
+What keeps it light:
+
+- **One bitmap per tile, at the tile's size.** A banner resource is usually 640×360 px or more;
+  only the scaled copy is kept, and drawing a tile copies it once.
+- **Only new apps cost a bitmap.** Coming back to the home screen reads the app list again, but
+  keeps the tiles, their bitmaps and the focus when it's the same; when an app was installed,
+  only its tile is new.
+- **Nothing allocated per key press.** Android's own focus search moves between tiles; the zoom
+  is a state animator created with each tile; scrolling reuses one `Scroller`.
+- **Layout passes only when the tiles change.** Focus, zoom and scrolling redraw without
+  measuring or laying out again.
 
 ## Platform choices
 
@@ -81,7 +111,7 @@ On the Android TV and Google TV emulator images from API 23 on, pressing Home ne
 "choose home app" prompt, and `adb shell cmd package set-home-activity …` has no effect. The stock launcher is a system app
 whose HOME intent filter has priority 2, third-party apps are capped at priority 0, and Android
 picks the highest priority without asking. Disable the stock launcher instead (this persists
-across reboots). Its package depends on the Android version:
+across reboots, once saved: see below). Its package depends on the Android version:
 
 | Emulator | Stock launcher |
 |---|---|
@@ -94,6 +124,11 @@ adb shell pm disable-user --user 0 com.google.android.leanbacklauncher   # Home 
 adb shell pm enable com.google.android.leanbacklauncher                  # back to the stock launcher
 adb shell cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.HOME   # who is home (API 24+)
 ```
+
+**Wait 30 s before stopping the emulator after disabling or enabling an app.** Android saves that
+change seconds later, not at once, and `adb emu kill` stops Android without saving: the next cold
+boot starts with the app as it was before
+([android-tv-wsl-dev-tools](https://github.com/CVasilakis/android-tv-wsl-dev-tools/blob/main/bin/README.md#start-emulatorsh)).
 
 API 22 (Android 5.1) is the exception: its stock launcher's HOME filter has no priority, so with
 Luncher installed, Home asks which home app to use. Pick Luncher there ("Always"); disabling the

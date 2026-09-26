@@ -17,6 +17,9 @@ import org.robolectric.annotation.GraphicsMode
 /**
  * Reference images live in app/src/test/screenshots/<feature>/. `recordRoborazziDebug` writes
  * them, `verifyRoborazziDebug` fails when the screen looks different; see docs/TESTING.md.
+ *
+ * The fake apps aren't installed, so every tile shows the card Luncher draws for an app without a
+ * banner, with Android's default icon.
  */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -27,7 +30,10 @@ class HomeScreenshotTest {
     fun homeScreen() {
         val application = RuntimeEnvironment.getApplication() as LuncherApplication
         application.graph = object : AppGraph(application) {
-            override val installedApps = FakeInstalledApps(app("movies"), app("music"))
+            // Seven apps: a full row, and a second one that starts at the left.
+            override val installedApps = FakeInstalledApps(
+                listOf("games", "movies", "music", "news", "photos", "radio", "an app name too long for its tile").map(::app),
+            )
         }
         val activity = Robolectric.buildActivity(HomeActivity::class.java).setup().get()
 

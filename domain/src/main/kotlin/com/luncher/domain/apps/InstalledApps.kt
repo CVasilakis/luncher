@@ -4,5 +4,5 @@ package com.luncher.domain.apps
 interface InstalledApps {
 
     /** Apps with a TV launcher entry (`MAIN` + `LEANBACK_LAUNCHER`), in no particular order. */
-    fun tvApps(): List<LaunchableApp>
+    fun tvApps(): List<InstalledApp>
 }

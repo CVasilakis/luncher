@@ -36,8 +36,8 @@ port in `:domain`), or UI-only (a `ui/` package for shared views and styling, cr
 needed).
 
 Resources follow the same split, because Android puts all of a module's resources in one
-namespace. Names start with their feature (`home_activity.xml`, `home_status`,
-`home_status_apps_found`). Only app-wide resources have no prefix: `app_name`, theme, colors.
+namespace. Names start with their feature (`home_activity.xml`, `home_apps`, `home_no_apps`).
+Only app-wide resources have no prefix: `app_name`, theme, colors.
 
 ## Rules
 
@@ -67,7 +67,9 @@ namespace. Names start with their feature (`home_activity.xml`, `home_status`,
 | Change | Where |
 |---|---|
 | A launcher decision (which apps show, sort order, banner choice, validation of a setting) | a rule in `:domain`, plus unit tests next to it |
-| New data the rules need from the device (settings, wallpaper, images) | a port (interface) in `:domain` with a fake in its test fixtures, an adapter in `:app/<feature>/`, one line in `AppGraph` |
+| New data the rules need from the device (settings, wallpaper, installed apps) | a port (interface) in `:domain` with a fake in its test fixtures, an adapter in `:app/<feature>/`, one line in `AppGraph` |
+| An image the UI shows (banners, later the wallpaper) | which image: a model and rule in `:domain` (like `Banner`); drawing it: an adapter in `:app/<feature>/`, created in `AppGraph`. The adapter has no port, because its result (`Bitmap`, `Drawable`) is an Android type `:domain` can't name. It draws at the size shown ([rule 5](#rules)). |
+| How the home screen arranges apps (grid, apps per row, alignment, a carousel) | a `TileLayout` in `:domain`'s `layout/` that computes sizes and positions, with unit tests; the view that shows the tiles only places them where the layout says ([`app/README.md`](../app/README.md#the-home-screen)) |
 | A new screen (e.g. settings) | a new feature package in `:app` with its activity, layouts prefixed with the feature name, manifest entry |
 | A shared view or style | `:app` `ui/` package, `values/` without a prefix |
 | Build or version changes | [`gradle/`](../gradle/README.md) |

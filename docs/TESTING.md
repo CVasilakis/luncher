@@ -50,7 +50,7 @@ outside a broken Back looks the same as a working one.
   after that code (`PackageManagerInstalledAppsTest`) or screen (`HomeActivityTest`,
   `HomeScreenshotTest`); system tests after the flow (`HomeKeyTest`).
 - **Name tests after behavior.** JVM tests use backtick sentences
-  (`` `counts again when the home screen comes back` ``). `androidTest` uses
+  (`` `reads the apps again when the home screen comes back` ``). `androidTest` uses
   `action_expectedResult` (`backKey_doesNotCloseTheHomeScreen`), because DEX files before API 30
   don't allow spaces in method names and the tests run on API 22.
 - **One set of fakes.** Fakes of the domain ports (`FakeInstalledApps`, …) live in `:domain`'s
@@ -67,7 +67,12 @@ outside a broken Back looks the same as a working one.
 - **TV screen configuration.** Robolectric tests of screens use `@Config(qualifiers = TV_1080P)`
   (`app/src/test/java/com/luncher/launcher/TvDevice.kt`).
 - **Leave the device as you found it.** Instrumented tests that change system state restore it
-  afterwards (e.g. `HomeKeyTest`, which disables other home apps to make Luncher the home).
+  afterwards (e.g. `HomeKeyTest`, which disables other home apps to make Luncher the home), and
+  then wait 30 s, only if they changed something, logging why (logcat; Gradle doesn't show a
+  test's output): Android saves such changes seconds later, and an emulator stopped right after
+  the run would otherwise boot with the test's state
+  ([`app/README.md`](../app/README.md#luncher-as-the-home-screen)). No condition to await shows
+  when it's saved, so this is the one fixed wait the tests have.
 
 ## Screenshot tests
 
@@ -99,6 +104,15 @@ device` with a long `File name too long` stack trace after the tests. It's harml
 run, and Luncher writes no additional test output. Turning that feature off
 (`android.enableAdditionalTestOutput=false`) makes AGP 9's `connectedDebugAndroidTest` fail
 instead.
+
+Run the instrumented tests with the stock launcher enabled, and on API 22 without having chosen
+Luncher as home ("Always"). Otherwise Luncher is the device's home app
+([`app/README.md`](../app/README.md#luncher-as-the-home-screen)), and Android starts it again as
+soon as an in-app test closes it; the closing activity can stay paused, and the test would time
+out although its checks passed. `HomeActivityTest` therefore fails at once, saying so, while
+Luncher is the home app. Re-enable the stock launcher first, e.g.
+`adb shell pm enable com.google.android.tvlauncher`. The system tier doesn't need it disabled:
+`HomeKeyTest` makes Luncher the home app for its own run.
 
 ### The system tier from API 24 on
 

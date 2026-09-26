@@ -3,6 +3,7 @@ package com.luncher.launcher
 import android.content.Context
 import com.luncher.domain.apps.InstalledApps
 import com.luncher.launcher.apps.PackageManagerInstalledApps
+import com.luncher.launcher.home.BannerImages
 
 /**
  * Composition root: the only place that creates adapters and decides which implementation
@@ -17,4 +18,6 @@ open class AppGraph(context: Context) {
     protected val appContext: Context = context.applicationContext
 
     open val installedApps: InstalledApps by lazy { PackageManagerInstalledApps(appContext.packageManager) }
+
+    val bannerImages: BannerImages by lazy { BannerImages(appContext) }
 }

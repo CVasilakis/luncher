@@ -1,24 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:gravity="center"
-    android:orientation="vertical"
-    android:padding="48dp">
+<!-- Merged into the window's content FrameLayout: one view level less to lay out and draw. -->
+<merge xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Tiles may zoom and scroll past the padding (the overscan margin), so nothing clips them. -->
+    <com.luncher.launcher.home.AppTilesView
+        android:id="@+id/home_apps"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clipChildren="false"
+        android:clipToPadding="false"
+        android:paddingLeft="@dimen/home_padding_horizontal"
+        android:paddingTop="@dimen/home_padding_vertical"
+        android:paddingRight="@dimen/home_padding_horizontal"
+        android:paddingBottom="@dimen/home_padding_vertical" />
 
     <TextView
+        android:id="@+id/home_empty"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/app_name"
-        android:textColor="@color/text_primary"
-        android:textSize="48sp" />
-
-    <TextView
-        android:id="@+id/home_status"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
+        android:layout_gravity="center"
+        android:text="@string/home_no_apps"
         android:textColor="@color/text_secondary"
-        android:textSize="20sp" />
+        android:textSize="20sp"
+        android:visibility="gone" />
 
-</LinearLayout>
+</merge>
