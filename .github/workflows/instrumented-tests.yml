@@ -3,8 +3,8 @@
 # Instrumented tests → Run workflow): emulator runs take many times the Actions minutes of the JVM
 # tiers, and a private repository's minutes are limited.
 #
-# The choices are the tools' tested images from Luncher's minSdk (25) on, named like the AVDs
-# create-avd.sh makes: tv_api<level> for Android TV, gtv_api<level> for Google TV.
+# The choices are the tools' tested images from Luncher's minSdk (22) on: android_tv_api<level>
+# and google_tv_api<level>. Each job's AVD gets that name too.
 name: Instrumented tests
 
 on:
@@ -13,27 +13,30 @@ on:
       emulators:
         description: Emulators to test on
         type: choice
-        default: required
+        default: required-22-24-28-30-33-36
         options:
-          - required                               # the five in docs/TESTING.md
-          - all-android-tv
-          - all-google-tv
+          - required-22-24-28-30-33-36             # the six in docs/TESTING.md; rename with that set
+          - android-tv-all
+          - google-tv-all
           - all
-          - tv_api25
-          - tv_api26
-          - tv_api27
-          - tv_api28
-          - tv_api29
-          - tv_api30
-          - tv_api31
-          - tv_api33
-          - tv_api34
-          - tv_api36
-          - gtv_api30
-          - gtv_api31
-          - gtv_api33
-          - gtv_api34
-          - gtv_api36
+          - android_tv_api22
+          - android_tv_api23
+          - android_tv_api24
+          - android_tv_api25
+          - android_tv_api26
+          - android_tv_api27
+          - android_tv_api28
+          - android_tv_api29
+          - android_tv_api30
+          - android_tv_api31
+          - android_tv_api33
+          - android_tv_api34
+          - android_tv_api36
+          - google_tv_api30
+          - google_tv_api31
+          - google_tv_api33
+          - google_tv_api34
+          - google_tv_api36
 
 permissions:
   contents: read
@@ -47,10 +50,10 @@ jobs:
       fail-fast: false
       matrix:
         avd: ${{ fromJSON(
-          inputs.emulators == 'required' && '["tv_api25", "tv_api28", "tv_api30", "tv_api33", "tv_api36"]' ||
-          inputs.emulators == 'all-android-tv' && '["tv_api25", "tv_api26", "tv_api27", "tv_api28", "tv_api29", "tv_api30", "tv_api31", "tv_api33", "tv_api34", "tv_api36"]' ||
-          inputs.emulators == 'all-google-tv' && '["gtv_api30", "gtv_api31", "gtv_api33", "gtv_api34", "gtv_api36"]' ||
-          inputs.emulators == 'all' && '["tv_api25", "tv_api26", "tv_api27", "tv_api28", "tv_api29", "tv_api30", "tv_api31", "tv_api33", "tv_api34", "tv_api36", "gtv_api30", "gtv_api31", "gtv_api33", "gtv_api34", "gtv_api36"]' ||
+          inputs.emulators == 'required-22-24-28-30-33-36' && '["android_tv_api22", "android_tv_api24", "android_tv_api28", "android_tv_api30", "android_tv_api33", "android_tv_api36"]' ||
+          inputs.emulators == 'android-tv-all' && '["android_tv_api22", "android_tv_api23", "android_tv_api24", "android_tv_api25", "android_tv_api26", "android_tv_api27", "android_tv_api28", "android_tv_api29", "android_tv_api30", "android_tv_api31", "android_tv_api33", "android_tv_api34", "android_tv_api36"]' ||
+          inputs.emulators == 'google-tv-all' && '["google_tv_api30", "google_tv_api31", "google_tv_api33", "google_tv_api34", "google_tv_api36"]' ||
+          inputs.emulators == 'all' && '["android_tv_api22", "android_tv_api23", "android_tv_api24", "android_tv_api25", "android_tv_api26", "android_tv_api27", "android_tv_api28", "android_tv_api29", "android_tv_api30", "android_tv_api31", "android_tv_api33", "android_tv_api34", "android_tv_api36", "google_tv_api30", "google_tv_api31", "google_tv_api33", "google_tv_api34", "google_tv_api36"]' ||
           format('["{0}"]', inputs.emulators)) }}
     env:
       AVD: ${{ matrix.avd }}
@@ -70,8 +73,8 @@ jobs:
         run: |
           echo "API=${AVD##*_api}" >> "$GITHUB_ENV"
           case "$AVD" in
-            gtv_*) echo "TAG=google-tv" >> "$GITHUB_ENV" ;;
-            *)     echo "TAG=android-tv" >> "$GITHUB_ENV" ;;
+            google_tv_*) echo "TAG=google-tv" >> "$GITHUB_ENV" ;;
+            *)           echo "TAG=android-tv" >> "$GITHUB_ENV" ;;
           esac
 
       - uses: actions/setup-java@v6
@@ -82,6 +85,12 @@ jobs:
         with:
           cache-provider: basic                    # see jvm-tests.yml
           cache-read-only: true                    # the JVM tests workflow keeps the cache
+
+      # Built before the emulator boots, so compiling doesn't compete with the emulator's own
+      # post-boot work for the runner's 2 cores; connectedDebugAndroidTest then only installs
+      # and runs them.
+      - name: Build the app and the test APKs
+        run: ./gradlew assembleDebug assembleDebugAndroidTest
 
       # The emulator needs ~7.2 GB free to create the AVD's data partition, and after installing a
       # system image of 3 GB or more the runner has about that or less (API 26 and 27 were 65 MB

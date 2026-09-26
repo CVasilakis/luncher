@@ -30,7 +30,7 @@ uses which:
 | Espresso | 3.7.0 | `espresso` |
 | UI Automator | 2.4.0 | `uiautomator` |
 
-The app's SDK levels (`minSdk 25`, `compileSdk`/`targetSdk 36`) are in [`../app/build.gradle.kts`](../app/build.gradle.kts).
+The app's SDK levels (`minSdk 22`, `compileSdk`/`targetSdk 36`) are in [`../app/build.gradle.kts`](../app/build.gradle.kts).
 
 ## How Kotlin is set up (AGP 9 built-in Kotlin)
 

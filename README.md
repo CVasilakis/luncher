@@ -17,7 +17,7 @@ emulator; the home screen itself is still a placeholder (see [`app/README.md`](a
 | | |
 |---|---|
 | Package | `com.luncher.launcher` |
-| Supported Android versions | Android TV 7.1 (API 25) and newer |
+| Supported Android versions | Android TV 5.1 (API 22) and newer |
 | Dependencies | Kotlin standard library only (no AndroidX, Leanback or Compose) |
 | Release APK size | ~22 KB |
 
@@ -26,9 +26,9 @@ emulator; the home screen itself is still a placeholder (see [`app/README.md`](a
 - **JDK 17+** to build, **21+** to run the Robolectric tests.
 - **Android SDK** with `platforms;android-36` and `platform-tools`. Gradle finds it through
   `ANDROID_HOME` or `sdk.dir` in `local.properties` (git-ignored).
-- **An Android TV device or emulator on API 25+** to run the app and the instrumented tests.
-  The instrumented tests are run on emulators of API 25, 28, 30, 33 and 36 (Android 7.1, 9, 11,
-  13 and 16); see [below](#emulators-and-the-android-tv-wsl-dev-tools-scripts).
+- **An Android TV device or emulator on API 22+** to run the app and the instrumented tests.
+  The instrumented tests are run on emulators of API 22, 24, 28, 30, 33 and 36 (Android 5.1, 7.0,
+  9, 11, 13 and 16); see [below](#emulators-and-the-android-tv-wsl-dev-tools-scripts).
 
 The first build and test run fill two caches outside the project: `~/.gradle` grows to ~1.1 GB
 (the Gradle distribution ~165 MB, plus the Android Gradle Plugin, Kotlin and the test libraries),
@@ -50,8 +50,8 @@ path. Without them, anything that does the same job works, e.g. Android Studio's
 | `start-emulator.sh [avd]` | Boots it and returns once Android has fully booted. | Start the emulator, and wait until Android reports that it has finished booting before installing or testing: an install started earlier fails. |
 | `remote.sh` | A TV remote in the terminal. | Use the emulator window's keyboard (arrows, Enter, Ctrl+Backspace for Back), or send Android key events with adb. |
 
-The docs name the emulators `tv_api25`, `tv_api28`, `tv_api30`, `tv_api33` and `tv_api36`; with emulators of
-your own, use their names instead. A physical Android TV device on API 25+ works too.
+The docs name the emulators `tv_api22`, `tv_api24`, `tv_api28`, `tv_api30`, `tv_api33` and `tv_api36`; with
+emulators of your own, use their names instead. A physical Android TV device on API 22+ works too.
 
 ## Quick start
 

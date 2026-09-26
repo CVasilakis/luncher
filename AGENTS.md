@@ -5,7 +5,7 @@ Guidance for AI coding agents (and humans) working on this repository.
 ## Project in one paragraph
 
 Luncher is a minimal Android TV launcher (home screen app) meant to run well on very weak devices:
-Kotlin, platform Views, plain `android.app.Activity`, no AndroidX/Leanback/Compose, `minSdk 25`,
+Kotlin, platform Views, plain `android.app.Activity`, no AndroidX/Leanback/Compose, `minSdk 22`,
 `compileSdk`/`targetSdk 36`, package `com.luncher.launcher`. Scope: hide apps, change app banners,
 set wallpapers, reorder apps, a few settings. Two Gradle modules: `:domain` (pure Kotlin rules)
 and `:app` (Android). Start with [`README.md`](README.md), then [`ARCHITECTURE.md`](docs/ARCHITECTURE.md)
@@ -24,7 +24,7 @@ aren't found, ask the user where the repository is rather than guessing a path.
 ./gradlew :domain:test :app:testDebugUnitTest :app:verifyRoborazziDebug   # JVM tiers
 ./gradlew :app:recordRoborazziDebug     # accept intended screen changes (commit the images)
 start-emulator.sh                       # android-tv-wsl-dev-tools: boot the TV emulator (returns when booted)
-for avd in tv_api25 tv_api28 tv_api30 tv_api33 tv_api36; do start-emulator.sh "$avd"; done   # all five (~13 GB RAM)
+for avd in tv_api22 tv_api24 tv_api28 tv_api30 tv_api33 tv_api36; do start-emulator.sh "$avd"; done   # all six (~16 GB RAM)
 ./gradlew connectedDebugAndroidTest     # Espresso + UI Automator on every booted emulator
 ./gradlew installDebug                  # install on it
 adb shell am start -n com.luncher.launcher/.home.HomeActivity
@@ -56,7 +56,8 @@ the result on the emulator (focus, screenshot, `adb logcat -b crash`).
 - **Every change comes with tests** in the tier `docs/TESTING.md` assigns to it; a bug fix starts with a
   failing test. Use the lowest tier that can catch the regression (most tests: `:domain` unit tests).
   Tiers: `:domain` JUnit → `:app` Robolectric (adapters, screens) → Roborazzi screenshots →
-  Espresso (real keys on a screen) → UI Automator (Home key, other apps).
+  Espresso (real keys on a screen) → UI Automator (Home key, other apps; API 24+ only, every
+  test in `system/` is left out below that by `SystemTierFilter`).
 - **Fakes of ports live in `domain/src/testFixtures/`**; tests swap them in through `AppGraph`
   (`application.graph = object : AppGraph(application) { override … }`), restoring it in
   `androidTest`.
@@ -72,7 +73,7 @@ the result on the emulator (focus, screenshot, `adb logcat -b crash`).
 
 - **Stay lightweight.** Every byte and allocation counts on weak devices. Don't add dependencies
   (AndroidX, Leanback, image loaders, coroutines, test libraries, …) without the user agreeing
-  to it. Everything must run on API 25: guard newer APIs with `Build.VERSION.SDK_INT`.
+  to it. Everything must run on API 22: guard newer APIs with `Build.VERSION.SDK_INT`.
 - **D-pad first.** Every screen must work with arrows, OK, Back and Home only; there's no touch.
   Don't make features reachable only through the Menu key (many remotes lack it).
 - **Docs describe the current state, not history.** No changelogs, dates or "we tried X" stories
@@ -117,8 +118,9 @@ Each of these fixes a real problem. The reasons are in the linked file; read the
 | Empty `onBackPressed()`, and an empty `OnBackInvokedCallback` on API 36+ | `app/…/home/HomeActivity.kt` | A home screen must not close on Back; Android 16 no longer calls `onBackPressed()` ([`app/README.md`](app/README.md)). |
 | `java`/`jvmTarget` 17 instead of a toolchain | `domain/build.gradle.kts` | Works with any JDK 17+ without downloading another JDK. |
 | `--add-opens=java.base/jdk.internal.access` for unit tests | `app/build.gradle.kts` | Robolectric's API 36 framework fails every test without it. |
-| `uninstallAll` before, `checkConnectedTestsRan` after instrumented tests | `app/build.gradle.kts` | AGP installs without `-r` (API 25 refuses), then reports success with zero tests on that device. |
+| `uninstallAll` before, `checkConnectedTestsRan` after instrumented tests | `app/build.gradle.kts` | AGP installs without `-r` (Android 9 and older refuse), then reports success with zero tests on that device. |
 | `android.injected.androidTest.leaveApksInstalledAfterRun` | `gradle.properties` | Otherwise a test run uninstalls Luncher, leaving no home screen. |
+| `testInstrumentationRunnerArguments["filter"]`, `SystemTierFilter` | `app/build.gradle.kts`, `app/src/androidTest/…` | Keeps the system tier (UI Automator) off API 22 and 23, where it fails ([`TESTING.md`](docs/TESTING.md#the-system-tier-from-api-24-on)). |
 | `open class AppGraph`, settable `LuncherApplication.graph` | `app/src/main/…` | How tests swap in fakes ([`TESTING.md`](docs/TESTING.md#organizing-tests)). |
 | Manifest `<queries>`, `uses-feature`, launcher intent filters | `AndroidManifest.xml` | Explained line by line in [`app/README.md`](app/README.md). |
 | `distributionSha256Sum` | `gradle/wrapper/gradle-wrapper.properties` | Verifies the downloaded Gradle distribution. |
@@ -143,7 +145,7 @@ Each of these fixes a real problem. The reasons are in the linked file; read the
 - On the API 26 and 27 Android TV emulators, the Home key does nothing until
   `tv_user_setup_complete` is set; `start-emulator.sh` sets it, otherwise
   `adb shell settings put secure tv_user_setup_complete 1` ([`app/README.md`](app/README.md#luncher-as-the-home-screen)).
-- Instrumented tests run on the `tv_api25`, `tv_api28`, `tv_api30`, `tv_api33` and `tv_api36` emulators
+- Instrumented tests run on the `tv_api22`, `tv_api24`, `tv_api28`, `tv_api30`, `tv_api33` and `tv_api36` emulators
   ([`TESTING.md`](docs/TESTING.md#on-several-android-versions)). From API 30 on, `dumpsys input` shows
   no key codes.
 - **Agents boot one emulator at a time** for their test runs, to spare the host's resources: boot
@@ -151,7 +153,7 @@ Each of these fixes a real problem. The reasons are in the linked file; read the
   many at once as their machine allows.)
 
   ```bash
-  for avd in tv_api25 tv_api28 tv_api30 tv_api33 tv_api36; do
+  for avd in tv_api22 tv_api24 tv_api28 tv_api30 tv_api33 tv_api36; do
     start-emulator.sh "$avd" && ./gradlew connectedDebugAndroidTest; adb emu kill; adb wait-for-disconnect
   done
   ```

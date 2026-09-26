@@ -13,7 +13,7 @@ needs to run, so a change comes with tests in the matching place and nowhere els
 | App JVM | adapters and screens on a simulated Android (API 36) | Robolectric | `app/src/test/java/` | JVM | `./gradlew :app:testDebugUnitTest` |
 | Screenshots | how screens look on a 1080p TV, including D-pad focus states | Roborazzi (on Robolectric) | `app/src/test/java/…/<feature>/*ScreenshotTest.kt`, images in `app/src/test/screenshots/<feature>/` | JVM | `./gradlew :app:verifyRoborazziDebug` |
 | In-app | a screen's behavior with real key events: D-pad focus, keys, Back | Espresso | `app/src/androidTest/java/…/<feature>/` | emulator | `./gradlew connectedDebugAndroidTest` |
-| System | Luncher as the home screen: Home key, other apps, returning | UI Automator | `app/src/androidTest/java/…/system/` | emulator | `./gradlew connectedDebugAndroidTest` |
+| System | Luncher as the home screen: Home key, other apps, returning | UI Automator | `app/src/androidTest/java/…/system/` | emulator, API 24+ ([why](#the-system-tier-from-api-24-on)) | `./gradlew connectedDebugAndroidTest` |
 
 Everything at once (with the emulator running for the last two tiers):
 
@@ -27,7 +27,7 @@ Everything at once (with the emulator running for the last two tiers):
 |---|---|
 | Domain unit | JDK 17+ |
 | App JVM, screenshots | **JDK 21+**: Robolectric runs the API 36 framework, which needs Java 21 |
-| In-app, system | a running Android TV emulator or device on API 25+ (see [`README.md`](../README.md#emulators-and-the-android-tv-wsl-dev-tools-scripts)); before committing, emulators of API 25, 28, 30, 33 and 36 ([below](#on-several-android-versions)) |
+| In-app, system | a running Android TV emulator or device on API 22+ (see [`README.md`](../README.md#emulators-and-the-android-tv-wsl-dev-tools-scripts)); before committing, emulators of API 22, 24, 28, 30, 33 and 36 ([below](#on-several-android-versions)) |
 
 The test libraries download automatically on the first test run (sizes in
 [`README.md`](../README.md#requirements)); no extra SDK packages are needed. If the Robolectric tests
@@ -63,7 +63,7 @@ outside a broken Back looks the same as a working one.
 - **Name tests after behavior.** JVM tests use backtick sentences
   (`` `counts again when the home screen comes back` ``). `androidTest` uses
   `action_expectedResult` (`backKey_doesNotCloseTheHomeScreen`), because DEX files before API 30
-  don't allow spaces in method names and the tests run on API 25.
+  don't allow spaces in method names and the tests run on API 22.
 - **One set of fakes.** Fakes of the domain ports (`FakeInstalledApps`, …) live in `:domain`'s
   test fixtures, `domain/src/testFixtures/kotlin/`, and every tier uses them. When a port changes,
   its fake changes in one place. A new port gets a fake there.
@@ -102,21 +102,32 @@ comparing images. Screenshots need Robolectric's native graphics
 AGP's behavior in three places (reasons in [`app/build.gradle.kts`](../app/build.gradle.kts) and
 `gradle.properties`):
 
-- Each run starts with `uninstallAll`: AGP's test engine installs without `-r`, which API 25
-  refuses when the app is already installed.
+- Each run starts with `uninstallAll`: AGP's test engine installs without `-r`, which Android 9
+  and older refuse when the app is already installed.
 - `checkConnectedTestsRan` fails the build when a device ran no test, naming it; AGP reports
   success when the install fails, even if the other devices ran their tests.
 - `android.injected.androidTest.leaveApksInstalledAfterRun=true` keeps Luncher installed afterwards,
   so a device with the stock launcher disabled still has a home screen.
 
+### The system tier from API 24 on
+
+The system tier runs only on API 24 and newer; on API 22 and 23 the in-app tier still runs.
+`SystemTierFilter` (`app/src/androidTest/java/…/SystemTierFilter.kt`), set as the test runner's
+`filter` argument in `app/build.gradle.kts`, leaves out every test in the `system` package on
+older devices, so a new system test needs nothing of its own: putting it in `system/` is enough.
+Those versions differ most in what system tests drive (no `cmd` before API 24, a "choose home
+app" prompt on API 22), and UI Automator itself needs API 23. Luncher as the home screen on
+API 22 and 23 is checked by hand ([`app/README.md`](../app/README.md#luncher-as-the-home-screen)).
+
 ### On several Android versions
 
-Luncher supports API 25 and newer, and behavior differs between versions, so the instrumented
-tests run on five emulators:
+Luncher supports API 22 and newer, and behavior differs between versions, so the instrumented
+tests run on six emulators:
 
 | Emulator | Android | Why this one |
 |---|---|---|
-| `tv_api25` | 7.1 | the oldest supported |
+| `tv_api22` | 5.1 | the oldest supported; the in-app tier only |
+| `tv_api24` | 7.0 | the oldest the system tier runs on |
 | `tv_api28` | 9 | stock launcher `tvlauncher` instead of `leanbacklauncher` |
 | `tv_api30` | 11 | package visibility: other apps are hidden from Luncher unless the manifest's `<queries>` names them |
 | `tv_api33` | 13 | `OnBackInvokedCallback` exists, but Back still calls `onBackPressed()`: the path `HomeActivity` relies on up to API 35 |
@@ -127,24 +138,24 @@ android-tv-wsl-dev-tools' scripts; any other way to create and boot the emulator
 ([`README.md`](../README.md#emulators-and-the-android-tv-wsl-dev-tools-scripts)):
 
 ```bash
-for api in 28 30 33 36; do create-avd.sh --api $api; done   # once; needs the system images, see
-                                                             # android-tv-wsl-dev-tools' SETUP.md, step 5
-for avd in tv_api25 tv_api28 tv_api30 tv_api33 tv_api36; do start-emulator.sh "$avd"; done
+for api in 22 24 28 30 33 36; do create-avd.sh --api $api; done   # once; needs the system images,
+                                                                   # see android-tv-wsl-dev-tools' SETUP.md, step 5
+for avd in tv_api22 tv_api24 tv_api28 tv_api30 tv_api33 tv_api36; do start-emulator.sh "$avd"; done
 ./gradlew connectedDebugAndroidTest                    # runs on every booted emulator
 ANDROID_SERIAL=emulator-5558 ./gradlew connectedDebugAndroidTest   # only one (serials: adb devices)
 ```
 
 Results are per device, in `app/build/outputs/androidTest-results/connected/debug/TEST-<device>.xml`
 and `app/build/reports/androidTests/connected/debug/`. How many run at once is up to you: an
-emulator takes ~2 GB of RAM on API 25 and 28 and ~3–3.4 GB on 30, 33 and 36, so all five need
-~13 GB. With less, boot them in batches (e.g. 25 and 36, then 28, 30 and 33) or one at a time, stopping each with `adb -s <serial> emu kill` before the next.
+emulator takes ~2 GB of RAM on API 22, 24 and 28 and ~3–3.4 GB on 30, 33 and 36, so all six need
+~16 GB. With less, boot them in batches (e.g. 22, 24 and 36, then 28, 30 and 33) or one at a time, stopping each with `adb -s <serial> emu kill` before the next.
 The API 36 image also takes 8.2 GB of disk.
 
 ## In CI
 
 GitHub Actions runs the JVM tiers on every push to `main` and every pull request. The
-instrumented tiers run only when started by hand: on the five emulators above, on every Android TV
-or Google TV emulator from API 25 on, or on one. Which workflow does what, and why:
+instrumented tiers run only when started by hand: on the six emulators above, on every Android TV
+or Google TV emulator from API 22 on, or on one. Which workflow does what, and why:
 [`.github/README.md`](../.github/README.md).
 
 ## Rules
@@ -153,7 +164,7 @@ or Google TV emulator from API 25 on, or on one. Which workflow does what, and w
   because of the bug.
 - **A new test must be able to fail.** Break the behavior on purpose, see it fail, restore.
 - **Before committing**, run the tiers that cover what changed: at least the JVM tiers, and the
-  instrumented tiers when a screen's keys or the home behavior changed, on the API 25, 28, 30, 33
-  and 36 emulators.
+  instrumented tiers when a screen's keys or the home behavior changed, on the API 22, 24, 28, 30,
+  33 and 36 emulators.
 - **Tests stay deterministic.** No fixed sleeps where a condition can be awaited, no dependence
   on the host's or emulator's other state, no network.

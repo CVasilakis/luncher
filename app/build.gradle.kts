@@ -9,12 +9,15 @@ android {
 
     defaultConfig {
         applicationId = "com.luncher.launcher"
-        minSdk = 25
+        minSdk = 22
         targetSdk = 36
         versionCode = 1
         versionName = "0.1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        // The system tier (UI Automator, the system/ package) runs only from API 24; below that
+        // this filter leaves it out on each device. Reasons: docs/TESTING.md.
+        testInstrumentationRunnerArguments["filter"] = "com.luncher.launcher.SystemTierFilter"
     }
 
     buildTypes {
@@ -61,10 +64,10 @@ dependencies {
 
 // Instrumented test runs (connectedDebugAndroidTest and friends; see docs/TESTING.md).
 // 1. AGP's test engine installs with `adb install -t`, without -r, so Android 9 and older (the
-//    API 25 emulator) refuse the install whenever the app is already there, e.g. after
+//    API 22 to 28 emulators) refuse the install whenever the app is already there, e.g. after
 //    `installDebug`. Every run therefore starts by uninstalling; AGP uninstalls after the run anyway.
 // 2. When the install fails, AGP runs no test on that device but still reports success. Fail the
-//    build instead. With several devices (e.g. the API 25 to 36 emulators) the others' results
+//    build instead. With several devices (e.g. the API 22 to 36 emulators) the others' results
 //    would hide it, so every device must have run tests: each gets a folder with its
 //    device-info.pb, and a TEST-<folder name>.xml next to it once tests ran there.
 val connectedTestResults = layout.buildDirectory.dir("outputs/androidTest-results/connected")

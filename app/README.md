@@ -7,7 +7,7 @@ implement `:domain`'s ports on Android APIs, and the composition root; see
 | | |
 |---|---|
 | Package / applicationId / namespace | `com.luncher.launcher` |
-| `minSdk` | 25 (Android 7.1 TV) |
+| `minSdk` | 22 (Android 5.1 TV) |
 | `compileSdk` / `targetSdk` | 36 |
 | Language / UI | Kotlin, platform Views |
 | Dependencies | `:domain` and the Kotlin standard library (test libraries are test-only) |
@@ -56,7 +56,7 @@ reordering apps and a few settings.
 
 - **Built for weak devices:** minimal memory, CPU and APK size. It extends `android.app.Activity` and uses the platform theme
   `Theme.DeviceDefault.NoActionBar`, with no AndroidX, AppCompat, Leanback or Compose. Adding a library
-  is a deliberate decision, not a default. Code must run on API 25, so guard newer APIs with
+  is a deliberate decision, not a default. Code must run on API 22, so guard newer APIs with
   `Build.VERSION.SDK_INT` checks.
 - **TV input:** everything must be usable with a D-pad (arrows, OK, Back, Home, Menu). There's no
   touchscreen. Many remotes have no Menu button, so actions shouldn't depend on Menu alone
@@ -97,23 +97,27 @@ Signing keys must never be committed.
 
 ## Luncher as the home screen
 
-On the Android TV and Google TV emulator images, pressing Home never shows a "choose home app" prompt,
-and `adb shell cmd package set-home-activity …` has no effect. The stock launcher is a system app
+On the Android TV and Google TV emulator images from API 23 on, pressing Home never shows a
+"choose home app" prompt, and `adb shell cmd package set-home-activity …` has no effect. The stock launcher is a system app
 whose HOME intent filter has priority 2, third-party apps are capped at priority 0, and Android
 picks the highest priority without asking. Disable the stock launcher instead (this persists
 across reboots). Its package depends on the Android version:
 
 | Emulator | Stock launcher |
 |---|---|
-| API 25 (Android 7.1) | `com.google.android.leanbacklauncher` |
+| API 22 to 25 (Android 5.1 to 7.1) | `com.google.android.leanbacklauncher` |
 | API 26 (Android 8.0) and newer | `com.google.android.tvlauncher` |
 | Google TV, every level (API 30–36) | `com.google.android.apps.tv.launcherx` |
 
 ```bash
-adb shell pm disable-user --user 0 com.google.android.leanbacklauncher   # Home opens Luncher (API 25)
+adb shell pm disable-user --user 0 com.google.android.leanbacklauncher   # Home opens Luncher (API 23-25)
 adb shell pm enable com.google.android.leanbacklauncher                  # back to the stock launcher
-adb shell cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.HOME   # who is home
+adb shell cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.HOME   # who is home (API 24+)
 ```
+
+API 22 (Android 5.1) is the exception: its stock launcher's HOME filter has no priority, so with
+Luncher installed, Home asks which home app to use. Pick Luncher there ("Always"); disabling the
+stock launcher isn't needed.
 
 Don't uninstall Luncher while the stock launcher is disabled, or Home has nowhere to go. Re-enable
 the stock launcher first, or wipe the emulator's data (android-tv-wsl-dev-tools'
