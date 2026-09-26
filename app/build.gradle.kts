@@ -45,7 +45,7 @@ android {
 dependencies {
     implementation(project(":domain"))
 
-    // Tests only: none of this reaches the APK. Tiers and their tools: TESTING.md.
+    // Tests only: none of this reaches the APK. Tiers and their tools: docs/TESTING.md.
     testImplementation(testFixtures(project(":domain")))
     testImplementation(libs.junit)
     testImplementation(libs.robolectric)
@@ -59,23 +59,35 @@ dependencies {
     androidTestImplementation(libs.uiautomator)
 }
 
-// Instrumented test runs (connectedDebugAndroidTest and friends; see TESTING.md).
+// Instrumented test runs (connectedDebugAndroidTest and friends; see docs/TESTING.md).
 // 1. AGP's test engine installs with `adb install -t`, without -r, so Android 9 and older (the
 //    API 25 emulator) refuse the install whenever the app is already there, e.g. after
 //    `installDebug`. Every run therefore starts by uninstalling; AGP uninstalls after the run anyway.
-// 2. When the install fails, AGP runs no test but still reports success. Fail the build instead.
+// 2. When the install fails, AGP runs no test on that device but still reports success. Fail the
+//    build instead. With several devices (e.g. the API 25 to 36 emulators) the others' results
+//    would hide it, so every device must have run tests: each gets a folder with its
+//    device-info.pb, and a TEST-<folder name>.xml next to it once tests ran there.
 val connectedTestResults = layout.buildDirectory.dir("outputs/androidTest-results/connected")
 val checkConnectedTestsRan = tasks.register("checkConnectedTestsRan") {
-    description = "Fails if the last instrumented test run produced no test results."
+    description = "Fails if the last instrumented test run ran no test on one of the devices."
     val results = connectedTestResults
     doLast {
         val suite = Regex("""<testsuite [^>]*\btests="(\d+)"""")
-        val ran = results.get().asFile.walk()
+        fun testsIn(report: File) =
+            if (report.isFile) suite.findAll(report.readText()).sumOf { it.groupValues[1].toInt() } else 0
+        val root = results.get().asFile
+        val ran = root.walk()
             .filter { it.isFile && it.name.startsWith("TEST-") && it.name.endsWith(".xml") }
-            .sumOf { file -> suite.findAll(file.readText()).sumOf { it.groupValues[1].toInt() } }
-        if (ran == 0) {
+            .sumOf(::testsIn)
+        val devicesWithoutTests = root.walk()
+            .filter { File(it, "device-info.pb").isFile }
+            .filter { testsIn(File(it.parentFile, "TEST-${it.name}.xml")) == 0 }
+            .map { it.name }
+            .toList()
+        if (ran == 0 || devicesWithoutTests.isNotEmpty()) {
+            val where = if (devicesWithoutTests.isEmpty()) "" else " on ${devicesWithoutTests.joinToString()}"
             throw GradleException(
-                "No instrumented test ran. Look above for the cause (e.g. INSTALL_FAILED_...).",
+                "No instrumented test ran$where. Look above for the cause (e.g. INSTALL_FAILED_...).",
             )
         }
     }

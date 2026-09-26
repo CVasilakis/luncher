@@ -2,7 +2,7 @@
 
 The Luncher application module: an Android TV home screen app. It holds the UI, the adapters that
 implement `:domain`'s ports on Android APIs, and the composition root; see
-[`../ARCHITECTURE.md`](../ARCHITECTURE.md).
+[`../docs/ARCHITECTURE.md`](../docs/ARCHITECTURE.md).
 
 | | |
 |---|---|
@@ -18,7 +18,7 @@ implement `:domain`'s ports on Android APIs, and the composition root; see
 app/
 ├── build.gradle.kts                  module build: SDK levels, R8, :domain, test setup
 ├── proguard-rules.pro                app-specific R8 rules (none yet)
-├── src/test/                         JVM tests: Robolectric, Roborazzi screenshots (TESTING.md)
+├── src/test/                         JVM tests: Robolectric, Roborazzi screenshots (docs/TESTING.md)
 │   ├── java/com/luncher/launcher/    same packages as the code; TvDevice.kt: TV screen config
 │   └── screenshots/<feature>/        reference images, committed
 ├── src/androidTest/                  instrumented tests on the emulator
@@ -43,7 +43,7 @@ app/
 ```
 
 Code is organized by feature package (`home/`, `apps/`); resource names start with their feature
-(`home_…`), except app-wide ones. [`../ARCHITECTURE.md`](../ARCHITECTURE.md) has the rules.
+(`home_…`), except app-wide ones. [`../docs/ARCHITECTURE.md`](../docs/ARCHITECTURE.md) has the rules.
 
 ## Current state
 
@@ -78,9 +78,11 @@ reordering apps and a few settings.
 | `stateNotNeeded`, `clearTaskOnLaunch`, `excludeFromRecents` | Standard for home activities: always starts clean, never in Recents. |
 | `screenOrientation="landscape"` | TVs are landscape. |
 
-In `HomeActivity`, `onBackPressed()` is deliberately empty: a home screen must not close on Back.
-It overrides a method deprecated in newer APIs because its replacement
-(`OnBackPressedCallback`/`OnBackInvokedCallback`) needs AndroidX or API 33.
+A home screen must not close on Back, and `HomeActivity` needs two ways to ignore it. Up to
+Android 15 (API 35), `onBackPressed()` is deliberately empty; it's deprecated, but its replacements
+need AndroidX (`OnBackPressedCallback`) or API 33 (`OnBackInvokedCallback`). On Android 16 (API 36),
+Back no longer calls `onBackPressed()` in apps targeting it and closes the activity instead, so
+there `onCreate` registers an empty `OnBackInvokedCallback`.
 
 ## Build outputs
 
@@ -95,19 +97,26 @@ Signing keys must never be committed.
 
 ## Luncher as the home screen
 
-On the Android TV emulator image (API 25), pressing Home never shows a "choose home app" prompt,
-and `adb shell cmd package set-home-activity …` has no effect. The stock launcher
-(`com.google.android.leanbacklauncher`) is a system app whose HOME intent filter has priority 2,
-third-party apps are capped at priority 0, and Android picks the highest priority without asking.
-Disable the stock launcher instead (this persists across reboots):
+On the Android TV and Google TV emulator images, pressing Home never shows a "choose home app" prompt,
+and `adb shell cmd package set-home-activity …` has no effect. The stock launcher is a system app
+whose HOME intent filter has priority 2, third-party apps are capped at priority 0, and Android
+picks the highest priority without asking. Disable the stock launcher instead (this persists
+across reboots). Its package depends on the Android version:
+
+| Emulator | Stock launcher |
+|---|---|
+| API 25 (Android 7.1) | `com.google.android.leanbacklauncher` |
+| API 28 (Android 9), API 30 (Android 11), API 33 (Android 13), API 36 (Android 16) | `com.google.android.tvlauncher` |
+| Google TV, every level (API 30–36) | `com.google.android.apps.tv.launcherx` |
 
 ```bash
-adb shell pm disable-user --user 0 com.google.android.leanbacklauncher   # Home opens Luncher
+adb shell pm disable-user --user 0 com.google.android.leanbacklauncher   # Home opens Luncher (API 25)
 adb shell pm enable com.google.android.leanbacklauncher                  # back to the stock launcher
 adb shell cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.HOME   # who is home
 ```
 
 Don't uninstall Luncher while the stock launcher is disabled, or Home has nowhere to go. Re-enable
-the stock launcher first, or wipe the emulator (`start-emulator.sh -wipe-data`). While the stock
+the stock launcher first, or wipe the emulator's data (android-tv-wsl-dev-tools'
+`start-emulator.sh -wipe-data`, or "Wipe Data" in Android Studio's Device Manager). While the stock
 launcher is enabled, Luncher appears in its app row (with its banner) and can be opened like any
 app. Home seems to do nothing while Luncher is already in front, because Luncher is the home screen.

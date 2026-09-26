@@ -1,10 +1,10 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 // Pure Kotlin: the launcher's models, rules and ports. No Android, no libraries; the compiler
-// enforces this, since nothing Android is on this module's classpath. See ARCHITECTURE.md.
+// enforces this, since nothing Android is on this module's classpath. See docs/ARCHITECTURE.md.
 plugins {
     alias(libs.plugins.kotlin.jvm)
-    // src/testFixtures: fakes of the ports, shared with :app's tests (see TESTING.md).
+    // src/testFixtures: fakes of the ports, shared with :app's tests (see docs/TESTING.md).
     `java-test-fixtures`
 }
 

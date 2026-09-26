@@ -16,7 +16,7 @@ import org.robolectric.annotation.GraphicsMode
 
 /**
  * Reference images live in app/src/test/screenshots/<feature>/. `recordRoborazziDebug` writes
- * them, `verifyRoborazziDebug` fails when the screen looks different; see TESTING.md.
+ * them, `verifyRoborazziDebug` fails when the screen looks different; see docs/TESTING.md.
  */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)

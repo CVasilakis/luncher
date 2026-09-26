@@ -1,7 +1,7 @@
 [versions]
 agp = "9.4.1"
 kotlin = "2.4.20"
-# Test-only (never in the APK); TESTING.md says which tier uses which.
+# Test-only (never in the APK); docs/TESTING.md says which tier uses which.
 junit = "4.13.2"
 robolectric = "4.17"
 roborazzi = "1.75.0"

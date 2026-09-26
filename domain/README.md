@@ -2,13 +2,13 @@
 
 The launcher's models, rules and ports, in pure Kotlin. No Android and no libraries: the
 compiler rejects both, since neither is on this module's classpath. See
-[`../ARCHITECTURE.md`](../ARCHITECTURE.md) for how it fits with `:app`.
+[`../docs/ARCHITECTURE.md`](../docs/ARCHITECTURE.md) for how it fits with `:app`.
 
 | | |
 |---|---|
 | Package | `com.luncher.domain` |
 | Build | [`build.gradle.kts`](build.gradle.kts): Kotlin/JVM (`org.jetbrains.kotlin.jvm`), bytecode level 17 like `:app` |
-| Tests | `src/test/kotlin/`, JUnit 4: `./gradlew :domain:test` (see [`../TESTING.md`](../TESTING.md)) |
+| Tests | `src/test/kotlin/`, JUnit 4: `./gradlew :domain:test` (see [`../docs/TESTING.md`](../docs/TESTING.md)) |
 | Test fixtures | `src/testFixtures/kotlin/`: fakes of the ports, used by the tests of every module |
 
 ## Layout

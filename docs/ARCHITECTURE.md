@@ -18,8 +18,8 @@ composition root              No Android, no libraries.
 
 | Module | Contains | May use |
 |---|---|---|
-| [`domain/`](domain/README.md) | **Models** (immutable data), **rules** (what the launcher decides: which apps show, in which order, with which banner) and **ports** (interfaces for what the rules need from the device) | Kotlin standard library only. Android isn't on its classpath, so an `android.*` import doesn't compile. |
-| [`app/`](app/README.md) | **UI** (activities, views, layouts), **adapters** (port implementations on Android APIs: PackageManager, SharedPreferences, WallpaperManager, files) and the **composition root** | Android platform APIs, `:domain` |
+| [`domain/`](../domain/README.md) | **Models** (immutable data), **rules** (what the launcher decides: which apps show, in which order, with which banner) and **ports** (interfaces for what the rules need from the device) | Kotlin standard library only. Android isn't on its classpath, so an `android.*` import doesn't compile. |
+| [`app/`](../app/README.md) | **UI** (activities, views, layouts), **adapters** (port implementations on Android APIs: PackageManager, SharedPreferences, WallpaperManager, files) and the **composition root** | Android platform APIs, `:domain` |
 
 `:domain` never depends on `:app`. A decision made in `:domain` is testable in milliseconds on the
 JVM, and survives a rewrite of the UI.
@@ -61,7 +61,7 @@ namespace. Names start with their feature (`home_activity.xml`, `home_status`,
    Don't allocate in drawing or D-pad handling code. Scale bitmaps down to their display size.
 7. **Storage formats belong to adapters.** `:domain` sees typed values (sets of hidden apps, an
    order), not preference keys or file layouts, so a storage change stays in one adapter.
-8. **Everything works with a D-pad** (see [`AGENTS.md`](AGENTS.md)).
+8. **Everything works with a D-pad** (see [`AGENTS.md`](../AGENTS.md)).
 
 ## Where things go
 
@@ -71,8 +71,9 @@ namespace. Names start with their feature (`home_activity.xml`, `home_status`,
 | New data the rules need from the device (settings, wallpaper, images) | a port (interface) in `:domain` with a fake in its test fixtures, an adapter in `:app/<feature>/`, one line in `AppGraph` |
 | A new screen (e.g. settings) | a new feature package in `:app` with its activity, layouts prefixed with the feature name, manifest entry |
 | A shared view or style | `:app` `ui/` package, `values/` without a prefix |
-| Build or version changes | [`gradle/`](gradle/README.md) |
-| Emulator and developer tooling | not here: the separate android-cli-dev-tools repository (see [`README.md`](README.md#requirements)) |
+| Build or version changes | [`gradle/`](../gradle/README.md) |
+| A guide that covers the whole project | [`docs/`](README.md) |
+| Emulator and developer tooling | not here: the separate android-tv-wsl-dev-tools repository (see [`README.md`](../README.md#emulators-and-the-android-tv-wsl-dev-tools-scripts)) |
 
 ## Adding a feature, step by step
 

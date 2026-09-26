@@ -17,7 +17,7 @@ Build tooling shared by the whole project.
 | Kotlin | 2.4.20 | `libs.versions.toml` (`kotlin`) |
 | JDK | 17+ to build, **21+ to run the Robolectric tests** (21 used) | environment, see [`../README.md`](../README.md#requirements) |
 
-Test libraries, all test-only (never in the APK); [`../TESTING.md`](../TESTING.md) says which tier
+Test libraries, all test-only (never in the APK); [`../docs/TESTING.md`](../docs/TESTING.md) says which tier
 uses which:
 
 | Library | Version | Catalog entry |
@@ -59,9 +59,9 @@ Check which versions actually resolve with:
 - **Test libraries:** change their entry in the catalog. Robolectric must support the app's
   `compileSdk`/`targetSdk`; a newer Android API may need a newer JDK (see its release notes).
 - After any upgrade, run `./gradlew assembleDebug assembleRelease`, all test tiers
-  ([`../TESTING.md`](../TESTING.md)), and install on the emulator.
+  ([`../docs/TESTING.md`](../docs/TESTING.md)), and install on the emulator.
 
 `gradle.properties` (repository root) sets the Gradle JVM heap, and enables the build cache and
 configuration cache and non-transitive R classes. It also keeps the APKs installed after
 instrumented tests (`android.injected.androidTest.leaveApksInstalledAfterRun`; reason in
-[`../TESTING.md`](../TESTING.md#instrumented-tests-espresso-ui-automator)).
+[`../docs/TESTING.md`](../docs/TESTING.md#instrumented-tests-espresso-ui-automator)).

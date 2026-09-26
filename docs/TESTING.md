@@ -27,14 +27,14 @@ Everything at once (with the emulator running for the last two tiers):
 |---|---|
 | Domain unit | JDK 17+ |
 | App JVM, screenshots | **JDK 21+**: Robolectric runs the API 36 framework, which needs Java 21 |
-| In-app, system | a running Android TV emulator or device on API 25+ (e.g. from android-cli-dev-tools, see [`README.md`](README.md#requirements)) |
+| In-app, system | a running Android TV emulator or device on API 25+ (see [`README.md`](../README.md#emulators-and-the-android-tv-wsl-dev-tools-scripts)); before committing, emulators of API 25, 28, 30, 33 and 36 ([below](#on-several-android-versions)) |
 
 The test libraries download automatically on the first test run (sizes in
-[`README.md`](README.md#requirements)); no extra SDK packages are needed. If the Robolectric tests
+[`README.md`](../README.md#requirements)); no extra SDK packages are needed. If the Robolectric tests
 fail with a Java version error, point `JAVA_HOME` at a JDK 21.
 
 Test libraries are only in `testImplementation`/`androidTestImplementation`, so none of them reach
-the APK. Their versions are in [`gradle/libs.versions.toml`](gradle/libs.versions.toml).
+the APK. Their versions are in [`gradle/libs.versions.toml`](../gradle/libs.versions.toml).
 
 ## Which tier for which test
 
@@ -97,15 +97,47 @@ comparing images. Screenshots need Robolectric's native graphics
 ## Instrumented tests (Espresso, UI Automator)
 
 `connectedDebugAndroidTest` runs on every connected device (point it at one with
-`ANDROID_SERIAL`), typically the emulator from android-cli-dev-tools' `start-emulator.sh`. The build adjusts
-AGP's behavior in three places (reasons in [`app/build.gradle.kts`](app/build.gradle.kts) and
+`ANDROID_SERIAL`), typically an emulator booted with android-tv-wsl-dev-tools' `start-emulator.sh`. The build adjusts
+AGP's behavior in three places (reasons in [`app/build.gradle.kts`](../app/build.gradle.kts) and
 `gradle.properties`):
 
 - Each run starts with `uninstallAll`: AGP's test engine installs without `-r`, which API 25
   refuses when the app is already installed.
-- `checkConnectedTestsRan` fails the build when no test ran; AGP reports success when the install fails.
+- `checkConnectedTestsRan` fails the build when a device ran no test, naming it; AGP reports
+  success when the install fails, even if the other devices ran their tests.
 - `android.injected.androidTest.leaveApksInstalledAfterRun=true` keeps Luncher installed afterwards,
   so a device with the stock launcher disabled still has a home screen.
+
+### On several Android versions
+
+Luncher supports API 25 and newer, and behavior differs between versions, so the instrumented
+tests run on five emulators:
+
+| Emulator | Android | Why this one |
+|---|---|---|
+| `tv_api25` | 7.1 | the oldest supported |
+| `tv_api28` | 9 | stock launcher `tvlauncher` instead of `leanbacklauncher` |
+| `tv_api30` | 11 | package visibility: other apps are hidden from Luncher unless the manifest's `<queries>` names them |
+| `tv_api33` | 13 | `OnBackInvokedCallback` exists, but Back still calls `onBackPressed()`: the path `HomeActivity` relies on up to API 35 |
+| `tv_api36` | 16 | the `targetSdk`: Back no longer calls `onBackPressed()` |
+
+With several booted, one run covers them all, in parallel. The first lines use
+android-tv-wsl-dev-tools' scripts; any other way to create and boot the emulators works
+([`README.md`](../README.md#emulators-and-the-android-tv-wsl-dev-tools-scripts)):
+
+```bash
+for api in 28 30 33 36; do create-avd.sh --api $api; done   # once; needs the system images, see
+                                                             # android-tv-wsl-dev-tools' SETUP.md, step 5
+for avd in tv_api25 tv_api28 tv_api30 tv_api33 tv_api36; do start-emulator.sh "$avd"; done
+./gradlew connectedDebugAndroidTest                    # runs on every booted emulator
+ANDROID_SERIAL=emulator-5558 ./gradlew connectedDebugAndroidTest   # only one (serials: adb devices)
+```
+
+Results are per device, in `app/build/outputs/androidTest-results/connected/debug/TEST-<device>.xml`
+and `app/build/reports/androidTests/connected/debug/`. How many run at once is up to you: an
+emulator takes ~2 GB of RAM on API 25 and 28 and ~3–3.4 GB on 30, 33 and 36, so all five need
+~13 GB. With less, boot them in batches (e.g. 25 and 36, then 28, 30 and 33) or one at a time, stopping each with `adb -s <serial> emu kill` before the next.
+The API 36 image also takes 8.2 GB of disk.
 
 ## Rules
 
@@ -113,6 +145,7 @@ AGP's behavior in three places (reasons in [`app/build.gradle.kts`](app/build.gr
   because of the bug.
 - **A new test must be able to fail.** Break the behavior on purpose, see it fail, restore.
 - **Before committing**, run the tiers that cover what changed: at least the JVM tiers, and the
-  instrumented tiers when a screen's keys or the home behavior changed.
+  instrumented tiers when a screen's keys or the home behavior changed, on the API 25, 28, 30, 33
+  and 36 emulators.
 - **Tests stay deterministic.** No fixed sleeps where a condition can be awaited, no dependence
   on the host's or emulator's other state, no network.
