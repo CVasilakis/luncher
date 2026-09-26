@@ -92,3 +92,7 @@ Why the stock launcher has to be disabled, and its name on the other emulators:
 | `.github/workflows/` | GitHub Actions workflows that run the tests ([`docs/TESTING.md`](docs/TESTING.md#in-ci)). |
 | [`AGENTS.md`](AGENTS.md) | What coding agents need on top of these docs. |
 | `build.gradle.kts`, `settings.gradle.kts`, `gradle.properties`, `gradlew*` | Standard Gradle project files. |
+
+## License
+
+Luncher is under the MIT License ([`LICENSE`](LICENSE)).
