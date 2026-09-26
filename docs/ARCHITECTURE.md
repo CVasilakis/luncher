@@ -18,7 +18,7 @@ composition root              No Android, no libraries.
 
 | Module | Contains | May use |
 |---|---|---|
-| [`domain/`](../domain/README.md) | **Models** (immutable data), **rules** (what the launcher decides: which apps show, in which order, with which banner) and **ports** (interfaces for what the rules need from the device) | Kotlin standard library only. Android isn't on its classpath, so an `android.*` import doesn't compile. |
+| [`domain/`](../domain/README.md) | **Models** (data), **rules** (what the launcher decides: which apps show, in which order, with which banner) and **ports** (interfaces for what the rules need from the device) | Kotlin standard library only. Android isn't on its classpath, so an `android.*` import doesn't compile. |
 | [`app/`](../app/README.md) | **UI** (activities, views, layouts), **adapters** (port implementations on Android APIs: PackageManager, SharedPreferences, WallpaperManager, files) and the **composition root** | Android platform APIs, `:domain` |
 
 `:domain` never depends on `:app`. A decision made in `:domain` is testable in milliseconds on the
@@ -26,13 +26,9 @@ JVM, and survives a rewrite of the UI.
 
 ## Inside `:app`: packages by feature
 
-```
-com.luncher.launcher
-├── LuncherApplication.kt   holds the AppGraph (tests may replace it); `Activity.graph` accessor
-├── AppGraph.kt             composition root: creates adapters, lazily; open so tests can override ports
-├── home/                   the home screen (HomeActivity, its views)
-└── apps/                   adapters about installed apps (PackageManagerInstalledApps)
-```
+The root package `com.luncher.launcher` holds only `LuncherApplication`, which keeps the process's
+`AppGraph`, and `AppGraph`, the composition root. Everything else is in a feature package
+(`home/`, `apps/`, …; the current files are listed in [`app/README.md`](../app/README.md#layout)).
 
 A feature package holds everything of one feature on the Android side: its screens, views and
 adapters. Features don't import each other. What two features share is either domain (a model or
@@ -45,23 +41,26 @@ namespace. Names start with their feature (`home_activity.xml`, `home_status`,
 
 ## Rules
 
-1. **No Android in `:domain`**, and no libraries either. The build enforces this.
-2. **Activities and views render and forward input; they don't decide.** Filtering, ordering,
+1. **Activities and views render and forward input; they don't decide.** Filtering, ordering,
    hiding, choosing a banner: rules in `:domain`, called by the UI.
-3. **Android data APIs live only in adapters behind a port.** The UI never calls PackageManager,
+2. **Android data APIs live only in adapters behind a port.** The UI never calls PackageManager,
    SharedPreferences or files directly. It gets ports from `graph`.
-4. **Only `AppGraph` creates adapters.** It's the one place that knows which implementation backs a
-   port. Tests override single ports in a subclass and install it as `LuncherApplication.graph`
-   ([`TESTING.md`](TESTING.md#organizing-tests)); production code never assigns `graph`.
-5. **Minimal visibility.** `private` by default. `internal` in `:domain` for helpers the app
+3. **Only `AppGraph` creates adapters.** It's the one place that knows which implementation backs a
+   port. Production code never assigns `LuncherApplication.graph`; tests replace ports through it
+   ([`TESTING.md`](TESTING.md#organizing-tests)).
+4. **Minimal visibility.** `private` by default. `internal` in `:domain` for helpers the app
    doesn't need. Public only what another package uses.
-6. **Pay only for what's used.** Adapters are created lazily in `AppGraph`. No reflection,
-   annotation processing or DI framework. No runtime libraries without the user's agreement (that
-   includes kotlinx-coroutines; plain `java.util.concurrent` and `Handler` cover background work).
-   Don't allocate in drawing or D-pad handling code. Scale bitmaps down to their display size.
-7. **Storage formats belong to adapters.** `:domain` sees typed values (sets of hidden apps, an
+5. **Pay only for what's used.** Adapters are created lazily in `AppGraph`. No reflection,
+   annotation processing or DI framework. No runtime libraries (AndroidX, AppCompat, Leanback,
+   Compose, image loaders, kotlinx-coroutines, …): adding one is a deliberate decision, never a
+   default; plain `java.util.concurrent` and `Handler` cover background work. Don't allocate in
+   drawing or D-pad handling code. Scale bitmaps down to their display size.
+6. **Storage formats belong to adapters.** `:domain` sees typed values (sets of hidden apps, an
    order), not preference keys or file layouts, so a storage change stays in one adapter.
-8. **Everything works with a D-pad** (see [`AGENTS.md`](../AGENTS.md)).
+7. **Everything runs on API 22.** Guard newer APIs with `Build.VERSION.SDK_INT` checks.
+8. **Everything works with a D-pad:** arrows, OK, Back and Home. There's no touchscreen. Many
+   remotes have no Menu button, so nothing may be reachable only through Menu (long-press OK is
+   the common alternative).
 
 ## Where things go
 
@@ -82,4 +81,4 @@ namespace. Names start with their feature (`home_activity.xml`, `home_status`,
 2. Implement the port in an adapter in the feature's `:app` package; add it to `AppGraph`.
 3. Build the UI in the feature package: it gets ports from `graph`, calls the rule, and renders.
 4. Add the tests each layer needs ([`TESTING.md`](TESTING.md)), and check D-pad use on the emulator.
-5. Update the READMEs that describe what changed.
+5. Update the docs that describe what changed ([`README.md`](README.md#writing-the-docs)).

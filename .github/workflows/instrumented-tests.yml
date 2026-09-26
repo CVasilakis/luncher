@@ -111,6 +111,8 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y libpulse0
       # The TV images of API 26-30 (Android TV and Google TV) are under android-sdk-preview-license,
       # which the runner image doesn't accept. sdkmanager's output is mostly progress bars, so it's shown only on failure.
+      # The system images aren't cached: together they would fill most of the repository's 10 GB
+      # Actions cache and evict the Gradle cache.
       - name: Install the emulator and the system image
         run: |
           sdkmanager="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
@@ -156,5 +158,5 @@ jobs:
             app/build/outputs/androidTest-results/connected/
             app/build/logcat.txt
             app/build/adb-server.log
-          retention-days: 7
+          retention-days: 7                        # so they don't fill a private repository's artifact storage
           if-no-files-found: ignore

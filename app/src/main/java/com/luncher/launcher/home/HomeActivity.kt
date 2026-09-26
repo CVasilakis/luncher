@@ -33,6 +33,8 @@ class HomeActivity : Activity() {
     }
 
     // Back on Android 15 (API 35) and older; onCreate handles Android 16, which lint doesn't see.
+    // Deprecated, but its replacements need AndroidX (OnBackPressedCallback) or API 33
+    // (OnBackInvokedCallback).
     @SuppressLint("GestureBackNavigation")
     @Deprecated("Deprecated in Java")
     override fun onBackPressed() = Unit

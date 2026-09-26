@@ -48,4 +48,4 @@ jobs:
             domain/build/reports/tests/
             app/build/reports/tests/
             app/build/outputs/roborazzi/
-          retention-days: 7
+          retention-days: 7                        # so they don't fill a private repository's artifact storage

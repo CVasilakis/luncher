@@ -2,8 +2,7 @@
 
 Tests protect behavior from regressions. Every test has a fixed place, determined by what it
 needs to run, so a change comes with tests in the matching place and nowhere else.
-[`ARCHITECTURE.md`](ARCHITECTURE.md) explains the layers these tiers follow;
-[What each tier needs](#what-each-tier-needs) lists what to install.
+[`ARCHITECTURE.md`](ARCHITECTURE.md) explains the layers these tiers follow.
 
 ## Tiers
 
@@ -21,20 +20,10 @@ Everything at once (with the emulator running for the last two tiers):
 ./gradlew :domain:test :app:testDebugUnitTest :app:verifyRoborazziDebug connectedDebugAndroidTest
 ```
 
-## What each tier needs
-
-| Tier | Needs |
-|---|---|
-| Domain unit | JDK 17+ |
-| App JVM, screenshots | **JDK 21+**: Robolectric runs the API 36 framework, which needs Java 21 |
-| In-app, system | a running Android TV emulator or device on API 22+ (see [`README.md`](../README.md#emulators-and-the-android-tv-wsl-dev-tools-scripts)); before committing, emulators of API 22, 24, 28, 30, 33 and 36 ([below](#on-several-android-versions)) |
-
-The test libraries download automatically on the first test run (sizes in
-[`README.md`](../README.md#requirements)); no extra SDK packages are needed. If the Robolectric tests
-fail with a Java version error, point `JAVA_HOME` at a JDK 21.
-
-Test libraries are only in `testImplementation`/`androidTestImplementation`, so none of them reach
-the APK. Their versions are in [`gradle/libs.versions.toml`](../gradle/libs.versions.toml).
+What to install for them (the JDK for the JVM tiers, a device for the others):
+[`README.md`](../README.md#requirements). The test libraries download on the first run; their
+versions are in [`gradle/libs.versions.toml`](../gradle/libs.versions.toml). They're only in
+`testImplementation`/`androidTestImplementation`, so none of them reach the APK.
 
 ## Which tier for which test
 
@@ -76,11 +65,9 @@ outside a broken Back looks the same as a working one.
   Under Robolectric each test gets a fresh application. In `androidTest` the process outlives the
   test, so restore it in `@After` with `application.graph = AppGraph(application)`.
 - **TV screen configuration.** Robolectric tests of screens use `@Config(qualifiers = TV_1080P)`
-  (`app/src/test/java/com/luncher/launcher/TvDevice.kt`): 960×540 dp at xhdpi, landscape, TV UI
-  mode, D-pad, no touch.
-- **Leave the device as you found it.** Instrumented tests that change system state restore it;
-  e.g. `HomeKeyTest` disables other home apps so Luncher is home, and marks the TV setup complete
-  so API 26 and 27 act on Home; afterwards it re-enables the apps and restores the setting.
+  (`app/src/test/java/com/luncher/launcher/TvDevice.kt`).
+- **Leave the device as you found it.** Instrumented tests that change system state restore it
+  afterwards (e.g. `HomeKeyTest`, which disables other home apps to make Luncher the home).
 
 ## Screenshot tests
 
@@ -98,26 +85,28 @@ comparing images. Screenshots need Robolectric's native graphics
 ## Instrumented tests (Espresso, UI Automator)
 
 `connectedDebugAndroidTest` runs on every connected device (point it at one with
-`ANDROID_SERIAL`), typically an emulator booted with android-tv-wsl-dev-tools' `start-emulator.sh`. The build adjusts
-AGP's behavior in three places (reasons in [`app/build.gradle.kts`](../app/build.gradle.kts) and
-`gradle.properties`):
+`ANDROID_SERIAL`), typically an emulator booted with android-tv-wsl-dev-tools' `start-emulator.sh`.
+The build changes three things about AGP's runs (the reasons are in comments in
+[`app/build.gradle.kts`](../app/build.gradle.kts) and `gradle.properties`):
 
-- Each run starts with `uninstallAll`: AGP's test engine installs without `-r`, which Android 9
-  and older refuse when the app is already installed.
-- `checkConnectedTestsRan` fails the build when a device ran no test, naming it; AGP reports
-  success when the install fails, even if the other devices ran their tests.
-- `android.injected.androidTest.leaveApksInstalledAfterRun=true` keeps Luncher installed afterwards,
-  so a device with the stock launcher disabled still has a home screen.
+- each run first uninstalls Luncher (`uninstallAll`), so it starts from a clean install;
+- the build fails, naming the device, when a device ran no test (`checkConnectedTestsRan`);
+- Luncher stays installed afterwards, so a device with the stock launcher disabled still has a
+  home screen.
+
+On API 22 and 23, AGP's test engine prints `Failed to retrieve additional test outputs from
+device` with a long `File name too long` stack trace after the tests. It's harmless: the tests have
+run, and Luncher writes no additional test output. Turning that feature off
+(`android.enableAdditionalTestOutput=false`) makes AGP 9's `connectedDebugAndroidTest` fail
+instead.
 
 ### The system tier from API 24 on
 
 The system tier runs only on API 24 and newer; on API 22 and 23 the in-app tier still runs.
-`SystemTierFilter` (`app/src/androidTest/java/…/SystemTierFilter.kt`), set as the test runner's
-`filter` argument in `app/build.gradle.kts`, leaves out every test in the `system` package on
-older devices, so a new system test needs nothing of its own: putting it in `system/` is enough.
-Those versions differ most in what system tests drive (no `cmd` before API 24, a "choose home
-app" prompt on API 22), and UI Automator itself needs API 23. Luncher as the home screen on
-API 22 and 23 is checked by hand ([`app/README.md`](../app/README.md#luncher-as-the-home-screen)).
+`SystemTierFilter` (`app/src/androidTest/java/…/SystemTierFilter.kt`, which says why) leaves out
+every test in the `system` package on older devices, so a new system test needs nothing of its
+own: putting it in `system/` is enough. Luncher as the home screen on API 22 and 23 is checked by
+hand ([`app/README.md`](../app/README.md#luncher-as-the-home-screen)).
 
 ### On several Android versions
 
@@ -148,15 +137,34 @@ ANDROID_SERIAL=emulator-5558 ./gradlew connectedDebugAndroidTest   # only one (s
 Results are per device, in `app/build/outputs/androidTest-results/connected/debug/TEST-<device>.xml`
 and `app/build/reports/androidTests/connected/debug/`. How many run at once is up to you: an
 emulator takes ~2 GB of RAM on API 22, 24 and 28 and ~3–3.4 GB on 30, 33 and 36, so all six need
-~16 GB. With less, boot them in batches (e.g. 22, 24 and 36, then 28, 30 and 33) or one at a time, stopping each with `adb -s <serial> emu kill` before the next.
-The API 36 image also takes 8.2 GB of disk.
+~16 GB. With less, boot them in batches (e.g. 22, 24 and 36, then 28, 30 and 33) or one at a time,
+stopping each with `adb -s <serial> emu kill` before the next. The API 36 image also takes 8.2 GB
+of disk.
 
 ## In CI
 
-GitHub Actions runs the JVM tiers on every push to `main` and every pull request. The
-instrumented tiers run only when started by hand: on the six emulators above, on every Android TV
-or Google TV emulator from API 22 on, or on one. Which workflow does what, and why:
-[`.github/README.md`](../.github/README.md).
+Two GitHub Actions workflows run the tests. The reasons for their individual steps are in comments
+in the workflow files.
+
+| Workflow | Runs | When |
+|---|---|---|
+| [`jvm-tests.yml`](../.github/workflows/jvm-tests.yml) | the JVM tiers, and `assembleRelease` to check that R8 shrinking still works | every push to `main`, every pull request, and by hand |
+| [`instrumented-tests.yml`](../.github/workflows/instrumented-tests.yml) | the emulator tiers, one emulator per job | only by hand (Actions → Instrumented tests → Run workflow), then pick the emulators below |
+
+The instrumented workflow creates and boots its emulators with android-tv-wsl-dev-tools, pinned to
+a release tag. It offers every Android TV and Google TV image that release is tested with, from
+API 22 on, named `android_tv_api<level>` and `google_tv_api<level>`:
+
+| Choice | Emulators |
+|---|---|
+| `required-22-24-28-30-33-36` (default) | the Android TV images of the [six emulators above](#on-several-android-versions) |
+| `android-tv-all` | every Android TV image |
+| `google-tv-all` | every Google TV image (they start at API 30) |
+| `all` | both |
+| one name, e.g. `google_tv_api33` | that emulator only |
+
+When a job fails, it uploads its test reports (and, for an emulator job, the device log and adb's
+server log) as artifacts.
 
 ## Rules
 
@@ -164,7 +172,9 @@ or Google TV emulator from API 22 on, or on one. Which workflow does what, and w
   because of the bug.
 - **A new test must be able to fail.** Break the behavior on purpose, see it fail, restore.
 - **Before committing**, run the tiers that cover what changed: at least the JVM tiers, and the
-  instrumented tiers when a screen's keys or the home behavior changed, on the API 22, 24, 28, 30,
-  33 and 36 emulators.
+  instrumented tiers when a screen's keys or the home behavior changed, on the
+  [six emulators](#on-several-android-versions).
 - **Tests stay deterministic.** No fixed sleeps where a condition can be awaited, no dependence
   on the host's or emulator's other state, no network.
+- **Test libraries are dependencies too.** They never reach the APK, but adding one is as
+  deliberate a decision as adding a runtime library ([`ARCHITECTURE.md`](ARCHITECTURE.md#rules)).

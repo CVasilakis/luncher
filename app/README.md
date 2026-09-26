@@ -1,16 +1,8 @@
 # app/
 
-The Luncher application module: an Android TV home screen app. It holds the UI, the adapters that
-implement `:domain`'s ports on Android APIs, and the composition root; see
+The Luncher application module: the UI, the adapters that implement `:domain`'s ports on Android
+APIs, and the composition root. How they fit together, and the rules they follow:
 [`../docs/ARCHITECTURE.md`](../docs/ARCHITECTURE.md).
-
-| | |
-|---|---|
-| Package / applicationId / namespace | `com.luncher.launcher` |
-| `minSdk` | 22 (Android 5.1 TV) |
-| `compileSdk` / `targetSdk` | 36 |
-| Language / UI | Kotlin, platform Views |
-| Dependencies | `:domain` and the Kotlin standard library (test libraries are test-only) |
 
 ## Layout
 
@@ -42,26 +34,18 @@ app/
         └── values/                   colors, strings, theme
 ```
 
-Code is organized by feature package (`home/`, `apps/`); resource names start with their feature
-(`home_…`), except app-wide ones. [`../docs/ARCHITECTURE.md`](../docs/ARCHITECTURE.md) has the rules.
-
 ## Current state
 
 `HomeActivity` is a placeholder home screen: it shows the app name and the number of installed TV
 apps (activities with `MAIN` + `LEANBACK_LAUNCHER`, from the `InstalledApps` port), re-counted in
-`onResume`. The planned features are hiding apps, changing app banners, setting wallpapers,
-reordering apps and a few settings.
+`onResume`.
 
-## Design rules
+## Platform choices
 
-- **Built for weak devices:** minimal memory, CPU and APK size. It extends `android.app.Activity` and uses the platform theme
-  `Theme.DeviceDefault.NoActionBar`, with no AndroidX, AppCompat, Leanback or Compose. Adding a library
-  is a deliberate decision, not a default. Code must run on API 22, so guard newer APIs with
-  `Build.VERSION.SDK_INT` checks.
-- **TV input:** everything must be usable with a D-pad (arrows, OK, Back, Home, Menu). There's no
-  touchscreen. Many remotes have no Menu button, so actions shouldn't depend on Menu alone
-  (long-press OK is the common alternative).
-- **Graphics are vectors** (`VectorDrawable` renders natively on API 21+), so no per-density PNGs are needed.
+- **Plain platform classes:** activities extend `android.app.Activity` and use the platform theme
+  `Theme.DeviceDefault.NoActionBar`, not AppCompat.
+- **Graphics are vectors** (`VectorDrawable` renders natively on API 21+), so no per-density PNGs
+  are needed.
 
 ## Manifest: why each part is there
 
@@ -78,22 +62,18 @@ reordering apps and a few settings.
 | `stateNotNeeded`, `clearTaskOnLaunch`, `excludeFromRecents` | Standard for home activities: always starts clean, never in Recents. |
 | `screenOrientation="landscape"` | TVs are landscape. |
 
-A home screen must not close on Back, and `HomeActivity` needs two ways to ignore it. Up to
-Android 15 (API 35), `onBackPressed()` is deliberately empty; it's deprecated, but its replacements
-need AndroidX (`OnBackPressedCallback`) or API 33 (`OnBackInvokedCallback`). On Android 16 (API 36),
-Back no longer calls `onBackPressed()` in apps targeting it and closes the activity instead, so
-there `onCreate` registers an empty `OnBackInvokedCallback`.
+A home screen must not close on Back; how `HomeActivity` ignores it on every Android version is
+explained in its comments.
 
 ## Build outputs
 
 ```bash
 ./gradlew assembleDebug      # app/build/outputs/apk/debug/app-debug.apk (~0.9 MB, no shrinking)
 ./gradlew installDebug       # install on the running emulator/device
-./gradlew assembleRelease    # app/build/outputs/apk/release/app-release-unsigned.apk (~22 KB, R8 minified)
+./gradlew assembleRelease    # app/build/outputs/apk/release/app-release-unsigned.apk (R8 minified)
 ```
 
 Release builds have no signing config yet, so the release APK is unsigned and can't be installed as is.
-Signing keys must never be committed.
 
 ## Luncher as the home screen
 
@@ -128,9 +108,8 @@ app. Home seems to do nothing while Luncher is already in front, because Luncher
 On the API 26 and 27 (Android 8.0 and 8.1) Android TV emulators, Home does nothing at all, whoever
 the home app is: Android ignores it until the TV setup wizard has set `tv_user_setup_complete`, and
 these images never run that wizard (logcat: "Not starting activity because user setup is in
-progress"). android-tv-wsl-dev-tools' `start-emulator.sh` sets it after the boot. On an emulator
-started another way, set it by hand; `HomeKeyTest` sets it for its run when it's missing, and
-restores it afterwards, so it works on any device:
+progress"). android-tv-wsl-dev-tools' `start-emulator.sh` sets it after the boot, and `HomeKeyTest`
+for its own run. On an emulator started another way, set it by hand:
 
 ```bash
 adb shell settings put secure tv_user_setup_complete 1

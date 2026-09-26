@@ -16,7 +16,7 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         // The system tier (UI Automator, the system/ package) runs only from API 24; below that
-        // this filter leaves it out on each device. Reasons: docs/TESTING.md.
+        // this filter leaves it out on each device. Reasons: SystemTierFilter.
         testInstrumentationRunnerArguments["filter"] = "com.luncher.launcher.SystemTierFilter"
     }
 
