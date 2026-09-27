@@ -1,11 +1,13 @@
 package com.luncher.launcher.home
 
+import android.view.View
 import com.github.takahirom.roborazzi.captureRoboImage
 import com.luncher.domain.apps.FakeInstalledApps
 import com.luncher.domain.apps.FakeInstalledApps.Companion.app
 import com.luncher.domain.clock.FakeClock
 import com.luncher.launcher.AppGraph
 import com.luncher.launcher.LuncherApplication
+import com.luncher.launcher.R
 import com.luncher.launcher.TV_1080P
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -28,8 +30,7 @@ import org.robolectric.annotation.GraphicsMode
 @Config(qualifiers = "en-rUS-$TV_1080P")
 class HomeScreenshotTest {
 
-    @Test
-    fun homeScreen() {
+    private fun start(): HomeActivity {
         val application = RuntimeEnvironment.getApplication() as LuncherApplication
         application.graph = object : AppGraph(application) {
             // Seven apps: a full row, and a second one that starts at the left.
@@ -38,8 +39,19 @@ class HomeScreenshotTest {
             )
             override val clock = FakeClock()
         }
-        val activity = Robolectric.buildActivity(HomeActivity::class.java).setup().get()
+        return Robolectric.buildActivity(HomeActivity::class.java).setup().get()
+    }
 
-        activity.window.decorView.captureRoboImage("src/test/screenshots/home/home_screen.png")
+    @Test
+    fun homeScreen() {
+        start().window.decorView.captureRoboImage("src/test/screenshots/home/home_screen.png")
+    }
+
+    @Test
+    fun settingsEntryFocused() {
+        val activity = start()
+        activity.findViewById<View>(R.id.home_settings).requestFocus()
+
+        activity.window.decorView.captureRoboImage("src/test/screenshots/home/home_settings_focused.png")
     }
 }

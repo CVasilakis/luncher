@@ -11,7 +11,9 @@ import com.luncher.launcher.AppGraph
 import com.luncher.launcher.LuncherApplication
 import com.luncher.launcher.R
 import com.luncher.launcher.TV_1080P
+import com.luncher.launcher.settings.SettingsActivity
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -49,6 +51,8 @@ class HomeActivityTest {
 
     // Not currentFocus: under Robolectric the window never gets focus, so that stays null.
     private fun HomeActivity.focusedLabel() = tiles().single { it.isFocused }.app.label
+
+    private fun HomeActivity.settingsEntry() = findViewById<View>(R.id.home_settings)
 
     private fun HomeActivity.press(keyCode: Int) {
         dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, keyCode))
@@ -91,6 +95,34 @@ class HomeActivityTest {
     }
 
     @Test
+    fun `OK on the settings entry opens the settings panel`() {
+        val activity = start().get()
+        activity.settingsEntry().requestFocus()
+
+        activity.press(KeyEvent.KEYCODE_DPAD_CENTER)
+
+        assertEquals(SettingsActivity::class.java.name, shadowOf(activity).nextStartedActivity.component?.className)
+    }
+
+    @Test
+    fun `the Menu key opens the settings panel`() {
+        val activity = start().get()
+
+        activity.press(KeyEvent.KEYCODE_MENU)
+
+        assertEquals(SettingsActivity::class.java.name, shadowOf(activity).nextStartedActivity.component?.className)
+    }
+
+    @Test
+    fun `the end of a Menu press that started elsewhere opens nothing`() {
+        val activity = start().get()
+
+        activity.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_MENU))
+
+        assertNull(shadowOf(activity).nextStartedActivity)
+    }
+
+    @Test
     fun `reads the apps again when the home screen comes back`() {
         val controller = start()
 
@@ -111,6 +143,18 @@ class HomeActivityTest {
         controller.restart().start().resume()
 
         assertEquals("News", controller.get().focusedLabel())
+    }
+
+    @Test
+    fun `keeps focus on the settings entry when the apps change`() {
+        val controller = start()
+        controller.get().settingsEntry().requestFocus()
+
+        controller.pause().stop()                   // e.g. in the system settings...
+        installedApps.apps += app("games")          // ...an app was installed
+        controller.restart().start().resume()
+
+        assertTrue(controller.get().settingsEntry().isFocused)
     }
 
     @Test

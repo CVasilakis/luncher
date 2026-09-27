@@ -6,6 +6,9 @@
     <color name="text_secondary">#B3FFFFFF</color>
     <!-- Tile of an app without a banner. -->
     <color name="home_tile_card">#FF26303B</color>
+    <!-- The settings panel, and the fill of its focused entry. -->
+    <color name="settings_panel">#FF1C232B</color>
+    <color name="settings_entry_focused">#1FFFFFFF</color>
     <color name="plate_rim">#FFECEFF3</color>
     <color name="plate_well">#FFCFD6DF</color>
 </resources>

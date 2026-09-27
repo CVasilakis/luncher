@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- An entry of the settings panel: framed in the accent color while it has focus, like a tile. -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_focused="true">
+        <shape>
+            <solid android:color="@color/settings_entry_focused" />
+            <stroke
+                android:width="@dimen/settings_entry_frame"
+                android:color="@color/accent" />
+            <corners android:radius="@dimen/settings_entry_corner" />
+        </shape>
+    </item>
+    <item android:drawable="@android:color/transparent" />
+</selector>

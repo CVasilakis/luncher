@@ -116,6 +116,11 @@ Luncher is the home app. Re-enable the stock launcher first, e.g.
 `adb shell pm enable com.google.android.tvlauncher`. The system tier doesn't need it disabled:
 `HomeKeyTest` makes Luncher the home app for its own run.
 
+On API 22 the "choose home app" dialog shows up during the run and stays on screen afterwards.
+That's expected: when a test closes its activity, Android goes Home, which asks there. It doesn't
+disturb the tests: each one starts its activity above the dialog, and Espresso sends keys only
+once that activity's window has focus. Leave the dialog unanswered (Back closes it).
+
 ### The system tier from API 24 on
 
 The system tier runs only on API 24 and newer; on API 22 and 23 the in-app tier still runs.

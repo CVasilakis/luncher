@@ -12,4 +12,21 @@
     <dimen name="home_date_text">18sp</dimen>
     <!-- Between the time and the date. -->
     <dimen name="home_clock_gap">16dp</dimen>
+    <!-- The settings entry at the end of the top bar: its size, and the gear's inset within it. -->
+    <dimen name="home_settings_size">40dp</dimen>
+    <dimen name="home_settings_padding">8dp</dimen>
+
+    <dimen name="settings_panel_width">420dp</dimen>
+    <dimen name="settings_panel_padding">24dp</dimen>
+    <dimen name="settings_panel_corner">12dp</dimen>
+    <dimen name="settings_title_text">24sp</dimen>
+    <!-- Between the title and the first entry. -->
+    <dimen name="settings_title_gap">16dp</dimen>
+    <dimen name="settings_entry_height">56dp</dimen>
+    <dimen name="settings_entry_padding">16dp</dimen>
+    <dimen name="settings_entry_text">20sp</dimen>
+    <dimen name="settings_entry_frame">3dp</dimen>
+    <dimen name="settings_entry_corner">8dp</dimen>
+    <!-- Between two groups of entries. -->
+    <dimen name="settings_group_gap">16dp</dimen>
 </resources>

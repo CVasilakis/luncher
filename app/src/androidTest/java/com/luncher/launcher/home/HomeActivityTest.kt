@@ -7,6 +7,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.espresso.Espresso.onView
+import androidx.test.espresso.Espresso.pressBack
 import androidx.test.espresso.Espresso.pressBackUnconditionally
 import androidx.test.espresso.action.ViewActions.pressKey
 import androidx.test.espresso.assertion.ViewAssertions.matches
@@ -16,6 +17,7 @@ import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
 import androidx.test.espresso.matcher.ViewMatchers.isRoot
 import androidx.test.espresso.matcher.ViewMatchers.withContentDescription
 import androidx.test.espresso.matcher.ViewMatchers.withId
+import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.luncher.domain.apps.FakeInstalledApps
 import com.luncher.domain.apps.FakeInstalledApps.Companion.app
@@ -71,11 +73,14 @@ class HomeActivityTest {
     }
 
     /** Checks [condition] on the tile labeled [label], retrying while an animation settles. */
-    private fun waitUntilTile(label: String, condition: Matcher<View>) {
+    private fun waitUntilTile(label: String, condition: Matcher<View>) = waitUntil(withContentDescription(label), condition)
+
+    /** Checks [condition] on the view [view] matches, retrying while an animation settles. */
+    private fun waitUntil(view: Matcher<View>, condition: Matcher<View>) {
         val deadline = SystemClock.uptimeMillis() + TIMEOUT_MS
         while (true) {
             try {
-                onView(withContentDescription(label)).check(matches(condition))
+                onView(view).check(matches(condition))
                 return
             } catch (e: AssertionFailedError) {
                 if (SystemClock.uptimeMillis() > deadline) throw e
@@ -128,6 +133,55 @@ class HomeActivityTest {
             repeat(9) { press(KeyEvent.KEYCODE_DPAD_DOWN) }
 
             waitUntilTile("App46", allOf(hasFocus(), isCompletelyDisplayed()))
+        }
+    }
+
+    @Test
+    fun dpadUp_fromTheFirstRow_movesFocusToTheSettingsEntry() {
+        launchWith("games", "movies", "music").use {
+            waitUntilTile("Games", hasFocus())
+
+            press(KeyEvent.KEYCODE_DPAD_UP)
+
+            waitUntil(withId(R.id.home_settings), hasFocus())
+        }
+    }
+
+    @Test
+    fun okOnTheSettingsEntry_opensTheSettingsPanel() {
+        launchWith("games", "movies").use {
+            waitUntilTile("Games", hasFocus())
+
+            press(KeyEvent.KEYCODE_DPAD_UP)
+            press(KeyEvent.KEYCODE_DPAD_CENTER)
+
+            waitUntil(withText(R.string.settings_system), allOf(isDisplayed(), hasFocus()))
+        }
+    }
+
+    @Test
+    fun menuKey_opensTheSettingsPanel() {
+        launchWith("games", "movies").use {
+            waitUntilTile("Games", hasFocus())
+
+            press(KeyEvent.KEYCODE_MENU)
+
+            waitUntil(withText(R.string.settings_system), isDisplayed())
+        }
+    }
+
+    @Test
+    fun backKey_closesTheSettingsPanel_withFocusBackOnTheSettingsEntry() {
+        launchWith("games", "movies").use { scenario ->
+            waitUntilTile("Games", hasFocus())
+            press(KeyEvent.KEYCODE_DPAD_UP)
+            press(KeyEvent.KEYCODE_DPAD_CENTER)
+            waitUntil(withText(R.string.settings_system), isDisplayed())
+
+            pressBack()
+
+            waitUntil(withId(R.id.home_settings), hasFocus())
+            assertEquals(Lifecycle.State.RESUMED, scenario.state)
         }
     }
 

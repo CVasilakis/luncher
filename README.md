@@ -12,13 +12,14 @@ small and frugal enough to run well on very weak devices.
 - a few settings
 
 **Status:** early. The home screen shows the time and date, and the TV apps as a grid of banners
-that it opens; none of the goals above exists yet ([`app/README.md`](app/README.md#current-state)).
+that it opens; a settings panel so far only opens the device's own settings. None of the goals
+above exists yet ([`app/README.md`](app/README.md#current-state)).
 
 | | |
 |---|---|
 | Package | `com.luncher.launcher` |
 | Supported Android versions | Android TV 5.1 (API 22) and newer |
-| Release APK size | ~30 KB |
+| Release APK size | ~38 KB |
 
 ## Documentation
 

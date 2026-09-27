@@ -22,6 +22,9 @@ domain/src/
 │   ├── clock/
 │   │   ├── ClockReading.kt      model: the time, time zone and hour format at one moment
 │   │   └── Clock.kt             port: the device's clock, and when what it shows changes
+│   ├── settings/
+│   │   ├── SettingsEntry.kt     model: the kinds of entry the settings panel lists, one type each
+│   │   └── SettingsMenu.kt      models and rule: which entries the panel lists, in tabs and groups
 │   └── layout/
 │       ├── TileLayout.kt        how an arrangement of tiles reports sizes and positions
 │       └── TileGrid.kt          rule: the grid (rows of a fixed number of columns, centered)
@@ -31,7 +34,7 @@ domain/src/
     └── clock/FakeClock.kt          fake of the Clock port: a fixed time the test moves
 ```
 
-Packages are by topic (`apps/`, `clock/`, `layout/`, and later e.g. `settings/`, `wallpaper/`), each holding the
+Packages are by topic (`apps/`, `clock/`, `layout/`, `settings/`, and later e.g. `wallpaper/`), each holding the
 models, rules and ports of that topic.
 
 ## Writing models, rules and ports

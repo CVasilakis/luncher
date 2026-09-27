@@ -8,9 +8,9 @@
         android:layout_height="match_parent"
         android:orientation="vertical">
 
-        <!-- The clock at the start; what follows it in the bar sits at the end (e.g. status
-             indicators). Not focusable itself: D-pad Up from the tiles reaches only what's
-             focusable in it. -->
+        <!-- The clock at the start; what follows it in the bar sits at the end (the settings
+             entry, later e.g. status indicators). Not focusable itself: D-pad Up from the tiles
+             reaches only what's focusable in it. -->
         <LinearLayout
             android:id="@+id/home_top_bar"
             android:layout_width="match_parent"
@@ -48,6 +48,18 @@
                     android:textColor="@color/text_secondary"
                     android:textSize="@dimen/home_date_text" />
             </com.luncher.launcher.home.ClockView>
+
+            <!-- Opens the settings panel. Focusable, so Up from the first row of tiles reaches it. -->
+            <ImageView
+                android:id="@+id/home_settings"
+                android:layout_width="@dimen/home_settings_size"
+                android:layout_height="@dimen/home_settings_size"
+                android:background="@drawable/home_settings_background"
+                android:contentDescription="@string/home_settings"
+                android:focusable="true"
+                android:focusableInTouchMode="true"
+                android:padding="@dimen/home_settings_padding"
+                android:src="@drawable/home_settings" />
         </LinearLayout>
 
         <!-- Tiles may zoom past the padding, and scroll through it up to the top bar. -->

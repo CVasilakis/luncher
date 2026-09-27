@@ -2,4 +2,8 @@
 <resources>
     <string name="app_name">Luncher</string>
     <string name="home_no_apps">No TV apps installed</string>
+    <string name="home_settings">Settings</string>
+    <string name="settings_title">Settings</string>
+    <string name="settings_system">System settings</string>
+    <string name="settings_system_unavailable">This device has no settings app</string>
 </resources>

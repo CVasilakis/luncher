@@ -28,6 +28,8 @@ app/
     │   │   ├── AppTilesView.kt       places the tiles where the domain's TileLayout says; scrolls
     │   │   ├── AppTileView.kt        one app: its image, focus frame and zoom
     │   │   └── BannerImages.kt       adapter: draws an app's Banner into a bitmap of the tile's size
+    │   ├── settings/
+    │   │   └── SettingsActivity.kt   the settings panel: lists the domain's settingsMenu, opens entries
     │   ├── apps/
     │   │   └── PackageManagerInstalledApps.kt   InstalledApps port on PackageManager
     │   └── clock/
@@ -36,8 +38,10 @@ app/
         ├── animator/home_tile_focus.xml   zoom of the focused tile
         ├── drawable/
         │   ├── banner.xml            TV banner, 320×180 dp (plate between a fork and a knife)
-        │   └── ic_launcher.xml       app icon (plate with a play button)
-        ├── layout/home_activity.xml
+        │   ├── ic_launcher.xml       app icon (plate with a play button)
+        │   ├── home_settings*.xml    the top bar's settings gear, and its focus disc
+        │   └── settings_*.xml        the settings panel's window and focused entry
+        ├── layout/                   home_activity.xml; settings_activity.xml, settings_entry.xml
         └── values/                   colors, dimensions, strings, theme
 ```
 
@@ -45,8 +49,9 @@ app/
 
 The home screen shows the time and date in a top bar, in the device's language and hour format,
 and below it the installed TV apps (activities with `MAIN` + `LEANBACK_LAUNCHER`) as a grid of
-banners, sorted by name, five per row; OK opens the focused app. Hiding, reordering, custom
-banners, wallpapers and settings don't exist yet.
+banners, sorted by name, five per row; OK opens the focused app. A gear at the end of the top bar,
+or the Menu key, opens the settings panel, whose one entry opens the device's own settings.
+Hiding, reordering, custom banners, wallpapers and Luncher's own settings don't exist yet.
 
 ## The home screen
 
@@ -64,13 +69,13 @@ one job, so a new arrangement, image source or top bar item changes one of them:
 | `Clock` (`:domain`) | what time it is, in which time zone and hour format, and when that changes |
 | `AndroidClock` | reads those from Android, and watches the time broadcasts only while something listens |
 | `ClockView` | formats a reading in the device's language, at the start of the top bar |
-| `HomeActivity` | reads the apps in `onResume`; when they changed, creates tiles for new apps and drops those of removed ones. Starts the clock in `onStart` and stops it in `onStop`. |
+| `HomeActivity` | reads the apps in `onResume`; when they changed, creates tiles for new apps and drops those of removed ones. Starts the clock in `onStart` and stops it in `onStop`. Opens the [settings panel](#the-settings-panel) on OK on the gear or on the Menu key. |
 
 ### The top bar
 
-`home_top_bar` in `home_activity.xml` holds the clock at its start; items added after the clock
-sit at its end, which is where status indicators and a settings entry go. Each item that shows
-device state that changes (the time, later e.g. the network) is built the same way:
+`home_top_bar` in `home_activity.xml` holds the clock at its start and the settings gear at its
+end; later items (e.g. status indicators) go at the end too. Each item that shows device state
+that changes (the time, later e.g. the network) is built the same way:
 
 - **A port in `:domain`** that reads the state and tells listeners when it changes, with a fake in
   the test fixtures that the test moves ([`FakeClock`](../domain/src/testFixtures/kotlin/com/luncher/domain/clock/FakeClock.kt)).
@@ -79,9 +84,10 @@ device state that changes (the time, later e.g. the network) is built the same w
 - **A view in `home/`** with `start(port)` and `stop()`, called from `HomeActivity`'s `onStart` and
   `onStop`: a hidden home screen listens to nothing, and reads everything again when it comes back.
 
-The bar itself isn't focusable. An item that should be reachable with the D-pad (a settings
-entry) is a focusable view in it, and Up from the first row of tiles moves there through
-Android's own focus search.
+The bar itself isn't focusable. An item that should be reachable with the D-pad (the settings
+gear) is a focusable view in it, and Up from the first row of tiles moves there through
+Android's own focus search. Focus in the bar stays there when the apps change on a return to the
+home screen; otherwise it stays on the same app.
 
 What keeps it light:
 
@@ -97,6 +103,32 @@ What keeps it light:
   bar only, not the tiles.
 - **Nothing runs while the home screen is hidden.** The clock's broadcast receiver exists only
   from `onStart` to `onStop`.
+
+## The settings panel
+
+`SettingsActivity` is a floating window over the dimmed home screen (its theme,
+`Theme.Luncher.Settings`, is a platform dialog theme). Back closes it, as any activity, and so does
+Home: the home screen is `singleTask`, and Android closes what's above it in its task. The home
+screen's focus is where it was.
+
+| Part | Job |
+|---|---|
+| `settingsMenu` (`:domain`) | which entries the panel lists: tabs of groups of entries, in order |
+| `SettingsEntry` (`:domain`) | the kinds of entry, one type each |
+| `SettingsActivity` | shows a tab: its groups one below the other, with a gap between them; each entry's label (`label`) and what OK on it does (`open`) |
+
+The panel shows the first tab. The tab strip to pick another one, and group titles, are built
+with the first tab or group that needs them. To add an entry:
+
+1. A `SettingsEntry` type in `:domain`, placed by `settingsMenu`, with its unit test.
+2. Its label and action in `SettingsActivity`: `label` and `open` are exhaustive `when`s, so the
+   app doesn't compile until both handle the new type.
+3. A value the entry changes (e.g. whether the date shows) is read and stored through a port with
+   an adapter, like any data from the device ([`ARCHITECTURE.md`](../docs/ARCHITECTURE.md#where-things-go)).
+
+What keeps it light: its code runs, and its window exists, only while it's open. Behind it the home
+screen stays started (the clock keeps running) and, as after any other activity, reads the apps
+again when the panel closes, keeping its tiles when nothing changed.
 
 ## Platform choices
 
@@ -119,6 +151,8 @@ What keeps it light:
 | `launchMode="singleTask"` | Pressing Home returns to the same instance instead of stacking new ones. |
 | `stateNotNeeded`, `clearTaskOnLaunch`, `excludeFromRecents` | Standard for home activities: always starts clean, never in Recents. |
 | `screenOrientation="landscape"` | TVs are landscape. |
+| `SettingsActivity`: `exported="false"`, `launchMode="singleTop"` | Only Luncher opens it; a repeated OK or Menu press doesn't stack a second panel. |
+| `SettingsActivity`: no `screenOrientation` | Android 8.0 (API 26) refuses one on a floating activity; it shows over the landscape home screen anyway. |
 
 A home screen must not close on Back; how `HomeActivity` ignores it on every Android version is
 explained in its comments.
@@ -126,7 +160,7 @@ explained in its comments.
 ## Build outputs
 
 ```bash
-./gradlew assembleDebug      # app/build/outputs/apk/debug/app-debug.apk (~0.9 MB, no shrinking)
+./gradlew assembleDebug      # app/build/outputs/apk/debug/app-debug.apk (~1 MB, no shrinking)
 ./gradlew installDebug       # install on the running emulator/device
 ./gradlew assembleRelease    # app/build/outputs/apk/release/app-release-unsigned.apk (R8 minified)
 ```
