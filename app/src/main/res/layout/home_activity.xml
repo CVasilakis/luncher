@@ -2,17 +2,67 @@
 <!-- Merged into the window's content FrameLayout: one view level less to lay out and draw. -->
 <merge xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- Tiles may zoom and scroll past the padding (the overscan margin), so nothing clips them. -->
-    <com.luncher.launcher.home.AppTilesView
-        android:id="@+id/home_apps"
+    <!-- The top bar stays in place; the tiles scroll in the space below it. -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:clipChildren="false"
-        android:clipToPadding="false"
-        android:paddingLeft="@dimen/home_padding_horizontal"
-        android:paddingTop="@dimen/home_padding_vertical"
-        android:paddingRight="@dimen/home_padding_horizontal"
-        android:paddingBottom="@dimen/home_padding_vertical" />
+        android:orientation="vertical">
+
+        <!-- The clock at the start; what follows it in the bar sits at the end (e.g. status
+             indicators). Not focusable itself: D-pad Up from the tiles reaches only what's
+             focusable in it. -->
+        <LinearLayout
+            android:id="@+id/home_top_bar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingLeft="@dimen/home_padding_horizontal"
+            android:paddingTop="@dimen/home_padding_vertical"
+            android:paddingRight="@dimen/home_padding_horizontal">
+
+            <!-- Time and date share a baseline (LinearLayout's default). -->
+            <com.luncher.launcher.home.ClockView
+                android:id="@+id/home_clock"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/home_time"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:includeFontPadding="false"
+                    android:textColor="@color/text_primary"
+                    android:textSize="@dimen/home_time_text" />
+
+                <TextView
+                    android:id="@+id/home_date"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/home_clock_gap"
+                    android:includeFontPadding="false"
+                    android:singleLine="true"
+                    android:ellipsize="end"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="@dimen/home_date_text" />
+            </com.luncher.launcher.home.ClockView>
+        </LinearLayout>
+
+        <!-- Tiles may zoom past the padding, and scroll through it up to the top bar. -->
+        <com.luncher.launcher.home.AppTilesView
+            android:id="@+id/home_apps"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:clipChildren="false"
+            android:clipToPadding="false"
+            android:paddingLeft="@dimen/home_padding_horizontal"
+            android:paddingTop="@dimen/home_tiles_padding_top"
+            android:paddingRight="@dimen/home_padding_horizontal"
+            android:paddingBottom="@dimen/home_padding_vertical" />
+    </LinearLayout>
 
     <TextView
         android:id="@+id/home_empty"

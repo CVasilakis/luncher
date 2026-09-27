@@ -19,15 +19,19 @@ domain/src/
 │   │   ├── InstalledApps.kt     port: the TV apps installed on the device
 │   │   ├── HomeApps.kt          rule: which apps the home screen shows, in which order
 │   │   └── Banner.kt            model and rule: which image a tile shows (the app's banner or its icon)
+│   ├── clock/
+│   │   ├── ClockReading.kt      model: the time, time zone and hour format at one moment
+│   │   └── Clock.kt             port: the device's clock, and when what it shows changes
 │   └── layout/
 │       ├── TileLayout.kt        how an arrangement of tiles reports sizes and positions
 │       └── TileGrid.kt          rule: the grid (rows of a fixed number of columns, centered)
 ├── test/kotlin/…/               unit tests (docs/TESTING.md), same packages as the code
-└── testFixtures/kotlin/…/apps/  fakes of the ports, used by the tests of every module
-    └── FakeInstalledApps.kt     fake of the InstalledApps port
+└── testFixtures/kotlin/…/       fakes of the ports, used by the tests of every module
+    ├── apps/FakeInstalledApps.kt   fake of the InstalledApps port
+    └── clock/FakeClock.kt          fake of the Clock port: a fixed time the test moves
 ```
 
-Packages are by topic (`apps/`, `layout/`, and later e.g. `settings/`, `wallpaper/`), each holding the
+Packages are by topic (`apps/`, `clock/`, `layout/`, and later e.g. `settings/`, `wallpaper/`), each holding the
 models, rules and ports of that topic.
 
 ## Writing models, rules and ports
@@ -37,3 +41,5 @@ models, rules and ports of that topic.
   so they're testable without fakes.
 - Ports are interfaces named after what they provide (`InstalledApps`), not how
   (`PackageManagerApps`); adapters in `:app` implement them.
+- A port for device state that changes while it's shown (`Clock`) has a read function, and
+  `addListener`/`removeListener` that tell when to read again, so nothing polls.

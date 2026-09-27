@@ -70,6 +70,7 @@ Only app-wide resources have no prefix: `app_name`, theme, colors.
 | New data the rules need from the device (settings, wallpaper, installed apps) | a port (interface) in `:domain` with a fake in its test fixtures, an adapter in `:app/<feature>/`, one line in `AppGraph` |
 | An image the UI shows (banners, later the wallpaper) | which image: a model and rule in `:domain` (like `Banner`); drawing it: an adapter in `:app/<feature>/`, created in `AppGraph`. The adapter has no port, because its result (`Bitmap`, `Drawable`) is an Android type `:domain` can't name. It draws at the size shown ([rule 5](#rules)). |
 | How the home screen arranges apps (grid, apps per row, alignment, a carousel) | a `TileLayout` in `:domain`'s `layout/` that computes sizes and positions, with unit tests; the view that shows the tiles only places them where the layout says ([`app/README.md`](../app/README.md#the-home-screen)) |
+| Something the home screen's top bar shows (the clock; later status indicators, a settings entry) | a view in `:app/home/`, placed in the bar. Device state it shows (the time, the network) comes from a port that also tells listeners when the state changes; its adapter watches Android only while it has listeners. Details: [`app/README.md`](../app/README.md#the-top-bar) |
 | A new screen (e.g. settings) | a new feature package in `:app` with its activity, layouts prefixed with the feature name, manifest entry |
 | A shared view or style | `:app` `ui/` package, `values/` without a prefix |
 | Build or version changes | [`gradle/`](../gradle/README.md) |

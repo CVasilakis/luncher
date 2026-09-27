@@ -24,11 +24,14 @@ app/
     │   ├── AppGraph.kt               composition root: creates adapters (lazily); open for test fakes
     │   ├── home/
     │   │   ├── HomeActivity.kt       the home screen: reads the apps, shows them, opens them
+    │   │   ├── ClockView.kt          the top bar's time and date, following the Clock port
     │   │   ├── AppTilesView.kt       places the tiles where the domain's TileLayout says; scrolls
     │   │   ├── AppTileView.kt        one app: its image, focus frame and zoom
     │   │   └── BannerImages.kt       adapter: draws an app's Banner into a bitmap of the tile's size
-    │   └── apps/
-    │       └── PackageManagerInstalledApps.kt   InstalledApps port on PackageManager
+    │   ├── apps/
+    │   │   └── PackageManagerInstalledApps.kt   InstalledApps port on PackageManager
+    │   └── clock/
+    │       └── AndroidClock.kt       Clock port on the system time, settings and time broadcasts
     └── res/
         ├── animator/home_tile_focus.xml   zoom of the focused tile
         ├── drawable/
@@ -40,13 +43,15 @@ app/
 
 ## Current state
 
-The home screen shows the installed TV apps (activities with `MAIN` + `LEANBACK_LAUNCHER`) as a
-grid of banners, sorted by name, five per row; OK opens the focused app. Hiding, reordering,
-custom banners, wallpapers and settings don't exist yet.
+The home screen shows the time and date in a top bar, in the device's language and hour format,
+and below it the installed TV apps (activities with `MAIN` + `LEANBACK_LAUNCHER`) as a grid of
+banners, sorted by name, five per row; OK opens the focused app. Hiding, reordering, custom
+banners, wallpapers and settings don't exist yet.
 
 ## The home screen
 
-Each part does one job, so a new arrangement or image source changes one of them:
+The screen is a top bar that stays in place, and below it the tiles, which scroll. Each part does
+one job, so a new arrangement, image source or top bar item changes one of them:
 
 | Part | Job |
 |---|---|
@@ -56,7 +61,27 @@ Each part does one job, so a new arrangement or image source changes one of them
 | `bannerFor` (`:domain`) | which image a tile shows |
 | `BannerImages` | draws that image into a bitmap of the tile's size |
 | `AppTileView` | draws that bitmap, the focus frame and zoom |
-| `HomeActivity` | reads the apps in `onResume`; when they changed, creates tiles for new apps and drops those of removed ones |
+| `Clock` (`:domain`) | what time it is, in which time zone and hour format, and when that changes |
+| `AndroidClock` | reads those from Android, and watches the time broadcasts only while something listens |
+| `ClockView` | formats a reading in the device's language, at the start of the top bar |
+| `HomeActivity` | reads the apps in `onResume`; when they changed, creates tiles for new apps and drops those of removed ones. Starts the clock in `onStart` and stops it in `onStop`. |
+
+### The top bar
+
+`home_top_bar` in `home_activity.xml` holds the clock at its start; items added after the clock
+sit at its end, which is where status indicators and a settings entry go. Each item that shows
+device state that changes (the time, later e.g. the network) is built the same way:
+
+- **A port in `:domain`** that reads the state and tells listeners when it changes, with a fake in
+  the test fixtures that the test moves ([`FakeClock`](../domain/src/testFixtures/kotlin/com/luncher/domain/clock/FakeClock.kt)).
+- **An adapter in a topic package** (`clock/`, later e.g. `network/`), created in `AppGraph`. It
+  registers with Android (a broadcast receiver, a callback) only while it has listeners.
+- **A view in `home/`** with `start(port)` and `stop()`, called from `HomeActivity`'s `onStart` and
+  `onStop`: a hidden home screen listens to nothing, and reads everything again when it comes back.
+
+The bar itself isn't focusable. An item that should be reachable with the D-pad (a settings
+entry) is a focusable view in it, and Up from the first row of tiles moves there through
+Android's own focus search.
 
 What keeps it light:
 
@@ -68,7 +93,10 @@ What keeps it light:
 - **Nothing allocated per key press.** Android's own focus search moves between tiles; the zoom
   is a state animator created with each tile; scrolling reuses one `Scroller`.
 - **Layout passes only when the tiles change.** Focus, zoom and scrolling redraw without
-  measuring or laying out again.
+  measuring or laying out again. The clock's text changes once a minute, which lays out the top
+  bar only, not the tiles.
+- **Nothing runs while the home screen is hidden.** The clock's broadcast receiver exists only
+  from `onStart` to `onStop`.
 
 ## Platform choices
 

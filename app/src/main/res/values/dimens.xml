@@ -3,7 +3,13 @@
     <!-- Android TV's overscan margin, plus room for the focused tile's zoom. -->
     <dimen name="home_padding_horizontal">48dp</dimen>
     <dimen name="home_padding_vertical">32dp</dimen>
+    <!-- Between the top bar and the tiles; room for a focused tile's zoom in the first row. -->
+    <dimen name="home_tiles_padding_top">24dp</dimen>
     <!-- Between tiles; more than a tile grows when it zooms, so neighbors never overlap. -->
     <dimen name="home_tile_gap">24dp</dimen>
     <dimen name="home_tile_frame">3dp</dimen>
+    <dimen name="home_time_text">32sp</dimen>
+    <dimen name="home_date_text">18sp</dimen>
+    <!-- Between the time and the date. -->
+    <dimen name="home_clock_gap">16dp</dimen>
 </resources>

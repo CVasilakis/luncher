@@ -13,12 +13,14 @@ import com.luncher.domain.apps.homeApps
 import com.luncher.launcher.R
 import com.luncher.launcher.graph
 
-/** The home screen: the TV apps as tiles; OK on one opens it. */
+/** The home screen: the time and date above the TV apps as tiles; OK on a tile opens its app. */
 class HomeActivity : Activity() {
 
     private val installedApps by lazy { graph.installedApps }
     private val banners by lazy { graph.bannerImages }
+    private val clock by lazy { graph.clock }
     private lateinit var tiles: AppTilesView
+    private lateinit var clockView: ClockView
     private lateinit var empty: View
 
     /** What the tiles show; null until the first [onResume]. */
@@ -31,12 +33,24 @@ class HomeActivity : Activity() {
         setContentView(R.layout.home_activity)
         tiles = findViewById(R.id.home_apps)
         empty = findViewById(R.id.home_empty)
+        clockView = findViewById(R.id.home_clock)
         // A home activity must not finish on Back. From Android 16 (API 36) on, Back no longer
         // calls onBackPressed in apps targeting it, and closes the activity unless a callback
         // takes it; before that, the empty onBackPressed below does.
         if (Build.VERSION.SDK_INT >= 36) {
             onBackInvokedDispatcher.registerOnBackInvokedCallback(OnBackInvokedDispatcher.PRIORITY_DEFAULT) {}
         }
+    }
+
+    // Visible from onStart to onStop; paused only, e.g. behind a dialog, it still shows.
+    override fun onStart() {
+        super.onStart()
+        clockView.start(clock)
+    }
+
+    override fun onStop() {
+        super.onStop()
+        clockView.stop()
     }
 
     override fun onResume() {

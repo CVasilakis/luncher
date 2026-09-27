@@ -65,7 +65,9 @@ outside a broken Back looks the same as a working one.
   Under Robolectric each test gets a fresh application. In `androidTest` the process outlives the
   test, so restore it in `@After` with `application.graph = AppGraph(application)`.
 - **TV screen configuration.** Robolectric tests of screens use `@Config(qualifiers = TV_1080P)`
-  (`app/src/test/java/com/luncher/launcher/TvDevice.kt`).
+  (`app/src/test/java/com/luncher/launcher/TvDevice.kt`). Tests that check text the language
+  formats (the clock) also fix the language, `"en-rUS-$TV_1080P"`, and replace the `Clock` port
+  with a `FakeClock`, so the result depends neither on the host's time nor on its time zone.
 - **Leave the device as you found it.** Instrumented tests that change system state restore it
   afterwards (e.g. `HomeKeyTest`, which disables other home apps to make Luncher the home), and
   then wait 30 s, only if they changed something, logging why (logcat; Gradle doesn't show a

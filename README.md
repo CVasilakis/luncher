@@ -11,8 +11,8 @@ small and frugal enough to run well on very weak devices.
 - reorder apps
 - a few settings
 
-**Status:** early. The home screen shows the TV apps as a grid of banners and opens them; none of
-the goals above exists yet ([`app/README.md`](app/README.md#current-state)).
+**Status:** early. The home screen shows the time and date, and the TV apps as a grid of banners
+that it opens; none of the goals above exists yet ([`app/README.md`](app/README.md#current-state)).
 
 | | |
 |---|---|

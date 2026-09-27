@@ -2,7 +2,9 @@ package com.luncher.launcher
 
 import android.content.Context
 import com.luncher.domain.apps.InstalledApps
+import com.luncher.domain.clock.Clock
 import com.luncher.launcher.apps.PackageManagerInstalledApps
+import com.luncher.launcher.clock.AndroidClock
 import com.luncher.launcher.home.BannerImages
 
 /**
@@ -20,4 +22,6 @@ open class AppGraph(context: Context) {
     open val installedApps: InstalledApps by lazy { PackageManagerInstalledApps(appContext.packageManager) }
 
     val bannerImages: BannerImages by lazy { BannerImages(appContext) }
+
+    open val clock: Clock by lazy { AndroidClock(appContext) }
 }
