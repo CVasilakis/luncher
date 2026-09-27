@@ -62,7 +62,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           repository: CVasilakis/android-tv-wsl-dev-tools
-          ref: v1.2.0
+          ref: v1.4.0
           path: .android-tv-wsl-dev-tools
       # adb too: the tools find it in the SDK by themselves, but the failure steps call it by name.
       - name: Put the tools and adb on PATH

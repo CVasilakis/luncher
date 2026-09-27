@@ -59,4 +59,66 @@ class TileGridTest {
     fun `needs at least one column`() {
         TileGrid(tileCount = 3, columns = 0, width = 1000, gap = 25)
     }
+
+    // Moves: 5 columns, so with 12 tiles rows are 0-4, 5-9 and 10-11.
+    private val twelve = grid(tiles = 12)
+
+    @Test
+    fun `left and right move one place along the order, wrapping rows`() {
+        assertEquals(6, twelve.indexToward(5, Direction.RIGHT))
+        assertEquals(5, twelve.indexToward(4, Direction.RIGHT))    // end of a row: start of the next
+        assertEquals(4, twelve.indexToward(5, Direction.LEFT))     // start of a row: end of the one above
+    }
+
+    @Test
+    fun `left and right stop at the ends`() {
+        assertEquals(null, twelve.indexToward(0, Direction.LEFT))
+        assertEquals(null, twelve.indexToward(11, Direction.RIGHT))
+    }
+
+    @Test
+    fun `up and down move one row`() {
+        assertEquals(8, twelve.indexToward(3, Direction.DOWN))
+        assertEquals(3, twelve.indexToward(8, Direction.UP))
+        assertEquals(10, twelve.indexToward(5, Direction.DOWN))
+    }
+
+    @Test
+    fun `down where the next row is too short goes to the last place`() {
+        assertEquals(11, twelve.indexToward(8, Direction.DOWN))
+    }
+
+    @Test
+    fun `up from the first row and down from the last stop`() {
+        assertEquals(null, twelve.indexToward(3, Direction.UP))
+        assertEquals(null, twelve.indexToward(11, Direction.DOWN))
+        assertEquals(null, twelve.indexToward(10, Direction.DOWN))
+    }
+
+    @Test
+    fun `a single tile can't move`() {
+        val one = grid(tiles = 1)
+
+        assertEquals(listOf(null, null, null, null), Direction.entries.map { one.indexToward(0, it) })
+    }
+
+    @Test
+    fun `columns count from the left of each row`() {
+        assertEquals(listOf(0, 4, 0, 3, 1), listOf(0, 4, 5, 8, 11).map(twelve::column))
+    }
+
+    @Test
+    fun `a tile coming in from above takes the first row, in its column`() {
+        assertEquals(3, twelve.entryIndex(Direction.DOWN, column = 3))
+        assertEquals(2, grid(tiles = 2).entryIndex(Direction.DOWN, column = 4))   // as near as there are tiles
+        assertEquals(0, grid(tiles = 0).entryIndex(Direction.DOWN, column = 4))
+    }
+
+    @Test
+    fun `a tile coming in from below takes the last row, in its column`() {
+        assertEquals(11, twelve.entryIndex(Direction.UP, column = 1))
+        assertEquals(12, twelve.entryIndex(Direction.UP, column = 4))   // after the last tile
+        assertEquals(8, grid(tiles = 10).entryIndex(Direction.UP, column = 3))   // a full last row
+        assertEquals(0, grid(tiles = 0).entryIndex(Direction.UP, column = 2))
+    }
 }

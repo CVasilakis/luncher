@@ -35,8 +35,8 @@ class SettingsActivityTest {
     }
 
     @Test
-    fun `lists the system settings`() {
-        assertEquals(listOf("System settings"), start().entries().map { it.text.toString() })
+    fun `lists hiding apps, then the system settings`() {
+        assertEquals(listOf("Hide apps", "System settings"), start().entries().map { it.text.toString() })
     }
 
     @Test
@@ -45,9 +45,30 @@ class SettingsActivityTest {
     }
 
     @Test
+    fun `OK on Hide apps opens the list of apps`() {
+        val activity = start()
+
+        activity.press(KeyEvent.KEYCODE_DPAD_CENTER)
+
+        assertEquals(HideAppsActivity::class.java.name, shadowOf(activity).nextStartedActivity.component?.className)
+    }
+
+    @Test
+    fun `the panel disappears while Hide apps is open in its place, and comes back after`() {
+        val controller = Robolectric.buildActivity(SettingsActivity::class.java).setup()
+
+        controller.get().press(KeyEvent.KEYCODE_DPAD_CENTER)
+        assertEquals(0f, controller.get().window.attributes.alpha)
+
+        controller.pause().resume()                 // Hide apps closed
+        assertEquals(1f, controller.get().window.attributes.alpha)
+    }
+
+    @Test
     fun `OK on the system settings opens them in a task of their own`() {
         val activity = start()
 
+        activity.entries()[1].requestFocus()
         activity.press(KeyEvent.KEYCODE_DPAD_CENTER)
 
         val intent = shadowOf(activity).nextStartedActivity
@@ -61,6 +82,7 @@ class SettingsActivityTest {
         // Nothing handles ACTION_SETTINGS here, so starting it now throws, as on such a device.
         shadowOf(activity.application).checkActivities(true)
 
+        activity.entries()[1].requestFocus()
         activity.press(KeyEvent.KEYCODE_DPAD_CENTER)
 
         assertNull(shadowOf(activity).nextStartedActivity)

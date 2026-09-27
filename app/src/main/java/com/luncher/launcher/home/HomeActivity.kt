@@ -8,7 +8,9 @@ import android.os.Build
 import android.os.Bundle
 import android.view.KeyEvent
 import android.view.View
+import android.widget.TextView
 import android.window.OnBackInvokedDispatcher
+import com.luncher.domain.apps.ArrangedApps
 import com.luncher.domain.apps.InstalledApp
 import com.luncher.domain.apps.homeApps
 import com.luncher.launcher.R
@@ -16,23 +18,36 @@ import com.luncher.launcher.graph
 import com.luncher.launcher.settings.SettingsActivity
 
 /**
- * The home screen: the time, the date and a settings entry above the TV apps as tiles; OK on a
- * tile opens its app, OK on the settings entry (or the Menu key) opens the settings panel.
+ * The home screen: the time, the date and a settings entry above the TV apps the user didn't hide,
+ * as tiles; OK on a tile opens its app, OK on the settings entry (or the Menu key) opens the
+ * settings panel. A long press of OK on a tile starts [ArrangeMode], where the user moves and
+ * hides apps; it gets every key first while it's on.
  */
 class HomeActivity : Activity() {
 
     private val installedApps by lazy { graph.installedApps }
+    private val arrangements by lazy { graph.appArrangements }
     private val banners by lazy { graph.bannerImages }
     private val clock by lazy { graph.clock }
     private lateinit var topBar: View
     private lateinit var tiles: AppTilesView
     private lateinit var clockView: ClockView
-    private lateinit var empty: View
+    private lateinit var empty: TextView
+    private lateinit var arrange: ArrangeMode
 
     /** What the tiles show; null until the first [onResume]. */
     private var shown: List<InstalledApp>? = null
 
+    /** The apps as last read, shown and hidden: where arrange mode starts from. */
+    private var arranged: ArrangedApps? = null
+
     private val openApp = View.OnClickListener { open((it as AppTileView).app) }
+
+    private val startArranging = View.OnLongClickListener {
+        val arranged = arranged ?: return@OnLongClickListener false
+        arrange.start(arranged, it as AppTileView)
+        true
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -41,12 +56,25 @@ class HomeActivity : Activity() {
         tiles = findViewById(R.id.home_apps)
         empty = findViewById(R.id.home_empty)
         clockView = findViewById(R.id.home_clock)
-        findViewById<View>(R.id.home_settings).setOnClickListener { openSettings() }
-        // A home activity must not finish on Back. From Android 16 (API 36) on, Back no longer
-        // calls onBackPressed in apps targeting it, and closes the activity unless a callback
-        // takes it; before that, the empty onBackPressed below does.
+        val settingsEntry = findViewById<View>(R.id.home_settings)
+        settingsEntry.setOnClickListener { openSettings() }
+        arrange = ArrangeMode(
+            tiles,
+            normalBar = listOf(clockView, settingsEntry),
+            title = findViewById(R.id.home_arrange_title),
+            hint = findViewById(R.id.home_arrange_hint),
+            banners,
+            arrangements,
+            onEnd = ::arrangingEnded,
+        )
+        // A home activity must not finish on Back: Back only ends arrange mode. From Android 16
+        // (API 36) on, Back no longer calls onBackPressed in apps targeting it, nor reaches them
+        // as a key, and closes the activity unless a callback takes it; before that,
+        // onBackPressed below does.
         if (Build.VERSION.SDK_INT >= 36) {
-            onBackInvokedDispatcher.registerOnBackInvokedCallback(OnBackInvokedDispatcher.PRIORITY_DEFAULT) {}
+            onBackInvokedDispatcher.registerOnBackInvokedCallback(OnBackInvokedDispatcher.PRIORITY_DEFAULT) {
+                arrange.back()
+            }
         }
     }
 
@@ -58,19 +86,43 @@ class HomeActivity : Activity() {
 
     override fun onStop() {
         super.onStop()
+        arrange.end()   // leaving the home screen (another app, the screen off) ends it
         clockView.stop()
     }
 
     override fun onResume() {
         super.onResume()
-        refresh()
+        // Paused and resumed while arranging (a system dialog came and went): the tiles are the
+        // user's work in progress, so the apps are read again only when the mode ends.
+        if (!arrange.active) refresh()
     }
 
-    /** Reads the apps again; apps may have been installed or removed since the home screen was last shown. */
+    // Home while the home screen is in front.
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        arrange.end()
+    }
+
+    override fun dispatchKeyEvent(event: KeyEvent): Boolean =
+        arrange.dispatchKeyEvent(event) || super.dispatchKeyEvent(event)
+
+    /**
+     * Reads the apps again: apps may have been installed or removed, or hidden or shown in the
+     * settings, since the home screen was last shown.
+     */
     private fun refresh() {
-        val apps = homeApps(installedApps.tvApps(), packageName)
+        val arranged = homeApps(installedApps.tvApps(), packageName, arrangements.read())
+        this.arranged = arranged
         // Unchanged, as on most returns to the home screen: keep the tiles, their images and focus.
-        if (apps != shown) show(apps)
+        if (arranged.shown != shown) show(arranged.shown)
+        showWhyEmpty(arranged)
+    }
+
+    /** Arrange mode ended: the tiles show [arranged] already. */
+    private fun arrangingEnded(arranged: ArrangedApps) {
+        this.arranged = arranged
+        shown = arranged.shown
+        showWhyEmpty(arranged)
     }
 
     private fun show(apps: List<InstalledApp>) {
@@ -81,12 +133,26 @@ class HomeActivity : Activity() {
         val kept = (0 until tiles.childCount).map { tiles.getChildAt(it) as AppTileView }.associateBy { it.app }
         tiles.removeAllViews()
         for (app in apps) {
-            tiles.addView(kept[app] ?: AppTileView(this, app, banners).apply { setOnClickListener(openApp) })
+            tiles.addView(
+                kept[app] ?: AppTileView(this, app, banners).apply {
+                    setOnClickListener(openApp)
+                    setOnLongClickListener(startArranging)
+                },
+            )
         }
-        empty.visibility = if (apps.isEmpty()) View.VISIBLE else View.GONE
         shown = apps
         val index = apps.indexOfFirst { it.launchable == focused }.coerceAtLeast(0)
         if (!topBarFocused) tiles.getChildAt(index)?.requestFocus()
+    }
+
+    /** Without tiles, says why: nothing installed, or everything hidden (and where to show apps again). */
+    private fun showWhyEmpty(arranged: ArrangedApps) {
+        if (arranged.shown.isNotEmpty()) {
+            empty.visibility = View.GONE
+            return
+        }
+        empty.setText(if (arranged.hidden.isEmpty()) R.string.home_no_apps else R.string.home_all_hidden)
+        empty.visibility = View.VISIBLE
     }
 
     private fun open(app: InstalledApp) {
@@ -122,8 +188,8 @@ class HomeActivity : Activity() {
 
     // Back on Android 15 (API 35) and older; onCreate handles Android 16, which lint doesn't see.
     // Deprecated, but its replacements need AndroidX (OnBackPressedCallback) or API 33
-    // (OnBackInvokedCallback).
+    // (OnBackInvokedCallback). Doesn't call super, which would close the home screen.
     @SuppressLint("GestureBackNavigation")
     @Deprecated("Deprecated in Java")
-    override fun onBackPressed() = Unit
+    override fun onBackPressed() = arrange.back()
 }

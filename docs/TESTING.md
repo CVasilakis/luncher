@@ -159,7 +159,7 @@ Results are per device, in `app/build/outputs/androidTest-results/connected/debu
 and `app/build/reports/androidTests/connected/debug/`. How many run at once is up to you: an
 emulator takes ~2 GB of RAM on API 22, 24 and 28 and ~3–3.4 GB on 30, 33 and 36, so all six need
 ~16 GB. With less, boot them in batches (e.g. 22, 24 and 36, then 28, 30 and 33) or one at a time,
-stopping each with `adb -s <serial> emu kill` before the next. The API 36 image also takes 8.2 GB
+stopping each with `stop-emulator.sh <avd>` before the next. The API 36 image also takes 8.2 GB
 of disk.
 
 ## In CI

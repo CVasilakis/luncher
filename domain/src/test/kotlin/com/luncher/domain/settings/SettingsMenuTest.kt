@@ -16,6 +16,11 @@ class SettingsMenuTest {
     }
 
     @Test
+    fun `offers hiding apps, before the system settings`() {
+        assertTrue(entries().indexOf(SettingsEntry.HideApps) in 0 until entries().indexOf(SettingsEntry.SystemSettings))
+    }
+
+    @Test
     fun `lists each entry once`() {
         assertEquals(entries().distinct(), entries())
     }

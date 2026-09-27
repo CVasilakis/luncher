@@ -5,8 +5,10 @@ import android.util.Log
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.By
+import androidx.test.uiautomator.BySelector
 import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.Until
+import com.luncher.launcher.longPressOk
 import com.luncher.launcher.resolvedHome
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -87,7 +89,21 @@ class HomeKeyTest {
         assertTrue("Luncher isn't in front", device.wait(Until.hasObject(By.pkg(LUNCHER)), TIMEOUT_MS))
     }
 
+    @Test
+    fun homeKey_endsArrangeMode() {
+        device.pressHome()
+        assertTrue("Luncher isn't in front", device.wait(Until.hasObject(By.pkg(LUNCHER)), TIMEOUT_MS))
+        longPressOk()   // on the focused app
+        assertTrue("Arrange mode didn't start", device.wait(Until.hasObject(ARRANGE_TITLE), TIMEOUT_MS))
+
+        device.pressHome()
+
+        assertTrue("Arrange mode didn't end", device.wait(Until.gone(ARRANGE_TITLE), TIMEOUT_MS))
+        assertTrue("The settings entry didn't come back", device.hasObject(By.res(LUNCHER, "home_settings")))
+    }
+
     private companion object {
+        val ARRANGE_TITLE: BySelector = By.res(LUNCHER, "home_arrange_title")
         const val TAG = "HomeKeyTest"
         const val LUNCHER = "com.luncher.launcher"
         const val TIMEOUT_MS = 10_000L

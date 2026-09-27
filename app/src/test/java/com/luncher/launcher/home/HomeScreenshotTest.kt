@@ -1,7 +1,10 @@
 package com.luncher.launcher.home
 
+import android.view.KeyEvent
 import android.view.View
 import com.github.takahirom.roborazzi.captureRoboImage
+import com.luncher.domain.apps.AppArrangement
+import com.luncher.domain.apps.FakeAppArrangements
 import com.luncher.domain.apps.FakeInstalledApps
 import com.luncher.domain.apps.FakeInstalledApps.Companion.app
 import com.luncher.domain.clock.FakeClock
@@ -30,16 +33,26 @@ import org.robolectric.annotation.GraphicsMode
 @Config(qualifiers = "en-rUS-$TV_1080P")
 class HomeScreenshotTest {
 
-    private fun start(): HomeActivity {
+    private fun start(hidden: List<String> = emptyList()): HomeActivity {
         val application = RuntimeEnvironment.getApplication() as LuncherApplication
         application.graph = object : AppGraph(application) {
-            // Seven apps: a full row, and a second one that starts at the left.
+            // Seven apps shown: a full row, and a second one that starts at the left.
             override val installedApps = FakeInstalledApps(
-                listOf("games", "movies", "music", "news", "photos", "radio", "an app name too long for its tile").map(::app),
+                (listOf("games", "movies", "music", "news", "photos", "radio", "an app name too long for its tile") + hidden)
+                    .map(::app),
             )
+            override val appArrangements = FakeAppArrangements(AppArrangement(order = null, hidden = hidden.map { app(it).launchable }))
             override val clock = FakeClock()
         }
         return Robolectric.buildActivity(HomeActivity::class.java).setup().get()
+    }
+
+    /** Starts arranging as a long press of OK on the tile of [label] would. */
+    private fun HomeActivity.arrange(label: String) {
+        val tiles = findViewById<AppTilesView>(R.id.home_apps)
+        val tile = (0 until tiles.childCount).map { tiles.getChildAt(it) as AppTileView }.single { it.app.label == label }
+        tile.requestFocus()
+        tile.performLongClick()
     }
 
     @Test
@@ -53,5 +66,25 @@ class HomeScreenshotTest {
         activity.findViewById<View>(R.id.home_settings).requestFocus()
 
         activity.window.decorView.captureRoboImage("src/test/screenshots/home/home_settings_focused.png")
+    }
+
+    // Holding Music, one app on the shelf.
+    @Test
+    fun arrangingHoldingAnApp() {
+        val activity = start(hidden = listOf("weather"))
+        activity.arrange("Music")
+
+        activity.window.decorView.captureRoboImage("src/test/screenshots/home/home_arranging_holding.png")
+    }
+
+    // Having put Music down: the focus only, and the empty slot of a shelf with nothing on it.
+    @Test
+    fun arrangingNothingHidden() {
+        val activity = start()
+        activity.arrange("Music")
+        activity.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DPAD_CENTER))
+        activity.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_DPAD_CENTER))
+
+        activity.window.decorView.captureRoboImage("src/test/screenshots/home/home_arranging_empty_shelf.png")
     }
 }

@@ -12,14 +12,15 @@ small and frugal enough to run well on very weak devices.
 - a few settings
 
 **Status:** early. The home screen shows the time and date, and the TV apps as a grid of banners
-that it opens; a settings panel so far only opens the device's own settings. None of the goals
-above exists yet ([`app/README.md`](app/README.md#current-state)).
+that it opens. A long press on an app arranges the apps: move them, or hide them on a shelf below;
+a settings panel lists the apps to hide or show, and opens the device's own settings. Of the goals
+above, hiding and reordering apps exist so far ([`app/README.md`](app/README.md#current-state)).
 
 | | |
 |---|---|
 | Package | `com.luncher.launcher` |
 | Supported Android versions | Android TV 5.1 (API 22) and newer |
-| Release APK size | ~38 KB |
+| Release APK size | ~58 KB |
 
 ## Documentation
 
@@ -52,19 +53,20 @@ SDK (~147 MB).
 
 ## Emulators and the android-tv-wsl-dev-tools scripts
 
-`create-avd.sh`, `start-emulator.sh` and `remote.sh` in these docs are scripts from
-[**android-tv-wsl-dev-tools**](https://github.com/CVasilakis/android-tv-wsl-dev-tools), a separate
-repository of command-line tools for Android TV development under WSL2, which also has `SETUP.md`,
-a setup of the whole toolchain (JDK, SDK, emulator) without Android Studio. The scripts are a
-convenience, not a requirement. To use them, clone that repository anywhere and put its `bin/`
-folder on your `PATH` (its README explains how), or call them by their path. Without them, anything
-that does the same job works, e.g. Android Studio's Device Manager:
+`create-avd.sh`, `start-emulator.sh`, `stop-emulator.sh` and `remote.sh` in these docs are scripts
+from [**android-tv-wsl-dev-tools**](https://github.com/CVasilakis/android-tv-wsl-dev-tools), a
+separate repository of command-line tools for Android TV development under WSL2, which also has
+`SETUP.md`, a setup of the whole toolchain (JDK, SDK, emulator) without Android Studio. The
+scripts are a convenience, not a requirement. To use them, clone that repository anywhere and put
+its `bin/` folder on your `PATH` (its README explains how), or call them by their path. Without
+them, anything that does the same job works, e.g. Android Studio's Device Manager:
 
 | Script | What it does | Without it |
 |---|---|---|
 | `create-avd.sh --api <level>` | Creates the `tv_api<level>` Android TV emulator. | Create an emulator from the Android TV system image of that API level with the TV 1080p device profile, in landscape, with hardware keyboard and D-pad input enabled. |
 | `start-emulator.sh [avd]` | Boots it and returns once Android has fully booted. | Start the emulator, and wait until Android reports that it has finished booting before installing or testing: an install started earlier fails. |
-| `remote.sh` | A TV remote in the terminal. | Use the emulator window's keyboard (arrows, Enter, Ctrl+Backspace for Back), or send Android key events with adb. |
+| `stop-emulator.sh [avd]` | Stops it and returns once it has exited. | Run `adb emu kill`, and wait until `adb devices` no longer lists the emulator before starting the same one again. |
+| `remote.sh` | A TV remote in the terminal; `remote.sh --long-press <key>` holds a key as a long press. | Use the emulator window's keyboard (arrows, Enter, Ctrl+Backspace for Back; hold a key for a long press), or send Android key events with adb. adb's long press (`adb shell input keyevent --longpress`) holds the key only from API 30 on; before, it's a short press. |
 
 The docs name emulators `tv_api<level>`, as `create-avd.sh` does; with emulators of your own, use
 their names instead. A physical Android TV device on API 22+ works too.

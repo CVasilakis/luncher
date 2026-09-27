@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- One app in the Hide apps list: its name, and "Hidden" at the end while it's hidden. Not
+     focusable: the list moves its selection, and OK on the list toggles the selected app. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="@dimen/settings_entry_height"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingLeft="@dimen/settings_entry_padding"
+    android:paddingRight="@dimen/settings_entry_padding">
+
+    <TextView
+        android:id="@+id/settings_app_label"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:ellipsize="end"
+        android:singleLine="true"
+        android:textColor="@color/text_primary"
+        android:textSize="@dimen/settings_entry_text" />
+
+    <TextView
+        android:id="@+id/settings_app_hidden"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/settings_app_state_gap"
+        android:singleLine="true"
+        android:text="@string/settings_hidden"
+        android:textColor="@color/text_secondary"
+        android:textSize="@dimen/settings_entry_text" />
+</LinearLayout>

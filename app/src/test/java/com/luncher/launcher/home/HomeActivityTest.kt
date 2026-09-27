@@ -3,6 +3,9 @@ package com.luncher.launcher.home
 import android.content.Intent
 import android.view.KeyEvent
 import android.view.View
+import android.widget.TextView
+import com.luncher.domain.apps.AppArrangement
+import com.luncher.domain.apps.FakeAppArrangements
 import com.luncher.domain.apps.FakeInstalledApps
 import com.luncher.domain.apps.FakeInstalledApps.Companion.app
 import com.luncher.domain.apps.InstalledApp
@@ -30,6 +33,7 @@ import org.robolectric.annotation.Config
 class HomeActivityTest {
 
     private val installedApps = FakeInstalledApps(app("news"), app("movies"), app("music"))
+    private val arrangements = FakeAppArrangements()
 
     @Before
     fun useFakeApps() {
@@ -37,6 +41,7 @@ class HomeActivityTest {
         val application = RuntimeEnvironment.getApplication() as LuncherApplication
         application.graph = object : AppGraph(application) {
             override val installedApps = this@HomeActivityTest.installedApps
+            override val appArrangements = this@HomeActivityTest.arrangements
         }
     }
 
@@ -187,5 +192,58 @@ class HomeActivityTest {
         val activity = start().get()
 
         assertEquals(View.VISIBLE, activity.findViewById<View>(R.id.home_empty).visibility)
+        assertEquals(activity.getString(R.string.home_no_apps), activity.emptyText())
     }
+
+    @Test
+    fun `leaves out hidden apps`() {
+        arrangements.arrangement = AppArrangement(order = null, hidden = listOf(app("music").launchable))
+
+        assertEquals(listOf("Movies", "News"), start().get().labels())
+    }
+
+    @Test
+    fun `shows the apps in the user's order`() {
+        val order = listOf(app("news"), app("music"), app("movies")).map { it.launchable }
+        arrangements.arrangement = AppArrangement(order, hidden = emptyList())
+
+        assertEquals(listOf("News", "Music", "Movies"), start().get().labels())
+    }
+
+    @Test
+    fun `hides apps hidden in the settings when it comes back`() {
+        val controller = start()
+
+        controller.pause()                          // the settings panel opened over it...
+        arrangements.arrangement = AppArrangement(order = null, hidden = listOf(app("movies").launchable))
+        controller.resume()                         // ...and closed
+
+        assertEquals(listOf("Music", "News"), controller.get().labels())
+    }
+
+    @Test
+    fun `says where to show apps again when all of them are hidden`() {
+        arrangements.arrangement = AppArrangement(order = null, hidden = installedApps.apps.map { it.launchable })
+
+        val activity = start().get()
+
+        assertEquals(emptyList<String>(), activity.labels())
+        assertEquals(View.VISIBLE, activity.findViewById<View>(R.id.home_empty).visibility)
+        assertEquals(activity.getString(R.string.home_all_hidden), activity.emptyText())
+    }
+
+    @Test
+    fun `the message follows when the last shown app is hidden while there were no tiles`() {
+        installedApps.apps = emptyList()
+        val controller = start()
+
+        controller.pause().stop()
+        installedApps.apps = listOf(app("movies"))  // installed...
+        arrangements.arrangement = AppArrangement(order = null, hidden = listOf(app("movies").launchable))  // ...and hidden
+        controller.restart().start().resume()
+
+        assertEquals(controller.get().getString(R.string.home_all_hidden), controller.get().emptyText())
+    }
+
+    private fun HomeActivity.emptyText() = findViewById<TextView>(R.id.home_empty).text.toString()
 }

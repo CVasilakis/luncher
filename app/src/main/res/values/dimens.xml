@@ -15,6 +15,14 @@
     <!-- The settings entry at the end of the top bar: its size, and the gear's inset within it. -->
     <dimen name="home_settings_size">40dp</dimen>
     <dimen name="home_settings_padding">8dp</dimen>
+    <!-- Arrange mode: the key hint at the end of the top bar; the shelf's label, and its empty
+         slot's dashed outline and caption. -->
+    <dimen name="home_arrange_hint_text">18sp</dimen>
+    <dimen name="home_shelf_label_text">18sp</dimen>
+    <dimen name="home_shelf_slot_line">2dp</dimen>
+    <dimen name="home_shelf_slot_dash">8dp</dimen>
+    <dimen name="home_shelf_caption_text">14sp</dimen>
+    <dimen name="home_shelf_caption_padding">12dp</dimen>
 
     <dimen name="settings_panel_width">420dp</dimen>
     <dimen name="settings_panel_padding">24dp</dimen>
@@ -29,4 +37,13 @@
     <dimen name="settings_entry_corner">8dp</dimen>
     <!-- Between two groups of entries. -->
     <dimen name="settings_group_gap">16dp</dimen>
+    <!-- The Hide apps list: at most six and a half rows tall, then it scrolls; the half row shows
+         there's more. On a small screen fewer, so the panel keeps the margin from the screen's
+         top and bottom edges. Between an app's name and its state. -->
+    <dimen name="settings_list_max_height">364dp</dimen>
+    <dimen name="settings_panel_margin">32dp</dimen>
+    <dimen name="settings_app_state_gap">16dp</dimen>
+    <!-- The strip at the list's end, in the panel's padding, where its scrollbar goes. -->
+    <dimen name="settings_list_scrollbar">12dp</dimen>
+    <dimen name="settings_list_scrollbar_negative">-12dp</dimen>
 </resources>

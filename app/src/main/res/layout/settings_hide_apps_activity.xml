@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The Hide apps list: a panel like the settings panel, as wide as this view. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/settings_hide_apps_panel"
+    android:layout_width="@dimen/settings_panel_width"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="@dimen/settings_panel_padding">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/settings_title_gap"
+        android:includeFontPadding="false"
+        android:text="@string/settings_hide_apps"
+        android:textColor="@color/text_primary"
+        android:textSize="@dimen/settings_title_text" />
+
+    <!-- A settings_app_row per app; HideAppsActivity sets the height. Rows are recycled while
+         scrolling, and the selector frames the selected one like a focused settings entry. The
+         scrollbar sits in the panel's padding, clear of the frame; rows keep the entries' width. -->
+    <ListView
+        android:id="@+id/settings_apps"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginRight="@dimen/settings_list_scrollbar_negative"
+        android:divider="@null"
+        android:dividerHeight="0dp"
+        android:listSelector="@drawable/settings_entry_background"
+        android:paddingRight="@dimen/settings_list_scrollbar"
+        android:scrollbarStyle="outsideOverlay" />
+
+    <TextView
+        android:id="@+id/settings_no_apps"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/settings_no_apps"
+        android:textColor="@color/text_secondary"
+        android:textSize="@dimen/settings_entry_text"
+        android:visibility="gone" />
+</LinearLayout>

@@ -60,6 +60,13 @@
             android:exported="false"
             android:launchMode="singleTop"
             android:theme="@style/Theme.Luncher.Settings" />
+
+        <!-- The settings panel's list of apps to hide or show, in the panel's place. -->
+        <activity
+            android:name=".settings.HideAppsActivity"
+            android:exported="false"
+            android:launchMode="singleTop"
+            android:theme="@style/Theme.Luncher.Settings.Panel" />
     </application>
 
 </manifest>

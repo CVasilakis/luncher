@@ -16,18 +16,51 @@ import com.luncher.launcher.R
  * One app on the home screen: its banner, and a frame and a slight zoom while it has focus.
  * The image is drawn at the tile's size whenever that size changes (the number of columns, for
  * example), so drawing the tile is a single bitmap copy.
+ *
+ * While the user arranges apps, a [held] tile has a white frame and a bigger zoom, apart from one
+ * that's only focused, and a [hidden] app's tile is dimmed.
  */
 @SuppressLint("ViewConstructor") // Created in code only, never from XML.
 class AppTileView(context: Context, val app: InstalledApp, private val banners: BannerImages) : View(context) {
 
     private var image: Bitmap? = null
 
+    @Suppress("DEPRECATION") // Context.getColor needs API 23.
+    private val focusColor = resources.getColor(R.color.accent)
+
     private val framePaint = Paint().apply {
         style = Paint.Style.STROKE
         strokeWidth = resources.getDimension(R.dimen.home_tile_frame)
-        @Suppress("DEPRECATION") // Context.getColor needs API 23.
-        color = resources.getColor(R.color.accent)
+        color = focusColor
     }
+
+    /** Draws the image of a hidden app, dimmed; created for the first one. */
+    private var dimPaint: Paint? = null
+
+    /** The user holds this tile, to move it. */
+    var held = false
+        set(value) {
+            if (field == value) return
+            field = value
+            @Suppress("DEPRECATION")
+            framePaint.color = if (value) resources.getColor(R.color.text_primary) else focusColor
+            val zoom = when {
+                value -> HELD_ZOOM
+                isFocused -> FOCUSED_ZOOM   // as the focus animator leaves it (home_tile_focus.xml)
+                else -> 1f
+            }
+            animate().scaleX(zoom).scaleY(zoom)
+            invalidate()
+        }
+
+    /** The app is hidden: its tile is on the shelf while the user arranges apps. */
+    var hidden = false
+        set(value) {
+            if (field == value) return
+            field = value
+            if (value && dimPaint == null) dimPaint = Paint().apply { alpha = HIDDEN_ALPHA }
+            invalidate()
+        }
 
     init {
         isFocusable = true
@@ -43,8 +76,8 @@ class AppTileView(context: Context, val app: InstalledApp, private val banners: 
     }
 
     override fun onDraw(canvas: Canvas) {
-        image?.let { canvas.drawBitmap(it, 0f, 0f, null) }
-        if (isFocused) {
+        image?.let { canvas.drawBitmap(it, 0f, 0f, if (hidden) dimPaint else null) }
+        if (isFocused || held) {
             val inset = framePaint.strokeWidth / 2
             canvas.drawRect(inset, inset, width - inset, height - inset, framePaint)
         }
@@ -53,5 +86,11 @@ class AppTileView(context: Context, val app: InstalledApp, private val banners: 
     override fun onFocusChanged(gainFocus: Boolean, direction: Int, previouslyFocusedRect: Rect?) {
         super.onFocusChanged(gainFocus, direction, previouslyFocusedRect)
         invalidate()
+    }
+
+    private companion object {
+        const val FOCUSED_ZOOM = 1.1f
+        const val HELD_ZOOM = 1.15f
+        const val HIDDEN_ALPHA = 102   // 40 %
     }
 }

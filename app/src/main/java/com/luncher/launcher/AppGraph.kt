@@ -1,9 +1,11 @@
 package com.luncher.launcher
 
 import android.content.Context
+import com.luncher.domain.apps.AppArrangements
 import com.luncher.domain.apps.InstalledApps
 import com.luncher.domain.clock.Clock
 import com.luncher.launcher.apps.PackageManagerInstalledApps
+import com.luncher.launcher.apps.PreferencesAppArrangements
 import com.luncher.launcher.clock.AndroidClock
 import com.luncher.launcher.home.BannerImages
 
@@ -20,6 +22,10 @@ open class AppGraph(context: Context) {
     protected val appContext: Context = context.applicationContext
 
     open val installedApps: InstalledApps by lazy { PackageManagerInstalledApps(appContext.packageManager) }
+
+    open val appArrangements: AppArrangements by lazy {
+        PreferencesAppArrangements(appContext.getSharedPreferences("arrangement", Context.MODE_PRIVATE))
+    }
 
     val bannerImages: BannerImages by lazy { BannerImages(appContext) }
 

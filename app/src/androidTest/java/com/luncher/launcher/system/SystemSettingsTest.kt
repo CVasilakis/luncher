@@ -33,6 +33,7 @@ class SystemSettingsTest {
         application.startActivity(Intent(application, SettingsActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
         assertTrue("The settings panel didn't open", device.wait(Until.hasObject(systemSettingsEntry), TIMEOUT_MS))
 
+        device.pressDPadDown()      // past Hide apps
         device.pressDPadCenter()
 
         assertTrue("The device's settings didn't open", device.wait(Until.gone(By.pkg(LUNCHER)), TIMEOUT_MS))

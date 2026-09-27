@@ -5,13 +5,17 @@ package com.luncher.domain.layout
  * between them, [gap] apart, with the banner's 16:9 shape; what's left over after rounding goes to
  * equal margins on both sides, so the grid is centered. A last row that isn't full starts at the
  * left. Rows below the space scroll vertically.
+ *
+ * A moved tile goes one place along the order on Left and Right, wrapping from the end of a row to
+ * the start of the next, and one row up or down on Up and Down. Down where the next row is too short
+ * takes it to the last place.
  */
 class TileGrid(
-    tileCount: Int,
+    private val tileCount: Int,
     private val columns: Int,
     width: Int,
     private val gap: Int,
-) : TileLayout {
+) : TileLayout, TileMoves {
 
     init {
         require(columns >= 1) { "columns must be at least 1: $columns" }
@@ -30,6 +34,25 @@ class TileGrid(
     override fun left(index: Int): Int = margin + index % columns * (tileWidth + gap)
 
     override fun top(index: Int): Int = index / columns * (tileHeight + gap)
+
+    override fun indexToward(index: Int, direction: Direction): Int? = when (direction) {
+        Direction.LEFT -> (index - 1).takeIf { it >= 0 }
+        Direction.RIGHT -> (index + 1).takeIf { it < tileCount }
+        Direction.UP -> (index - columns).takeIf { it >= 0 }
+        Direction.DOWN -> when {
+            index + columns < tileCount -> index + columns
+            index / columns < (tileCount - 1) / columns -> tileCount - 1
+            else -> null
+        }
+    }
+
+    override fun column(index: Int): Int = index % columns
+
+    override fun entryIndex(direction: Direction, column: Int): Int {
+        val lastRowStart = if (tileCount == 0) 0 else (tileCount - 1) / columns * columns
+        val index = if (direction == Direction.UP) lastRowStart + column else column
+        return index.coerceIn(0, tileCount)
+    }
 
     companion object {
         /** Tiles per row until a setting chooses it. */

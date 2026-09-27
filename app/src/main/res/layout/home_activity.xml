@@ -10,7 +10,8 @@
 
         <!-- The clock at the start; what follows it in the bar sits at the end (the settings
              entry, later e.g. status indicators). Not focusable itself: D-pad Up from the tiles
-             reaches only what's focusable in it. -->
+             reaches only what's focusable in it. While the user arranges apps, the mode's title
+             and key hint take the place of the clock and the settings entry. -->
         <LinearLayout
             android:id="@+id/home_top_bar"
             android:layout_width="match_parent"
@@ -48,6 +49,30 @@
                     android:textColor="@color/text_secondary"
                     android:textSize="@dimen/home_date_text" />
             </com.luncher.launcher.home.ClockView>
+
+            <!-- As tall as the settings entry it replaces, so the tiles below stay where they are. -->
+            <TextView
+                android:id="@+id/home_arrange_title"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center_vertical"
+                android:minHeight="@dimen/home_settings_size"
+                android:includeFontPadding="false"
+                android:singleLine="true"
+                android:text="@string/home_arrange_title"
+                android:textColor="@color/text_primary"
+                android:textSize="@dimen/home_time_text"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/home_arrange_hint"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:singleLine="true"
+                android:textColor="@color/text_secondary"
+                android:textSize="@dimen/home_arrange_hint_text"
+                android:visibility="gone" />
 
             <!-- Opens the settings panel. Focusable, so Up from the first row of tiles reaches it. -->
             <ImageView

@@ -34,6 +34,11 @@ class SettingsActivity : Activity() {
         entries.getChildAt(0)?.requestFocus()
     }
 
+    override fun onResume() {
+        super.onResume()
+        showPanel(true)   // back from a panel of its own, such as Hide apps
+    }
+
     private fun show(tab: SettingsTab) {
         val groupGap = resources.getDimensionPixelSize(R.dimen.settings_group_gap)
         tab.groups.forEachIndexed { groupIndex, group ->
@@ -50,11 +55,27 @@ class SettingsActivity : Activity() {
     }
 
     private fun label(entry: SettingsEntry): Int = when (entry) {
+        SettingsEntry.HideApps -> R.string.settings_hide_apps
         SettingsEntry.SystemSettings -> R.string.settings_system
     }
 
     private fun open(entry: SettingsEntry) = when (entry) {
+        SettingsEntry.HideApps -> openOwnPanel(Intent(this, HideAppsActivity::class.java))
         SettingsEntry.SystemSettings -> openSystemSettings()
+    }
+
+    /**
+     * Opens a panel of its own over this one (its theme is `Theme.Luncher.Settings.Panel`), in its
+     * place: this panel disappears meanwhile, since the other one may be smaller and would show
+     * it around its edges. Its window stays, and with it the dimming of the home screen behind.
+     */
+    private fun openOwnPanel(intent: Intent) {
+        startActivity(intent)
+        showPanel(false)
+    }
+
+    private fun showPanel(shown: Boolean) {
+        window.attributes = window.attributes.apply { alpha = if (shown) 1f else 0f }
     }
 
     /** In a task of its own, like any other app; Back from it returns to this panel. */
