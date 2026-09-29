@@ -22,6 +22,16 @@ and [how API levels differ](https://github.com/CVasilakis/android-tv-wsl-dev-too
 What Luncher needs to be the home screen on each of them:
 [`app/README.md`](app/README.md#luncher-as-the-home-screen).
 
+Two things of the host that can stop the work:
+- **"No access to /dev/kvm"** from `start-emulator.sh`, although it worked before: under WSL,
+  booting another WSL distro can hand `/dev/kvm` to that distro's `kvm` group
+  ([the tools' `SETUP.md`](https://github.com/CVasilakis/android-tv-wsl-dev-tools/blob/main/SETUP.md#make-devkvm-writable)).
+  The fix needs `sudo`: stop and ask the user.
+- **The user's desktop:** don't run anything that opens and closes many windows on the real
+  display (`$DISPLAY`, e.g. the tools' X11 tests with `SCRIPT_TESTS_DISPLAY=:0`). It has crashed
+  WSLg's compositor, which closes every Linux GUI app. Boot emulators for tests with
+  `-no-window`.
+
 ## Verifying a change
 
 Beyond the tests [`docs/TESTING.md`](docs/TESTING.md) asks for, install the change and look at it
@@ -107,6 +117,8 @@ Each of these fixes a real problem. Read the reason before changing anything.
 | `uninstallAll` before, `checkConnectedTestsRan` after instrumented tests | `app/build.gradle.kts` | its comment |
 | `android.injected.androidTest.leaveApksInstalledAfterRun` | `gradle.properties` | its comment |
 | `testInstrumentationRunnerArguments["filter"]`, `SystemTierFilter` | `app/build.gradle.kts`, `app/src/androidTest/…` | `SystemTierFilter`'s comment |
+| `waitForHomeScreen()` before every instrumented test (and its Back on "USB drive connected"), `pressHome()` in `HomeKeyTest`'s cleanup | `app/src/androidTest/…` | their comments |
+| `start-emulator.sh --wait-for-home` in CI, although the tests wait for the home screen too | `.github/workflows/instrumented-tests.yml` | its comment |
 | `open class AppGraph`, settable `LuncherApplication.graph` | `app/src/main/…` | [`docs/TESTING.md`](docs/TESTING.md#organizing-tests) |
 | Manifest `<queries>`, `uses-feature`, launcher intent filters | `AndroidManifest.xml` | [`app/README.md`](app/README.md#manifest-why-each-part-is-there) |
 | `distributionSha256Sum` | `gradle/wrapper/gradle-wrapper.properties` | [`gradle/README.md`](gradle/README.md#upgrading) |

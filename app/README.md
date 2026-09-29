@@ -288,6 +288,20 @@ the stock launcher first, or wipe the emulator's data (android-tv-wsl-dev-tools'
 launcher is enabled, Luncher appears in its app row (with its banner) and can be opened like any
 app. Home seems to do nothing while Luncher is already in front, because Luncher is the home screen.
 
+Re-enabled, the stock launcher starts cold at the next Home. The API 36 one (`tvlauncher`) can then
+open a promotion over itself a few seconds later, "Buy and rent movies on your TV"
+(`.dialog.ShowDialogsActivity`, at most once per boot in the runs seen), which stays until
+dismissed. An app opened in those seconds ends up behind it, which is why the instrumented tests
+start from a settled home screen
+([`docs/TESTING.md`](../docs/TESTING.md#instrumented-tests-espresso-ui-automator)).
+
+On API 23 and 29, a new emulator can open "USB drive connected" on its first boot
+(`com.android.tv.settings/.device.storage.NewStorageActivity`), in front of the home app, and it
+stays until Back. It did on every first boot of emulators made with android-tv-wsl-dev-tools'
+`create-avd.sh`; emulators made with plain `avdmanager create avd` defaults (which have an SD
+card image too) didn't show it in two first boots, and what makes the difference isn't known. The instrumented tests press Back on it, and so does
+`start-emulator.sh --wait-for-home`.
+
 On the API 26 and 27 (Android 8.0 and 8.1) Android TV emulators, Home does nothing at all, whoever
 the home app is: Android ignores it until the TV setup wizard has set `tv_user_setup_complete`, and
 these images never run that wizard (logcat: "Not starting activity because user setup is in

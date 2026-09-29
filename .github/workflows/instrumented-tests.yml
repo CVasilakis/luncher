@@ -62,7 +62,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           repository: CVasilakis/android-tv-wsl-dev-tools
-          ref: v1.4.0
+          ref: v1.5.0
           path: .android-tv-wsl-dev-tools
       # adb too: the tools find it in the SDK by themselves, but the failure steps call it by name.
       - name: Put the tools and adb on PATH
@@ -120,12 +120,17 @@ jobs:
           "$sdkmanager" "emulator" "platform-tools" "system-images;android-$API;$TAG;x86" \
             > "$RUNNER_TEMP/sdkmanager.log" || { cat "$RUNNER_TEMP/sdkmanager.log"; exit 1; }
 
+      # --wait-for-home: Android has booted (sys.boot_completed) before the device has settled. On
+      # API 34 the tests once started while no window had the focus, and none ever got it. It also
+      # presses Back on "USB drive connected", which a new AVD's first boot opens on API 23 and 29.
+      # The tests wait for the home screen themselves too (docs/TESTING.md), for runs without the
+      # tools. Time limits: ADT_BOOT_TIMEOUT (900 s) for the boot, then ADT_HOME_TIMEOUT (300 s).
       - name: Boot the emulator
         run: |
           google_tv=()
           if [ "$TAG" = google-tv ]; then google_tv=(--google-tv); fi
           create-avd.sh --api "$API" "${google_tv[@]}" --if-missing "$AVD"
-          serial="$(start-emulator.sh "$AVD" -no-snapshot-save)"
+          serial="$(start-emulator.sh --wait-for-home "$AVD" -no-snapshot-save)"
           echo "ANDROID_SERIAL=$serial" >> "$GITHUB_ENV"
       - name: Run the instrumented tests
         run: ./gradlew connectedDebugAndroidTest
@@ -148,7 +153,16 @@ jobs:
       - name: Save the device log
         if: failure()
         run: timeout 30 adb logcat -d > app/build/logcat.txt || true
-      - name: Upload the test reports, the device log and adb's server log
+      # What was in front: the focused activity and window (mFocusedApp, mCurrentFocus; Espresso
+      # sends keys only to a focused window of the app), every window, and the screen itself.
+      - name: Save the windows and a screenshot
+        if: failure()
+        run: |
+          mkdir -p app/build
+          timeout 30 adb shell dumpsys window > app/build/windows.txt || true
+          grep -E 'mCurrentFocus|mFocusedApp' app/build/windows.txt || true
+          timeout 30 adb exec-out screencap -p > app/build/screen.png || true
+      - name: Upload the test reports, the device's log, windows and screen, and adb's server log
         if: failure()
         uses: actions/upload-artifact@v7
         with:
@@ -157,6 +171,8 @@ jobs:
             app/build/reports/androidTests/connected/
             app/build/outputs/androidTest-results/connected/
             app/build/logcat.txt
+            app/build/windows.txt
+            app/build/screen.png
             app/build/adb-server.log
           retention-days: 7                        # so they don't fill a private repository's artifact storage
           if-no-files-found: ignore

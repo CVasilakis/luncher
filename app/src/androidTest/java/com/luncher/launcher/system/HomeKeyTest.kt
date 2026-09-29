@@ -10,6 +10,7 @@ import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.Until
 import com.luncher.launcher.longPressOk
 import com.luncher.launcher.resolvedHome
+import com.luncher.launcher.waitForHomeScreen
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -28,10 +29,12 @@ class HomeKeyTest {
     /**
      * Another home app (e.g. the stock launcher, whose HOME filter has a higher priority) keeps
      * Luncher from being the home screen, so disable those for the test. [restoreDevice]
-     * re-enables them, leaving the device as it was.
+     * re-enables them, leaving the device as it was. Starts from the device's home screen, settled
+     * (like every instrumented test: [waitForHomeScreen]).
      */
     @Before
     fun makeLuncherTheHome() {
+        waitForHomeScreen()
         repeat(MAX_OTHER_HOMES) {
             val home = checkNotNull(resolvedHome()) { "nothing handles Home" }
             if (home == LUNCHER) return
@@ -64,10 +67,17 @@ class HomeKeyTest {
      * stopped before that (`adb emu kill` right after the run) boots with the test's state
      * instead, e.g. without its stock launcher. So after a restore, wait until it's saved; no
      * condition to wait for is visible without root, hence the fixed time (docs/TESTING.md).
+     *
+     * Presses Home once the other home apps are back, so the stock launcher starts now, cold, and
+     * not when the runner closes Luncher after the test, while the next test starts its own
+     * activity (which the launcher's windows then covered, see [waitForHomeScreen]). Before
+     * tv_user_setup_complete is put back, which on API 26 and 27 can make Android ignore Home.
+     * Ends on the settled home screen.
      */
     @After
     fun restoreDevice() {
         disabledHomes.forEach { device.executeShellCommand("pm enable $it") }
+        if (disabledHomes.isNotEmpty()) device.pressHome()
         when (val value = tvSetupCompleteBefore) {
             null -> Unit
             "null" -> device.executeShellCommand("settings delete secure $TV_SETUP_COMPLETE")
@@ -77,6 +87,7 @@ class HomeKeyTest {
         // Gradle doesn't show a test's output, so this is for whoever reads logcat.
         Log.i(TAG, "Waiting ${SAVE_DELAY_MS / 1000} s so Android saves the restored home apps and settings")
         SystemClock.sleep(SAVE_DELAY_MS)
+        waitForHomeScreen()
     }
 
     @Test

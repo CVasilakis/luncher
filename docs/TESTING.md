@@ -74,7 +74,10 @@ outside a broken Back looks the same as a working one.
   test's output): Android saves such changes seconds later, and an emulator stopped right after
   the run would otherwise boot with the test's state
   ([`app/README.md`](../app/README.md#luncher-as-the-home-screen)). No condition to await shows
-  when it's saved, so this is the one fixed wait the tests have.
+  when it's saved, so this is the one fixed wait the tests have. Found as it was includes what's
+  on screen: `HomeKeyTest` presses Home once the stock launcher is back, so it starts (cold, and
+  on API 36 sometimes with a promotion of its own over it) during that wait rather than while
+  the next test runs, and ends on the settled home screen.
 
 ## Screenshot tests
 
@@ -101,6 +104,16 @@ The build changes three things about AGP's runs (the reasons are in comments in
 - Luncher stays installed afterwards, so a device with the stock launcher disabled still has a
   home screen.
 
+Every instrumented test that opens a screen starts from the device's home screen, settled, so none
+depends on what an earlier test or the boot left behind: its `@Before` calls `waitForHomeScreen()`
+(`app/src/androidTest/java/…/HomeApp.kt`, which says what settled means and why). The home app
+starts whenever a test closes its activities, and some stock launchers then open screens of their
+own over whatever a test has started meanwhile. A new test class does the same. On the first
+boot of a new emulator, API 23 and 29 can open "USB drive connected" in front of
+the home app, which stays until Back ([`app/README.md`](../app/README.md#luncher-as-the-home-screen)):
+the helper presses Back on that screen, named, and on no other, since the tests can run on
+someone's TV.
+
 On API 22 and 23, AGP's test engine prints `Failed to retrieve additional test outputs from
 device` with a long `File name too long` stack trace after the tests. It's harmless: the tests have
 run, and Luncher writes no additional test output. Turning that feature off
@@ -114,7 +127,10 @@ soon as an in-app test closes it; the closing activity can stay paused, and the 
 out although its checks passed. `HomeActivityTest` therefore fails at once, saying so, while
 Luncher is the home app. Re-enable the stock launcher first, e.g.
 `adb shell pm enable com.google.android.tvlauncher`. The system tier doesn't need it disabled:
-`HomeKeyTest` makes Luncher the home app for its own run.
+`HomeKeyTest` makes Luncher the home app for its own run. While it has the stock launcher
+disabled, the device log can show that launcher crashing as Android starts its process anyway (on
+the API 34 Android TV emulator, twice per run: `Tried to schedule job for non-existent component
+… DailyCheckInService`). That's harmless: the launcher is disabled, and nothing of it is on screen.
 
 On API 22 the "choose home app" dialog shows up during the run and stays on screen afterwards.
 That's expected: when a test closes its activity, Android goes Home, which asks there. It doesn't
@@ -162,6 +178,31 @@ emulator takes ~2 GB of RAM on API 22, 24 and 28 and ~3–3.4 GB on 30, 33 and 3
 stopping each with `stop-emulator.sh <avd>` before the next. The API 36 image also takes 8.2 GB
 of disk.
 
+### Without android-tv-wsl-dev-tools
+
+The tests don't need the tools: an emulator from Android Studio, or one started with the SDK's
+`emulator` command, or a TV device works. What's up to you:
+
+- **Wait for the boot** before installing or testing: an install started earlier fails. E.g.
+  `until adb shell getprop sys.boot_completed 2>/dev/null | grep -q 1; do sleep 2; done`
+  (`adb wait-for-device` alone isn't enough: while an emulator boots, adb can list it as `offline`
+  for a moment, and a command sent then fails).
+- **"offline" after a Quick Boot.** Android Studio resumes an emulator from a snapshot by default,
+  and adb can then list it as `offline` for good, so Gradle says the device is offline. Run
+  `adb reconnect offline`, or cold boot it (Device Manager → Cold Boot Now, or
+  `emulator -avd <name> -no-snapshot-load`).
+- **The stock launcher enabled**, and on API 22 no "Always" for Luncher
+  ([above](#instrumented-tests-espresso-ui-automator)).
+
+What the tests take care of themselves:
+
+- **The settled home screen**, after the boot and between tests, including Back on "USB drive
+  connected" after a first boot (`waitForHomeScreen()`, [above](#instrumented-tests-espresso-ui-automator)).
+- **Luncher as the home app**: `HomeKeyTest` disables the other home apps for its run, enables them
+  again, and waits 30 s so Android saves that.
+- **`tv_user_setup_complete`**, without which API 26 and 27 ignore Home: `HomeKeyTest` sets it for
+  its run and puts the old value back.
+
 ## In CI
 
 Two GitHub Actions workflows run the tests. The reasons for their individual steps are in comments
@@ -173,8 +214,11 @@ in the workflow files.
 | [`instrumented-tests.yml`](../.github/workflows/instrumented-tests.yml) | the emulator tiers, one emulator per job | only by hand (Actions → Instrumented tests → Run workflow), then pick the emulators below |
 
 The instrumented workflow creates and boots its emulators with android-tv-wsl-dev-tools, pinned to
-a release tag. It offers every Android TV and Google TV image that release is tested with, from
-API 22 on, named `android_tv_api<level>` and `google_tv_api<level>`:
+a release tag. It boots them with `start-emulator.sh --wait-for-home`, which returns once the home
+app is in front with the focus, for a few seconds in a row, rather than as soon as Android has
+booted: on API 34, tests started right after the boot once found no window with the focus, ever.
+It offers every Android TV and Google TV image that release is tested with, from API 22 on, named
+`android_tv_api<level>` and `google_tv_api<level>`:
 
 | Choice | Emulators |
 |---|---|
@@ -184,8 +228,9 @@ API 22 on, named `android_tv_api<level>` and `google_tv_api<level>`:
 | `all` | both |
 | one name, e.g. `google_tv_api33` | that emulator only |
 
-When a job fails, it uploads its test reports (and, for an emulator job, the device log and adb's
-server log) as artifacts.
+When a job fails, it uploads its test reports as artifacts, and for an emulator job the device's
+log, its windows (`dumpsys window`: `mCurrentFocus` is the focused window, `mFocusedApp` the
+focused activity), a screenshot, and adb's server log.
 
 ## Rules
 

@@ -10,8 +10,10 @@ import androidx.test.uiautomator.Until
 import com.luncher.launcher.LuncherApplication
 import com.luncher.launcher.R
 import com.luncher.launcher.settings.SettingsActivity
+import com.luncher.launcher.waitForHomeScreen
 import org.junit.After
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -22,6 +24,12 @@ class SystemSettingsTest {
     private val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
     private val application = ApplicationProvider.getApplicationContext<LuncherApplication>()
     private val systemSettingsEntry = By.pkg(LUNCHER).text(application.getString(R.string.settings_system))
+
+    /** Not while the home app is still starting, which can open windows over the panel. */
+    @Before
+    fun startFromTheHomeScreen() {
+        waitForHomeScreen()
+    }
 
     @After
     fun closeThePanel() {

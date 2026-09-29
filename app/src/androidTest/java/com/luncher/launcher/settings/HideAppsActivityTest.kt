@@ -23,12 +23,14 @@ import com.luncher.domain.apps.FakeInstalledApps.Companion.app
 import com.luncher.launcher.AppGraph
 import com.luncher.launcher.LuncherApplication
 import com.luncher.launcher.R
+import com.luncher.launcher.waitForHomeScreen
 import junit.framework.AssertionFailedError
 import org.hamcrest.Matcher
 import org.hamcrest.Matchers.allOf
 import org.hamcrest.Matchers.not
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -45,6 +47,12 @@ class HideAppsActivityTest {
             override val appArrangements = this@HideAppsActivityTest.arrangements
         }
         return ActivityScenario.launch(HideAppsActivity::class.java)
+    }
+
+    /** Not while the home app is still starting, which can open windows over the list. */
+    @Before
+    fun startFromTheHomeScreen() {
+        waitForHomeScreen()
     }
 
     @After

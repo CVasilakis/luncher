@@ -64,7 +64,7 @@ them, anything that does the same job works, e.g. Android Studio's Device Manage
 | Script | What it does | Without it |
 |---|---|---|
 | `create-avd.sh --api <level>` | Creates the `tv_api<level>` Android TV emulator. | Create an emulator from the Android TV system image of that API level with the TV 1080p device profile, in landscape, with hardware keyboard and D-pad input enabled. |
-| `start-emulator.sh [avd]` | Boots it and returns once Android has fully booted. | Start the emulator, and wait until Android reports that it has finished booting before installing or testing: an install started earlier fails. |
+| `start-emulator.sh [avd]` | Boots it and returns once Android has fully booted. | Start the emulator, and wait until Android reports that it has finished booting before installing or testing: an install started earlier fails ([how, and what else the tests need](docs/TESTING.md#without-android-tv-wsl-dev-tools)). |
 | `stop-emulator.sh [avd]` | Stops it and returns once it has exited. | Run `adb emu kill`, and wait until `adb devices` no longer lists the emulator before starting the same one again. |
 | `remote.sh` | A TV remote in the terminal; `remote.sh --long-press <key>` holds a key as a long press. | Use the emulator window's keyboard (arrows, Enter, Ctrl+Backspace for Back; hold a key for a long press), or send Android key events with adb. adb's long press (`adb shell input keyevent --longpress`) holds the key only from API 30 on; before, it's a short press. |
 

@@ -30,6 +30,7 @@ import com.luncher.launcher.LuncherApplication
 import com.luncher.launcher.R
 import com.luncher.launcher.longPressOk
 import com.luncher.launcher.resolvedHome
+import com.luncher.launcher.waitForHomeScreen
 import junit.framework.AssertionFailedError
 import org.hamcrest.Matcher
 import org.hamcrest.Matchers.allOf
@@ -68,6 +69,12 @@ class HomeActivityTest {
             application.packageName,
             resolvedHome(),
         )
+    }
+
+    /** Not while the home app is still starting, which can open windows over the home screen under test. */
+    @Before
+    fun startFromTheHomeScreen() {
+        waitForHomeScreen()
     }
 
     @After
