@@ -295,12 +295,15 @@ dismissed. An app opened in those seconds ends up behind it, which is why the in
 start from a settled home screen
 ([`docs/TESTING.md`](../docs/TESTING.md#instrumented-tests-espresso-ui-automator)).
 
-On API 23 and 29, a new emulator can open "USB drive connected" on its first boot
-(`com.android.tv.settings/.device.storage.NewStorageActivity`), in front of the home app, and it
-stays until Back. It did on every first boot of emulators made with android-tv-wsl-dev-tools'
-`create-avd.sh`; emulators made with plain `avdmanager create avd` defaults (which have an SD
-card image too) didn't show it in two first boots, and what makes the difference isn't known. The instrumented tests press Back on it, and so does
-`start-emulator.sh --wait-for-home`.
+On API 23 and 29, the first boot of a new emulator with an SD card opens "USB drive connected"
+(`com.android.tv.settings/.device.storage.NewStorageActivity`) in front of the home app, and it
+stays until Back; later boots don't. It's Android TV's Settings announcing the SD card, which
+Android mounts as a removable drive from API 23 on. android-tv-wsl-dev-tools' `create-avd.sh`
+gives every emulator an SD card, so each of them, CI's included, shows the screen once.
+`avdmanager create avd` without `--sdcard` writes an SD card size into the emulator's
+`config.ini` but creates no SD card image, so its emulators have no SD card and don't show it.
+Why the other API levels don't show it isn't known. The instrumented tests press Back on it, and
+so does `start-emulator.sh --wait-for-home`.
 
 On the API 26 and 27 (Android 8.0 and 8.1) Android TV emulators, Home does nothing at all, whoever
 the home app is: Android ignores it until the TV setup wizard has set `tv_user_setup_complete`, and

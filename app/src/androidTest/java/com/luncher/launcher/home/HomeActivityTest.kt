@@ -28,6 +28,7 @@ import com.luncher.domain.apps.FakeInstalledApps.Companion.app
 import com.luncher.launcher.AppGraph
 import com.luncher.launcher.LuncherApplication
 import com.luncher.launcher.R
+import com.luncher.launcher.focus
 import com.luncher.launcher.longPressOk
 import com.luncher.launcher.resolvedHome
 import com.luncher.launcher.waitForHomeScreen
@@ -105,6 +106,24 @@ class HomeActivityTest {
                 if (SystemClock.uptimeMillis() > deadline) throw e
                 SystemClock.sleep(POLL_MS)
             }
+        }
+    }
+
+    /**
+     * Waits until the settings panel is in front again with the input focus, on its Hide apps
+     * entry, after Back has closed the Hide apps list over it, so that the next key goes to the
+     * panel. Espresso's Back waits only briefly for the list's activity to pause (150 ms, then
+     * 600 ms for the activities' transitions) and then returns anyway; on a slow device the next
+     * Back can then still find the list resumed, its window focused, and be lost on it, leaving the
+     * panel open. Espresso checks a view only once its window has the focus, which from API 30 on
+     * the app learns from the input dispatcher, where keys go, so it isn't ahead of it. Fails after
+     * [TIMEOUT_MS], saying what has the focus.
+     */
+    private fun waitForTheSettingsPanel() {
+        try {
+            waitUntil(withText(R.string.settings_hide_apps), hasFocus())
+        } catch (e: Throwable) {
+            throw AssertionError("The settings panel didn't get the focus back in ${TIMEOUT_MS / 1000} s: ${focus()}", e)
         }
     }
 
@@ -190,8 +209,9 @@ class HomeActivityTest {
             press(KeyEvent.KEYCODE_DPAD_DOWN)
             press(KeyEvent.KEYCODE_DPAD_CENTER)             // hides Movies
             waitUntil(allOf(withId(R.id.settings_app_hidden), hasSibling(withText("Movies"))), isDisplayed())
-            pressBack()
-            pressBack()
+            pressBack()                                     // closes Hide apps
+            waitForTheSettingsPanel()                       // so the next Back goes there
+            pressBack()                                     // closes the panel
 
             waitUntilTile("Games", hasFocus())
             onView(withContentDescription("Movies")).check(doesNotExist())

@@ -1,6 +1,8 @@
 package com.luncher.launcher.system
 
+import android.content.ComponentName
 import android.content.Intent
+import android.provider.Settings
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -9,7 +11,10 @@ import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.Until
 import com.luncher.launcher.LuncherApplication
 import com.luncher.launcher.R
+import com.luncher.launcher.focus
+import com.luncher.launcher.resolvedActivity
 import com.luncher.launcher.settings.SettingsActivity
+import com.luncher.launcher.waitForFocus
 import com.luncher.launcher.waitForHomeScreen
 import org.junit.After
 import org.junit.Assert.assertTrue
@@ -31,20 +36,29 @@ class SystemSettingsTest {
         waitForHomeScreen()
     }
 
+    /**
+     * Back goes to the window that has the focus, so only while the panel has it. Otherwise the
+     * runner closes the panel after the test, with the app's other activities.
+     */
     @After
     fun closeThePanel() {
-        if (device.hasObject(systemSettingsEntry)) device.pressBack()
+        val panel = ComponentName(application, SettingsActivity::class.java)
+        if (focus().isOf(panel)) device.pressBack()
     }
 
     @Test
     fun systemSettingsEntry_opensTheDeviceSettings_andBackReturnsToThePanel() {
+        val settings = checkNotNull(resolvedActivity(Settings.ACTION_SETTINGS)) { "nothing opens the device's settings" }
+            .substringBefore('/')
         application.startActivity(Intent(application, SettingsActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
         assertTrue("The settings panel didn't open", device.wait(Until.hasObject(systemSettingsEntry), TIMEOUT_MS))
+        waitForFocus(SettingsActivity::class.java)   // shown isn't enough: keys go where the focus is
 
         device.pressDPadDown()      // past Hide apps
         device.pressDPadCenter()
 
-        assertTrue("The device's settings didn't open", device.wait(Until.gone(By.pkg(LUNCHER)), TIMEOUT_MS))
+        assertTrue("The device's settings didn't open", device.wait(Until.hasObject(By.pkg(settings)), TIMEOUT_MS))
+        waitForFocus(settings)                       // Back goes there
 
         device.pressBack()
 

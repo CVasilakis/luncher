@@ -117,7 +117,9 @@ Each of these fixes a real problem. Read the reason before changing anything.
 | `uninstallAll` before, `checkConnectedTestsRan` after instrumented tests | `app/build.gradle.kts` | its comment |
 | `android.injected.androidTest.leaveApksInstalledAfterRun` | `gradle.properties` | its comment |
 | `testInstrumentationRunnerArguments["filter"]`, `SystemTierFilter` | `app/build.gradle.kts`, `app/src/androidTest/…` | `SystemTierFilter`'s comment |
-| `waitForHomeScreen()` before every instrumented test (and its Back on "USB drive connected"), `pressHome()` in `HomeKeyTest`'s cleanup | `app/src/androidTest/…` | their comments |
+| `waitForHomeScreen()` before every instrumented test (and its Back on "USB drive connected"), `pressHome()` in `HomeKeyTest`'s setup (until Luncher has the focus) and cleanup | `app/src/androidTest/…` | their comments |
+| `waitForFocus()` right after a screen is seen, before keys (in the system tests and `longPressOk()`) | `app/src/androidTest/…` | `waitForFocus`'s comment, [`docs/TESTING.md`](docs/TESTING.md#instrumented-tests-espresso-ui-automator) |
+| `waitForTheSettingsPanel()` between the two Backs of `hidingAnAppInTheSettings_removesItsTile` | `app/src/androidTest/…/home/HomeActivityTest.kt` | its comment, [`docs/TESTING.md`](docs/TESTING.md#instrumented-tests-espresso-ui-automator) |
 | `start-emulator.sh --wait-for-home` in CI, although the tests wait for the home screen too | `.github/workflows/instrumented-tests.yml` | its comment |
 | `open class AppGraph`, settable `LuncherApplication.graph` | `app/src/main/…` | [`docs/TESTING.md`](docs/TESTING.md#organizing-tests) |
 | Manifest `<queries>`, `uses-feature`, launcher intent filters | `AndroidManifest.xml` | [`app/README.md`](app/README.md#manifest-why-each-part-is-there) |

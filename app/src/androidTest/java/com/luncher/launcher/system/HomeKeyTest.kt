@@ -1,6 +1,7 @@
 package com.luncher.launcher.system
 
 import android.os.SystemClock
+import android.provider.Settings
 import android.util.Log
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -8,8 +9,11 @@ import androidx.test.uiautomator.By
 import androidx.test.uiautomator.BySelector
 import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.Until
+import com.luncher.launcher.home.HomeActivity
 import com.luncher.launcher.longPressOk
+import com.luncher.launcher.resolvedActivity
 import com.luncher.launcher.resolvedHome
+import com.luncher.launcher.waitForFocus
 import com.luncher.launcher.waitForHomeScreen
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -27,14 +31,24 @@ class HomeKeyTest {
     private var tvSetupCompleteBefore: String? = null
 
     /**
-     * Another home app (e.g. the stock launcher, whose HOME filter has a higher priority) keeps
-     * Luncher from being the home screen, so disable those for the test. [restoreDevice]
-     * re-enables them, leaving the device as it was. Starts from the device's home screen, settled
-     * (like every instrumented test: [waitForHomeScreen]).
+     * Makes Luncher the home screen and starts each test with it in front, settled. Starts from the
+     * device's home screen, settled (like every instrumented test: [waitForHomeScreen]).
+     * [restoreDevice] undoes the changes, leaving the device as it was.
      */
     @Before
     fun makeLuncherTheHome() {
         waitForHomeScreen()
+        markTvSetupComplete()
+        disableOtherHomes()
+        assertEquals("Luncher must be the home app", LUNCHER, resolvedHome())
+        showLuncher()
+    }
+
+    /**
+     * Another home app (e.g. the stock launcher, whose HOME filter has a higher priority) keeps
+     * Luncher from being the home screen, so disable those for the test.
+     */
+    private fun disableOtherHomes() {
         repeat(MAX_OTHER_HOMES) {
             val home = checkNotNull(resolvedHome()) { "nothing handles Home" }
             if (home == LUNCHER) return
@@ -45,21 +59,39 @@ class HomeKeyTest {
             device.executeShellCommand("pm disable-user --user 0 $home")
             disabledHomes += home
         }
-        assertEquals("Luncher must be the home app", LUNCHER, resolvedHome())
     }
 
     /**
      * Android TV 8.0 and 8.1 (API 26, 27) ignore the Home key until the TV setup wizard has set
      * tv_user_setup_complete ("Not starting activity because user setup is in progress"). Real
      * TVs have it set, but the emulator images never run that wizard. [restoreDevice] puts back
-     * the value it had.
+     * the value it had. Before [showLuncher]'s Home.
      */
-    @Before
-    fun markTvSetupComplete() {
+    private fun markTvSetupComplete() {
         val value = device.executeShellCommand("settings get secure $TV_SETUP_COMPLETE").trim()
         if (value == "1") return
         tvSetupCompleteBefore = value
         device.executeShellCommand("settings put secure $TV_SETUP_COMPLETE 1")
+    }
+
+    /**
+     * Home, until Luncher has the focus, then waits until it's settled. Android closes a disabled
+     * home app asynchronously, and an app started meanwhile can be lost: on API 30, Settings started
+     * 80 ms after the stock launcher was disabled never showed, nor did anything else, for 10 s.
+     * So the tests open other apps only from Luncher, settled, and the first Home is pressed again
+     * if it's lost the same way.
+     */
+    private fun showLuncher() {
+        repeat(HOME_TRIES) { attempt ->
+            device.pressHome()
+            try {
+                waitForFocus(HomeActivity::class.java)
+                waitForHomeScreen()
+                return
+            } catch (e: AssertionError) {
+                if (attempt == HOME_TRIES - 1) throw e
+            }
+        }
     }
 
     /**
@@ -92,8 +124,11 @@ class HomeKeyTest {
 
     @Test
     fun homeKey_returnsToLuncherFromAnotherApp() {
-        device.executeShellCommand("am start -W -a android.settings.SETTINGS")
-        assertTrue("Settings didn't open", device.wait(Until.gone(By.pkg(LUNCHER)), TIMEOUT_MS))
+        val settings = checkNotNull(resolvedActivity(Settings.ACTION_SETTINGS)) { "nothing opens the device's settings" }
+            .substringBefore('/')
+        device.executeShellCommand("am start -W -a ${Settings.ACTION_SETTINGS}")
+        assertTrue("Settings didn't open", device.wait(Until.hasObject(By.pkg(settings)), TIMEOUT_MS))
+        waitForFocus(settings)   // so Home comes from there
 
         device.pressHome()
 
@@ -102,8 +137,12 @@ class HomeKeyTest {
 
     @Test
     fun homeKey_endsArrangeMode() {
-        device.pressHome()
-        assertTrue("Luncher isn't in front", device.wait(Until.hasObject(By.pkg(LUNCHER)), TIMEOUT_MS))
+        // Luncher is in front, settled (makeLuncherTheHome); a Home now could reach it late and end
+        // the mode the long press starts. Seen with a focused tile, so it's laid out (its window
+        // can get the focus before that, and a long press sent then was lost), and its window has
+        // the focus: keys go there.
+        assertTrue("Luncher isn't in front", device.wait(Until.hasObject(By.pkg(LUNCHER).focused(true)), TIMEOUT_MS))
+        waitForFocus(HomeActivity::class.java)
         longPressOk()   // on the focused app
         assertTrue("Arrange mode didn't start", device.wait(Until.hasObject(ARRANGE_TITLE), TIMEOUT_MS))
 
@@ -119,6 +158,7 @@ class HomeKeyTest {
         const val LUNCHER = "com.luncher.launcher"
         const val TIMEOUT_MS = 10_000L
         const val MAX_OTHER_HOMES = 5
+        const val HOME_TRIES = 3
         const val TV_SETUP_COMPLETE = "tv_user_setup_complete"
 
         /** How long Android may take to save a changed setting, with a margin. */

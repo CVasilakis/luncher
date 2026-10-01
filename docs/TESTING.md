@@ -108,11 +108,32 @@ Every instrumented test that opens a screen starts from the device's home screen
 depends on what an earlier test or the boot left behind: its `@Before` calls `waitForHomeScreen()`
 (`app/src/androidTest/java/…/HomeApp.kt`, which says what settled means and why). The home app
 starts whenever a test closes its activities, and some stock launchers then open screens of their
-own over whatever a test has started meanwhile. A new test class does the same. On the first
-boot of a new emulator, API 23 and 29 can open "USB drive connected" in front of
-the home app, which stays until Back ([`app/README.md`](../app/README.md#luncher-as-the-home-screen)):
+own over whatever a test has started meanwhile. A new test class does the same. After a boot,
+Google TV's launcher shows a screen of its own first, for minutes on a slow host, then its home
+screen over it. So settled is a state the device shows, not a time it has lasted: the home app's
+top activity, in its home task, resumed and idle, with the focus. `HomeLookTest` checks that
+decision on dumps the emulators produced. On the first boot of a new emulator with an SD card,
+API 23 and 29 open "USB drive connected" in front of the home app, which stays until Back
+([`app/README.md`](../app/README.md#luncher-as-the-home-screen)):
 the helper presses Back on that screen, named, and on no other, since the tests can run on
 someone's TV.
+
+A test sends keys to a screen only once UI Automator sees it and its window has the input focus.
+Keys go to the focused window alone, and a window shows before it gets the focus: a key sent to a
+screen UI Automator can already see can reach the window behind it, or wait for a focused window.
+With none focused at all, a key the app under test injects waits for one, up to 60 s (on CI's API
+34, a long press hung that long), and is then dropped without an error. The focus alone isn't
+enough either: Android can give it to a window still being added, before its first layout, and on
+API 24 a long press sent 70 ms after the home screen's `onResume` was lost. Espresso's actions wait
+for a focused, laid-out window themselves, but of the activity that's resumed when they start:
+after a Back that closes an activity, Espresso waits at most 750 ms for it to pause, so on a slow
+device the next key can find it still resumed, and be lost on its closing window. So after a key
+that changes the window in front, an in-app test waits until the new window shows what it
+expects, focused, before the next key (`HomeActivityTest`'s `waitForTheSettingsPanel()`).
+Before a key from UI Automator or `Instrumentation.sendKeySync`, a test sees the screen, then
+calls `waitForFocus()` (`app/src/androidTest/java/…/Focus.kt`), which fails after 10 s, saying
+what has the focus (`dumpsys window`'s `mFocusedApp` and `mCurrentFocus`, as in
+`waitForHomeScreen()`). `longPressOk()` waits for a window of Luncher that way too.
 
 On API 22 and 23, AGP's test engine prints `Failed to retrieve additional test outputs from
 device` with a long `File name too long` stack trace after the tests. It's harmless: the tests have
@@ -199,7 +220,9 @@ What the tests take care of themselves:
 - **The settled home screen**, after the boot and between tests, including Back on "USB drive
   connected" after a first boot (`waitForHomeScreen()`, [above](#instrumented-tests-espresso-ui-automator)).
 - **Luncher as the home app**: `HomeKeyTest` disables the other home apps for its run, enables them
-  again, and waits 30 s so Android saves that.
+  again, and waits 30 s so Android saves that. Before each test opens another app, it presses Home
+  until Luncher is in front, settled: Android closes a disabled home app asynchronously, and on
+  API 30 an app started 80 ms after that never showed, nor did anything else.
 - **`tv_user_setup_complete`**, without which API 26 and 27 ignore Home: `HomeKeyTest` sets it for
   its run and puts the old value back.
 
@@ -215,8 +238,9 @@ in the workflow files.
 
 The instrumented workflow creates and boots its emulators with android-tv-wsl-dev-tools, pinned to
 a release tag. It boots them with `start-emulator.sh --wait-for-home`, which returns once the home
-app is in front with the focus, for a few seconds in a row, rather than as soon as Android has
-booted: on API 34, tests started right after the boot once found no window with the focus, ever.
+app's screen is in front, has finished starting and has the focus, the state the tests' helper
+waits for, rather than as soon as Android has booted: on API 34, tests started right after the
+boot once found no window with the focus, ever.
 It offers every Android TV and Google TV image that release is tested with, from API 22 on, named
 `android_tv_api<level>` and `google_tv_api<level>`:
 
