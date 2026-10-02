@@ -11,6 +11,7 @@ import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.Until
 import com.luncher.launcher.LuncherApplication
 import com.luncher.launcher.R
+import com.luncher.launcher.RetryWhenCovered
 import com.luncher.launcher.focus
 import com.luncher.launcher.resolvedActivity
 import com.luncher.launcher.settings.SettingsActivity
@@ -19,12 +20,16 @@ import com.luncher.launcher.waitForHomeScreen
 import org.junit.After
 import org.junit.Assert.assertTrue
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
 /** The settings panel's way into the device's own settings app, and back. */
 @RunWith(AndroidJUnit4::class)
 class SystemSettingsTest {
+
+    @get:Rule
+    val retryWhenCovered = RetryWhenCovered()
 
     private val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
     private val application = ApplicationProvider.getApplicationContext<LuncherApplication>()

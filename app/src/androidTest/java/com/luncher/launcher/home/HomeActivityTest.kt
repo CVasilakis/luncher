@@ -28,6 +28,7 @@ import com.luncher.domain.apps.FakeInstalledApps.Companion.app
 import com.luncher.launcher.AppGraph
 import com.luncher.launcher.LuncherApplication
 import com.luncher.launcher.R
+import com.luncher.launcher.RetryWhenCovered
 import com.luncher.launcher.focus
 import com.luncher.launcher.longPressOk
 import com.luncher.launcher.resolvedHome
@@ -40,12 +41,16 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
 /** The home screen on a real device, driven by real key events. */
 @RunWith(AndroidJUnit4::class)
 class HomeActivityTest {
+
+    @get:Rule
+    val retryWhenCovered = RetryWhenCovered()
 
     private val application = ApplicationProvider.getApplicationContext<LuncherApplication>()
 

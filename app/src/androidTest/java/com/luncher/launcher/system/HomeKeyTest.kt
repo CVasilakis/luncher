@@ -22,7 +22,14 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/** Luncher as the device's home screen, across apps: real Home and Back keys, real task switches. */
+/**
+ * Luncher as the device's home screen, across apps: real Home and Back keys, real task switches.
+ *
+ * Without [com.luncher.launcher.RetryWhenCovered], unlike the other tests that open screens: the
+ * stock launcher can't cover these tests. Their setup disables it, which stops it, and presses
+ * Home until Luncher is in front, settled, so it also undoes a cover that came before; from then
+ * on Luncher is the home app, until the cleanup brings the stock launcher back itself.
+ */
 @RunWith(AndroidJUnit4::class)
 class HomeKeyTest {
 

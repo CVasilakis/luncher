@@ -23,6 +23,7 @@ import com.luncher.domain.apps.FakeInstalledApps.Companion.app
 import com.luncher.launcher.AppGraph
 import com.luncher.launcher.LuncherApplication
 import com.luncher.launcher.R
+import com.luncher.launcher.RetryWhenCovered
 import com.luncher.launcher.waitForHomeScreen
 import junit.framework.AssertionFailedError
 import org.hamcrest.Matcher
@@ -31,6 +32,7 @@ import org.hamcrest.Matchers.not
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -38,10 +40,16 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class HideAppsActivityTest {
 
+    @get:Rule
+    val retryWhenCovered = RetryWhenCovered()
+
     private val application = ApplicationProvider.getApplicationContext<LuncherApplication>()
-    private val arrangements = FakeAppArrangements()
+
+    /** New at each launch: [RetryWhenCovered] runs a covered test again on the same instance. */
+    private lateinit var arrangements: FakeAppArrangements
 
     private fun launchWith(names: List<String>): ActivityScenario<HideAppsActivity> {
+        arrangements = FakeAppArrangements()
         application.graph = object : AppGraph(application) {
             override val installedApps = FakeInstalledApps(names.map { app(it) })
             override val appArrangements = this@HideAppsActivityTest.arrangements

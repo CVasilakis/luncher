@@ -118,6 +118,24 @@ API 23 and 29 open "USB drive connected" in front of the home app, which stays u
 the helper presses Back on that screen, named, and on no other, since the tests can run on
 someone's TV.
 
+What no wait before a test can foresee is the stock launcher coming back over it later, on its
+own. On Google TV API 33, Play Store updates Google Play services about 20 s after a boot; the
+launcher dies with it, restarts, and brings its home task over whatever is in front, about 25 s
+after the boot's wait for the home screen returned. A covered test fails within its own time
+limits, with an error that doesn't say why: Espresso gives up after 33–38 s without a resumed
+activity, `waitForFocus()` and UI Automator's waits after 10 s. So the test classes that open
+screens have the rule `RetryWhenCovered` (`app/src/androidTest/java/…/RetryWhenCovered.kt`): when
+a test fails and, while it ran, one of its activities went under a screen of the stock home app
+(on API 22, the "choose home app" dialog), the rule logs that, waits for the settled home screen
+and runs the test once more, `@Before` and `@After` included. Only a cover identified that way,
+and only once: a retry hides the first failure, so any other failure, including one whose screen
+something else covered, fails at once as before, and a test that fails twice says its first
+attempt was covered. The retry runs on the same instance of the test class, so a test class
+creates what a test changes in `@Before` or in the test, not in a field's initializer. A new test
+class that opens screens uses the rule too; `RetryWhenCoveredTest` covers its own screen with a
+HOME intent to check it. `HomeKeyTest` doesn't: it disables the stock launcher, and presses Home
+until Luncher is settled, before each test.
+
 A test sends keys to a screen only once UI Automator sees it and its window has the input focus.
 Keys go to the focused window alone, and a window shows before it gets the focus: a key sent to a
 screen UI Automator can already see can reach the window behind it, or wait for a focused window.
