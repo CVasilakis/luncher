@@ -62,7 +62,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           repository: CVasilakis/android-tv-wsl-dev-tools
-          ref: v1.5.0
+          ref: v1.6.1
           path: .android-tv-wsl-dev-tools
       # adb too: the tools find it in the SDK by themselves, but the failure steps call it by name.
       - name: Put the tools and adb on PATH
@@ -124,7 +124,7 @@ jobs:
       # API 34 the tests once started while no window had the focus, and none ever got it. It also
       # presses Back on "USB drive connected", which a new AVD's first boot opens on API 23 and 29.
       # The tests wait for the home screen themselves too (docs/TESTING.md), for runs without the
-      # tools. Time limits: ADT_BOOT_TIMEOUT (900 s) for the boot, then ADT_HOME_TIMEOUT (300 s).
+      # tools. Time limits: ADT_BOOT_TIMEOUT (900 s) for the boot, then ADT_HOME_TIMEOUT (600 s).
       - name: Boot the emulator
         run: |
           google_tv=()

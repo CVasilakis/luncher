@@ -68,16 +68,28 @@ outside a broken Back looks the same as a working one.
   (`app/src/test/java/com/luncher/launcher/TvDevice.kt`). Tests that check text the language
   formats (the clock) also fix the language, `"en-rUS-$TV_1080P"`, and replace the `Clock` port
   with a `FakeClock`, so the result depends neither on the host's time nor on its time zone.
-- **Leave the device as you found it.** Instrumented tests that change system state restore it
-  afterwards (e.g. `HomeKeyTest`, which disables other home apps to make Luncher the home), and
-  then wait 30 s, only if they changed something, logging why (logcat; Gradle doesn't show a
-  test's output): Android saves such changes seconds later, and an emulator stopped right after
-  the run would otherwise boot with the test's state
-  ([`app/README.md`](../app/README.md#luncher-as-the-home-screen)). No condition to await shows
-  when it's saved, so this is the one fixed wait the tests have. Found as it was includes what's
-  on screen: `HomeKeyTest` presses Home once the stock launcher is back, so it starts (cold, and
-  on API 36 sometimes with a promotion of its own over it) during that wait rather than while
-  the next test runs, and ends on the settled home screen.
+- **Leave the device as you found it, saved.** Instrumented tests that change system state
+  restore it afterwards (e.g. `HomeKeyTest`, which disables other home apps to make Luncher the
+  home), and make Android save it before the test ends: an emulator stopped right after the run
+  would otherwise boot with the test's state
+  ([`app/README.md`](../app/README.md#luncher-as-the-home-screen)). Android writes an app's
+  enabled state up to 10 s after the change and a setting about 0.2 s after it, and for up to 5 s
+  after the write a boot still reads the old file, which Android keeps as a backup until the
+  filesystem's journal has recorded the new one. So `HomeKeyTest` has Android write the app
+  states at once: up to API 31 with `dumpsys package write`; from API 33 on, where that command
+  no longer writes and no other shell command does, by changing the state of one of Luncher's own
+  activities and back with `PackageManager.SYNCHRONOUS`, which makes Android write every app's
+  state at once (`writeHomeAppsNow`'s KDoc says why that's harmless). Android can otherwise be
+  minutes late: on a starved Google TV API 33 it wrote nothing for over 3 minutes while it
+  compiled an update of Google Play services. From API 33 on it then waits until Android logs
+  that write (a `commit_sys_config_file` event in the events log, from API 28 on), and fails,
+  saying what that means, if none comes. For the setting it waits until Android has written in the
+  folder of the settings files (`/data/system/users/0`, whose modification time a shell can read,
+  unlike the files). Then it commits the journal (`sync`). Found as it was includes what's on
+  screen: `HomeKeyTest` presses Home once the stock launcher is back, so it starts now, cold, and
+  ends on the settled home screen. A screen the stock launcher opens over itself a few seconds after
+  such a cold start (on API 36 sometimes a promotion, on Google TV the profile chooser) can come
+  over the next test, which `RetryWhenCovered` then runs once more (below).
 
 ## Screenshot tests
 
@@ -96,13 +108,15 @@ comparing images. Screenshots need Robolectric's native graphics
 
 `connectedDebugAndroidTest` runs on every connected device (point it at one with
 `ANDROID_SERIAL`), typically an emulator booted with android-tv-wsl-dev-tools' `start-emulator.sh`.
-The build changes three things about AGP's runs (the reasons are in comments in
+The build changes four things about AGP's runs (the reasons are in comments in
 [`app/build.gradle.kts`](../app/build.gradle.kts) and `gradle.properties`):
 
 - each run first uninstalls Luncher (`uninstallAll`), so it starts from a clean install;
 - the build fails, naming the device, when a device ran no test (`checkConnectedTestsRan`);
 - Luncher stays installed afterwards, so a device with the stock launcher disabled still has a
-  home screen.
+  home screen;
+- the runner fails a test method that hasn't returned after 15 minutes and goes on with the next
+  (`timeout_msec`), a backstop against a hang: every wait of the tests' own has a shorter limit.
 
 Every instrumented test that opens a screen starts from the device's home screen, settled, so none
 depends on what an earlier test or the boot left behind: its `@Before` calls `waitForHomeScreen()`
@@ -111,29 +125,37 @@ starts whenever a test closes its activities, and some stock launchers then open
 own over whatever a test has started meanwhile. A new test class does the same. After a boot,
 Google TV's launcher shows a screen of its own first, for minutes on a slow host, then its home
 screen over it. So settled is a state the device shows, not a time it has lasted: the home app's
-top activity, in its home task, resumed and idle, with the focus. `HomeLookTest` checks that
-decision on dumps the emulators produced. On the first boot of a new emulator with an SD card,
-API 23 and 29 open "USB drive connected" in front of the home app, which stays until Back
+top activity, in its home task, resumed and idle, with the focus. The helper waits for it up to
+10 minutes while the device is on its way there (the home app's own screens, Settings'
+`FallbackHome` before the user is unlocked, no focused window), and returns as soon as it's there.
+A screen of another app is never on that way: once the same one has kept the focus for 60 s (an
+app left open on someone's TV, a dialog), the helper fails, naming it, rather than make every test
+wait 10 minutes. `HomeLookTest` checks both decisions on dumps the
+emulators produced. On the first boot of a new emulator with an SD card, API 23 and 29 open "USB
+drive connected" in front of the home app, which stays until Back
 ([`app/README.md`](../app/README.md#luncher-as-the-home-screen)):
 the helper presses Back on that screen, named, and on no other, since the tests can run on
 someone's TV.
 
-What no wait before a test can foresee is the stock launcher coming back over it later, on its
-own. On Google TV API 33, Play Store updates Google Play services about 20 s after a boot; the
-launcher dies with it, restarts, and brings its home task over whatever is in front, about 25 s
-after the boot's wait for the home screen returned. A covered test fails within its own time
-limits, with an error that doesn't say why: Espresso gives up after 33–38 s without a resumed
-activity, `waitForFocus()` and UI Automator's waits after 10 s. So the test classes that open
-screens have the rule `RetryWhenCovered` (`app/src/androidTest/java/…/RetryWhenCovered.kt`): when
-a test fails and, while it ran, one of its activities went under a screen of the stock home app
-(on API 22, the "choose home app" dialog), the rule logs that, waits for the settled home screen
-and runs the test once more, `@Before` and `@After` included. Only a cover identified that way,
-and only once: a retry hides the first failure, so any other failure, including one whose screen
-something else covered, fails at once as before, and a test that fails twice says its first
-attempt was covered. The retry runs on the same instance of the test class, so a test class
-creates what a test changes in `@Before` or in the test, not in a field's initializer. A new test
-class that opens screens uses the rule too; `RetryWhenCoveredTest` covers its own screen with a
-HOME intent to check it. `HomeKeyTest` doesn't: it disables the stock launcher, and presses Home
+What no wait before a test can foresee is the stock launcher coming back over it later, on its own.
+On Google TV API 33, Play Store updates Google Play services about 20 s after a boot; the launcher
+dies with it, restarts, and brings its home task over whatever is in front, about 25 s after the
+boot's wait for the home screen returned. A covered test fails within its own time limits, with an
+error that doesn't say why: Espresso gives up after 33–38 s without a resumed activity,
+`waitForFocus()` after 10 s, UI Automator's waits after 30 s. So the test classes that open screens
+have the rule `RetryWhenCovered` (`app/src/androidTest/java/…/RetryWhenCovered.kt`): when a test
+fails and, while it ran, one of its activities went under a screen of the stock home app (on API
+22, the "choose home app" dialog), the rule logs that, waits for the settled home screen and runs
+the test once more, `@Before` and `@After` included. A look at the focus counts by the state when
+its read began, since on a starved emulator one `dumpsys window` took 18 s and the covered test had
+closed its screen before it returned; a read during which a screen of the app came back doesn't
+count. Only a cover identified that way, and only once: a retry hides the first failure, so any
+other failure, including one whose screen something else covered, fails at once as before, and a
+test that fails twice says its first attempt was covered. The retry runs on the same instance of
+the test class, so a test class creates what a test changes in `@Before` or in the test, not in a
+field's initializer. A new test class that opens screens uses the rule too; `RetryWhenCoveredTest`
+covers its own screen with a HOME intent to check it, once with the rule's read held until the test
+has closed its screen. `HomeKeyTest` doesn't: it disables the stock launcher, and presses Home
 until Luncher is settled, before each test.
 
 A test sends keys to a screen only once UI Automator sees it and its window has the input focus.
@@ -159,6 +181,14 @@ run, and Luncher writes no additional test output. Turning that feature off
 (`android.enableAdditionalTestOutput=false`) makes AGP 9's `connectedDebugAndroidTest` fail
 instead.
 
+On `tv_api36` starved of CPU, Android TV 16's own Settings app can crash as it opens (a
+`NullPointerException` in `MainFragment.onSuggestionReady`, on a launch after the first, from its
+cached process), also without Luncher, opened from the shell. `SystemSettingsTest` then fails,
+saying that the device's settings app crashed, with the crash's first line from
+`adb logcat -b crash`, rather than only that the settings didn't open. It doesn't run the test
+again: a retry would hide a real failure too. It's a bug of the device, not of Luncher: run the
+test again, or on an emulator with CPU to spare.
+
 Run the instrumented tests with the stock launcher enabled, and on API 22 without having chosen
 Luncher as home ("Always"). Otherwise Luncher is the device's home app
 ([`app/README.md`](../app/README.md#luncher-as-the-home-screen)), and Android starts it again as
@@ -174,7 +204,11 @@ the API 34 Android TV emulator, twice per run: `Tried to schedule job for non-ex
 On API 22 the "choose home app" dialog shows up during the run and stays on screen afterwards.
 That's expected: when a test closes its activity, Android goes Home, which asks there. It doesn't
 disturb the tests: each one starts its activity above the dialog, and Espresso sends keys only
-once that activity's window has focus. Leave the dialog unanswered (Back closes it).
+once that activity's window has focus. Leave the dialog unanswered (Back closes it). The dialog
+finishes itself once it's covered, within a second, and a HOME intent that reaches it before is lost
+with it, so `RetryWhenCoveredTest`, which covers its own screen with one, first waits until the
+dialog has begun to finish. An emulator that has run the tests before shows the dialog from its
+boot, since Luncher stays installed.
 
 ### The system tier from API 24 on
 
@@ -238,9 +272,10 @@ What the tests take care of themselves:
 - **The settled home screen**, after the boot and between tests, including Back on "USB drive
   connected" after a first boot (`waitForHomeScreen()`, [above](#instrumented-tests-espresso-ui-automator)).
 - **Luncher as the home app**: `HomeKeyTest` disables the other home apps for its run, enables them
-  again, and waits 30 s so Android saves that. Before each test opens another app, it presses Home
-  until Luncher is in front, settled: Android closes a disabled home app asynchronously, and on
-  API 30 an app started 80 ms after that never showed, nor did anything else.
+  again, and makes Android save that before it ends. Before each test opens another app, it
+  presses Home until Luncher is in front, settled: Android closes a disabled home app
+  asynchronously, and on API 30 an app started 80 ms after that never showed, nor did anything
+  else.
 - **`tv_user_setup_complete`**, without which API 26 and 27 ignore Home: `HomeKeyTest` sets it for
   its run and puts the old value back.
 

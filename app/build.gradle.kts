@@ -18,6 +18,13 @@ android {
         // The system tier (UI Automator, the system/ package) runs only from API 24; below that
         // this filter leaves it out on each device. Reasons: SystemTierFilter.
         testInstrumentationRunnerArguments["filter"] = "com.luncher.launcher.SystemTierFilter"
+        // A backstop against a test that hangs: the runner fails a test method still running after
+        // 15 minutes, and goes on with the next test. A test once hung for over 10 minutes on CI,
+        // cause unknown, until the job's own time limit ended the whole run. It times the test
+        // method alone, not @Before, @After or rules (a RetryWhenCovered retry gets its own), and
+        // is longer than all of a test method's own waits together, waitForHomeScreen()'s 10
+        // minutes included, so a test that runs out of one of those still fails with its message.
+        testInstrumentationRunnerArguments["timeout_msec"] = "900000"
     }
 
     buildTypes {

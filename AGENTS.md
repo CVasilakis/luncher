@@ -48,7 +48,8 @@ stop-emulator.sh                                 # stop it; returns once it has 
 ```
 
 After changing a device setting by hand (e.g. disabling the stock launcher), wait 30 s before
-stopping the emulator, or the change is lost ([why](app/README.md#luncher-as-the-home-screen)).
+stopping the emulator, or the change is lost, unless you stop it with `stop-emulator.sh`, which
+has Android save it first ([why](app/README.md#luncher-as-the-home-screen)).
 
 **Boot one emulator at a time** for test runs, to spare the host's resources: boot one, run the
 tests, stop it, then start the next.
@@ -117,10 +118,14 @@ Each of these fixes a real problem. Read the reason before changing anything.
 | `uninstallAll` before, `checkConnectedTestsRan` after instrumented tests | `app/build.gradle.kts` | its comment |
 | `android.injected.androidTest.leaveApksInstalledAfterRun` | `gradle.properties` | its comment |
 | `testInstrumentationRunnerArguments["filter"]`, `SystemTierFilter` | `app/build.gradle.kts`, `app/src/androidTest/…` | `SystemTierFilter`'s comment |
-| `waitForHomeScreen()` before every instrumented test (and its Back on "USB drive connected"), `pressHome()` in `HomeKeyTest`'s setup (until Luncher has the focus) and cleanup | `app/src/androidTest/…` | their comments |
+| `testInstrumentationRunnerArguments["timeout_msec"]` (15 minutes per test method) | `app/build.gradle.kts` | its comment |
+| `waitForHomeScreen()` before every instrumented test (and its Back on "USB drive connected"), with its two limits (10 minutes on the way to the home screen, 60 s for another app's screen), `pressHome()` in `HomeKeyTest`'s setup (until Luncher has the focus) and cleanup | `app/src/androidTest/…` | their comments |
+| `HomeKeyTest`'s cleanup: `dumpsys package write` (up to API 31) or the wait for a `commit_sys_config_file` event, the wait for `/data/system/users/0` to change, then `sync` | `app/src/androidTest/…/system/HomeKeyTest.kt` | `restoreDevice`'s KDoc, [`docs/TESTING.md`](docs/TESTING.md#organizing-tests) |
+| From API 33 on, `HomeKeyTest`'s cleanup setting Luncher's own `SettingsActivity` to ENABLED and back to DEFAULT with `PackageManager.SYNCHRONOUS` | `app/src/androidTest/…/system/HomeKeyTest.kt` | `writeHomeAppsNow`'s KDoc: it makes Android write the restored stock launcher's state at once, which nothing else can from API 33 on |
 | `waitForFocus()` right after a screen is seen, before keys (in the system tests and `longPressOk()`) | `app/src/androidTest/…` | `waitForFocus`'s comment, [`docs/TESTING.md`](docs/TESTING.md#instrumented-tests-espresso-ui-automator) |
 | `waitForTheSettingsPanel()` between the two Backs of `hidingAnAppInTheSettings_removesItsTile` | `app/src/androidTest/…/home/HomeActivityTest.kt` | its comment, [`docs/TESTING.md`](docs/TESTING.md#instrumented-tests-espresso-ui-automator) |
-| `RetryWhenCovered` in the test classes that open screens (a test the stock launcher covered runs twice), and `HideAppsActivityTest`'s `arrangements` made anew at each launch | `app/src/androidTest/…` | its KDoc, [`docs/TESTING.md`](docs/TESTING.md#instrumented-tests-espresso-ui-automator) |
+| The wait, before `coverWithTheStockLauncher()`'s HOME intent, until no "choose home app" dialog is left that isn't finishing (`homeChooserNotFinishing`), rather than re-sending the intent | `app/src/androidTest/…/RetryWhenCoveredTest.kt` | `coverWithTheStockLauncher`'s KDoc, [`docs/TESTING.md`](docs/TESTING.md#instrumented-tests-espresso-ui-automator) |
+| `RetryWhenCovered` in the test classes that open screens (a test the stock launcher covered runs twice), judging each look by the state when its read began; and `HideAppsActivityTest`'s `arrangements` made anew at each launch | `app/src/androidTest/…` | its KDoc, [`docs/TESTING.md`](docs/TESTING.md#instrumented-tests-espresso-ui-automator) |
 | `start-emulator.sh --wait-for-home` in CI, although the tests wait for the home screen too | `.github/workflows/instrumented-tests.yml` | its comment |
 | `open class AppGraph`, settable `LuncherApplication.graph` | `app/src/main/…` | [`docs/TESTING.md`](docs/TESTING.md#organizing-tests) |
 | Manifest `<queries>`, `uses-feature`, launcher intent filters | `AndroidManifest.xml` | [`app/README.md`](app/README.md#manifest-why-each-part-is-there) |

@@ -273,10 +273,23 @@ adb shell pm enable com.google.android.leanbacklauncher                  # back 
 adb shell cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.HOME   # who is home (API 24+)
 ```
 
-**Wait 30 s before stopping the emulator after disabling or enabling an app.** Android saves that
-change seconds later, not at once, and `adb emu kill` stops Android without saving: the next cold
-boot starts with the app as it was before
-([android-tv-wsl-dev-tools](https://github.com/CVasilakis/android-tv-wsl-dev-tools/blob/main/bin/README.md#start-emulatorsh)).
+**Wait 30 s before stopping the emulator after disabling or enabling an app.** `adb emu kill`
+doesn't shut Android down, and Android saves such a change only a while after it's made, so the
+next cold boot starts with the app as it was before. Measured on these emulators:
+
+- Android writes an app's enabled state 10 s after the first unsaved change (10.35 s measured; on
+  an emulator starved of CPU, 10 s after the `pm` command returned, which itself took 3–4 s
+  there). A setting (`settings put`) it writes about 0.2 s after the change (0.34 s at most when
+  starved). API 22 writes both at once.
+- Then the file needs up to 5 s more: Android keeps the old one as a backup until the new one is
+  complete, and until the filesystem's journal has recorded that (every 5 s), a boot reads the
+  backup.
+
+So a change is safe 15 s after it at the latest, and 30 s leaves twice that. Stopped earlier, a
+change survived only by chance. The alternative is to stop the emulator with
+android-tv-wsl-dev-tools'
+[`stop-emulator.sh`](https://github.com/CVasilakis/android-tv-wsl-dev-tools/blob/main/bin/README.md#stop-emulatorsh),
+which has Android save its pending changes before it stops it, so no wait is needed.
 
 API 22 (Android 5.1) is the exception: its stock launcher's HOME filter has no priority, so with
 Luncher installed, Home asks which home app to use. Pick Luncher there ("Always"); disabling the
