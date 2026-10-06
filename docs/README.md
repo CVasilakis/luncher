@@ -7,6 +7,7 @@ before the folder READMEs ([reading order](../README.md#documentation)).
 |---|---|
 | [`ARCHITECTURE.md`](ARCHITECTURE.md) | Modules, layers and the rules for where code goes. |
 | [`TESTING.md`](TESTING.md) | Test tiers: what goes where, how to run them, on which emulators, and in CI. |
+| [`RELEASING.md`](RELEASING.md) | Making a release: versions, the signing key, the release workflow, F-Droid. |
 
 ## Writing the docs
 

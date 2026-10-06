@@ -91,7 +91,8 @@ class SystemSettingsTest {
     }
 
     private companion object {
-        const val LUNCHER = "com.luncher.launcher"
+        /** The app under test, e.g. com.luncher.launcher.debug (a debug build's ID). */
+        val LUNCHER: String = InstrumentationRegistry.getInstrumentation().targetContext.packageName
 
         /**
          * For UI Automator to see a screen. On an emulator starved of CPU, Luncher's settings panel

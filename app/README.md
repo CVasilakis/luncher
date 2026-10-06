@@ -8,7 +8,7 @@ APIs, and the composition root. How they fit together, and the rules they follow
 
 ```
 app/
-├── build.gradle.kts                  module build: SDK levels, R8, :domain, test setup
+├── build.gradle.kts                  module build: SDK levels, version, debug app ID, R8, :domain, test setup
 ├── proguard-rules.pro                app-specific R8 rules (none yet)
 ├── src/test/                         JVM tests: Robolectric, Roborazzi screenshots (docs/TESTING.md)
 │   ├── java/com/luncher/launcher/    same packages as the code; TvDevice.kt: TV screen config
@@ -17,6 +17,7 @@ app/
 │   └── java/com/luncher/launcher/
 │       ├── <feature>/                Espresso: one screen, real key events
 │       └── system/                   UI Automator: Home key, other apps
+├── src/debug/res/values/strings.xml  the debug build's name, "Luncher (debug)"
 └── src/main/
     ├── AndroidManifest.xml           launcher registration, TV features, package visibility
     ├── java/com/luncher/launcher/
@@ -251,7 +252,14 @@ explained in its comments.
 ./gradlew assembleRelease    # app/build/outputs/apk/release/app-release-unsigned.apk (R8 minified)
 ```
 
-Release builds have no signing config yet, so the release APK is unsigned and can't be installed as is.
+A debug build is an app of its own, `com.luncher.launcher.debug`, labeled "Luncher (debug)"
+(`src/debug/`), so it installs next to a release, which is signed with another key. Its classes
+keep the package `com.luncher.launcher`, so its activities' full name is e.g.
+`com.luncher.launcher.debug/com.luncher.launcher.home.HomeActivity`.
+
+Builds have the version set in `build.gradle.kts`, the last release's between releases
+([`docs/RELEASING.md`](../docs/RELEASING.md#versions)). The release APK is unsigned and can't be
+installed as is: the release workflow signs it ([`docs/RELEASING.md`](../docs/RELEASING.md)).
 
 ## Luncher as the home screen
 

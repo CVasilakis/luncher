@@ -39,7 +39,7 @@ on the emulator:
 
 ```bash
 ./gradlew installDebug
-adb shell am start -n com.luncher.launcher/.home.HomeActivity
+adb shell am start -n com.luncher.launcher.debug/com.luncher.launcher.home.HomeActivity
 adb shell dumpsys window | grep mCurrentFocus    # what's in front
 adb exec-out screencap -p > screen.png           # screenshot, to look at the UI
 adb logcat -b crash                              # crashes
@@ -130,3 +130,5 @@ Each of these fixes a real problem. Read the reason before changing anything.
 | `open class AppGraph`, settable `LuncherApplication.graph` | `app/src/main/…` | [`docs/TESTING.md`](docs/TESTING.md#organizing-tests) |
 | Manifest `<queries>`, `uses-feature`, launcher intent filters | `AndroidManifest.xml` | [`app/README.md`](app/README.md#manifest-why-each-part-is-there) |
 | `distributionSha256Sum` | `gradle/wrapper/gradle-wrapper.properties` | [`gradle/README.md`](gradle/README.md#upgrading) |
+| `versionCode` and `versionName` written out as literals, although the check after the `android` block could compute one from the other | `app/build.gradle.kts` | their comment, [`docs/RELEASING.md`](docs/RELEASING.md#versions): F-Droid reads them from the file |
+| `--alignment-preserved true` on `apksigner sign`, and the `reproduce` job | `.github/workflows/release.yml` | [`docs/RELEASING.md`](docs/RELEASING.md#f-droid): without them F-Droid may silently stop publishing releases |

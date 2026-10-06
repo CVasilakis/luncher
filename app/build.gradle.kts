@@ -11,8 +11,12 @@ android {
         applicationId = "com.luncher.launcher"
         minSdk = 22
         targetSdk = 36
-        versionCode = 1
-        versionName = "0.1.0"
+        // The version, changed by hand before each release (docs/RELEASING.md#versions). Both are
+        // written out, as literals and before any other line naming them: F-Droid finds a
+        // release's version by reading this file. The check after the android block keeps them
+        // in step.
+        versionCode = 1_000_000
+        versionName = "1.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         // The system tier (UI Automator, the system/ package) runs only from API 24; below that
@@ -28,6 +32,11 @@ android {
     }
 
     buildTypes {
+        // A debug build is an app of its own, "Luncher (debug)" (src/debug/), so it installs next
+        // to a release, which is signed with another key.
+        debug {
+            applicationIdSuffix = ".debug"
+        }
         release {
             isMinifyEnabled = true
             isShrinkResources = true
@@ -49,6 +58,23 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+    }
+}
+
+// versionName is X.Y.Z, each part 0 to 999, and versionCode follows it: X * 1,000,000 + Y * 1,000
+// + Z. So a higher version always has a higher versionCode, which Android needs to update an app.
+// Checked whenever Gradle reads this file, so a mismatch fails every build, not only a release's.
+android.defaultConfig.run {
+    val name = versionName.orEmpty()
+    val (major, minor, patch) = Regex("""(0|[1-9]\d{0,2})\.(0|[1-9]\d{0,2})\.(0|[1-9]\d{0,2})""")
+        .matchEntire(name)?.destructured
+        ?: throw GradleException("versionName must be X.Y.Z, each part 0 to 999, e.g. 1.2.3, not \"$name\"")
+    val code = major.toInt() * 1_000_000 + minor.toInt() * 1_000 + patch.toInt()
+    if (versionCode != code) {
+        val written = code.toString().reversed().chunked(3).joinToString("_").reversed()
+        throw GradleException(
+            "versionCode must be $written for versionName $name, not $versionCode (docs/RELEASING.md#versions)",
+        )
     }
 }
 

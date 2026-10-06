@@ -1,0 +1,264 @@
+# Makes a draft GitHub release of main at the version app/build.gradle.kts holds: builds the
+# release APK, signs it, tags the commit vX.Y.Z, and attaches the APK, its SHA-256 and a template
+# of the release notes. Started by hand (Actions → Release → Run workflow), once the version has
+# been raised; the notes are written and the release published by hand too.
+# Setup and steps: docs/RELEASING.md.
+#
+# Separate jobs, so the signing key never meets Gradle and the token that can write to the
+# repository never meets the key: Gradle runs the build's plugins and dependencies, any of which
+# could read the key if it were there. Before anything is tagged, a fourth job checks that F-Droid
+# can publish the signed APK (docs/RELEASING.md#f-droid).
+name: Release
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Two runs at once could both find the same version free.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      tagged: ${{ steps.version.outputs.tagged }}
+    steps:
+      - uses: actions/checkout@v7
+      # Gradle checks the versionCode against the versionName when it builds; this checks the
+      # versionName against the releases there are.
+      - name: Check the version
+        id: version
+        run: |
+          if [ "$GITHUB_REF" != refs/heads/main ]; then
+            echo "::error::Releases are made from main only, not from $GITHUB_REF_NAME."
+            exit 1
+          fi
+          # Read the way F-Droid reads it: the first line that sets versionName.
+          version="$(sed -n 's/^[[:space:]]*versionName = "\(.*\)"[[:space:]]*$/\1/p' app/build.gradle.kts | head -n 1)"
+          # The form app/build.gradle.kts checks too.
+          part='(0|[1-9][0-9]{0,2})'
+          release="^v?$part\.$part\.$part$"
+          if ! [[ "$version" =~ $release ]]; then
+            echo "::error::app/build.gradle.kts has no versionName X.Y.Z, each part 0 to 999 without leading zeros, e.g. 1.2.3; found '$version'."
+            exit 1
+          fi
+          # A tag made by hand before the run is kept if it's on this commit, the one F-Droid will
+          # build; on another commit it would name a different APK. Of an annotated tag, ls-remote
+          # also lists the commit it points at, as <tag>^{}, which sorts last.
+          tag="v$version"
+          tagged="$(git ls-remote --tags origin "refs/tags/$tag" "refs/tags/$tag^{}" | sort -k 2 | tail -n 1 | cut -f 1)"
+          if [ -n "$tagged" ] && [ "$tagged" != "$GITHUB_SHA" ]; then
+            echo "::error::$tag is tagged already, on $tagged, not on the commit this run releases ($GITHUB_SHA). Raise the version in app/build.gradle.kts (docs/RELEASING.md#making-a-release), or, if $tag was never released, delete that tag."
+            exit 1
+          fi
+          # Android updates an app only to a higher versionCode, which follows the version.
+          tags="$(git ls-remote --tags --refs origin 'v*' | sed 's|.*refs/tags/||' | grep -E "$release" | grep -vx "$tag" || true)"
+          latest="$(sort -V <<< "$tags" | tail -n 1)"
+          if [ -n "$latest" ] && [ "$(printf '%s\n' "$latest" "v$version" | sort -V | tail -n 1)" != "v$version" ]; then
+            echo "::error::Version $version in app/build.gradle.kts isn't higher than the last release, $latest."
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "tagged=$([ -n "$tagged" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-provider: basic                    # see jvm-tests.yml
+          cache-read-only: true                    # the JVM tests workflow keeps the cache
+      - name: Build the release APK
+        run: ./gradlew assembleRelease
+      - uses: actions/upload-artifact@v7
+        with:
+          name: unsigned-apk
+          path: app/build/outputs/apk/release/app-release-unsigned.apk
+          retention-days: 1                        # the signed one is in the release
+          if-no-files-found: error
+
+  # The only job with the signing key.
+  sign:
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions: {}
+    env:
+      APK: luncher-v${{ needs.build.outputs.version }}.apk
+    outputs:
+      certificate: ${{ steps.verify.outputs.certificate }}
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: unsigned-apk
+      # apksigner picks the signature schemes from the APK's minSdk. No v4 signature: it's a
+      # separate .idsig file, only for streaming installs from a computer. --alignment-preserved
+      # true: from build-tools 35 on, apksigner otherwise redoes the padding that aligns the APK's
+      # files, and F-Droid, which copies this signature onto its own build of the APK, can then no
+      # longer verify it (docs/RELEASING.md#f-droid).
+      - name: Sign the APK
+        env:
+          KEYSTORE_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ] || [ -z "$KEYSTORE_PASSWORD" ]; then
+            echo "::error::The secrets RELEASE_KEYSTORE_BASE64 and RELEASE_KEYSTORE_PASSWORD aren't set (docs/RELEASING.md)."
+            exit 1
+          fi
+          keystore="$RUNNER_TEMP/release.p12"
+          trap 'rm -f "$keystore"' EXIT
+          base64 -d <<< "$KEYSTORE_BASE64" > "$keystore"
+          build_tools="$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -n 1)"
+          "$build_tools/apksigner" sign --ks "$keystore" --ks-pass env:KEYSTORE_PASSWORD \
+            --ks-key-alias luncher --v4-signing-enabled false --alignment-preserved true \
+            --out "$APK" app-release-unsigned.apk
+      - name: Verify the signature, and take the checksum
+        id: verify
+        run: |
+          build_tools="$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -n 1)"
+          certs="$("$build_tools/apksigner" verify --print-certs "$APK")"
+          echo "$certs"
+          certificate="$(sed -n 's/^Signer #1 certificate SHA-256 digest: //p' <<< "$certs")"
+          echo "certificate=$certificate" >> "$GITHUB_OUTPUT"
+          sha256sum "$APK" > "$APK.sha256"
+          cat "$APK.sha256"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: signed-apk
+          path: |
+            ${{ env.APK }}
+            ${{ env.APK }}.sha256
+          retention-days: 1                        # it's in the release
+          if-no-files-found: error
+
+  # Checks that F-Droid can publish the signed APK (docs/RELEASING.md#f-droid): it builds the APK
+  # again from the tagged source on its build server, copies our signature onto that build, and
+  # publishes our APK only if the signature then verifies. So this job does the same: first with
+  # the build job's APK, which checks the signing alone, then with an APK built here, in F-Droid's
+  # build server image (Debian and its JDK, rather than the build job's Ubuntu and Temurin), at
+  # the path F-Droid builds in. The image's tag follows the image F-Droid builds with.
+  reproduce:
+    needs: [build, sign]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions: {}
+    container: registry.gitlab.com/fdroid/fdroidserver:buildserver
+    env:
+      APK: luncher-v${{ needs.build.outputs.version }}.apk
+      REBUILD: /home/vagrant/build/com.luncher.launcher
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
+        with:
+          name: unsigned-apk
+          path: built
+      - uses: actions/download-artifact@v8
+        with:
+          name: signed-apk
+          path: signed
+      # The tool F-Droid copies signatures with; it verifies the result with apksigner, which the
+      # image has.
+      - name: Install apksigcopier
+        run: apt-get update && apt-get install -y apksigcopier
+      - name: Check that the signature carries over to the build job's APK
+        run: |
+          if ! apksigcopier compare "signed/$APK" --unsigned built/app-release-unsigned.apk; then
+            echo "::error::The signature doesn't carry over to the APK it was made for, so the signing changed the APK in more than its signature. Look at the apksigner options in the sign job."
+            exit 1
+          fi
+      # As F-Droid's build server does: Gradle runs as the user vagrant, with the image's JDK. Its
+      # own launcher, gradlew-fdroid, isn't used: it fetches the same Gradle version the wrapper
+      # names, so the APK doesn't depend on which of them runs it.
+      - name: Build the APK again, the way F-Droid does
+        run: |
+          source /etc/profile.d/bsenv.sh
+          mkdir -p "$(dirname "$REBUILD")"
+          cp -a "$GITHUB_WORKSPACE" "$REBUILD"
+          chown -R vagrant:vagrant /home/vagrant
+          cd "$REBUILD"
+          runuser -u vagrant -- env HOME=/home/vagrant ANDROID_HOME="$ANDROID_HOME" \
+            ./gradlew assembleRelease
+      - name: Check that the signature carries over to that APK
+        run: |
+          if ! apksigcopier compare "signed/$APK" --unsigned "$REBUILD/app/build/outputs/apk/release/app-release-unsigned.apk"; then
+            echo "::error::The APK built the way F-Droid builds differs from the release's, so F-Droid wouldn't publish this release. Compare the two APKs in the artifact reproduce-diff, e.g. with diffoscope."
+            exit 1
+          fi
+      - name: Upload both APKs, to find what differs
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: reproduce-diff
+          path: |
+            built/app-release-unsigned.apk
+            ${{ env.REBUILD }}/app/build/outputs/apk/release/app-release-unsigned.apk
+          retention-days: 7
+          if-no-files-found: ignore
+
+  # Tags the commit that was built, unless it's tagged already, before making the draft: GitHub
+  # would tag a draft's commit only once it's published, and the check above finds versions by
+  # their tags.
+  release:
+    needs: [build, sign, reproduce]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      VERSION: ${{ needs.build.outputs.version }}
+      TAG: v${{ needs.build.outputs.version }}
+      APK: luncher-v${{ needs.build.outputs.version }}.apk
+      CERTIFICATE: ${{ needs.sign.outputs.certificate }}
+      TAGGED: ${{ needs.build.outputs.tagged }}
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: signed-apk
+      # A paragraph on one line: GitHub shows a release's line breaks as typed.
+      - name: Write the release notes' template
+        run: |
+          cat > notes.md <<EOF
+          <!-- Fill in the notes, delete the sections that stay empty, then publish the release. -->
+
+          ## What's new
+
+          -
+
+          ## Fixes
+
+          -
+
+          ## Install
+
+          Download \`$APK\` below and install it on an Android TV device with Android 5.1 (API 22) or newer, e.g. \`adb install -r $APK\`.
+
+          ## Verify the download
+
+          - SHA-256 of the APK: \`$(cut -d ' ' -f 1 "$APK.sha256")\`
+          - SHA-256 of the signing certificate: \`$CERTIFICATE\` (\`apksigner verify --print-certs $APK\`)
+          EOF
+      - name: Tag the commit and make the draft release
+        run: |
+          # Drafts included, which only a token that can write sees: a tag made by hand may
+          # already have one.
+          if [ -n "$(gh api "repos/$GITHUB_REPOSITORY/releases" --paginate --jq ".[] | select(.tag_name == \"$TAG\") | .id")" ]; then
+            echo "::error::$TAG has a release already, published or draft. Raise the version in app/build.gradle.kts (docs/RELEASING.md#making-a-release), or delete that release if it's a draft."
+            exit 1
+          fi
+          if [ "$TAGGED" != true ]; then
+            gh api "repos/$GITHUB_REPOSITORY/git/refs" -f ref="refs/tags/$TAG" -f sha="$GITHUB_SHA" > /dev/null
+          fi
+          gh release create "$TAG" --draft --verify-tag --title "Luncher $VERSION" \
+            --notes-file notes.md "$APK" "$APK.sha256"

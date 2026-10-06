@@ -282,7 +282,7 @@ What the tests take care of themselves:
 ## In CI
 
 Two GitHub Actions workflows run the tests. The reasons for their individual steps are in comments
-in the workflow files.
+in the workflow files. A third, `release.yml`, runs no tests ([`RELEASING.md`](RELEASING.md)).
 
 | Workflow | Runs | When |
 |---|---|---|

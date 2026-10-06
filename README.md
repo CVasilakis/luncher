@@ -18,7 +18,7 @@ above, hiding and reordering apps exist so far ([`app/README.md`](app/README.md#
 
 | | |
 |---|---|
-| Package | `com.luncher.launcher` |
+| Package | `com.luncher.launcher` (debug builds: `com.luncher.launcher.debug`) |
 | Supported Android versions | Android TV 5.1 (API 22) and newer |
 | Release APK size | ~58 KB |
 
@@ -91,8 +91,8 @@ Why the stock launcher has to be disabled, and its name on the other emulators:
 | [`app/`](app/README.md) | The Android app module: UI, adapters on Android APIs, composition root. |
 | [`domain/`](domain/README.md) | Pure Kotlin module: the launcher's models, rules and ports (no Android). |
 | [`gradle/`](gradle/README.md) | Version catalog and Gradle wrapper. |
-| [`docs/`](docs/README.md) | Project-wide guides: architecture and testing. |
-| `.github/workflows/` | GitHub Actions workflows that run the tests ([`docs/TESTING.md`](docs/TESTING.md#in-ci)). |
+| [`docs/`](docs/README.md) | Project-wide guides: architecture, testing and releases. |
+| `.github/workflows/` | GitHub Actions workflows that run the tests ([`docs/TESTING.md`](docs/TESTING.md#in-ci)) and make releases ([`docs/RELEASING.md`](docs/RELEASING.md)). |
 | [`AGENTS.md`](AGENTS.md) | What coding agents need on top of these docs. |
 | `build.gradle.kts`, `settings.gradle.kts`, `gradle.properties`, `gradlew*` | Standard Gradle project files. |
 

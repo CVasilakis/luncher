@@ -187,7 +187,7 @@ class HomeKeyTest {
      * and back to default, each with the flag. That's harmless: an activity enabled by default and
      * one enabled explicitly behave the same, `DONT_KILL_APP` keeps Android from stopping Luncher
      * (and with it this test), and the activity's state ends as it was, the default, which
-     * `dumpsys package com.luncher.launcher` shows as no enabled or disabled component entry.
+     * `dumpsys package com.luncher.launcher.debug` shows as no enabled or disabled component entry.
      * API 33 writes before the call returns, on the calling thread, even while the thread that
      * makes Android's own writes is busy; later levels start the write at once on a thread of
      * their own. Android logs the write, which [waitUntilHomeAppsWritten] then finds, so this
@@ -312,9 +312,10 @@ class HomeKeyTest {
     }
 
     private companion object {
+        /** The app under test, e.g. com.luncher.launcher.debug (a debug build's ID). */
+        val LUNCHER: String = InstrumentationRegistry.getInstrumentation().targetContext.packageName
         val ARRANGE_TITLE: BySelector = By.res(LUNCHER, "home_arrange_title")
         const val TAG = "HomeKeyTest"
-        const val LUNCHER = "com.luncher.launcher"
 
         /**
          * For UI Automator to see a screen. On an emulator starved of CPU, Luncher's settings panel
