@@ -1,0 +1,1 @@
+First release: a home screen with the time, the date and your TV apps; move apps where you want them, and hide the ones you don't use.

@@ -1,0 +1,13 @@
+Luncher is a lightweight home screen (launcher) for Android TV, small and frugal enough to run well on very weak devices.
+
+The home screen shows the time and date, and your TV apps as a grid of banners.
+
+- Reorder apps: hold OK on an app, then move it where you want it.
+- Hide apps: move an app onto the hidden shelf, or hide it from the list in Luncher's settings. Hidden apps can be shown again the same way.
+- Settings: the gear at the top, or the Menu key, opens Luncher's settings and the device's own settings.
+
+Luncher asks for no permissions and has no internet access: no ads, no tracking, no accounts. It runs on Android TV 5.1 and newer, and the app is under 100 KB.
+
+Custom app banners, wallpapers and a few more settings are planned.
+
+Making Luncher your home screen: on Android TV 5.1, the Home button asks which home screen to use. From Android 6 on, most devices always open their built-in launcher; Luncher then becomes the home screen once the built-in launcher is disabled, e.g. with adb. Luncher can also be opened like any other app.

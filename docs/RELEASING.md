@@ -61,7 +61,9 @@ dependencies, and it has no token that can change the repository.
 ## Making a release
 
 1. **Raise the version:** change `versionName` and `versionCode` in `app/build.gradle.kts`
-   ([Versions](#versions)), and push the change to `main`.
+   ([Versions](#versions)), add the version's changes to the store listing as
+   `fastlane/metadata/android/en-US/changelogs/<versionCode>.txt`
+   ([`fastlane/`](../fastlane/README.md)), and push the change to `main`.
 2. **Run the workflow:** Actions → Release → Run workflow, on `main`. It releases the version
    `app/build.gradle.kts` holds, and refuses another branch, a version that isn't higher than the
    last release or already has a release, and a missing signing secret. A tag `v1.2.3` made by
