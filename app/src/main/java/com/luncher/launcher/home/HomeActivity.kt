@@ -50,10 +50,6 @@ class HomeActivity : Activity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        // The manifest's Theme.Luncher.Launch is for the launch screen Android shows while the
-        // process starts; the window itself gets the plain background, or the launch screen's
-        // drawing would stay behind the tiles, drawn under every frame.
-        setTheme(R.style.Theme_Luncher)
         super.onCreate(savedInstanceState)
         setContentView(R.layout.home_activity)
         topBar = findViewById(R.id.home_top_bar)

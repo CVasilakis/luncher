@@ -8,6 +8,7 @@ before the folder READMEs ([reading order](../README.md#documentation)).
 | [`ARCHITECTURE.md`](ARCHITECTURE.md) | Modules, layers and the rules for where code goes. |
 | [`TESTING.md`](TESTING.md) | Test tiers: what goes where, how to run them, on which emulators, and in CI. |
 | [`RELEASING.md`](RELEASING.md) | Making a release: versions, the signing key, the release workflow, F-Droid. |
+| [`archive/`](archive/) | How the current design was reached, not part of the build: [`launch-screen/`](archive/launch-screen/README.md), a removed feature, its graphics and what it taught. |
 
 ## Writing the docs
 
@@ -22,7 +23,9 @@ These apply to every document in the repository, and to comments that explain co
   its own without restating what comes before it.
 - **Every top-level folder has a `README.md`**, except `.github/`: GitHub shows a
   `.github/README.md` on the repository's front page instead of the root one.
-- **The current state, not history.** No changelogs, dates or "we tried X" stories.
+- **The current state, not history.** No changelogs, dates or "we tried X" stories, except in
+  `archive/`, whose documents keep how the design was reached and what removed features taught;
+  elsewhere, link to them where the reason for the current state is there.
 - **No machine-specific measurements.** How long a boot, build, test run or key press takes
   depends on the host, so describe it relatively ("slower", "faster than a cold boot"). Sizes, RAM
   needs and counts are fine.

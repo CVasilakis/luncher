@@ -1,11 +1,10 @@
-Luncher's icon, banner and launch screen artwork
+Luncher's icon and banner artwork
 
 These files are derived from Android Open Source Project artwork and are licensed under the
 Apache License, Version 2.0 (LICENSE-APACHE-2.0 in this folder), not Luncher's MIT license:
 
 - the app's icon and banner: src/main/res/drawable/banner.xml, ic_launcher.xml and
   ic_launcher_foreground.xml, and the debug build's versions in src/debug/res/drawable/
-- the app's launch screen: src/main/res/drawable/launch_screen_art.xml
 - the store listing's images: ../fastlane/metadata/android/en-US/images/icon.png, tvBanner.png
   and featureGraphic.png
 

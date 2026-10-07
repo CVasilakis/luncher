@@ -1,8 +1,5 @@
 package com.luncher.launcher.home
 
-import android.graphics.Bitmap
-import android.graphics.Canvas
-import android.view.ContextThemeWrapper
 import android.view.KeyEvent
 import android.view.View
 import com.github.takahirom.roborazzi.captureRoboImage
@@ -104,31 +101,5 @@ class HomeScreenshotTest {
         activity.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_DPAD_CENTER))
 
         activity.window.decorView.captureRoboImage("src/test/screenshots/home/home_arranging_empty_shelf.png")
-    }
-
-    // What Android shows up to Android 11 while Luncher starts: the launch theme's window
-    // background, on the whole screen.
-    private fun launchScreen(): Bitmap {
-        val context = ContextThemeWrapper(RuntimeEnvironment.getApplication(), R.style.Theme_Luncher_Launch)
-        val attributes = context.obtainStyledAttributes(intArrayOf(android.R.attr.windowBackground))
-        val background = attributes.getDrawable(0)!!
-        attributes.recycle()
-        val metrics = context.resources.displayMetrics
-        val screen = Bitmap.createBitmap(metrics.widthPixels, metrics.heightPixels, Bitmap.Config.ARGB_8888)
-        background.setBounds(0, 0, screen.width, screen.height)
-        background.draw(Canvas(screen))
-        return screen
-    }
-
-    @Test
-    fun launchScreen1080p() {
-        launchScreen().captureRoboImage("src/test/screenshots/home/home_launch_screen.png")
-    }
-
-    // A 4:3 screen, 720x540 dp: the drawing keeps its shape in the middle, cut at the sides.
-    @Test
-    @Config(qualifiers = "+w720dp")
-    fun launchScreen4by3() {
-        launchScreen().captureRoboImage("src/test/screenshots/home/home_launch_screen_4by3.png")
     }
 }

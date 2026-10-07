@@ -1,7 +1,6 @@
 package com.luncher.launcher.home
 
 import android.content.Intent
-import android.graphics.drawable.ColorDrawable
 import android.os.Looper
 import android.view.KeyEvent
 import android.view.View
@@ -92,14 +91,17 @@ class HomeActivityTest {
         assertEquals("Movies", start().get().focusedLabel())
     }
 
+    // From the theme in the manifest, which Android reads before any of Luncher's code runs.
     @Test
-    fun `starts on the launch screen's theme, then draws on the plain background`() {
+    fun `asks for no starting window, so the previous screen stays until it draws`() {
         val activity = start().get()
 
-        assertEquals(R.style.Theme_Luncher_Launch, activity.packageManager.getActivityInfo(activity.componentName, 0).theme)
-        val background = activity.window.decorView.background
-        assertTrue("window background: $background", background is ColorDrawable)
-        assertEquals(activity.getColor(R.color.background), (background as ColorDrawable).color)
+        val theme = activity.resources.newTheme()
+        theme.applyStyle(activity.packageManager.getActivityInfo(activity.componentName, 0).themeResource, true)
+        val values = theme.obtainStyledAttributes(intArrayOf(android.R.attr.windowDisablePreview))
+        val disabled = values.getBoolean(0, false)
+        values.recycle()
+        assertTrue(disabled)
     }
 
     // Right-to-left isn't supported yet: the tiles fill from the left, and arrange mode's Left and

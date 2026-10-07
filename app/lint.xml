@@ -11,12 +11,10 @@
 
     <!-- A vector drawable larger than 200x200 dp is drawn into a bitmap of the size it's shown at.
          The banner is 320x180 dp, the size Android TV asks for; launchers draw it once into a
-         tile. The launch screen's drawing is a 960x540 dp screen, drawn only while the starting
-         window shows (app/README.md#the-launch-screen). -->
+         tile. -->
     <issue id="VectorRaster">
         <ignore path="src/main/res/drawable/banner.xml" />
         <ignore path="src/debug/res/drawable/banner.xml" />
-        <ignore path="src/main/res/drawable/launch_screen_art.xml" />
     </issue>
 
     <!-- Android 16 ignores a fixed orientation on screens at least 600 dp wide and high; TVs are

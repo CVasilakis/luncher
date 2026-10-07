@@ -10,14 +10,9 @@
         <item name="android:windowSplashScreenBackground" tools:targetApi="31">@color/background</item>
         <item name="android:windowNoTitle">true</item>
         <item name="android:colorAccent">@color/accent</item>
-    </style>
-
-    <!-- The home screen's theme until it's created, for the launch screen: up to Android 11,
-         Android shows this windowBackground while Luncher starts. From Android 12 on it shows
-         the splash screen's background instead, and on TV never an icon: the home screen's own
-         colour there. HomeActivity.onCreate switches back to Theme.Luncher. -->
-    <style name="Theme.Luncher.Launch">
-        <item name="android:windowBackground">@drawable/launch_screen</item>
+        <!-- No starting window up to Android 11: the previous screen stays until the home screen
+             draws, as it does from Android 12 on (app/README.md#while-luncher-starts). -->
+        <item name="android:windowDisablePreview">true</item>
     </style>
 
     <!-- The settings panel: a floating window over the dimmed home screen. -->

@@ -20,7 +20,7 @@ above, hiding and reordering apps exist so far ([`app/README.md`](app/README.md#
 |---|---|
 | Package | `com.luncher.launcher` (debug builds: `com.luncher.launcher.debug`) |
 | Supported Android versions | Android TV 5.1 (API 22) and newer |
-| Release APK size | ~77 KB |
+| Release APK size | ~70 KB |
 
 ## Documentation
 
@@ -91,7 +91,7 @@ Why the stock launcher has to be disabled, and its name on the other emulators:
 | [`app/`](app/README.md) | The Android app module: UI, adapters on Android APIs, composition root. |
 | [`domain/`](domain/README.md) | Pure Kotlin module: the launcher's models, rules and ports (no Android). |
 | [`gradle/`](gradle/README.md) | Version catalog and Gradle wrapper. |
-| [`docs/`](docs/README.md) | Project-wide guides: architecture, testing and releases. |
+| [`docs/`](docs/README.md) | Project-wide guides: architecture, testing and releases; and an archive of how the design was reached: the artwork's options, layout reviews, removed features. |
 | [`fastlane/`](fastlane/README.md) | The store listing F-Droid and Google Play show: name, descriptions, changes per version, screenshots (not part of the build). |
 | `.github/workflows/` | GitHub Actions workflows that run the tests ([`docs/TESTING.md`](docs/TESTING.md#in-ci)) and make releases ([`docs/RELEASING.md`](docs/RELEASING.md)). |
 | [`AGENTS.md`](AGENTS.md) | What coding agents need on top of these docs. |
@@ -99,7 +99,8 @@ Why the stock launcher has to be disabled, and its name on the other emulators:
 
 ## License
 
-Luncher is under the MIT License ([`LICENSE`](LICENSE)). Its icon and banner, and the store
-listing's images, are derived from Android Open Source Project artwork and are under the Apache
-License 2.0 instead ([`app/NOTICE`](app/NOTICE),
-[`app/LICENSE-APACHE-2.0`](app/LICENSE-APACHE-2.0)).
+Luncher is under the MIT License ([`LICENSE`](LICENSE)). Its icon and banner, the store
+listing's images, and the archived launch screen's graphics
+([`docs/archive/launch-screen/`](docs/archive/launch-screen/README.md#license)) are derived from
+Android Open Source Project artwork and are under the Apache License 2.0 instead
+([`app/NOTICE`](app/NOTICE), [`app/LICENSE-APACHE-2.0`](app/LICENSE-APACHE-2.0)).

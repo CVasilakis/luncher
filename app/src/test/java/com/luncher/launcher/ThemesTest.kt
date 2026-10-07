@@ -64,7 +64,7 @@ class ThemesTest {
     }
 
     private companion object {
-        /** Mid-grey is 0.5; the launch screen, the brightest background, is about 0.14. */
+        /** Mid-grey is 0.5. */
         const val MAX_BRIGHTNESS = 0.2
     }
 }
