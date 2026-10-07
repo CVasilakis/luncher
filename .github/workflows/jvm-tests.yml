@@ -30,11 +30,13 @@ jobs:
         with:
           cache-provider: basic                    # MIT; the default "enhanced" one is proprietary
                                                    # and may be charged for on private repositories
-      - name: Cache Robolectric's Android framework
+      # One framework per API level the tests run on (36; 33 for the layout tests). A cache found
+      # under its key isn't saved again, so the key names the levels: change it with them.
+      - name: Cache Robolectric's Android frameworks
         uses: actions/cache@v6
         with:
           path: ~/.m2/repository/org/robolectric
-          key: robolectric-${{ hashFiles('gradle/libs.versions.toml') }}
+          key: robolectric-api33-api36-${{ hashFiles('gradle/libs.versions.toml') }}
 
       - name: Run the JVM tiers and lint, and build the release APK
         run: ./gradlew :domain:test :app:testDebugUnitTest :app:verifyRoborazziDebug :app:lintDebug assembleRelease

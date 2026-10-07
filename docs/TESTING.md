@@ -9,7 +9,7 @@ needs to run, so a change comes with tests in the matching place and nowhere els
 | Tier | What it checks | Tool | Location | Runs on | Command |
 |---|---|---|---|---|---|
 | Domain unit | rules and models in `:domain` | JUnit 4 | `domain/src/test/kotlin/` | JVM | `./gradlew :domain:test` |
-| App JVM | adapters and screens on a simulated Android (API 36) | Robolectric | `app/src/test/java/` | JVM | `./gradlew :app:testDebugUnitTest` |
+| App JVM | adapters and screens on a simulated Android (API 36; the layout checks also API 33) | Robolectric | `app/src/test/java/` | JVM | `./gradlew :app:testDebugUnitTest` |
 | Screenshots | how screens look on a 1080p TV, including D-pad focus states, and on a few other screens | Roborazzi (on Robolectric) | `app/src/test/java/…/<feature>/*ScreenshotTest.kt`, images in `app/src/test/screenshots/<feature>/` | JVM | `./gradlew :app:verifyRoborazziDebug` |
 | In-app | a screen's behavior with real key events: D-pad focus, keys, Back | Espresso | `app/src/androidTest/java/…/<feature>/` | emulator | `./gradlew connectedDebugAndroidTest` |
 | System | Luncher as the home screen: Home key, other apps, returning | UI Automator | `app/src/androidTest/java/…/system/` | emulator, API 24+ ([why](#the-system-tier-from-api-24-on)) | `./gradlew connectedDebugAndroidTest` |
@@ -123,9 +123,11 @@ screen to support a line in `TV_SCREENS`. Their text checks need native graphics
 screenshots: without them, Robolectric measures every character as 1 px wide. A few of these
 screens also have reference images (`home_screen_4by3.png`, …).
 
-Robolectric runs API 36, which from API 34 on grows large text less than small, so the large-text
-screen is checked as API 36 shows it: at the largest text size, the 32 sp clock stays about 32 dp,
-where API 22 to 33 make it 41.6 dp.
+The layout tests run on two Android versions, API 33 and 36 (`@Config(sdk = …)`), since they
+scale large text differently: from API 34 on, Android grows large text less than small, so at the
+largest text size the 32 sp clock stays about 32 dp, where API 22 to 33 make it 41.6 dp. API 33
+stands for all of 22 to 33, which scale text alike; every screen runs on both, so a difference
+between the versions other than the text shows too. The other JVM tests run on API 36 only.
 
 ## Lint and compiler warnings
 
@@ -133,9 +135,9 @@ where API 22 to 33 make it 41.6 dp.
 ./gradlew :app:lintDebug    # report: app/build/reports/lint-results-debug.html
 ```
 
-Lint finds what no JVM test can: the JVM tiers run on API 36's framework, so an API used below
-the level it exists on (`NewApi`) passes them, and the emulators catch it only on a path a test
-takes. Every lint warning fails it, and every Kotlin compiler warning fails the build, in both
+Lint finds what no JVM test can: the JVM tiers run on API 36's framework (the layout tests on
+33's too), so an API used below the level it exists on (`NewApi`) passes them, and the emulators
+catch it only on a path a test takes. Every lint warning fails it, and every Kotlin compiler warning fails the build, in both
 modules. A warning is fixed, or, where it doesn't apply, made an exception with its reason: in
 [`app/lint.xml`](../app/lint.xml) for lint, with `@Suppress` and a comment in Kotlin (as in
 `AppTileView`). Lint's checks that a newer SDK or library exists are off, since they would fail

@@ -27,7 +27,8 @@ val TV_SCREENS = listOf(
     TvScreen("21 by 9", tv(1260, 540, "xhdpi")),
     TvScreen("1080p at 240 dpi", tv(1280, 720, "hdpi")),
     TvScreen("1080p at 160 dpi", tv(1920, 1080, "mdpi")),
-    // Android TV's largest text size. Robolectric runs API 36, which from API 34 on grows large
-    // text less than small: 32 sp stays about 32 dp, where API 22 to 33 make it 41.6 dp.
+    // Android TV's largest text size. From API 34 on Android grows large text less than small:
+    // 32 sp stays about 32 dp, where API 22 to 33 make it 41.6 dp. So the *LayoutTests run on
+    // API 33 as well as 36.
     TvScreen("1080p, large text", TV_1080P, fontScale = 1.3f),
 )
