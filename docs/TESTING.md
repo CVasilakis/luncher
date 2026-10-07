@@ -69,6 +69,10 @@ outside a broken Back looks the same as a working one.
   (`app/src/test/java/com/luncher/launcher/TvDevice.kt`). Tests that check text the language
   formats (the clock) also fix the language, `"en-rUS-$TV_1080P"`, and replace the `Clock` port
   with a `FakeClock`, so the result depends neither on the host's time nor on its time zone.
+- **A configuration change** (another resolution over HDMI, another language) recreates the
+  activity: `RuntimeEnvironment.setQualifiers("+tvdpi")`, then
+  `controller.configurationChange().visible()`. Robolectric attaches the new activity's window
+  only on `visible()`; without it, nothing in the new activity is laid out.
 - **Leave the device as you found it, saved.** Instrumented tests that change system state
   restore it afterwards (e.g. `HomeKeyTest`, which disables other home apps to make Luncher the
   home), and make Android save it before the test ends: an emulator stopped right after the run

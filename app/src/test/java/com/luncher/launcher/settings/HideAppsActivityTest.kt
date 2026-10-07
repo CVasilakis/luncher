@@ -105,6 +105,22 @@ class HideAppsActivityTest {
         assertEquals(AppArrangement.NONE, arrangements.arrangement)
     }
 
+    // A TV switched from 1080p to 720p (HDMI), or a new language, recreates the panel.
+    @Test
+    fun `after a configuration change, lists the apps as stored, the same one selected`() {
+        val controller = Robolectric.buildActivity(HideAppsActivity::class.java).setup()
+        controller.get().press(KeyEvent.KEYCODE_DPAD_DOWN)
+        controller.get().press(KeyEvent.KEYCODE_DPAD_DOWN)
+        controller.get().press(KeyEvent.KEYCODE_DPAD_CENTER)   // hides News
+
+        RuntimeEnvironment.setQualifiers("+tvdpi")   // 960x540 dp at 720p
+        controller.configurationChange().visible()   // Robolectric shows the new window only when told
+
+        val activity = controller.get()
+        assertEquals(listOf("Movies", "Music (hidden)", "News (hidden)"), activity.rows())
+        assertEquals(2, activity.list().selectedItemPosition)
+    }
+
     @Test
     fun `shows six and a half rows at most, so the half row says there's more`() {
         installedApps.apps = List(12) { app("app%02d".format(it)) }

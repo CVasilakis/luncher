@@ -274,4 +274,37 @@ class ArrangeModeTest {
 
         assertEquals("abcedf", controller.get().state())
     }
+
+    // A TV switched from 1080p to 720p (HDMI), or a new language, recreates the home screen.
+    @Test
+    fun `a configuration change while arranging puts the app down, stores it and ends arranging`() {
+        val controller = start()
+        controller.get().longPress("b")
+        controller.get().press(KeyEvent.KEYCODE_DPAD_RIGHT)
+
+        RuntimeEnvironment.setQualifiers("+tvdpi")
+        controller.configurationChange().visible()   // Robolectric shows the new window only when told
+
+        assertFalse(controller.get().arranging())
+        assertEquals("acbde", controller.get().state())
+        assertEquals(listOf("a", "c", "b", "d", "e").map { app(it).launchable }, arrangements.arrangement.order)
+    }
+
+    @Test
+    fun `with many apps, down from the last row puts the held app on the shelf, scrolled into view`() {
+        installedApps.apps = (1..150).map { app("app%03d".format(it)) } + app("x")
+        val activity = start().get()
+        activity.longPress("app001")
+
+        repeat(30) { activity.press(KeyEvent.KEYCODE_DPAD_DOWN) }   // 29 rows down, then onto the shelf
+        shadowOf(Looper.getMainLooper()).idle()                    // the layout pass, which scrolls
+
+        val tile = activity.tile("app001")
+        assertTrue(tile.hidden)
+        assertEquals(149, activity.tiles().indexOf(tile))           // after the 149 shown, first of the hidden
+        val grid = activity.findViewById<AppTilesView>(R.id.home_apps)
+        val top = tile.top - grid.scrollY
+        val bottom = tile.bottom - grid.scrollY
+        assertTrue("tile at $top to $bottom, view 0 to ${grid.height}", top >= 0 && bottom <= grid.height - grid.paddingBottom)
+    }
 }

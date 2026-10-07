@@ -2,6 +2,7 @@ package com.luncher.launcher.home
 
 import android.content.Intent
 import android.graphics.drawable.ColorDrawable
+import android.os.Looper
 import android.view.KeyEvent
 import android.view.View
 import android.widget.TextView
@@ -11,6 +12,7 @@ import com.luncher.domain.apps.FakeInstalledApps
 import com.luncher.domain.apps.FakeInstalledApps.Companion.app
 import com.luncher.domain.apps.InstalledApp
 import com.luncher.domain.apps.LaunchableApp
+import com.luncher.domain.clock.FakeClock
 import com.luncher.launcher.AppGraph
 import com.luncher.launcher.LuncherApplication
 import com.luncher.launcher.R
@@ -28,6 +30,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
+import java.time.Duration
 
 @RunWith(RobolectricTestRunner::class)
 @Config(qualifiers = TV_1080P)
@@ -35,6 +38,7 @@ class HomeActivityTest {
 
     private val installedApps = FakeInstalledApps(app("news"), app("movies"), app("music"))
     private val arrangements = FakeAppArrangements()
+    private val clock = FakeClock()
 
     @Before
     fun useFakeApps() {
@@ -43,6 +47,7 @@ class HomeActivityTest {
         application.graph = object : AppGraph(application) {
             override val installedApps = this@HomeActivityTest.installedApps
             override val appArrangements = this@HomeActivityTest.arrangements
+            override val clock = this@HomeActivityTest.clock
         }
     }
 
@@ -267,6 +272,54 @@ class HomeActivityTest {
         controller.restart().start().resume()
 
         assertEquals(controller.get().getString(R.string.home_all_hidden), controller.get().emptyText())
+    }
+
+    // A TV switched from 1080p to 720p (HDMI), or a new language, recreates the activity.
+    @Test
+    fun `after a configuration change, shows the same apps at the new screen's size`() {
+        val controller = start()
+        val before = controller.get().tiles().first().width
+
+        RuntimeEnvironment.setQualifiers("+tvdpi")   // 960x540 dp at 720p
+        controller.configurationChange().visible()   // Robolectric shows the new window only when told
+
+        val activity = controller.get()
+        assertEquals(listOf("Movies", "Music", "News"), activity.labels())
+        assertEquals("Movies", activity.focusedLabel())
+        val after = activity.tiles().first().width
+        assertEquals(before * 213 / 320.0, after.toDouble(), 1.0)   // the density's share
+        assertEquals("the old screen's clock stopped, the new one's started", 1, clock.listenerCount)
+    }
+
+    @Test
+    fun `with many apps, focus reaches the last row, scrolled into view, and comes back to the top`() {
+        installedApps.apps = (1..150).map { app("app%03d".format(it)) }
+        val activity = start().get()
+        val grid = activity.findViewById<AppTilesView>(R.id.home_apps)
+        assertEquals(150, activity.tiles().size)
+
+        repeat(29) { activity.moveFocus(View.FOCUS_DOWN) }
+        assertEquals("App146", activity.focusedLabel())   // the first of the 30th row
+        assertInView(grid, activity.tiles()[145])
+
+        repeat(29) { activity.moveFocus(View.FOCUS_UP) }
+        assertEquals("App001", activity.focusedLabel())
+        assertEquals(0, grid.scrollY)
+    }
+
+    // Robolectric moves focus only when told, and draws no frames, so the scroll animation is run to
+    // its end here: the time it takes, then computeScroll as a frame would.
+    private fun HomeActivity.moveFocus(direction: Int) {
+        val focused = tiles().single { it.isFocused }
+        assertTrue(focused.focusSearch(direction)!!.requestFocus())
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofSeconds(1))
+        findViewById<AppTilesView>(R.id.home_apps).computeScroll()
+    }
+
+    private fun assertInView(grid: AppTilesView, tile: View) {
+        val top = tile.top - grid.scrollY
+        val bottom = tile.bottom - grid.scrollY
+        assertTrue("tile at $top to $bottom, view 0 to ${grid.height}", top >= 0 && bottom <= grid.height - grid.paddingBottom)
     }
 
     private fun HomeActivity.emptyText() = findViewById<TextView>(R.id.home_empty).text.toString()

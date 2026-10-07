@@ -14,6 +14,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 import org.robolectric.shadows.ShadowToast
@@ -42,6 +43,19 @@ class SettingsActivityTest {
     @Test
     fun `starts with the first entry focused`() {
         assertTrue(start().entries().first().isFocused)
+    }
+
+    // A TV switched from 1080p to 720p (HDMI), or a new language, recreates the panel.
+    @Test
+    fun `after a configuration change, lists the same entries, the first focused`() {
+        val controller = Robolectric.buildActivity(SettingsActivity::class.java).setup()
+
+        RuntimeEnvironment.setQualifiers("+tvdpi")   // 960x540 dp at 720p
+        controller.configurationChange().visible()   // Robolectric shows the new window only when told
+
+        val activity = controller.get()
+        assertEquals(listOf("Hide apps", "System settings"), activity.entries().map { it.text.toString() })
+        assertTrue(activity.entries().first().isFocused)
     }
 
     @Test
