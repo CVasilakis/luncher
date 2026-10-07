@@ -63,6 +63,21 @@ class HomeScreenshotTest {
         start().window.decorView.captureRoboImage("src/test/screenshots/home/home_screen.png")
     }
 
+    // A 4:3 screen, 720x540 dp: four tiles in a row, of about the size they have at 1080p.
+    @Test
+    @Config(qualifiers = "+w720dp")
+    fun homeScreen4by3() {
+        start().window.decorView.captureRoboImage("src/test/screenshots/home/home_screen_4by3.png")
+    }
+
+    // 1080p at 160 dpi, as some TV boxes are set, 1920x1080 dp: ten tiles in a row, of about the
+    // size they have next to the clock at 1080p.
+    @Test
+    @Config(qualifiers = "+w1920dp-h1080dp-mdpi")
+    fun homeScreen160dpi() {
+        start().window.decorView.captureRoboImage("src/test/screenshots/home/home_screen_160dpi.png")
+    }
+
     @Test
     fun settingsEntryFocused() {
         val activity = start()

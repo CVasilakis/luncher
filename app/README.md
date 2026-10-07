@@ -13,7 +13,7 @@ app/
 ├── proguard-rules.pro                app-specific R8 rules (none yet)
 ├── lint.xml                          lint's exceptions, each with its reason; any other warning fails lint
 ├── src/test/                         JVM tests: Robolectric, Roborazzi screenshots (docs/TESTING.md)
-│   ├── java/com/luncher/launcher/    same packages as the code; TvDevice.kt: TV screen config
+│   ├── java/com/luncher/launcher/    same packages as the code; TvDevice.kt: the TV screens tested; LayoutChecks.kt
 │   └── screenshots/<feature>/        reference images, committed
 ├── src/androidTest/                  instrumented tests on the emulator
 │   └── java/com/luncher/launcher/
