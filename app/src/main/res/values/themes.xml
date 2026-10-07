@@ -1,14 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Every background colour Android may show for a screen is set here, dark, rather than
+         left to Theme.DeviceDefault, which device makers may restyle: never a white screen,
+         ThemesTest checks it. windowSplashScreenBackground is the splash screen's from
+         Android 12 on, which on TV is only that colour. -->
     <style name="Theme.Luncher" parent="@android:style/Theme.DeviceDefault.NoActionBar">
         <item name="android:windowBackground">@color/background</item>
+        <item name="android:colorBackground">@color/background</item>
+        <item name="android:windowSplashScreenBackground" tools:targetApi="31">@color/background</item>
         <item name="android:windowNoTitle">true</item>
         <item name="android:colorAccent">@color/accent</item>
+    </style>
+
+    <!-- The home screen's theme until it's created, for the launch screen: up to Android 11,
+         Android shows this windowBackground while Luncher starts. From Android 12 on it shows
+         the splash screen's background instead, and on TV never an icon: the home screen's own
+         colour there. HomeActivity.onCreate switches back to Theme.Luncher. -->
+    <style name="Theme.Luncher.Launch">
+        <item name="android:windowBackground">@drawable/launch_screen</item>
     </style>
 
     <!-- The settings panel: a floating window over the dimmed home screen. -->
     <style name="Theme.Luncher.Settings" parent="@android:style/Theme.DeviceDefault.Dialog.NoActionBar">
         <item name="android:windowBackground">@drawable/settings_panel_background</item>
+        <item name="android:colorBackground">@color/settings_panel</item>
+        <item name="android:windowSplashScreenBackground" tools:targetApi="31">@color/settings_panel</item>
         <item name="android:colorAccent">@color/accent</item>
         <item name="android:backgroundDimAmount">0.6</item>
         <!-- The dialog theme's minimum width is a share of the screen; the layout sets the width. -->

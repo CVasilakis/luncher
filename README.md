@@ -20,7 +20,7 @@ above, hiding and reordering apps exist so far ([`app/README.md`](app/README.md#
 |---|---|
 | Package | `com.luncher.launcher` (debug builds: `com.luncher.launcher.debug`) |
 | Supported Android versions | Android TV 5.1 (API 22) and newer |
-| Release APK size | ~69 KB |
+| Release APK size | ~77 KB |
 
 ## Documentation
 

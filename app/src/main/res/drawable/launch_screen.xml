@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The launch screen on Android 5.1 (API 22): the drawing fills the window, so on a screen
+     that isn't 16:9 it's stretched; a layer-list places an item by gravity only from API 23 on
+     (drawable-v23/launch_screen.xml). -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@drawable/launch_screen_art" />
+</layer-list>

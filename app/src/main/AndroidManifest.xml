@@ -32,6 +32,7 @@
 
         <activity
             android:name=".home.HomeActivity"
+            android:theme="@style/Theme.Luncher.Launch"
             android:clearTaskOnLaunch="true"
             android:excludeFromRecents="true"
             android:exported="true"

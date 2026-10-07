@@ -1,6 +1,7 @@
 package com.luncher.launcher.home
 
 import android.content.Intent
+import android.graphics.drawable.ColorDrawable
 import android.view.KeyEvent
 import android.view.View
 import android.widget.TextView
@@ -84,6 +85,16 @@ class HomeActivityTest {
     @Test
     fun `starts with the first app focused`() {
         assertEquals("Movies", start().get().focusedLabel())
+    }
+
+    @Test
+    fun `starts on the launch screen's theme, then draws on the plain background`() {
+        val activity = start().get()
+
+        assertEquals(R.style.Theme_Luncher_Launch, activity.packageManager.getActivityInfo(activity.componentName, 0).theme)
+        val background = activity.window.decorView.background
+        assertTrue("window background: $background", background is ColorDrawable)
+        assertEquals(activity.getColor(R.color.background), (background as ColorDrawable).color)
     }
 
     @Test

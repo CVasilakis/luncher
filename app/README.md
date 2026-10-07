@@ -9,7 +9,7 @@ APIs, and the composition root. How they fit together, and the rules they follow
 ```
 app/
 ├── build.gradle.kts                  module build: SDK levels, version, debug app ID, R8, :domain, test setup
-├── LICENSE-APACHE-2.0, NOTICE        license of the icon and banner artwork (Apache 2.0, from AOSP)
+├── LICENSE-APACHE-2.0, NOTICE        license of the icon, banner and launch screen artwork (Apache 2.0, from AOSP)
 ├── proguard-rules.pro                app-specific R8 rules (none yet)
 ├── src/test/                         JVM tests: Robolectric, Roborazzi screenshots (docs/TESTING.md)
 │   ├── java/com/luncher/launcher/    same packages as the code; TvDevice.kt: TV screen config
@@ -47,12 +47,15 @@ app/
         │   ├── banner.xml            TV banner, 320×180 dp: the logo's TV and the name
         │   ├── ic_launcher.xml       app icon before Android 8.0: the TV on a sky-blue square
         │   ├── ic_launcher_foreground.xml   the adaptive icon's foreground: the TV
+        │   ├── launch_screen.xml     the launch screen on API 22: the drawing, stretched over the window
+        │   ├── launch_screen_art.xml the launch screen's drawing, 960×540 dp: the TV and the name in a glow
         │   ├── home_settings*.xml    the top bar's settings gear, and its focus disc
         │   └── settings_*.xml        the settings panel's window and focused entry
+        ├── drawable-v23/launch_screen.xml   the launch screen from API 23 on: the drawing centred
         ├── drawable-anydpi-v26/ic_launcher.xml   app icon from 8.0 on: adaptive, the TV on sky blue
         ├── layout/                   home_activity.xml; settings_activity.xml, settings_entry.xml,
         │                             settings_hide_apps_activity.xml, settings_app_row.xml
-        └── values/                   colors, dimensions, strings, theme
+        └── values/                   colors, dimensions, strings, themes
 ```
 
 ## Current state
@@ -221,12 +224,57 @@ while scrolling. It shows at most six and a half rows, so the half row says ther
 small screen (e.g. 720p at the 1080p density, 360 dp tall) as many as leave the panel a margin
 from the screen's edges, still ending on half a row.
 
+## The launch screen
+
+While a cold-started app's process starts, Android shows a starting window until the app draws.
+Up to Android 11 (API 30) that window is the activity theme's `windowBackground`, which for the
+home screen used to be its plain dark colour: a blank screen for half a second or more. Luncher's
+home screen has `Theme.Luncher.Launch` in the manifest, whose `windowBackground` is
+`launch_screen.xml`, the TV and the name in a glow; `HomeActivity.onCreate` switches to
+`Theme.Luncher` before anything else, or the drawing would stay as the window's background,
+drawn behind the tiles on every frame. The emulators of API 22 to 30 show it when Luncher's
+process was killed and Home brings it back (what a TV short of memory does), when Home starts it
+while another home app is in front, and when it's opened as an app. At boot, by AOSP's code, the
+first home activity gets no starting window: the boot animation stays until Luncher draws.
+
+From Android 12 (API 31) on there is no launch screen to draw, whatever the theme says:
+
+- An activity of type home never gets a splash screen (AOSP `ActivityRecord.getStartingWindowType`):
+  the previous screen stays until Luncher draws.
+- On TV, Android's window manager overrides every app's splash screen (AOSP
+  `TvStartingWindowTypeAlgorithm`): only its background on Android 12, a solid colour on 13, none
+  from 14 on. `windowSplashScreenAnimatedIcon` and the app icon are never shown. For Luncher
+  opened as an app on 12 and 13, `windowSplashScreenBackground` keeps that colour the home
+  screen's.
+
+The drawing, `launch_screen_art.xml`, is a 16:9 TV's whole screen, 960×540 dp, which is what a TV
+usually is at 720p, 1080p and 4K. From API 23 on, `drawable-v23/launch_screen.xml` puts it at that
+size in the middle of the home screen's background, so it keeps its shape on any screen: on 4:3,
+16:10 or 21:9 it's cut at the edges or surrounded by the background, into which its glow fades, and
+at a density that makes a 16:9 screen larger than 960×540 dp it's smaller than the screen. A
+layer-list places an item by gravity only from API 23 on, so on API 22 `drawable/launch_screen.xml`
+stretches the drawing over the window, distorted on a screen that isn't 16:9. A vector drawable is
+drawn into a bitmap of the size it's shown at (lint's `VectorRaster` warning), about the screen's,
+but only while the starting window shows. Its glow is opaque discs, each in its colour already
+blended: vector drawables have gradients only from API 24 on, and before that they're drawn in
+8-bit steps one shape at a time, so stacked faint transparent discs would add up to nothing on
+API 22.
+
+On the API 22 emulator, with the display density changed at runtime (`wm density`, as Developer
+options do) to differ from the device's own, Android's starting window draws the drawing zoomed
+in and shifted; with that density set from boot, it's drawn right. It's Android 5.1's: Luncher's
+own code draws the same drawable right at that density.
+
 ## Platform choices
 
 - **Plain platform classes:** activities extend `android.app.Activity` and use the platform theme
   `Theme.DeviceDefault.NoActionBar`, not AppCompat.
 - **Graphics are vectors** (`VectorDrawable` renders natively on API 21+), so no per-density PNGs
   are needed.
+- **Never a white screen:** every background Android may show for a screen before it draws
+  (`windowBackground`, `colorBackground`, `windowSplashScreenBackground`) is set, dark, in
+  `themes.xml`, rather than left to `Theme.DeviceDefault`, which device makers may restyle.
+  `ThemesTest` checks every activity in the manifest.
 
 ## Manifest: why each part is there
 
@@ -243,6 +291,7 @@ from the screen's edges, still ending on half a row.
 | `stateNotNeeded`, `clearTaskOnLaunch`, `excludeFromRecents` | Standard for home activities: always starts clean, never in Recents. |
 | `screenOrientation="landscape"` | TVs are landscape. |
 | `SettingsActivity`, `HideAppsActivity`: `exported="false"`, `launchMode="singleTop"` | Only Luncher opens them; a repeated OK or Menu press doesn't stack a second panel. |
+| `HomeActivity`: `Theme.Luncher.Launch` | Shows the launch screen while Luncher starts ([below](#the-launch-screen)). |
 | `HideAppsActivity`: `Theme.Luncher.Settings.Panel` | Opens in the settings panel's place, which already dims the home screen ([above](#hidden-apps)). |
 | `SettingsActivity`, `HideAppsActivity`: no `screenOrientation` | Android 8.0 (API 26) refuses one on a floating activity; it shows over the landscape home screen anyway. |
 
@@ -263,7 +312,7 @@ a release, which is signed with another key. Its classes keep the package `com.l
 so its activities' full name is e.g.
 `com.luncher.launcher.debug/com.luncher.launcher.home.HomeActivity`.
 
-The icon and banner drawables are flat: each path has its coordinates and stroke width already
+The icon, banner and launch screen drawables are flat: each path has its coordinates and stroke width already
 moved and scaled, with no `<group>` and no `<clip-path>`. Vector drawables before Android 7.0
 (API 24) don't scale a stroke's width with its group's scale, and keep a group's clip path for
 everything drawn after the group; on API 22 the first drew every line several times too thick and
