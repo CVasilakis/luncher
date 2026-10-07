@@ -1,10 +1,12 @@
 package com.luncher.domain.layout
 
+import kotlin.math.roundToInt
+
 /**
- * Tiles in rows of [columns], filled from the top left. The tiles share the [width] they get
- * between them, [gap] apart, with the banner's 16:9 shape; what's left over after rounding goes to
- * equal margins on both sides, so the grid is centered. A last row that isn't full starts at the
- * left. Rows below the space scroll vertically.
+ * Tiles in rows of [columns] ([columnsFor] picks how many for a width), filled from the top left.
+ * The tiles share the [width] they get between them, [gap] apart, with the banner's 16:9 shape;
+ * what's left over after rounding goes to equal margins on both sides, so the grid is centered. A
+ * last row that isn't full starts at the left. Rows below the space scroll vertically.
  *
  * A moved tile goes one place along the order on Left and Right, wrapping from the end of a row to
  * the start of the next, and one row up or down on Up and Down. Down where the next row is too short
@@ -55,8 +57,15 @@ class TileGrid(
     }
 
     companion object {
-        /** Tiles per row until a setting chooses it. */
-        const val DEFAULT_COLUMNS = 5
+        /**
+         * How many columns of tiles about [tileWidth] wide, [gap] apart, fit [width]: the nearest
+         * whole number, at least one. So tiles keep about that size, next to text of a fixed size,
+         * on any screen: more of them on a wider one, or at a lower density.
+         */
+        fun columnsFor(width: Int, tileWidth: Int, gap: Int): Int {
+            require(tileWidth > 0) { "tileWidth must be positive: $tileWidth" }
+            return ((width + gap).toFloat() / (tileWidth + gap)).roundToInt().coerceAtLeast(1)
+        }
 
         // Android TV banners are 320x180 dp.
         private const val BANNER_WIDTH = 16

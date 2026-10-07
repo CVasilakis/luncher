@@ -61,14 +61,15 @@ app/
 
 ## Current state
 
-The home screen shows the time and date in a top bar, in the device's language and hour format,
-and below it the installed TV apps (activities with `MAIN` + `LEANBACK_LAUNCHER`) as a grid of
-banners, sorted by name, five per row; OK opens the focused app. A gear at the end of the top bar,
-or the Menu key, opens the settings panel. Its entries are Hide apps, a list of every app where OK
+The home screen shows the time and date in a top bar, in the device's language and hour format, and
+below it the installed TV apps (activities with `MAIN` + `LEANBACK_LAUNCHER`) as a grid of banners,
+sorted by name, as many per row as fit at about 154 dp wide (five on a 16:9 TV, more on a screen
+wider in dp, e.g. 1080p at 160 dpi); OK opens the focused app. A gear at the end of the top bar, or
+the Menu key, opens the settings panel. Its entries are Hide apps, a list of every app where OK
 hides one from the home screen or shows it again, and the device's own settings. When every app is
-hidden, the home screen says where to show them again. A long press of OK on an app starts
-[arrange mode](#arrange-mode), where the user moves apps and hides them on a shelf. Custom
-banners, wallpapers and Luncher's other settings don't exist yet.
+hidden, the home screen says where to show them again. A long press of OK on an app starts [arrange
+mode](#arrange-mode), where the user moves apps and hides them on a shelf. Custom banners,
+wallpapers and Luncher's other settings don't exist yet.
 
 ## The home screen
 
@@ -78,7 +79,7 @@ one job, so a new arrangement, image source or top bar item changes one of them:
 | Part | Job |
 |---|---|
 | `homeApps` (`:domain`) | which apps show, in which order, and which are hidden: the installed apps matched to the stored `AppArrangement` ([below](#hidden-apps)) |
-| `TileLayout` (`:domain`) | where each tile goes and how big it is; `TileGrid` is the only one so far |
+| `TileLayout` (`:domain`) | where each tile goes and how big it is; `TileGrid` is the only one so far, with as many columns as fit tiles of about `home_tile_width` (`TileGrid.columnsFor`), so tiles keep their size next to the top bar's text on any screen |
 | `AppTilesView` | lays tiles out where the `TileLayout` says, and scrolls to the focused one. `grid` is the only place that picks the arrangement. |
 | `bannerFor` (`:domain`) | which image a tile shows |
 | `BannerImages` | draws that image into a bitmap of the tile's size |

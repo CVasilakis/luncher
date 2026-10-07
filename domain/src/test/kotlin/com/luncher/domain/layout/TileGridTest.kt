@@ -60,6 +60,30 @@ class TileGridTest {
         TileGrid(tileCount = 3, columns = 0, width = 1000, gap = 25)
     }
 
+    // Columns for a width: tiles of about 154 px, 24 px apart, as on the home screen at 160 dpi,
+    // where 1 dp is 1 px. Widths are the screen's, less 2 x 48 of padding.
+    private fun columnsFor(width: Int) = TileGrid.columnsFor(width, tileWidth = 154, gap = 24)
+
+    @Test
+    fun `as many columns as fit tiles of about the given width`() {
+        assertEquals(5, columnsFor(864))    // a 16:9 TV, 960 dp
+        assertEquals(4, columnsFor(624))    // 4:3, 720 dp
+        assertEquals(7, columnsFor(1164))   // 21:9, 1260 dp
+        assertEquals(10, columnsFor(1824))  // 1080p at 160 dpi, 1920 dp
+    }
+
+    @Test
+    fun `the nearest whole number of columns`() {
+        assertEquals(5, columnsFor(795))    // (795 + 24) / (154 + 24) = 4.6
+        assertEquals(4, columnsFor(759))    // 4.4
+    }
+
+    @Test
+    fun `at least one column, however narrow`() {
+        assertEquals(1, columnsFor(0))
+        assertEquals(1, columnsFor(50))
+    }
+
     // Moves: 5 columns, so with 12 tiles rows are 0-4, 5-9 and 10-11.
     private val twelve = grid(tiles = 12)
 

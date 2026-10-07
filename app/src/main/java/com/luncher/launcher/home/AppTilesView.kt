@@ -33,6 +33,7 @@ import com.luncher.launcher.R
 class AppTilesView(context: Context, attrs: AttributeSet?) : ViewGroup(context, attrs) {
 
     private val gap = resources.getDimensionPixelSize(R.dimen.home_tile_gap)
+    private val tileWidth = resources.getDimensionPixelSize(R.dimen.home_tile_width)
     private val scroller = Scroller(context)
 
     /**
@@ -52,7 +53,8 @@ class AppTilesView(context: Context, attrs: AttributeSet?) : ViewGroup(context, 
 
     private var tileLayout: TileLayout = createLayout(width = 0)
 
-    private fun grid(tileCount: Int, width: Int) = TileGrid(tileCount, TileGrid.DEFAULT_COLUMNS, width, gap)
+    private fun grid(tileCount: Int, width: Int) =
+        TileGrid(tileCount, TileGrid.columnsFor(width, tileWidth, gap), width, gap)
 
     private fun createLayout(width: Int): TileLayout {
         val shown = shownCount ?: return grid(childCount, width)

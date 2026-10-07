@@ -274,6 +274,27 @@ class HomeActivityTest {
         assertEquals(controller.get().getString(R.string.home_all_hidden), controller.get().emptyText())
     }
 
+    @Test
+    fun `shows five apps in a row on a 16 by 9 TV`() {
+        installedApps.apps = (1..12).map { app("app%02d".format(it)) }
+
+        assertEquals(5, start().get().firstRowSize())
+    }
+
+    // 1080p at 160 dpi, as some TV boxes are set: 1920 dp wide, so twice as many tiles of about the
+    // same size, rather than five twice as large next to the same clock.
+    @Test
+    @Config(qualifiers = "+w1920dp-h1080dp-mdpi")
+    fun `fits more apps in a row on a screen wider in dp, at about the same size`() {
+        installedApps.apps = (1..12).map { app("app%02d".format(it)) }
+        val activity = start().get()
+
+        assertEquals(10, activity.firstRowSize())
+        assertEquals(160, activity.tiles().first().width)   // dp, at 160 dpi; 153 dp at 1080p
+    }
+
+    private fun HomeActivity.firstRowSize() = tiles().count { it.top == tiles().first().top }
+
     // A TV switched from 1080p to 720p (HDMI), or a new language, recreates the activity.
     @Test
     fun `after a configuration change, shows the same apps at the new screen's size`() {

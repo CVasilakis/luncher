@@ -34,7 +34,7 @@ domain/src/
 │       ├── TileLayout.kt        how an arrangement of tiles reports sizes and positions
 │       ├── TileMoves.kt         how it says where a tile the user moves goes
 │       ├── Direction.kt         model: a D-pad arrow
-│       ├── TileGrid.kt          rule: the grid (rows of a fixed number of columns, centered), and moves in it
+│       ├── TileGrid.kt          rule: the grid (rows of tiles, centered; as many columns as fit a width), and moves in it
 │       └── ShelfLayout.kt       rule: the shown apps' tiles above a shelf of the hidden ones, while arranging
 ├── test/kotlin/…/               unit tests (docs/TESTING.md), same packages as the code
 └── testFixtures/kotlin/…/       fakes of the ports, used by the tests of every module
