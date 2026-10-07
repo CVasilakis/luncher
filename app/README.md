@@ -11,6 +11,7 @@ app/
 ├── build.gradle.kts                  module build: SDK levels, version, debug app ID, R8, :domain, test setup
 ├── LICENSE-APACHE-2.0, NOTICE        license of the icon, banner and launch screen artwork (Apache 2.0, from AOSP)
 ├── proguard-rules.pro                app-specific R8 rules (none yet)
+├── lint.xml                          lint's exceptions, each with its reason; any other warning fails lint
 ├── src/test/                         JVM tests: Robolectric, Roborazzi screenshots (docs/TESTING.md)
 │   ├── java/com/luncher/launcher/    same packages as the code; TvDevice.kt: TV screen config
 │   └── screenshots/<feature>/        reference images, committed
@@ -290,6 +291,7 @@ own code draws the same drawable right at that density.
 | `launchMode="singleTask"` | Pressing Home returns to the same instance instead of stacking new ones. |
 | `stateNotNeeded`, `clearTaskOnLaunch`, `excludeFromRecents` | Standard for home activities: always starts clean, never in Recents. |
 | `screenOrientation="landscape"` | TVs are landscape. |
+| `supportsRtl="false"` | Right-to-left isn't supported yet: the tiles fill from the left, and arrange mode's Left and Right go along their order. So in Arabic or Hebrew every screen stays left to right, rather than a top bar mirrored over tiles that aren't. Supporting it takes mirroring `TileGrid` and those keys. |
 | `SettingsActivity`, `HideAppsActivity`: `exported="false"`, `launchMode="singleTop"` | Only Luncher opens them; a repeated OK or Menu press doesn't stack a second panel. |
 | `HomeActivity`: `Theme.Luncher.Launch` | Shows the launch screen while Luncher starts ([below](#the-launch-screen)). |
 | `HideAppsActivity`: `Theme.Luncher.Settings.Panel` | Opens in the settings panel's place, which already dims the home screen ([above](#hidden-apps)). |

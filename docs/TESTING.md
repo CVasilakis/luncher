@@ -14,10 +14,11 @@ needs to run, so a change comes with tests in the matching place and nowhere els
 | In-app | a screen's behavior with real key events: D-pad focus, keys, Back | Espresso | `app/src/androidTest/java/…/<feature>/` | emulator | `./gradlew connectedDebugAndroidTest` |
 | System | Luncher as the home screen: Home key, other apps, returning | UI Automator | `app/src/androidTest/java/…/system/` | emulator, API 24+ ([why](#the-system-tier-from-api-24-on)) | `./gradlew connectedDebugAndroidTest` |
 
-Everything at once (with the emulator running for the last two tiers):
+Everything at once, [lint](#lint-and-compiler-warnings) included (with the emulator running for
+the last two tiers):
 
 ```bash
-./gradlew :domain:test :app:testDebugUnitTest :app:verifyRoborazziDebug connectedDebugAndroidTest
+./gradlew :domain:test :app:testDebugUnitTest :app:verifyRoborazziDebug :app:lintDebug connectedDebugAndroidTest
 ```
 
 What to install for them (the JDK for the JVM tiers, a device for the others):
@@ -103,6 +104,20 @@ Reference images are committed. When a change alters a screen on purpose, record
 image, and commit it with the change. A plain `testDebugUnitTest` runs the screenshot tests without
 comparing images. Screenshots need Robolectric's native graphics
 (`@GraphicsMode(GraphicsMode.Mode.NATIVE)`), available on Linux x86-64, macOS and Windows.
+
+## Lint and compiler warnings
+
+```bash
+./gradlew :app:lintDebug    # report: app/build/reports/lint-results-debug.html
+```
+
+Lint finds what no JVM test can: the JVM tiers run on API 36's framework, so an API used below
+the level it exists on (`NewApi`) passes them, and the emulators catch it only on a path a test
+takes. Every lint warning fails it, and every Kotlin compiler warning fails the build, in both
+modules. A warning is fixed, or, where it doesn't apply, made an exception with its reason: in
+[`app/lint.xml`](../app/lint.xml) for lint, with `@Suppress` and a comment in Kotlin (as in
+`AppTileView`). Lint's checks that a newer SDK or library exists are off, since they would fail
+the build the day one comes out, without a change in the repository.
 
 ## Instrumented tests (Espresso, UI Automator)
 
@@ -286,7 +301,7 @@ in the workflow files. A third, `release.yml`, runs no tests ([`RELEASING.md`](R
 
 | Workflow | Runs | When |
 |---|---|---|
-| [`jvm-tests.yml`](../.github/workflows/jvm-tests.yml) | the JVM tiers, and `assembleRelease` to check that R8 shrinking still works | every push to `main`, every pull request, and by hand |
+| [`jvm-tests.yml`](../.github/workflows/jvm-tests.yml) | the JVM tiers, lint, and `assembleRelease` to check that R8 shrinking still works | every push to `main`, every pull request, and by hand |
 | [`instrumented-tests.yml`](../.github/workflows/instrumented-tests.yml) | the emulator tiers, one emulator per job | only by hand (Actions → Instrumented tests → Run workflow), then pick the emulators below |
 
 The instrumented workflow creates and boots its emulators with android-tv-wsl-dev-tools, pinned to
@@ -314,8 +329,8 @@ focused activity), a screenshot, and adb's server log.
 - **Every change comes with tests** in the right tier. A bug fix starts with a test that fails
   because of the bug.
 - **A new test must be able to fail.** Break the behavior on purpose, see it fail, restore.
-- **Before committing**, run the tiers that cover what changed: at least the JVM tiers, and the
-  instrumented tiers when a screen's keys or the home behavior changed, on the
+- **Before committing**, run the tiers that cover what changed: at least the JVM tiers and lint,
+  and the instrumented tiers when a screen's keys or the home behavior changed, on the
   [six emulators](#on-several-android-versions).
 - **Tests stay deterministic.** No fixed sleeps where a condition can be awaited, no dependence
   on the host's or emulator's other state, no network.

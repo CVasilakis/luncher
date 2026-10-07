@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Lint's exceptions, each with its reason. Every other warning fails the build
+     (warningsAsErrors in build.gradle.kts), so a new one is fixed or added here with its reason. -->
+<lint>
+    <!-- These report that a newer SDK or library exists: they turn the build red the day one comes
+         out, without a change here. Upgrades are decided on their own (gradle/README.md#upgrading). -->
+    <issue id="NewerVersionAvailable" severity="ignore" />
+    <issue id="GradleDependency" severity="ignore" />
+    <issue id="AndroidGradlePluginVersion" severity="ignore" />
+    <issue id="OldTargetApi" severity="ignore" />
+
+    <!-- A vector drawable larger than 200x200 dp is drawn into a bitmap of the size it's shown at.
+         The banner is 320x180 dp, the size Android TV asks for; launchers draw it once into a
+         tile. The launch screen's drawing is a 960x540 dp screen, drawn only while the starting
+         window shows (app/README.md#the-launch-screen). -->
+    <issue id="VectorRaster">
+        <ignore path="src/main/res/drawable/banner.xml" />
+        <ignore path="src/debug/res/drawable/banner.xml" />
+        <ignore path="src/main/res/drawable/launch_screen_art.xml" />
+    </issue>
+
+    <!-- Android 16 ignores a fixed orientation on screens at least 600 dp wide and high; TVs are
+         landscape anyway, and it keeps the home screen landscape on the others. -->
+    <issue id="DiscouragedApi">
+        <ignore path="src/main/AndroidManifest.xml" />
+    </issue>
+
+    <!-- A monochrome icon is for themed icons, which phone launchers draw; Luncher is TV-only. -->
+    <issue id="MonochromeLauncherIcon" severity="ignore" />
+</lint>

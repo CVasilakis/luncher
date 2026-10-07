@@ -59,6 +59,17 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
+
+    // Every warning fails lint (`lintDebug`, run in CI); its exceptions and their reasons: lint.xml.
+    lint {
+        warningsAsErrors = true
+    }
+}
+
+kotlin {
+    compilerOptions {
+        allWarningsAsErrors = true
+    }
 }
 
 // versionName is X.Y.Z, each part 0 to 999, and versionCode follows it: X * 1,000,000 + Y * 1,000

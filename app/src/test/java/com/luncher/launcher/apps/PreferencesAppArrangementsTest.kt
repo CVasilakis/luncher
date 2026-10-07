@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import com.luncher.domain.apps.AppArrangement
 import com.luncher.domain.apps.LaunchableApp
+import com.luncher.launcher.AppGraph
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -19,6 +20,32 @@ class PreferencesAppArrangementsTest {
     private val movies = LaunchableApp("com.example.movies", "com.example.movies.MainActivity")
     private val news = LaunchableApp("com.example.news", ".NewsActivity")
     private val music = LaunchableApp("com.example.music", "com.example.music.tv.Main")
+
+    // The stored format, written out: a TV keeps it across updates, so a change of it has to read
+    // this one too. The other tests save and read back, which a change of both sides would pass.
+    // Through AppGraph, which names the file.
+    private val storedOrder = "com.example.news/.NewsActivity\ncom.example.movies/com.example.movies.MainActivity"
+    private val storedHidden = "com.example.music/com.example.music.tv.Main"
+
+    @Test
+    fun `reads the stored format`() {
+        preferences.edit().putString("order", storedOrder).putString("hidden", storedHidden).commit()
+
+        val arrangements = AppGraph(RuntimeEnvironment.getApplication()).appArrangements
+
+        assertEquals(AppArrangement(order = listOf(news, movies), hidden = listOf(music)), arrangements.read())
+    }
+
+    @Test
+    fun `saves in the stored format`() {
+        val arrangements = AppGraph(RuntimeEnvironment.getApplication()).appArrangements
+
+        arrangements.save(AppArrangement(order = listOf(news, movies), hidden = listOf(music)))
+        assertEquals(mapOf("order" to storedOrder, "hidden" to storedHidden), preferences.all)
+
+        arrangements.save(AppArrangement(order = null, hidden = emptyList()))
+        assertEquals(mapOf("hidden" to ""), preferences.all)
+    }
 
     @Test
     fun `has no arrangement before one is saved`() {

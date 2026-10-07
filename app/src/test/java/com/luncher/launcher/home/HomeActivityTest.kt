@@ -97,6 +97,19 @@ class HomeActivityTest {
         assertEquals(activity.getColor(R.color.background), (background as ColorDrawable).color)
     }
 
+    // Right-to-left isn't supported yet: the tiles fill from the left, and arrange mode's Left and
+    // Right go along their order. So in an RTL language everything stays left to right, rather
+    // than a top bar mirrored over tiles that aren't.
+    @Test
+    @Config(qualifiers = "ar-rEG-ldrtl-$TV_1080P")
+    fun `lays out left to right in right-to-left languages too`() {
+        val activity = start().get()
+
+        assertEquals(View.LAYOUT_DIRECTION_LTR, activity.window.decorView.layoutDirection)
+        val clock = activity.findViewById<View>(R.id.home_clock)
+        assertTrue("clock at ${clock.left}, settings at ${activity.settingsEntry().left}", clock.left < activity.settingsEntry().left)
+    }
+
     @Test
     fun `OK opens the focused app in a task of its own`() {
         val activity = start().get()
