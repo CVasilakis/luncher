@@ -39,7 +39,9 @@ jobs:
           key: robolectric-api33-api36-${{ hashFiles('gradle/libs.versions.toml') }}
 
       - name: Run the JVM tiers and lint, and build the release APK
-        run: ./gradlew :domain:test :app:testDebugUnitTest :app:verifyRoborazziDebug :app:lintDebug assembleRelease
+        # testDebugUnitTest and verifyRoborazziDebug run in every module that has them; lint runs
+        # from :app over every module.
+        run: ./gradlew :domain:test testDebugUnitTest verifyRoborazziDebug :app:lintDebug assembleRelease
 
       - name: Upload the test reports and screenshot diffs
         if: failure()
@@ -47,8 +49,8 @@ jobs:
         with:
           name: jvm-test-reports
           path: |
-            domain/build/reports/tests/
-            app/build/reports/tests/
-            app/build/outputs/roborazzi/
+            */build/reports/tests/
+            feature/*/build/reports/tests/
+            feature/*/build/outputs/roborazzi/
             app/build/reports/lint-results-debug.html
           retention-days: 7                        # so they don't fill a private repository's artifact storage

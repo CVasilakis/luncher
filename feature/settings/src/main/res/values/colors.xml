@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The settings panel, and the fill of its focused entry. -->
+    <color name="settings_panel">#FF1C232B</color>
+    <color name="settings_entry_focused">#1FFFFFFF</color>
+</resources>

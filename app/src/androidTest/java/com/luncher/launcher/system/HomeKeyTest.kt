@@ -13,12 +13,12 @@ import androidx.test.uiautomator.BySelector
 import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.Until
 import com.luncher.launcher.home.HomeActivity
-import com.luncher.launcher.longPressOk
-import com.luncher.launcher.resolvedActivity
-import com.luncher.launcher.resolvedHome
 import com.luncher.launcher.settings.SettingsActivity
-import com.luncher.launcher.waitForFocus
-import com.luncher.launcher.waitForHomeScreen
+import com.luncher.launcher.testing.longPressOk
+import com.luncher.launcher.testing.resolvedActivity
+import com.luncher.launcher.testing.resolvedHome
+import com.luncher.launcher.testing.waitForFocus
+import com.luncher.launcher.testing.waitForHomeScreen
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -29,10 +29,10 @@ import org.junit.runner.RunWith
 /**
  * Luncher as the device's home screen, across apps: real Home and Back keys, real task switches.
  *
- * Without [com.luncher.launcher.RetryWhenCovered], unlike the other tests that open screens: the
- * stock launcher can't cover these tests. Their setup disables it, which stops it, and presses
- * Home until Luncher is in front, settled, so it also undoes a cover that came before; from then
- * on Luncher is the home app, until the cleanup brings the stock launcher back itself.
+ * Without [com.luncher.launcher.testing.RetryWhenCovered], unlike the other tests that open
+ * screens: the stock launcher can't cover these tests. Their setup disables it, which stops it,
+ * and presses Home until Luncher is in front, settled, so it also undoes a cover that came before;
+ * from then on Luncher is the home app, until the cleanup brings the stock launcher back itself.
  */
 @RunWith(AndroidJUnit4::class)
 class HomeKeyTest {
@@ -123,7 +123,7 @@ class HomeKeyTest {
      * tv_user_setup_complete is put back, which on API 26 and 27 can make Android ignore Home.
      * Ends on the settled home screen. A screen the stock launcher opens over itself later, after
      * its cold start (API 36's promotion, Google TV's profile chooser), can come over the next
-     * test, which [com.luncher.launcher.RetryWhenCovered] then runs once more.
+     * test, which [com.luncher.launcher.testing.RetryWhenCovered] then runs once more.
      */
     @After
     fun restoreDevice() {

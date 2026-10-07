@@ -11,6 +11,9 @@ espresso = "3.7.0"
 uiautomator = "2.4.0"
 
 [libraries]
+# Build tooling: the API the convention plugins in build-logic/ compile against.
+android-gradle-plugin = { module = "com.android.tools.build:gradle", version.ref = "agp" }
+kotlin-gradle-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
 junit = { module = "junit:junit", version.ref = "junit" }
 robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
 roborazzi = { module = "io.github.takahirom.roborazzi:roborazzi", version.ref = "roborazzi" }
@@ -22,9 +25,13 @@ uiautomator = { module = "androidx.test.uiautomator:uiautomator", version.ref = 
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
+android-library = { id = "com.android.library", version.ref = "agp" }
 # AGP 9 compiles Kotlin itself ("built-in Kotlin"); declaring KGP here only pins the Kotlin version it uses.
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 # Pure Kotlin/JVM modules (:domain).
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 # Screenshot tests (record/verify tasks).
 roborazzi = { id = "io.github.takahirom.roborazzi", version.ref = "roborazzi" }
+# Luncher's convention plugins (build-logic/): what every Android module shares.
+luncher-android-application = { id = "luncher.android.application" }
+luncher-android-library = { id = "luncher.android.library" }

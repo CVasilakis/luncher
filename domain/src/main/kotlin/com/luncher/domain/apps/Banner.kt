@@ -1,6 +1,6 @@
 package com.luncher.domain.apps
 
-/** Which image the home screen shows for an app. :app turns it into a picture of the tile's size. */
+/** Which image the home screen shows for an app. [AppImages] draws it at the tile's size. */
 sealed interface Banner {
 
     /** The TV banner the app declares. */

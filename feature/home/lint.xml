@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Lint's exceptions for this module's files, each with its reason; those for every module are in
+     the root lint.xml. -->
+<lint>
+    <!-- Android 16 ignores a fixed orientation on screens at least 600 dp wide and high; TVs are
+         landscape anyway, and it keeps the home screen landscape on the others. -->
+    <issue id="DiscouragedApi">
+        <ignore path="src/main/AndroidManifest.xml" />
+    </issue>
+</lint>

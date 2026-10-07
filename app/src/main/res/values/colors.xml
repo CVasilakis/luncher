@@ -1,14 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="background">#FF101418</color>
-    <color name="accent">#FFFF7043</color>
-    <color name="text_primary">#FFFFFFFF</color>
-    <color name="text_secondary">#B3FFFFFF</color>
-    <!-- Tile of an app without a banner. -->
-    <color name="home_tile_card">#FF26303B</color>
-    <!-- The settings panel, and the fill of its focused entry. -->
-    <color name="settings_panel">#FF1C232B</color>
-    <color name="settings_entry_focused">#1FFFFFFF</color>
     <!-- The adaptive app icon's background layer: the logo's sky blue. -->
     <color name="icon_background">#FFA9C8F5</color>
 </resources>

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <dimen name="settings_panel_width">420dp</dimen>
+    <dimen name="settings_panel_padding">24dp</dimen>
+    <dimen name="settings_panel_corner">12dp</dimen>
+    <dimen name="settings_title_text">24sp</dimen>
+    <!-- Between the title and the first entry. -->
+    <dimen name="settings_title_gap">16dp</dimen>
+    <dimen name="settings_entry_height">56dp</dimen>
+    <dimen name="settings_entry_padding">16dp</dimen>
+    <dimen name="settings_entry_text">20sp</dimen>
+    <dimen name="settings_entry_frame">3dp</dimen>
+    <dimen name="settings_entry_corner">8dp</dimen>
+    <!-- Between two groups of entries. -->
+    <dimen name="settings_group_gap">16dp</dimen>
+    <!-- The Hide apps list: at most six and a half rows tall, then it scrolls; the half row shows
+         there's more. On a small screen fewer, so the panel keeps the margin from the screen's
+         top and bottom edges. Between an app's name and its state. -->
+    <dimen name="settings_list_max_height">364dp</dimen>
+    <dimen name="settings_panel_margin">32dp</dimen>
+    <dimen name="settings_app_state_gap">16dp</dimen>
+    <!-- The strip at the list's end, in the panel's padding, where its scrollbar goes. -->
+    <dimen name="settings_list_scrollbar">12dp</dimen>
+    <dimen name="settings_list_scrollbar_negative">-12dp</dimen>
+</resources>

@@ -4,12 +4,12 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 // enforces this, since nothing Android is on this module's classpath. See docs/ARCHITECTURE.md.
 plugins {
     alias(libs.plugins.kotlin.jvm)
-    // src/testFixtures: fakes of the ports, shared with :app's tests (see docs/TESTING.md).
+    // src/testFixtures: fakes of the ports, shared with every module's tests (see docs/TESTING.md).
     `java-test-fixtures`
 }
 
-// Same bytecode level as :app. Set explicitly instead of a toolchain, so any JDK 17+ that runs
-// Gradle works without downloading another one.
+// Same bytecode level as the Android modules (build-logic/). Set explicitly instead of a
+// toolchain, so any JDK 17+ that runs Gradle works without downloading another one.
 java {
     sourceCompatibility = JavaVersion.VERSION_17
     targetCompatibility = JavaVersion.VERSION_17

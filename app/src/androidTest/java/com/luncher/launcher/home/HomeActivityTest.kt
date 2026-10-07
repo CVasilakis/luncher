@@ -3,13 +3,14 @@ package com.luncher.launcher.home
 import android.os.SystemClock
 import android.view.KeyEvent
 import android.view.View
+import android.view.ViewGroup
 import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.espresso.Espresso.onView
-import androidx.test.espresso.NoMatchingViewException
 import androidx.test.espresso.Espresso.pressBack
 import androidx.test.espresso.Espresso.pressBackUnconditionally
+import androidx.test.espresso.NoMatchingViewException
 import androidx.test.espresso.action.ViewActions.pressKey
 import androidx.test.espresso.assertion.ViewAssertions.doesNotExist
 import androidx.test.espresso.assertion.ViewAssertions.matches
@@ -27,12 +28,11 @@ import com.luncher.domain.apps.FakeInstalledApps
 import com.luncher.domain.apps.FakeInstalledApps.Companion.app
 import com.luncher.launcher.AppGraph
 import com.luncher.launcher.LuncherApplication
-import com.luncher.launcher.R
-import com.luncher.launcher.RetryWhenCovered
-import com.luncher.launcher.focus
-import com.luncher.launcher.longPressOk
-import com.luncher.launcher.resolvedHome
-import com.luncher.launcher.waitForHomeScreen
+import com.luncher.launcher.testing.RetryWhenCovered
+import com.luncher.launcher.testing.focus
+import com.luncher.launcher.testing.longPressOk
+import com.luncher.launcher.testing.resolvedHome
+import com.luncher.launcher.testing.waitForHomeScreen
 import junit.framework.AssertionFailedError
 import org.hamcrest.Matcher
 import org.hamcrest.Matchers.allOf
@@ -44,6 +44,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import com.luncher.launcher.settings.R as SettingsR
 
 /** The home screen on a real device, driven by real key events. */
 @RunWith(AndroidJUnit4::class)
@@ -126,7 +127,7 @@ class HomeActivityTest {
      */
     private fun waitForTheSettingsPanel() {
         try {
-            waitUntil(withText(R.string.settings_hide_apps), hasFocus())
+            waitUntil(withText(SettingsR.string.settings_hide_apps), hasFocus())
         } catch (e: Throwable) {
             throw AssertionError("The settings panel didn't get the focus back in ${TIMEOUT_MS / 1000} s: ${focus()}", e)
         }
@@ -198,7 +199,7 @@ class HomeActivityTest {
             press(KeyEvent.KEYCODE_DPAD_UP)
             press(KeyEvent.KEYCODE_DPAD_CENTER)
 
-            waitUntil(withText(R.string.settings_hide_apps), allOf(isDisplayed(), hasFocus()))
+            waitUntil(withText(SettingsR.string.settings_hide_apps), allOf(isDisplayed(), hasFocus()))
         }
     }
 
@@ -208,12 +209,12 @@ class HomeActivityTest {
             waitUntilTile("Games", hasFocus())
 
             press(KeyEvent.KEYCODE_MENU)                    // the settings panel
-            waitUntil(withText(R.string.settings_hide_apps), hasFocus())
+            waitUntil(withText(SettingsR.string.settings_hide_apps), hasFocus())
             press(KeyEvent.KEYCODE_DPAD_CENTER)             // Hide apps, with Games selected
-            waitUntil(withId(R.id.settings_apps), isDisplayed())
+            waitUntil(withId(SettingsR.id.settings_apps), isDisplayed())
             press(KeyEvent.KEYCODE_DPAD_DOWN)
             press(KeyEvent.KEYCODE_DPAD_CENTER)             // hides Movies
-            waitUntil(allOf(withId(R.id.settings_app_hidden), hasSibling(withText("Movies"))), isDisplayed())
+            waitUntil(allOf(withId(SettingsR.id.settings_app_hidden), hasSibling(withText("Movies"))), isDisplayed())
             pressBack()                                     // closes Hide apps
             waitForTheSettingsPanel()                       // so the next Back goes there
             pressBack()                                     // closes the panel
@@ -231,7 +232,7 @@ class HomeActivityTest {
 
             press(KeyEvent.KEYCODE_MENU)
 
-            waitUntil(withText(R.string.settings_system), isDisplayed())
+            waitUntil(withText(SettingsR.string.settings_system), isDisplayed())
         }
     }
 
@@ -241,7 +242,7 @@ class HomeActivityTest {
             waitUntilTile("Games", hasFocus())
             press(KeyEvent.KEYCODE_DPAD_UP)
             press(KeyEvent.KEYCODE_DPAD_CENTER)
-            waitUntil(withText(R.string.settings_system), isDisplayed())
+            waitUntil(withText(SettingsR.string.settings_system), isDisplayed())
 
             pressBack()
 
@@ -254,8 +255,9 @@ class HomeActivityTest {
     private fun ActivityScenario<HomeActivity>.labels(): List<String> {
         var labels = emptyList<String>()
         onActivity { activity ->
-            val tiles = activity.findViewById<AppTilesView>(R.id.home_apps)
-            labels = (0 until tiles.childCount).map { (tiles.getChildAt(it) as AppTileView).app.label }
+            // Each tile's description is its app's label; the tiles' views are the home module's own.
+            val tiles = activity.findViewById<ViewGroup>(R.id.home_apps)
+            labels = (0 until tiles.childCount).map { tiles.getChildAt(it).contentDescription.toString() }
         }
         return labels
     }

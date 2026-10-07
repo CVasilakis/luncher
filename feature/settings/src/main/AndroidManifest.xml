@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application>
+
+        <!-- The settings panel, floating over the home screen. No screenOrientation: Android 8.0
+             refuses one on a floating activity, which shows over the landscape home screen anyway. -->
+        <activity
+            android:name=".SettingsActivity"
+            android:exported="false"
+            android:launchMode="singleTop"
+            android:theme="@style/Theme.Luncher.Settings" />
+
+        <!-- The settings panel's list of apps to hide or show, in the panel's place. -->
+        <activity
+            android:name=".HideAppsActivity"
+            android:exported="false"
+            android:launchMode="singleTop"
+            android:theme="@style/Theme.Luncher.Settings.Panel" />
+    </application>
+
+</manifest>

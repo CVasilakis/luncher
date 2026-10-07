@@ -17,6 +17,10 @@ metadata/android/en-US/
   images/tvScreenshots/         1920 × 1080 screenshots, shown in the order of their names
 ```
 
+**License:** `icon.png`, `tvBanner.png` and `featureGraphic.png` are derived from AOSP artwork and
+are under the Apache License 2.0, not Luncher's MIT license: [`../app/NOTICE`](../app/NOTICE), which
+covers the app's own icon and banner too ([below](#icon-banner-and-feature-graphic)).
+
 ## Rules
 
 - **The path is fixed:** `fastlane/metadata/android/<language>/` at the root of the repository.

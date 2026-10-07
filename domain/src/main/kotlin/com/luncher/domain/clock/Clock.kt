@@ -1,7 +1,7 @@
 package com.luncher.domain.clock
 
 /**
- * Port: the device's clock. Implemented in :app on the system time, settings and broadcasts.
+ * Port: the device's clock. Implemented in :platform on the system time, settings and broadcasts.
  *
  * Something that shows the time reads it once, then again whenever a listener is called, so
  * nothing has to poll. Listen only while showing it: an implementation watches the device only

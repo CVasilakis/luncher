@@ -1,16 +1,15 @@
+// The application: LuncherApplication and AppGraph, which joins the modules; the version, the
+// release build and the instrumented tests (README.md). SDK levels and the settings every Android
+// module shares: build-logic/.
 plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.roborazzi)
+    alias(libs.plugins.luncher.android.application)
 }
 
 android {
     namespace = "com.luncher.launcher"
-    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.luncher.launcher"
-        minSdk = 22
-        targetSdk = 36
         // The version, changed by hand before each release (docs/RELEASING.md#versions). Both are
         // written out, as literals and before any other line naming them: F-Droid finds a
         // release's version by reading this file. The check after the android block keeps them
@@ -21,7 +20,7 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         // The system tier (UI Automator, the system/ package) runs only from API 24; below that
         // this filter leaves it out on each device. Reasons: SystemTierFilter.
-        testInstrumentationRunnerArguments["filter"] = "com.luncher.launcher.SystemTierFilter"
+        testInstrumentationRunnerArguments["filter"] = "com.luncher.launcher.testing.SystemTierFilter"
         // A backstop against a test that hangs: the runner fails a test method still running after
         // 15 minutes, and goes on with the next test. A test once hung for over 10 minutes on CI,
         // cause unknown, until the job's own time limit ended the whole run. It times the test
@@ -47,28 +46,10 @@ android {
         }
     }
 
-    testOptions {
-        // Robolectric and Roborazzi need the merged resources and manifest.
-        unitTests.isIncludeAndroidResources = true
-        // Robolectric's Android 16 (API 36) framework uses a JDK-internal class the JDK doesn't
-        // open by default; without this every Robolectric test fails with IllegalAccessException.
-        unitTests.all { it.jvmArgs("--add-opens=java.base/jdk.internal.access=ALL-UNNAMED") }
-    }
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
-    }
-
-    // Every warning fails lint (`lintDebug`, run in CI); its exceptions and their reasons: lint.xml.
+    // Lint runs here, over every module the app depends on (`:app:lintDebug`): a library alone
+    // lacks what the app's merged manifest has, such as the TV banner and supportsRtl.
     lint {
-        warningsAsErrors = true
-    }
-}
-
-kotlin {
-    compilerOptions {
-        allWarningsAsErrors = true
+        checkDependencies = true
     }
 }
 
@@ -91,12 +72,15 @@ android.defaultConfig.run {
 
 dependencies {
     implementation(project(":domain"))
+    implementation(project(":ui"))
+    implementation(project(":platform"))
+    implementation(project(":feature:home"))
+    implementation(project(":feature:settings"))
 
     // Tests only: none of this reaches the APK. Tiers and their tools: docs/TESTING.md.
-    testImplementation(testFixtures(project(":domain")))
+    testImplementation(testFixtures(project(":ui")))
     testImplementation(libs.junit)
     testImplementation(libs.robolectric)
-    testImplementation(libs.roborazzi)
 
     androidTestImplementation(testFixtures(project(":domain")))
     androidTestImplementation(libs.androidx.test.core)

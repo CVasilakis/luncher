@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Lint's exceptions for every module, each with its reason. Every other warning fails the build
+     (warningsAsErrors, build-logic/), so a new one is fixed or added here with its reason; one
+     that concerns a single module's files goes in that module's own lint.xml, which adds to
+     this one. -->
+<lint>
+    <!-- These report that a newer SDK or library exists: they turn the build red the day one comes
+         out, without a change here. Upgrades are decided on their own (gradle/README.md#upgrading). -->
+    <issue id="NewerVersionAvailable" severity="ignore" />
+    <issue id="GradleDependency" severity="ignore" />
+    <issue id="AndroidGradlePluginVersion" severity="ignore" />
+    <issue id="OldTargetApi" severity="ignore" />
+</lint>

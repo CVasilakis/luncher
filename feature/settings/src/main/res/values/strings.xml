@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_title">Settings</string>
+    <string name="settings_hide_apps">Hide apps</string>
+    <string name="settings_hidden">Hidden</string>
+    <string name="settings_no_apps">No TV apps installed</string>
+    <string name="settings_system">System settings</string>
+    <string name="settings_system_unavailable">This device has no settings app</string>
+</resources>

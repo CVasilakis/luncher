@@ -1,4 +1,6 @@
 pluginManagement {
+    // The convention plugins shared by the Android modules (build-logic/README.md).
+    includeBuild("build-logic")
     repositories {
         google()
         mavenCentral()
@@ -15,4 +17,4 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "Luncher"
-include(":app", ":domain")
+include(":app", ":domain", ":ui", ":platform", ":feature:home", ":feature:settings")

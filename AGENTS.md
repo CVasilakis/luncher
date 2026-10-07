@@ -43,7 +43,7 @@ adb shell am start -n com.luncher.launcher.debug/com.luncher.launcher.home.HomeA
 adb shell dumpsys window | grep mCurrentFocus    # what's in front
 adb exec-out screencap -p > screen.png           # screenshot, to look at the UI
 adb logcat -b crash                              # crashes
-remote.sh --long-press DPAD_CENTER               # long press of OK, any API level (app/README.md#arrange-mode)
+remote.sh --long-press DPAD_CENTER               # long press of OK, any API level (feature/home/README.md#arrange-mode)
 stop-emulator.sh                                 # stop it; returns once it has exited (add <avd> if several run)
 ```
 
@@ -111,25 +111,28 @@ Each of these fixes a real problem. Read the reason before changing anything.
 
 | What | Where | Reason |
 |---|---|---|
-| `kotlin-android` declared with `apply false` at the root | `build.gradle.kts` | [`gradle/README.md`](gradle/README.md#how-kotlin-is-set-up-agp-9-built-in-kotlin) |
-| `onBackPressed()` without `super`, and an `OnBackInvokedCallback` on API 36+, that only end arrange mode | `app/…/home/HomeActivity.kt` | its comments |
+| `kotlin-android` (and the other plugins) declared with `apply false` at the root; AGP and KGP `compileOnly` in `build-logic/` | `build.gradle.kts`, `build-logic/build.gradle.kts` | [`gradle/README.md`](gradle/README.md#how-kotlin-is-set-up-agp-9-built-in-kotlin) |
+| `onBackPressed()` without `super`, and an `OnBackInvokedCallback` on API 36+, that only end arrange mode | `feature/home/…/HomeActivity.kt` | its comments |
 | `java`/`jvmTarget` 17 instead of a toolchain | `domain/build.gradle.kts` | its comment |
-| `--add-opens=java.base/jdk.internal.access` for unit tests | `app/build.gradle.kts` | its comment |
+| `--add-opens=java.base/jdk.internal.access` for unit tests | `build-logic/…/AndroidConventions.kt` | its comment |
+| A library's `testOptions.targetSdk`, and its device tests disabled | `build-logic/…/AndroidLibraryConventionPlugin.kt` | its KDoc: without the first, Robolectric runs a library's tests on minSdk |
+| `checkDependencies` in `:app`'s lint | `app/build.gradle.kts` | its comment, [`docs/TESTING.md`](docs/TESTING.md#lint-and-compiler-warnings) |
 | `uninstallAll` before, `checkConnectedTestsRan` after instrumented tests | `app/build.gradle.kts` | its comment |
 | `android.injected.androidTest.leaveApksInstalledAfterRun` | `gradle.properties` | its comment |
-| `testInstrumentationRunnerArguments["filter"]`, `SystemTierFilter` | `app/build.gradle.kts`, `app/src/androidTest/…` | `SystemTierFilter`'s comment |
+| `testInstrumentationRunnerArguments["filter"]`, `SystemTierFilter` | `app/build.gradle.kts`, `app/src/androidTest/…/testing/` | `SystemTierFilter`'s comment |
 | `testInstrumentationRunnerArguments["timeout_msec"]` (15 minutes per test method) | `app/build.gradle.kts` | its comment |
 | `waitForHomeScreen()` before every instrumented test (and its Back on "USB drive connected"), with its two limits (10 minutes on the way to the home screen, 60 s for another app's screen), `pressHome()` in `HomeKeyTest`'s setup (until Luncher has the focus) and cleanup | `app/src/androidTest/…` | their comments |
 | `HomeKeyTest`'s cleanup: `dumpsys package write` (up to API 31) or the wait for a `commit_sys_config_file` event, the wait for `/data/system/users/0` to change, then `sync` | `app/src/androidTest/…/system/HomeKeyTest.kt` | `restoreDevice`'s KDoc, [`docs/TESTING.md`](docs/TESTING.md#organizing-tests) |
 | From API 33 on, `HomeKeyTest`'s cleanup setting Luncher's own `SettingsActivity` to ENABLED and back to DEFAULT with `PackageManager.SYNCHRONOUS` | `app/src/androidTest/…/system/HomeKeyTest.kt` | `writeHomeAppsNow`'s KDoc: it makes Android write the restored stock launcher's state at once, which nothing else can from API 33 on |
 | `waitForFocus()` right after a screen is seen, before keys (in the system tests and `longPressOk()`) | `app/src/androidTest/…` | `waitForFocus`'s comment, [`docs/TESTING.md`](docs/TESTING.md#instrumented-tests-espresso-ui-automator) |
 | `waitForTheSettingsPanel()` between the two Backs of `hidingAnAppInTheSettings_removesItsTile` | `app/src/androidTest/…/home/HomeActivityTest.kt` | its comment, [`docs/TESTING.md`](docs/TESTING.md#instrumented-tests-espresso-ui-automator) |
-| The wait, before `coverWithTheStockLauncher()`'s HOME intent, until no "choose home app" dialog is left that isn't finishing (`homeChooserNotFinishing`), rather than re-sending the intent | `app/src/androidTest/…/RetryWhenCoveredTest.kt` | `coverWithTheStockLauncher`'s KDoc, [`docs/TESTING.md`](docs/TESTING.md#instrumented-tests-espresso-ui-automator) |
+| The wait, before `coverWithTheStockLauncher()`'s HOME intent, until no "choose home app" dialog is left that isn't finishing (`homeChooserNotFinishing`), rather than re-sending the intent | `app/src/androidTest/…/testing/RetryWhenCoveredTest.kt` | `coverWithTheStockLauncher`'s KDoc, [`docs/TESTING.md`](docs/TESTING.md#instrumented-tests-espresso-ui-automator) |
 | `RetryWhenCovered` in the test classes that open screens (a test the stock launcher covered runs twice), judging each look by the state when its read began; and `HideAppsActivityTest`'s `arrangements` made anew at each launch | `app/src/androidTest/…` | its KDoc, [`docs/TESTING.md`](docs/TESTING.md#instrumented-tests-espresso-ui-automator) |
 | `start-emulator.sh --wait-for-home` in CI, although the tests wait for the home screen too | `.github/workflows/instrumented-tests.yml` | its comment |
-| `windowDisablePreview` in `Theme.Luncher` | `app/src/main/res/values/themes.xml` | [`app/README.md`](app/README.md#while-luncher-starts): no starting window up to Android 11, as from 12 on; a launch screen there flickers on slow TVs ([`docs/archive/launch-screen/`](docs/archive/launch-screen/README.md)) |
-| `open class AppGraph`, settable `LuncherApplication.graph` | `app/src/main/…` | [`docs/TESTING.md`](docs/TESTING.md#organizing-tests) |
-| Manifest `<queries>`, `uses-feature`, launcher intent filters | `AndroidManifest.xml` | [`app/README.md`](app/README.md#manifest-why-each-part-is-there) |
+| `windowDisablePreview` in `Theme.Luncher` | `ui/src/main/res/values/themes.xml` | [`app/README.md`](app/README.md#while-luncher-starts): no starting window up to Android 11, as from 12 on; a launch screen there flickers on slow TVs ([`docs/archive/launch-screen/`](docs/archive/launch-screen/README.md)) |
+| `open class AppGraph`, settable `LuncherApplication.graph`; the features' `Test…Graph` and test Applications, named in `robolectric.properties` | `app/src/main/…`, `feature/*/src/test/…` | [`docs/TESTING.md`](docs/TESTING.md#organizing-tests) |
+| `android:theme` on `HomeActivity`, although the application has the same | `feature/home/src/main/AndroidManifest.xml` | [`feature/home/README.md`](feature/home/README.md#manifest): the JVM tests have no app manifest |
+| Manifest `<queries>`, `uses-feature`, launcher intent filters | `AndroidManifest.xml` of `:app` and `:platform` | [`app/README.md`](app/README.md#manifest-why-each-part-is-there), [`platform/README.md`](platform/README.md#manifest) |
 | `distributionSha256Sum` | `gradle/wrapper/gradle-wrapper.properties` | [`gradle/README.md`](gradle/README.md#upgrading) |
 | `versionCode` and `versionName` written out as literals, although the check after the `android` block could compute one from the other | `app/build.gradle.kts` | their comment, [`docs/RELEASING.md`](docs/RELEASING.md#versions): F-Droid reads them from the file |
 | `--alignment-preserved true` on `apksigner sign`, and the `reproduce` job | `.github/workflows/release.yml` | [`docs/RELEASING.md`](docs/RELEASING.md#f-droid): without them F-Droid may silently stop publishing releases |

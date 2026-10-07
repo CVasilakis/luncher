@@ -1,12 +1,12 @@
 # domain/
 
 The launcher's models, rules and ports, in pure Kotlin. What each of them is, what this module may
-use, and how it fits with `:app`: [`../docs/ARCHITECTURE.md`](../docs/ARCHITECTURE.md).
+use, and how it fits with the other modules: [`../docs/ARCHITECTURE.md`](../docs/ARCHITECTURE.md).
 
 | | |
 |---|---|
 | Package | `com.luncher.domain` |
-| Build | [`build.gradle.kts`](build.gradle.kts): Kotlin/JVM (`org.jetbrains.kotlin.jvm`), bytecode level 17 like `:app` |
+| Build | [`build.gradle.kts`](build.gradle.kts): Kotlin/JVM (`org.jetbrains.kotlin.jvm`), bytecode level 17 like the Android modules |
 
 ## Layout
 
@@ -17,6 +17,7 @@ domain/src/
 │   │   ├── LaunchableApp.kt     model: an app's TV launcher activity (package + activity), its identity
 │   │   ├── InstalledApp.kt      model: a launchable app with its label and whether it has a banner
 │   │   ├── InstalledApps.kt     port: the TV apps installed on the device
+│   │   ├── AppImages.kt         port: an app's image drawn at a size, in the UI's image type
 │   │   ├── AppArrangement.kt    model: the user's order of the shown apps, and the hidden apps, as stored
 │   │   ├── AppArrangements.kt   port: where the arrangement is kept
 │   │   ├── HomeApps.kt          rule: which apps the home screen shows, in which order, and which are hidden
@@ -55,6 +56,7 @@ models, rules and ports of that topic.
   nothing ([`ARCHITECTURE.md`](../docs/ARCHITECTURE.md#rules), rule 5). It's still pure Kotlin,
   tested the same way.
 - Ports are interfaces named after what they provide (`InstalledApps`), not how
-  (`PackageManagerApps`); adapters in `:app` implement them.
+  (`PackageManagerApps`); adapters in `:platform` implement them. A port whose result is a UI type
+  this module can't name is generic in it (`AppImages<Image>`).
 - A port for device state that changes while it's shown (`Clock`) has a read function, and
   `addListener`/`removeListener` that tell when to read again, so nothing polls.

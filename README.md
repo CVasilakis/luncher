@@ -88,14 +88,19 @@ Why the stock launcher has to be disabled, and its name on the other emulators:
 
 | Path | Contents |
 |---|---|
-| [`app/`](app/README.md) | The Android app module: UI, adapters on Android APIs, composition root. |
+| [`app/`](app/README.md) | The application module: the composition root that joins the others, the manifest, icon and version, and the instrumented tests. |
+| [`feature/`](feature/README.md) | The screens, one module per feature: the home screen, the settings panel. |
+| [`platform/`](platform/README.md) | The adapters: the domain's ports on Android APIs. |
+| [`ui/`](ui/README.md) | What every screen shares: the theme, colors and UI helpers. |
 | [`domain/`](domain/README.md) | Pure Kotlin module: the launcher's models, rules and ports (no Android). |
+| [`build-logic/`](build-logic/README.md) | Gradle convention plugins: the build settings every Android module shares. |
 | [`gradle/`](gradle/README.md) | Version catalog and Gradle wrapper. |
 | [`docs/`](docs/README.md) | Project-wide guides: architecture, testing and releases; and an archive of how the design was reached: the artwork's options, layout reviews, removed features. |
 | [`fastlane/`](fastlane/README.md) | The store listing F-Droid and Google Play show: name, descriptions, changes per version, screenshots (not part of the build). |
 | `.github/workflows/` | GitHub Actions workflows that run the tests ([`docs/TESTING.md`](docs/TESTING.md#in-ci)) and make releases ([`docs/RELEASING.md`](docs/RELEASING.md)). |
 | [`AGENTS.md`](AGENTS.md) | What coding agents need on top of these docs. |
 | `build.gradle.kts`, `settings.gradle.kts`, `gradle.properties`, `gradlew*` | Standard Gradle project files. |
+| `lint.xml` | Lint's exceptions for every module ([`docs/TESTING.md`](docs/TESTING.md#lint-and-compiler-warnings)). |
 
 ## License
 

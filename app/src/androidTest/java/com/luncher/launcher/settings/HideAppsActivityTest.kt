@@ -22,9 +22,8 @@ import com.luncher.domain.apps.FakeInstalledApps
 import com.luncher.domain.apps.FakeInstalledApps.Companion.app
 import com.luncher.launcher.AppGraph
 import com.luncher.launcher.LuncherApplication
-import com.luncher.launcher.R
-import com.luncher.launcher.RetryWhenCovered
-import com.luncher.launcher.waitForHomeScreen
+import com.luncher.launcher.testing.RetryWhenCovered
+import com.luncher.launcher.testing.waitForHomeScreen
 import junit.framework.AssertionFailedError
 import org.hamcrest.Matcher
 import org.hamcrest.Matchers.allOf

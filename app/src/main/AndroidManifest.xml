@@ -9,18 +9,8 @@
         android:name="android.hardware.touchscreen"
         android:required="false" />
 
-    <!-- Package visibility (API 30+): a launcher must be able to see launchable apps. -->
-    <queries>
-        <intent>
-            <action android:name="android.intent.action.MAIN" />
-            <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
-        </intent>
-        <intent>
-            <action android:name="android.intent.action.MAIN" />
-            <category android:name="android.intent.category.LAUNCHER" />
-        </intent>
-    </queries>
-
+    <!-- The activities are declared in the feature modules' manifests, which the build merges
+         into this one; here, what makes the home screen's activity Luncher's entry point. -->
     <application
         android:name=".LuncherApplication"
         android:allowBackup="true"
@@ -31,13 +21,8 @@
         android:theme="@style/Theme.Luncher">
 
         <activity
-            android:name=".home.HomeActivity"
-            android:clearTaskOnLaunch="true"
-            android:excludeFromRecents="true"
-            android:exported="true"
-            android:launchMode="singleTask"
-            android:screenOrientation="landscape"
-            android:stateNotNeeded="true">
+            android:name="com.luncher.launcher.home.HomeActivity"
+            android:exported="true">
 
             <!-- Registers the app as a home screen (launcher). -->
             <intent-filter>
@@ -52,21 +37,6 @@
                 <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
             </intent-filter>
         </activity>
-
-        <!-- The settings panel, floating over the home screen. No screenOrientation: Android 8.0
-             refuses one on a floating activity, which shows over the landscape home screen anyway. -->
-        <activity
-            android:name=".settings.SettingsActivity"
-            android:exported="false"
-            android:launchMode="singleTop"
-            android:theme="@style/Theme.Luncher.Settings" />
-
-        <!-- The settings panel's list of apps to hide or show, in the panel's place. -->
-        <activity
-            android:name=".settings.HideAppsActivity"
-            android:exported="false"
-            android:launchMode="singleTop"
-            android:theme="@style/Theme.Luncher.Settings.Panel" />
     </application>
 
 </manifest>

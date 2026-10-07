@@ -1,19 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Luncher</string>
-    <string name="home_no_apps">No TV apps installed</string>
-    <string name="home_all_hidden">All apps are hidden. Open Settings → Hide apps to show them again.</string>
-    <string name="home_settings">Settings</string>
-    <!-- Arrange mode: the top bar's title and which keys do what, and the shelf of hidden apps. -->
-    <string name="home_arrange_title">Arrange apps</string>
-    <string name="home_arrange_hint_holding">↑↓←→ Move · OK Drop · Back Done</string>
-    <string name="home_arrange_hint_browsing">OK Pick up · Back Done</string>
-    <string name="home_hidden">Hidden</string>
-    <string name="home_hidden_empty">Move apps here to hide them</string>
-    <string name="settings_title">Settings</string>
-    <string name="settings_hide_apps">Hide apps</string>
-    <string name="settings_hidden">Hidden</string>
-    <string name="settings_no_apps">No TV apps installed</string>
-    <string name="settings_system">System settings</string>
-    <string name="settings_system_unavailable">This device has no settings app</string>
 </resources>

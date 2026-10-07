@@ -9,8 +9,8 @@ needs to run, so a change comes with tests in the matching place and nowhere els
 | Tier | What it checks | Tool | Location | Runs on | Command |
 |---|---|---|---|---|---|
 | Domain unit | rules and models in `:domain` | JUnit 4 | `domain/src/test/kotlin/` | JVM | `./gradlew :domain:test` |
-| App JVM | adapters and screens on a simulated Android (API 36; the layout checks also API 33) | Robolectric | `app/src/test/java/` | JVM | `./gradlew :app:testDebugUnitTest` |
-| Screenshots | how screens look on a 1080p TV, including D-pad focus states, and on a few other screens | Roborazzi (on Robolectric) | `app/src/test/java/…/<feature>/*ScreenshotTest.kt`, images in `app/src/test/screenshots/<feature>/` | JVM | `./gradlew :app:verifyRoborazziDebug` |
+| Android JVM | adapters and screens on a simulated Android (API 36; the layout checks also API 33) | Robolectric | `src/test/java/` of `:platform`, each feature and `:app` | JVM | `./gradlew testDebugUnitTest` |
+| Screenshots | how screens look on a 1080p TV, including D-pad focus states, and on a few other screens | Roborazzi (on Robolectric) | `feature/<name>/src/test/java/…/*ScreenshotTest.kt`, images in `feature/<name>/src/test/screenshots/<name>/` | JVM | `./gradlew verifyRoborazziDebug` |
 | In-app | a screen's behavior with real key events: D-pad focus, keys, Back | Espresso | `app/src/androidTest/java/…/<feature>/` | emulator | `./gradlew connectedDebugAndroidTest` |
 | System | Luncher as the home screen: Home key, other apps, returning | UI Automator | `app/src/androidTest/java/…/system/` | emulator, API 24+ ([why](#the-system-tier-from-api-24-on)) | `./gradlew connectedDebugAndroidTest` |
 
@@ -18,7 +18,7 @@ Everything at once, [lint](#lint-and-compiler-warnings) included (with the emula
 the last two tiers):
 
 ```bash
-./gradlew :domain:test :app:testDebugUnitTest :app:verifyRoborazziDebug :app:lintDebug connectedDebugAndroidTest
+./gradlew :domain:test testDebugUnitTest verifyRoborazziDebug :app:lintDebug connectedDebugAndroidTest
 ```
 
 What to install for them (the JDK for the JVM tiers, a device for the others):
@@ -32,10 +32,10 @@ Use the lowest tier that can catch the regression; each step up is slower and mo
 
 - **A decision** (which apps show, their order, hidden apps, banner choice, validating a setting):
   domain unit test. This is where most tests belong.
-- **An adapter** (does the PackageManager query or the preferences storage work): app JVM test,
+- **An adapter** (does the PackageManager query or the preferences storage work): Android JVM test,
   with Robolectric's shadows standing in for the system (e.g. `shadowOf(packageManager)` to
   install fake apps with intent filters).
-- **What a screen shows, and how it reacts to lifecycle changes**: app JVM test
+- **What a screen shows, and how it reacts to lifecycle changes**: Android JVM test
   (`Robolectric.buildActivity(…)`). **How it looks**: screenshot test.
 - **Real key events on a screen** (D-pad focus movement, OK, Back): Espresso.
 - **Anything across apps or the system** (Home key, launching an app and returning, being the
@@ -47,9 +47,18 @@ outside a broken Back looks the same as a working one.
 
 ## Organizing tests
 
-- **Mirror the code.** A test lives in the same package as the code it tests; its class is named
-  after that code (`PackageManagerInstalledAppsTest`) or screen (`HomeActivityTest`,
-  `HomeScreenshotTest`); system tests after the flow (`HomeKeyTest`).
+- **Mirror the code.** A JVM test lives in the module and package of the code it tests; its class
+  is named after that code (`PackageManagerInstalledAppsTest`) or screen (`HomeActivityTest`,
+  `HomeScreenshotTest`); system tests after the flow (`HomeKeyTest`). The instrumented tests of
+  every module are in `:app` (`app/src/androidTest/`), in the package of the screen they test:
+  they need the installed app as the device's home screen. The library modules have none
+  ([`build-logic/`](../build-logic/README.md)).
+- **Test infrastructure in `testing/`.** What the tests of several features share is in a package
+  `com.luncher.launcher.testing`, with the tests of that infrastructure itself: for the JVM tests,
+  `:ui`'s test fixtures (the TV screens, layout checks), which every module's tests can use; for
+  the instrumented tests, `app/src/androidTest/…/testing/` (the waits for the home screen and the
+  focus, keys, `RetryWhenCovered`, `SystemTierFilter`). A feature's test package holds only that
+  feature's tests.
 - **Name tests after behavior.** JVM tests use backtick sentences
   (`` `reads the apps again when the home screen comes back` ``). `androidTest` uses
   `action_expectedResult` (`backKey_doesNotCloseTheHomeScreen`), because DEX files before API 30
@@ -57,16 +66,21 @@ outside a broken Back looks the same as a working one.
 - **One set of fakes.** Fakes of the domain ports (`FakeInstalledApps`, …) live in `:domain`'s
   test fixtures, `domain/src/testFixtures/kotlin/`, and every tier uses them. When a port changes,
   its fake changes in one place. A new port gets a fake there.
-- **Replace ports through `AppGraph`**, never by reaching into a screen:
+- **Replace ports through the graph**, never by reaching into a screen. A feature's JVM tests run
+  with an Application of their own (`HomeTestApplication`, named in the module's
+  `src/test/resources/robolectric.properties`), which holds the feature's graph; a test gives it
+  the feature's test graph, which has fakes, with its own ports in their place:
   ```kotlin
-  application.graph = object : AppGraph(application) {
+  application.graph = object : TestHomeGraph(application) {
       override val installedApps = FakeInstalledApps(app("movies"), app("music"))
   }
   ```
-  Under Robolectric each test gets a fresh application. In `androidTest` the process outlives the
-  test, so restore it in `@After` with `application.graph = AppGraph(application)`.
+  The instrumented tests run on the real app, and replace ports in `AppGraph`, the same way:
+  `object : AppGraph(application) { override … }`. Under Robolectric each test gets a fresh
+  application. In `androidTest` the process outlives the test, so restore it in `@After` with
+  `application.graph = AppGraph(application)`.
 - **TV screen configuration.** Robolectric tests of screens use `@Config(qualifiers = TV_1080P)`
-  (`app/src/test/java/com/luncher/launcher/TvDevice.kt`). Tests that check text the language
+  (`ui/src/testFixtures/java/com/luncher/launcher/testing/TvDevice.kt`). Tests that check text the language
   formats (the clock) also fix the language, `"en-rUS-$TV_1080P"`, and replace the `Clock` port
   with a `FakeClock`, so the result depends neither on the host's time nor on its time zone.
   Other screens: [Layouts on other screens](#layouts-on-other-screens).
@@ -100,9 +114,9 @@ outside a broken Back looks the same as a working one.
 ## Screenshot tests
 
 ```bash
-./gradlew :app:recordRoborazziDebug    # write/overwrite the reference images
-./gradlew :app:verifyRoborazziDebug    # fail if a screen differs from its reference image
-./gradlew :app:compareRoborazziDebug   # write diff images to app/build/outputs/roborazzi/
+./gradlew recordRoborazziDebug    # write/overwrite the reference images, in every feature
+./gradlew verifyRoborazziDebug    # fail if a screen differs from its reference image
+./gradlew compareRoborazziDebug   # write diff images to feature/<name>/build/outputs/roborazzi/
 ```
 
 Reference images are committed. When a change alters a screen on purpose, record, look at the new
@@ -115,7 +129,7 @@ comparing images. Screenshots need Robolectric's native graphics
 TVs aren't all 960×540 dp: 720p at the 1080p density is 640×360 dp, some TV boxes run 1080p at
 240 or 160 dpi (1280 or 1920 dp wide), screens can be 4:3, 16:10 or 21:9, and the user can make
 text larger. `HomeLayoutTest` and `SettingsLayoutTest` run on each of these screens, `TV_SCREENS`
-in `app/src/test/java/…/TvDevice.kt`, and check rules rather than pixels (`LayoutChecks.kt`):
+in `ui/src/testFixtures/…/testing/TvDevice.kt`, and check rules rather than pixels (`LayoutChecks.kt`):
 everything inside the TV's overscan margin, tiles clear of each other and of the top bar even
 zoomed, tiles of about the size meant, no text cut, panels a margin from the screen's edges. A
 new element of a screen gets its check there, a new screen a `*LayoutTest` of its own, and a
@@ -132,15 +146,17 @@ between the versions other than the text shows too. The other JVM tests run on A
 ## Lint and compiler warnings
 
 ```bash
-./gradlew :app:lintDebug    # report: app/build/reports/lint-results-debug.html
+./gradlew :app:lintDebug    # every module; report: app/build/reports/lint-results-debug.html
 ```
 
 Lint finds what no JVM test can: the JVM tiers run on API 36's framework (the layout tests on
 33's too), so an API used below the level it exists on (`NewApi`) passes them, and the emulators
-catch it only on a path a test takes. Every lint warning fails it, and every Kotlin compiler warning fails the build, in both
-modules. A warning is fixed, or, where it doesn't apply, made an exception with its reason: in
-[`app/lint.xml`](../app/lint.xml) for lint, with `@Suppress` and a comment in Kotlin (as in
-`AppTileView`). Lint's checks that a newer SDK or library exists are off, since they would fail
+catch it only on a path a test takes. Lint runs from `:app` over every module, with the app's
+merged manifest; a library's own `lintDebug` lacks it, and reports e.g. a missing TV banner. Every
+lint warning fails it, and every Kotlin compiler warning fails the build, in every module. A
+warning is fixed, or, where it doesn't apply, made an exception with its reason: for lint in the
+root [`lint.xml`](../lint.xml), or a module's own `lint.xml` for its files; in Kotlin with
+`@Suppress` and a comment (as in `ui`'s `Colors.kt`). Lint's checks that a newer SDK or library exists are off, since they would fail
 the build the day one comes out, without a change in the repository.
 
 ## Instrumented tests (Espresso, UI Automator)
@@ -159,7 +175,7 @@ The build changes four things about AGP's runs (the reasons are in comments in
 
 Every instrumented test that opens a screen starts from the device's home screen, settled, so none
 depends on what an earlier test or the boot left behind: its `@Before` calls `waitForHomeScreen()`
-(`app/src/androidTest/java/…/HomeApp.kt`, which says what settled means and why). The home app
+(`app/src/androidTest/java/…/testing/HomeApp.kt`, which says what settled means and why). The home app
 starts whenever a test closes its activities, and some stock launchers then open screens of their
 own over whatever a test has started meanwhile. A new test class does the same. After a boot,
 Google TV's launcher shows a screen of its own first, for minutes on a slow host, then its home
@@ -182,7 +198,7 @@ dies with it, restarts, and brings its home task over whatever is in front, abou
 boot's wait for the home screen returned. A covered test fails within its own time limits, with an
 error that doesn't say why: Espresso gives up after 33–38 s without a resumed activity,
 `waitForFocus()` after 10 s, UI Automator's waits after 30 s. So the test classes that open screens
-have the rule `RetryWhenCovered` (`app/src/androidTest/java/…/RetryWhenCovered.kt`): when a test
+have the rule `RetryWhenCovered` (`app/src/androidTest/java/…/testing/RetryWhenCovered.kt`): when a test
 fails and, while it ran, one of its activities went under a screen of the stock home app (on API
 22, the "choose home app" dialog), the rule logs that, waits for the settled home screen and runs
 the test once more, `@Before` and `@After` included. A look at the focus counts by the state when
@@ -210,7 +226,7 @@ device the next key can find it still resumed, and be lost on its closing window
 that changes the window in front, an in-app test waits until the new window shows what it
 expects, focused, before the next key (`HomeActivityTest`'s `waitForTheSettingsPanel()`).
 Before a key from UI Automator or `Instrumentation.sendKeySync`, a test sees the screen, then
-calls `waitForFocus()` (`app/src/androidTest/java/…/Focus.kt`), which fails after 10 s, saying
+calls `waitForFocus()` (`app/src/androidTest/java/…/testing/Focus.kt`), which fails after 10 s, saying
 what has the focus (`dumpsys window`'s `mFocusedApp` and `mCurrentFocus`, as in
 `waitForHomeScreen()`). `longPressOk()` waits for a window of Luncher that way too.
 
@@ -252,7 +268,7 @@ boot, since Luncher stays installed.
 ### The system tier from API 24 on
 
 The system tier runs only on API 24 and newer; on API 22 and 23 the in-app tier still runs.
-`SystemTierFilter` (`app/src/androidTest/java/…/SystemTierFilter.kt`, which says why) leaves out
+`SystemTierFilter` (`app/src/androidTest/java/…/testing/SystemTierFilter.kt`, which says why) leaves out
 every test in the `system` package on older devices, so a new system test needs nothing of its
 own: putting it in `system/` is enough. Luncher as the home screen on API 22 and 23 is checked by
 hand ([`app/README.md`](../app/README.md#luncher-as-the-home-screen)).
