@@ -9,6 +9,7 @@ APIs, and the composition root. How they fit together, and the rules they follow
 ```
 app/
 ├── build.gradle.kts                  module build: SDK levels, version, debug app ID, R8, :domain, test setup
+├── LICENSE-APACHE-2.0, NOTICE        license of the icon and banner artwork (Apache 2.0, from AOSP)
 ├── proguard-rules.pro                app-specific R8 rules (none yet)
 ├── src/test/                         JVM tests: Robolectric, Roborazzi screenshots (docs/TESTING.md)
 │   ├── java/com/luncher/launcher/    same packages as the code; TvDevice.kt: TV screen config
@@ -17,7 +18,9 @@ app/
 │   └── java/com/luncher/launcher/
 │       ├── <feature>/                Espresso: one screen, real key events
 │       └── system/                   UI Automator: Home key, other apps
-├── src/debug/res/values/strings.xml  the debug build's name, "Luncher (debug)"
+├── src/debug/res/
+│   ├── values/strings.xml            the debug build's name, "Luncher (debug)"
+│   └── drawable/                     its banner and icon: the release's with an amber DEBUG stripe
 └── src/main/
     ├── AndroidManifest.xml           launcher registration, TV features, package visibility
     ├── java/com/luncher/launcher/
@@ -41,10 +44,12 @@ app/
     └── res/
         ├── animator/home_tile_focus.xml   zoom of the focused tile
         ├── drawable/
-        │   ├── banner.xml            TV banner, 320×180 dp (plate between a fork and a knife)
-        │   ├── ic_launcher.xml       app icon (plate with a play button)
+        │   ├── banner.xml            TV banner, 320×180 dp: the logo's TV and the name
+        │   ├── ic_launcher.xml       app icon before Android 8.0: the TV on a sky-blue square
+        │   ├── ic_launcher_foreground.xml   the adaptive icon's foreground: the TV
         │   ├── home_settings*.xml    the top bar's settings gear, and its focus disc
         │   └── settings_*.xml        the settings panel's window and focused entry
+        ├── drawable-anydpi-v26/ic_launcher.xml   app icon from 8.0 on: adaptive, the TV on sky blue
         ├── layout/                   home_activity.xml; settings_activity.xml, settings_entry.xml,
         │                             settings_hide_apps_activity.xml, settings_app_row.xml
         └── values/                   colors, dimensions, strings, theme
@@ -253,9 +258,17 @@ explained in its comments.
 ```
 
 A debug build is an app of its own, `com.luncher.launcher.debug`, labeled "Luncher (debug)"
-(`src/debug/`), so it installs next to a release, which is signed with another key. Its classes
-keep the package `com.luncher.launcher`, so its activities' full name is e.g.
+and with an amber DEBUG stripe across its icon and banner (`src/debug/`), so it installs next to
+a release, which is signed with another key. Its classes keep the package `com.luncher.launcher`,
+so its activities' full name is e.g.
 `com.luncher.launcher.debug/com.luncher.launcher.home.HomeActivity`.
+
+The icon and banner drawables are flat: each path has its coordinates and stroke width already
+moved and scaled, with no `<group>` and no `<clip-path>`. Vector drawables before Android 7.0
+(API 24) don't scale a stroke's width with its group's scale, and keep a group's clip path for
+everything drawn after the group; on API 22 the first drew every line several times too thick and
+the second left half the drawing out. Edit them the same way. They're derived from AOSP artwork
+under the Apache License 2.0 ([`NOTICE`](NOTICE)), and each keeps its AOSP header.
 
 Builds have the version set in `build.gradle.kts`, the last release's between releases
 ([`docs/RELEASING.md`](../docs/RELEASING.md#versions)). The release APK is unsigned and can't be

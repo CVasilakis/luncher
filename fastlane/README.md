@@ -11,6 +11,9 @@ metadata/android/en-US/
   short_description.txt         one line, at most 80 characters
   full_description.txt          at most 4000 characters
   changelogs/<versionCode>.txt  what's new in that version, at most 500 characters
+  images/icon.png               the app's icon, 512 × 512
+  images/tvBanner.png           the TV banner, 1280 × 720
+  images/featureGraphic.png     the header of the store page, 1024 × 500
   images/tvScreenshots/         1920 × 1080 screenshots, shown in the order of their names
 ```
 
@@ -27,10 +30,24 @@ metadata/android/en-US/
   it from the release's tag.
 - **Plain text,** one paragraph per line: both stores keep the line breaks, and Play shows no
   HTML beyond a few tags.
-- **Images without transparency:** Play rejects PNGs with an alpha channel.
+- **Images without transparency:** Play asks for the feature graphic, the TV banner and the
+  screenshots without an alpha channel, and for the icon with one, fully opaque.
 
-The icon (`images/icon.png`, 512 × 512), feature graphic (`images/featureGraphic.png`,
-1024 × 500) and TV banner (`images/tvBanner.png`, 1280 × 720) come with the chosen logo.
+## Icon, banner and feature graphic
+
+The same drawings as the app's own: the icon is the adaptive app icon's visible part, square
+(stores round the corners themselves), the TV banner is the app's banner at 4×, and the feature
+graphic is the banner's TV and name on a wider ground. Their desserts come from AOSP artwork, so
+they are under the Apache License 2.0 like the app's icon and banner
+([`../app/NOTICE`](../app/NOTICE)).
+
+Rendered from SVGs of the same drawings with librsvg (`gdk-pixbuf-thumbnailer -s <width> in.svg out.png`), then
+without the alpha channel like the screenshots below, except the icon, whose alpha channel is
+made opaque instead:
+
+```bash
+convert icon.png -alpha opaque -strip -define png:color-type=6 icon.png
+```
 
 ## Screenshots
 

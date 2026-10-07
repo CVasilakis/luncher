@@ -20,7 +20,7 @@ above, hiding and reordering apps exist so far ([`app/README.md`](app/README.md#
 |---|---|
 | Package | `com.luncher.launcher` (debug builds: `com.luncher.launcher.debug`) |
 | Supported Android versions | Android TV 5.1 (API 22) and newer |
-| Release APK size | ~58 KB |
+| Release APK size | ~69 KB |
 
 ## Documentation
 
@@ -99,4 +99,7 @@ Why the stock launcher has to be disabled, and its name on the other emulators:
 
 ## License
 
-Luncher is under the MIT License ([`LICENSE`](LICENSE)).
+Luncher is under the MIT License ([`LICENSE`](LICENSE)). Its icon and banner, and the store
+listing's images, are derived from Android Open Source Project artwork and are under the Apache
+License 2.0 instead ([`app/NOTICE`](app/NOTICE),
+[`app/LICENSE-APACHE-2.0`](app/LICENSE-APACHE-2.0)).

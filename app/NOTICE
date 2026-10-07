@@ -1,0 +1,30 @@
+Luncher's icon and banner artwork
+
+These files are derived from Android Open Source Project artwork and are licensed under the
+Apache License, Version 2.0 (LICENSE-APACHE-2.0 in this folder), not Luncher's MIT license:
+
+- the app's icon and banner: src/main/res/drawable/banner.xml, ic_launcher.xml and
+  ic_launcher_foreground.xml, and the debug build's versions in src/debug/res/drawable/
+- the store listing's images: ../fastlane/metadata/android/en-US/images/icon.png, tvBanner.png
+  and featureGraphic.png
+
+They draw the desserts of the Android 14-17 "platform logo" (AOSP frameworks/base,
+packages/SystemUI/res/drawable/android14_patch_monochrome.xml to android17_patch_monochrome.xml),
+modified for Luncher: the Android robot is removed from each (the 14 cake gets sprinkles where its
+head was, the 15 ice cream scoop gets a waffle cone), and the desserts are served on plates on the
+screen of a TV. The lettering "Luncher" is set in Roboto (Apache License 2.0).
+
+The notice below is the part of AOSP's frameworks/base NOTICE that covers this artwork; the rest
+of that file covers other code in Android.
+
+   =========================================================================
+   ==  NOTICE file corresponding to the section 4 d of                    ==
+   ==  the Apache License, Version 2.0,                                   ==
+   ==  in this case for the Android-specific code.                        ==
+   =========================================================================
+
+Android Code
+Copyright 2005-2008 The Android Open Source Project
+
+This product includes software developed as part of
+The Android Open Source Project (http://source.android.com).

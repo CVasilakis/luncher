@@ -9,6 +9,6 @@
     <!-- The settings panel, and the fill of its focused entry. -->
     <color name="settings_panel">#FF1C232B</color>
     <color name="settings_entry_focused">#1FFFFFFF</color>
-    <color name="plate_rim">#FFECEFF3</color>
-    <color name="plate_well">#FFCFD6DF</color>
+    <!-- The adaptive app icon's background layer: the logo's sky blue. -->
+    <color name="icon_background">#FFA9C8F5</color>
 </resources>
