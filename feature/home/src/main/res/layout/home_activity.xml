@@ -108,7 +108,7 @@
         android:layout_gravity="center"
         android:text="@string/home_no_apps"
         android:textColor="@color/text_secondary"
-        android:textSize="20sp"
+        android:textSize="@dimen/home_empty_text"
         android:visibility="gone" />
 
 </merge>

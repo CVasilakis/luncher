@@ -14,6 +14,8 @@
     <dimen name="home_tile_frame">3dp</dimen>
     <dimen name="home_time_text">32sp</dimen>
     <dimen name="home_date_text">18sp</dimen>
+    <!-- The message in place of the tiles: no TV apps installed, or all of them hidden. -->
+    <dimen name="home_empty_text">20sp</dimen>
     <!-- Between the time and the date. -->
     <dimen name="home_clock_gap">16dp</dimen>
     <!-- The settings entry at the end of the top bar: its size, and the gear's inset within it. -->
