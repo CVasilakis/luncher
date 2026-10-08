@@ -69,7 +69,7 @@ for avd in tv_api22 tv_api24 tv_api28 tv_api30 tv_api33 tv_api36; do start-emula
 ```
 
 How many run at once is up to you: an emulator takes ~2 GB of RAM on API 22, 24 and 28 and
-~3–3.4 GB on 30, 33 and 36, so all six need ~16 GB. With less, boot them in batches (e.g. 22, 24
+~3.2–3.8 GB on 30, 33 and 36, so all six need ~17 GB. With less, boot them in batches (e.g. 22, 24
 and 36, then 28, 30 and 33) or one at a time, stopping each with `stop-emulator.sh <avd>` before
 the next. The API 36 image also takes 8.2 GB of disk.
 
@@ -158,8 +158,8 @@ as the home screen on API 22 and 23 is checked by hand
   tests: each one starts its activity above the dialog. Leave it unanswered (Back closes it). An
   emulator that has run the tests before shows it from its boot, since Luncher stays installed.
 - **The stock launcher crashing while `HomeKeyTest` has it disabled:** the device log can show it
-  as Android starts its process anyway (on the API 34 Android TV emulator, twice per run: `Tried
-  to schedule job for non-existent component … DailyCheckInService`). That's harmless: the
+  as Android starts its process anyway (on the API 33 and 34 Android TV emulators, twice per run:
+  `Tried to schedule job for non-existent component … DailyCheckInService`). That's harmless: the
   launcher is disabled, and nothing of it is on screen.
 - **Android TV 16's Settings crashing on `tv_api36` starved of CPU,** as it opens (a
   `NullPointerException` in `MainFragment.onSuggestionReady`, on a launch after the first, from

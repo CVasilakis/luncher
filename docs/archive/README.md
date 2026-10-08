@@ -39,9 +39,9 @@ app starts, on each version).
 
 Up to Android 11 (API 30), once the app's window has drawn, Android doesn't remove the starting
 window at once: it fades it out over the app's first frame, linearly over 150 ms
-(`app_starting_exit`, chosen by AOSP `PhoneWindowManager.selectAnimationLw` up to Android 10 and
-`DisplayPolicy.selectAnimation` on 11). Android 11 skips the fade for an activity of type home,
-not for one opened as an app.
+(`app_starting_exit`, chosen by AOSP `PhoneWindowManager.selectAnimationLw` up to Android 9,
+`DisplayPolicy.selectAnimationLw` on 10 and `DisplayPolicy.selectAnimation` on 11). Android 11
+skips the fade for an activity of type home, not for one opened as an app.
 
 - With the plain dark starting window Luncher had before, the fade was invisible: it went from
   the home screen's background colour to the home screen, so only the tiles faded in.

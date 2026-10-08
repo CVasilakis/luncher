@@ -148,8 +148,9 @@ What keeps it light:
 
 - **The hidden apps' tiles exist only during the mode.** Their bitmaps are drawn when it starts,
   and dropped with the tiles when it ends.
-- **A move allocates nothing,** except when an app crosses between the shown and the hidden
-  ones. The tile is moved in place (detached and attached again, which keeps its focus); only
-  the tiles' layout runs again.
+- **A move reads and draws nothing new.** The tile is moved in place (detached and attached again,
+  which keeps its focus), and only the tiles' layout runs again, which creates the layout's few
+  small objects (a `TileGrid`, and in the mode a `ShelfLayout`). `ArrangeSession` itself
+  allocates nothing for a move, except when an app crosses between the shown and the hidden ones.
 - **Nothing is read while arranging.** The apps are read again when the home screen comes back
   after the mode, not while the user's changes are on screen.

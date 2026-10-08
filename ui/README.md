@@ -21,7 +21,7 @@ ui/
     │   │   └── Colors.kt         color(id): a color resource on every API level
     │   └── res/values/
     │       ├── colors.xml        background, accent, primary and secondary text
-    │       └── themes.xml        Theme.Luncher, every screen's theme or its parent
+    │       └── themes.xml        Theme.Luncher, the app's and the home screen's theme
     └── testFixtures/java/com/luncher/launcher/testing/
         ├── TvDevice.kt           the TV screens the JVM tests run on (TV_1080P, TV_SCREENS)
         └── LayoutChecks.kt       the layout tests' checks: bounds, inside, apart, whole text
@@ -38,8 +38,10 @@ The test fixtures are what the screens' JVM tests share, in every module
 
 ## The theme
 
-`Theme.Luncher` is every screen's theme, or its parent. It's a platform theme
-(`Theme.DeviceDefault.NoActionBar`), not AppCompat, like every activity's `android.app.Activity`
+`Theme.Luncher` is the application's theme and the home screen's; a feature whose screens look
+different has its own (the settings panels' dialog theme,
+[`feature/settings/`](../feature/settings/README.md#the-settings-panel)). They're all platform
+themes (`Theme.DeviceDefault…`), not AppCompat, like every activity's `android.app.Activity`
 ([`ARCHITECTURE.md`](../docs/ARCHITECTURE.md#rules), rule 5).
 
 **Never a white screen:** every background Android may show for a screen before it draws

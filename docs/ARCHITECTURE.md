@@ -28,7 +28,8 @@ slow CPU and storage). Two goals shape the structure:
 | [`app/`](../app/README.md) | The **composition root** (`AppGraph`), which creates the adapters and gives each feature its ports; the application's manifest, icon, version and release build | every module |
 
 Dependencies only point down: `:domain` depends on nothing, no module depends on `:app`, and only
-`:app` depends on `:platform`. A decision made in `:domain` is testable in milliseconds on the JVM,
+`:app` depends on `:platform` (and `:feature:home`'s JVM tests, which draw tiles with the real
+`BannerImages`). A decision made in `:domain` is testable in milliseconds on the JVM,
 and survives a rewrite of the UI. The build files set every boundary, so the compiler enforces
 them: a feature can't name an adapter or another feature's views, since it doesn't depend on
 them or they're `internal` there. The settings every Android module's build shares are in

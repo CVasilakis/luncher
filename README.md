@@ -34,11 +34,13 @@ other settings don't yet.
 Read from the general to the specific; each document builds on the ones before it:
 
 1. **This README:** what Luncher is, what to install, how to build and run it.
-2. **[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md):** modules, layers and the rules for where code goes.
+2. **[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md):** modules, layers and the rules for where
+   code goes.
 3. **[`docs/TESTING.md`](docs/TESTING.md):** test tiers, how to run them, and in CI.
 4. **The other guides in [`docs/`](docs/README.md)**, as a task needs them: emulators and
    devices, the instrumented tests, releasing.
-5. **The folder READMEs** ([repository layout](#repository-layout)): what each folder holds, in detail.
+5. **The folder READMEs** ([repository layout](#repository-layout)): what each folder holds, in
+   detail.
 6. **Comments in the code and build files:** why a particular line is there.
 
 How the docs are written and kept up to date: [`docs/README.md`](docs/README.md#writing-the-docs).
@@ -56,9 +58,10 @@ Coding agents also read [`AGENTS.md`](AGENTS.md).
   docs use, is in [`docs/EMULATORS.md`](docs/EMULATORS.md).
 
 Everything else downloads by itself on the first build and test run, into caches outside the
-project: `~/.gradle` grows to ~1.1 GB (the Gradle distribution ~165 MB, plus the Android Gradle
-Plugin, Kotlin and the test libraries), and Robolectric's Android framework jar adds ~204 MB in
-`~/.m2/repository`. The build also makes the Android Gradle Plugin install build-tools into the
+project: `~/.gradle` grows to ~1.5 GB (the Gradle distribution ~165 MB, the Android Gradle Plugin,
+Kotlin and the test libraries, and what Gradle makes of them), and Robolectric's Android framework
+jars add ~360 MB in `~/.m2/repository`: API 36's, ~204 MB, and API 33's for the layout tests,
+~156 MB. The build also makes the Android Gradle Plugin install build-tools into the
 SDK (~147 MB).
 
 ## Quick start

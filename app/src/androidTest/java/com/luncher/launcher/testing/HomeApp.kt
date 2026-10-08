@@ -270,7 +270,7 @@ private const val HOME_CHOOSER = "android/com.android.internal.app.ResolverActiv
 
 /**
  * Screens a first boot opens in front of the home app, which stay until Back: activity and window
- * title. "USB drive connected", for the SD card, on a new emulator's first boot, API 23 and 29
+ * title. "USB drive connected", for the SD card, on a new emulator's first boot, API 23, 28, 29
  * (docs/EMULATORS.md).
  */
 private val FIRST_BOOT_SCREENS = listOf(

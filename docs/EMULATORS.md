@@ -103,14 +103,15 @@ change survived only by chance.
   most once per boot in the runs seen), which stays until dismissed. An app opened in those
   seconds ends up behind it. Google TV's launcher, coming back, opens its profile chooser over
   itself the same way.
-- **"USB drive connected" on a first boot (API 23 and 29).** The first boot of a new emulator with
-  an SD card opens `com.android.tv.settings/.device.storage.NewStorageActivity` in front of the
-  home app, and it stays until Back; later boots don't. It's Android TV's Settings announcing the
-  SD card, which Android mounts as a removable drive from API 23 on. `create-avd.sh` gives every
-  emulator an SD card, so each of them, CI's included, shows the screen once. `avdmanager create
-  avd` without `--sdcard` writes an SD card size into the emulator's `config.ini` but creates no
-  SD card image, so its emulators have no SD card and don't show it. Why the other API levels
-  don't show it isn't known. `start-emulator.sh --wait-for-home` presses Back on it.
+- **"USB drive connected" on a first boot (API 23, 28 and 29).** The first boot of a new emulator
+  with an SD card can open `com.android.tv.settings/.device.storage.NewStorageActivity` in front of
+  the home app, and it stays until Back; later boots don't. It's Android TV's Settings announcing
+  the SD card, which Android mounts as a removable drive from API 23 on. `create-avd.sh` gives
+  every emulator an SD card; in a first boot of each Android TV and Google TV level, API 23, 28 and
+  29 showed the screen and the others didn't, and why isn't known. `avdmanager create avd` without
+  `--sdcard` writes an SD card size into the emulator's `config.ini` but creates no SD card image,
+  so its emulators have no SD card and don't show it. `start-emulator.sh --wait-for-home` presses
+  Back on it.
 - **Home does nothing on API 26 and 27** (Android 8.0 and 8.1), whoever the home app is: Android
   ignores it until the TV setup wizard has set `tv_user_setup_complete`, and these images never
   run that wizard (logcat: "Not starting activity because user setup is in progress").

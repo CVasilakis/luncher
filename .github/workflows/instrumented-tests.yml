@@ -122,7 +122,7 @@ jobs:
 
       # --wait-for-home: Android has booted (sys.boot_completed) before the device has settled. On
       # API 34 the tests once started while no window had the focus, and none ever got it. It also
-      # presses Back on "USB drive connected", which a new AVD's first boot opens on API 23 and 29.
+      # presses Back on "USB drive connected", which a new AVD's first boot opens on API 23, 28, 29.
       # The tests wait for the home screen themselves too (docs/INSTRUMENTED-TESTS.md), for runs
       # without the tools. Time limits: ADT_BOOT_TIMEOUT (900 s) for the boot, then ADT_HOME_TIMEOUT
       # (600 s).
