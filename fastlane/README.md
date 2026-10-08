@@ -2,8 +2,9 @@
 
 Luncher's store listing: its name, descriptions, the changes of each version, and its images.
 F-Droid shows it on Luncher's page, reading it from the repository at each release's tag; Google
-Play takes the same files, uploaded by hand or with fastlane's `supply`. Nothing here is part of
-the build.
+Play takes the same files, uploaded by hand or with fastlane's `supply`. The root
+[`README.md`](../README.md) shows the feature graphic and the first four screenshots too. Nothing
+here is part of the build.
 
 ```
 metadata/android/en-US/

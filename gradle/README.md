@@ -9,7 +9,7 @@ Build tooling shared by the whole project.
 | [`wrapper/gradle-wrapper.jar`](wrapper/gradle-wrapper.jar) | Small bootstrap that downloads that Gradle version into `~/.gradle`. Committed on purpose, as for every Gradle project. |
 
 Versions are declared only in these two files. The JDK comes from the environment
-([`../README.md`](../README.md#requirements)); the SDK levels of every Android module are in
+([`docs/BUILDING.md`](../docs/BUILDING.md#requirements)); the SDK levels of every Android module are in
 [`../build-logic/`](../build-logic/README.md).
 
 `gradle.properties` (repository root) sets the Gradle JVM heap, and enables the build cache,

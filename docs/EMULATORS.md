@@ -2,7 +2,7 @@
 
 How to run Luncher on an Android TV emulator or device, make it the home screen, and drive it from
 the command line; and what the emulator images do on their own that gets in the way. What to
-install first: [`README.md`](../README.md#requirements). How the instrumented tests use the
+install first: [`BUILDING.md`](BUILDING.md#requirements). How the instrumented tests use the
 emulators: [`INSTRUMENTED-TESTS.md`](INSTRUMENTED-TESTS.md).
 
 ## The android-tv-wsl-dev-tools scripts

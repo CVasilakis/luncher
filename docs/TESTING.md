@@ -22,7 +22,7 @@ the last two tiers):
 ```
 
 What to install for them (the JDK for the JVM tiers, a device for the others):
-[`README.md`](../README.md#requirements). The test libraries download on the first run; their
+[`BUILDING.md`](BUILDING.md#requirements). The test libraries download on the first run; their
 versions are in [`gradle/libs.versions.toml`](../gradle/libs.versions.toml). They're only in
 `testImplementation`/`androidTestImplementation`, so none of them reach the APK.
 

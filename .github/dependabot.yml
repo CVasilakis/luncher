@@ -1,0 +1,8 @@
+# Pull requests for new versions of the GitHub Actions the workflows use. Gradle and its plugins
+# and libraries are left out: upgrading them has steps of its own (gradle/README.md#upgrading).
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly

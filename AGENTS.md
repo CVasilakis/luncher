@@ -1,11 +1,12 @@
 # AGENTS.md
 
 What AI coding agents need on top of the project's documentation. Read that first, from the
-general to the specific ([reading order](README.md#documentation)): [`README.md`](README.md) (what
-Luncher is, requirements, build and run), [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) (where
-code goes and the rules it follows), [`docs/TESTING.md`](docs/TESTING.md) (which tests a change
-needs and how to run them), then the README of the folder you're working in. Docs you write
-follow [`docs/README.md`](docs/README.md#writing-the-docs).
+general to the specific ([reading order](docs/README.md#reading-order)): [`README.md`](README.md)
+(what Luncher is), [`docs/BUILDING.md`](docs/BUILDING.md) (requirements, build and run),
+[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) (where code goes and the rules it follows),
+[`docs/TESTING.md`](docs/TESTING.md) (which tests a change needs and how to run them), then the
+README of the folder you're working in. Docs you write follow
+[`docs/README.md`](docs/README.md#writing-the-docs).
 
 ## Tools outside this repository
 

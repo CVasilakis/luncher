@@ -1,7 +1,8 @@
 # The instrumented tiers (docs/INSTRUMENTED-TESTS.md) on Android TV and Google TV emulators, one
 # emulator per job, set up with android-tv-wsl-dev-tools as its CI.md describes. Started by hand
-# only (Actions → Instrumented tests → Run workflow): emulator runs take many times the Actions
-# minutes of the JVM tiers, and a private repository's minutes are limited.
+# only (Actions → Instrumented tests → Run workflow), when a change touches what these tiers check:
+# a job takes up to 45 minutes on the runner's 2 CPUs, and an emulator that fails on its own now and
+# then would fail pushes that changed nothing it tests.
 #
 # The choices are the tools' tested images from Luncher's minSdk (22) on: android_tv_api<level>
 # and google_tv_api<level>. Each job's AVD gets that name too.
@@ -175,5 +176,5 @@ jobs:
             app/build/windows.txt
             app/build/screen.png
             app/build/adb-server.log
-          retention-days: 7                        # so they don't fill a private repository's artifact storage
+          retention-days: 7                        # a failed run is looked into the same day
           if-no-files-found: ignore

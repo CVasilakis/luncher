@@ -28,8 +28,8 @@ jobs:
           java-version: 21                         # Robolectric's API 36 framework needs 21
       - uses: gradle/actions/setup-gradle@v6
         with:
-          cache-provider: basic                    # MIT; the default "enhanced" one is proprietary
-                                                   # and may be charged for on private repositories
+          cache-provider: basic                    # MIT; the default "enhanced" one is proprietary,
+                                                   # under Gradle's own terms of use
       # One framework per API level the tests run on (36; 33 for the layout tests). A cache found
       # under its key isn't saved again, so the key names the levels: change it with them.
       - name: Cache Robolectric's Android frameworks
@@ -53,4 +53,4 @@ jobs:
             feature/*/build/reports/tests/
             feature/*/build/outputs/roborazzi/
             app/build/reports/lint-results-debug.html
-          retention-days: 7                        # so they don't fill a private repository's artifact storage
+          retention-days: 7                        # a failed run is looked into the same day

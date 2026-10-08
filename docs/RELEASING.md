@@ -45,6 +45,12 @@ keytool -genkeypair -keystore ~/luncher-release.p12 -storetype PKCS12 -alias lun
 Keep the keystore and its password in two places outside the repository, e.g. a password manager
 and an offline drive. `.gitignore` excludes `*.p12`, `*.jks` and `*.keystore`.
 
+Signing makes the APK about 16 KB larger, nearly all of it whatever the app's size. Android checks
+the v1 signature up to 6.0 (API 23), v2 from 7.0 and v3 from 9, so the APK carries all three, each
+with the certificate and a 4096-bit signature: ~4.5 KB for v1, whose lists of every file's digest
+grow a little with each file, and ~2.5 KB each for v2 and v3. The other ~6 KB is padding:
+`apksigner` starts and ends its signing block, which holds v2 and v3, on a multiple of 4096 bytes.
+
 The workflow reads it from two repository secrets (Settings → Secrets and variables → Actions →
 New repository secret):
 
@@ -64,9 +70,10 @@ dependencies, and it has no token that can change the repository.
    ([Versions](#versions)), add the version's changes to the store listing as
    `fastlane/metadata/android/en-US/changelogs/<versionCode>.txt`
    ([`fastlane/`](../fastlane/README.md)), and push the change to `main`. If the APK's size has
-   changed, update "Release APK size" in the [root README](../README.md) in the same change.
-   `./gradlew assembleRelease` builds it unsigned, as
-   `app/build/outputs/apk/release/app-release-unsigned.apk`; the signature adds a few KB.
+   changed, update its size in the [root README](../README.md#light-by-design) in the same change:
+   the signed APK's, the size users download. `./gradlew assembleRelease` builds it unsigned, as
+   `app/build/outputs/apk/release/app-release-unsigned.apk`; signing adds about 16 KB
+   ([The signing key](#the-signing-key)).
 2. **Run the workflow:** Actions → Release → Run workflow, on `main`. It releases the version
    `app/build.gradle.kts` holds, and refuses another branch, a version that isn't higher than the
    last release or already has a release, and a missing signing secret. A tag `v1.2.3` made by
