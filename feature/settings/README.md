@@ -29,12 +29,7 @@ feature/settings/
         └── screenshots/settings/ reference images, committed
 ```
 
-Everything but the activities and `SettingsGraph` is `internal`. The panels' instrumented tests
-are in `:app` (`app/src/androidTest/…/settings/`): they need the installed app.
-
-The activities get their ports from the Application, which implements `SettingsGraph.Owner`: in
-the app `LuncherApplication`, whose `AppGraph` implements `SettingsGraph`; in this module's JVM
-tests `SettingsTestApplication`, with a `TestSettingsGraph` of fakes.
+Everything but the activities and `SettingsGraph` is `internal`.
 
 ## Manifest
 
@@ -46,6 +41,7 @@ tests `SettingsTestApplication`, with a `TestSettingsGraph` of fakes.
 
 ## The settings panel
 
+Its entries are Hide apps ([below](#hidden-apps)) and the device's own settings.
 `SettingsActivity` is a floating window over the dimmed home screen (its theme,
 `Theme.Luncher.Settings`, is a platform dialog theme). Back closes it, as any activity, and so does
 Home: the home screen is `singleTask`, and Android closes what's above it in its task. The home

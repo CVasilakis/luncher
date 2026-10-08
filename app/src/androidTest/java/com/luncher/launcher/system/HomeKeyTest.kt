@@ -108,14 +108,12 @@ class HomeKeyTest {
     /**
      * Undoes what the test changed, and makes Android save it before the test ends: an emulator
      * stopped right after the run (`adb emu kill`, which doesn't shut Android down) would otherwise
-     * boot with the test's state, e.g. without its stock launcher. Android writes a changed app
-     * state up to 10 s later, and a changed setting about 0.2 s later. Even a written file is lost
-     * for up to 5 s more: Android keeps the old file as a backup until the new one is complete,
-     * and until the filesystem's journal has recorded that, a boot reads the backup
-     * (docs/TESTING.md). So Android is told to write the app states at once ([writeHomeAppsNow]),
-     * and from API 33 on, where that's only seen in its log, that's awaited
-     * ([waitUntilHomeAppsWritten]); the setting is awaited ([waitUntilSettingWritten]); and then
-     * `sync` commits the journal.
+     * boot with the test's state, e.g. without its stock launcher, since Android saves a changed
+     * app state or setting only a while later, and a boot can read the old file for seconds after
+     * that (docs/EMULATORS.md#saving-a-change-to-the-device). So Android is told to write the app
+     * states at once ([writeHomeAppsNow]), and from API 33 on, where that's only seen in its log,
+     * that's awaited ([waitUntilHomeAppsWritten]); the setting is awaited
+     * ([waitUntilSettingWritten]); and then `sync` commits the journal.
      *
      * Presses Home once the other home apps are back, so the stock launcher starts now, cold, and
      * not when the runner closes Luncher after the test, while the next test starts its own

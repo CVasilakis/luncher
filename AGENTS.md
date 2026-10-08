@@ -9,18 +9,16 @@ follow [`docs/README.md`](docs/README.md#writing-the-docs).
 
 ## Tools outside this repository
 
-The emulator scripts (`create-avd.sh`, `start-emulator.sh`, `remote.sh`) come from
-[android-tv-wsl-dev-tools](https://github.com/CVasilakis/android-tv-wsl-dev-tools), a separate
+The emulator scripts (`create-avd.sh`, `start-emulator.sh`, `stop-emulator.sh`, `remote.sh`) come
+from [android-tv-wsl-dev-tools](https://github.com/CVasilakis/android-tv-wsl-dev-tools), a separate
 repository that can live anywhere; its `bin/` must be on `PATH`
-([`README.md`](README.md#emulators-and-the-android-tv-wsl-dev-tools-scripts)). If the scripts
-aren't found, ask the user where that repository is rather than guessing a path.
+([`docs/EMULATORS.md`](docs/EMULATORS.md)). If the scripts aren't found, ask the user where that
+repository is rather than guessing a path.
 
 Its `bin/README.md` is the reference for driving the emulator from a script:
 [sending keys](https://github.com/CVasilakis/android-tv-wsl-dev-tools/blob/main/bin/README.md#controlling-the-tv),
 [checking what Android received](https://github.com/CVasilakis/android-tv-wsl-dev-tools/blob/main/bin/README.md#checking-what-the-emulator-is-doing),
 and [how API levels differ](https://github.com/CVasilakis/android-tv-wsl-dev-tools/blob/main/bin/README.md#differences-between-api-levels).
-What Luncher needs to be the home screen on each of them:
-[`app/README.md`](app/README.md#luncher-as-the-home-screen).
 
 Two things of the host that can stop the work:
 - **"No access to /dev/kvm"** from `start-emulator.sh`, although it worked before: under WSL,
@@ -35,21 +33,19 @@ Two things of the host that can stop the work:
 ## Verifying a change
 
 Beyond the tests [`docs/TESTING.md`](docs/TESTING.md) asks for, install the change and look at it
-on the emulator:
+on the emulator: `./gradlew installDebug`, then start it, or make it the home screen
+([`docs/EMULATORS.md`](docs/EMULATORS.md#luncher-as-the-home-screen)), and drive it with keys
+([Keys](docs/EMULATORS.md#keys)). To see what happened:
 
 ```bash
-./gradlew installDebug
-adb shell am start -n com.luncher.launcher.debug/com.luncher.launcher.home.HomeActivity
 adb shell dumpsys window | grep mCurrentFocus    # what's in front
 adb exec-out screencap -p > screen.png           # screenshot, to look at the UI
 adb logcat -b crash                              # crashes
-remote.sh --long-press DPAD_CENTER               # long press of OK, any API level (feature/home/README.md#arrange-mode)
-stop-emulator.sh                                 # stop it; returns once it has exited (add <avd> if several run)
 ```
 
-After changing a device setting by hand (e.g. disabling the stock launcher), wait 30 s before
-stopping the emulator, or the change is lost, unless you stop it with `stop-emulator.sh`, which
-has Android save it first ([why](app/README.md#luncher-as-the-home-screen)).
+Stop an emulator with `stop-emulator.sh`, which has Android save a device setting changed by hand
+first; any other way loses a change made less than 30 s before
+([why](docs/EMULATORS.md#saving-a-change-to-the-device)).
 
 **Boot one emulator at a time** for test runs, to spare the host's resources: boot one, run the
 tests, stop it, then start the next.
@@ -122,14 +118,14 @@ Each of these fixes a real problem. Read the reason before changing anything.
 | `testInstrumentationRunnerArguments["filter"]`, `SystemTierFilter` | `app/build.gradle.kts`, `app/src/androidTest/…/testing/` | `SystemTierFilter`'s comment |
 | `testInstrumentationRunnerArguments["timeout_msec"]` (15 minutes per test method) | `app/build.gradle.kts` | its comment |
 | `waitForHomeScreen()` before every instrumented test (and its Back on "USB drive connected"), with its two limits (10 minutes on the way to the home screen, 60 s for another app's screen), `pressHome()` in `HomeKeyTest`'s setup (until Luncher has the focus) and cleanup | `app/src/androidTest/…` | their comments |
-| `HomeKeyTest`'s cleanup: `dumpsys package write` (up to API 31) or the wait for a `commit_sys_config_file` event, the wait for `/data/system/users/0` to change, then `sync` | `app/src/androidTest/…/system/HomeKeyTest.kt` | `restoreDevice`'s KDoc, [`docs/TESTING.md`](docs/TESTING.md#organizing-tests) |
+| `HomeKeyTest`'s cleanup: `dumpsys package write` (up to API 31) or the wait for a `commit_sys_config_file` event, the wait for `/data/system/users/0` to change, then `sync` | `app/src/androidTest/…/system/HomeKeyTest.kt` | `restoreDevice`'s KDoc, [`docs/INSTRUMENTED-TESTS.md`](docs/INSTRUMENTED-TESTS.md#leave-the-device-as-it-was-saved) |
 | From API 33 on, `HomeKeyTest`'s cleanup setting Luncher's own `SettingsActivity` to ENABLED and back to DEFAULT with `PackageManager.SYNCHRONOUS` | `app/src/androidTest/…/system/HomeKeyTest.kt` | `writeHomeAppsNow`'s KDoc: it makes Android write the restored stock launcher's state at once, which nothing else can from API 33 on |
-| `waitForFocus()` right after a screen is seen, before keys (in the system tests and `longPressOk()`) | `app/src/androidTest/…` | `waitForFocus`'s comment, [`docs/TESTING.md`](docs/TESTING.md#instrumented-tests-espresso-ui-automator) |
-| `waitForTheSettingsPanel()` between the two Backs of `hidingAnAppInTheSettings_removesItsTile` | `app/src/androidTest/…/home/HomeActivityTest.kt` | its comment, [`docs/TESTING.md`](docs/TESTING.md#instrumented-tests-espresso-ui-automator) |
-| The wait, before `coverWithTheStockLauncher()`'s HOME intent, until no "choose home app" dialog is left that isn't finishing (`homeChooserNotFinishing`), rather than re-sending the intent | `app/src/androidTest/…/testing/RetryWhenCoveredTest.kt` | `coverWithTheStockLauncher`'s KDoc, [`docs/TESTING.md`](docs/TESTING.md#instrumented-tests-espresso-ui-automator) |
-| `RetryWhenCovered` in the test classes that open screens (a test the stock launcher covered runs twice), judging each look by the state when its read began; and `HideAppsActivityTest`'s `arrangements` made anew at each launch | `app/src/androidTest/…` | its KDoc, [`docs/TESTING.md`](docs/TESTING.md#instrumented-tests-espresso-ui-automator) |
+| `waitForFocus()` right after a screen is seen, before keys (in the system tests and `longPressOk()`) | `app/src/androidTest/…` | `waitForFocus`'s comment, [`docs/INSTRUMENTED-TESTS.md`](docs/INSTRUMENTED-TESTS.md#writing-them) |
+| `waitForTheSettingsPanel()` between the two Backs of `hidingAnAppInTheSettings_removesItsTile` | `app/src/androidTest/…/home/HomeActivityTest.kt` | its comment, [`docs/INSTRUMENTED-TESTS.md`](docs/INSTRUMENTED-TESTS.md#writing-them) |
+| The wait, before `coverWithTheStockLauncher()`'s HOME intent, until no "choose home app" dialog is left that isn't finishing (`homeChooserNotFinishing`), rather than re-sending the intent | `app/src/androidTest/…/testing/RetryWhenCoveredTest.kt` | `coverWithTheStockLauncher`'s KDoc, [`docs/INSTRUMENTED-TESTS.md`](docs/INSTRUMENTED-TESTS.md#writing-them) |
+| `RetryWhenCovered` in the test classes that open screens (a test the stock launcher covered runs twice), judging each look by the state when its read began; and `HideAppsActivityTest`'s `arrangements` made anew at each launch | `app/src/androidTest/…` | its KDoc, [`docs/INSTRUMENTED-TESTS.md`](docs/INSTRUMENTED-TESTS.md#writing-them) |
 | `start-emulator.sh --wait-for-home` in CI, although the tests wait for the home screen too | `.github/workflows/instrumented-tests.yml` | its comment |
-| `windowDisablePreview` in `Theme.Luncher` | `ui/src/main/res/values/themes.xml` | [`app/README.md`](app/README.md#while-luncher-starts): no starting window up to Android 11, as from 12 on; a launch screen there flickers on slow TVs ([`docs/archive/launch-screen/`](docs/archive/launch-screen/README.md)) |
+| `windowDisablePreview` in `Theme.Luncher` | `ui/src/main/res/values/themes.xml` | [`ui/README.md`](ui/README.md#while-luncher-starts): no starting window up to Android 11, as from 12 on; a launch screen there flickers on slow TVs ([`docs/archive/`](docs/archive/README.md#the-launch-screen-removed)) |
 | `open class AppGraph`, settable `LuncherApplication.graph`; the features' `Test…Graph` and test Applications, named in `robolectric.properties` | `app/src/main/…`, `feature/*/src/test/…` | [`docs/TESTING.md`](docs/TESTING.md#organizing-tests) |
 | `android:theme` on `HomeActivity`, although the application has the same | `feature/home/src/main/AndroidManifest.xml` | [`feature/home/README.md`](feature/home/README.md#manifest): the JVM tests have no app manifest |
 | Manifest `<queries>`, `uses-feature`, launcher intent filters | `AndroidManifest.xml` of `:app` and `:platform` | [`app/README.md`](app/README.md#manifest-why-each-part-is-there), [`platform/README.md`](platform/README.md#manifest) |

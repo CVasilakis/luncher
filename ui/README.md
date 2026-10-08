@@ -35,3 +35,45 @@ any resource.
 The test fixtures are what the screens' JVM tests share, in every module
 (`testImplementation(testFixtures(project(":ui")))`): how they're used,
 [`../docs/TESTING.md`](../docs/TESTING.md#layouts-on-other-screens).
+
+## The theme
+
+`Theme.Luncher` is every screen's theme, or its parent. It's a platform theme
+(`Theme.DeviceDefault.NoActionBar`), not AppCompat, like every activity's `android.app.Activity`
+([`ARCHITECTURE.md`](../docs/ARCHITECTURE.md#rules), rule 5).
+
+**Never a white screen:** every background Android may show for a screen before it draws
+(`windowBackground`, `colorBackground`, `windowSplashScreenBackground`) is set, dark, in the
+themes (this one, a feature's own), rather than left to `Theme.DeviceDefault`, which device makers
+may restyle. `ThemesTest`, in `:app`, checks every activity of the merged manifest, drawing their
+backgrounds over black.
+
+### While Luncher starts
+
+While a cold-started app's process starts, Android may show a starting window until the app has
+drawn. The home screen has none on any Android version: the previous screen (an app, the stock
+launcher, the boot animation) stays until Luncher has drawn, and the home screen then appears
+whole.
+
+- **Up to Android 11 (API 30)**, the starting window would be a window with the `windowBackground`
+  of the theme the manifest gives the activity. The emulators of API 22 to 30 show one when
+  Luncher's process was killed and Home brings it back (what a TV short of memory does), when Home
+  starts it while another home app is in front, and when it's opened as an app.
+  `Theme.Luncher` sets `windowDisablePreview`, for which Android adds none (AOSP
+  `ActivityRecord.addStartingWindow` returns before making one).
+- **From Android 12 (API 31) on**, an activity of type home never gets a splash screen, whatever
+  its theme (AOSP `ActivityRecord.getStartingWindowType`).
+- **At boot**, on every version, the first home activity gets no starting window: the boot
+  animation stays until Luncher draws.
+- **Opened as an app** rather than as the home screen, on Android 12 and 13 it still gets a
+  splash screen: from 12 on, Android ignores `windowDisablePreview` for an activity started from
+  the launcher, System UI or the system (`launchedFromSystemSurface`). On TV, Android's window
+  manager overrides every app's splash screen (AOSP `TvStartingWindowTypeAlgorithm`): only its
+  background on 12, a solid colour on 13, which `windowSplashScreenBackground` keeps the home
+  screen's, none from 14 on. `windowSplashScreenAnimatedIcon` and the app icon are never shown.
+- **A task snapshot**, the app's own last frame shown when returning to its task, is decided
+  before the theme is read, so `windowDisablePreview` doesn't stop that.
+
+A launch screen, a drawing as the starting window up to Android 11, was removed: Android fades it
+out over the first frame, which on a slow TV looks like the two screens flickering
+([`docs/archive/`](../docs/archive/README.md#the-launch-screen-removed)).

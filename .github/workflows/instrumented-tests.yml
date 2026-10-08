@@ -1,7 +1,7 @@
-# The instrumented tiers (docs/TESTING.md) on Android TV and Google TV emulators, one emulator per
-# job, set up with android-tv-wsl-dev-tools as its CI.md describes. Started by hand only (Actions →
-# Instrumented tests → Run workflow): emulator runs take many times the Actions minutes of the JVM
-# tiers, and a private repository's minutes are limited.
+# The instrumented tiers (docs/INSTRUMENTED-TESTS.md) on Android TV and Google TV emulators, one
+# emulator per job, set up with android-tv-wsl-dev-tools as its CI.md describes. Started by hand
+# only (Actions → Instrumented tests → Run workflow): emulator runs take many times the Actions
+# minutes of the JVM tiers, and a private repository's minutes are limited.
 #
 # The choices are the tools' tested images from Luncher's minSdk (22) on: android_tv_api<level>
 # and google_tv_api<level>. Each job's AVD gets that name too.
@@ -15,7 +15,7 @@ on:
         type: choice
         default: required-22-24-28-30-33-36
         options:
-          - required-22-24-28-30-33-36             # the six in docs/TESTING.md; rename with that set
+          - required-22-24-28-30-33-36             # the six in docs/INSTRUMENTED-TESTS.md; rename with that set
           - android-tv-all
           - google-tv-all
           - all
@@ -123,8 +123,9 @@ jobs:
       # --wait-for-home: Android has booted (sys.boot_completed) before the device has settled. On
       # API 34 the tests once started while no window had the focus, and none ever got it. It also
       # presses Back on "USB drive connected", which a new AVD's first boot opens on API 23 and 29.
-      # The tests wait for the home screen themselves too (docs/TESTING.md), for runs without the
-      # tools. Time limits: ADT_BOOT_TIMEOUT (900 s) for the boot, then ADT_HOME_TIMEOUT (600 s).
+      # The tests wait for the home screen themselves too (docs/INSTRUMENTED-TESTS.md), for runs
+      # without the tools. Time limits: ADT_BOOT_TIMEOUT (900 s) for the boot, then ADT_HOME_TIMEOUT
+      # (600 s).
       - name: Boot the emulator
         run: |
           google_tv=()

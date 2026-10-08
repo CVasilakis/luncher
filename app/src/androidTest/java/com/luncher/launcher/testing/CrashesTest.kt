@@ -8,8 +8,9 @@ import org.junit.runner.RunWith
 
 /**
  * Which crash [crashSince] names, decided on the crash log as an emulator printed it: Android TV
- * 16's Settings app crashing on a starved tv_api36 (docs/TESTING.md). Here rather than on the JVM
- * because the helper is in androidTest, like [HomeLookTest]; it needs no particular device.
+ * 16's Settings app crashing on a starved tv_api36 (docs/INSTRUMENTED-TESTS.md). Here rather than
+ * on the JVM because the helper is in androidTest, like [HomeLookTest]; it needs no particular
+ * device.
  */
 @RunWith(AndroidJUnit4::class)
 class CrashesTest {

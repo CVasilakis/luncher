@@ -68,7 +68,9 @@ theme, colors.
 5. **Pay only for what's used.** Adapters are created lazily in `AppGraph`. No reflection,
    annotation processing or DI framework. No runtime libraries (AndroidX, AppCompat, Leanback,
    Compose, image loaders, kotlinx-coroutines, …): adding one is a deliberate decision, never a
-   default; plain `java.util.concurrent` and `Handler` cover background work
+   default. Activities extend `android.app.Activity`, with platform themes
+   ([`ui/README.md`](../ui/README.md#the-theme)); plain `java.util.concurrent` and `Handler` cover
+   background work
    ([below](#background-work-and-changes-while-shown)). Don't allocate in drawing or D-pad
    handling code. Scale bitmaps down to their display size.
 6. **Storage formats belong to adapters.** `:domain` sees typed values (sets of hidden apps, an
@@ -89,11 +91,12 @@ the main thread (decoding a wallpaper). Neither may delay a key press.
    nothing else reads or writes them, so nothing needs a lock.
 2. **State that can change while it's shown comes from a port you can watch:** a read function, and
    `addListener`/`removeListener` that tell when to read again, on the main thread (`Clock` is
-   one). Its adapter tells its listeners when the state changes, also when another screen of
-   Luncher changed it. A screen listens from `onStart` to `onStop`: the home screen stays started
-   behind the floating settings panel, so a setting changed there shows on it at once, and a
-   hidden screen does nothing. A change that's quick to apply (another `TileLayout`) is applied
-   right there, on the main thread.
+   one), so nothing polls. Its adapter tells its listeners when the state changes, also when
+   another screen of Luncher changed it, and registers with Android (a broadcast receiver, a
+   callback) only while it has listeners, so a hidden screen costs nothing. A screen listens from
+   `onStart` to `onStop`: the home screen stays started behind the floating settings panel, so a
+   setting changed there shows on it at once, and a hidden screen does nothing. A change that's
+   quick to apply (another `TileLayout`) is applied right there, on the main thread.
 3. **Slow work is a job:** a computation from immutable inputs to an immutable result (a file and
    a size to a bitmap), which touches no view and no state. Jobs run one at a time on a single
    background thread that `AppGraph` creates on first use, and post their result to the main
@@ -122,13 +125,13 @@ and moves to them whatever measures slow.
 | An image the UI shows (banners, later the wallpaper) | which image: a model and rule in `:domain` (like `Banner`); drawing it: an adapter in `:platform` behind a port generic in the image type (`AppImages<Bitmap>`), since `:domain` can't name `Bitmap`. It draws at the size shown ([rule 5](#rules)), and is slow work if it's slow ([above](#background-work-and-changes-while-shown)). |
 | How the home screen arranges apps (grid, apps per row, alignment, a carousel) | a `TileLayout` in `:domain`'s `layout/` that computes sizes and positions, and `TileMoves` for where a tile the user moves goes, with unit tests; the view that shows the tiles only places them where the layout says ([`feature/home/README.md`](../feature/home/README.md#the-home-screen)) |
 | What the user can do while arranging apps (moving, hiding, which key does what to the held app) | `ArrangeSession` in `:domain`'s `arrange/`, with unit tests; `ArrangeMode` in `:feature:home` turns keys into its moves ([`feature/home/README.md`](../feature/home/README.md#arrange-mode)) |
-| Something the home screen's top bar shows (the clock, the settings entry; later status indicators) | a view in `:feature:home`, placed in the bar. Device state it shows (the time, the network) comes from a port you can watch ([above](#background-work-and-changes-while-shown)); its adapter watches Android only while it has listeners. Details: [`feature/home/README.md`](../feature/home/README.md#the-top-bar) |
-| A new setting | which entries the settings panel offers, in which tab and group: `settingsMenu` in `:domain`'s `settings/`, with unit tests; its label and what OK on it does: `:feature:settings`. A value it stores comes through a port you can watch, so the screens it affects update while it changes. A setting with a screen of its own (a list, like Hide apps) is another activity in `:feature:settings`, opened by the entry. Details: [`feature/settings/README.md`](../feature/settings/README.md#the-settings-panel) |
+| Something the home screen's top bar shows (the clock, the settings entry; later status indicators) | a view in `:feature:home`, placed in the bar; device state it shows (the time, the network) comes from a port you can watch ([above](#background-work-and-changes-while-shown)). Details: [`feature/home/README.md`](../feature/home/README.md#the-top-bar) |
+| A new setting | its entry: `settingsMenu` in `:domain`'s `settings/`, and its label and action in `:feature:settings`; a value it stores comes through a port you can watch, so the screens it affects update while it changes; a screen of its own (a list, like Hide apps) is another activity in `:feature:settings`. Steps: [`feature/settings/README.md`](../feature/settings/README.md#the-settings-panel) |
 | A new screen of its own (e.g. a wallpaper picker) | a new feature module (below) |
 | A shared view, style or UI helper | `:ui`, resources without a prefix |
 | Build or version changes | [`gradle/`](../gradle/README.md); settings every Android module shares: [`build-logic/`](../build-logic/README.md) |
-| A guide that covers the whole project | [`docs/`](README.md) |
-| Emulator and developer tooling | not here: the separate android-tv-wsl-dev-tools repository (see [`README.md`](../README.md#emulators-and-the-android-tv-wsl-dev-tools-scripts)) |
+| A guide that covers the whole project, or a topic too narrow for the document above it | [`docs/`](README.md) |
+| Emulator and developer tooling | not here: the separate android-tv-wsl-dev-tools repository ([`EMULATORS.md`](EMULATORS.md)) |
 
 ## Adding a feature, step by step
 

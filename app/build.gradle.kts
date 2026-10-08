@@ -90,7 +90,7 @@ dependencies {
     androidTestImplementation(libs.uiautomator)
 }
 
-// Instrumented test runs (connectedDebugAndroidTest and friends; see docs/TESTING.md).
+// Instrumented test runs (connectedDebugAndroidTest and friends; see docs/INSTRUMENTED-TESTS.md).
 // 1. AGP's test engine installs with `adb install -t`, without -r, so Android 9 and older (the
 //    API 22 to 28 emulators) refuse the install whenever the app is already there, e.g. after
 //    `installDebug`. Every run therefore starts by uninstalling; AGP uninstalls after the run anyway.

@@ -191,10 +191,10 @@ internal class HomeLook(private val sdk: Int, private val home: String?, windows
 /**
  * Whether `dumpsys activity activities` ([activities]) lists a "choose home app" dialog that hasn't
  * begun to finish. On API 22, with a second home app, Home opens that dialog (from API 23 on Home
- * never asks, app/README.md), and the dialog finishes itself once it's stopped. Covered by another
- * screen, it stays paused, not finishing, for most of a second (0.7 s on the emulator), and a HOME
- * intent that comes then goes to it and is lost with it: nothing comes to the front. Once it has
- * begun to finish it's listed as finishing, for seconds more, and Home opens a new dialog.
+ * never asks, docs/EMULATORS.md), and the dialog finishes itself once it's stopped. Covered by
+ * another screen, it stays paused, not finishing, for most of a second (0.7 s on the emulator), and
+ * a HOME intent that comes then goes to it and is lost with it: nothing comes to the front. Once it
+ * has begun to finish it's listed as finishing, for seconds more, and Home opens a new dialog.
  */
 internal fun homeChooserNotFinishing(activities: String): Boolean =
     activitiesIn(activities).any { it.component == HOME_CHOOSER && it.finishing == false }
@@ -271,7 +271,7 @@ private const val HOME_CHOOSER = "android/com.android.internal.app.ResolverActiv
 /**
  * Screens a first boot opens in front of the home app, which stay until Back: activity and window
  * title. "USB drive connected", for the SD card, on a new emulator's first boot, API 23 and 29
- * (app/README.md).
+ * (docs/EMULATORS.md).
  */
 private val FIRST_BOOT_SCREENS = listOf(
     "com.android.tv.settings/.device.storage.NewStorageActivity" to

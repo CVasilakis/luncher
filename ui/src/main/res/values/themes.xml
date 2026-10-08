@@ -11,7 +11,7 @@
         <item name="android:windowNoTitle">true</item>
         <item name="android:colorAccent">@color/accent</item>
         <!-- No starting window up to Android 11: the previous screen stays until the home screen
-             draws, as it does from Android 12 on (app/README.md#while-luncher-starts). -->
+             draws, as it does from Android 12 on (ui/README.md#while-luncher-starts). -->
         <item name="android:windowDisablePreview">true</item>
     </style>
 </resources>

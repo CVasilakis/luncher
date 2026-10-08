@@ -30,8 +30,7 @@ build time they use the versions the root `build.gradle.kts` puts on the build's
 catalog's ([`../gradle/README.md`](../gradle/README.md#how-kotlin-is-set-up-agp-9-built-in-kotlin)).
 Versions are declared only in the catalog.
 
-A library module has no instrumented tests (`deviceTests` disabled): Luncher's need the installed
-app as the device's home screen, so they're all in `:app`, and
-`./gradlew connectedDebugAndroidTest` builds and installs only its test APK. Lint runs from `:app`
-over every module (`checkDependencies`, in `app/build.gradle.kts`), since a library alone lacks
-the merged manifest's TV banner and `supportsRtl`.
+A library module has no instrumented tests (`deviceTests` disabled), so
+`./gradlew connectedDebugAndroidTest` builds and installs only `:app`'s test APK, where they all
+are ([`../docs/TESTING.md`](../docs/TESTING.md#organizing-tests)). Lint runs from `:app` over every
+module ([`../docs/TESTING.md`](../docs/TESTING.md#lint-and-compiler-warnings)).

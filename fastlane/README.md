@@ -17,10 +17,6 @@ metadata/android/en-US/
   images/tvScreenshots/         1920 × 1080 screenshots, shown in the order of their names
 ```
 
-**License:** `icon.png`, `tvBanner.png` and `featureGraphic.png` are derived from AOSP artwork and
-are under the Apache License 2.0, not Luncher's MIT license: [`../app/NOTICE`](../app/NOTICE), which
-covers the app's own icon and banner too ([below](#icon-banner-and-feature-graphic)).
-
 ## Rules
 
 - **The path is fixed:** `fastlane/metadata/android/<language>/` at the root of the repository.
@@ -41,13 +37,14 @@ covers the app's own icon and banner too ([below](#icon-banner-and-feature-graph
 
 The same drawings as the app's own: the icon is the adaptive app icon's visible part, square
 (stores round the corners themselves), the TV banner is the app's banner at 4×, and the feature
-graphic is the banner's TV and name on a wider ground. Their desserts come from AOSP artwork, so
-they are under the Apache License 2.0 like the app's icon and banner
-([`../app/NOTICE`](../app/NOTICE)).
+graphic is the banner's TV and name on a wider ground
+([`app/README.md`](../app/README.md#icon-and-banner)). Their desserts come from AOSP artwork, so
+they are under the Apache License 2.0, not Luncher's MIT license, like the app's icon and banner,
+and listed in its `NOTICE` ([`app/README.md`](../app/README.md#license)).
 
-Rendered from SVGs of the same drawings with librsvg (`gdk-pixbuf-thumbnailer -s <width> in.svg out.png`), then
-without the alpha channel like the screenshots below, except the icon, whose alpha channel is
-made opaque instead:
+Rendered from SVGs of the same drawings with librsvg
+(`gdk-pixbuf-thumbnailer -s <width> in.svg out.png`), then without the alpha channel like the
+screenshots below, except the icon, whose alpha channel is made opaque instead:
 
 ```bash
 convert icon.png -alpha opaque -strip -define png:color-type=6 icon.png

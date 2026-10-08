@@ -43,8 +43,9 @@ so the adapter of `com.luncher.domain.clock.Clock` is in `clock/`.
   format out, so a change that breaks what a TV already stored fails
   (`PreferencesAppArrangementsTest`).
 - **Device state that changes** (the time, later the network) is watched only while a listener is
-  registered: `AndroidClock` registers its broadcast receiver with the first listener and
-  unregisters it with the last, so a hidden home screen costs nothing.
+  registered ([`ARCHITECTURE.md`](../docs/ARCHITECTURE.md#background-work-and-changes-while-shown)):
+  `AndroidClock` registers its broadcast receiver with the first listener and unregisters it with
+  the last.
 - **Another app's resources can fail** (uninstalled a moment ago, broken): an adapter returns what
   it can (`BannerImages` draws a card) rather than crashing the home screen.
 - **Public,** since `AppGraph` in `:app` creates them; no other module depends on this one.

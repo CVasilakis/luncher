@@ -58,5 +58,5 @@ models, rules and ports of that topic.
 - Ports are interfaces named after what they provide (`InstalledApps`), not how
   (`PackageManagerApps`); adapters in `:platform` implement them. A port whose result is a UI type
   this module can't name is generic in it (`AppImages<Image>`).
-- A port for device state that changes while it's shown (`Clock`) has a read function, and
-  `addListener`/`removeListener` that tell when to read again, so nothing polls.
+- A port for device state that changes while it's shown (`Clock`) is a port you can watch
+  ([`ARCHITECTURE.md`](../docs/ARCHITECTURE.md#background-work-and-changes-while-shown)).

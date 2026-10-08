@@ -33,13 +33,9 @@ feature/home/
         └── screenshots/home/     reference images, committed
 ```
 
-Everything but `HomeActivity` and `HomeGraph` is `internal`. The home screen's instrumented tests
-are in `:app` (`app/src/androidTest/…/home/`): they need the installed app.
-
-`HomeActivity` gets its ports from the Application, which implements `HomeGraph.Owner`: in the app
-`LuncherApplication`, whose `AppGraph` implements `HomeGraph`; in this module's JVM tests
-`HomeTestApplication`, with a `TestHomeGraph` of fakes and the real `BannerImages`, so the
-screenshots show tiles as the app draws them.
+Everything but `HomeActivity` and `HomeGraph` is `internal`. The JVM tests' `TestHomeGraph` has
+fakes of the ports but the real `BannerImages`, so the screenshots show tiles as the app draws
+them.
 
 ## Manifest
 
@@ -60,7 +56,11 @@ explained in its comments.
 
 ## The home screen
 
-The screen is a top bar that stays in place, and below it the tiles, which scroll. Each part does
+The screen is a top bar that stays in place, with the time and date in the device's language and
+hour format, and below it the TV apps (activities with `MAIN` + `LEANBACK_LAUNCHER`) as tiles of
+their banners, which scroll: by name until the user reorders them, as many per row as fit at about
+`home_tile_width` (154 dp: five on a 16:9 TV, more on a screen wider in dp, e.g. 1080p at
+160 dpi). OK opens the focused app. Each part does
 one job, so a new arrangement, image source or top bar item changes one of them:
 
 | Part | Job |
@@ -80,15 +80,11 @@ one job, so a new arrangement, image source or top bar item changes one of them:
 
 `home_top_bar` in `home_activity.xml` holds the clock at its start and the settings gear at its
 end; later items (e.g. status indicators) go at the end too. Each item that shows device state
-that changes (the time, later e.g. the network) is built the same way:
-
-- **A port in `:domain`** that reads the state and tells listeners when it changes, with a fake in
-  the test fixtures that the test moves ([`FakeClock`](../../domain/src/testFixtures/kotlin/com/luncher/domain/clock/FakeClock.kt)).
-- **An adapter in `:platform`** ([`platform/README.md`](../../platform/README.md)), created in
-  `AppGraph`. It registers with Android (a broadcast receiver, a callback) only while it has
-  listeners.
-- **A view in this module** with `start(port)` and `stop()`, called from `HomeActivity`'s
-  `onStart` and `onStop`: a hidden home screen listens to nothing, and reads everything again when it comes back.
+that changes (the time, later e.g. the network) gets it from a port you can watch
+([`ARCHITECTURE.md`](../../docs/ARCHITECTURE.md#background-work-and-changes-while-shown)), with a
+fake in `:domain`'s test fixtures that the test moves
+([`FakeClock`](../../domain/src/testFixtures/kotlin/com/luncher/domain/clock/FakeClock.kt)), and is
+a view with `start(port)` and `stop()`, called from `HomeActivity`'s `onStart` and `onStop`.
 
 The bar itself isn't focusable. An item that should be reachable with the D-pad (the settings
 gear) is a focusable view in it, and Up from the first row of tiles moves there through
@@ -145,13 +141,8 @@ nothing meanwhile. On Android 16 (API 36), Back reaches the app only through
 `OnBackInvokedCallback`, not as a key, so `HomeActivity` passes Back to the mode from there as well
 as from `onBackPressed`.
 
-To try it on an emulator, a long press of OK has to hold the key:
-`remote.sh --long-press DPAD_CENTER` does on every API level (android-tv-wsl-dev-tools v1.4.0 on;
-in the interactive `remote.sh`, `l` then Enter), and so does holding Enter in the emulator window.
-`adb shell input keyevent --longpress` doesn't before API 30
-([`README.md`](../../README.md#emulators-and-the-android-tv-wsl-dev-tools-scripts)): there it's a
-short press, which opens the app. The instrumented tests hold it with real key events
-(`longPressOk`, in `app/src/androidTest/…/testing/Keys.kt`), which works on every version.
+To try it on an emulator, a long press of OK has to hold the key down, which `adb shell input
+keyevent --longpress` doesn't before API 30 ([`EMULATORS.md`](../../docs/EMULATORS.md#keys)).
 
 What keeps it light:
 

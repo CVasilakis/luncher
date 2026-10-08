@@ -67,12 +67,12 @@ class HomeActivityTest {
     /**
      * Closing the home screen at the end of a test can hang while Luncher is the device's home app:
      * Android starts it again at once, and the closing activity may stay paused. Fail at once with
-     * the fix instead of a timeout that looks like Luncher's fault; see docs/TESTING.md.
+     * the fix instead of a timeout that looks like Luncher's fault; see docs/INSTRUMENTED-TESTS.md.
      */
     @Before
     fun checkLuncherIsNotTheHomeApp() {
         assertNotEquals(
-            "Luncher is the device's home app; re-enable the stock launcher first (docs/TESTING.md)",
+            "Luncher is the device's home app; re-enable the stock launcher first (docs/INSTRUMENTED-TESTS.md)",
             application.packageName,
             resolvedHome(),
         )

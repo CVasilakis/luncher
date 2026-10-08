@@ -77,9 +77,9 @@ class SystemSettingsTest {
     /**
      * Runs [check], and if it fails after the device's settings app ([settings]) crashed (since
      * [since], the device's clock), fails saying so, with the crash's first line: on a starved
-     * tv_api36, Android TV 16's own Settings app crashes as it starts (docs/TESTING.md), and a
-     * failed wait alone doesn't tell that from Luncher not opening it. Not run again: a retry would
-     * hide a real failure, and this one is the device's bug.
+     * tv_api36, Android TV 16's own Settings app crashes as it starts (docs/INSTRUMENTED-TESTS.md),
+     * and a failed wait alone doesn't tell that from Luncher not opening it. Not run again: a retry
+     * would hide a real failure, and this one is the device's bug.
      */
     private inline fun sayingWhetherItCrashed(settings: String, since: Long, check: () -> Unit) {
         try {
