@@ -1,6 +1,7 @@
 package com.luncher.domain.apps
 
 import com.luncher.domain.apps.FakeInstalledApps.Companion.app
+import java.util.Locale
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -10,7 +11,7 @@ class ArrangedAppsTest {
     private val installed = listOf(app("games"), app("movies"), app("music"), app("news"))
 
     private fun arranged(arrangement: AppArrangement = AppArrangement.NONE) =
-        homeApps(installed, "com.luncher.launcher", arrangement)
+        homeApps(installed, "com.luncher.launcher", arrangement, Locale.ENGLISH)
 
     private fun labels(apps: List<InstalledApp>) = apps.map { it.label }
 

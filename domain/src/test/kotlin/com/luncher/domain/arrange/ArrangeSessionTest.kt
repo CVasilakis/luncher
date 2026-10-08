@@ -9,6 +9,7 @@ import com.luncher.domain.layout.Direction.LEFT
 import com.luncher.domain.layout.Direction.RIGHT
 import com.luncher.domain.layout.Direction.UP
 import com.luncher.domain.layout.TileGrid
+import java.util.Locale
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -25,7 +26,7 @@ class ArrangeSessionTest {
             order = shown.map { app(it.toString()).launchable },
             hidden = hidden.map { app(it.toString()).launchable },
         )
-        val arranged = homeApps(names.map { app(it) }, "com.luncher.launcher", arrangement)
+        val arranged = homeApps(names.map { app(it) }, "com.luncher.launcher", arrangement, Locale.ENGLISH)
         return ArrangeSession(arranged) { TileGrid(it, columns = 3, width = 300, gap = 0) }
     }
 
@@ -199,7 +200,7 @@ class ArrangeSessionTest {
 
     @Test
     fun `fixes the order by label once anything moved`() {
-        val start = homeApps(listOf(app("b"), app("a"), app("c")), "com.luncher.launcher", AppArrangement.NONE)
+        val start = homeApps(listOf(app("b"), app("a"), app("c")), "com.luncher.launcher", AppArrangement.NONE, Locale.ENGLISH)
         val session = ArrangeSession(start) { TileGrid(it, columns = 3, width = 300, gap = 0) }
         assertSame(start, session.arranged())      // nothing moved: the order stays by label
 

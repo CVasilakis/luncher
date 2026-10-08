@@ -60,7 +60,8 @@ explained in its comments.
 
 The screen is a top bar that stays in place, with the time and date in the device's language and
 hour format, and below it the TV apps (activities with `MAIN` + `LEANBACK_LAUNCHER`) as tiles of
-their banners, which scroll: by name until the user reorders them, as many per row as fit at about
+their banners, which scroll: by name, as the device's language sorts words, until the user
+reorders them, as many per row as fit at about
 `home_tile_width` (154 dp: five on a 16:9 TV, more on a screen wider in dp, e.g. 1080p at
 160 dpi). OK opens the focused app. Each part does
 one job, so a new arrangement, image source or top bar item changes one of them:

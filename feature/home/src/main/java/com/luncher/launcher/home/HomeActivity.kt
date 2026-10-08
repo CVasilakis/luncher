@@ -13,8 +13,9 @@ import android.window.OnBackInvokedDispatcher
 import com.luncher.domain.apps.ArrangedApps
 import com.luncher.domain.apps.InstalledApp
 import com.luncher.domain.apps.homeApps
-import com.luncher.launcher.settings.SettingsActivity
 import com.luncher.launcher.settings.R as SettingsR
+import com.luncher.launcher.settings.SettingsActivity
+import java.util.Locale
 
 /**
  * The home screen: the time, the date and a settings entry above the TV apps the user didn't hide,
@@ -110,7 +111,7 @@ class HomeActivity : Activity() {
      * settings, since the home screen was last shown.
      */
     private fun refresh() {
-        val arranged = homeApps(installedApps.tvApps(), packageName, arrangements.read())
+        val arranged = homeApps(installedApps.tvApps(), packageName, arrangements.read(), Locale.getDefault())
         this.arranged = arranged
         // Unchanged, as on most returns to the home screen: keep the tiles, their images and focus.
         if (arranged.shown != shown) show(arranged.shown)

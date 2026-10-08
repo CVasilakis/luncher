@@ -10,6 +10,8 @@ class ArrangedApps internal constructor(
     val hidden: List<InstalledApp>,
     /** The stored arrangement matched to the installed apps; it keeps the entries of apps not installed now. */
     private val stored: AppArrangement,
+    /** How apps sort by label, in the device's language ([homeApps]). */
+    private val byLabel: Comparator<InstalledApp>,
 ) {
 
     /**
@@ -18,7 +20,7 @@ class ArrangedApps internal constructor(
      */
     fun hide(app: InstalledApp): ArrangedApps {
         require(app in shown) { "not shown: ${app.launchable}" }
-        return ArrangedApps(shown - app, listOf(app) + hidden, stored)
+        return ArrangedApps(shown - app, listOf(app) + hidden, stored, byLabel)
     }
 
     /**
@@ -27,8 +29,8 @@ class ArrangedApps internal constructor(
      */
     fun show(app: InstalledApp): ArrangedApps {
         require(app in hidden) { "not hidden: ${app.launchable}" }
-        val shown = if (stored.order == null) (shown + app).sortedWith(BY_LABEL) else shown + app
-        return ArrangedApps(shown, hidden - app, stored)
+        val shown = if (stored.order == null) (shown + app).sortedWith(byLabel) else shown + app
+        return ArrangedApps(shown, hidden - app, stored, byLabel)
     }
 
     /**
@@ -37,13 +39,13 @@ class ArrangedApps internal constructor(
      */
     internal fun rearranged(shown: List<InstalledApp>, hidden: List<InstalledApp>): ArrangedApps {
         require(shown.size + hidden.size == this.shown.size + this.hidden.size) { "not the same apps" }
-        return ArrangedApps(shown, hidden, stored.copy(order = stored.order ?: emptyList()))
+        return ArrangedApps(shown, hidden, stored.copy(order = stored.order ?: emptyList()), byLabel)
     }
 
     /** All apps by label, each with whether it's hidden: the list where the user hides and shows them. */
     fun byLabel(): List<AppVisibility> =
         (shown.map { AppVisibility(it, hidden = false) } + hidden.map { AppVisibility(it, hidden = true) })
-            .sortedWith(compareBy(BY_LABEL) { it.app })
+            .sortedWith(compareBy(byLabel) { it.app })
 
     /** What to store: this arrangement, plus the entries of apps that aren't installed right now, in place. */
     val arrangement: AppArrangement

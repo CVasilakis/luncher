@@ -18,8 +18,9 @@ its own.
 
 `:domain` has no text: it returns data (`SettingsEntry.HideApps`, whether every app is hidden),
 and the screens turn it into strings. Texts that aren't Luncher's come in the device's language
-already: the apps' names, from Android, and the time and date, which `ClockView` formats with the
-language's own patterns.
+already: the apps' names, from Android, which `:domain` sorts as that language sorts words
+(`LabelOrder`: "Άρης" after "Αθήνα" in Greek), and the time and date, which `ClockView` formats
+with the language's own patterns.
 
 A right-to-left language mirrors the settings panels but not the home screen
 ([`app/README.md`](../app/README.md#manifest-why-each-part-is-there)).

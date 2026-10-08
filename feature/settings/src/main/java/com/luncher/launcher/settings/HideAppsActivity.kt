@@ -10,8 +10,9 @@ import android.widget.TextView
 import com.luncher.domain.apps.AppVisibility
 import com.luncher.domain.apps.ArrangedApps
 import com.luncher.domain.apps.homeApps
-import com.luncher.launcher.ui.color
 import com.luncher.launcher.ui.R as UiR
+import com.luncher.launcher.ui.color
+import java.util.Locale
 
 /**
  * The settings panel's list of every app by name, over the panel: OK on an app hides it from the
@@ -29,7 +30,7 @@ class HideAppsActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.settings_hide_apps_activity)
-        arranged = homeApps(graph.installedApps.tvApps(), packageName, arrangements.read())
+        arranged = homeApps(graph.installedApps.tvApps(), packageName, arrangements.read(), Locale.getDefault())
         rows = arranged.byLabel()
 
         val list = findViewById<ListView>(R.id.settings_apps)

@@ -1,6 +1,7 @@
 package com.luncher.domain.apps
 
 import com.luncher.domain.apps.FakeInstalledApps.Companion.app
+import java.util.Locale
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -10,11 +11,17 @@ class HomeAppsTest {
 
     private fun labels(apps: List<InstalledApp>) = apps.map { it.label }
 
-    private fun shown(installed: List<InstalledApp>, arrangement: AppArrangement = AppArrangement.NONE) =
-        labels(homeApps(installed, launcher, arrangement).shown)
+    private fun shown(
+        installed: List<InstalledApp>,
+        arrangement: AppArrangement = AppArrangement.NONE,
+        locale: Locale = Locale.ENGLISH,
+    ) = labels(homeApps(installed, launcher, arrangement, locale).shown)
+
+    /** An app for each of [labels], in that order. */
+    private fun labeled(vararg labels: String) = labels.mapIndexed { i, label -> app("app$i").copy(label = label) }
 
     private fun hidden(installed: List<InstalledApp>, arrangement: AppArrangement) =
-        labels(homeApps(installed, launcher, arrangement).hidden)
+        labels(homeApps(installed, launcher, arrangement, Locale.ENGLISH).hidden)
 
     private fun id(name: String) = app(name).launchable
 
@@ -36,11 +43,29 @@ class HomeAppsTest {
 
     @Test
     fun `sorts by what the label shows, skipping invisible formatting characters`() {
-        // As Google TV's Settings app reports its label: wrapped in text direction marks.
+        // As Google TV's Settings app reports its label: wrapped in text direction marks. And in
+        // isolates, which the JDK's collation, unlike Android's, would sort after every letter.
         val settings = app("settings").copy(label = "\u200e\u200f\u200e\u200eSettings\u200e\u200f")
-        val installed = listOf(app("youtube").copy(label = "YouTube"), settings, app("play").copy(label = "Play Store"))
+        val news = app("news").copy(label = "\u2068News\u2069")
+        val installed = listOf(app("youtube").copy(label = "YouTube"), settings, news, app("play").copy(label = "Play Store"))
 
-        assertEquals(listOf("Play Store", settings.label, "YouTube"), shown(installed))
+        assertEquals(listOf(news.label, "Play Store", settings.label, "YouTube"), shown(installed))
+    }
+
+    @Test
+    fun `sorts an accented letter with its letter`() {
+        assertEquals(listOf("Eagle", "Éclair", "Zoom"), shown(labeled("Zoom", "Éclair", "Eagle")))
+    }
+
+    // By character code, Greek's accented vowels come before or after every letter.
+    @Test
+    fun `sorts as the language sorts words`() {
+        val greek = Locale.forLanguageTag("el")
+
+        assertEquals(
+            listOf("Αθήνα", "Άρης", "Βήτα", "Ήλιος", "Ωμέγα", "Ώρα"),
+            shown(labeled("Ώρα", "Ωμέγα", "Ήλιος", "Βήτα", "Άρης", "Αθήνα"), locale = greek),
+        )
     }
 
     @Test
@@ -63,8 +88,8 @@ class HomeAppsTest {
         val second = app("b").copy(label = "Same")
 
         assertEquals(
-            homeApps(listOf(first, second), launcher, AppArrangement.NONE).shown,
-            homeApps(listOf(second, first), launcher, AppArrangement.NONE).shown,
+            homeApps(listOf(first, second), launcher, AppArrangement.NONE, Locale.ENGLISH).shown,
+            homeApps(listOf(second, first), launcher, AppArrangement.NONE, Locale.ENGLISH).shown,
         )
     }
 
@@ -112,7 +137,7 @@ class HomeAppsTest {
         val installed = listOf(app("movies"), renamed("news"))
         val arrangement = AppArrangement(order = null, hidden = listOf(id("news")))
 
-        val arranged = homeApps(installed, launcher, arrangement)
+        val arranged = homeApps(installed, launcher, arrangement, Locale.ENGLISH)
 
         assertEquals(listOf("News"), labels(arranged.hidden))
         assertEquals(listOf(renamed("news").launchable), arranged.arrangement.hidden)
@@ -132,7 +157,7 @@ class HomeAppsTest {
         val installed = listOf(renamed("news"), second)
         val arrangement = AppArrangement(order = null, hidden = listOf(id("news")))
 
-        val arranged = homeApps(installed, launcher, arrangement)
+        val arranged = homeApps(installed, launcher, arrangement, Locale.ENGLISH)
 
         assertEquals(emptyList<InstalledApp>(), arranged.hidden)
         assertEquals(emptyList<LaunchableApp>(), arranged.arrangement.hidden)
@@ -145,14 +170,14 @@ class HomeAppsTest {
         val gone = LaunchableApp("com.example.news", "com.example.news.OldActivity")
         val arrangement = AppArrangement(order = listOf(gone, id("news")), hidden = emptyList())
 
-        assertEquals(listOf(id("news")), homeApps(installed, launcher, arrangement).arrangement.order)
+        assertEquals(listOf(id("news")), homeApps(installed, launcher, arrangement, Locale.ENGLISH).arrangement.order)
     }
 
     @Test
     fun `keeps the entries of apps that aren't installed`() {
         val arrangement = AppArrangement(order = listOf(id("games"), id("news")), hidden = listOf(id("music")))
 
-        val arranged = homeApps(listOf(app("news")), launcher, arrangement)
+        val arranged = homeApps(listOf(app("news")), launcher, arrangement, Locale.ENGLISH)
 
         assertEquals(listOf("News"), labels(arranged.shown))
         assertEquals(emptyList<InstalledApp>(), arranged.hidden)
@@ -162,7 +187,7 @@ class HomeAppsTest {
     @Test
     fun `an app that comes back gets its place back`() {
         val arrangement = AppArrangement(order = listOf(id("news"), id("games"), id("movies")), hidden = emptyList())
-        val withoutGames = homeApps(listOf(app("movies"), app("news")), launcher, arrangement).arrangement
+        val withoutGames = homeApps(listOf(app("movies"), app("news")), launcher, arrangement, Locale.ENGLISH).arrangement
 
         assertEquals(listOf("News", "Games", "Movies"), shown(listOf(app("games"), app("movies"), app("news")), withoutGames))
     }
@@ -170,7 +195,7 @@ class HomeAppsTest {
     @Test
     fun `a hidden app that comes back is still hidden`() {
         val arrangement = AppArrangement(order = null, hidden = listOf(id("games")))
-        val withoutGames = homeApps(listOf(app("movies")), launcher, arrangement).arrangement
+        val withoutGames = homeApps(listOf(app("movies")), launcher, arrangement, Locale.ENGLISH).arrangement
 
         assertEquals(listOf("Games"), hidden(listOf(app("games"), app("movies")), withoutGames))
     }
