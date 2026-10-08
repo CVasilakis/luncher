@@ -23,7 +23,7 @@ feature/settings/
     │   │   └── HideAppsActivity.kt   the Hide apps list: every app by name; OK hides or shows one
     │   └── res/                  the panels' themes (Theme.Luncher.Settings, .Panel), window and
     │                             focused entry, layouts, settings_* colors, dimensions and strings,
-    │                             Greek strings in values-el/ (docs/TRANSLATIONS.md)
+    │                             their translations in values-el/ and values-ar/ (docs/TRANSLATIONS.md)
     └── test/
         ├── java/…/settings/      JVM tests; TestSettingsGraph.kt: the ports a test gives the screens,
         │                         and the tests' Application (named in resources/robolectric.properties)

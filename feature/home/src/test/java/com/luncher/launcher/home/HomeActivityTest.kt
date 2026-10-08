@@ -104,7 +104,7 @@ class HomeActivityTest {
     // Where the clock, the settings entry and the tiles go is for settings to decide, not the
     // language: only the settings panels mirror (HideAppsActivityTest).
     @Test
-    @Config(qualifiers = "ar-rEG-ldrtl-$TV_1080P")
+    @Config(qualifiers = "ar-rEG-$TV_1080P")
     fun `stays left to right in right-to-left languages`() {
         val activity = start().get()
 
@@ -114,15 +114,14 @@ class HomeActivityTest {
         assertEquals(listOf("Movies", "Music", "News"), activity.tiles().sortedBy { it.left }.map { it.app.label })
     }
 
-    // Text keeps its own direction, which would put a right-to-left title at the right of its
-    // view, against the key hint.
+    // Text keeps its own direction, which would put the Arabic title at the right of its view,
+    // against the key hint.
     @Test
-    @Config(qualifiers = "ar-rEG-ldrtl-$TV_1080P")
+    @Config(qualifiers = "ar-rEG-$TV_1080P")
     fun `puts a right-to-left arrange title at the left too`() {
         val activity = start().get()
         val title = activity.findViewById<TextView>(R.id.home_arrange_title)
 
-        title.text = "ترتيب التطبيقات"
         title.visibility = View.VISIBLE
         shadowOf(Looper.getMainLooper()).idle()   // the layout pass
 

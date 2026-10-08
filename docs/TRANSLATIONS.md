@@ -1,13 +1,17 @@
 # Translations
 
-Luncher's texts are in English and Greek. This covers where they are, how a string is written so
-that it translates well, and what a new string or language needs.
+Luncher's texts are in English, Greek and Arabic. This covers where they are, how a string is
+written so that it translates well, and what a new string or language needs.
+
+- **Greek** is kept by the project's maintainer.
+- **Arabic** is there so a right-to-left translation is tested on every change, and for users who
+  want it. No native speaker has reviewed it yet; corrections are welcome.
 
 ## Where the texts are
 
 | Module | Texts | Languages |
 |---|---|---|
-| `:feature:home` | the home screen and arrange mode | `res/values/strings.xml` (English), `res/values-el/` (Greek) |
+| `:feature:home` | the home screen and arrange mode | `res/values/strings.xml` (English), `res/values-el/` (Greek), `res/values-ar/` (Arabic) |
 | `:feature:settings` | the settings panels | the same |
 | `:app` | the app's name | `translatable="false"`: a name, the same in every language |
 
@@ -39,8 +43,10 @@ A right-to-left language mirrors the settings panels but not the home screen
 - **Room for longer text.** A translation often runs a third longer than the English, Greek's
   arrange title almost twice. Where text can't grow, the layout says what gives way: the arrange
   title ends in "…" on a narrow screen, never the key hint.
-- **In a right-to-left language,** a left-to-right part that should keep its order (the arrows)
-  goes between U+2066 and U+2069, a left-to-right isolate.
+- **In a right-to-left language,** a left-to-right part that should keep its order goes between
+  U+2066 and U+2069, a left-to-right isolate, written `\u2066` and `\u2069` in the string: the
+  arrange hint's arrows in Arabic would otherwise show in reverse order. An arrow that means
+  "then" points the way the text reads (`←` in Arabic's `home_all_hidden`).
 
 ## A new string, a new language
 
@@ -56,11 +62,13 @@ A right-to-left language mirrors the settings panels but not the home screen
 
 - **The layout tests** (`HomeLayoutTest`, `SettingsLayoutTest`) run every screen in every
   language, with the longest date each has: nothing cut, except where the layout allows it, and
-  everything fits ([`TESTING.md`](TESTING.md#layouts-on-other-screens)).
+  everything fits ([`TESTING.md`](TESTING.md#layouts-on-other-screens)). In Arabic, that's the
+  mirrored settings panels too.
 - **On an emulator,** from API 33 on, Luncher's own language can change without the device's:
 
   ```bash
   adb shell cmd locale set-app-locales com.luncher.launcher.debug --locales el   # Greek
+  adb shell cmd locale set-app-locales com.luncher.launcher.debug --locales ar   # Arabic
   adb shell cmd locale set-app-locales com.luncher.launcher.debug --locales ""   # the device's again
   ```
 

@@ -26,8 +26,8 @@ feature/home/
     │   │   ├── AppTileView.kt    one app: its image, focus frame and zoom; held or hidden while arranging
     │   │   └── ArrangeMode.kt    arrange mode: keys to the domain's ArrangeSession, the shelf, the top bar's title and hint
     │   └── res/                  the focused tile's zoom (animator/), the settings gear and its focus
-    │                             disc, home_activity.xml, home_* dimensions and strings, Greek
-    │                             strings in values-el/ (docs/TRANSLATIONS.md)
+    │                             disc, home_activity.xml, home_* dimensions and strings, and their
+    │                             translations in values-el/ and values-ar/ (docs/TRANSLATIONS.md)
     └── test/
         ├── java/…/home/          JVM tests; TestHomeGraph.kt: the ports a test gives the screen, and
         │                         the tests' Application (named in resources/robolectric.properties)

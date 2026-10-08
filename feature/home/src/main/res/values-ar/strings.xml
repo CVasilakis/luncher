@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Arabic. What each string is for: values/strings.xml. The D-pad's arrows sit in a
+     left-to-right isolate (U+2066 … U+2069), so they keep their order in right-to-left text. -->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="home_no_apps">لا توجد تطبيقات تلفزيون مثبّتة</string>
+    <string name="home_all_hidden">كل التطبيقات مخفية. افتح <xliff:g id="settings" example="الإعدادات">%1$s</xliff:g> ← <xliff:g id="hide_apps" example="إخفاء التطبيقات">%2$s</xliff:g> لإظهارها مجددًا.</string>
+    <string name="home_settings">الإعدادات</string>
+    <string name="home_arrange_title">ترتيب التطبيقات</string>
+    <string name="home_arrange_hint_holding"><xliff:g id="arrows" example="↑↓←→">⁦↑↓←→⁩</xliff:g> نقل · OK إفلات · رجوع إنهاء</string>
+    <string name="home_arrange_hint_browsing">OK التقاط · رجوع إنهاء</string>
+    <string name="home_hidden">مخفية</string>
+    <string name="home_hidden_empty">انقل التطبيقات إلى هنا لإخفائها</string>
+</resources>

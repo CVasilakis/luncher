@@ -158,7 +158,7 @@ class HideAppsActivityTest {
 
     // Unlike the home screen (HomeActivityTest), which stays left to right.
     @Test
-    @Config(qualifiers = "ar-rEG-ldrtl-$TV_1080P")
+    @Config(qualifiers = "ar-rEG-$TV_1080P")
     fun `mirrors in right-to-left languages, the scrollbar's strip on the left`() {
         val list = start().list()
 

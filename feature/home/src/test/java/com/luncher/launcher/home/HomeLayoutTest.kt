@@ -1,8 +1,8 @@
 package com.luncher.launcher.home
 
 import android.graphics.RectF
-import android.text.format.DateFormat
 import android.os.Looper
+import android.text.format.DateFormat
 import android.view.KeyEvent
 import android.view.View
 import android.view.ViewConfiguration
@@ -19,6 +19,14 @@ import com.luncher.launcher.testing.assertApart
 import com.luncher.launcher.testing.assertInside
 import com.luncher.launcher.testing.assertWhole
 import com.luncher.launcher.testing.bounds
+import java.text.SimpleDateFormat
+import java.time.Duration
+import java.time.LocalDate
+import java.time.ZoneOffset
+import java.util.Date
+import java.util.Locale
+import java.util.TimeZone
+import org.junit.After
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -29,12 +37,6 @@ import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
-import java.text.SimpleDateFormat
-import java.time.Duration
-import java.time.LocalDate
-import java.time.ZoneOffset
-import java.util.Date
-import java.util.TimeZone
 
 /**
  * The home screen's layout on every screen of [TV_SCREENS], in every language: everything inside
@@ -58,10 +60,18 @@ class HomeLayoutTest(private val screen: TvScreen) {
     private val shown = listOf("an app name far too long for its tile") + (1..11).map { "app%02d".format(it) }
     private val hidden = listOf("x1", "x2", "x3")
 
+    private val defaultLocale = Locale.getDefault()
+
+    @After
+    fun restoreLocale() = Locale.setDefault(defaultLocale)
+
     @Before
     fun useScreenAndFakes() {
         RuntimeEnvironment.setFontScale(screen.fontScale)
         RuntimeEnvironment.setQualifiers(screen.qualifiers)
+        // The language formats the clock and sorts the apps too, through the default Locale, which
+        // Robolectric sets from a test's @Config only.
+        Locale.setDefault(RuntimeEnvironment.getApplication().resources.configuration.locales[0])
         val application = RuntimeEnvironment.getApplication() as HomeTestApplication
         application.graph = object : TestHomeGraph(application) {
             override val installedApps = FakeInstalledApps((shown + hidden).map(::app))

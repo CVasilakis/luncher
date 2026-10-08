@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Arabic. What each string is for: values/strings.xml. -->
+<resources>
+    <string name="settings_title">الإعدادات</string>
+    <string name="settings_hide_apps">إخفاء التطبيقات</string>
+    <string name="settings_hidden">مخفي</string>
+    <string name="settings_no_apps">لا توجد تطبيقات تلفزيون مثبّتة</string>
+    <string name="settings_system">إعدادات النظام</string>
+    <string name="settings_system_unavailable">لا يتوفّر تطبيق إعدادات على هذا الجهاز</string>
+</resources>

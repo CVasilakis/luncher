@@ -14,6 +14,8 @@ import com.luncher.launcher.testing.TV_SCREENS
 import com.luncher.launcher.testing.TV_SCREENS_IN_EVERY_LANGUAGE
 import com.luncher.launcher.testing.TvScreen
 import com.luncher.launcher.testing.assertWhole
+import java.util.Locale
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -43,10 +45,18 @@ class SettingsLayoutTest(private val screen: TvScreen) {
 
     private val apps = (1..11).map { "app%02d".format(it) } + "zz last app"
 
+    private val defaultLocale = Locale.getDefault()
+
+    @After
+    fun restoreLocale() = Locale.setDefault(defaultLocale)
+
     @Before
     fun useScreenAndFakes() {
         RuntimeEnvironment.setFontScale(screen.fontScale)
         RuntimeEnvironment.setQualifiers(screen.qualifiers)
+        // The language formats the clock and sorts the apps too, through the default Locale, which
+        // Robolectric sets from a test's @Config only.
+        Locale.setDefault(RuntimeEnvironment.getApplication().resources.configuration.locales[0])
         val application = RuntimeEnvironment.getApplication() as SettingsTestApplication
         application.graph = object : TestSettingsGraph() {
             override val installedApps = FakeInstalledApps(apps.map(::app))

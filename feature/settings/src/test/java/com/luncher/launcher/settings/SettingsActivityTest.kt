@@ -102,12 +102,15 @@ class SettingsActivityTest {
         assertEquals("This device has no settings app", ShadowToast.getTextOfLatestToast())
     }
 
-    // Unlike the home screen (HomeActivityTest), which stays left to right.
+    // Unlike the home screen (HomeActivityTest), which stays left to right. Persian: a
+    // right-to-left language Luncher has no translation for, so its entries are in English.
     @Test
-    @Config(qualifiers = "ar-rEG-ldrtl-$TV_1080P")
+    @Config(qualifiers = "fa-rIR-$TV_1080P")
     fun `lines its entries up at the right in right-to-left languages, English ones too`() {
-        val entry = start().entries().first().layout
+        val entries = start().entries()
+        val entry = entries.first().layout
 
+        assertEquals("Hide apps", entries.first().text.toString())
         assertEquals(entry.width.toFloat(), entry.getLineRight(0))
     }
 }
