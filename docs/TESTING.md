@@ -41,6 +41,10 @@ Use the lowest tier that can catch the regression; each step up is slower and mo
   install fake apps with intent filters).
 - **What a screen shows, and how it reacts to lifecycle changes**: Android JVM test
   (`Robolectric.buildActivity(…)`). **How it looks**: screenshot test.
+- **That a key press or a frame allocates nothing** ([`ARCHITECTURE.md`](ARCHITECTURE.md#rules),
+  rule 5): Android JVM test counting the bytes the test's thread allocates, with native graphics,
+  around only the steps Robolectric doesn't stand in for: measuring and drawing, not scrolling,
+  whose stand-ins allocate (`ArrangeModeTest`).
 - **Real key events on a screen** (D-pad focus movement, OK, Back): Espresso.
 - **Anything across apps or the system** (Home key, launching an app and returning, being the
   default home): UI Automator.

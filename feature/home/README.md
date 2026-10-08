@@ -98,8 +98,9 @@ What keeps it light:
 - **Only new apps cost a bitmap.** Coming back to the home screen reads the app list again, but
   keeps the tiles, their bitmaps and the focus when it's the same; when an app was installed,
   only its tile is new.
-- **Nothing allocated per key press.** Android's own focus search moves between tiles; the zoom
-  is a state animator created with each tile; scrolling reuses one `Scroller`.
+- **Nothing allocated per key press in Luncher's code.** Android's own focus search moves between
+  tiles; the zoom is a state animator created with each tile; scrolling reuses one `Scroller`.
+  Android 5 still allocates inside its animators each time they start, about 2 KB a focus move.
 - **Layout passes only when the tiles change.** Focus, zoom and scrolling redraw without
   measuring or laying out again. The clock's text changes once a minute, which lays out the top
   bar only, not the tiles.
@@ -148,9 +149,10 @@ What keeps it light:
 
 - **The hidden apps' tiles exist only during the mode.** Their bitmaps are drawn when it starts,
   and dropped with the tiles when it ends.
-- **A move reads and draws nothing new.** The tile is moved in place (detached and attached again,
-  which keeps its focus), and only the tiles' layout runs again, which creates the layout's few
-  small objects (a `TileGrid`, and in the mode a `ShelfLayout`). `ArrangeSession` itself
-  allocates nothing for a move, except when an app crosses between the shown and the hidden ones.
+- **A move allocates nothing.** The tile is moved in place (detached and attached again, which
+  keeps its focus), and the tiles are laid out again with the layout they had: `AppTilesView`
+  keeps it while the width, the number of tiles and `shownCount` stay the same, which a move
+  doesn't change. Only an app crossing between the shown and the hidden ones creates new ones: the
+  view's `ShelfLayout` and its two `TileGrid`s, and `ArrangeSession`'s `TileMoves`.
 - **Nothing is read while arranging.** The apps are read again when the home screen comes back
   after the mode, not while the user's changes are on screen.

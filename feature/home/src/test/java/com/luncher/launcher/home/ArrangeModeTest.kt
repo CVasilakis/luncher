@@ -1,6 +1,8 @@
 package com.luncher.launcher.home
 
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.Canvas
 import android.os.Looper
 import android.view.KeyEvent
 import android.view.View
@@ -24,6 +26,8 @@ import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.android.controller.ActivityController
 import org.robolectric.annotation.Config
+import org.robolectric.annotation.GraphicsMode
+import java.lang.management.ManagementFactory
 import java.time.Duration
 
 /** Arrange mode, through the home screen: five apps a to e (one row of five), and x hidden. */
@@ -303,5 +307,61 @@ class ArrangeModeTest {
         val top = tile.top - grid.scrollY
         val bottom = tile.bottom - grid.scrollY
         assertTrue("tile at $top to $bottom, view 0 to ${grid.height}", top >= 0 && bottom <= grid.height - grid.paddingBottom)
+    }
+
+    @Test
+    fun `hiding the only app of the last row moves the shelf up a row`() {
+        installedApps.apps = listOf("a", "b", "c", "d", "e", "f", "x").map { app(it) }   // f alone in the second row
+        val activity = start().get()
+        activity.longPress("f")
+        shadowOf(Looper.getMainLooper()).idle()
+        val row = activity.tile("f").top - activity.tile("a").top
+        val shelfTop = activity.tile("x").top
+
+        activity.press(KeyEvent.KEYCODE_DPAD_DOWN)
+        shadowOf(Looper.getMainLooper()).idle()   // the layout pass
+
+        assertEquals("abcde[F][x]", activity.state())
+        assertEquals(shelfTop - row, activity.tile("x").top)
+        assertEquals(activity.tile("x").top, activity.tile("f").top)   // on the shelf, next to x
+    }
+
+    // Rule 5 (docs/ARCHITECTURE.md): a key press allocates nothing. Counts what this thread allocates
+    // measuring the tiles after each move, which makes their layout, and drawing them, as a frame
+    // would. Not the key itself or onLayout: Robolectric's stand-ins for View's scrolling methods
+    // allocate on each call, where Android's don't. Native graphics, since Robolectric's own canvas
+    // records each drawing call as text.
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun `moving the held app allocates nothing to measure and draw the tiles`() {
+        val activity = start().get()
+        activity.longPress("b")
+        val tiles = activity.findViewById<AppTilesView>(R.id.home_apps)
+        val width = View.MeasureSpec.makeMeasureSpec(tiles.width, View.MeasureSpec.EXACTLY)
+        val height = View.MeasureSpec.makeMeasureSpec(tiles.height, View.MeasureSpec.EXACTLY)
+        val canvas = Canvas(Bitmap.createBitmap(tiles.width, tiles.height, Bitmap.Config.ARGB_8888))
+        val keys = listOf(KeyEvent.KEYCODE_DPAD_RIGHT, KeyEvent.KEYCODE_DPAD_LEFT)
+            .map { listOf(KeyEvent(KeyEvent.ACTION_DOWN, it), KeyEvent(KeyEvent.ACTION_UP, it)) }
+        val threads = ManagementFactory.getThreadMXBean() as com.sun.management.ThreadMXBean
+        /** Moves the held app and lays the tiles out again; returns the bytes measuring and drawing them allocated. */
+        fun move(index: Int): Long {
+            for (event in keys[index % 2]) activity.dispatchKeyEvent(event)
+            var start = threads.currentThreadAllocatedBytes
+            tiles.measure(width, height)
+            var allocated = threads.currentThreadAllocatedBytes - start
+            tiles.layout(tiles.left, tiles.top, tiles.right, tiles.bottom)
+            start = threads.currentThreadAllocatedBytes
+            tiles.draw(canvas)
+            allocated += threads.currentThreadAllocatedBytes - start
+            return allocated
+        }
+        repeat(1000) { move(it) }   // classes loaded, code compiled
+        val moves = 1000
+
+        val perMove = (0 until moves).sumOf { move(it) }.toDouble() / moves
+
+        assertEquals("aBcde[x]", activity.state())   // back where it started
+        // Below the smallest object, so a one-off allocation of the JVM's own doesn't count.
+        assertTrue("$perMove bytes per move", perMove < 16)
     }
 }

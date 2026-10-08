@@ -46,13 +46,24 @@ internal class AppTilesView(context: Context, attrs: AttributeSet?) : ViewGroup(
             if (field == value) return
             field = value
             setWillNotDraw(value == null)   // the shelf's label and empty slot are drawn here
+            layoutChanged = true
             requestLayout()
         }
 
     /** The shelf's label, empty slot and its caption: created with the first shelf. */
     private val shelf by lazy { Shelf() }
 
+    /**
+     * Where the tiles go, kept while what [createLayout] makes it from stays the same: the width and
+     * the number of tiles, compared in [onMeasure], and [shownCount], which sets [layoutChanged]. A
+     * move in arrange mode changes none of them, only which tile is where, so it lays the tiles out
+     * again without allocating (docs/ARCHITECTURE.md, rule 5). Anything a layout comes to depend on
+     * later (a setting, say) sets [layoutChanged] when it changes.
+     */
     private var tileLayout: TileLayout = createLayout(width = 0)
+    private var layoutWidth = 0
+    private var layoutTileCount = 0
+    private var layoutChanged = true
 
     private fun grid(tileCount: Int, width: Int) =
         TileGrid(tileCount, TileGrid.columnsFor(width, tileWidth, gap), width, gap)
@@ -80,7 +91,13 @@ internal class AppTilesView(context: Context, attrs: AttributeSet?) : ViewGroup(
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         val width = MeasureSpec.getSize(widthMeasureSpec)
         val height = MeasureSpec.getSize(heightMeasureSpec)
-        tileLayout = createLayout(width - paddingLeft - paddingRight)
+        val tilesWidth = width - paddingLeft - paddingRight
+        if (layoutChanged || tilesWidth != layoutWidth || childCount != layoutTileCount) {
+            tileLayout = createLayout(tilesWidth)
+            layoutWidth = tilesWidth
+            layoutTileCount = childCount
+            layoutChanged = false
+        }
         val tileWidth = MeasureSpec.makeMeasureSpec(tileLayout.tileWidth, MeasureSpec.EXACTLY)
         val tileHeight = MeasureSpec.makeMeasureSpec(tileLayout.tileHeight, MeasureSpec.EXACTLY)
         for (i in 0 until childCount) getChildAt(i).measure(tileWidth, tileHeight)
@@ -158,7 +175,8 @@ internal class AppTilesView(context: Context, attrs: AttributeSet?) : ViewGroup(
             textSize = resources.getDimension(R.dimen.home_shelf_label_text)
         }
         private val label = resources.getString(R.string.home_hidden)
-        val labelHeight = labelPaint.fontMetricsInt.let { it.descent - it.ascent }
+        private val labelMetrics = labelPaint.fontMetricsInt   // read once: each read allocates
+        val labelHeight = labelMetrics.descent - labelMetrics.ascent
 
         private val slotPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             style = Paint.Style.STROKE
@@ -178,7 +196,7 @@ internal class AppTilesView(context: Context, attrs: AttributeSet?) : ViewGroup(
         fun draw(canvas: Canvas, layout: ShelfLayout) {
             val left = paddingLeft + layout.left(shownCount ?: 0).toFloat()
             val labelTop = paddingTop + layout.labelTop
-            canvas.drawText(label, left, labelTop - labelPaint.fontMetricsInt.ascent.toFloat(), labelPaint)
+            canvas.drawText(label, left, labelTop - labelMetrics.ascent.toFloat(), labelPaint)
 
             val empty = layout.emptySlot ?: return
             val inset = slotPaint.strokeWidth / 2

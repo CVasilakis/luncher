@@ -327,6 +327,39 @@ class HomeActivityTest {
         assertEquals(0, grid.scrollY)
     }
 
+    @Test
+    fun `with apps installed since, focus still reaches the last row, scrolled into view`() {
+        val controller = start()   // three apps, one row
+        controller.pause().stop()
+        installedApps.apps = (1..150).map { app("app%03d".format(it)) }
+        controller.restart().start().resume()
+        shadowOf(Looper.getMainLooper()).idle()   // the layout pass for the new tiles
+        val activity = controller.get()
+
+        repeat(29) { activity.moveFocus(View.FOCUS_DOWN) }
+
+        assertEquals("App146", activity.focusedLabel())
+        assertInView(activity.findViewById(R.id.home_apps), activity.tiles()[145])
+    }
+
+    // The tiles' layout is kept while nothing it's made from changes; a new width is one such change.
+    @Test
+    fun `lays the tiles out again for a new width`() {
+        installedApps.apps = (1..12).map { app("app%02d".format(it)) }
+        val activity = start().get()
+        val grid = activity.findViewById<AppTilesView>(R.id.home_apps)
+        val width = grid.width / 2
+
+        grid.measure(exactly(width), exactly(grid.height))
+        grid.layout(0, 0, width, grid.height)
+
+        assertTrue(activity.firstRowSize() < 5)
+        val right = activity.tiles().maxOf { it.right }
+        assertTrue("tiles reach $right, the space ends at ${width - grid.paddingRight}", right <= width - grid.paddingRight)
+    }
+
+    private fun exactly(size: Int) = View.MeasureSpec.makeMeasureSpec(size, View.MeasureSpec.EXACTLY)
+
     // Robolectric moves focus only when told, and draws no frames, so the scroll animation is run to
     // its end here: the time it takes, then computeScroll as a frame would.
     private fun HomeActivity.moveFocus(direction: Int) {
