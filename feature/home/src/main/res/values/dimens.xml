@@ -5,12 +5,6 @@
     <dimen name="home_padding_vertical">32dp</dimen>
     <!-- Between the top bar and the tiles; room for a focused tile's zoom in the first row. -->
     <dimen name="home_tiles_padding_top">24dp</dimen>
-    <!-- Between tiles; more than a tile grows when it zooms, so neighbors never overlap. -->
-    <dimen name="home_tile_gap">24dp</dimen>
-    <!-- About how wide a tile is: as many fit in a row as make the nearest whole number, so a
-         16:9 TV's 960 dp, less its padding, has five. Fewer on a narrower screen, more on a wider
-         one or at a lower density. -->
-    <dimen name="home_tile_width">154dp</dimen>
     <dimen name="home_tile_frame">3dp</dimen>
     <dimen name="home_time_text">32sp</dimen>
     <dimen name="home_date_text">18sp</dimen>

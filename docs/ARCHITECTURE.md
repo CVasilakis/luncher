@@ -72,8 +72,10 @@ theme, colors.
    default. Activities extend `android.app.Activity`, with platform themes
    ([`ui/README.md`](../ui/README.md#the-theme)); plain `java.util.concurrent` and `Handler` cover
    background work
-   ([below](#background-work-and-changes-while-shown)). Don't allocate in drawing or D-pad
-   handling code. Scale bitmaps down to their display size.
+   ([below](#background-work-and-changes-while-shown)). Don't allocate in drawing, or for a key
+   that moves something (the focus, a held app); a key that changes a stored value (putting a
+   moved app down, a setting's next value) may, as storing it does anyway. Scale bitmaps down to
+   their display size.
 6. **Storage formats belong to adapters.** `:domain` sees typed values (sets of hidden apps, an
    order), not file names, preference keys or file layouts, so a storage change stays in one
    adapter.
@@ -117,6 +119,56 @@ No job runs today: the app list and the banners are read on the main thread, as 
 enough so far. The first slow job, the wallpaper, brings the background thread and the helper,
 and moves to them whatever measures slow.
 
+## Appearance
+
+What the user can change about how the home screen looks (where the tiles go, their corner
+radius, a color, which side the clock is on, …) follows one design, so that another aspect is a
+fixed list of steps that touches nothing else, and each step forgotten fails to compile or fails
+a test.
+
+1. **`Appearance`, in `:domain`'s `appearance/`, is one immutable model, made of parts.** Each
+   part goes to the one part of the home screen that draws it, and holds values that cost the
+   same to apply: `TileGeometry` (where tiles go and how big they are: a new layout, and new
+   images when their size changes) is one; how a tile is drawn (a redraw only) would be another.
+   Its defaults are the home screen as it looks without settings. Values are dp or choices, never
+   pixels, and in the screen's own directions: left and right never mirror in a right-to-left
+   language ([`app/README.md`](../app/README.md#manifest-why-each-part-is-there)). A color is a
+   choice from a palette defined in `:domain`, never a free value.
+2. **Each consumer applies only its part, and compares it with `==`.** A view keeps what it built
+   from the part it was given last, and builds anew only when the new part is different, so an
+   unchanged part costs nothing, and a value added to a part takes effect without code that
+   remembers to drop what was kept. `TileLayouts`, in `:domain`'s `layout/`, is the one place
+   that turns a `TileGeometry` into the layouts and moves of the tiles, in pixels at a density.
+3. **What the user can change is a catalog of options in `:domain`:** each option is a type of
+   its own, with an ordered list of values and the part of `Appearance` it reads and changes. A
+   number is a list of steps too, so every option is changed the same way. Every layer that
+   handles options does so in an exhaustive `when`, so a new option doesn't compile until each
+   one handles it.
+4. **One port you can watch stores the whole `Appearance`**
+   ([above](#background-work-and-changes-while-shown)). Its adapter in `:platform` keeps one value
+   per option, under a key it assigns in an exhaustive `when`; a value it doesn't know (stored by
+   an older or newer version) becomes that option's default, and nothing else changes.
+5. **The home screen applies a change once, not at every step.** A screen where the user changes
+   the appearance covers the home screen whole, so the home screen is stopped meanwhile, doesn't
+   listen, and applies the result when it comes back (a tile size's steps would otherwise redraw
+   every banner each time).
+6. **Whatever else shows an appearance (a preview) lays it out with the same `:domain` rules** as
+   the home screen, at its own scale, never with rules of its own, so it can't disagree with the
+   home screen.
+
+Adding an aspect, e.g. the focus frame's color:
+
+| Step | Where | What catches it when it's missing |
+|---|---|---|
+| The value in the part of `Appearance` it belongs to, its default the current look; a palette or limits it needs | `:domain` | unit tests |
+| Its option in the catalog | `:domain` | unit tests |
+| Its storage key | `:platform` | the exhaustive `when` doesn't compile; a round trip of every option in the catalog |
+| Its label and its values' labels, in every translation | `:feature:settings` | the exhaustive `when` doesn't compile; lint ([`TRANSLATIONS.md`](TRANSLATIONS.md)) |
+| Its effect on the home screen, and on the preview where it shows | `:feature:home`, `:feature:settings` | a test that sets each option of the catalog to a value other than its default, and fails if the home screen, or the preview, draws the same |
+
+Today `Appearance` has one part, `TileGeometry`, with its defaults, which `AppTilesView` lays its
+tiles out by; no option can be changed yet.
+
 ## Where things go
 
 | Change | Where |
@@ -124,9 +176,10 @@ and moves to them whatever measures slow.
 | A launcher decision (which apps show, sort order, banner choice, validation of a setting) | a rule in `:domain`, plus unit tests next to it |
 | New data the rules or screens need from the device (settings, wallpaper, installed apps) | a port (interface) in `:domain` with a fake in its test fixtures; an adapter in `:platform`, in the package of the port's topic; one line in `AppGraph`; the port in the graph interface of each feature that uses it |
 | An image the UI shows (banners, later the wallpaper) | which image: a model and rule in `:domain` (like `Banner`); drawing it: an adapter in `:platform` behind a port generic in the image type (`AppImages<Bitmap>`), since `:domain` can't name `Bitmap`. It draws at the size shown ([rule 5](#rules)), and is slow work if it's slow ([above](#background-work-and-changes-while-shown)). |
-| How the home screen arranges apps (grid, apps per row, alignment, a carousel) | a `TileLayout` in `:domain`'s `layout/` that computes sizes and positions, and `TileMoves` for where a tile the user moves goes, with unit tests; the view that shows the tiles only places them where the layout says ([`feature/home/README.md`](../feature/home/README.md#the-home-screen)) |
+| How the home screen arranges apps (grid, apps per row, alignment, a carousel) | a `TileLayout` in `:domain`'s `layout/` that computes sizes and positions, and `TileMoves` for where a tile the user moves goes, with unit tests; `TileLayouts` picks it, so everything that shows tiles lays them out alike; the view that shows the tiles only places them where the layout says ([`feature/home/README.md`](../feature/home/README.md#the-home-screen)) |
 | What the user can do while arranging apps (moving, hiding, which key does what to the held app) | `ArrangeSession` in `:domain`'s `arrange/`, with unit tests; `ArrangeMode` in `:feature:home` turns keys into its moves ([`feature/home/README.md`](../feature/home/README.md#arrange-mode)) |
 | Something the home screen's top bar shows (the clock, the settings entry; later status indicators) | a view in `:feature:home`, placed in the bar; device state it shows (the time, the network) comes from a port you can watch ([above](#background-work-and-changes-while-shown)). Details: [`feature/home/README.md`](../feature/home/README.md#the-top-bar) |
+| Something the user can change about how the home screen looks (tile placement, corner radius, a color) | a value in `Appearance` and an option in its catalog, in `:domain`; the steps and what checks each: [Appearance](#appearance) |
 | A new setting | its entry: `settingsMenu` in `:domain`'s `settings/`, and its label and action in `:feature:settings`; a value it stores comes through a port you can watch, so the screens it affects update while it changes; a screen of its own (a list, like Hide apps) is another activity in `:feature:settings`. Steps: [`feature/settings/README.md`](../feature/settings/README.md#the-settings-panel) |
 | A new screen of its own (e.g. a wallpaper picker) | a new feature module (below) |
 | A shared view, style or UI helper | `:ui`, resources without a prefix |

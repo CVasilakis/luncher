@@ -23,6 +23,9 @@ domain/src/
 │   │   ├── HomeApps.kt          rule: which apps the home screen shows, in which order, and which are hidden
 │   │   ├── ArrangedApps.kt      model and rules: the shown and hidden apps; hiding or showing one, and what to store
 │   │   └── Banner.kt            model and rule: which image a tile shows (the app's banner or its icon)
+│   ├── appearance/
+│   │   ├── Appearance.kt        model: how the home screen looks, as far as the user can change it, in parts (docs/ARCHITECTURE.md#appearance)
+│   │   └── TileGeometry.kt      model: where tiles go and how big they are, in dp
 │   ├── clock/
 │   │   ├── ClockReading.kt      model: the time, time zone and hour format at one moment
 │   │   └── Clock.kt             port: the device's clock, and when what it shows changes
@@ -36,6 +39,7 @@ domain/src/
 │       ├── TileMoves.kt         how it says where a tile the user moves goes
 │       ├── Direction.kt         model: a D-pad arrow
 │       ├── TileGrid.kt          rule: the grid (rows of tiles, centered; as many columns as fit a width), and moves in it
+│       ├── TileLayouts.kt       rule: the layouts for a TileGeometry, in pixels at a density; picks the arrangement
 │       └── ShelfLayout.kt       rule: the shown apps' tiles above a shelf of the hidden ones, while arranging
 ├── test/kotlin/…/               unit tests (docs/TESTING.md), same packages as the code
 └── testFixtures/kotlin/…/       fakes of the ports, used by the tests of every module
@@ -44,7 +48,7 @@ domain/src/
     └── clock/FakeClock.kt          fake of the Clock port: a fixed time the test moves
 ```
 
-Packages are by topic (`apps/`, `arrange/`, `clock/`, `layout/`, `settings/`, and later e.g. `wallpaper/`), each holding the
+Packages are by topic (`appearance/`, `apps/`, `arrange/`, `clock/`, `layout/`, `settings/`, and later e.g. `wallpaper/`), each holding the
 models, rules and ports of that topic.
 
 ## Writing models, rules and ports

@@ -12,9 +12,10 @@ import android.util.AttributeSet
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Scroller
+import com.luncher.domain.appearance.TileGeometry
 import com.luncher.domain.layout.ShelfLayout
-import com.luncher.domain.layout.TileGrid
 import com.luncher.domain.layout.TileLayout
+import com.luncher.domain.layout.TileLayouts
 import com.luncher.domain.layout.TileMoves
 import com.luncher.launcher.ui.color
 import com.luncher.launcher.ui.R as UiR
@@ -22,7 +23,7 @@ import com.luncher.launcher.ui.R as UiR
 /**
  * The home screen's app tiles, placed where a [TileLayout] says, scrolled so the focused tile stays
  * in view. The arrangement itself (grid, columns, alignment) is the layout's decision, made in
- * :domain; [grid] is the one place that picks which one.
+ * :domain, where [TileLayouts] picks it for the [tileGeometry].
  *
  * While the user arranges apps ([shownCount] set), the tiles after the shown ones are the hidden
  * apps, on a shelf below a label ([ShelfLayout]); with none, an empty slot shows where hiding is.
@@ -33,9 +34,22 @@ import com.luncher.launcher.ui.R as UiR
  */
 internal class AppTilesView(context: Context, attrs: AttributeSet?) : ViewGroup(context, attrs) {
 
-    private val gap = resources.getDimensionPixelSize(R.dimen.home_tile_gap)
-    private val tileWidth = resources.getDimensionPixelSize(R.dimen.home_tile_width)
+    private val pixelsPerDp = resources.displayMetrics.density
     private val scroller = Scroller(context)
+
+    /**
+     * Where the tiles go and how big they are, from the home screen's appearance. Its default is
+     * the home screen without settings.
+     */
+    var tileGeometry: TileGeometry = TileGeometry()
+        set(value) {
+            if (field == value) return
+            field = value
+            layouts = TileLayouts(value, pixelsPerDp)
+            requestLayout()
+        }
+
+    private var layouts = TileLayouts(tileGeometry, pixelsPerDp)
 
     /**
      * While the user arranges apps, how many of the tiles are shown apps; the others are hidden
@@ -46,7 +60,6 @@ internal class AppTilesView(context: Context, attrs: AttributeSet?) : ViewGroup(
             if (field == value) return
             field = value
             setWillNotDraw(value == null)   // the shelf's label and empty slot are drawn here
-            layoutChanged = true
             requestLayout()
         }
 
@@ -54,28 +67,25 @@ internal class AppTilesView(context: Context, attrs: AttributeSet?) : ViewGroup(
     private val shelf by lazy { Shelf() }
 
     /**
-     * Where the tiles go, kept while what [createLayout] makes it from stays the same: the width and
-     * the number of tiles, compared in [onMeasure], and [shownCount], which sets [layoutChanged]. A
-     * move in arrange mode changes none of them, only which tile is where, so it lays the tiles out
-     * again without allocating (docs/ARCHITECTURE.md, rule 5). Anything a layout comes to depend on
-     * later (a setting, say) sets [layoutChanged] when it changes.
+     * Where the tiles go, kept while what [createLayout] makes it from stays the same: the width,
+     * the number of tiles, [shownCount] and [tileGeometry], each compared in [onMeasure] with the
+     * value the layout was made from. A move in arrange mode changes none of them, only which tile
+     * is where, so it lays the tiles out again without allocating (docs/ARCHITECTURE.md, rule 5).
+     * Anything a layout comes to depend on is compared there too.
      */
     private var tileLayout: TileLayout = createLayout(width = 0)
     private var layoutWidth = 0
     private var layoutTileCount = 0
-    private var layoutChanged = true
-
-    private fun grid(tileCount: Int, width: Int) =
-        TileGrid(tileCount, TileGrid.columnsFor(width, tileWidth, gap), width, gap)
+    private var layoutShownCount: Int? = null
+    private var layoutGeometry = tileGeometry
 
     private fun createLayout(width: Int): TileLayout {
-        val shown = shownCount ?: return grid(childCount, width)
-        val hidden = childCount - shown
-        return ShelfLayout(grid(shown, width), grid(hidden, width), shown, hidden, shelf.labelHeight, gap)
+        val shown = shownCount ?: return layouts.tiles(childCount, width)
+        return layouts.shelf(shown, childCount - shown, width, shelf.labelHeight)
     }
 
     /** How tiles move among [tileCount] of them, in the arrangement this view shows them in. */
-    fun movesFor(tileCount: Int): TileMoves = grid(tileCount, width - paddingLeft - paddingRight)
+    fun movesFor(tileCount: Int): TileMoves = layouts.tiles(tileCount, width - paddingLeft - paddingRight)
 
     /** Moves the tile at [from] to [to], the others shifting to make room. Focus stays on it. */
     fun moveTile(from: Int, to: Int) {
@@ -92,11 +102,14 @@ internal class AppTilesView(context: Context, attrs: AttributeSet?) : ViewGroup(
         val width = MeasureSpec.getSize(widthMeasureSpec)
         val height = MeasureSpec.getSize(heightMeasureSpec)
         val tilesWidth = width - paddingLeft - paddingRight
-        if (layoutChanged || tilesWidth != layoutWidth || childCount != layoutTileCount) {
+        if (tilesWidth != layoutWidth || childCount != layoutTileCount || shownCount != layoutShownCount ||
+            tileGeometry != layoutGeometry
+        ) {
             tileLayout = createLayout(tilesWidth)
             layoutWidth = tilesWidth
             layoutTileCount = childCount
-            layoutChanged = false
+            layoutShownCount = shownCount
+            layoutGeometry = tileGeometry
         }
         val tileWidth = MeasureSpec.makeMeasureSpec(tileLayout.tileWidth, MeasureSpec.EXACTLY)
         val tileHeight = MeasureSpec.makeMeasureSpec(tileLayout.tileHeight, MeasureSpec.EXACTLY)

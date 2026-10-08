@@ -28,7 +28,7 @@ ui/
 ```
 
 Resources here have no prefix (`accent`, `Theme.Luncher`); a feature's are named after it
-(`home_tile_gap`). Code refers to them through this module's R class, imported as
+(`home_tile_frame`). Code refers to them through this module's R class, imported as
 `com.luncher.launcher.ui.R as UiR` next to the module's own `R`; layouts and themes by name, as
 any resource.
 

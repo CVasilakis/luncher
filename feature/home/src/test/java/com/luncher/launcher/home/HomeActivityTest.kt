@@ -5,6 +5,7 @@ import android.os.Looper
 import android.view.KeyEvent
 import android.view.View
 import android.widget.TextView
+import com.luncher.domain.appearance.TileGeometry
 import com.luncher.domain.apps.AppArrangement
 import com.luncher.domain.apps.FakeAppArrangements
 import com.luncher.domain.apps.FakeInstalledApps
@@ -15,6 +16,7 @@ import com.luncher.domain.clock.FakeClock
 import com.luncher.launcher.settings.SettingsActivity
 import com.luncher.launcher.testing.TV_1080P
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
@@ -370,6 +372,31 @@ class HomeActivityTest {
         assertTrue(activity.firstRowSize() < 5)
         val right = activity.tiles().maxOf { it.right }
         assertTrue("tiles reach $right, the space ends at ${width - grid.paddingRight}", right <= width - grid.paddingRight)
+    }
+
+    @Test
+    fun `lays the tiles out again for a new tile geometry`() {
+        installedApps.apps = (1..12).map { app("app%02d".format(it)) }
+        val activity = start().get()
+        val grid = activity.findViewById<AppTilesView>(R.id.home_apps)
+        val width = activity.tiles().first().width
+
+        grid.tileGeometry = TileGeometry(tileWidthDp = 300)
+        shadowOf(Looper.getMainLooper()).idle()   // the layout pass
+
+        assertEquals(3, activity.firstRowSize())
+        assertTrue(activity.tiles().first().width > width)
+    }
+
+    // Compared by value: an equal geometry, as each read of the appearance gives, costs no layout pass.
+    @Test
+    fun `keeps the tiles' layout for an equal tile geometry`() {
+        val activity = start().get()
+        val grid = activity.findViewById<AppTilesView>(R.id.home_apps)
+
+        grid.tileGeometry = TileGeometry()
+
+        assertFalse(grid.isLayoutRequested)
     }
 
     private fun exactly(size: Int) = View.MeasureSpec.makeMeasureSpec(size, View.MeasureSpec.EXACTLY)

@@ -8,6 +8,7 @@ import android.view.KeyEvent
 import android.view.View
 import android.view.ViewConfiguration
 import android.widget.TextView
+import com.luncher.domain.appearance.TileGeometry
 import com.luncher.domain.apps.AppArrangement
 import com.luncher.domain.apps.FakeAppArrangements
 import com.luncher.domain.apps.FakeInstalledApps
@@ -111,6 +112,20 @@ class ArrangeModeTest {
 
         assertEquals("acdBe[x]", activity.state())
         assertTrue(activity.tile("b").isFocused)
+    }
+
+    // Moves come from the same TileLayouts as the tiles' places, so they follow the geometry too.
+    @Test
+    fun `arrows move the held app along the rows the tiles are shown in`() {
+        val activity = start().get()
+        // 300 dp tiles: three in a row, a b c above d e.
+        activity.findViewById<AppTilesView>(R.id.home_apps).tileGeometry = TileGeometry(tileWidthDp = 300)
+        shadowOf(Looper.getMainLooper()).idle()   // the layout pass
+        activity.longPress("a")
+
+        activity.press(KeyEvent.KEYCODE_DPAD_DOWN)
+
+        assertEquals("bcdAe[x]", activity.state())
     }
 
     @Test

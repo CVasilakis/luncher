@@ -7,6 +7,7 @@ import android.view.KeyEvent
 import android.view.View
 import android.view.ViewConfiguration
 import android.widget.TextView
+import com.luncher.domain.appearance.TileGeometry
 import com.luncher.domain.apps.AppArrangement
 import com.luncher.domain.apps.FakeAppArrangements
 import com.luncher.domain.apps.FakeInstalledApps
@@ -120,7 +121,7 @@ class HomeLayoutTest(private val screen: TvScreen) {
         val topBar = bounds(findViewById(R.id.home_top_bar))
         val width = tiles.first().width
         // About the width they're meant to have: the nearest whole number of them fills a row.
-        val meant = resources.getDimension(R.dimen.home_tile_width)
+        val meant = TileGeometry().tileWidthDp * resources.displayMetrics.density
         assertTrue("tiles $width px wide on $screen, meant $meant", width in (meant * 0.8f).toInt()..(meant * 1.25f).toInt())
         for (tile in tiles) {
             val zoomed = bounds(tile, HELD_ZOOM)

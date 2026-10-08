@@ -62,15 +62,16 @@ The screen is a top bar that stays in place, with the time and date in the devic
 hour format, and below it the TV apps (activities with `MAIN` + `LEANBACK_LAUNCHER`) as tiles of
 their banners, which scroll: by name, as the device's language sorts words, until the user
 reorders them, as many per row as fit at about
-`home_tile_width` (154 dp: five on a 16:9 TV, more on a screen wider in dp, e.g. 1080p at
-160 dpi). OK opens the focused app. Each part does
+`TileGeometry`'s tile width (154 dp: five on a 16:9 TV, more on a screen wider in dp, e.g. 1080p
+at 160 dpi). OK opens the focused app. Each part does
 one job, so a new arrangement, image source or top bar item changes one of them:
 
 | Part | Job |
 |---|---|
 | `homeApps` (`:domain`) | which apps show, in which order, and which are hidden: the installed apps matched to the stored `AppArrangement` ([Hidden apps](../settings/README.md#hidden-apps)) |
-| `TileLayout` (`:domain`) | where each tile goes and how big it is; `TileGrid` is the only one so far, with as many columns as fit tiles of about `home_tile_width` (`TileGrid.columnsFor`), so tiles keep their size next to the top bar's text on any screen |
-| `AppTilesView` | lays tiles out where the `TileLayout` says, and scrolls to the focused one. `grid` is the only place that picks the arrangement. |
+| `TileGeometry` (`:domain`) | the tiles' width and the gap between them, in dp: the home screen's [appearance](../../docs/ARCHITECTURE.md#appearance), its defaults so far |
+| `TileLayout`, `TileLayouts` (`:domain`) | where each tile goes and how big it is; `TileGrid` is the only one so far, with as many columns as fit tiles of about the geometry's width (`TileGrid.columnsFor`), so tiles keep their size next to the top bar's text on any screen. `TileLayouts` is the only place that picks the arrangement, for the tiles' places and for moves in arrange mode alike. |
+| `AppTilesView` | lays tiles out where the `TileLayout` says, and scrolls to the focused one |
 | `bannerFor` (`:domain`) | which image a tile shows |
 | `AppImages` (`:domain`), `BannerImages` (`:platform`) | draws that image into a bitmap of the tile's size |
 | `AppTileView` | draws that bitmap, the focus frame and zoom; in arrange mode, a white frame and a bigger zoom when held, dimmed when hidden |
@@ -156,8 +157,8 @@ What keeps it light:
   and dropped with the tiles when it ends.
 - **A move allocates nothing.** The tile is moved in place (detached and attached again, which
   keeps its focus), and the tiles are laid out again with the layout they had: `AppTilesView`
-  keeps it while the width, the number of tiles and `shownCount` stay the same, which a move
-  doesn't change. Only an app crossing between the shown and the hidden ones creates new ones: the
+  keeps it while the width, the number of tiles, `shownCount` and the `TileGeometry` stay the
+  same, each compared with what the layout was made from, and a move changes none of them. Only an app crossing between the shown and the hidden ones creates new ones: the
   view's `ShelfLayout` and its two `TileGrid`s, and `ArrangeSession`'s `TileMoves`.
 - **Nothing is read while arranging.** The apps are read again when the home screen comes back
   after the mode, not while the user's changes are on screen.
