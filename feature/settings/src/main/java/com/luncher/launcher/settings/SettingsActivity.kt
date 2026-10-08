@@ -10,7 +10,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import com.luncher.domain.settings.SettingsEntry
-import com.luncher.domain.settings.SettingsTab
+import com.luncher.domain.settings.SettingsMenu
 import com.luncher.domain.settings.settingsMenu
 
 /**
@@ -18,7 +18,7 @@ import com.luncher.domain.settings.settingsMenu
  * [settingsMenu]. Back closes it, as any activity, and the home screen's focus is where it was.
  *
  * What an entry shows and does is decided here, per kind of entry, in [label] and [open]; which
- * entries exist and in which tab and group is the domain's decision.
+ * entries exist and in which group is the domain's decision.
  */
 class SettingsActivity : Activity() {
 
@@ -28,8 +28,7 @@ class SettingsActivity : Activity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.settings_activity)
         entries = findViewById(R.id.settings_entries)
-        // One tab shows at a time: the first, until there are more and a tab strip to pick one.
-        show(settingsMenu().tabs.first())
+        show(settingsMenu())
         entries.getChildAt(0)?.requestFocus()
     }
 
@@ -38,9 +37,9 @@ class SettingsActivity : Activity() {
         showPanel(true)   // back from a panel of its own, such as Hide apps
     }
 
-    private fun show(tab: SettingsTab) {
+    private fun show(menu: SettingsMenu) {
         val groupGap = resources.getDimensionPixelSize(R.dimen.settings_group_gap)
-        tab.groups.forEachIndexed { groupIndex, group ->
+        menu.groups.forEachIndexed { groupIndex, group ->
             group.entries.forEachIndexed { entryIndex, entry ->
                 val view = layoutInflater.inflate(R.layout.settings_entry, entries, false) as TextView
                 view.setText(label(entry))

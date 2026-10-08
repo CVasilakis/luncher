@@ -8,7 +8,7 @@ class SettingsMenuTest {
 
     private val menu = settingsMenu()
 
-    private fun entries() = menu.tabs.flatMap { it.groups }.flatMap { it.entries }
+    private fun entries() = menu.groups.flatMap { it.entries }
 
     @Test
     fun `offers the system settings`() {
@@ -25,13 +25,10 @@ class SettingsMenuTest {
         assertEquals(entries().distinct(), entries())
     }
 
-    // The panel would show an empty tab or a gap for an empty group.
+    // The panel would show nothing to focus, or a gap for an empty group.
     @Test
-    fun `has no empty tab or group`() {
-        assertTrue(menu.tabs.isNotEmpty())
-        menu.tabs.forEach { tab ->
-            assertTrue(tab.groups.isNotEmpty())
-            tab.groups.forEach { assertTrue(it.entries.isNotEmpty()) }
-        }
+    fun `has no empty group`() {
+        assertTrue(menu.groups.isNotEmpty())
+        menu.groups.forEach { assertTrue(it.entries.isNotEmpty()) }
     }
 }

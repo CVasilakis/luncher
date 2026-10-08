@@ -63,7 +63,10 @@ dependencies, and it has no token that can change the repository.
 1. **Raise the version:** change `versionName` and `versionCode` in `app/build.gradle.kts`
    ([Versions](#versions)), add the version's changes to the store listing as
    `fastlane/metadata/android/en-US/changelogs/<versionCode>.txt`
-   ([`fastlane/`](../fastlane/README.md)), and push the change to `main`.
+   ([`fastlane/`](../fastlane/README.md)), and push the change to `main`. If the APK's size has
+   changed, update "Release APK size" in the [root README](../README.md) in the same change.
+   `./gradlew assembleRelease` builds it unsigned, as
+   `app/build/outputs/apk/release/app-release-unsigned.apk`; the signature adds a few KB.
 2. **Run the workflow:** Actions → Release → Run workflow, on `main`. It releases the version
    `app/build.gradle.kts` holds, and refuses another branch, a version that isn't higher than the
    last release or already has a release, and a missing signing secret. A tag `v1.2.3` made by

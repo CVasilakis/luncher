@@ -51,12 +51,13 @@ screen's focus is where it was.
 
 | Part | Job |
 |---|---|
-| `settingsMenu` (`:domain`) | which entries the panel lists: tabs of groups of entries, in order |
+| `settingsMenu` (`:domain`) | which entries the panel lists: groups of entries, in order |
 | `SettingsEntry` (`:domain`) | the kinds of entry, one type each |
-| `SettingsActivity` | shows a tab: its groups one below the other, with a gap between them; each entry's label (`label`) and what OK on it does (`open`) |
+| `SettingsActivity` | shows the groups one below the other, with a gap between them; each entry's label (`label`) and what OK on it does (`open`) |
 
-The panel shows the first tab. The tab strip to pick another one, and group titles, are built
-with the first tab or group that needs them. To add an entry:
+Group titles are built with the first group that needs one. An entry with settings of its own
+opens them in a panel of its own ([below](#hidden-apps)) rather than in more of this one. To add
+an entry:
 
 1. A `SettingsEntry` type in `:domain`, placed by `settingsMenu`, with its unit test.
 2. Its label and action in `SettingsActivity`: `label` and `open` are exhaustive `when`s, so this

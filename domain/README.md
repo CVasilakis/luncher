@@ -28,7 +28,7 @@ domain/src/
 │   │   └── Clock.kt             port: the device's clock, and when what it shows changes
 │   ├── settings/
 │   │   ├── SettingsEntry.kt     model: the kinds of entry the settings panel lists, one type each
-│   │   └── SettingsMenu.kt      models and rule: which entries the panel lists, in tabs and groups
+│   │   └── SettingsMenu.kt      models and rule: which entries the panel lists, in groups
 │   ├── arrange/
 │   │   └── ArrangeSession.kt    rule: the user arranging apps, holding one and moving it among and between shown and hidden
 │   └── layout/
