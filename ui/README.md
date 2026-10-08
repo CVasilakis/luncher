@@ -50,6 +50,12 @@ themes (this one, a feature's own), rather than left to `Theme.DeviceDefault`, w
 may restyle. `ThemesTest`, in `:app`, checks every activity of the merged manifest, drawing their
 backgrounds over black.
 
+**Texts at their view's start:** every theme (this one, a feature's own) sets `textAlignment` to
+`viewStart`, so in a right-to-left language each text lines up with the screen's direction rather
+than its own: English and Arabic app names alike at the right of a mirrored list, and at the left
+of the home screen, which stays left to right
+([why](../app/README.md#manifest-why-each-part-is-there)).
+
 ### While Luncher starts
 
 While a cold-started app's process starts, Android may show a starting window until the app has

@@ -50,6 +50,7 @@ The build merges the two.
 | `screenOrientation="landscape"` | TVs are landscape. |
 | `exported="true"` | Android starts it for Home and from the TV's app list. |
 | `theme="@style/Theme.Luncher"` | Set on the activity rather than only on the app, so the JVM tests, which have no app manifest, show it as the app does. |
+| `supportsRtl="true"` | As the app declares it ([why](../../app/README.md#manifest-why-each-part-is-there)), so the JVM tests follow a right-to-left language as the app does: there the home screen still stays left to right. |
 
 A home screen must not close on Back; how `HomeActivity` ignores it on every Android version is
 explained in its comments.
@@ -79,7 +80,9 @@ one job, so a new arrangement, image source or top bar item changes one of them:
 ### The top bar
 
 `home_top_bar` in `home_activity.xml` holds the clock at its start and the settings gear at its
-end; later items (e.g. status indicators) go at the end too. Each item that shows device state
+end, the left and the right in every language
+([why](../../app/README.md#manifest-why-each-part-is-there)); later items (e.g. status
+indicators) go at the end too. Each item that shows device state
 that changes (the time, later e.g. the network) gets it from a port you can watch
 ([`ARCHITECTURE.md`](../../docs/ARCHITECTURE.md#background-work-and-changes-while-shown)), with a
 fake in `:domain`'s test fixtures that the test moves

@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <application>
+    <!-- As the app declares it, so the JVM tests, which have no app manifest, follow a
+         right-to-left language as the app does. -->
+    <application android:supportsRtl="true">
 
         <!-- How the home screen behaves; what makes it the device's home screen and a TV app (its
              intent filters) is the app's to declare, in its manifest, which the build merges with

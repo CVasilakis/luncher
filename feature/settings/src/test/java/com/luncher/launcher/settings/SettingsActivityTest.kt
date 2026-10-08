@@ -101,4 +101,13 @@ class SettingsActivityTest {
         assertNull(shadowOf(activity).nextStartedActivity)
         assertEquals("This device has no settings app", ShadowToast.getTextOfLatestToast())
     }
+
+    // Unlike the home screen (HomeActivityTest), which stays left to right.
+    @Test
+    @Config(qualifiers = "ar-rEG-ldrtl-$TV_1080P")
+    fun `lines its entries up at the right in right-to-left languages, English ones too`() {
+        val entry = start().entries().first().layout
+
+        assertEquals(entry.width.toFloat(), entry.getLineRight(0))
+    }
 }

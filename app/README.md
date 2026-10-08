@@ -49,7 +49,7 @@ built.
 | `uses-feature android.software.leanback required=true` | TV-only app. |
 | `uses-feature android.hardware.touchscreen required=false` | Touchscreen is otherwise assumed required, which excludes TVs (e.g. on Google Play). |
 | `android:banner` | The 16:9 image the Android TV launcher shows for an app. |
-| `supportsRtl="false"` | Right-to-left isn't supported yet: the tiles fill from the left, and arrange mode's Left and Right go along their order. So in Arabic or Hebrew every screen stays left to right, rather than a top bar mirrored over tiles that aren't. Supporting it takes mirroring `TileGrid` and those keys. |
+| `supportsRtl="true"` | Luncher follows a right-to-left language set on the device, with no setting of its own, but only where the language should decide. The settings panels mirror. The home screen stays left to right (`layoutDirection="ltr"` on the root of `home_activity.xml`): where its clock, settings entry and tiles go is for settings to decide, not the language, and arrange mode's Left and Right stay the remote's. Texts read in their own direction but line up at their view's start, whatever that direction (`textAlignment` in `Theme.Luncher` and `Theme.Luncher.Settings`): otherwise English app names would sit at the left of a mirrored Hide apps list and Arabic ones at the right. The feature modules declare `supportsRtl` too, for their JVM tests. |
 | `HomeActivity`'s intent filter `MAIN` + `HOME` + `DEFAULT` | Makes Luncher a home screen app. |
 | `HomeActivity`'s intent filter `MAIN` + `LEANBACK_LAUNCHER` | Also lists it as a normal TV app, so it can be opened while another launcher is home. |
 

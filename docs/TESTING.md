@@ -139,8 +139,8 @@ between the versions other than the text shows too. The other JVM tests run on A
 Lint finds what no JVM test can: the JVM tiers run on API 36's framework (the layout tests on
 33's too), so an API used below the level it exists on (`NewApi`) passes them, and the emulators
 catch it only on a path a test takes. Lint runs from `:app` over every module, with the app's
-merged manifest; a library's own `lintDebug` lacks it, and reports e.g. hard-coded left and right
-(`RtlHardcoded`), which the app's `supportsRtl="false"` makes moot. Every
+merged manifest; a library's own `lintDebug` lacks it (the TV banner and launcher intent filters
+are the app's), so its report isn't the one that counts. Every
 lint warning fails it, and every Kotlin compiler warning fails the build, in every module. A
 warning is fixed, or, where it doesn't apply, made an exception with its reason: for lint in the
 root [`lint.xml`](../lint.xml), or a module's own `lint.xml` for its files; in Kotlin with

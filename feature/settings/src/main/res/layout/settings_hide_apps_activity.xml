@@ -18,16 +18,19 @@
 
     <!-- A settings_app_row per app; HideAppsActivity sets the height. Rows are recycled while
          scrolling, and the selector frames the selected one like a focused settings entry. The
-         scrollbar sits in the panel's padding, clear of the frame; rows keep the entries' width. -->
+         scrollbar sits in the panel's padding, clear of the frame; rows keep the entries' width.
+         The strip is at the end only, as Android puts the scrollbar: on the left in a
+         right-to-left language. -->
     <ListView
         android:id="@+id/settings_apps"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_marginRight="@dimen/settings_list_scrollbar_negative"
+        android:layout_marginEnd="@dimen/settings_list_scrollbar_negative"
         android:divider="@null"
         android:dividerHeight="0dp"
         android:listSelector="@drawable/settings_entry_background"
-        android:paddingRight="@dimen/settings_list_scrollbar"
+        android:paddingStart="0dp"
+        android:paddingEnd="@dimen/settings_list_scrollbar"
         android:scrollbarStyle="outsideOverlay" />
 
     <TextView

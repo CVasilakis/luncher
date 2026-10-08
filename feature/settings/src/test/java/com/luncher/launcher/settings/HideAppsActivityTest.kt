@@ -156,6 +156,22 @@ class HideAppsActivityTest {
         assertTrue(activity.list().layoutParams.height > row)
     }
 
+    // Unlike the home screen (HomeActivityTest), which stays left to right.
+    @Test
+    @Config(qualifiers = "ar-rEG-ldrtl-$TV_1080P")
+    fun `mirrors in right-to-left languages, the scrollbar's strip on the left`() {
+        val list = start().list()
+
+        val row = list.getChildAt(1)   // Music, hidden
+        val label = row.findViewById<View>(R.id.settings_app_label)
+        val hidden = row.findViewById<View>(R.id.settings_app_hidden)
+        assertTrue("label at ${label.left}, hidden at ${hidden.right}", hidden.right <= label.left)
+        val text = (label as TextView).layout
+        assertEquals(text.width.toFloat(), text.getLineRight(0))   // an English name at the right too
+        assertEquals(list.resources.getDimensionPixelSize(R.dimen.settings_list_scrollbar), list.paddingLeft)
+        assertEquals(0, list.paddingRight)
+    }
+
     @Test
     fun `says so when there are no apps`() {
         installedApps.apps = emptyList()

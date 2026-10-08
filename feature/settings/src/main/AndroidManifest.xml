@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <application>
+    <!-- As the app declares it, so the JVM tests, which have no app manifest, follow a
+         right-to-left language as the app does. -->
+    <application android:supportsRtl="true">
 
         <!-- The settings panel, floating over the home screen. No screenOrientation: Android 8.0
              refuses one on a floating activity, which shows over the landscape home screen anyway. -->

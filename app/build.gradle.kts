@@ -47,7 +47,7 @@ android {
     }
 
     // Lint runs here, over every module the app depends on (`:app:lintDebug`): a library alone
-    // lacks what the app's merged manifest has, such as supportsRtl="false".
+    // lacks what the app's merged manifest has, such as the TV banner and launcher intent filters.
     lint {
         checkDependencies = true
     }

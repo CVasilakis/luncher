@@ -2,10 +2,15 @@
 <!-- Merged into the window's content FrameLayout: one view level less to lay out and draw. -->
 <merge xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- The top bar stays in place; the tiles scroll in the space below it. -->
+    <!-- The top bar stays in place; the tiles scroll in the space below it. Left to right in every
+         language: where the clock, the settings entry and the tiles go is for settings to decide,
+         not the language. So a right-to-left language mirrors only the settings panels, and a
+         future carousel (a RecyclerView, say) doesn't mirror either. Texts still read in their
+         own direction, lined up at the left (Theme.Luncher). -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:layoutDirection="ltr"
         android:orientation="vertical">
 
         <!-- The clock at the start; what follows it in the bar sits at the end (the settings

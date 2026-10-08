@@ -38,6 +38,7 @@ Everything but the activities and `SettingsGraph` is `internal`.
 | `exported="false"`, `launchMode="singleTop"` | Only Luncher opens them; a repeated OK or Menu press doesn't stack a second panel. |
 | `HideAppsActivity`: `Theme.Luncher.Settings.Panel` | Opens in the settings panel's place, which already dims the home screen ([below](#hidden-apps)). |
 | No `screenOrientation` | Android 8.0 (API 26) refuses one on a floating activity; it shows over the landscape home screen anyway. |
+| `supportsRtl="true"` | As the app declares it ([why](../../app/README.md#manifest-why-each-part-is-there)), so the JVM tests mirror the panels in a right-to-left language as the app does. |
 
 ## The settings panel
 

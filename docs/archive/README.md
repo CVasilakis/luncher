@@ -19,9 +19,9 @@ shaped the current layouts and their tests:
   bar's text kept its size, huge on 1080p at 160 dpi, small on 4:3. The home screen now fits as
   many tiles in a row as the width holds
   ([`feature/home/README.md`](../../feature/home/README.md#the-home-screen)).
-- **Right-to-left:** the top bar mirrored while the tiles still filled from the left. Every screen
-  now stays left to right (`supportsRtl="false"`,
-  [`app/README.md`](../../app/README.md#manifest-why-each-part-is-there)).
+- **Right-to-left:** the top bar mirrored while the tiles still filled from the left. The home
+  screen now stays left to right, and only the settings panels mirror
+  ([`app/README.md`](../../app/README.md#manifest-why-each-part-is-there)).
 - **The other screens** fitted, which `HomeLayoutTest` and `SettingsLayoutTest` now check on each
   of them ([`docs/TESTING.md`](../TESTING.md#layouts-on-other-screens)).
 

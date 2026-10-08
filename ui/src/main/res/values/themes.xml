@@ -13,5 +13,10 @@
         <!-- No starting window up to Android 11: the previous screen stays until the home screen
              draws, as it does from Android 12 on (ui/README.md#while-luncher-starts). -->
         <item name="android:windowDisablePreview">true</item>
+        <!-- Texts line up at the start of their view, the left on the home screen, which stays
+             left to right, and the right in a mirrored one, whatever their own direction.
+             Otherwise each would follow its own: an Arabic arrange title at the right, against
+             the hint, or English entries at the left of a mirrored settings panel. -->
+        <item name="android:textAlignment">viewStart</item>
     </style>
 </resources>
