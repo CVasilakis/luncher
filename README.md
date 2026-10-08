@@ -38,7 +38,7 @@ Read from the general to the specific; each document builds on the ones before i
    code goes.
 3. **[`docs/TESTING.md`](docs/TESTING.md):** test tiers, how to run them, and in CI.
 4. **The other guides in [`docs/`](docs/README.md)**, as a task needs them: emulators and
-   devices, the instrumented tests, releasing.
+   devices, the instrumented tests, translations, releasing.
 5. **The folder READMEs** ([repository layout](#repository-layout)): what each folder holds, in
    detail.
 6. **Comments in the code and build files:** why a particular line is there.

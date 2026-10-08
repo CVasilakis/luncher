@@ -7,7 +7,7 @@ rules it follows: [`../../docs/ARCHITECTURE.md`](../../docs/ARCHITECTURE.md).
 | | |
 |---|---|
 | Package | `com.luncher.launcher.home` |
-| Depends on | `:domain`; `:ui`; `:feature:settings`, for `SettingsActivity`'s class, which it starts |
+| Depends on | `:domain`; `:ui`; `:feature:settings`, for `SettingsActivity`'s class, which it starts, and the settings panel's names, which the message that every app is hidden refers to |
 
 ## Layout
 
@@ -26,7 +26,8 @@ feature/home/
     │   │   ├── AppTileView.kt    one app: its image, focus frame and zoom; held or hidden while arranging
     │   │   └── ArrangeMode.kt    arrange mode: keys to the domain's ArrangeSession, the shelf, the top bar's title and hint
     │   └── res/                  the focused tile's zoom (animator/), the settings gear and its focus
-    │                             disc, home_activity.xml, home_* dimensions and strings
+    │                             disc, home_activity.xml, home_* dimensions and strings, Greek
+    │                             strings in values-el/ (docs/TRANSLATIONS.md)
     └── test/
         ├── java/…/home/          JVM tests; TestHomeGraph.kt: the ports a test gives the screen, and
         │                         the tests' Application (named in resources/robolectric.properties)

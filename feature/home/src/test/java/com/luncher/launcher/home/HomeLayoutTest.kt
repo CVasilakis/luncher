@@ -1,6 +1,7 @@
 package com.luncher.launcher.home
 
 import android.graphics.RectF
+import android.text.format.DateFormat
 import android.os.Looper
 import android.view.KeyEvent
 import android.view.View
@@ -12,6 +13,7 @@ import com.luncher.domain.apps.FakeInstalledApps
 import com.luncher.domain.apps.FakeInstalledApps.Companion.app
 import com.luncher.domain.clock.FakeClock
 import com.luncher.launcher.testing.TV_SCREENS
+import com.luncher.launcher.testing.TV_SCREENS_IN_EVERY_LANGUAGE
 import com.luncher.launcher.testing.TvScreen
 import com.luncher.launcher.testing.assertApart
 import com.luncher.launcher.testing.assertInside
@@ -27,12 +29,17 @@ import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
+import java.text.SimpleDateFormat
 import java.time.Duration
+import java.time.LocalDate
+import java.time.ZoneOffset
+import java.util.Date
+import java.util.TimeZone
 
 /**
- * The home screen's layout on every screen of [TV_SCREENS]: everything inside the TV's overscan
- * margin, nothing overlapping, no text cut, and tiles of about the size they're meant to be.
- * With the longest time and date English has, 12 apps shown and 3 hidden.
+ * The home screen's layout on every screen of [TV_SCREENS], in every language: everything inside
+ * the TV's overscan margin, nothing overlapping, no text cut, and tiles of about the size they're
+ * meant to be. With the longest time and date the language has, 12 apps shown and 3 hidden.
  */
 @RunWith(ParameterizedRobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)   // real text widths; without it a character is 1 px wide
@@ -42,7 +49,7 @@ class HomeLayoutTest(private val screen: TvScreen) {
     companion object {
         @JvmStatic
         @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
-        fun screens() = TV_SCREENS.map { arrayOf<Any>(it) }
+        fun screens() = TV_SCREENS_IN_EVERY_LANGUAGE.map { arrayOf<Any>(it) }
 
         /** A held tile's zoom (AppTileView), the largest a tile gets. */
         const val HELD_ZOOM = 1.15f
@@ -54,16 +61,28 @@ class HomeLayoutTest(private val screen: TvScreen) {
     @Before
     fun useScreenAndFakes() {
         RuntimeEnvironment.setFontScale(screen.fontScale)
-        RuntimeEnvironment.setQualifiers("en-rUS-${screen.qualifiers}")
+        RuntimeEnvironment.setQualifiers(screen.qualifiers)
         val application = RuntimeEnvironment.getApplication() as HomeTestApplication
         application.graph = object : TestHomeGraph(application) {
             override val installedApps = FakeInstalledApps((shown + hidden).map(::app))
             override val appArrangements = FakeAppArrangements(AppArrangement(order = null, hidden = hidden.map { app(it).launchable }))
-            override val clock = FakeClock(FakeClock.at(2026, 9, 30, 23, 55, uses24Hour = false))   // "11:55 PM", "Wednesday, September 30"
+            override val clock = longestDate().let { FakeClock(FakeClock.at(it.year, it.monthValue, it.dayOfMonth, 23, 55, uses24Hour = false)) }   // "11:55 PM"
         }
     }
 
     private fun start() = Robolectric.buildActivity(HomeActivity::class.java).setup().get()
+
+    /**
+     * The day of 2026 whose date is longest in the screen's language, formatted as [ClockView]
+     * does: "Wednesday, September 30" in English.
+     */
+    private fun longestDate(): LocalDate {
+        val locale = RuntimeEnvironment.getApplication().resources.configuration.locales[0]
+        val format = SimpleDateFormat(DateFormat.getBestDateTimePattern(locale, "EEEEdMMMM"), locale)
+        format.timeZone = TimeZone.getTimeZone("UTC")
+        val days = generateSequence(LocalDate.of(2026, 1, 1)) { it.plusDays(1) }.takeWhile { it.year == 2026 }
+        return days.maxBy { format.format(Date.from(it.atStartOfDay(ZoneOffset.UTC).toInstant())).length }
+    }
 
     private fun HomeActivity.tiles(): List<AppTileView> {
         val tiles = findViewById<AppTilesView>(R.id.home_apps)
@@ -132,7 +151,7 @@ class HomeLayoutTest(private val screen: TvScreen) {
         assertTrue(tile.held)
 
         for (view in listOf(title, hint)) assertInside(screen, activity.safeArea(), activity.name(view), bounds(view))
-        assertWhole(screen, title)
+        // The title may end in "…" where a language's title and hint don't both fit, never the hint.
         assertWhole(screen, hint)
         activity.checkTiles()
     }

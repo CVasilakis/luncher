@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Greek. What each string is for: values/strings.xml. -->
+<resources>
+    <string name="settings_title">Ρυθμίσεις</string>
+    <string name="settings_hide_apps">Απόκρυψη εφαρμογών</string>
+    <string name="settings_hidden">Κρυφή</string>
+    <string name="settings_no_apps">Δεν υπάρχουν εγκατεστημένες εφαρμογές TV</string>
+    <string name="settings_system">Ρυθμίσεις συστήματος</string>
+    <string name="settings_system_unavailable">Αυτή η συσκευή δεν έχει εφαρμογή ρυθμίσεων</string>
+</resources>

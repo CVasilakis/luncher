@@ -14,6 +14,7 @@ import com.luncher.domain.apps.ArrangedApps
 import com.luncher.domain.apps.InstalledApp
 import com.luncher.domain.apps.homeApps
 import com.luncher.launcher.settings.SettingsActivity
+import com.luncher.launcher.settings.R as SettingsR
 
 /**
  * The home screen: the time, the date and a settings entry above the TV apps the user didn't hide,
@@ -149,7 +150,11 @@ class HomeActivity : Activity() {
             empty.visibility = View.GONE
             return
         }
-        empty.setText(if (arranged.hidden.isEmpty()) R.string.home_no_apps else R.string.home_all_hidden)
+        empty.text = if (arranged.hidden.isEmpty()) {
+            getString(R.string.home_no_apps)
+        } else {
+            getString(R.string.home_all_hidden, getString(SettingsR.string.settings_title), getString(SettingsR.string.settings_hide_apps))
+        }
         empty.visibility = View.VISIBLE
     }
 

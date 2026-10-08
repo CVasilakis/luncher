@@ -10,13 +10,29 @@ const val TV_1080P = "w960dp-h540dp-land-television-xhdpi-notouch-dpad"
 /** A screen to check a layout on: its Robolectric qualifiers, and the user's font scale. */
 class TvScreen(private val name: String, val qualifiers: String, val fontScale: Float = 1f) {
     override fun toString() = name   // the parameterized tests' names
+
+    /** This screen with Luncher's texts in [language]. */
+    fun inLanguage(language: TvLanguage) = TvScreen("$name, ${language.name}", "${language.qualifier}-$qualifiers", fontScale)
 }
+
+/** A language Luncher's texts are in: its name, and its Robolectric qualifier. */
+class TvLanguage(val name: String, val qualifier: String)
+
+/**
+ * English and each translation (`values-<language>/` in the screens' modules). A translation is
+ * often longer than the English, so the `*LayoutTest`s check every screen in each.
+ */
+val LANGUAGES = listOf(
+    TvLanguage("English", "en-rUS"),
+    TvLanguage("Greek", "el-rGR"),
+)
 
 private fun tv(width: Int, height: Int, density: String) = "w${width}dp-h${height}dp-land-television-$density-notouch-dpad"
 
 /**
- * The screens Luncher's layouts must work on (`*LayoutTest`): TVs at their usual sizes, other
- * shapes, the lower densities some TV boxes are set to, and large text.
+ * The screens Luncher's layouts must work on: TVs at their usual sizes, other shapes, the lower
+ * densities some TV boxes are set to, and large text. The `*LayoutTest`s check each in every
+ * language ([TV_SCREENS_IN_EVERY_LANGUAGE]).
  */
 val TV_SCREENS = listOf(
     TvScreen("1080p", TV_1080P),
@@ -32,3 +48,6 @@ val TV_SCREENS = listOf(
     // API 33 as well as 36.
     TvScreen("1080p, large text", TV_1080P, fontScale = 1.3f),
 )
+
+/** Every screen of [TV_SCREENS] in every language of [LANGUAGES]: what the `*LayoutTest`s check. */
+val TV_SCREENS_IN_EVERY_LANGUAGE = LANGUAGES.flatMap { language -> TV_SCREENS.map { it.inLanguage(language) } }

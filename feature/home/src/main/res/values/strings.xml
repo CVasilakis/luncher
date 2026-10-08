@@ -1,12 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<!-- The home screen's texts. Each translation, in values-<language>/, has every string here. -->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <!-- Shown in place of the tiles when the device has no TV apps. -->
     <string name="home_no_apps">No TV apps installed</string>
-    <string name="home_all_hidden">All apps are hidden. Open Settings → Hide apps to show them again.</string>
+    <!-- Shown in place of the tiles when every app is hidden. The settings panel's title and its
+         Hide apps entry, as the panel shows them. -->
+    <string name="home_all_hidden">All apps are hidden. Open <xliff:g id="settings" example="Settings">%1$s</xliff:g> → <xliff:g id="hide_apps" example="Hide apps">%2$s</xliff:g> to show them again.</string>
+    <!-- The gear at the end of the top bar, for screen readers: it opens the settings panel. -->
     <string name="home_settings">Settings</string>
-    <!-- Arrange mode: the top bar's title and which keys do what, and the shelf of hidden apps. -->
+    <!-- Arrange mode: the top bar's title and which keys do what, and the shelf of hidden apps.
+         OK and Back are the remote's buttons; the arrows are its D-pad, and stay as they are. -->
     <string name="home_arrange_title">Arrange apps</string>
-    <string name="home_arrange_hint_holding">↑↓←→ Move · OK Drop · Back Done</string>
+    <!-- While an app is held: the D-pad moves it, OK puts it down, Back ends arrange mode. -->
+    <string name="home_arrange_hint_holding"><xliff:g id="arrows" example="↑↓←→">↑↓←→</xliff:g> Move · OK Drop · Back Done</string>
+    <!-- While no app is held: OK picks up the focused app, Back ends arrange mode. -->
     <string name="home_arrange_hint_browsing">OK Pick up · Back Done</string>
+    <!-- The label above the shelf of hidden apps. -->
     <string name="home_hidden">Hidden</string>
+    <!-- In the empty slot on the shelf, while no app is hidden. -->
     <string name="home_hidden_empty">Move apps here to hide them</string>
 </resources>

@@ -222,7 +222,7 @@ class ArrangeModeTest {
 
         assertEquals("", activity.state())
         assertTrue(activity.findViewById<View>(R.id.home_settings).isFocused)
-        assertEquals(activity.getString(R.string.home_all_hidden), activity.findViewById<TextView>(R.id.home_empty).text.toString())
+        assertEquals("All apps are hidden. Open Settings → Hide apps to show them again.", activity.findViewById<TextView>(R.id.home_empty).text.toString())
     }
 
     @Test

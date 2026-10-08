@@ -11,6 +11,7 @@ import com.luncher.domain.apps.FakeAppArrangements
 import com.luncher.domain.apps.FakeInstalledApps
 import com.luncher.domain.apps.FakeInstalledApps.Companion.app
 import com.luncher.launcher.testing.TV_SCREENS
+import com.luncher.launcher.testing.TV_SCREENS_IN_EVERY_LANGUAGE
 import com.luncher.launcher.testing.TvScreen
 import com.luncher.launcher.testing.assertWhole
 import org.junit.Assert.assertEquals
@@ -25,9 +26,9 @@ import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
 /**
- * The settings panels' layout on every screen of [TV_SCREENS]: each panel within the screen, a
- * margin from its edges, and no text cut. Hide apps lists 12 apps, more than fit, the last one
- * hidden.
+ * The settings panels' layout on every screen of [TV_SCREENS], in every language: each panel
+ * within the screen, a margin from its edges, and no text cut. Hide apps lists 12 apps, more than
+ * fit, the last one hidden.
  */
 @RunWith(ParameterizedRobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)   // real text widths; without it a character is 1 px wide
@@ -37,7 +38,7 @@ class SettingsLayoutTest(private val screen: TvScreen) {
     companion object {
         @JvmStatic
         @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
-        fun screens() = TV_SCREENS.map { arrayOf<Any>(it) }
+        fun screens() = TV_SCREENS_IN_EVERY_LANGUAGE.map { arrayOf<Any>(it) }
     }
 
     private val apps = (1..11).map { "app%02d".format(it) } + "zz last app"
@@ -45,7 +46,7 @@ class SettingsLayoutTest(private val screen: TvScreen) {
     @Before
     fun useScreenAndFakes() {
         RuntimeEnvironment.setFontScale(screen.fontScale)
-        RuntimeEnvironment.setQualifiers("en-rUS-${screen.qualifiers}")
+        RuntimeEnvironment.setQualifiers(screen.qualifiers)
         val application = RuntimeEnvironment.getApplication() as SettingsTestApplication
         application.graph = object : TestSettingsGraph() {
             override val installedApps = FakeInstalledApps(apps.map(::app))

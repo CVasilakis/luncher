@@ -130,6 +130,7 @@ and moves to them whatever measures slow.
 | A new setting | its entry: `settingsMenu` in `:domain`'s `settings/`, and its label and action in `:feature:settings`; a value it stores comes through a port you can watch, so the screens it affects update while it changes; a screen of its own (a list, like Hide apps) is another activity in `:feature:settings`. Steps: [`feature/settings/README.md`](../feature/settings/README.md#the-settings-panel) |
 | A new screen of its own (e.g. a wallpaper picker) | a new feature module (below) |
 | A shared view, style or UI helper | `:ui`, resources without a prefix |
+| Text the user sees | a string in the `strings.xml` of the module that shows it, with a comment for translators, and in every translation ([`TRANSLATIONS.md`](TRANSLATIONS.md)) |
 | Build or version changes | [`gradle/`](../gradle/README.md); settings every Android module shares: [`build-logic/`](../build-logic/README.md) |
 | A guide that covers the whole project, or a topic too narrow for the document above it | [`docs/`](README.md) |
 | Emulator and developer tooling | not here: the separate android-tv-wsl-dev-tools repository ([`EMULATORS.md`](EMULATORS.md)) |

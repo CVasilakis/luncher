@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Greek. What each string is for: values/strings.xml. -->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="home_no_apps">Δεν υπάρχουν εγκατεστημένες εφαρμογές TV</string>
+    <string name="home_all_hidden">Όλες οι εφαρμογές είναι κρυφές. Ανοίξτε <xliff:g id="settings" example="Ρυθμίσεις">%1$s</xliff:g> → <xliff:g id="hide_apps" example="Απόκρυψη εφαρμογών">%2$s</xliff:g> για να τις εμφανίσετε ξανά.</string>
+    <string name="home_settings">Ρυθμίσεις</string>
+    <string name="home_arrange_title">Τακτοποίηση εφαρμογών</string>
+    <string name="home_arrange_hint_holding"><xliff:g id="arrows" example="↑↓←→">↑↓←→</xliff:g> Μετακίνηση · OK Απόθεση · Πίσω Τέλος</string>
+    <string name="home_arrange_hint_browsing">OK Επιλογή · Πίσω Τέλος</string>
+    <string name="home_hidden">Κρυφές</string>
+    <string name="home_hidden_empty">Μετακινήστε εφαρμογές εδώ για να τις κρύψετε</string>
+</resources>

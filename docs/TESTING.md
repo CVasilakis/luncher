@@ -116,11 +116,13 @@ comparing images. Screenshots need Robolectric's native graphics
 TVs aren't all 960×540 dp: 720p at the 1080p density is 640×360 dp, some TV boxes run 1080p at
 240 or 160 dpi (1280 or 1920 dp wide), screens can be 4:3, 16:10 or 21:9, and the user can make
 text larger. `HomeLayoutTest` and `SettingsLayoutTest` run on each of these screens, `TV_SCREENS` in
-`ui/src/testFixtures/…/testing/TvDevice.kt`, and check rules rather than pixels (`LayoutChecks.kt`):
-everything inside the TV's overscan margin, tiles clear of each other and of the top bar even
-zoomed, tiles of about the size meant, no text cut, panels a margin from the screen's edges. A
-new element of a screen gets its check there, a new screen a `*LayoutTest` of its own, and a
-screen to support a line in `TV_SCREENS`. Their text checks need native graphics, like the
+`ui/src/testFixtures/…/testing/TvDevice.kt`, in each language Luncher's texts are in (`LANGUAGES`
+there, [`TRANSLATIONS.md`](TRANSLATIONS.md)), and check rules rather than pixels
+(`LayoutChecks.kt`): everything inside the TV's overscan margin, tiles clear of each other and of
+the top bar even zoomed, tiles of about the size meant, no text cut (except the arrange title,
+which ends in "…" where it must), panels a margin from the screen's edges. A new element of a
+screen gets its check there, a new screen a `*LayoutTest` of its own, and a screen to support a
+line in `TV_SCREENS`. Their text checks need native graphics, like the
 screenshots: without them, Robolectric measures every character as 1 px wide. A few of these
 screens also have reference images (`home_screen_4by3.png`, …).
 

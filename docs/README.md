@@ -9,6 +9,7 @@ before the folder READMEs ([reading order](../README.md#documentation)).
 | [`TESTING.md`](TESTING.md) | Test tiers: what goes where, how to run them, and in CI. |
 | [`INSTRUMENTED-TESTS.md`](INSTRUMENTED-TESTS.md) | The emulator tiers: running them, on which emulators, and writing them so that the device can't make them fail. |
 | [`EMULATORS.md`](EMULATORS.md) | Emulators and devices: the scripts that create and drive them, Luncher as the home screen on each Android version, and what the images do on their own. |
+| [`TRANSLATIONS.md`](TRANSLATIONS.md) | Translations: where the texts are, writing a string that translates well, adding a string or a language, checking a translation. |
 | [`RELEASING.md`](RELEASING.md) | Making a release: versions, the signing key, the release workflow, F-Droid. |
 | [`archive/`](archive/README.md) | How the current design was reached, not part of the build: the layout review on nine TV screens, and the removed launch screen, its final drawables and what it taught. |
 

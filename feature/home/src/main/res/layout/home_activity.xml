@@ -55,12 +55,15 @@
                     android:textSize="@dimen/home_date_text" />
             </com.luncher.launcher.home.ClockView>
 
-            <!-- As tall as the settings entry it replaces, so the tiles below stay where they are. -->
+            <!-- As tall as the settings entry it replaces, so the tiles below stay where they are.
+                 What the hint leaves of the bar: where a language's title and hint don't both
+                 fit (a narrow screen, large text), the title ends in "…", never the hint. -->
             <TextView
                 android:id="@+id/home_arrange_title"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
+                android:ellipsize="end"
                 android:gravity="center_vertical"
                 android:minHeight="@dimen/home_settings_size"
                 android:includeFontPadding="false"
