@@ -97,8 +97,8 @@ the second left half the drawing out. Edit them the same way.
 
 ### License
 
-The icon and banner drawables (`src/main/res/drawable/`, `src/debug/res/drawable/`) and the store
-listing's images are derived from AOSP artwork and are under the Apache License 2.0
+The icon and banner drawables (`src/main/res/drawable/`, `src/debug/res/drawable/`), the store
+listing's images and the root README's banner are derived from AOSP artwork and are under the Apache License 2.0
 ([`LICENSE-APACHE-2.0`](LICENSE-APACHE-2.0)), not Luncher's MIT license. What that license asks,
 and where it's met:
 

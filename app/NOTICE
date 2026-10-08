@@ -7,6 +7,7 @@ Apache License, Version 2.0 (LICENSE-APACHE-2.0 in this folder), not Luncher's M
   ic_launcher_foreground.xml, and the debug build's versions in src/debug/res/drawable/
 - the store listing's images: ../fastlane/metadata/android/en-US/images/icon.png, tvBanner.png
   and featureGraphic.png
+- the root README's banner: ../docs/images/readme-banner.png
 
 They draw the desserts of the Android 14-17 "platform logo" (AOSP frameworks/base,
 packages/SystemUI/res/drawable/android14_patch_monochrome.xml to android17_patch_monochrome.xml),

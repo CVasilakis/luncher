@@ -3,7 +3,8 @@
 Luncher's store listing: its name, descriptions, the changes of each version, and its images.
 F-Droid shows it on Luncher's page, reading it from the repository at each release's tag; Google
 Play takes the same files, uploaded by hand or with fastlane's `supply`. The root
-[`README.md`](../README.md) shows the feature graphic and the first four screenshots too. Nothing
+[`README.md`](../README.md) shows the first four screenshots too, under a wider cut of the feature
+graphic ([below](#icon-banner-and-feature-graphic)). Nothing
 here is part of the build.
 
 ```
@@ -50,6 +51,12 @@ screenshots below, except the icon, whose alpha channel is made opaque instead:
 ```bash
 convert icon.png -alpha opaque -strip -define png:color-type=6 icon.png
 ```
+
+The root README's banner, [`docs/images/readme-banner.png`](../docs/images/readme-banner.png), is
+the feature graphic's drawing cut to 4:1, so it doesn't take up the page: the SVG's view box
+narrowed to 1280 × 320 around the TV and the name, the blue ground widened to fill it, rendered
+at 2560 × 640 for sharp high-density screens. It's derived from AOSP artwork too, and listed in
+the `NOTICE`.
 
 ## Screenshots
 

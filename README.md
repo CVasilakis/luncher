@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="fastlane/metadata/android/en-US/images/featureGraphic.png" alt="Luncher" width="640">
+  <img src="docs/images/readme-banner.png" alt="Luncher" width="100%">
 </p>
 
 <p align="center"><b>A lightweight and customizable home screen for Android TV.</b></p>
@@ -52,6 +52,6 @@ How to build Luncher, how the code is organized, testing and releasing: [`docs/`
 ## License
 
 Luncher is under the MIT License ([`LICENSE`](LICENSE)), except its icon and banner, the store
-listing's images and the archived launch screen's graphics, which are derived from Android Open
-Source Project artwork and are under the Apache License 2.0
+listing's images, this page's banner and the archived launch screen's graphics, which are derived
+from Android Open Source Project artwork and are under the Apache License 2.0
 ([`app/README.md`](app/README.md#license)).
