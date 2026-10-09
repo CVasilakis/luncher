@@ -81,10 +81,11 @@ dependencies, and it has no token that can change the repository.
    commit: F-Droid builds the commit the tag names. Before tagging, the run also fails if F-Droid
    couldn't publish the signed APK ([F-Droid](#f-droid)).
 3. **What it makes:** the tag `v1.2.3` on the commit it built, unless it's there already, and a
-   draft release "Luncher 1.2.3" with `luncher-v1.2.3.apk`, `luncher-v1.2.3.apk.sha256`, and
-   notes from a template that already holds the install command and both checksums (the APK's,
-   and the signing certificate's that `apksigner verify --print-certs` shows).
-4. **Finish it:** on the Releases page, edit the draft, write the notes, and publish it.
+   draft release "Luncher v1.2.3" with `luncher-v1.2.3.apk`, `luncher-v1.2.3.apk.sha256`, and
+   notes from a template: empty "What's new" and "Fixes" sections, and both checksums (the
+   APK's, and the signing certificate's that `apksigner verify --print-certs` shows).
+4. **Finish it:** on the Releases page, edit the draft, write the notes, delete a section that
+   stays empty, and publish it.
 
 To drop a draft, delete it on the Releases page and delete its tag:
 `git push origin --delete v1.2.3`. A run that failed in its last step, after tagging, can be run
