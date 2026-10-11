@@ -40,6 +40,14 @@ class SettingsActivityTest {
     }
 
     @Test
+    fun `lists its entries equally far apart`() {
+        val entries = start().entries()
+
+        val gaps = entries.zipWithNext { above, below -> below.top - above.bottom }
+        assertEquals(listOf(0, 0), gaps)
+    }
+
+    @Test
     fun `starts with the first entry focused`() {
         assertTrue(start().entries().first().isFocused)
     }

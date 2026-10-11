@@ -55,11 +55,11 @@ screen's focus is where it was.
 
 | Part | Job |
 |---|---|
-| `settingsMenu` (`:domain`) | which entries the panel lists: groups of entries, in order |
+| `settingsMenu` (`:domain`) | which entries the panel lists, in order |
 | `SettingsEntry` (`:domain`) | the kinds of entry, one type each |
-| `SettingsActivity` | shows the groups one below the other, with a gap between them; each entry's label (`label`) and what OK on it does (`open`) |
+| `SettingsActivity` | shows the entries one below the other, all equally far apart; each entry's label (`label`) and what OK on it does (`open`) |
 
-Group titles are built with the first group that needs one. An entry with settings of its own
+An entry with settings of its own
 opens them in a panel of its own ([below](#hidden-apps)) rather than in more of this one. To add
 an entry:
 
@@ -77,7 +77,8 @@ again when the panel closes, keeping its tiles when nothing changed.
 
 Hide apps (`HideAppsActivity`) is a panel of its own, opened in the settings panel's place: it
 lists every app by name; OK on one hides it or shows it again, and Back returns to the settings
-panel. The home screen shows the change when it comes back, since it reads the apps then anyway.
+panel. The home screen behind shows each change at once: it follows the stored arrangement while
+it's started, as it stays behind the floating panels.
 
 A panel of its own is another activity in this module, started from the settings panel with
 `openOwnPanel`. The settings panel's window stays behind it, invisible (its alpha is 0 until it
@@ -88,7 +89,7 @@ nothing itself.
 | Part | Job |
 |---|---|
 | `AppArrangement` (`:domain`) | what's stored: the order of the shown apps (none until the user reorders, which means by name) and the hidden apps in their order |
-| `AppArrangements` (`:domain`) / `PreferencesAppArrangements` (`:platform`) | port and adapter: reads the arrangement once per process, and saves each change at once, in the background |
+| `AppArrangements` (`:domain`) / `PreferencesAppArrangements` (`:platform`) | port and adapter: reads the arrangement once per process, and saves each change at once, in the background, telling the listeners (the home screen behind) |
 | `homeApps` (`:domain`) | matches the stored apps to the installed ones: an update that renamed an app's activity keeps its place and hidden state, and apps that aren't installed right now keep theirs for when they come back |
 | `ArrangedApps` (`:domain`) | the shown and hidden apps: hiding one puts it first among the hidden apps, showing one puts it last in the user's order (or in its place by name while there's none), and `byLabel` is the list's content |
 | `HideAppsActivity` | shows that list, stores each change |
@@ -101,13 +102,15 @@ from the screen's edges, still ending on half a row.
 ### Appearance
 
 Appearance (`AppearanceActivity`) is the editor of the home screen's
-[appearance](../../docs/ARCHITECTURE.md#appearance): full-screen, with a preview of the home screen
-at the left and the options at the right, in groups (the tiles', the top bar's), each showing its
-value between arrows. Left and Right step the focused option through its values and stop at the
-first and the last, where that arrow dims; each change is stored at once, and the preview follows.
-An option that changes nothing with the others as they are (a full bottom row with the tiles at the
-top) is dimmed, and the focus passes it by. The last entry, Reset to defaults, puts every option
-back. Back returns to the settings panel; the home screen shows the result when it comes back.
+[appearance](../../docs/ARCHITECTURE.md#appearance): full-screen, with its title right above a
+preview of the home screen at the left, and the options at the right. The options are in groups
+(the tiles', the top bar's), each an entry of its own, closed at first: OK on one shows its options
+below it and closes the group that was open, so the list stays short; OK again closes it. Each
+option shows its value between arrows; Left and Right step it through its values, around from the
+last to the first, and each change is stored at once, the preview following. An option that
+changes nothing with the others as they are (a full bottom row with the tiles at the top) is
+dimmed, and the focus passes it by. The last entry, Reset to defaults, puts every option back.
+Back returns to the settings panel; the home screen shows the result when it comes back.
 
 It's started with `openOwnPanel`, like Hide apps, but covers the settings panel and the home screen
 whole (its theme). In a right-to-left language it mirrors like the other panels: the options at
@@ -122,7 +125,7 @@ they scroll when they're taller than the screen.
 | `appearanceOptions`, `AppearanceOption` (`:domain`) | which options there are, in which groups; each one's values, in order, the part of `Appearance` it reads and changes, whether it applies, and what a step does |
 | `AppearanceSettings` (`:domain`) / `PreferencesAppearanceSettings` (`:platform`) | port and adapter: the stored `Appearance`, read once per process; each write is stored at once, in the background, and told to the listeners (the home screen, while it's shown) |
 | `TileLayouts`, `topBarLayout` (`:domain`) | where the preview's tiles and top bar items go, by the home screen's own rules |
-| `AppearanceActivity` | the options' rows, what each option and value is called (exhaustive `when`s, so a new option doesn't compile until it has its labels), the keys, and the reset entry |
+| `AppearanceActivity` | the groups' entries, opening one at a time; the options' rows, what each option and value is called (exhaustive `when`s, so a new option doesn't compile until it has its labels), the keys, and the reset entry |
 | `AppearancePreviewView` | draws the preview: an illustration, not the real home screen (below) |
 
 **The preview** draws outlines of tiles on the home screen's background, the first one framed and

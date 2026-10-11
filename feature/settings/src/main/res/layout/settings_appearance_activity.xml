@@ -1,21 +1,42 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The appearance editor: the preview at the start, the options at the end. Mirrored in a
-     right-to-left language, like the other settings panels; the preview's content isn't. -->
+<!-- The appearance editor: the title and the preview at the start, the options at the end.
+     Mirrored in a right-to-left language, like the other settings panels; the preview's content
+     isn't. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:baselineAligned="false"
     android:orientation="horizontal">
 
-    <!-- Not focusable: only the options are. -->
-    <com.luncher.launcher.settings.AppearancePreviewView
-        android:id="@+id/settings_appearance_preview"
+    <!-- The title right above the preview, the two centered in the height. -->
+    <LinearLayout
         android:layout_width="0dp"
         android:layout_height="match_parent"
         android:layout_weight="1"
         android:layout_marginStart="@dimen/settings_appearance_margin_horizontal"
         android:layout_marginTop="@dimen/settings_appearance_margin_vertical"
         android:layout_marginEnd="@dimen/settings_panel_padding"
-        android:layout_marginBottom="@dimen/settings_appearance_margin_vertical" />
+        android:layout_marginBottom="@dimen/settings_appearance_margin_vertical"
+        android:gravity="center_vertical"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/settings_appearance_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/settings_title_gap"
+            android:includeFontPadding="false"
+            android:text="@string/settings_appearance"
+            android:textColor="@color/text_primary"
+            android:textSize="@dimen/settings_title_text" />
+
+        <!-- As tall as its 16:9 screen, at most the rest of the height. Not focusable: only the
+             options are. -->
+        <com.luncher.launcher.settings.AppearancePreviewView
+            android:id="@+id/settings_appearance_preview"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+    </LinearLayout>
 
     <!-- AppearanceActivity sets the width: settings_appearance_options_width, or half the screen.
          Scrolls when the options are taller than the screen; moving the focus scrolls it. The
@@ -32,21 +53,11 @@
         android:paddingBottom="@dimen/settings_appearance_margin_vertical"
         android:scrollbarStyle="outsideOverlay">
 
-        <!-- AppearanceActivity adds each group's title and its options, then the reset entry. -->
+        <!-- AppearanceActivity adds each group, its options below it, then the reset entry. -->
         <LinearLayout
             android:id="@+id/settings_appearance_options"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="@dimen/settings_title_gap"
-                android:includeFontPadding="false"
-                android:text="@string/settings_appearance"
-                android:textColor="@color/text_primary"
-                android:textSize="@dimen/settings_title_text" />
-        </LinearLayout>
+            android:orientation="vertical" />
     </ScrollView>
 </LinearLayout>

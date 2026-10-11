@@ -5,12 +5,10 @@ import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.os.Bundle
 import android.provider.Settings
-import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import com.luncher.domain.settings.SettingsEntry
-import com.luncher.domain.settings.SettingsMenu
 import com.luncher.domain.settings.settingsMenu
 
 /**
@@ -37,18 +35,12 @@ class SettingsActivity : Activity() {
         showPanel(true)   // back from a panel of its own, such as Hide apps
     }
 
-    private fun show(menu: SettingsMenu) {
-        val groupGap = resources.getDimensionPixelSize(R.dimen.settings_group_gap)
-        menu.groups.forEachIndexed { groupIndex, group ->
-            group.entries.forEachIndexed { entryIndex, entry ->
-                val view = layoutInflater.inflate(R.layout.settings_entry, entries, false) as TextView
-                view.setText(label(entry))
-                view.setOnClickListener { open(entry) }
-                if (groupIndex > 0 && entryIndex == 0) {
-                    (view.layoutParams as ViewGroup.MarginLayoutParams).topMargin = groupGap
-                }
-                entries.addView(view)
-            }
+    private fun show(menu: List<SettingsEntry>) {
+        for (entry in menu) {
+            val view = layoutInflater.inflate(R.layout.settings_entry, entries, false) as TextView
+            view.setText(label(entry))
+            view.setOnClickListener { open(entry) }
+            entries.addView(view)
         }
     }
 

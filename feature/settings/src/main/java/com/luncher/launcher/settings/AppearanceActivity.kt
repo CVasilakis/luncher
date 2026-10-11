@@ -12,20 +12,20 @@ import com.luncher.domain.appearance.AppearanceTopic
 import com.luncher.domain.appearance.Side
 import com.luncher.domain.appearance.TilePlacement
 import com.luncher.domain.appearance.appearanceOptions
-import com.luncher.domain.appearance.canStep
 import com.luncher.domain.appearance.step
 
 /**
- * The editor of the home screen's appearance, full-screen: the options of the domain's
+ * The editor of the home screen's appearance, full-screen: the groups of options of the domain's
  * [appearanceOptions] at the right (the left in a right-to-left language, mirrored like the other
- * panels), each with its value, and a preview of the result beside them. Left and Right on an
- * option step through its values, toward the arrow on that side, stopping at the first and the
- * last; each change is stored at once, and the home screen shows it when it comes back. An option
- * that changes nothing with the others as they are is dimmed, and the focus passes it by. OK on
- * the last entry puts every option back to its default. Back closes it, as any activity.
+ * panels), and the title and a preview of the result beside them. OK on a group shows its options
+ * below it, and hides those of the group that showed; all are hidden at first. Left and Right on
+ * an option step through its values, toward the arrow on that side, around from the last to the
+ * first; each change is stored at once, and the home screen shows it when it comes back. An
+ * option that changes nothing with the others as they are is dimmed, and the focus passes it by.
+ * OK on the last entry puts every option back to its default. Back closes it, as any activity.
  *
- * Which options there are, their values and what a step does are the domain's; what each one is
- * called is decided here, per option, in [label] and [valueLabel].
+ * Which options there are, in which groups, their values and what a step does are the domain's;
+ * what each one is called is decided here, per option, in [label] and [valueLabel].
  */
 class AppearanceActivity : Activity() {
 
@@ -33,6 +33,10 @@ class AppearanceActivity : Activity() {
     private lateinit var appearance: Appearance
     private lateinit var preview: AppearancePreviewView
     private val rows = mutableListOf<Row>()
+    private val groups = mutableListOf<Group>()
+
+    /** The group whose options show; at most one, so the list stays short. */
+    private var open: Group? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,24 +50,30 @@ class AppearanceActivity : Activity() {
         )
         val options = findViewById<LinearLayout>(R.id.settings_appearance_options)
         for (group in appearanceOptions().groups) {
-            val title = layoutInflater.inflate(R.layout.settings_appearance_group, options, false) as TextView
-            title.setText(topic(group.topic))
-            options.addView(title)
-            for (option in group.options) {
+            val header = layoutInflater.inflate(R.layout.settings_appearance_group, options, false)
+            options.addView(header)
+            val rows = group.options.map { option ->
                 val view = layoutInflater.inflate(R.layout.settings_appearance_option, options, false)
-                rows += Row(option, view).also { view.setOnKeyListener(it) }
                 options.addView(view)
+                Row(option, view).also { view.setOnKeyListener(it) }
             }
+            this.rows += rows
+            groups += Group(header, topic(group.topic), rows)
         }
         val reset = layoutInflater.inflate(R.layout.settings_entry, options, false) as TextView
         reset.setText(R.string.settings_appearance_reset)
         reset.setOnClickListener { change(Appearance()) }
-        (reset.layoutParams as LinearLayout.LayoutParams).topMargin = resources.getDimensionPixelSize(R.dimen.settings_group_gap)
         options.addView(reset)
 
         appearance = settings.read()
         show()
-        rows.first().view.requestFocus()
+        groups.first().header.requestFocus()
+    }
+
+    /** Shows [group]'s options, and hides any other group's; or hides [group]'s if they show. */
+    private fun toggle(group: Group) {
+        open = if (open == group) null else group
+        for (each in groups) each.show(open == each)
     }
 
     private fun change(appearance: Appearance) {
@@ -115,12 +125,29 @@ class AppearanceActivity : Activity() {
         Side.RIGHT -> R.string.settings_appearance_right
     }
 
+    /** A group's entry, which shows or hides its options' [rows] below it. Hidden at first. */
+    private inner class Group(val header: View, title: Int, private val rows: List<Row>) {
+
+        private val arrow = header.findViewById<View>(R.id.settings_group_arrow)
+
+        init {
+            header.findViewById<TextView>(R.id.settings_group_title).setText(title)
+            header.setOnClickListener { toggle(this) }
+            show(false)
+        }
+
+        fun show(open: Boolean) {
+            for (row in rows) row.view.visibility = if (open) View.VISIBLE else View.GONE
+            // The arrow turns to point down, at the options: the other way round when mirrored.
+            val down = if (header.layoutDirection == View.LAYOUT_DIRECTION_RTL) -90f else 90f
+            arrow.rotation = if (open) down else 0f
+        }
+    }
+
     /** An option's row: shows its value, and steps it on Left and Right while it has the focus. */
     private inner class Row(val option: AppearanceOption<*>, val view: View) : View.OnKeyListener {
 
         private val value = view.findViewById<TextView>(R.id.settings_option_value)
-        private val previous = view.findViewById<View>(R.id.settings_option_previous)
-        private val next = view.findViewById<View>(R.id.settings_option_next)
 
         init {
             view.findViewById<TextView>(R.id.settings_option_label).setText(label(option))
@@ -129,15 +156,13 @@ class AppearanceActivity : Activity() {
         fun show() {
             val applies = option.appliesTo(appearance)
             value.text = valueLabel(option, appearance)
-            previous.alpha = if (applies && option.canStep(appearance, forward = false)) 1f else DIMMED
-            next.alpha = if (applies && option.canStep(appearance, forward = true)) 1f else DIMMED
             view.alpha = if (applies) 1f else DIMMED
             view.isFocusable = applies
             view.isFocusableInTouchMode = applies
         }
 
-        // Toward an arrow, its value: in a mirrored row the next value is to the left. Taken at
-        // the first and last value too, so the focus stays here.
+        // Toward an arrow, its value: in a mirrored row the next value is to the left. Around at
+        // the first and last value.
         override fun onKey(v: View, keyCode: Int, event: KeyEvent): Boolean {
             val right = when (keyCode) {
                 KeyEvent.KEYCODE_DPAD_LEFT -> false

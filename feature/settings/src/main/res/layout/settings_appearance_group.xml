@@ -1,11 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The title of a group of options in the appearance editor: the part of the home screen they change. -->
-<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+<!-- A group of options in the appearance editor, named after the part of the home screen they
+     change: OK shows its options below it, or hides them again. Its arrow points at the options
+     while they show. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginTop="@dimen/settings_group_gap"
-    android:layout_marginBottom="@dimen/settings_appearance_value_gap"
+    android:background="@drawable/settings_entry_background"
+    android:focusable="true"
+    android:focusableInTouchMode="true"
+    android:gravity="center_vertical"
+    android:minHeight="@dimen/settings_entry_height"
+    android:orientation="horizontal"
     android:paddingLeft="@dimen/settings_entry_padding"
-    android:paddingRight="@dimen/settings_entry_padding"
-    android:textColor="@color/text_secondary"
-    android:textSize="@dimen/settings_appearance_group_text" />
+    android:paddingRight="@dimen/settings_entry_padding">
+
+    <TextView
+        android:id="@+id/settings_group_title"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:ellipsize="end"
+        android:maxLines="2"
+        android:textColor="@color/text_primary"
+        android:textSize="@dimen/settings_entry_text" />
+
+    <TextView
+        android:id="@+id/settings_group_arrow"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/settings_appearance_value_gap"
+        android:text="@string/settings_appearance_arrow_next"
+        android:textColor="@color/text_primary"
+        android:textSize="@dimen/settings_entry_text" />
+</LinearLayout>

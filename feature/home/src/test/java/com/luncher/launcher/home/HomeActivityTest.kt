@@ -265,6 +265,32 @@ class HomeActivityTest {
         assertEquals(listOf("Music", "News"), controller.get().labels())
     }
 
+    // The settings panel and Hide apps float over the home screen, which stays started behind them.
+    @Test
+    fun `hides an app hidden in the settings at once, behind the panel`() {
+        val controller = start()
+
+        controller.pause()                          // the settings panel opened over it
+        arrangements.save(AppArrangement(order = null, hidden = listOf(app("movies").launchable)))
+
+        assertEquals(listOf("Music", "News"), controller.get().labels())
+    }
+
+    @Test
+    fun `follows the arrangement from start to stop`() {
+        val controller = start()
+        assertEquals(1, arrangements.listenerCount)
+
+        controller.pause().stop()
+        assertEquals(0, arrangements.listenerCount)
+        arrangements.save(AppArrangement(order = null, hidden = listOf(app("movies").launchable)))
+        assertEquals(listOf("Movies", "Music", "News"), controller.get().labels())   // not while hidden
+
+        controller.restart().resume()   // restart() starts it too, as Android does
+        assertEquals(1, arrangements.listenerCount)
+        assertEquals(listOf("Music", "News"), controller.get().labels())
+    }
+
     @Test
     fun `says where to show apps again when all of them are hidden`() {
         arrangements.arrangement = AppArrangement(order = null, hidden = installedApps.apps.map { it.launchable })

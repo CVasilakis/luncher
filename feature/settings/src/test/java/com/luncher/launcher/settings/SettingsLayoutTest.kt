@@ -8,6 +8,7 @@ import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.ListView
 import android.widget.TextView
+import com.luncher.domain.appearance.appearanceOptions
 import com.luncher.domain.apps.AppArrangement
 import com.luncher.domain.apps.FakeAppArrangements
 import com.luncher.domain.apps.FakeInstalledApps
@@ -124,31 +125,46 @@ class SettingsLayoutTest(private val screen: TvScreen) {
         val activity = Robolectric.buildActivity(AppearanceActivity::class.java).setup().get()
         val metrics = activity.resources.displayMetrics
         val margin = activity.resources.getDimension(R.dimen.settings_appearance_margin_horizontal)
+        val title = activity.findViewById<TextView>(R.id.settings_appearance_title)
         val preview = activity.findViewById<View>(R.id.settings_appearance_preview)
         val options = activity.findViewById<ViewGroup>(R.id.settings_appearance_options)
         val children = (0 until options.childCount).map { options.getChildAt(it) }
-        val rows = children.filter { it.findViewById<View>(R.id.settings_option_value) != null }
+        val groups = children.filter { it.findViewById<View>(R.id.settings_group_title) != null }
 
+        assertWhole(screen, title)
+        assertApart(screen, "title and preview", bounds(title), bounds(preview))
         assertApart(screen, "preview and options", bounds(preview), bounds(activity.findViewById(R.id.settings_appearance_scroll)))
         assertTrue("preview ${preview.width} px wide on $screen", preview.width >= metrics.widthPixels / 3)
-        for (child in children) {
-            val area = bounds(child)
-            assertTrue("$area outside the overscan margin on $screen", area.left >= margin && area.right <= metrics.widthPixels - margin)
-            if (child is TextView) assertWhole(screen, child)
-        }
-        // Each option through its values, in order: the tiles end at the bottom, where the full
-        // bottom row can be changed. The next value is toward the arrow on its side: Left when
-        // mirrored.
+        assertTrue("preview ${preview.height} px tall on $screen", preview.height >= metrics.heightPixels / 4)
+        // Each group open in turn, each of its options through its values, in order, ending at
+        // the last: the tiles end at the bottom, where the full bottom row can be changed. The
+        // next value is toward the arrow on its side: Left when mirrored.
         val next = if (options.layoutDirection == View.LAYOUT_DIRECTION_RTL) KeyEvent.KEYCODE_DPAD_LEFT else KeyEvent.KEYCODE_DPAD_RIGHT
-        for (row in rows) {
-            assertTrue("${row.label()} can't take the focus on $screen", row.requestFocus())
-            do {
-                val before = row.value().text.toString()
-                assertWhole(screen, row.label())
-                assertWhole(screen, row.value())
-                activity.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, next))
-                shadowOf(Looper.getMainLooper()).idle()   // the layout pass
-            } while (row.value().text.toString() != before)
+        val catalog = appearanceOptions().groups
+        for ((index, group) in groups.withIndex()) {
+            assertTrue(group.requestFocus())
+            activity.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DPAD_CENTER))
+            activity.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_DPAD_CENTER))
+            shadowOf(Looper.getMainLooper()).idle()   // the layout pass, for the options it shows
+            val shown = children.filter { it.visibility == View.VISIBLE }
+            for (child in shown) {
+                val area = bounds(child)
+                assertTrue("$area outside the overscan margin on $screen", area.left >= margin && area.right <= metrics.widthPixels - margin)
+                if (child is TextView) assertWhole(screen, child)
+            }
+            assertWhole(screen, group.findViewById(R.id.settings_group_title))
+            val rows = shown.filter { it.findViewById<View>(R.id.settings_option_value) != null }
+            for ((row, option) in rows.zip(catalog[index].options)) {
+                assertTrue("${row.label().text} can't take the focus on $screen", row.requestFocus())
+                repeat(option.values.size) { step ->
+                    assertWhole(screen, row.label())
+                    assertWhole(screen, row.value())
+                    if (step < option.values.lastIndex) {
+                        activity.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, next))
+                        shadowOf(Looper.getMainLooper()).idle()   // the layout pass
+                    }
+                }
+            }
         }
     }
 

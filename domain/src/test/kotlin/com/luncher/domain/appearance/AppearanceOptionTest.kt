@@ -2,7 +2,6 @@ package com.luncher.domain.appearance
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -75,26 +74,32 @@ class AppearanceOptionTest {
     }
 
     @Test
-    fun `stops at the first and the last value`() {
+    fun `wraps around at the first and the last value`() {
         val radius = AppearanceOption.CornerRadius
         val first = Appearance()
         val last = radius.set(first, 16)
 
-        assertSame(first, radius.step(first, forward = false))
-        assertSame(last, radius.step(last, forward = true))
-        assertFalse(radius.canStep(first, forward = false))
-        assertTrue(radius.canStep(first, forward = true))
-        assertFalse(radius.canStep(last, forward = true))
+        assertEquals(16, radius.get(radius.step(first, forward = false)))
+        assertEquals(0, radius.get(radius.step(last, forward = true)))
     }
 
     @Test
-    fun `steps through every value in order`() {
+    fun `steps through every value in order, then back to the first`() {
         val placement = AppearanceOption.Placement
-        val seen = generateSequence(Appearance()) { placement.step(it, forward = true).takeIf { next -> next != it } }
+        val seen = generateSequence(Appearance()) { placement.step(it, forward = true) }
+            .take(TilePlacement.entries.size + 1)
             .map(placement::get)
             .toList()
 
-        assertEquals(TilePlacement.entries, seen)
+        assertEquals(TilePlacement.entries + TilePlacement.TOP_LEFT, seen)
+    }
+
+    @Test
+    fun `an option of two values toggles either way`() {
+        val clock = AppearanceOption.ClockSide
+
+        assertEquals(Side.RIGHT, clock.get(clock.step(Appearance(), forward = true)))
+        assertEquals(Side.RIGHT, clock.get(clock.step(Appearance(), forward = false)))
     }
 
     // An appearance made in code with a value the option doesn't offer: the next step goes back to the default.

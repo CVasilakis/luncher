@@ -48,6 +48,10 @@ class HomeActivity : Activity() {
 
     private val showAppearance: () -> Unit = { show(appearanceSettings.read()) }
 
+    // Hidden or shown in the settings, over the home screen: shown at once. Not while arranging,
+    // whose own saves these are, with the tiles showing them already.
+    private val showArrangement: () -> Unit = { if (!arrange.active) refresh() }
+
     private val openApp = View.OnClickListener { open((it as AppTileView).app) }
 
     private val startArranging = View.OnLongClickListener {
@@ -86,13 +90,15 @@ class HomeActivity : Activity() {
     }
 
     // Visible from onStart to onStop; paused only, e.g. behind a dialog, it still shows.
-    // The appearance, as the clock, only while visible: a change made meanwhile (in the editor,
-    // which covers the home screen whole) is applied once, when it comes back.
+    // The appearance and the arrangement, as the clock, only while visible: a change made meanwhile
+    // (in the appearance editor, which covers the home screen whole) is applied once, when it comes
+    // back. The apps are read in onResume.
     override fun onStart() {
         super.onStart()
         clockView.start(clock)
         appearanceSettings.addListener(showAppearance)
         showAppearance()
+        arrangements.addListener(showArrangement)
     }
 
     override fun onStop() {
@@ -100,6 +106,7 @@ class HomeActivity : Activity() {
         arrange.end()   // leaving the home screen (another app, the screen off) ends it
         clockView.stop()
         appearanceSettings.removeListener(showAppearance)
+        arrangements.removeListener(showArrangement)
     }
 
     override fun onResume() {

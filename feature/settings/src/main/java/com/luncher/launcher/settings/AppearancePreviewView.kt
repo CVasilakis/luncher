@@ -60,6 +60,12 @@ internal class AppearancePreviewView(context: Context, attrs: AttributeSet?) : V
         this.color = color
     }
 
+    /** As tall as its screen at its width, if there's the room. */
+    override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+        val width = MeasureSpec.getSize(widthMeasureSpec)
+        setMeasuredDimension(width, resolveSize(width * SCREEN_HEIGHT / SCREEN_WIDTH, heightMeasureSpec))
+    }
+
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         scale = minOf(w / SCREEN_WIDTH.toFloat(), h / SCREEN_HEIGHT.toFloat())
         val left = (w - SCREEN_WIDTH * scale) / 2

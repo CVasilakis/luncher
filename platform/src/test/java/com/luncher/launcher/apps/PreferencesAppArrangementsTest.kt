@@ -100,4 +100,19 @@ class PreferencesAppArrangementsTest {
 
         assertEquals(listOf(news), PreferencesAppArrangements(context).read().hidden)
     }
+
+    @Test
+    fun `tells its listeners of every save, until they're removed`() {
+        val arrangements = PreferencesAppArrangements(context)
+        val heard = mutableListOf<AppArrangement>()
+        val listener = { heard += arrangements.read() }
+        arrangements.addListener(listener)
+        val hidden = AppArrangement(order = null, hidden = listOf(news))
+
+        arrangements.save(hidden)
+        arrangements.removeListener(listener)
+        arrangements.save(AppArrangement.NONE)
+
+        assertEquals(listOf(hidden), heard)
+    }
 }

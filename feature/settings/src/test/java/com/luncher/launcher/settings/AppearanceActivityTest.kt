@@ -1,5 +1,6 @@
 package com.luncher.launcher.settings
 
+import android.os.Looper
 import android.view.KeyEvent
 import android.view.View
 import android.widget.LinearLayout
@@ -12,6 +13,7 @@ import com.luncher.domain.appearance.TilePlacement
 import com.luncher.domain.appearance.TileStyle
 import com.luncher.domain.appearance.TopBarAppearance
 import com.luncher.launcher.testing.TV_1080P
+import com.luncher.launcher.testing.bounds
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertSame
@@ -22,6 +24,7 @@ import org.junit.runner.RunWith
 import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
+import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
@@ -44,15 +47,22 @@ class AppearanceActivityTest {
 
     private fun AppearanceActivity.children() = list().let { list -> (0 until list.childCount).map { list.getChildAt(it) } }
 
-    /** The options' rows. */
+    /** The options' rows, shown or not. */
     private fun AppearanceActivity.rows() = children().filter { it.findViewById<View>(R.id.settings_option_value) != null }
 
-    /** Each option as "Label: value", each group title alone, then the last entry. */
-    private fun AppearanceActivity.lines() = children().drop(1).map { child ->
+    /** What shows: each group's title, "open" after it while its options show; each option as "Label: value"; the last entry. */
+    private fun AppearanceActivity.lines() = children().filter { it.visibility == View.VISIBLE }.map { child ->
+        val title = child.findViewById<TextView>(R.id.settings_group_title)
         val value = child.findViewById<TextView>(R.id.settings_option_value)
-        if (value == null) (child as TextView).text.toString()
-        else "${child.findViewById<TextView>(R.id.settings_option_label).text}: ${value.text}"
+        when {
+            title != null -> if (child.findViewById<View>(R.id.settings_group_arrow).rotation != 0f) "${title.text} open" else title.text.toString()
+            value != null -> "${child.findViewById<TextView>(R.id.settings_option_label).text}: ${value.text}"
+            else -> (child as TextView).text.toString()
+        }
     }
+
+    private fun AppearanceActivity.group(title: String) =
+        children().single { it.findViewById<TextView>(R.id.settings_group_title)?.text?.toString() == title }
 
     private fun AppearanceActivity.row(label: String) =
         rows().single { it.findViewById<TextView>(R.id.settings_option_label).text.toString() == label }
@@ -64,21 +74,48 @@ class AppearanceActivityTest {
         dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_UP, keyCode))
     }
 
+    /** OK on the group titled [title]. */
+    private fun AppearanceActivity.toggle(title: String) {
+        assertTrue(group(title).requestFocus())
+        press(KeyEvent.KEYCODE_DPAD_CENTER)
+        shadowOf(Looper.getMainLooper()).idle()   // the layout pass, for the options it shows
+    }
+
+    /** Opens the group titled [title], and puts the focus on its option labeled [label]. */
+    private fun AppearanceActivity.focus(title: String, label: String) {
+        toggle(title)
+        assertTrue(row(label).requestFocus())
+    }
+
     @Test
-    fun `lists the options in groups, each with its value, then the reset entry`() {
+    fun `lists the groups, their options hidden, then the reset entry`() {
+        assertEquals(listOf("Tiles", "Top bar", "Reset to defaults"), start().lines())
+    }
+
+    @Test
+    fun `starts with the first group focused`() {
+        assertTrue(start().group("Tiles").isFocused)
+    }
+
+    @Test
+    fun `OK on a group shows its options, each with its value, and hides another group's`() {
+        val activity = start()
+
+        activity.toggle("Tiles")
         assertEquals(
-            listOf(
-                "Tiles",
-                "Placement: Top left",
-                "Full bottom row: Off",
-                "Corner radius: 0 dp",
-                "Top bar",
-                "Clock: Left",
-                "Time beside the date: Left",
-                "Reset to defaults",
-            ),
-            start().lines(),
+            listOf("Tiles open", "Placement: Top left", "Full bottom row: Off", "Corner radius: 0 dp", "Top bar", "Reset to defaults"),
+            activity.lines(),
         )
+        assertTrue(activity.group("Tiles").isFocused)
+
+        activity.toggle("Top bar")
+        assertEquals(
+            listOf("Tiles", "Top bar open", "Clock: Left", "Time beside the date: Left", "Reset to defaults"),
+            activity.lines(),
+        )
+
+        activity.toggle("Top bar")
+        assertEquals(listOf("Tiles", "Top bar", "Reset to defaults"), activity.lines())
     }
 
     @Test
@@ -100,13 +137,9 @@ class AppearanceActivityTest {
     }
 
     @Test
-    fun `starts with the first option focused`() {
-        assertTrue(start().row("Placement").isFocused)
-    }
-
-    @Test
     fun `Right steps to the next value and stores it at once, Left back`() {
         val activity = start()
+        activity.focus("Tiles", "Placement")
 
         activity.press(KeyEvent.KEYCODE_DPAD_RIGHT)
         assertEquals("Top right", activity.value("Placement"))
@@ -121,6 +154,7 @@ class AppearanceActivityTest {
     @Test
     fun `the preview follows each step`() {
         val activity = start()
+        activity.focus("Tiles", "Placement")
 
         activity.press(KeyEvent.KEYCODE_DPAD_RIGHT)
 
@@ -128,30 +162,26 @@ class AppearanceActivityTest {
     }
 
     @Test
-    fun `stops at the first and the last value, keeping the focus, its arrow dimmed`() {
+    fun `steps around from the last value to the first, and back`() {
         val activity = start()
-        val row = activity.row("Placement")
-        val previous = row.findViewById<View>(R.id.settings_option_previous)
-        val next = row.findViewById<View>(R.id.settings_option_next)
-        assertTrue(previous.alpha < 1f)
-        assertEquals(1f, next.alpha)
+        activity.focus("Tiles", "Placement")
 
         activity.press(KeyEvent.KEYCODE_DPAD_LEFT)
-        assertEquals("Top left", activity.value("Placement"))
-
-        repeat(5) { activity.press(KeyEvent.KEYCODE_DPAD_RIGHT) }
         assertEquals("Bottom right", activity.value("Placement"))
-        assertEquals(1f, previous.alpha)
-        assertTrue(next.alpha < 1f)
-        assertTrue(row.isFocused)
+
+        activity.press(KeyEvent.KEYCODE_DPAD_RIGHT)
+        assertEquals("Top left", activity.value("Placement"))
+        assertTrue(activity.row("Placement").isFocused)
     }
 
     @Test
-    fun `a write happens only when a value changes`() {
+    fun `nothing is stored when nothing changes`() {
         val activity = start()
         val before = settings.appearance
+        val reset = activity.children().last()
 
-        activity.press(KeyEvent.KEYCODE_DPAD_LEFT)   // at the first value already
+        assertTrue(reset.requestFocus())
+        activity.press(KeyEvent.KEYCODE_DPAD_CENTER)   // the defaults already
 
         assertSame(before, settings.appearance)
     }
@@ -160,6 +190,7 @@ class AppearanceActivityTest {
     @Test
     fun `with the tiles at the top, the full bottom row is dimmed and the focus passes it by`() {
         val activity = start()
+        activity.focus("Tiles", "Placement")
         val fullRow = activity.row("Full bottom row")
 
         assertFalse(fullRow.isFocusable)
@@ -170,6 +201,7 @@ class AppearanceActivityTest {
     @Test
     fun `with the tiles at the bottom, the full bottom row can be changed`() {
         val activity = start()
+        activity.focus("Tiles", "Placement")
         activity.press(KeyEvent.KEYCODE_DPAD_RIGHT)
         activity.press(KeyEvent.KEYCODE_DPAD_RIGHT)   // bottom left
         val fullRow = activity.row("Full bottom row")
@@ -197,14 +229,22 @@ class AppearanceActivityTest {
     }
 
     @Test
-    fun `the preview can't take the focus`() {
-        assertFalse(start().findViewById<View>(R.id.settings_appearance_preview).isFocusable)
+    fun `the title is right above the preview, and the preview can't take the focus`() {
+        val activity = start()
+
+        val title = activity.findViewById<View>(R.id.settings_appearance_title)
+        val preview = activity.findViewById<View>(R.id.settings_appearance_preview)
+        assertEquals(title.left, preview.left)
+        val gap = activity.resources.getDimensionPixelSize(R.dimen.settings_title_gap)
+        assertEquals(title.bottom + gap, preview.top)
+        assertFalse(preview.isFocusable)
     }
 
     // A TV switched from 1080p to 720p (HDMI), or a new language, recreates the editor.
     @Test
     fun `after a configuration change, shows the values as stored`() {
         val controller = Robolectric.buildActivity(AppearanceActivity::class.java).setup()
+        controller.get().focus("Tiles", "Placement")
         controller.get().press(KeyEvent.KEYCODE_DPAD_RIGHT)
 
         RuntimeEnvironment.setQualifiers("+tvdpi")   // 960x540 dp at 720p
@@ -219,10 +259,11 @@ class AppearanceActivityTest {
     @Config(qualifiers = "ar-rEG-$TV_1080P")
     fun `mirrors in right-to-left languages, Left stepping to the next value`() {
         val activity = start()
+        activity.focus("المربعات", "الموضع")
 
-        val preview = activity.findViewById<View>(R.id.settings_appearance_preview)
-        val options = activity.findViewById<View>(R.id.settings_appearance_scroll)
-        assertTrue("options at ${options.right}, preview at ${preview.left}", options.right <= preview.left)
+        val preview = bounds(activity.findViewById(R.id.settings_appearance_preview))
+        val options = bounds(activity.findViewById(R.id.settings_appearance_scroll))
+        assertTrue("options at $options, preview at $preview", options.right <= preview.left)
         val row = activity.rows().first()
         val label = row.findViewById<TextView>(R.id.settings_option_label)
         val value = row.findViewById<View>(R.id.settings_option_value)

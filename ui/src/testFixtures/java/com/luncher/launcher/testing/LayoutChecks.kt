@@ -32,12 +32,16 @@ fun assertApart(screen: TvScreen, what: String, a: RectF, b: RectF) {
     assertFalse("$what overlap on $screen: $a and $b", RectF.intersects(a, b))
 }
 
-/** [view]'s text shows whole: not ellipsized, and within the room the view leaves it, both ways. */
+/**
+ * [view]'s text shows whole: not ellipsized, and within the room the view leaves it, both ways. A
+ * line's width without the space it ends on, where it wraps: that space is never drawn, and may
+ * hang past the edge.
+ */
 fun assertWhole(screen: TvScreen, view: TextView) {
     val layout = view.layout
     val width = view.width - view.totalPaddingLeft - view.totalPaddingRight
     val height = view.height - view.totalPaddingTop - view.totalPaddingBottom
     val cut = layout.height > height ||
-        (0 until layout.lineCount).any { layout.getEllipsisCount(it) > 0 || layout.getLineWidth(it) > width + 0.5f }
+        (0 until layout.lineCount).any { layout.getEllipsisCount(it) > 0 || layout.getLineMax(it) > width + 0.5f }
     assertFalse("\"${view.text}\" cut on $screen: ${layout.width} x ${layout.height} in $width x $height", cut)
 }

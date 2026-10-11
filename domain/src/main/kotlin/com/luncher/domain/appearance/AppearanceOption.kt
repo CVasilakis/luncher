@@ -76,16 +76,12 @@ fun <T> AppearanceOption<T>.valueOrDefault(value: T?): T =
     if (value != null && value in values) value else default
 
 /**
- * [appearance] with this option at its next value ([forward]) or its previous one. At the first
- * or last value it stays: [appearance] itself.
+ * [appearance] with this option at its next value ([forward]) or its previous one, around: after
+ * the last value comes the first, and before the first the last.
  */
 fun <T> AppearanceOption<T>.step(appearance: Appearance, forward: Boolean): Appearance {
     val index = values.indexOf(get(appearance))
     if (index < 0) return set(appearance, default)
-    val next = if (forward) index + 1 else index - 1
-    return if (next in values.indices) set(appearance, values[next]) else appearance
+    val next = (index + if (forward) 1 else -1).mod(values.size)
+    return set(appearance, values[next])
 }
-
-/** Whether [step] toward [forward] changes anything: false at the first or last value. */
-fun <T> AppearanceOption<T>.canStep(appearance: Appearance, forward: Boolean): Boolean =
-    step(appearance, forward) != appearance

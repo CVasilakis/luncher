@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- An option of the appearance editor: its name, and its value between arrows, which Left and
-     Right step through; an arrow dims at the first or last value. Its name may take up to three
-     lines, on a narrow screen in a longer language. -->
+<!-- An option of the appearance editor, below its group and set in from it: its name, and its
+     value between arrows, which Left and Right step through, around. Its name may take up to
+     three lines, on a narrow screen in a longer language. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -11,9 +11,9 @@
     android:gravity="center_vertical"
     android:minHeight="@dimen/settings_entry_height"
     android:orientation="horizontal"
-    android:paddingLeft="@dimen/settings_entry_padding"
+    android:paddingStart="@dimen/settings_appearance_option_indent"
     android:paddingTop="@dimen/settings_appearance_value_gap"
-    android:paddingRight="@dimen/settings_entry_padding"
+    android:paddingEnd="@dimen/settings_entry_padding"
     android:paddingBottom="@dimen/settings_appearance_value_gap">
 
     <TextView

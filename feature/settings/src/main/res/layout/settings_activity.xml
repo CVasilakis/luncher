@@ -15,7 +15,7 @@
         android:textColor="@color/text_primary"
         android:textSize="@dimen/settings_title_text" />
 
-    <!-- SettingsActivity adds a settings_entry for each entry of settingsMenu, a gap between groups. -->
+    <!-- SettingsActivity adds a settings_entry for each entry of settingsMenu, in order. -->
     <LinearLayout
         android:id="@+id/settings_entries"
         android:layout_width="match_parent"

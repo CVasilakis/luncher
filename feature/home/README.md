@@ -82,7 +82,7 @@ one job, so a new arrangement, image source or top bar item changes one of them:
 | `AndroidClock` (`:platform`) | reads those from Android, and watches the time broadcasts only while something listens |
 | `ClockView` | formats a reading in the device's language; the time and the date side by side, in the order the top bar gives |
 | `topBarLayout` (`:domain`), `TopBarView` | which edge of the top bar the clock and the settings entry are at, and the time's side of the date; the view moves its items there |
-| `HomeActivity` | reads the apps and their arrangement in `onResume`; when the shown apps changed, creates tiles for new ones and drops the others. Without tiles, says why: nothing installed, or everything hidden. Starts the clock and follows the appearance in `onStart`, and stops both in `onStop`. Opens the [settings panel](../settings/README.md#the-settings-panel) on OK on the gear or on the Menu key. A long press of OK on a tile starts [arrange mode](#arrange-mode), which gets every key first while it's on. |
+| `HomeActivity` | reads the apps and their arrangement in `onResume`; when the shown apps changed, creates tiles for new ones and drops the others. Without tiles, says why: nothing installed, or everything hidden. Starts the clock and follows the appearance and the arrangement in `onStart`, and stops all three in `onStop`: an app hidden or shown in the settings shows at once, behind the panel; arrange mode's own saves don't read the apps again. Opens the [settings panel](../settings/README.md#the-settings-panel) on OK on the gear or on the Menu key. A long press of OK on a tile starts [arrange mode](#arrange-mode), which gets every key first while it's on. |
 
 ### The top bar
 
@@ -118,7 +118,7 @@ What keeps it light:
   measuring or laying out again. The clock's text changes once a minute, which lays out the top
   bar only, not the tiles.
 - **Nothing runs while the home screen is hidden.** The clock's broadcast receiver exists only
-  from `onStart` to `onStop`, and the appearance is followed only then.
+  from `onStart` to `onStop`, and the appearance and the arrangement are followed only then.
 
 ### Appearance
 

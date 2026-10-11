@@ -154,6 +154,19 @@ class ArrangeModeTest {
         assertEquals(listOf(app("x").launchable), arrangements.arrangement.hidden)
     }
 
+    // The mode's own saves reach the home screen's listener too; the tiles show them already.
+    @Test
+    fun `a save while arranging doesn't read the apps again`() {
+        val activity = start().get()
+        activity.longPress("b")
+        activity.press(KeyEvent.KEYCODE_DPAD_RIGHT)
+        installedApps.apps += app("f")          // installed meanwhile
+
+        activity.press(KeyEvent.KEYCODE_DPAD_CENTER)   // puts b down, and stores it
+
+        assertEquals("acbde[x]", activity.state())
+    }
+
     @Test
     fun `putting an app down where it was stores nothing`() {
         val activity = start().get()

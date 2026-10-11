@@ -17,7 +17,6 @@ import androidx.test.espresso.matcher.ViewMatchers.withChild
 import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.luncher.domain.appearance.Appearance
 import com.luncher.domain.appearance.FakeAppearanceSettings
 import com.luncher.domain.appearance.TilePlacement
 import com.luncher.launcher.AppGraph
@@ -70,6 +69,9 @@ class AppearanceActivityTest {
         onView(isRoot()).perform(pressKey(keyCode))
     }
 
+    /** The editor's entry of the group titled [title]. */
+    private fun group(title: Int) = allOf(withChild(withText(title)), withChild(withId(R.id.settings_group_arrow)))
+
     /** The editor's row of the option labeled [label]. */
     private fun option(label: Int) = allOf(withChild(withText(label)), withChild(withId(R.id.settings_option_value)))
 
@@ -95,12 +97,17 @@ class AppearanceActivityTest {
     }
 
     @Test
-    fun dpadRight_stepsTheFocusedOption_andBackReturnsToThePanel() {
+    fun okOnAGroup_showsItsOptions_dpadStepsThemAround_andBackReturnsToThePanel() {
         launchThePanel().use {
             waitUntil(withText(R.string.settings_hide_apps), hasFocus())
             press(KeyEvent.KEYCODE_DPAD_DOWN)
             waitUntil(withText(R.string.settings_appearance), hasFocus())
             press(KeyEvent.KEYCODE_DPAD_CENTER)
+            waitUntil(group(R.string.settings_appearance_tiles), hasFocus())
+
+            press(KeyEvent.KEYCODE_DPAD_CENTER)
+            waitUntil(option(R.string.settings_appearance_placement), isDisplayed())
+            press(KeyEvent.KEYCODE_DPAD_DOWN)
             waitUntil(option(R.string.settings_appearance_placement), hasFocus())
 
             press(KeyEvent.KEYCODE_DPAD_RIGHT)
@@ -109,9 +116,10 @@ class AppearanceActivityTest {
             assertEquals(TilePlacement.TOP_RIGHT, settings.appearance.tileGeometry.placement)
 
             press(KeyEvent.KEYCODE_DPAD_LEFT)
+            press(KeyEvent.KEYCODE_DPAD_LEFT)   // around, from the first value to the last
 
-            waitUntil(allOf(withText(R.string.settings_appearance_top_left), withId(R.id.settings_option_value)), isDisplayed())
-            assertEquals(Appearance(), settings.appearance)
+            waitUntil(allOf(withText(R.string.settings_appearance_bottom_right), withId(R.id.settings_option_value)), isDisplayed())
+            assertEquals(TilePlacement.BOTTOM_RIGHT, settings.appearance.tileGeometry.placement)
 
             pressBack()
 

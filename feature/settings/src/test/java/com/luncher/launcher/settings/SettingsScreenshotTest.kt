@@ -64,7 +64,7 @@ class SettingsScreenshotTest {
     }
 
     // Every option away from its default; the tiles at the bottom, so the full bottom row can be
-    // changed. Focus on the corner radius, at its last value: its Right arrow dimmed.
+    // changed. The tiles' group open, the focus on the corner radius.
     @Test
     fun appearanceEditorChanged() {
         val activity = appearanceEditor(
@@ -73,11 +73,9 @@ class SettingsScreenshotTest {
                 TileStyle(cornerRadiusDp = 16),
                 TopBarAppearance(clockSide = Side.RIGHT, timeSide = Side.RIGHT),
             ),
+            open = "Tiles",
         )
-        val options = activity.findViewById<LinearLayout>(R.id.settings_appearance_options)
-        (0 until options.childCount).map { options.getChildAt(it) }
-            .single { it.findViewById<TextView>(R.id.settings_option_label)?.text == "Corner radius" }
-            .requestFocus()
+        activity.child { it.findViewById<TextView>(R.id.settings_option_label)?.text == "Corner radius" }.requestFocus()
 
         activity.window.decorView.captureRoboImage("src/test/screenshots/settings/settings_appearance_changed.png")
     }
@@ -86,14 +84,16 @@ class SettingsScreenshotTest {
     @Test
     @Config(qualifiers = "+w640dp-h360dp")
     fun appearanceEditorOnASmallScreen() {
-        appearanceEditor(Appearance()).window.decorView.captureRoboImage("src/test/screenshots/settings/settings_appearance_small_screen.png")
+        appearanceEditor(Appearance(), open = "Tiles").window.decorView
+            .captureRoboImage("src/test/screenshots/settings/settings_appearance_small_screen.png")
     }
 
     // Arabic: mirrored, the options at the left; the preview's content still left to right.
     @Test
     @Config(qualifiers = "ar-rEG-$TV_1080P")
     fun appearanceEditorInArabic() {
-        appearanceEditor(Appearance()).window.decorView.captureRoboImage("src/test/screenshots/settings/settings_appearance_arabic.png")
+        appearanceEditor(Appearance(), open = "المربعات").window.decorView
+            .captureRoboImage("src/test/screenshots/settings/settings_appearance_arabic.png")
     }
 
     // The preview alone, with the defaults and with each value of each option: a loop over the
@@ -109,13 +109,24 @@ class SettingsScreenshotTest {
         }
     }
 
-    /** The appearance editor showing [appearance], its first option focused. */
-    private fun appearanceEditor(appearance: Appearance): AppearanceActivity {
+    /** The appearance editor showing [appearance], with the group titled [open] open and focused, or the first focused. */
+    private fun appearanceEditor(appearance: Appearance, open: String? = null): AppearanceActivity {
         val application = RuntimeEnvironment.getApplication() as SettingsTestApplication
         application.graph = object : TestSettingsGraph() {
             override val appearanceSettings = FakeAppearanceSettings(appearance)
         }
-        return Robolectric.buildActivity(AppearanceActivity::class.java).setup().get()
+        val activity = Robolectric.buildActivity(AppearanceActivity::class.java).setup().get()
+        if (open != null) {
+            activity.child { it.findViewById<TextView>(R.id.settings_group_title)?.text == open }.performClick()
+            shadowOf(Looper.getMainLooper()).idle()   // the layout pass, for the options it shows
+        }
+        return activity
+    }
+
+    /** The editor's entry that [matches]. */
+    private fun AppearanceActivity.child(matches: (View) -> Boolean): View {
+        val options = findViewById<LinearLayout>(R.id.settings_appearance_options)
+        return (0 until options.childCount).map { options.getChildAt(it) }.single(matches)
     }
 
     /** Hide apps with the apps of [hideAppsPanel], the first one selected: its window. */

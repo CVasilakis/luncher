@@ -9,11 +9,15 @@ import com.luncher.domain.apps.LaunchableApp
  * [AppArrangements] in SharedPreferences. Each list is one string, an app per line as
  * `package/activity`: a string set would lose the order. No order key means no order yet.
  *
- * Read from storage once per process, then kept; a save writes in the background (`apply`).
+ * Read from storage once per process, then kept; a save writes in the background (`apply`) and
+ * tells the listeners at once. Every screen gets this one instance from AppGraph, so a save made in
+ * the settings reaches the home screen behind them.
  */
 class PreferencesAppArrangements(context: Context) : AppArrangements {
 
     private val preferences = context.getSharedPreferences(FILE, Context.MODE_PRIVATE)
+
+    private val listeners = mutableListOf<() -> Unit>()
 
     private var current: AppArrangement? = null
 
@@ -30,6 +34,15 @@ class PreferencesAppArrangements(context: Context) : AppArrangements {
             .apply { if (order == null) remove(ORDER) else putString(ORDER, encode(order)) }
             .putString(HIDDEN, encode(arrangement.hidden))
             .apply()
+        listeners.toList().forEach { it() }
+    }
+
+    override fun addListener(listener: () -> Unit) {
+        listeners += listener
+    }
+
+    override fun removeListener(listener: () -> Unit) {
+        listeners -= listener
     }
 
     private fun encode(apps: List<LaunchableApp>) = apps.joinToString("\n") { "${it.packageName}/${it.activityName}" }

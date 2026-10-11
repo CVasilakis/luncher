@@ -19,7 +19,7 @@ domain/src/
 │   │   ├── InstalledApps.kt     port: the TV apps installed on the device
 │   │   ├── AppImages.kt         port: an app's image drawn at a size, in the UI's image type
 │   │   ├── AppArrangement.kt    model: the user's order of the shown apps, and the hidden apps, as stored
-│   │   ├── AppArrangements.kt   port: where the arrangement is kept
+│   │   ├── AppArrangements.kt   port: where the arrangement is kept, and when it changes
 │   │   ├── HomeApps.kt          rule: which apps the home screen shows, in which order, and which are hidden
 │   │   ├── ArrangedApps.kt      model and rules: the shown and hidden apps; hiding or showing one, and what to store
 │   │   └── Banner.kt            model and rule: which image a tile shows (the app's banner or its icon)
@@ -30,7 +30,7 @@ domain/src/
 │   │   ├── TileStyle.kt         model: how each tile is drawn (its corner radius)
 │   │   ├── TopBarAppearance.kt  model: the clock's side of the top bar, the time's side of the date
 │   │   ├── Side.kt              model: left or right, the screen's, in every language
-│   │   ├── AppearanceOption.kt  models and rules: each option the user can change, its values, stepping through them
+│   │   ├── AppearanceOption.kt  models and rules: each option the user can change, its values, stepping through them, around
 │   │   ├── AppearanceOptions.kt models and rule: which options the editor lists, in groups
 │   │   └── AppearanceSettings.kt port: the stored appearance, and when it changes
 │   ├── clock/
@@ -38,7 +38,7 @@ domain/src/
 │   │   └── Clock.kt             port: the device's clock, and when what it shows changes
 │   ├── settings/
 │   │   ├── SettingsEntry.kt     model: the kinds of entry the settings panel lists, one type each
-│   │   └── SettingsMenu.kt      models and rule: which entries the panel lists, in groups
+│   │   └── SettingsMenu.kt      rule: which entries the panel lists, in order
 │   ├── arrange/
 │   │   └── ArrangeSession.kt    rule: the user arranging apps, holding one and moving it among and between shown and hidden
 │   └── layout/
@@ -72,5 +72,5 @@ models, rules and ports of that topic.
 - Ports are interfaces named after what they provide (`InstalledApps`), not how
   (`PackageManagerApps`); adapters in `:platform` implement them. A port whose result is a UI type
   this module can't name is generic in it (`AppImages<Image>`).
-- A port for state that changes while it's shown (`Clock`, `AppearanceSettings`) is a port you can watch
+- A port for state that changes while it's shown (`Clock`, `AppearanceSettings`, `AppArrangements`) is a port you can watch
   ([`ARCHITECTURE.md`](../docs/ARCHITECTURE.md#background-work-and-changes-while-shown)).
