@@ -1,8 +1,7 @@
-# Makes a draft GitHub release of main at the version app/build.gradle.kts holds: builds the
-# release APK, signs it, tags the commit vX.Y.Z, and attaches the APK, its SHA-256 and a template
-# of the release notes. Started by hand (Actions → Release → Run workflow), once the version has
-# been raised; the notes are written and the release published by hand too.
-# Setup and steps: docs/RELEASING.md.
+# Releases main at the version app/build.gradle.kts holds: builds the release APK, signs it, tags
+# the commit vX.Y.Z, and publishes a GitHub release with the APK, its SHA-256, and the notes from
+# .github/release-notes/vX.Y.Z.md. Started by hand (Actions → Release → Run workflow), once the
+# version has been raised and the notes written. Setup and steps: docs/RELEASING.md.
 #
 # Separate jobs, so the signing key never meets Gradle and the token that can write to the
 # repository never meets the key: Gradle runs the build's plugins and dependencies, any of which
@@ -48,17 +47,29 @@ jobs:
             echo "::error::app/build.gradle.kts has no versionName X.Y.Z, each part 0 to 999 without leading zeros, e.g. 1.2.3; found '$version'."
             exit 1
           fi
+          # The release's notes, written in the commit that raises the version: checked first, as a
+          # run without them could only fail at its end, after the builds.
+          notes=".github/release-notes/v$version.md"
+          if ! grep -q '[^[:space:]]' "$notes" 2>/dev/null; then
+            echo "::error::$notes is missing or empty: write the release's notes there (docs/RELEASING.md#release-notes)."
+            exit 1
+          fi
+          # The tags, read once; without them the checks below would find nothing to refuse.
+          if ! refs="$(git ls-remote --tags origin)"; then
+            echo "::error::Couldn't read the repository's tags, so the version can't be checked; nothing was released. Run the workflow again."
+            exit 1
+          fi
           # A tag made by hand before the run is kept if it's on this commit, the one F-Droid will
           # build; on another commit it would name a different APK. Of an annotated tag, ls-remote
           # also lists the commit it points at, as <tag>^{}, which sorts last.
           tag="v$version"
-          tagged="$(git ls-remote --tags origin "refs/tags/$tag" "refs/tags/$tag^{}" | sort -k 2 | tail -n 1 | cut -f 1)"
+          tagged="$(awk -v tag="refs/tags/$tag" '$2 == tag || $2 == tag "^{}"' <<< "$refs" | sort -k 2 | tail -n 1 | cut -f 1)"
           if [ -n "$tagged" ] && [ "$tagged" != "$GITHUB_SHA" ]; then
             echo "::error::$tag is tagged already, on $tagged, not on the commit this run releases ($GITHUB_SHA). Raise the version in app/build.gradle.kts (docs/RELEASING.md#making-a-release), or, if $tag was never released, delete that tag."
             exit 1
           fi
           # Android updates an app only to a higher versionCode, which follows the version.
-          tags="$(git ls-remote --tags --refs origin 'v*' | sed 's|.*refs/tags/||' | grep -E "$release" | grep -vx "$tag" || true)"
+          tags="$(cut -f 2 <<< "$refs" | grep -v '\^{}$' | sed 's|^refs/tags/||' | grep '^v' | grep -E "$release" | grep -vx "$tag" || true)"
           latest="$(sort -V <<< "$tags" | tail -n 1)"
           if [ -n "$latest" ] && [ "$(printf '%s\n' "$latest" "v$version" | sort -V | tail -n 1)" != "v$version" ]; then
             echo "::error::Version $version in app/build.gradle.kts isn't higher than the last release, $latest."
@@ -200,9 +211,9 @@ jobs:
           retention-days: 7
           if-no-files-found: ignore
 
-  # Tags the commit that was built, unless it's tagged already, before making the draft: GitHub
-  # would tag a draft's commit only once it's published, and the check above finds versions by
-  # their tags.
+  # Tags the commit that was built, unless it's tagged already, and publishes the release right
+  # after: F-Droid builds a new tag on its own and downloads the release's APK to compare, which
+  # fails while the release is unpublished (docs/RELEASING.md#f-droid).
   release:
     needs: [build, sign, reproduce]
     runs-on: ubuntu-24.04
@@ -217,13 +228,18 @@ jobs:
       APK: luncher-v${{ needs.build.outputs.version }}.apk
       TAGGED: ${{ needs.build.outputs.tagged }}
     steps:
+      - uses: actions/checkout@v7
+        with:
+          sparse-checkout: .github/release-notes
+          persist-credentials: false               # nothing here pushes with git
       - uses: actions/download-artifact@v8
         with:
           name: signed-apk
-      # The certificate's digest is read here, not passed on from the sign job: GitHub drops a
-      # job output in which it finds any secret's value, or a line of one, and a short one can
-      # turn up in a hex digest.
-      - name: Write the release notes' template
+      # The release's own notes, then how to install and verify it, the same in every release
+      # ("Android 5.1" follows minSdk, as the root README does). The certificate's digest is read
+      # here, not passed on from the sign job: GitHub drops a job output in which it finds any
+      # secret's value, or a line of one, and a short one can turn up in a hex digest.
+      - name: Write the release notes
         run: |
           build_tools="$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -n 1)"
           certificate="$("$build_tools/apksigner" verify --print-certs "$APK" | sed -n 's/^Signer #1 certificate SHA-256 digest: //p')"
@@ -231,30 +247,34 @@ jobs:
             echo "::error::apksigner printed no certificate digest for $APK."
             exit 1
           fi
-          cat > notes.md <<EOF
-          ## What's new
+          {
+            cat ".github/release-notes/$TAG.md"
+            cat <<EOF
 
-          -
+          ## Install
 
-          ## Fixes
-
-          -
+          Download \`$APK\` below and install it on an Android TV device with Android 5.1 (API 22) or newer, e.g. \`adb install -r $APK\`. You can also install it with [Obtainium](https://github.com/ImranR98/Obtainium).
 
           ## Verify the download
 
           - SHA-256 of the APK: \`$(cut -d ' ' -f 1 "$APK.sha256")\`
           - SHA-256 of the signing certificate: \`$certificate\` (\`apksigner verify --print-certs $APK\`)
           EOF
-      - name: Tag the commit and make the draft release
+          } > notes.md
+      - name: Tag the commit and publish the release
         run: |
           # Drafts included, which only a token that can write sees: a tag made by hand may
-          # already have one.
-          if [ -n "$(gh api "repos/$GITHUB_REPOSITORY/releases" --paginate --jq ".[] | select(.tag_name == \"$TAG\") | .id")" ]; then
+          # already have one. A failed lookup stops the run, rather than finding none.
+          if ! existing="$(gh api "repos/$GITHUB_REPOSITORY/releases" --paginate --jq ".[] | select(.tag_name == \"$TAG\") | .id")"; then
+            echo "::error::Couldn't read the repository's releases, so nothing was tagged or released. Run the workflow again."
+            exit 1
+          fi
+          if [ -n "$existing" ]; then
             echo "::error::$TAG has a release already, published or draft. Raise the version in app/build.gradle.kts (docs/RELEASING.md#making-a-release), or delete that release if it's a draft."
             exit 1
           fi
           if [ "$TAGGED" != true ]; then
             gh api "repos/$GITHUB_REPOSITORY/git/refs" -f ref="refs/tags/$TAG" -f sha="$GITHUB_SHA" > /dev/null
           fi
-          gh release create "$TAG" --draft --verify-tag --title "Luncher $TAG" \
+          gh release create "$TAG" --verify-tag --title "Luncher $TAG" \
             --notes-file notes.md "$APK" "$APK.sha256"

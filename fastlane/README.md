@@ -30,6 +30,9 @@ metadata/android/en-US/
 - **A changelog for each release,** named after its `versionCode` and written in the commit that
   raises the version ([`docs/RELEASING.md`](../docs/RELEASING.md#making-a-release)): F-Droid takes
   it from the release's tag.
+- **The descriptions and screenshots show the latest release:** checked, and updated where the
+  release changes what they say, before each release
+  ([`docs/RELEASING.md`](../docs/RELEASING.md#making-a-release)), for the same reason.
 - **Plain text,** one paragraph per line: both stores keep the line breaks, and Play shows no
   HTML beyond a few tags.
 - **Images without transparency:** Play asks for the feature graphic, the TV banner and the

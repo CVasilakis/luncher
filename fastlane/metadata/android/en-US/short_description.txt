@@ -1,1 +1,1 @@
-A lightweight home screen for Android TV: hide and reorder your apps
+A lightweight and customizable launcher for Android TV.

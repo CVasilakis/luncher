@@ -1,8 +1,8 @@
 # Releasing
 
 A release is a GitHub release tagged `vX.Y.Z`, with the signed APK `luncher-vX.Y.Z.apk` and its
-SHA-256 as downloads. The [release workflow](../.github/workflows/release.yml) makes it as a
-draft, from `main`; its notes are written and it is published by hand.
+SHA-256 as downloads. The [release workflow](../.github/workflows/release.yml) makes and publishes
+it from `main`, with notes written beforehand ([Release notes](#release-notes)).
 
 ## Versions
 
@@ -66,30 +66,51 @@ dependencies, and it has no token that can change the repository.
 
 ## Making a release
 
-1. **Raise the version:** change `versionName` and `versionCode` in `app/build.gradle.kts`
-   ([Versions](#versions)), add the version's changes to the store listing as
-   `fastlane/metadata/android/en-US/changelogs/<versionCode>.txt`
-   ([`fastlane/`](../fastlane/README.md)), and push the change to `main`. If the APK's size has
-   changed, update its size in the [root README](../README.md#light-by-design) in the same change:
-   the signed APK's, the size users download. `./gradlew assembleRelease` builds it unsigned, as
-   `app/build/outputs/apk/release/app-release-unsigned.apk`; signing adds about 16 KB
-   ([The signing key](#the-signing-key)).
+1. **Raise the version, and describe the release,** in changes pushed to `main` before the run:
+   - `versionName` and `versionCode` in `app/build.gradle.kts` ([Versions](#versions)).
+   - The version's changes in the store listing, as
+     `fastlane/metadata/android/en-US/changelogs/<versionCode>.txt`
+     ([`fastlane/`](../fastlane/README.md)).
+   - The release's notes, in `.github/release-notes/v1.2.3.md` ([Release notes](#release-notes)).
+   - **Wherever Luncher is described to its users, what the release changes:** a new or changed
+     feature, setting or requirement. In the [root README](../README.md): its features (one that
+     ships moves up from "On the way"), what Luncher runs on, and how to install it. In
+     the store listing ([`fastlane/`](../fastlane/README.md)): `full_description.txt`,
+     `short_description.txt`, and the screenshots, which the root README shows too. F-Droid reads
+     the listing from the release's tag, so a change made after the release shows there only
+     with the next one.
+   - The APK's size in the [root README](../README.md#light-by-design), if it has changed: the
+     signed APK's, the size users download. `./gradlew assembleRelease` builds it unsigned, as
+     `app/build/outputs/apk/release/app-release-unsigned.apk`; signing adds about 16 KB
+     ([The signing key](#the-signing-key)).
 2. **Run the workflow:** Actions → Release → Run workflow, on `main`. It releases the version
    `app/build.gradle.kts` holds, and refuses another branch, a version that isn't higher than the
-   last release or already has a release, and a missing signing secret. A tag `v1.2.3` made by
-   hand beforehand is kept if it's on the commit the run releases, and refused on any other
-   commit: F-Droid builds the commit the tag names. Before tagging, the run also fails if F-Droid
-   couldn't publish the signed APK ([F-Droid](#f-droid)).
-3. **What it makes:** the tag `v1.2.3` on the commit it built, unless it's there already, and a
-   draft release "Luncher v1.2.3" with `luncher-v1.2.3.apk`, `luncher-v1.2.3.apk.sha256`, and
-   notes from a template: empty "What's new" and "Fixes" sections, and both checksums (the
-   APK's, and the signing certificate's that `apksigner verify --print-certs` shows).
-4. **Finish it:** on the Releases page, edit the draft, write the notes, delete a section that
-   stays empty, and publish it.
+   last release or already has a release, missing release notes, and a missing signing secret;
+   it stops, too, when it can't read the repository's tags or releases to check them.
+   A tag `v1.2.3` made by hand beforehand is kept if it's on the commit the run releases, and
+   refused on any other commit: F-Droid builds the commit the tag names. Before tagging, the run
+   also fails if F-Droid couldn't publish the signed APK ([F-Droid](#f-droid)).
+3. **What it makes:** the tag `v1.2.3` on the commit it built, unless it's there already, and,
+   right after, the published release "Luncher v1.2.3" with `luncher-v1.2.3.apk` and
+   `luncher-v1.2.3.apk.sha256`. It's published at once, not left as a draft: F-Droid builds a new
+   tag on its own and downloads the release's APK, which it can't while the release is a draft
+   ([F-Droid](#f-droid)).
 
-To drop a draft, delete it on the Releases page and delete its tag:
-`git push origin --delete v1.2.3`. A run that failed in its last step, after tagging, can be run
-again as it is, as long as `main` hasn't moved on: its tag is on the commit the new run releases.
+Its notes can still be edited on the Releases page afterwards; F-Droid doesn't show them. A
+published release can't be taken back from those who downloaded it, nor from F-Droid, which
+publishes it too: a mistake is fixed by a higher version. A run that failed in its last step,
+after tagging, can be run again as it is, as long as `main` hasn't moved on: its tag is on the
+commit the new run releases.
+
+## Release notes
+
+Each release's notes are written in `.github/release-notes/vX.Y.Z.md`, in the commit that raises
+the version, and are the start of the release's page on GitHub. They are Markdown, for the people
+reading the Releases page: a "What's new" section, and "Fixes" when there are any. The workflow
+adds two sections of its own after them, the same in every release: how to install the APK, and
+both checksums (the APK's, and the signing certificate's that `apksigner verify --print-certs`
+shows). The store listing's changelog, `changelogs/<versionCode>.txt`, is a separate, shorter text
+in plain words, at most 500 characters ([`fastlane/`](../fastlane/README.md)).
 
 ## F-Droid
 

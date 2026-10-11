@@ -47,6 +47,7 @@ How the docs are written and kept up to date: [below](#writing-the-docs). Coding
 | [`docs/`](README.md) | Project-wide guides: building, architecture, testing, emulators, releasing; an archive of how the design was reached; and the root README's banner, in `images/` ([how it's made](../fastlane/README.md#icon-banner-and-feature-graphic)). |
 | [`fastlane/`](../fastlane/README.md) | The store listing F-Droid and Google Play show: name, descriptions, changes per version, screenshots (not part of the build). |
 | `.github/workflows/` | GitHub Actions workflows that run the tests ([`TESTING.md`](TESTING.md#in-ci)) and make releases ([`RELEASING.md`](RELEASING.md)). |
+| `.github/release-notes/` | Each release's notes on GitHub, `vX.Y.Z.md` ([`RELEASING.md`](RELEASING.md#release-notes)). |
 | [`AGENTS.md`](../AGENTS.md) | What coding agents need on top of these docs. |
 | `build.gradle.kts`, `settings.gradle.kts`, `gradle.properties`, `gradlew*` | Standard Gradle project files. |
 | `lint.xml` | Lint's exceptions for every module ([`TESTING.md`](TESTING.md#lint-and-compiler-warnings)). |
