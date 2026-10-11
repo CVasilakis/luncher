@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The title of a group of options in the appearance editor: the part of the home screen they change. -->
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="@dimen/settings_group_gap"
+    android:layout_marginBottom="@dimen/settings_appearance_value_gap"
+    android:layoutDirection="locale"
+    android:paddingLeft="@dimen/settings_entry_padding"
+    android:paddingRight="@dimen/settings_entry_padding"
+    android:textColor="@color/text_secondary"
+    android:textSize="@dimen/settings_appearance_group_text" />

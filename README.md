@@ -30,13 +30,15 @@ Android TV launcher.
 - Your TV apps as a grid of banners, with the time and date
 - Reorder apps: hold OK on an app
 - Hide apps: move them onto the hidden shelf, or pick them from a list in the settings
+- Appearance, with a preview as you change it: the corner the apps gather in, rounded corners,
+  which side the clock is on
 - Settings from the gear or the Menu key on the remote
 
 **On the way**
 
 - Your own banners for apps
 - Your own wallpapers
-- Appearance settings: tile size and spacing, colors and much more
+- More appearance settings: tile size and spacing, colors and much more
 - Wi-Fi, VPN and notifications in the status bar
 - Grouping apps into folders
 

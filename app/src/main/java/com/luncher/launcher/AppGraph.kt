@@ -2,10 +2,12 @@ package com.luncher.launcher
 
 import android.content.Context
 import android.graphics.Bitmap
+import com.luncher.domain.appearance.AppearanceSettings
 import com.luncher.domain.apps.AppArrangements
 import com.luncher.domain.apps.AppImages
 import com.luncher.domain.apps.InstalledApps
 import com.luncher.domain.clock.Clock
+import com.luncher.launcher.appearance.PreferencesAppearanceSettings
 import com.luncher.launcher.apps.BannerImages
 import com.luncher.launcher.apps.PackageManagerInstalledApps
 import com.luncher.launcher.apps.PreferencesAppArrangements
@@ -33,4 +35,6 @@ open class AppGraph(context: Context) : HomeGraph, SettingsGraph {
     override val appImages: AppImages<Bitmap> by lazy { BannerImages(appContext) }
 
     override val clock: Clock by lazy { AndroidClock(appContext) }
+
+    override val appearanceSettings: AppearanceSettings by lazy { PreferencesAppearanceSettings(appContext) }
 }

@@ -47,4 +47,30 @@ class ShelfLayoutTest {
         assertEquals(0, layout.labelTop)
         assertEquals(40 + 30, layout.top(0))
     }
+
+    @Test
+    fun `at the bottom of a height it fits, moves down as a whole`() {
+        val top = shelf(shown = 7, hidden = 2)
+        val bottom = ShelfLayout(grid(7), grid(2), 7, 2, labelHeight = 40, gap = 30, height = 1000, atBottom = true)
+        val down = 1000 - top.contentHeight
+
+        assertEquals(1000, bottom.contentHeight)
+        assertEquals(top.top(0) + down, bottom.top(0))
+        assertEquals(top.labelTop + down, bottom.labelTop)
+        assertEquals(top.top(8) + down, bottom.top(8))
+    }
+
+    @Test
+    fun `at the bottom of a height it doesn't fit, starts at the top`() {
+        val bottom = ShelfLayout(grid(7), grid(2), 7, 2, labelHeight = 40, gap = 30, height = 300, atBottom = true)
+
+        assertEquals(0, bottom.top(0))
+    }
+
+    @Test
+    fun `the label lines up with the shelf's first tile, or its last one's right edge`() {
+        assertEquals(0, shelf(shown = 7, hidden = 2).labelLeft(labelWidth = 60))
+        val right = ShelfLayout(grid(7), grid(2), 7, 2, labelHeight = 40, gap = 30, labelAtRight = true)
+        assertEquals(205 + 180 - 60, right.labelLeft(labelWidth = 60))
+    }
 }

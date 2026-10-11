@@ -10,7 +10,7 @@ data class SettingsGroup(val entries: List<SettingsEntry>)
 fun settingsMenu(): SettingsMenu =
     SettingsMenu(
         listOf(
-            SettingsGroup(listOf(SettingsEntry.HideApps)),
+            SettingsGroup(listOf(SettingsEntry.HideApps, SettingsEntry.Appearance)),
             SettingsGroup(listOf(SettingsEntry.SystemSettings)),
         ),
     )

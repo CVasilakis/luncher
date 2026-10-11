@@ -10,6 +10,9 @@ sealed interface SettingsEntry {
     /** Lists every app, to hide it from the home screen or show it again. */
     data object HideApps : SettingsEntry
 
+    /** Opens the editor of the home screen's appearance. */
+    data object Appearance : SettingsEntry
+
     /** Opens the device's own settings app. */
     data object SystemSettings : SettingsEntry
 }

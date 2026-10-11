@@ -3,7 +3,8 @@ package com.luncher.launcher.home
 import android.content.Context
 import android.text.format.DateFormat
 import android.util.AttributeSet
-import android.widget.LinearLayout
+import android.view.View
+import android.view.ViewGroup
 import android.widget.TextView
 import com.luncher.domain.clock.Clock
 import com.luncher.domain.clock.ClockReading
@@ -17,15 +18,25 @@ import java.util.TimeZone
  * them ("14:05  Sunday, 27 September", "2:05 PM  Sunday, September 27"). Its children, the
  * `home_time` and `home_date` text views, come from the layout, which also styles them.
  *
+ * The two sit side by side on a shared baseline, in the order and at the side of the view that
+ * [arrange] gives, from the top bar's layout. The time always gets its room first: a date too
+ * long for what's left ends in "…", on either side.
+ *
  * The screen calls [start] when it becomes visible and [stop] when it's hidden, so a hidden home
  * screen does no work, and the time is read again when it comes back. The screen's lifecycle, not
  * the view's own window visibility: Robolectric never reports that, so the JVM tests couldn't
  * cover it.
  */
-internal class ClockView(context: Context, attrs: AttributeSet?) : LinearLayout(context, attrs) {
+internal class ClockView(context: Context, attrs: AttributeSet?) : ViewGroup(context, attrs) {
 
     private lateinit var time: TextView
     private lateinit var date: TextView
+
+    /** Between the time and the date. */
+    private val gap = resources.getDimensionPixelSize(R.dimen.home_clock_gap)
+
+    private var timeFirst = true
+    private var atRight = false
 
     private var clock: Clock? = null
     private val update: () -> Unit = { clock?.let { show(it.read()) } }
@@ -42,6 +53,48 @@ internal class ClockView(context: Context, attrs: AttributeSet?) : LinearLayout(
         time = findViewById(R.id.home_time)
         date = findViewById(R.id.home_date)
     }
+
+    /** Puts the time before the date ([timeFirst]) or after it, at the view's left or right ([atRight]). */
+    fun arrange(timeFirst: Boolean, atRight: Boolean) {
+        if (timeFirst == this.timeFirst && atRight == this.atRight) return
+        this.timeFirst = timeFirst
+        this.atRight = atRight
+        requestLayout()
+    }
+
+    override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+        val unspecified = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
+        val room = MeasureSpec.getSize(widthMeasureSpec) - paddingLeft - paddingRight
+        val limited = MeasureSpec.getMode(widthMeasureSpec) != MeasureSpec.UNSPECIFIED
+        fun upTo(width: Int) =
+            if (limited) MeasureSpec.makeMeasureSpec(width.coerceAtLeast(0), MeasureSpec.AT_MOST) else unspecified
+        time.measure(upTo(room), unspecified)
+        date.measure(upTo(room - time.measuredWidth - gap), unspecified)
+        val height = paddingTop + aboveBaseline() + belowBaseline() + paddingBottom
+        val width = paddingLeft + contentWidth() + paddingRight
+        setMeasuredDimension(resolveSize(width, widthMeasureSpec), resolveSize(height, heightMeasureSpec))
+    }
+
+    override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
+        val left = if (atRight) width - paddingRight - contentWidth() else paddingLeft
+        val first = if (timeFirst) time else date
+        val second = if (timeFirst) date else time
+        place(first, left)
+        place(second, left + first.measuredWidth + gap)
+    }
+
+    private fun place(view: View, left: Int) {
+        val top = paddingTop + aboveBaseline() - view.baseline
+        view.layout(left, top, left + view.measuredWidth, top + view.measuredHeight)
+    }
+
+    private fun contentWidth() = time.measuredWidth + gap + date.measuredWidth
+
+    private fun aboveBaseline() = maxOf(time.baseline, date.baseline)
+
+    private fun belowBaseline() = maxOf(below(time), below(date))
+
+    private fun below(view: View) = view.measuredHeight - view.baseline
 
     /** Shows [clock]'s time, and follows it until [stop]. */
     fun start(clock: Clock) {

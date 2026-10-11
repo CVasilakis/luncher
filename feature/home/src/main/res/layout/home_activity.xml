@@ -13,11 +13,12 @@
         android:layoutDirection="ltr"
         android:orientation="vertical">
 
-        <!-- The clock at the start; what follows it in the bar sits at the end (the settings
-             entry, later e.g. status indicators). Not focusable itself: D-pad Up from the tiles
-             reaches only what's focusable in it. While the user arranges apps, the mode's title
-             and key hint take the place of the clock and the settings entry. -->
-        <LinearLayout
+        <!-- The clock at one edge, the settings entry (later e.g. status indicators too) at the
+             other: which is where, TopBarView decides from the appearance, and moves them. Not
+             focusable itself: D-pad Up from the tiles reaches only what's focusable in it. While
+             the user arranges apps, the mode's title and key hint take the place of the clock
+             and the settings entry. -->
+        <com.luncher.launcher.home.TopBarView
             android:id="@+id/home_top_bar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -27,13 +28,12 @@
             android:paddingTop="@dimen/home_padding_vertical"
             android:paddingRight="@dimen/home_padding_horizontal">
 
-            <!-- Time and date share a baseline (LinearLayout's default). -->
+            <!-- Time and date share a baseline, side by side in the order the appearance gives. -->
             <com.luncher.launcher.home.ClockView
                 android:id="@+id/home_clock"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="horizontal">
+                android:layout_weight="1">
 
                 <TextView
                     android:id="@+id/home_time"
@@ -47,7 +47,6 @@
                     android:id="@+id/home_date"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="@dimen/home_clock_gap"
                     android:includeFontPadding="false"
                     android:singleLine="true"
                     android:ellipsize="end"
@@ -93,7 +92,7 @@
                 android:focusableInTouchMode="true"
                 android:padding="@dimen/home_settings_padding"
                 android:src="@drawable/home_settings" />
-        </LinearLayout>
+        </com.luncher.launcher.home.TopBarView>
 
         <!-- Tiles may zoom past the padding, and scroll through it up to the top bar. -->
         <com.luncher.launcher.home.AppTilesView

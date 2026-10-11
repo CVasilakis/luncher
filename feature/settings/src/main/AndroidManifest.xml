@@ -19,6 +19,14 @@
             android:exported="false"
             android:launchMode="singleTop"
             android:theme="@style/Theme.Luncher.Settings.Panel" />
+
+        <!-- The editor of the home screen's appearance, opened from the settings panel:
+             full-screen, over the home screen and the panel. -->
+        <activity
+            android:name=".AppearanceActivity"
+            android:exported="false"
+            android:launchMode="singleTop"
+            android:theme="@style/Theme.Luncher.Settings.FullScreen" />
     </application>
 
 </manifest>

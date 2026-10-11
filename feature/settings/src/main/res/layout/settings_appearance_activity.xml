@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The appearance editor: the preview at the left, the options at the right. Left to right in
+     every language, like the home screen it shows; only the texts line up at the right in a
+     right-to-left one (layoutDirection="locale" on each). -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layoutDirection="ltr"
+    android:orientation="horizontal">
+
+    <!-- Not focusable: only the options are. Start and end are left and right here. -->
+    <com.luncher.launcher.settings.AppearancePreviewView
+        android:id="@+id/settings_appearance_preview"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:layout_marginStart="@dimen/settings_appearance_margin_horizontal"
+        android:layout_marginTop="@dimen/settings_appearance_margin_vertical"
+        android:layout_marginEnd="@dimen/settings_panel_padding"
+        android:layout_marginBottom="@dimen/settings_appearance_margin_vertical" />
+
+    <!-- AppearanceActivity sets the width: settings_appearance_options_width, or half the screen.
+         Scrolls when the options are taller than the screen; moving the focus scrolls it. The
+         overscan margin on the right only: the preview's margin is on the left (and lint's
+         RtlSymmetry wants both sides set). -->
+    <ScrollView
+        android:id="@+id/settings_appearance_scroll"
+        android:layout_width="@dimen/settings_appearance_options_width"
+        android:layout_height="match_parent"
+        android:clipToPadding="false"
+        android:paddingStart="0dp"
+        android:paddingTop="@dimen/settings_appearance_margin_vertical"
+        android:paddingEnd="@dimen/settings_appearance_margin_horizontal"
+        android:paddingBottom="@dimen/settings_appearance_margin_vertical"
+        android:scrollbarStyle="outsideOverlay">
+
+        <!-- AppearanceActivity adds each group's title and its options, then the reset entry. -->
+        <LinearLayout
+            android:id="@+id/settings_appearance_options"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/settings_title_gap"
+                android:includeFontPadding="false"
+                android:layoutDirection="locale"
+                android:text="@string/settings_appearance"
+                android:textColor="@color/text_primary"
+                android:textSize="@dimen/settings_title_text" />
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>

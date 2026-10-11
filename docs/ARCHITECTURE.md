@@ -166,8 +166,11 @@ Adding an aspect, e.g. the focus frame's color:
 | Its label and its values' labels, in every translation | `:feature:settings` | the exhaustive `when` doesn't compile; lint ([`TRANSLATIONS.md`](TRANSLATIONS.md)) |
 | Its effect on the home screen, and on the preview where it shows | `:feature:home`, `:feature:settings` | a test that sets each option of the catalog to a value other than its default, and fails if the home screen, or the preview, draws the same |
 
-Today `Appearance` has one part, `TileGeometry`, with its defaults, which `AppTilesView` lays its
-tiles out by; no option can be changed yet.
+Today `Appearance` has three parts: `TileGeometry` (the tiles' size, spacing and the corner they
+gather in), `TileStyle` (their corner radius) and `TopBarAppearance` (the clock's side, and the
+time's side of the date). The catalog's options, placement, a full bottom row, the corner radius,
+the clock's side and the time's side, are changed in the settings' appearance editor
+([`feature/settings/README.md`](../feature/settings/README.md#appearance)).
 
 ## Where things go
 

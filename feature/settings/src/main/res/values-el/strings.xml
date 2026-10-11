@@ -1,10 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Greek. What each string is for: values/strings.xml. -->
-<resources>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <string name="settings_title">Ρυθμίσεις</string>
     <string name="settings_hide_apps">Απόκρυψη εφαρμογών</string>
     <string name="settings_hidden">Κρυφή</string>
     <string name="settings_no_apps">Δεν υπάρχουν εγκατεστημένες εφαρμογές TV</string>
+    <string name="settings_appearance">Εμφάνιση</string>
+    <string name="settings_appearance_tiles">Πλακίδια</string>
+    <string name="settings_appearance_top_bar">Πάνω γραμμή</string>
+    <string name="settings_appearance_placement">Θέση</string>
+    <string name="settings_appearance_top_left">Πάνω αριστερά</string>
+    <string name="settings_appearance_top_right">Πάνω δεξιά</string>
+    <string name="settings_appearance_bottom_left">Κάτω αριστερά</string>
+    <string name="settings_appearance_bottom_right">Κάτω δεξιά</string>
+    <string name="settings_appearance_full_bottom_row">Γεμάτη κάτω σειρά</string>
+    <string name="settings_appearance_corner_radius">Στρογγύλεμα γωνιών</string>
+    <string name="settings_appearance_radius_dp"><xliff:g id="radius" example="8">%1$d</xliff:g> dp</string>
+    <string name="settings_appearance_clock_side">Ρολόι</string>
+    <string name="settings_appearance_time_side">Ώρα δίπλα στην ημερομηνία</string>
+    <string name="settings_appearance_left">Αριστερά</string>
+    <string name="settings_appearance_right">Δεξιά</string>
+    <string name="settings_appearance_on">Ναι</string>
+    <string name="settings_appearance_off">Όχι</string>
+    <string name="settings_appearance_reset">Επαναφορά προεπιλογών</string>
     <string name="settings_system">Ρυθμίσεις συστήματος</string>
     <string name="settings_system_unavailable">Αυτή η συσκευή δεν έχει εφαρμογή ρυθμίσεων</string>
 </resources>

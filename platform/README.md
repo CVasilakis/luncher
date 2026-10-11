@@ -20,6 +20,8 @@ platform/
     ├── main/
     │   ├── AndroidManifest.xml   package visibility (below)
     │   ├── java/com/luncher/launcher/
+    │   │   ├── appearance/
+    │   │   │   └── PreferencesAppearanceSettings.kt AppearanceSettings on SharedPreferences: a key per option, and its stored form
     │   │   ├── apps/
     │   │   │   ├── PackageManagerInstalledApps.kt   InstalledApps on PackageManager
     │   │   │   ├── PreferencesAppArrangements.kt    AppArrangements on SharedPreferences: the file and its format
@@ -30,7 +32,7 @@ platform/
     └── test/java/…/              JVM tests (Robolectric), same packages as the code
 ```
 
-Packages follow `:domain`'s topics (`apps/`, `clock/`, and later e.g. `wallpaper/`, `network/`),
+Packages follow `:domain`'s topics (`appearance/`, `apps/`, `clock/`, and later e.g. `wallpaper/`, `network/`),
 so the adapter of `com.luncher.domain.clock.Clock` is in `clock/`.
 
 ## Writing adapters
@@ -41,7 +43,9 @@ so the adapter of `com.luncher.domain.clock.Clock` is in `clock/`.
 - **Storage formats stay here:** file names, keys and encodings (rule 6 of
   [`ARCHITECTURE.md`](../docs/ARCHITECTURE.md#rules)). A test of the adapter writes the stored
   format out, so a change that breaks what a TV already stored fails
-  (`PreferencesAppArrangementsTest`).
+  (`PreferencesAppArrangementsTest`). A value stored by another version that the adapter doesn't
+  know reads as a default rather than failing (`PreferencesAppearanceSettings`: that option's
+  default, the others as stored).
 - **Device state that changes** (the time, later the network) is watched only while a listener is
   registered ([`ARCHITECTURE.md`](../docs/ARCHITECTURE.md#background-work-and-changes-while-shown)):
   `AndroidClock` registers its broadcast receiver with the first listener and unregisters it with

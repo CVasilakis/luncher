@@ -3,6 +3,13 @@ package com.luncher.launcher.home
 import android.view.KeyEvent
 import android.view.View
 import com.github.takahirom.roborazzi.captureRoboImage
+import com.luncher.domain.appearance.Appearance
+import com.luncher.domain.appearance.FakeAppearanceSettings
+import com.luncher.domain.appearance.Side
+import com.luncher.domain.appearance.TileGeometry
+import com.luncher.domain.appearance.TilePlacement
+import com.luncher.domain.appearance.TileStyle
+import com.luncher.domain.appearance.TopBarAppearance
 import com.luncher.domain.apps.AppArrangement
 import com.luncher.domain.apps.FakeAppArrangements
 import com.luncher.domain.apps.FakeInstalledApps
@@ -30,7 +37,7 @@ import org.robolectric.annotation.GraphicsMode
 @Config(qualifiers = "en-rUS-$TV_1080P")
 class HomeScreenshotTest {
 
-    private fun start(hidden: List<String> = emptyList()): HomeActivity {
+    private fun start(hidden: List<String> = emptyList(), appearance: Appearance = Appearance()): HomeActivity {
         val application = RuntimeEnvironment.getApplication() as HomeTestApplication
         application.graph = object : TestHomeGraph(application) {
             // Seven apps shown: a full row, and a second one that starts at the left.
@@ -40,6 +47,7 @@ class HomeScreenshotTest {
             )
             override val appArrangements = FakeAppArrangements(AppArrangement(order = null, hidden = hidden.map { app(it).launchable }))
             override val clock = FakeClock()
+            override val appearanceSettings = FakeAppearanceSettings(appearance)
         }
         return Robolectric.buildActivity(HomeActivity::class.java).setup().get()
     }
@@ -70,6 +78,27 @@ class HomeScreenshotTest {
     @Config(qualifiers = "+w1920dp-h1080dp-mdpi")
     fun homeScreen160dpi() {
         start().window.decorView.captureRoboImage("src/test/screenshots/home/home_screen_160dpi.png")
+    }
+
+    // Every option away from its default: the tiles at the bottom right, the bottom row full, round
+    // corners; the clock on the right, the time after the date.
+    @Test
+    fun homeScreenWithAnAppearance() {
+        val appearance = Appearance(
+            TileGeometry(placement = TilePlacement.BOTTOM_RIGHT, fullBottomRow = true),
+            TileStyle(cornerRadiusDp = 12),
+            TopBarAppearance(clockSide = Side.RIGHT, timeSide = Side.RIGHT),
+        )
+        start(appearance = appearance).window.decorView.captureRoboImage("src/test/screenshots/home/home_screen_appearance.png")
+    }
+
+    // Arrange mode with the tiles at the bottom right: the shelf below them, all at the bottom.
+    @Test
+    fun arrangingAtTheBottomRight() {
+        val activity = start(hidden = listOf("weather"), appearance = Appearance(TileGeometry(placement = TilePlacement.BOTTOM_RIGHT)))
+        activity.arrange("Music")
+
+        activity.window.decorView.captureRoboImage("src/test/screenshots/home/home_arranging_bottom_right.png")
     }
 
     @Test

@@ -43,7 +43,7 @@ internal class ArrangeMode(
         if (active) return
         val session = ArrangeSession(arranged, tiles::movesFor).also { session = it }
         for (app in arranged.hidden) {
-            tiles.addView(AppTileView(tiles.context, app, images).apply { hidden = true })
+            tiles.addView(AppTileView(tiles.context, app, images, tiles.paints).apply { hidden = true })
         }
         tiles.shownCount = arranged.shown.size
         for (view in normalBar) view.visibility = View.GONE

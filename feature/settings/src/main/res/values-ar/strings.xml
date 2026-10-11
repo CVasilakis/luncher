@@ -1,10 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Arabic. What each string is for: values/strings.xml. -->
-<resources>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <string name="settings_title">الإعدادات</string>
     <string name="settings_hide_apps">إخفاء التطبيقات</string>
     <string name="settings_hidden">مخفي</string>
     <string name="settings_no_apps">لا توجد تطبيقات تلفزيون مثبّتة</string>
+    <string name="settings_appearance">المظهر</string>
+    <string name="settings_appearance_tiles">المربعات</string>
+    <string name="settings_appearance_top_bar">الشريط العلوي</string>
+    <string name="settings_appearance_placement">الموضع</string>
+    <string name="settings_appearance_top_left">أعلى اليسار</string>
+    <string name="settings_appearance_top_right">أعلى اليمين</string>
+    <string name="settings_appearance_bottom_left">أسفل اليسار</string>
+    <string name="settings_appearance_bottom_right">أسفل اليمين</string>
+    <string name="settings_appearance_full_bottom_row">صف سفلي كامل</string>
+    <string name="settings_appearance_corner_radius">استدارة الزوايا</string>
+    <string name="settings_appearance_radius_dp"><xliff:g id="radius" example="8">%1$d</xliff:g> dp</string>
+    <string name="settings_appearance_clock_side">الساعة</string>
+    <string name="settings_appearance_time_side">الوقت بجانب التاريخ</string>
+    <string name="settings_appearance_left">يسار</string>
+    <string name="settings_appearance_right">يمين</string>
+    <string name="settings_appearance_on">تشغيل</string>
+    <string name="settings_appearance_off">إيقاف</string>
+    <string name="settings_appearance_reset">استعادة الإعدادات الافتراضية</string>
     <string name="settings_system">إعدادات النظام</string>
     <string name="settings_system_unavailable">لا يتوفّر تطبيق إعدادات على هذا الجهاز</string>
 </resources>

@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- An option of the appearance editor: its name, and its value between arrows, which Left and
+     Right step through; an arrow dims at the first or last value. Its name may take up to three
+     lines, on a narrow screen in a longer language. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/settings_entry_background"
+    android:focusable="true"
+    android:focusableInTouchMode="true"
+    android:gravity="center_vertical"
+    android:minHeight="@dimen/settings_entry_height"
+    android:orientation="horizontal"
+    android:paddingLeft="@dimen/settings_entry_padding"
+    android:paddingTop="@dimen/settings_appearance_value_gap"
+    android:paddingRight="@dimen/settings_entry_padding"
+    android:paddingBottom="@dimen/settings_appearance_value_gap">
+
+    <TextView
+        android:id="@+id/settings_option_label"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:ellipsize="end"
+        android:layoutDirection="locale"
+        android:maxLines="3"
+        android:textColor="@color/text_primary"
+        android:textSize="@dimen/settings_entry_text" />
+
+    <TextView
+        android:id="@+id/settings_option_previous"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/settings_appearance_value_gap"
+        android:text="@string/settings_appearance_arrow_previous"
+        android:textColor="@color/text_primary"
+        android:textSize="@dimen/settings_entry_text" />
+
+    <TextView
+        android:id="@+id/settings_option_value"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/settings_appearance_value_gap"
+        android:layout_marginEnd="@dimen/settings_appearance_value_gap"
+        android:singleLine="true"
+        android:textColor="@color/text_primary"
+        android:textSize="@dimen/settings_entry_text" />
+
+    <TextView
+        android:id="@+id/settings_option_next"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/settings_appearance_arrow_next"
+        android:textColor="@color/text_primary"
+        android:textSize="@dimen/settings_entry_text" />
+</LinearLayout>

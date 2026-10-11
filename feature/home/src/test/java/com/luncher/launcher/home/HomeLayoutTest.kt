@@ -7,7 +7,13 @@ import android.view.KeyEvent
 import android.view.View
 import android.view.ViewConfiguration
 import android.widget.TextView
+import com.luncher.domain.appearance.Appearance
+import com.luncher.domain.appearance.FakeAppearanceSettings
+import com.luncher.domain.appearance.Side
 import com.luncher.domain.appearance.TileGeometry
+import com.luncher.domain.appearance.TilePlacement
+import com.luncher.domain.appearance.TileStyle
+import com.luncher.domain.appearance.TopBarAppearance
 import com.luncher.domain.apps.AppArrangement
 import com.luncher.domain.apps.FakeAppArrangements
 import com.luncher.domain.apps.FakeInstalledApps
@@ -63,6 +69,8 @@ class HomeLayoutTest(private val screen: TvScreen) {
 
     private val defaultLocale = Locale.getDefault()
 
+    private val appearance = FakeAppearanceSettings()
+
     @After
     fun restoreLocale() = Locale.setDefault(defaultLocale)
 
@@ -78,6 +86,7 @@ class HomeLayoutTest(private val screen: TvScreen) {
             override val installedApps = FakeInstalledApps((shown + hidden).map(::app))
             override val appArrangements = FakeAppArrangements(AppArrangement(order = null, hidden = hidden.map { app(it).launchable }))
             override val clock = longestDate().let { FakeClock(FakeClock.at(it.year, it.monthValue, it.dayOfMonth, 23, 55, uses24Hour = false)) }   // "11:55 PM"
+            override val appearanceSettings = this@HomeLayoutTest.appearance
         }
     }
 
@@ -146,6 +155,18 @@ class HomeLayoutTest(private val screen: TvScreen) {
         assertWhole(screen, time)
         assertWhole(screen, date)
         activity.checkTiles()
+    }
+
+    // The clock and the settings entry swapped, the time after the date; the tiles at the bottom.
+    @Test
+    fun `the home screen fits with every option away from its default`() {
+        appearance.appearance = Appearance(
+            TileGeometry(placement = TilePlacement.BOTTOM_RIGHT, fullBottomRow = true),
+            TileStyle(cornerRadiusDp = 16),
+            TopBarAppearance(clockSide = Side.RIGHT, timeSide = Side.RIGHT),
+        )
+
+        `the home screen fits`()
     }
 
     @Test

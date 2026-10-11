@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- The settings panels' texts. Each translation, in values-<language>/, has every string here. -->
-<resources>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <!-- The settings panel's title. -->
     <string name="settings_title">Settings</string>
     <!-- The entry that opens the list of apps to hide or show, and that list's title. -->
@@ -9,6 +9,42 @@
     <string name="settings_hidden">Hidden</string>
     <!-- Shown in that list when the device has no TV apps. -->
     <string name="settings_no_apps">No TV apps installed</string>
+    <!-- The entry that opens the editor of the home screen's look, and that editor's title. -->
+    <string name="settings_appearance">Appearance</string>
+    <!-- In the appearance editor: the title of the options for the home screen's app tiles. -->
+    <string name="settings_appearance_tiles">Tiles</string>
+    <!-- In the appearance editor: the title of the options for the bar at the top of the home
+         screen, which has the time, the date and the settings gear. -->
+    <string name="settings_appearance_top_bar">Top bar</string>
+    <!-- An option: which corner of the home screen the app tiles gather in. -->
+    <string name="settings_appearance_placement">Placement</string>
+    <!-- Its values: the corners of the screen. Left and right are the screen's, in every language. -->
+    <string name="settings_appearance_top_left">Top left</string>
+    <string name="settings_appearance_top_right">Top right</string>
+    <string name="settings_appearance_bottom_left">Bottom left</string>
+    <string name="settings_appearance_bottom_right">Bottom right</string>
+    <!-- An option, with the tiles at the bottom: the bottom row of tiles is always full, and the
+         row that isn't goes at the top. Its values are On and Off. -->
+    <string name="settings_appearance_full_bottom_row">Full bottom row</string>
+    <!-- An option: how round the corners of the app tiles are. -->
+    <string name="settings_appearance_corner_radius">Corner radius</string>
+    <!-- Its values: the radius in dp, the unit of size Android uses, 0 for square corners. -->
+    <string name="settings_appearance_radius_dp"><xliff:g id="radius" example="8">%1$d</xliff:g> dp</string>
+    <!-- An option: which side of the top bar the clock is on; the settings gear goes on the other. -->
+    <string name="settings_appearance_clock_side">Clock</string>
+    <!-- An option: on which side of the date the time is. -->
+    <string name="settings_appearance_time_side">Time beside the date</string>
+    <!-- Values of the options above: the screen's left and right, in every language. -->
+    <string name="settings_appearance_left">Left</string>
+    <string name="settings_appearance_right">Right</string>
+    <!-- Values of an option that's on or off. -->
+    <string name="settings_appearance_on">On</string>
+    <string name="settings_appearance_off">Off</string>
+    <!-- Around an option's value: Left steps to the previous value, Right to the next. -->
+    <string name="settings_appearance_arrow_previous" translatable="false">‹</string>
+    <string name="settings_appearance_arrow_next" translatable="false">›</string>
+    <!-- The last entry of the appearance editor: puts every option back to how it was at first. -->
+    <string name="settings_appearance_reset">Reset to defaults</string>
     <!-- The entry that opens the device's own settings. -->
     <string name="settings_system">System settings</string>
     <!-- A message, when the device has no settings app to open. -->

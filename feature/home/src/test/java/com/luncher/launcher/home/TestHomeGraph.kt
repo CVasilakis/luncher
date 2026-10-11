@@ -3,6 +3,8 @@ package com.luncher.launcher.home
 import android.app.Application
 import android.content.Context
 import android.graphics.Bitmap
+import com.luncher.domain.appearance.AppearanceSettings
+import com.luncher.domain.appearance.FakeAppearanceSettings
 import com.luncher.domain.apps.AppArrangements
 import com.luncher.domain.apps.AppImages
 import com.luncher.domain.apps.FakeAppArrangements
@@ -22,6 +24,7 @@ open class TestHomeGraph(context: Context) : HomeGraph {
     override val appArrangements: AppArrangements = FakeAppArrangements()
     override val appImages: AppImages<Bitmap> = BannerImages(context)
     override val clock: Clock = FakeClock()
+    override val appearanceSettings: AppearanceSettings = FakeAppearanceSettings()
 }
 
 /** The Application of this module's JVM tests (robolectric.properties): it holds the graph a test sets. */

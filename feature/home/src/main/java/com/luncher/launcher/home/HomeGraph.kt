@@ -2,6 +2,7 @@ package com.luncher.launcher.home
 
 import android.app.Activity
 import android.graphics.Bitmap
+import com.luncher.domain.appearance.AppearanceSettings
 import com.luncher.domain.apps.AppArrangements
 import com.luncher.domain.apps.AppImages
 import com.luncher.domain.apps.InstalledApps
@@ -16,6 +17,7 @@ interface HomeGraph {
     val appArrangements: AppArrangements
     val appImages: AppImages<Bitmap>
     val clock: Clock
+    val appearanceSettings: AppearanceSettings
 
     /** Implemented by the Application, which holds the process's graph. */
     interface Owner {

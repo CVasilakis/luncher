@@ -2,8 +2,18 @@ package com.luncher.launcher.settings
 
 import android.os.Looper
 import android.view.View
+import android.widget.LinearLayout
 import android.widget.ListView
+import android.widget.TextView
 import com.github.takahirom.roborazzi.captureRoboImage
+import com.luncher.domain.appearance.Appearance
+import com.luncher.domain.appearance.FakeAppearanceSettings
+import com.luncher.domain.appearance.Side
+import com.luncher.domain.appearance.TileGeometry
+import com.luncher.domain.appearance.TilePlacement
+import com.luncher.domain.appearance.TileStyle
+import com.luncher.domain.appearance.TopBarAppearance
+import com.luncher.domain.appearance.appearanceChanges
 import com.luncher.domain.apps.AppArrangement
 import com.luncher.domain.apps.FakeAppArrangements
 import com.luncher.domain.apps.FakeInstalledApps
@@ -46,6 +56,66 @@ class SettingsScreenshotTest {
     @Config(qualifiers = "+w640dp-h360dp")
     fun hideAppsPanelOnASmallScreen() {
         hideApps().captureRoboImage("src/test/screenshots/settings/settings_hide_apps_small_screen.png")
+    }
+
+    @Test
+    fun appearanceEditor() {
+        appearanceEditor(Appearance()).window.decorView.captureRoboImage("src/test/screenshots/settings/settings_appearance.png")
+    }
+
+    // Every option away from its default; the tiles at the bottom, so the full bottom row can be
+    // changed. Focus on the corner radius, at its last value: its Right arrow dimmed.
+    @Test
+    fun appearanceEditorChanged() {
+        val activity = appearanceEditor(
+            Appearance(
+                TileGeometry(placement = TilePlacement.BOTTOM_RIGHT, fullBottomRow = true),
+                TileStyle(cornerRadiusDp = 16),
+                TopBarAppearance(clockSide = Side.RIGHT, timeSide = Side.RIGHT),
+            ),
+        )
+        val options = activity.findViewById<LinearLayout>(R.id.settings_appearance_options)
+        (0 until options.childCount).map { options.getChildAt(it) }
+            .single { it.findViewById<TextView>(R.id.settings_option_label)?.text == "Corner radius" }
+            .requestFocus()
+
+        activity.window.decorView.captureRoboImage("src/test/screenshots/settings/settings_appearance_changed.png")
+    }
+
+    // 720p at the 1080p density, 640x360 dp: the options take half the screen, and scroll.
+    @Test
+    @Config(qualifiers = "+w640dp-h360dp")
+    fun appearanceEditorOnASmallScreen() {
+        appearanceEditor(Appearance()).window.decorView.captureRoboImage("src/test/screenshots/settings/settings_appearance_small_screen.png")
+    }
+
+    // Arabic: laid out as in English, the texts at the right.
+    @Test
+    @Config(qualifiers = "ar-rEG-$TV_1080P")
+    fun appearanceEditorInArabic() {
+        appearanceEditor(Appearance()).window.decorView.captureRoboImage("src/test/screenshots/settings/settings_appearance_arabic.png")
+    }
+
+    // The preview alone, with the defaults and with each value of each option: a loop over the
+    // catalog, so a new option's values get images too.
+    @Test
+    fun appearancePreview() {
+        val preview = appearanceEditor(Appearance()).findViewById<AppearancePreviewView>(R.id.settings_appearance_preview)
+        preview.captureRoboImage("src/test/screenshots/settings/preview/default.png")
+        for (change in appearanceChanges()) {
+            preview.appearance = change.changed
+            val name = "${change.option}_${change.value}".lowercase()
+            preview.captureRoboImage("src/test/screenshots/settings/preview/$name.png")
+        }
+    }
+
+    /** The appearance editor showing [appearance], its first option focused. */
+    private fun appearanceEditor(appearance: Appearance): AppearanceActivity {
+        val application = RuntimeEnvironment.getApplication() as SettingsTestApplication
+        application.graph = object : TestSettingsGraph() {
+            override val appearanceSettings = FakeAppearanceSettings(appearance)
+        }
+        return Robolectric.buildActivity(AppearanceActivity::class.java).setup().get()
     }
 
     /** Hide apps with the apps of [hideAppsPanel], the first one selected: its window. */

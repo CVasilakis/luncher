@@ -1,6 +1,7 @@
 package com.luncher.launcher.settings
 
 import android.app.Activity
+import com.luncher.domain.appearance.AppearanceSettings
 import com.luncher.domain.apps.AppArrangements
 import com.luncher.domain.apps.InstalledApps
 
@@ -11,6 +12,7 @@ import com.luncher.domain.apps.InstalledApps
 interface SettingsGraph {
     val installedApps: InstalledApps
     val appArrangements: AppArrangements
+    val appearanceSettings: AppearanceSettings
 
     /** Implemented by the Application, which holds the process's graph. */
     interface Owner {

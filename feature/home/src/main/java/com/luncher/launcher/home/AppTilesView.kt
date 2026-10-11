@@ -13,17 +13,20 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Scroller
 import com.luncher.domain.appearance.TileGeometry
+import com.luncher.domain.appearance.TileStyle
 import com.luncher.domain.layout.ShelfLayout
 import com.luncher.domain.layout.TileLayout
 import com.luncher.domain.layout.TileLayouts
 import com.luncher.domain.layout.TileMoves
 import com.luncher.launcher.ui.color
+import kotlin.math.ceil
 import com.luncher.launcher.ui.R as UiR
 
 /**
  * The home screen's app tiles, placed where a [TileLayout] says, scrolled so the focused tile stays
- * in view. The arrangement itself (grid, columns, alignment) is the layout's decision, made in
- * :domain, where [TileLayouts] picks it for the [tileGeometry].
+ * in view. The arrangement itself (grid, columns, alignment, placement) is the layout's decision,
+ * made in :domain, where [TileLayouts] picks it for the [tileGeometry]. How each tile is drawn
+ * ([tileStyle]) is in [paints], which all the tiles share.
  *
  * While the user arranges apps ([shownCount] set), the tiles after the shown ones are the hidden
  * apps, on a shelf below a label ([ShelfLayout]); with none, an empty slot shows where hiding is.
@@ -51,6 +54,21 @@ internal class AppTilesView(context: Context, attrs: AttributeSet?) : ViewGroup(
 
     private var layouts = TileLayouts(tileGeometry, pixelsPerDp)
 
+    /** What every tile draws with: give it to each new tile. */
+    val paints = TilePaints(context)
+
+    /**
+     * How the tiles are drawn, from the home screen's appearance: a new one changes [paints] and
+     * redraws the tiles, with the places and images they have.
+     */
+    var tileStyle: TileStyle = TileStyle()
+        set(value) {
+            if (field == value) return
+            field = value
+            paints.cornerRadius = value.cornerRadiusDp * pixelsPerDp
+            for (i in 0 until childCount) getChildAt(i).invalidate()
+        }
+
     /**
      * While the user arranges apps, how many of the tiles are shown apps; the others are hidden
      * ones, on the shelf. Null otherwise.
@@ -67,25 +85,27 @@ internal class AppTilesView(context: Context, attrs: AttributeSet?) : ViewGroup(
     private val shelf by lazy { Shelf() }
 
     /**
-     * Where the tiles go, kept while what [createLayout] makes it from stays the same: the width,
-     * the number of tiles, [shownCount] and [tileGeometry], each compared in [onMeasure] with the
-     * value the layout was made from. A move in arrange mode changes none of them, only which tile
-     * is where, so it lays the tiles out again without allocating (docs/ARCHITECTURE.md, rule 5).
+     * Where the tiles go, kept while what [createLayout] makes it from stays the same: the width
+     * and height, the number of tiles, [shownCount] and [tileGeometry], each compared in
+     * [onMeasure] with the value the layout was made from. A move in arrange mode changes none of
+     * them, only which tile is where, so it lays the tiles out again without allocating
+     * (docs/ARCHITECTURE.md, rule 5).
      * Anything a layout comes to depend on is compared there too.
      */
-    private var tileLayout: TileLayout = createLayout(width = 0)
+    private var tileLayout: TileLayout = createLayout(width = 0, height = 0)
     private var layoutWidth = 0
+    private var layoutHeight = 0
     private var layoutTileCount = 0
     private var layoutShownCount: Int? = null
     private var layoutGeometry = tileGeometry
 
-    private fun createLayout(width: Int): TileLayout {
-        val shown = shownCount ?: return layouts.tiles(childCount, width)
-        return layouts.shelf(shown, childCount - shown, width, shelf.labelHeight)
+    private fun createLayout(width: Int, height: Int): TileLayout {
+        val shown = shownCount ?: return layouts.tiles(childCount, width, height)
+        return layouts.shelf(shown, childCount - shown, width, height, shelf.labelHeight)
     }
 
     /** How tiles move among [tileCount] of them, in the arrangement this view shows them in. */
-    fun movesFor(tileCount: Int): TileMoves = layouts.tiles(tileCount, width - paddingLeft - paddingRight)
+    fun movesFor(tileCount: Int): TileMoves = layouts.moves(tileCount, width - paddingLeft - paddingRight)
 
     /** Moves the tile at [from] to [to], the others shifting to make room. Focus stays on it. */
     fun moveTile(from: Int, to: Int) {
@@ -102,11 +122,13 @@ internal class AppTilesView(context: Context, attrs: AttributeSet?) : ViewGroup(
         val width = MeasureSpec.getSize(widthMeasureSpec)
         val height = MeasureSpec.getSize(heightMeasureSpec)
         val tilesWidth = width - paddingLeft - paddingRight
-        if (tilesWidth != layoutWidth || childCount != layoutTileCount || shownCount != layoutShownCount ||
-            tileGeometry != layoutGeometry
+        val tilesHeight = height - paddingTop - paddingBottom
+        if (tilesWidth != layoutWidth || tilesHeight != layoutHeight || childCount != layoutTileCount ||
+            shownCount != layoutShownCount || tileGeometry != layoutGeometry
         ) {
-            tileLayout = createLayout(tilesWidth)
+            tileLayout = createLayout(tilesWidth, tilesHeight)
             layoutWidth = tilesWidth
+            layoutHeight = tilesHeight
             layoutTileCount = childCount
             layoutShownCount = shownCount
             layoutGeometry = tileGeometry
@@ -190,6 +212,7 @@ internal class AppTilesView(context: Context, attrs: AttributeSet?) : ViewGroup(
         private val label = resources.getString(R.string.home_hidden)
         private val labelMetrics = labelPaint.fontMetricsInt   // read once: each read allocates
         val labelHeight = labelMetrics.descent - labelMetrics.ascent
+        private val labelWidth = ceil(labelPaint.measureText(label)).toInt()
 
         private val slotPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             style = Paint.Style.STROKE
@@ -207,11 +230,12 @@ internal class AppTilesView(context: Context, attrs: AttributeSet?) : ViewGroup(
         private var caption: StaticLayout? = null   // wrapped to the slot's width, when it changes
 
         fun draw(canvas: Canvas, layout: ShelfLayout) {
-            val left = paddingLeft + layout.left(shownCount ?: 0).toFloat()
+            val labelLeft = paddingLeft + layout.labelLeft(labelWidth).toFloat()
             val labelTop = paddingTop + layout.labelTop
-            canvas.drawText(label, left, labelTop - labelMetrics.ascent.toFloat(), labelPaint)
+            canvas.drawText(label, labelLeft, labelTop - labelMetrics.ascent.toFloat(), labelPaint)
 
             val empty = layout.emptySlot ?: return
+            val left = paddingLeft + layout.left(empty).toFloat()
             val inset = slotPaint.strokeWidth / 2
             val top = paddingTop + layout.top(empty).toFloat()
             slot.set(left + inset, top + inset, left + layout.tileWidth - inset, top + layout.tileHeight - inset)

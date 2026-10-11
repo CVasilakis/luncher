@@ -20,4 +20,12 @@
     <style name="Theme.Luncher.Settings.Panel">
         <item name="android:backgroundDimEnabled">false</item>
     </style>
+
+    <!-- The appearance editor: full-screen and opaque, unlike the panels, so the home screen
+         behind it is stopped, and applies a change once, when it comes back. -->
+    <style name="Theme.Luncher.Settings.FullScreen" parent="@style/Theme.Luncher">
+        <item name="android:windowBackground">@color/settings_panel</item>
+        <item name="android:colorBackground">@color/settings_panel</item>
+        <item name="android:windowSplashScreenBackground" tools:targetApi="31">@color/settings_panel</item>
+    </style>
 </resources>

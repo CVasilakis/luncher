@@ -7,7 +7,7 @@ module's README. What a feature module may use, and how a new one is added:
 | Module | Screens |
 |---|---|
 | [`home/`](home/README.md), `:feature:home` | the home screen: the top bar, the app tiles, arrange mode |
-| [`settings/`](settings/README.md), `:feature:settings` | the settings panel, and Hide apps |
+| [`settings/`](settings/README.md), `:feature:settings` | the settings panel, Hide apps, and the appearance editor |
 
 Each holds the same parts:
 

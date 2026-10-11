@@ -21,9 +21,11 @@ feature/home/
     │   ├── java/com/luncher/launcher/home/
     │   │   ├── HomeGraph.kt      the ports the home screen needs; Activity.graph
     │   │   ├── HomeActivity.kt   the home screen: reads the apps, shows those not hidden, opens them
+    │   │   ├── TopBarView.kt     the top bar: the clock and the settings entry where the appearance puts them
     │   │   ├── ClockView.kt      the top bar's time and date, following the Clock port
     │   │   ├── AppTilesView.kt   places the tiles where the domain's TileLayout says; scrolls
     │   │   ├── AppTileView.kt    one app: its image, focus frame and zoom; held or hidden while arranging
+    │   │   ├── TilePaints.kt     what every tile draws with: frames, dimming, the corner radius
     │   │   └── ArrangeMode.kt    arrange mode: keys to the domain's ArrangeSession, the shelf, the top bar's title and hint
     │   └── res/                  the focused tile's zoom (animator/), the settings gear and its focus
     │                             disc, home_activity.xml, home_* dimensions and strings, and their
@@ -69,23 +71,28 @@ one job, so a new arrangement, image source or top bar item changes one of them:
 | Part | Job |
 |---|---|
 | `homeApps` (`:domain`) | which apps show, in which order, and which are hidden: the installed apps matched to the stored `AppArrangement` ([Hidden apps](../settings/README.md#hidden-apps)) |
-| `TileGeometry` (`:domain`) | the tiles' width and the gap between them, in dp: the home screen's [appearance](../../docs/ARCHITECTURE.md#appearance), its defaults so far |
+| `Appearance` (`:domain`) | how the home screen looks, as the user set it in the [appearance editor](../settings/README.md#appearance), in parts: `TileGeometry` (the tiles' width, the gap between them, the corner they gather in), `TileStyle` (their corner radius), `TopBarAppearance` (the clock's side, the time's side of the date). [Below](#appearance): how each part is applied. |
+| `AppearanceSettings` (`:domain`), `PreferencesAppearanceSettings` (`:platform`) | the stored appearance, and when it changes |
 | `TileLayout`, `TileLayouts` (`:domain`) | where each tile goes and how big it is; `TileGrid` is the only one so far, with as many columns as fit tiles of about the geometry's width (`TileGrid.columnsFor`), so tiles keep their size next to the top bar's text on any screen. `TileLayouts` is the only place that picks the arrangement, for the tiles' places and for moves in arrange mode alike. |
-| `AppTilesView` | lays tiles out where the `TileLayout` says, and scrolls to the focused one |
+| `AppTilesView` | lays tiles out where the `TileLayout` says, and scrolls to the focused one; holds the `TilePaints` its tiles share |
 | `bannerFor` (`:domain`) | which image a tile shows |
 | `AppImages` (`:domain`), `BannerImages` (`:platform`) | draws that image into a bitmap of the tile's size |
-| `AppTileView` | draws that bitmap, the focus frame and zoom; in arrange mode, a white frame and a bigger zoom when held, dimmed when hidden |
+| `AppTileView` | draws that bitmap, the focus frame and zoom, with the corners `TilePaints` gives; in arrange mode, a white frame and a bigger zoom when held, dimmed when hidden |
 | `Clock` (`:domain`) | what time it is, in which time zone and hour format, and when that changes |
 | `AndroidClock` (`:platform`) | reads those from Android, and watches the time broadcasts only while something listens |
-| `ClockView` | formats a reading in the device's language, at the start of the top bar |
-| `HomeActivity` | reads the apps and their arrangement in `onResume`; when the shown apps changed, creates tiles for new ones and drops the others. Without tiles, says why: nothing installed, or everything hidden. Starts the clock in `onStart` and stops it in `onStop`. Opens the [settings panel](../settings/README.md#the-settings-panel) on OK on the gear or on the Menu key. A long press of OK on a tile starts [arrange mode](#arrange-mode), which gets every key first while it's on. |
+| `ClockView` | formats a reading in the device's language; the time and the date side by side, in the order the top bar gives |
+| `topBarLayout` (`:domain`), `TopBarView` | which edge of the top bar the clock and the settings entry are at, and the time's side of the date; the view moves its items there |
+| `HomeActivity` | reads the apps and their arrangement in `onResume`; when the shown apps changed, creates tiles for new ones and drops the others. Without tiles, says why: nothing installed, or everything hidden. Starts the clock and follows the appearance in `onStart`, and stops both in `onStop`. Opens the [settings panel](../settings/README.md#the-settings-panel) on OK on the gear or on the Menu key. A long press of OK on a tile starts [arrange mode](#arrange-mode), which gets every key first while it's on. |
 
 ### The top bar
 
-`home_top_bar` in `home_activity.xml` holds the clock at its start and the settings gear at its
-end, the left and the right in every language
+`home_top_bar` in `home_activity.xml`, a `TopBarView`, holds the clock at one edge and the settings
+gear at the other: by default the clock at the left, the time before the date, and the gear at the
+right; the appearance can swap them. The domain's `topBarLayout` decides where each goes, so the
+editor's preview shows them alike. Left and right are the screen's in every language
 ([why](../../app/README.md#manifest-why-each-part-is-there)); later items (e.g. status
-indicators) go at the end too. Each item that shows device state
+indicators) go with the settings gear. The time always gets its room first; a date too long for
+what's left ends in "…". Each item that shows device state
 that changes (the time, later e.g. the network) gets it from a port you can watch
 ([`ARCHITECTURE.md`](../../docs/ARCHITECTURE.md#background-work-and-changes-while-shown)), with a
 fake in `:domain`'s test fixtures that the test moves
@@ -111,7 +118,34 @@ What keeps it light:
   measuring or laying out again. The clock's text changes once a minute, which lays out the top
   bar only, not the tiles.
 - **Nothing runs while the home screen is hidden.** The clock's broadcast receiver exists only
-  from `onStart` to `onStop`.
+  from `onStart` to `onStop`, and the appearance is followed only then.
+
+### Appearance
+
+The home screen reads the user's `Appearance` in `onStart`, then again whenever the port says it
+changed, until `onStop`, and hands each part to the one view that draws it. Each view compares its
+part with `==` against the one it has, so an unchanged part costs nothing: every return to the home
+screen reads an equal appearance. What a change costs depends on the part:
+
+| Part | Goes to | A change costs |
+|---|---|---|
+| `TileGeometry` | `AppTilesView.tileGeometry` | a new layout from `TileLayouts` (it's an input of the layout, with the width, the height, the number of tiles and `shownCount`), and a layout pass; new banner bitmaps only for tiles whose size changes, so a new placement draws none |
+| `TileStyle` | `AppTilesView.tileStyle` | the radius in the `TilePaints` all tiles share, and a redraw: no layout pass, no new bitmaps |
+| `TopBarAppearance` | `TopBarView.appearance` | the bar's items moved (focus on the gear stays), and a layout pass of the bar only |
+
+The appearance editor covers the home screen whole, so the home screen is stopped while the user
+changes it, and applies the result once, when it comes back
+([`ARCHITECTURE.md`](../../docs/ARCHITECTURE.md#appearance)).
+
+Where the tiles go is the layout's decision (`TileLayouts`, from the geometry's placement): rows
+keep the apps' order, and a row that isn't full lines up on the placement's side; at the bottom,
+the rows end at the bottom of the space if they fit it, and otherwise start at the top and scroll
+as at the top. With a full bottom row, the short row is the first rather than the last.
+
+With rounded corners, each tile fills a rounded rectangle with its bitmap through a shader made
+with the bitmap, when its size changes; the focus and held frames follow the same corners. A new
+radius draws the same bitmaps, so no banner is drawn again. Drawing allocates nothing, with or
+without rounded corners.
 
 ## Arrange mode
 
@@ -135,7 +169,7 @@ mode too, with a held app put down where it is.
 |---|---|
 | `ArrangeSession` (`:domain`) | the held app, where each arrow takes it, and the apps as arranged; it keeps state, the one rule that does ([`domain/README.md`](../../domain/README.md#writing-models-rules-and-ports)) |
 | `TileMoves` (`:domain`), in `TileGrid` | where a moved tile goes in the grid, and where one coming in from above or below lands |
-| `ShelfLayout` (`:domain`) | the positions: the shown tiles, the label, the shelf |
+| `ShelfLayout` (`:domain`) | the positions: the shown tiles, the label, the shelf; with the tiles at the bottom, the three together at the bottom of the space, and on the right, the label and the shelf's rows lined up at the right |
 | `ArrangeMode` | starts and ends the mode; turns keys into the session's moves and moves the tiles to match; stores the arrangement each time an app that moved is put down |
 | `AppTilesView` | with `shownCount` set, lays the tiles out with a `ShelfLayout` and draws the label and the empty slot; `moveTile` moves one without it losing focus |
 
@@ -157,8 +191,8 @@ What keeps it light:
   and dropped with the tiles when it ends.
 - **A move allocates nothing.** The tile is moved in place (detached and attached again, which
   keeps its focus), and the tiles are laid out again with the layout they had: `AppTilesView`
-  keeps it while the width, the number of tiles, `shownCount` and the `TileGeometry` stay the
-  same, each compared with what the layout was made from, and a move changes none of them. Only an app crossing between the shown and the hidden ones creates new ones: the
+  keeps it while the width and height, the number of tiles, `shownCount` and the `TileGeometry`
+  stay the same, each compared with what the layout was made from, and a move changes none of them. Only an app crossing between the shown and the hidden ones creates new ones: the
   view's `ShelfLayout` and its two `TileGrid`s, and `ArrangeSession`'s `TileMoves`.
 - **Nothing is read while arranging.** The apps are read again when the home screen comes back
   after the mode, not while the user's changes are on screen.

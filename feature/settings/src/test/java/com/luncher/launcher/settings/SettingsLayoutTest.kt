@@ -1,6 +1,8 @@
 package com.luncher.launcher.settings
 
 import android.app.Activity
+import android.os.Looper
+import android.view.KeyEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
@@ -13,7 +15,9 @@ import com.luncher.domain.apps.FakeInstalledApps.Companion.app
 import com.luncher.launcher.testing.TV_SCREENS
 import com.luncher.launcher.testing.TV_SCREENS_IN_EVERY_LANGUAGE
 import com.luncher.launcher.testing.TvScreen
+import com.luncher.launcher.testing.assertApart
 import com.luncher.launcher.testing.assertWhole
+import com.luncher.launcher.testing.bounds
 import java.util.Locale
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -24,13 +28,14 @@ import org.junit.runner.RunWith
 import org.robolectric.ParameterizedRobolectricTestRunner
 import org.robolectric.Robolectric
 import org.robolectric.RuntimeEnvironment
+import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
 /**
  * The settings panels' layout on every screen of [TV_SCREENS], in every language: each panel
  * within the screen, a margin from its edges, and no text cut. Hide apps lists 12 apps, more than
- * fit, the last one hidden.
+ * fit, the last one hidden. The appearance editor shows every value of every option.
  */
 @RunWith(ParameterizedRobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)   // real text widths; without it a character is 1 px wide
@@ -113,4 +118,39 @@ class SettingsLayoutTest(private val screen: TvScreen) {
         assertWhole(screen, last.findViewById(R.id.settings_app_hidden))
         assertPanelFits(activity)
     }
+
+    @Test
+    fun `the appearance editor fits, with every value of every option`() {
+        val activity = Robolectric.buildActivity(AppearanceActivity::class.java).setup().get()
+        val metrics = activity.resources.displayMetrics
+        val margin = activity.resources.getDimension(R.dimen.settings_appearance_margin_horizontal)
+        val preview = activity.findViewById<View>(R.id.settings_appearance_preview)
+        val options = activity.findViewById<ViewGroup>(R.id.settings_appearance_options)
+        val children = (0 until options.childCount).map { options.getChildAt(it) }
+        val rows = children.filter { it.findViewById<View>(R.id.settings_option_value) != null }
+
+        assertApart(screen, "preview and options", bounds(preview), bounds(activity.findViewById(R.id.settings_appearance_scroll)))
+        assertTrue("preview ${preview.width} px wide on $screen", preview.width >= metrics.widthPixels / 3)
+        for (child in children) {
+            val area = bounds(child)
+            assertTrue("$area outside the overscan margin on $screen", area.left >= margin && area.right <= metrics.widthPixels - margin)
+            if (child is TextView) assertWhole(screen, child)
+        }
+        // Each option through its values, in order: the tiles end at the bottom, where the full
+        // bottom row can be changed.
+        for (row in rows) {
+            assertTrue("${row.label()} can't take the focus on $screen", row.requestFocus())
+            do {
+                val before = row.value().text.toString()
+                assertWhole(screen, row.label())
+                assertWhole(screen, row.value())
+                activity.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DPAD_RIGHT))
+                shadowOf(Looper.getMainLooper()).idle()   // the layout pass
+            } while (row.value().text.toString() != before)
+        }
+    }
+
+    private fun View.label() = findViewById<TextView>(R.id.settings_option_label)
+
+    private fun View.value() = findViewById<TextView>(R.id.settings_option_value)
 }

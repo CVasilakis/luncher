@@ -54,11 +54,13 @@ class SettingsActivity : Activity() {
 
     private fun label(entry: SettingsEntry): Int = when (entry) {
         SettingsEntry.HideApps -> R.string.settings_hide_apps
+        SettingsEntry.Appearance -> R.string.settings_appearance
         SettingsEntry.SystemSettings -> R.string.settings_system
     }
 
     private fun open(entry: SettingsEntry) = when (entry) {
         SettingsEntry.HideApps -> openOwnPanel(Intent(this, HideAppsActivity::class.java))
+        SettingsEntry.Appearance -> openOwnPanel(Intent(this, AppearanceActivity::class.java))
         SettingsEntry.SystemSettings -> openSystemSettings()
     }
 
@@ -66,6 +68,7 @@ class SettingsActivity : Activity() {
      * Opens a panel of its own over this one (its theme is `Theme.Luncher.Settings.Panel`), in its
      * place: this panel disappears meanwhile, since the other one may be smaller and would show
      * it around its edges. Its window stays, and with it the dimming of the home screen behind.
+     * The appearance editor is full-screen (`Theme.Luncher.Settings.FullScreen`), and covers both.
      */
     private fun openOwnPanel(intent: Intent) {
         startActivity(intent)

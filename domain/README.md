@@ -25,7 +25,14 @@ domain/src/
 │   │   └── Banner.kt            model and rule: which image a tile shows (the app's banner or its icon)
 │   ├── appearance/
 │   │   ├── Appearance.kt        model: how the home screen looks, as far as the user can change it, in parts (docs/ARCHITECTURE.md#appearance)
-│   │   └── TileGeometry.kt      model: where tiles go and how big they are, in dp
+│   │   ├── TileGeometry.kt      model: where tiles go and how big they are, in dp; the corner they gather in
+│   │   ├── TilePlacement.kt     model: the four corners the tiles can gather in
+│   │   ├── TileStyle.kt         model: how each tile is drawn (its corner radius)
+│   │   ├── TopBarAppearance.kt  model: the clock's side of the top bar, the time's side of the date
+│   │   ├── Side.kt              model: left or right, the screen's, in every language
+│   │   ├── AppearanceOption.kt  models and rules: each option the user can change, its values, stepping through them
+│   │   ├── AppearanceOptions.kt models and rule: which options the editor lists, in groups
+│   │   └── AppearanceSettings.kt port: the stored appearance, and when it changes
 │   ├── clock/
 │   │   ├── ClockReading.kt      model: the time, time zone and hour format at one moment
 │   │   └── Clock.kt             port: the device's clock, and when what it shows changes
@@ -38,13 +45,16 @@ domain/src/
 │       ├── TileLayout.kt        how an arrangement of tiles reports sizes and positions
 │       ├── TileMoves.kt         how it says where a tile the user moves goes
 │       ├── Direction.kt         model: a D-pad arrow
-│       ├── TileGrid.kt          rule: the grid (rows of tiles, centered; as many columns as fit a width), and moves in it
-│       ├── TileLayouts.kt       rule: the layouts for a TileGeometry, in pixels at a density; picks the arrangement
-│       └── ShelfLayout.kt       rule: the shown apps' tiles above a shelf of the hidden ones, while arranging
+│       ├── TileGrid.kt          rule: the grid (rows of tiles as wide as a width; the short row first or last, at the left or right; at the top or bottom of a height), and moves in it
+│       ├── TileLayouts.kt       rule: the layouts for a TileGeometry, in pixels at a density; picks the arrangement and placement
+│       ├── ShelfLayout.kt       rule: the shown apps' tiles above a shelf of the hidden ones, while arranging
+│       └── TopBarLayout.kt      rule: which edge of the top bar each of its items is at, for a TopBarAppearance
 ├── test/kotlin/…/               unit tests (docs/TESTING.md), same packages as the code
 └── testFixtures/kotlin/…/       fakes of the ports, used by the tests of every module
     ├── apps/FakeInstalledApps.kt   fake of the InstalledApps port
     ├── apps/FakeAppArrangements.kt fake of the AppArrangements port: the arrangement in memory
+    ├── appearance/FakeAppearanceSettings.kt  fake of the AppearanceSettings port: the appearance in memory
+    ├── appearance/AppearanceChanges.kt       each option at each value but its default: what the catalog-wide tests draw
     └── clock/FakeClock.kt          fake of the Clock port: a fixed time the test moves
 ```
 
@@ -62,5 +72,5 @@ models, rules and ports of that topic.
 - Ports are interfaces named after what they provide (`InstalledApps`), not how
   (`PackageManagerApps`); adapters in `:platform` implement them. A port whose result is a UI type
   this module can't name is generic in it (`AppImages<Image>`).
-- A port for device state that changes while it's shown (`Clock`) is a port you can watch
+- A port for state that changes while it's shown (`Clock`, `AppearanceSettings`) is a port you can watch
   ([`ARCHITECTURE.md`](../docs/ARCHITECTURE.md#background-work-and-changes-while-shown)).

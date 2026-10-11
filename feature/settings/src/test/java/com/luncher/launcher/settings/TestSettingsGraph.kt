@@ -1,6 +1,8 @@
 package com.luncher.launcher.settings
 
 import android.app.Application
+import com.luncher.domain.appearance.AppearanceSettings
+import com.luncher.domain.appearance.FakeAppearanceSettings
 import com.luncher.domain.apps.AppArrangements
 import com.luncher.domain.apps.FakeAppArrangements
 import com.luncher.domain.apps.FakeInstalledApps
@@ -13,6 +15,7 @@ import com.luncher.domain.apps.InstalledApps
 open class TestSettingsGraph : SettingsGraph {
     override val installedApps: InstalledApps = FakeInstalledApps()
     override val appArrangements: AppArrangements = FakeAppArrangements()
+    override val appearanceSettings: AppearanceSettings = FakeAppearanceSettings()
 }
 
 /** The Application of this module's JVM tests (robolectric.properties): it holds the graph a test sets. */

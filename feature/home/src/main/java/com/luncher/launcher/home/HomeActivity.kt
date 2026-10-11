@@ -10,6 +10,7 @@ import android.view.KeyEvent
 import android.view.View
 import android.widget.TextView
 import android.window.OnBackInvokedDispatcher
+import com.luncher.domain.appearance.Appearance
 import com.luncher.domain.apps.ArrangedApps
 import com.luncher.domain.apps.InstalledApp
 import com.luncher.domain.apps.homeApps
@@ -22,6 +23,9 @@ import java.util.Locale
  * as tiles; OK on a tile opens its app, OK on the settings entry (or the Menu key) opens the
  * settings panel. A long press of OK on a tile starts [ArrangeMode], where the user moves and
  * hides apps; it gets every key first while it's on.
+ *
+ * How it looks follows the user's [Appearance] while it's shown: each part goes to the view that
+ * draws it, which compares it with what it has, so an unchanged part costs nothing.
  */
 class HomeActivity : Activity() {
 
@@ -29,7 +33,8 @@ class HomeActivity : Activity() {
     private val arrangements by lazy { graph.appArrangements }
     private val images by lazy { graph.appImages }
     private val clock by lazy { graph.clock }
-    private lateinit var topBar: View
+    private val appearanceSettings by lazy { graph.appearanceSettings }
+    private lateinit var topBar: TopBarView
     private lateinit var tiles: AppTilesView
     private lateinit var clockView: ClockView
     private lateinit var empty: TextView
@@ -40,6 +45,8 @@ class HomeActivity : Activity() {
 
     /** The apps as last read, shown and hidden: where arrange mode starts from. */
     private var arranged: ArrangedApps? = null
+
+    private val showAppearance: () -> Unit = { show(appearanceSettings.read()) }
 
     private val openApp = View.OnClickListener { open((it as AppTileView).app) }
 
@@ -79,15 +86,20 @@ class HomeActivity : Activity() {
     }
 
     // Visible from onStart to onStop; paused only, e.g. behind a dialog, it still shows.
+    // The appearance, as the clock, only while visible: a change made meanwhile (in the editor,
+    // which covers the home screen whole) is applied once, when it comes back.
     override fun onStart() {
         super.onStart()
         clockView.start(clock)
+        appearanceSettings.addListener(showAppearance)
+        showAppearance()
     }
 
     override fun onStop() {
         super.onStop()
         arrange.end()   // leaving the home screen (another app, the screen off) ends it
         clockView.stop()
+        appearanceSettings.removeListener(showAppearance)
     }
 
     override fun onResume() {
@@ -118,6 +130,12 @@ class HomeActivity : Activity() {
         showWhyEmpty(arranged)
     }
 
+    private fun show(appearance: Appearance) {
+        tiles.tileGeometry = appearance.tileGeometry
+        tiles.tileStyle = appearance.tileStyle
+        topBar.appearance = appearance.topBar
+    }
+
     /** Arrange mode ended: the tiles show [arranged] already. */
     private fun arrangingEnded(arranged: ArrangedApps) {
         this.arranged = arranged
@@ -134,7 +152,7 @@ class HomeActivity : Activity() {
         tiles.removeAllViews()
         for (app in apps) {
             tiles.addView(
-                kept[app] ?: AppTileView(this, app, images).apply {
+                kept[app] ?: AppTileView(this, app, images, tiles.paints).apply {
                     setOnClickListener(openApp)
                     setOnLongClickListener(startArranging)
                 },

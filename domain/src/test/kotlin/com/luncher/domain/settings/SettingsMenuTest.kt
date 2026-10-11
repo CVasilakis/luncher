@@ -21,6 +21,14 @@ class SettingsMenuTest {
     }
 
     @Test
+    fun `offers the appearance, with Luncher's own settings, before the system settings`() {
+        val group = menu.groups.single { SettingsEntry.HideApps in it.entries }
+
+        assertEquals(listOf(SettingsEntry.HideApps, SettingsEntry.Appearance), group.entries)
+        assertTrue(entries().indexOf(SettingsEntry.Appearance) < entries().indexOf(SettingsEntry.SystemSettings))
+    }
+
+    @Test
     fun `lists each entry once`() {
         assertEquals(entries().distinct(), entries())
     }
