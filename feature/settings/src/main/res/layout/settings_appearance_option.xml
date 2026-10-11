@@ -22,7 +22,6 @@
         android:layout_height="wrap_content"
         android:layout_weight="1"
         android:ellipsize="end"
-        android:layoutDirection="locale"
         android:maxLines="3"
         android:textColor="@color/text_primary"
         android:textSize="@dimen/settings_entry_text" />

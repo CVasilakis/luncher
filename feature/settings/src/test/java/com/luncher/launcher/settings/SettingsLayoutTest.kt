@@ -137,14 +137,16 @@ class SettingsLayoutTest(private val screen: TvScreen) {
             if (child is TextView) assertWhole(screen, child)
         }
         // Each option through its values, in order: the tiles end at the bottom, where the full
-        // bottom row can be changed.
+        // bottom row can be changed. The next value is toward the arrow on its side: Left when
+        // mirrored.
+        val next = if (options.layoutDirection == View.LAYOUT_DIRECTION_RTL) KeyEvent.KEYCODE_DPAD_LEFT else KeyEvent.KEYCODE_DPAD_RIGHT
         for (row in rows) {
             assertTrue("${row.label()} can't take the focus on $screen", row.requestFocus())
             do {
                 val before = row.value().text.toString()
                 assertWhole(screen, row.label())
                 assertWhole(screen, row.value())
-                activity.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DPAD_RIGHT))
+                activity.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, next))
                 shadowOf(Looper.getMainLooper()).idle()   // the layout pass
             } while (row.value().text.toString() != before)
         }

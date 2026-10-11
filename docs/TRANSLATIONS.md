@@ -27,8 +27,7 @@ already: the apps' names, from Android, which `:domain` sorts as that language s
 with the language's own patterns.
 
 A right-to-left language mirrors the settings panels but not the home screen, nor the appearance
-editor, which shows it; there only the texts line up at the right
-([`app/README.md`](../app/README.md#manifest-why-each-part-is-there)).
+editor's preview of it ([`app/README.md`](../app/README.md#manifest-why-each-part-is-there)).
 
 ## Writing a string
 

@@ -17,11 +17,12 @@ import com.luncher.domain.appearance.step
 
 /**
  * The editor of the home screen's appearance, full-screen: the options of the domain's
- * [appearanceOptions] at the right, each with its value, and a preview of the result at the left.
- * Left and Right on an option step through its values, stopping at the first and the last; each
- * change is stored at once, and the home screen shows it when it comes back. An option that
- * changes nothing with the others as they are is dimmed, and the focus passes it by. OK on the
- * last entry puts every option back to its default. Back closes it, as any activity.
+ * [appearanceOptions] at the right (the left in a right-to-left language, mirrored like the other
+ * panels), each with its value, and a preview of the result beside them. Left and Right on an
+ * option step through its values, toward the arrow on that side, stopping at the first and the
+ * last; each change is stored at once, and the home screen shows it when it comes back. An option
+ * that changes nothing with the others as they are is dimmed, and the focus passes it by. OK on
+ * the last entry puts every option back to its default. Back closes it, as any activity.
  *
  * Which options there are, their values and what a step does are the domain's; what each one is
  * called is decided here, per option, in [label] and [valueLabel].
@@ -56,7 +57,6 @@ class AppearanceActivity : Activity() {
         }
         val reset = layoutInflater.inflate(R.layout.settings_entry, options, false) as TextView
         reset.setText(R.string.settings_appearance_reset)
-        reset.layoutDirection = View.LAYOUT_DIRECTION_LOCALE
         reset.setOnClickListener { change(Appearance()) }
         (reset.layoutParams as LinearLayout.LayoutParams).topMargin = resources.getDimensionPixelSize(R.dimen.settings_group_gap)
         options.addView(reset)
@@ -136,14 +136,15 @@ class AppearanceActivity : Activity() {
             view.isFocusableInTouchMode = applies
         }
 
-        // Left is the previous value and Right the next, in every language, as the editor
-        // doesn't mirror. Taken at the first and last value too, so the focus stays here.
+        // Toward an arrow, its value: in a mirrored row the next value is to the left. Taken at
+        // the first and last value too, so the focus stays here.
         override fun onKey(v: View, keyCode: Int, event: KeyEvent): Boolean {
-            val forward = when (keyCode) {
+            val right = when (keyCode) {
                 KeyEvent.KEYCODE_DPAD_LEFT -> false
                 KeyEvent.KEYCODE_DPAD_RIGHT -> true
                 else -> return false
             }
+            val forward = right != (v.layoutDirection == View.LAYOUT_DIRECTION_RTL)
             if (event.action == KeyEvent.ACTION_DOWN) change(option.step(appearance, forward))
             return true
         }

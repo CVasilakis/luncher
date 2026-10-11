@@ -213,23 +213,27 @@ class AppearanceActivityTest {
         assertEquals("Top right", controller.get().value("Placement"))
     }
 
-    // Unlike the other settings panels (HideAppsActivityTest), it doesn't mirror: the preview stays
-    // at the left, the options at the right, Left still the previous value. Only texts line up at
-    // the right.
+    // Like the other settings panels (HideAppsActivityTest): the options at the left, each value at
+    // the left of its name, and Left steps toward the arrow on that side, the next value.
     @Test
     @Config(qualifiers = "ar-rEG-$TV_1080P")
-    fun `stays left to right in right-to-left languages, its texts at the right`() {
+    fun `mirrors in right-to-left languages, Left stepping to the next value`() {
         val activity = start()
 
         val preview = activity.findViewById<View>(R.id.settings_appearance_preview)
         val options = activity.findViewById<View>(R.id.settings_appearance_scroll)
-        assertTrue("preview at ${preview.right}, options at ${options.left}", preview.right <= options.left)
+        assertTrue("options at ${options.right}, preview at ${preview.left}", options.right <= preview.left)
         val row = activity.rows().first()
         val label = row.findViewById<TextView>(R.id.settings_option_label)
         val value = row.findViewById<View>(R.id.settings_option_value)
-        assertTrue("label at ${label.left}, value at ${value.left}", label.right <= value.left)
+        val next = row.findViewById<View>(R.id.settings_option_next)
+        assertTrue("value at ${value.right}, label at ${label.left}", value.right <= label.left)
+        assertTrue("next arrow at ${next.right}, value at ${value.left}", next.right <= value.left)
         assertEquals(label.layout.width.toFloat(), label.layout.getLineRight(0))
-        activity.press(KeyEvent.KEYCODE_DPAD_RIGHT)
+
+        activity.press(KeyEvent.KEYCODE_DPAD_LEFT)
         assertEquals(TilePlacement.TOP_RIGHT, settings.appearance.tileGeometry.placement)
+        activity.press(KeyEvent.KEYCODE_DPAD_RIGHT)
+        assertEquals(TilePlacement.TOP_LEFT, settings.appearance.tileGeometry.placement)
     }
 }

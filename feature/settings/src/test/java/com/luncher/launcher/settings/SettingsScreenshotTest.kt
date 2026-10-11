@@ -89,7 +89,7 @@ class SettingsScreenshotTest {
         appearanceEditor(Appearance()).window.decorView.captureRoboImage("src/test/screenshots/settings/settings_appearance_small_screen.png")
     }
 
-    // Arabic: laid out as in English, the texts at the right.
+    // Arabic: mirrored, the options at the left; the preview's content still left to right.
     @Test
     @Config(qualifiers = "ar-rEG-$TV_1080P")
     fun appearanceEditorInArabic() {

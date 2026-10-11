@@ -5,7 +5,6 @@
     android:layout_height="wrap_content"
     android:layout_marginTop="@dimen/settings_group_gap"
     android:layout_marginBottom="@dimen/settings_appearance_value_gap"
-    android:layoutDirection="locale"
     android:paddingLeft="@dimen/settings_entry_padding"
     android:paddingRight="@dimen/settings_entry_padding"
     android:textColor="@color/text_secondary"

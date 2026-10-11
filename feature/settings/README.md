@@ -110,9 +110,9 @@ top) is dimmed, and the focus passes it by. The last entry, Reset to defaults, p
 back. Back returns to the settings panel; the home screen shows the result when it comes back.
 
 It's started with `openOwnPanel`, like Hide apps, but covers the settings panel and the home screen
-whole (its theme). It stays left to right in every language, like the home screen it shows: its
-options name the screen's left and right, and Left is always the previous value. Only its texts
-line up at the right in a right-to-left language
+whole (its theme). In a right-to-left language it mirrors like the other panels: the options at
+the left, each value at the left of its name, and Left steps toward the arrow on that side, the
+next value. The preview's content doesn't: it shows the home screen, which stays left to right
 ([why](../../app/README.md#manifest-why-each-part-is-there)). The options take at most
 `settings_appearance_options_width`, and half of a narrow screen, so the preview keeps the rest;
 they scroll when they're taller than the screen.
