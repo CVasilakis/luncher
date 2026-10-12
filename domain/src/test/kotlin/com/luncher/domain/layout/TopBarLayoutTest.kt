@@ -34,4 +34,27 @@ class TopBarLayoutTest {
             topBarLayout(TopBarAppearance(clockSide = Side.RIGHT, timeSide = Side.RIGHT)),
         )
     }
+
+    @Test
+    fun `leaves out the time or the date that's hidden`() {
+        assertEquals(
+            TopBarLayout(left = listOf(DATE), right = listOf(SETTINGS)),
+            topBarLayout(TopBarAppearance(showTime = false)),
+        )
+        assertEquals(
+            TopBarLayout(left = listOf(SETTINGS), right = listOf(TIME)),
+            topBarLayout(TopBarAppearance(clockSide = Side.RIGHT, timeSide = Side.RIGHT, showDate = false)),
+        )
+    }
+
+    // So the clock's side changes nothing then, and the editor can dim it.
+    @Test
+    fun `with neither the time nor the date, the settings entry at the right, wherever the clock was`() {
+        for (side in Side.entries) {
+            assertEquals(
+                TopBarLayout(left = emptyList(), right = listOf(SETTINGS)),
+                topBarLayout(TopBarAppearance(clockSide = side, showTime = false, showDate = false)),
+            )
+        }
+    }
 }

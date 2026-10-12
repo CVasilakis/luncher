@@ -48,20 +48,38 @@ sealed interface AppearanceOption<T> {
             appearance.copy(tileStyle = appearance.tileStyle.copy(corners = value))
     }
 
-    /** The side of the top bar the clock is on. */
+    /** Whether the top bar shows the time. */
+    data object ShowTime : AppearanceOption<Boolean> {
+        override val values: List<Boolean> = listOf(true, false)
+        override fun get(appearance: Appearance) = appearance.topBar.showTime
+        override fun set(appearance: Appearance, value: Boolean) =
+            appearance.copy(topBar = appearance.topBar.copy(showTime = value))
+    }
+
+    /** Whether the top bar shows the date. */
+    data object ShowDate : AppearanceOption<Boolean> {
+        override val values: List<Boolean> = listOf(true, false)
+        override fun get(appearance: Appearance) = appearance.topBar.showDate
+        override fun set(appearance: Appearance, value: Boolean) =
+            appearance.copy(topBar = appearance.topBar.copy(showDate = value))
+    }
+
+    /** The side of the top bar the time and the date are on, while either shows. */
     data object ClockSide : AppearanceOption<Side> {
         override val values: List<Side> = Side.entries
         override fun get(appearance: Appearance) = appearance.topBar.clockSide
         override fun set(appearance: Appearance, value: Side) =
             appearance.copy(topBar = appearance.topBar.copy(clockSide = value))
+        override fun appliesTo(appearance: Appearance) = appearance.topBar.showTime || appearance.topBar.showDate
     }
 
-    /** The side of the date the time is on. */
+    /** The side of the date the time is on, while both show. */
     data object TimeSide : AppearanceOption<Side> {
         override val values: List<Side> = Side.entries
         override fun get(appearance: Appearance) = appearance.topBar.timeSide
         override fun set(appearance: Appearance, value: Side) =
             appearance.copy(topBar = appearance.topBar.copy(timeSide = value))
+        override fun appliesTo(appearance: Appearance) = appearance.topBar.showTime && appearance.topBar.showDate
     }
 }
 

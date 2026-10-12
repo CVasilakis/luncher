@@ -64,8 +64,9 @@ class SettingsScreenshotTest {
         appearanceEditor(Appearance()).window.decorView.captureRoboImage("src/test/screenshots/settings/settings_appearance.png")
     }
 
-    // Every option away from its default; the tiles at the bottom, so the full bottom row can be
-    // changed. The tiles' group open, the focus on the corner radius.
+    // Every option away from its default but the time's and the date's, which would hide what the
+    // others move; the tiles at the bottom, so the full bottom row can be changed. The tiles' group
+    // open, the focus on the corner radius.
     @Test
     fun appearanceEditorChanged() {
         val activity = appearanceEditor(
@@ -79,6 +80,15 @@ class SettingsScreenshotTest {
         activity.child { it.findViewById<TextView>(R.id.settings_option_label)?.text == "Corner radius" }.requestFocus()
 
         activity.window.decorView.captureRoboImage("src/test/screenshots/settings/settings_appearance_changed.png")
+    }
+
+    // The top bar's group open, the date hidden: the order, which needs both, dimmed.
+    @Test
+    fun appearanceEditorTopBar() {
+        val activity = appearanceEditor(Appearance(topBar = TopBarAppearance(showDate = false)), open = "Top bar")
+        activity.child { it.findViewById<TextView>(R.id.settings_option_label)?.text == "Date" }.requestFocus()
+
+        activity.window.decorView.captureRoboImage("src/test/screenshots/settings/settings_appearance_top_bar.png")
     }
 
     // 720p at the 1080p density, 640x360 dp: the options take half the screen, and scroll.

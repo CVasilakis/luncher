@@ -139,8 +139,10 @@ class SettingsLayoutTest(private val screen: TvScreen) {
         assertTrue("preview ${preview.width} px wide on $screen", preview.width >= metrics.widthPixels / 3)
         assertTrue("preview ${preview.height} px tall on $screen", preview.height >= metrics.heightPixels / 4)
         // Each group open in turn, each of its options through its values, in order, ending at
-        // the last: the tiles end at the bottom, where the full bottom row can be changed. The
-        // next value is toward the arrow on its side: Left when mirrored.
+        // the last: the tiles end at the bottom, where the full bottom row can be changed. Unless
+        // the last leaves a later option that can't be changed (the time hidden, its order with
+        // the date): then around to the first. The next value is toward the arrow on its side:
+        // Left when mirrored.
         val next = if (options.layoutDirection == View.LAYOUT_DIRECTION_RTL) KeyEvent.KEYCODE_DPAD_LEFT else KeyEvent.KEYCODE_DPAD_RIGHT
         val catalog = appearanceOptions().groups
         for ((index, group) in groups.withIndex()) {
@@ -156,7 +158,8 @@ class SettingsLayoutTest(private val screen: TvScreen) {
             }
             assertWhole(screen, group.findViewById(R.id.settings_group_title))
             val rows = shown.filter { it.findViewById<View>(R.id.settings_option_value) != null }
-            for ((row, option) in rows.zip(catalog[index].options)) {
+            for ((i, pair) in rows.zip(catalog[index].options).withIndex()) {
+                val (row, option) = pair
                 assertTrue("${row.label().text} can't take the focus on $screen", row.requestFocus())
                 repeat(option.values.size) { step ->
                     assertWhole(screen, row.label())
@@ -165,6 +168,10 @@ class SettingsLayoutTest(private val screen: TvScreen) {
                         activity.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, next))
                         shadowOf(Looper.getMainLooper()).idle()   // the layout pass
                     }
+                }
+                if (rows.drop(i + 1).any { !it.isFocusable }) {
+                    activity.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, next))
+                    shadowOf(Looper.getMainLooper()).idle()
                 }
             }
         }

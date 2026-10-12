@@ -81,8 +81,9 @@ class HomeScreenshotTest {
         start().window.decorView.captureRoboImage("src/test/screenshots/home/home_screen_160dpi.png")
     }
 
-    // Every option away from its default: the tiles at the bottom right, the bottom row full, round
-    // corners; the clock on the right, the time after the date.
+    // Every option away from its default but the time's and the date's, which would hide what the
+    // others move: the tiles at the bottom right, the bottom row full, round corners; the clock on
+    // the right, the time after the date.
     @Test
     fun homeScreenWithAnAppearance() {
         val appearance = Appearance(
@@ -91,6 +92,13 @@ class HomeScreenshotTest {
             TopBarAppearance(clockSide = Side.RIGHT, timeSide = Side.RIGHT),
         )
         start(appearance = appearance).window.decorView.captureRoboImage("src/test/screenshots/home/home_screen_appearance.png")
+    }
+
+    // The date hidden: the time alone, the tiles where they are with both.
+    @Test
+    fun homeScreenWithoutTheDate() {
+        start(appearance = Appearance(topBar = TopBarAppearance(showDate = false))).window.decorView
+            .captureRoboImage("src/test/screenshots/home/home_screen_without_date.png")
     }
 
     // Arrange mode with the tiles at the bottom right: the shelf below them, all at the bottom.

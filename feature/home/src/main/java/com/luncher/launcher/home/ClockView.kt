@@ -8,6 +8,7 @@ import android.view.ViewGroup
 import android.widget.TextView
 import com.luncher.domain.clock.Clock
 import com.luncher.domain.clock.ClockReading
+import com.luncher.domain.layout.TopBarItem
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -19,8 +20,10 @@ import java.util.TimeZone
  * `home_time` and `home_date` text views, come from the layout, which also styles them.
  *
  * The two sit side by side on a shared baseline, in the order and at the side of the view that
- * [arrange] gives, from the top bar's layout. The time always gets its room first: a date too
- * long for what's left ends in "…", on either side.
+ * [arrange] gives, from the top bar's layout, which may leave out either or both. The time always
+ * gets its room first: a date too long for what's left ends in "…", on either side. One left out
+ * is invisible, not gone: the view stays as tall as with both, so hiding them never moves the
+ * tiles below the bar.
  *
  * The screen calls [start] when it becomes visible and [stop] when it's hidden, so a hidden home
  * screen does no work, and the time is read again when it comes back. The screen's lifecycle, not
@@ -37,6 +40,8 @@ internal class ClockView(context: Context, attrs: AttributeSet?) : ViewGroup(con
 
     private var timeFirst = true
     private var atRight = false
+    private var showTime = true
+    private var showDate = true
 
     private var clock: Clock? = null
     private val update: () -> Unit = { clock?.let { show(it.read()) } }
@@ -54,11 +59,21 @@ internal class ClockView(context: Context, attrs: AttributeSet?) : ViewGroup(con
         date = findViewById(R.id.home_date)
     }
 
-    /** Puts the time before the date ([timeFirst]) or after it, at the view's left or right ([atRight]). */
-    fun arrange(timeFirst: Boolean, atRight: Boolean) {
-        if (timeFirst == this.timeFirst && atRight == this.atRight) return
+    /**
+     * Shows the time and the date that are among [items], in their order, at the view's left or
+     * right ([atRight]); hides those that aren't.
+     */
+    fun arrange(items: List<TopBarItem>, atRight: Boolean) {
+        val showTime = TopBarItem.TIME in items
+        val showDate = TopBarItem.DATE in items
+        val timeFirst = !showDate || items.indexOf(TopBarItem.TIME) < items.indexOf(TopBarItem.DATE)
+        if (timeFirst == this.timeFirst && atRight == this.atRight && showTime == this.showTime && showDate == this.showDate) return
         this.timeFirst = timeFirst
         this.atRight = atRight
+        this.showTime = showTime
+        this.showDate = showDate
+        time.visibility = if (showTime) View.VISIBLE else View.INVISIBLE
+        date.visibility = if (showDate) View.VISIBLE else View.INVISIBLE
         requestLayout()
     }
 
@@ -69,7 +84,7 @@ internal class ClockView(context: Context, attrs: AttributeSet?) : ViewGroup(con
         fun upTo(width: Int) =
             if (limited) MeasureSpec.makeMeasureSpec(width.coerceAtLeast(0), MeasureSpec.AT_MOST) else unspecified
         time.measure(upTo(room), unspecified)
-        date.measure(upTo(room - time.measuredWidth - gap), unspecified)
+        date.measure(upTo(room - timeWidth()), unspecified)
         val height = paddingTop + aboveBaseline() + belowBaseline() + paddingBottom
         val width = paddingLeft + contentWidth() + paddingRight
         setMeasuredDimension(resolveSize(width, widthMeasureSpec), resolveSize(height, heightMeasureSpec))
@@ -80,7 +95,7 @@ internal class ClockView(context: Context, attrs: AttributeSet?) : ViewGroup(con
         val first = if (timeFirst) time else date
         val second = if (timeFirst) date else time
         place(first, left)
-        place(second, left + first.measuredWidth + gap)
+        place(second, if (first.visibility == View.VISIBLE) left + first.measuredWidth + gap else left)
     }
 
     private fun place(view: View, left: Int) {
@@ -88,7 +103,15 @@ internal class ClockView(context: Context, attrs: AttributeSet?) : ViewGroup(con
         view.layout(left, top, left + view.measuredWidth, top + view.measuredHeight)
     }
 
-    private fun contentWidth() = time.measuredWidth + gap + date.measuredWidth
+    /** The room the time takes from the date: none when it's hidden. */
+    private fun timeWidth() = if (showTime) time.measuredWidth + gap else 0
+
+    private fun contentWidth(): Int = when {
+        showTime && showDate -> time.measuredWidth + gap + date.measuredWidth
+        showTime -> time.measuredWidth
+        showDate -> date.measuredWidth
+        else -> 0
+    }
 
     private fun aboveBaseline() = maxOf(time.baseline, date.baseline)
 

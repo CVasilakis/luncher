@@ -71,7 +71,7 @@ one job, so a new arrangement, image source or top bar item changes one of them:
 | Part | Job |
 |---|---|
 | `homeApps` (`:domain`) | which apps show, in which order, and which are hidden: the installed apps matched to the stored `AppArrangement` ([Hidden apps](../settings/README.md#hidden-apps)) |
-| `Appearance` (`:domain`) | how the home screen looks, as the user set it in the [appearance editor](../settings/README.md#appearance), in parts: `TileGeometry` (the tiles' width, the gap between them, the corner they gather in), `TileStyle` (their corners: a radius, 8 dp by default, or round ends), `TopBarAppearance` (the clock's side, the time's side of the date). [Below](#appearance): how each part is applied. |
+| `Appearance` (`:domain`) | how the home screen looks, as the user set it in the [appearance editor](../settings/README.md#appearance), in parts: `TileGeometry` (the tiles' width, the gap between them, the corner they gather in), `TileStyle` (their corners: a radius, 8 dp by default, or round ends), `TopBarAppearance` (whether the time and the date show, the clock's side, the time's side of the date). [Below](#appearance): how each part is applied. |
 | `AppearanceSettings` (`:domain`), `PreferencesAppearanceSettings` (`:platform`) | the stored appearance, and when it changes |
 | `TileLayout`, `TileLayouts` (`:domain`) | where each tile goes and how big it is; `TileGrid` is the only one so far, with as many columns as fit tiles of about the geometry's width (`TileGrid.columnsFor`), so tiles keep their size next to the top bar's text on any screen. `TileLayouts` is the only place that picks the arrangement, for the tiles' places and for moves in arrange mode alike. |
 | `AppTilesView` | lays tiles out where the `TileLayout` says, and scrolls to the focused one; holds the `TilePaints` its tiles share |
@@ -80,16 +80,18 @@ one job, so a new arrangement, image source or top bar item changes one of them:
 | `AppTileView` | draws that bitmap, the focus frame and zoom, with the corners `TilePaints` gives; in arrange mode, a white frame and a bigger zoom when held, dimmed when hidden |
 | `Clock` (`:domain`) | what time it is, in which time zone and hour format, and when that changes |
 | `AndroidClock` (`:platform`) | reads those from Android, and watches the time broadcasts only while something listens |
-| `ClockView` | formats a reading in the device's language; the time and the date side by side, in the order the top bar gives |
-| `topBarLayout` (`:domain`), `TopBarView` | which edge of the top bar the clock and the settings entry are at, and the time's side of the date; the view moves its items there |
+| `ClockView` | formats a reading in the device's language; the time and the date side by side, in the order the top bar gives, either or both hidden |
+| `topBarLayout` (`:domain`), `TopBarView` | which edge of the top bar the clock and the settings entry are at, the time's side of the date, and whether each of the two shows; the view moves its items there |
 | `HomeActivity` | reads the apps and their arrangement in `onResume`; when the shown apps changed, creates tiles for new ones and drops the others. Without tiles, says why: nothing installed, or everything hidden. Starts the clock and follows the appearance and the arrangement in `onStart`, and stops all three in `onStop`: an app hidden or shown in the settings shows at once, behind the panel; arrange mode's own saves don't read the apps again. Opens the [settings panel](../settings/README.md#the-settings-panel) on OK on the gear or on the Menu key. A long press of OK on a tile starts [arrange mode](#arrange-mode), which gets every key first while it's on. |
 
 ### The top bar
 
 `home_top_bar` in `home_activity.xml`, a `TopBarView`, holds the clock at one edge and the settings
 gear at the other: by default the clock at the left, the time before the date, and the gear at the
-right; the appearance can swap them. The domain's `topBarLayout` decides where each goes, so the
-editor's preview shows them alike. Left and right are the screen's in every language
+right; the appearance can swap them, and hide the time, the date or both. With both hidden, the
+gear is at the right, wherever the clock's side says. The domain's `topBarLayout` decides where
+each goes, so the editor's preview shows them alike. A hidden time or date is invisible, not gone:
+the bar keeps its height, so the tiles below it never move. Left and right are the screen's in every language
 ([why](../../app/README.md#manifest-why-each-part-is-there)); later items (e.g. status
 indicators) go with the settings gear. The time always gets its room first; a date too long for
 what's left ends in "…". Each item that shows device state

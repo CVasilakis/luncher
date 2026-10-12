@@ -29,7 +29,7 @@ domain/src/
 │   │   ├── TilePlacement.kt     model: the four corners the tiles can gather in
 │   │   ├── TileStyle.kt         model: how each tile is drawn (its corners)
 │   │   ├── Corners.kt           model and rule: a corner radius or round ends, in pixels for a tile's height
-│   │   ├── TopBarAppearance.kt  model: the clock's side of the top bar, the time's side of the date
+│   │   ├── TopBarAppearance.kt  model: whether the time and the date show, the clock's side of the top bar, the time's side of the date
 │   │   ├── Side.kt              model: left or right, the screen's, in every language
 │   │   ├── AppearanceOption.kt  models and rules: each option the user can change, its values, stepping through them, around
 │   │   ├── AppearanceOptions.kt models and rule: which options the editor lists, in groups

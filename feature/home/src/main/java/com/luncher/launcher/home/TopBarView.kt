@@ -11,8 +11,8 @@ import com.luncher.domain.layout.topBarLayout
 /**
  * The home screen's top bar: the clock and the settings entry, each at the edge of the bar that
  * the domain's [topBarLayout] gives for the home screen's [appearance], and the time on its side of
- * the date. Arrange mode's title and key hint stay between them, in the order the layout file
- * gives, since they replace both.
+ * the date, each of the two only if it shows. Arrange mode's title and key hint stay between them,
+ * in the order the layout file gives, since they replace both.
  */
 internal class TopBarView(context: Context, attrs: AttributeSet?) : LinearLayout(context, attrs) {
 
@@ -36,12 +36,9 @@ internal class TopBarView(context: Context, attrs: AttributeSet?) : LinearLayout
 
     private fun arrange() {
         val layout = topBarLayout(appearance)
-        val clockItems = if (TopBarItem.TIME in layout.left) layout.left else layout.right
-        clock.arrange(
-            timeFirst = clockItems.indexOf(TopBarItem.TIME) < clockItems.indexOf(TopBarItem.DATE),
-            atRight = clockItems === layout.right,
-        )
         val settingsAtLeft = TopBarItem.SETTINGS in layout.left
+        // The clock fills the rest of the bar, even with nothing in it, so the gear stays at its edge.
+        clock.arrange(if (settingsAtLeft) layout.right else layout.left, atRight = settingsAtLeft)
         move(if (settingsAtLeft) settings else clock, 0)
         move(if (settingsAtLeft) clock else settings, childCount - 1)
         requestLayout()

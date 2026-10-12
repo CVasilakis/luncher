@@ -115,8 +115,14 @@ internal class AppearancePreviewView(context: Context, attrs: AttributeSet?) : V
         tileRadius = appearance.tileStyle.corners.pixels(tileHeight, scale)
     }
 
-    /** Each item of the top bar as a block of its size, at the edge the domain's layout puts it. */
+    /**
+     * Each item of the top bar as a block of its size, at the edge the domain's layout puts it; an
+     * item it leaves out is empty, which draws nothing.
+     */
     private fun placeBar() {
+        time.setEmpty()
+        date.setEmpty()
+        gear.setEmpty()
         val layout = topBarLayout(appearance.topBar)
         var x = PADDING_HORIZONTAL.toFloat()
         for (item in layout.left) {

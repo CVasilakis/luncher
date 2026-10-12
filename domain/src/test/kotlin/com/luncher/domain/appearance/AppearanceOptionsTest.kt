@@ -15,7 +15,10 @@ class AppearanceOptionsTest {
             listOf(AppearanceOption.Placement, AppearanceOption.FullBottomRow, AppearanceOption.CornerRadius),
             catalog.groups[0].options,
         )
-        assertEquals(listOf(AppearanceOption.ClockSide, AppearanceOption.TimeSide), catalog.groups[1].options)
+        assertEquals(
+            listOf(AppearanceOption.ShowTime, AppearanceOption.ShowDate, AppearanceOption.ClockSide, AppearanceOption.TimeSide),
+            catalog.groups[1].options,
+        )
     }
 
     // An option that isn't listed couldn't be changed, nor would the catalog-wide tests cover it.

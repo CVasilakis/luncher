@@ -98,6 +98,8 @@ class AppearanceActivity : Activity() {
         AppearanceOption.Placement -> R.string.settings_appearance_placement
         AppearanceOption.FullBottomRow -> R.string.settings_appearance_full_bottom_row
         AppearanceOption.CornerRadius -> R.string.settings_appearance_corner_radius
+        AppearanceOption.ShowTime -> R.string.settings_appearance_time
+        AppearanceOption.ShowDate -> R.string.settings_appearance_date
         AppearanceOption.ClockSide -> R.string.settings_appearance_clock_side
         AppearanceOption.TimeSide -> R.string.settings_appearance_time_side
     }
@@ -110,8 +112,10 @@ class AppearanceActivity : Activity() {
             is Corners.Radius -> getString(R.string.settings_appearance_radius_dp, corners.dp)
             Corners.Pill -> getString(R.string.settings_appearance_pill)
         }
+        AppearanceOption.ShowTime -> getString(shown(AppearanceOption.ShowTime.get(appearance)))
+        AppearanceOption.ShowDate -> getString(shown(AppearanceOption.ShowDate.get(appearance)))
         AppearanceOption.ClockSide -> getString(side(AppearanceOption.ClockSide.get(appearance)))
-        AppearanceOption.TimeSide -> getString(side(AppearanceOption.TimeSide.get(appearance)))
+        AppearanceOption.TimeSide -> getString(order(AppearanceOption.TimeSide.get(appearance)))
     }
 
     private fun placement(placement: TilePlacement): Int = when (placement) {
@@ -123,9 +127,18 @@ class AppearanceActivity : Activity() {
 
     private fun onOff(on: Boolean): Int = if (on) R.string.settings_appearance_on else R.string.settings_appearance_off
 
+    private fun shown(shown: Boolean): Int =
+        if (shown) R.string.settings_appearance_shown else R.string.settings_appearance_hidden
+
     private fun side(side: Side): Int = when (side) {
         Side.LEFT -> R.string.settings_appearance_left
         Side.RIGHT -> R.string.settings_appearance_right
+    }
+
+    /** The time's side of the date, as the order the two read in, left to right. */
+    private fun order(timeSide: Side): Int = when (timeSide) {
+        Side.LEFT -> R.string.settings_appearance_time_first
+        Side.RIGHT -> R.string.settings_appearance_date_first
     }
 
     /** A group's entry, which shows or hides its options' [rows] below it. Hidden at first. */

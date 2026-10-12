@@ -100,6 +100,44 @@ class HomeAppearanceTest {
         assertEquals(bar.width - bar.paddingRight, location(time) + time.width)   // the time at the edge
     }
 
+    @Test
+    fun `hides the time or the date as the appearance says, and the tiles stay where they are`() {
+        val activity = start().get()
+        idle()
+        val time = activity.findViewById<View>(R.id.home_time)
+        val date = activity.findViewById<View>(R.id.home_date)
+        val tilesTop = activity.grid().top
+        val bar = activity.topBar()
+
+        appearance.write(Appearance(topBar = TopBarAppearance(showTime = false)))
+        idle()
+        assertEquals(View.INVISIBLE, time.visibility)
+        assertEquals(View.VISIBLE, date.visibility)
+        assertEquals(bar.paddingLeft, location(date))   // in the time's place
+        assertEquals(tilesTop, activity.grid().top)
+
+        appearance.write(Appearance(topBar = TopBarAppearance(clockSide = Side.RIGHT, showDate = false)))
+        idle()
+        assertEquals(View.VISIBLE, time.visibility)
+        assertEquals(View.INVISIBLE, date.visibility)
+        assertEquals(bar.width - bar.paddingRight, location(time) + time.width)
+        assertEquals(tilesTop, activity.grid().top)
+    }
+
+    // At the right, wherever the clock's side says: the side changes nothing then.
+    @Test
+    fun `with the time and the date hidden, the settings entry is at the right`() {
+        appearance.appearance = Appearance(topBar = TopBarAppearance(clockSide = Side.RIGHT, showTime = false, showDate = false))
+
+        val activity = start().get()
+
+        val bar = activity.topBar()
+        val settings = activity.findViewById<View>(R.id.home_settings)
+        assertEquals(bar.width - bar.paddingRight, settings.right)
+        assertEquals(View.INVISIBLE, activity.findViewById<View>(R.id.home_time).visibility)
+        assertEquals(View.INVISIBLE, activity.findViewById<View>(R.id.home_date).visibility)
+    }
+
     /** [view]'s left edge in the top bar. */
     private fun location(view: View) = (view.parent as View).left + view.left
 

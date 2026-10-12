@@ -33,13 +33,26 @@
     <!-- Its last value: the tiles' ends fully round, half circles, their top and bottom straight,
          like a pill or a capsule. -->
     <string name="settings_appearance_pill">Pill</string>
-    <!-- An option: which side of the top bar the clock is on; the settings gear goes on the other. -->
-    <string name="settings_appearance_clock_side">Clock</string>
-    <!-- An option: on which side of the date the time is. -->
-    <string name="settings_appearance_time_side">Time beside the date</string>
-    <!-- Values of the options above: the screen's left and right, in every language. -->
+    <!-- An option: whether the top bar shows the time of day. -->
+    <string name="settings_appearance_time">Time</string>
+    <!-- An option: whether the top bar shows the date. -->
+    <string name="settings_appearance_date">Date</string>
+    <!-- Values of the two options above. -->
+    <string name="settings_appearance_shown">Shown</string>
+    <string name="settings_appearance_hidden">Hidden</string>
+    <!-- An option: which side of the top bar the time and the date are on; the settings gear goes
+         on the other. Its values are Left and Right. -->
+    <string name="settings_appearance_clock_side">Side</string>
+    <!-- Values of the option above: the screen's left and right, in every language. -->
     <string name="settings_appearance_left">Left</string>
     <string name="settings_appearance_right">Right</string>
+    <!-- An option: in which order the time and the date are, side by side, left to right in every
+         language. -->
+    <string name="settings_appearance_time_side">Order</string>
+    <!-- Its values: the time on the left of the date, or the date on the left of the time. In a
+         right-to-left language, where "first" would mean the right, say which is on the left. -->
+    <string name="settings_appearance_time_first">Time first</string>
+    <string name="settings_appearance_date_first">Date first</string>
     <!-- Values of an option that's on or off. -->
     <string name="settings_appearance_on">On</string>
     <string name="settings_appearance_off">Off</string>

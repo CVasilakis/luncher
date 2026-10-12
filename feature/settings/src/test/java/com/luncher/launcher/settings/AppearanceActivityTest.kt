@@ -111,7 +111,7 @@ class AppearanceActivityTest {
 
         activity.toggle("Top bar")
         assertEquals(
-            listOf("Tiles", "Top bar open", "Clock: Left", "Time beside the date: Left", "Reset to defaults"),
+            listOf("Tiles", "Top bar open", "Time: Shown", "Date: Shown", "Side: Left", "Order: Time first", "Reset to defaults"),
             activity.lines(),
         )
 
@@ -132,8 +132,8 @@ class AppearanceActivityTest {
         assertEquals("Bottom right", activity.value("Placement"))
         assertEquals("On", activity.value("Full bottom row"))
         assertEquals("12 dp", activity.value("Corner radius"))
-        assertEquals("Right", activity.value("Clock"))
-        assertEquals("Right", activity.value("Time beside the date"))
+        assertEquals("Right", activity.value("Side"))
+        assertEquals("Date first", activity.value("Order"))
         assertEquals(settings.appearance, activity.findViewById<AppearancePreviewView>(R.id.settings_appearance_preview).appearance)
     }
 
@@ -213,6 +213,34 @@ class AppearanceActivityTest {
         activity.press(KeyEvent.KEYCODE_DPAD_RIGHT)
         assertEquals("On", activity.value("Full bottom row"))
         assertTrue(settings.appearance.tileGeometry.fullBottomRow)
+    }
+
+    @Test
+    fun `hides the date, and dims the order, which needs both`() {
+        val activity = start()
+        activity.focus("Top bar", "Date")
+
+        activity.press(KeyEvent.KEYCODE_DPAD_RIGHT)
+
+        assertEquals("Hidden", activity.value("Date"))
+        assertFalse(settings.appearance.topBar.showDate)
+        assertTrue(activity.row("Side").isFocusable)
+        assertFalse(activity.row("Order").isFocusable)
+        assertTrue(activity.row("Order").alpha < 1f)
+    }
+
+    // The settings gear alone then, at the right: the side would change nothing.
+    @Test
+    fun `with the time and the date hidden, the side and the order are dimmed and the focus passes them by`() {
+        settings.appearance = Appearance(topBar = TopBarAppearance(showTime = false, showDate = false))
+        val activity = start()
+        activity.focus("Top bar", "Date")
+
+        assertEquals("Hidden", activity.value("Time"))
+        assertEquals("Hidden", activity.value("Date"))
+        assertFalse(activity.row("Side").isFocusable)
+        assertFalse(activity.row("Order").isFocusable)
+        assertSame(activity.children().last(), activity.row("Date").focusSearch(View.FOCUS_DOWN))
     }
 
     @Test

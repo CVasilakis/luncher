@@ -27,7 +27,7 @@ class AppearanceOptionTest {
         val appearance = Appearance(
             TileGeometry(placement = TilePlacement.BOTTOM_RIGHT, fullBottomRow = true),
             TileStyle(Corners.Radius(8)),
-            TopBarAppearance(clockSide = Side.RIGHT, timeSide = Side.RIGHT),
+            TopBarAppearance(clockSide = Side.RIGHT, timeSide = Side.RIGHT, showTime = true, showDate = false),
         )
 
         assertEquals(TilePlacement.BOTTOM_RIGHT, AppearanceOption.Placement.get(appearance))
@@ -35,9 +35,18 @@ class AppearanceOptionTest {
         assertEquals(Corners.Radius(8), AppearanceOption.CornerRadius.get(appearance))
         assertEquals(Side.RIGHT, AppearanceOption.ClockSide.get(appearance))
         assertEquals(Side.RIGHT, AppearanceOption.TimeSide.get(appearance))
+        assertEquals(true, AppearanceOption.ShowTime.get(appearance))
+        assertEquals(false, AppearanceOption.ShowDate.get(appearance))
         assertEquals(TileStyle(Corners.Radius(12)), AppearanceOption.CornerRadius.set(appearance, Corners.Radius(12)).tileStyle)
         assertEquals(TileGeometry(placement = TilePlacement.TOP_LEFT, fullBottomRow = true), AppearanceOption.Placement.set(appearance, TilePlacement.TOP_LEFT).tileGeometry)
-        assertEquals(TopBarAppearance(clockSide = Side.LEFT, timeSide = Side.RIGHT), AppearanceOption.ClockSide.set(appearance, Side.LEFT).topBar)
+        assertEquals(
+            TopBarAppearance(clockSide = Side.LEFT, timeSide = Side.RIGHT, showTime = true, showDate = false),
+            AppearanceOption.ClockSide.set(appearance, Side.LEFT).topBar,
+        )
+        assertEquals(
+            TopBarAppearance(clockSide = Side.RIGHT, timeSide = Side.RIGHT, showTime = false, showDate = false),
+            AppearanceOption.ShowTime.set(appearance, false).topBar,
+        )
     }
 
     // The defaults are the home screen as it looks without settings.
@@ -49,6 +58,8 @@ class AppearanceOptionTest {
         assertEquals(Corners.Radius(8), AppearanceOption.CornerRadius.default)
         assertEquals(Side.LEFT, AppearanceOption.ClockSide.default)
         assertEquals(Side.LEFT, AppearanceOption.TimeSide.default)
+        assertEquals(true, AppearanceOption.ShowTime.default)
+        assertEquals(true, AppearanceOption.ShowDate.default)
     }
 
     @Test
@@ -134,7 +145,35 @@ class AppearanceOptionTest {
     }
 
     @Test
-    fun `the other options always apply`() {
-        for (option in options - AppearanceOption.FullBottomRow) assertTrue("$option", option.appliesTo(Appearance()))
+    fun `the clock's side applies while the time or the date shows`() {
+        val side = AppearanceOption.ClockSide
+        fun showing(time: Boolean, date: Boolean) = Appearance(topBar = TopBarAppearance(showTime = time, showDate = date))
+
+        assertTrue(side.appliesTo(showing(time = true, date = true)))
+        assertTrue(side.appliesTo(showing(time = true, date = false)))
+        assertTrue(side.appliesTo(showing(time = false, date = true)))
+        assertFalse(side.appliesTo(showing(time = false, date = false)))
+    }
+
+    @Test
+    fun `the time's side of the date applies only while both show`() {
+        val side = AppearanceOption.TimeSide
+        fun showing(time: Boolean, date: Boolean) = Appearance(topBar = TopBarAppearance(showTime = time, showDate = date))
+
+        assertTrue(side.appliesTo(showing(time = true, date = true)))
+        assertFalse(side.appliesTo(showing(time = true, date = false)))
+        assertFalse(side.appliesTo(showing(time = false, date = true)))
+        assertFalse(side.appliesTo(showing(time = false, date = false)))
+    }
+
+    @Test
+    fun `every option applies to the defaults, and the others always`() {
+        for (option in options) assertTrue("$option", option.appliesTo(Appearance()) || option == AppearanceOption.FullBottomRow)
+        val conditional = setOf(AppearanceOption.FullBottomRow, AppearanceOption.ClockSide, AppearanceOption.TimeSide)
+        val nothingShown = Appearance(
+            TileGeometry(placement = TilePlacement.TOP_LEFT),
+            topBar = TopBarAppearance(showTime = false, showDate = false),
+        )
+        for (option in options - conditional) assertTrue("$option", option.appliesTo(nothingShown))
     }
 }

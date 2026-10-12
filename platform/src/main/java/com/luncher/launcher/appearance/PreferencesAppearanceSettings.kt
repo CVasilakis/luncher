@@ -71,6 +71,8 @@ class PreferencesAppearanceSettings(context: Context) : AppearanceSettings {
         AppearanceOption.CornerRadius -> "tile_corner_radius"
         AppearanceOption.ClockSide -> "clock_side"
         AppearanceOption.TimeSide -> "time_side"
+        AppearanceOption.ShowTime -> "show_time"
+        AppearanceOption.ShowDate -> "show_date"
     }
 
     private companion object {

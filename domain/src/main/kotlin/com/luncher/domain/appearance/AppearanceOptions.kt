@@ -23,7 +23,12 @@ fun appearanceOptions(): AppearanceOptions =
             ),
             AppearanceGroup(
                 AppearanceTopic.TOP_BAR,
-                listOf(AppearanceOption.ClockSide, AppearanceOption.TimeSide),
+                listOf(
+                    AppearanceOption.ShowTime,
+                    AppearanceOption.ShowDate,
+                    AppearanceOption.ClockSide,
+                    AppearanceOption.TimeSide,
+                ),
             ),
         ),
     )

@@ -29,7 +29,7 @@ class PreferencesAppearanceSettingsTest {
     private val changed = Appearance(
         TileGeometry(placement = TilePlacement.BOTTOM_RIGHT, fullBottomRow = true),
         TileStyle(Corners.Radius(12)),
-        TopBarAppearance(clockSide = Side.RIGHT, timeSide = Side.RIGHT),
+        TopBarAppearance(clockSide = Side.RIGHT, timeSide = Side.RIGHT, showTime = true, showDate = false),
     )
 
     // The stored format, written out: a TV keeps it across updates, so a change of it has to read
@@ -40,6 +40,8 @@ class PreferencesAppearanceSettingsTest {
         "tile_corner_radius" to "12",
         "clock_side" to "RIGHT",
         "time_side" to "RIGHT",
+        "show_time" to "true",
+        "show_date" to "false",
     )
 
     private fun store(values: Map<String, Any>) {
@@ -76,6 +78,14 @@ class PreferencesAppearanceSettingsTest {
         assertEquals(Corners.Pill, PreferencesAppearanceSettings(context).read().tileStyle.corners)
     }
 
+    // The time and the date could only show before there were options for them.
+    @Test
+    fun `stored before the time and the date could be hidden, shows both`() {
+        store(stored - "show_time" - "show_date")
+
+        assertEquals(changed.copy(topBar = changed.topBar.copy(showDate = true)), PreferencesAppearanceSettings(context).read())
+    }
+
     @Test
     fun `has the defaults before anything is written`() {
         assertEquals(Appearance(), PreferencesAppearanceSettings(context).read())
@@ -106,6 +116,7 @@ class PreferencesAppearanceSettingsTest {
             Triple("tile_corner_radius", "5", AppearanceOption.CornerRadius),
             Triple("clock_side", "right", AppearanceOption.ClockSide),   // names are exact
             Triple("time_side", "1", AppearanceOption.TimeSide),         // a position, never stored
+            Triple("show_date", "hidden", AppearanceOption.ShowDate),
         )
         for ((key, value, option) in unknown) {
             preferences.edit().clear().commit()
