@@ -40,12 +40,12 @@ sealed interface AppearanceOption<T> {
         override fun appliesTo(appearance: Appearance) = appearance.tileGeometry.placement.atBottom
     }
 
-    /** The tiles' corner radius, in dp. */
-    data object CornerRadius : AppearanceOption<Int> {
-        override val values: List<Int> = listOf(0, 4, 8, 12, 16)
-        override fun get(appearance: Appearance) = appearance.tileStyle.cornerRadiusDp
-        override fun set(appearance: Appearance, value: Int) =
-            appearance.copy(tileStyle = appearance.tileStyle.copy(cornerRadiusDp = value))
+    /** How round the tiles' corners are: radii in dp, then round ends. */
+    data object CornerRadius : AppearanceOption<Corners> {
+        override val values: List<Corners> = listOf(0, 4, 8, 12, 16, 24, 32).map { Corners.Radius(it) } + Corners.Pill
+        override fun get(appearance: Appearance) = appearance.tileStyle.corners
+        override fun set(appearance: Appearance, value: Corners) =
+            appearance.copy(tileStyle = appearance.tileStyle.copy(corners = value))
     }
 
     /** The side of the top bar the clock is on. */

@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import com.luncher.domain.appearance.Appearance
 import com.luncher.domain.appearance.AppearanceOption
+import com.luncher.domain.appearance.Corners
 import com.luncher.domain.appearance.Side
 import com.luncher.domain.appearance.TileGeometry
 import com.luncher.domain.appearance.TilePlacement
@@ -27,7 +28,7 @@ class PreferencesAppearanceSettingsTest {
 
     private val changed = Appearance(
         TileGeometry(placement = TilePlacement.BOTTOM_RIGHT, fullBottomRow = true),
-        TileStyle(cornerRadiusDp = 12),
+        TileStyle(Corners.Radius(12)),
         TopBarAppearance(clockSide = Side.RIGHT, timeSide = Side.RIGHT),
     )
 
@@ -65,6 +66,14 @@ class PreferencesAppearanceSettingsTest {
         PreferencesAppearanceSettings(context).write(changed)
 
         assertEquals(stored, preferences.all)
+    }
+
+    @Test
+    fun `stores round ends by name`() {
+        PreferencesAppearanceSettings(context).write(AppearanceOption.CornerRadius.set(changed, Corners.Pill))
+
+        assertEquals("pill", preferences.all["tile_corner_radius"])
+        assertEquals(Corners.Pill, PreferencesAppearanceSettings(context).read().tileStyle.corners)
     }
 
     @Test
@@ -110,7 +119,7 @@ class PreferencesAppearanceSettingsTest {
     fun `a value stored as another type reads as that option's default`() {
         store(stored - "tile_corner_radius" + ("tile_corner_radius" to 12))
 
-        assertEquals(AppearanceOption.CornerRadius.set(changed, 0), PreferencesAppearanceSettings(context).read())
+        assertEquals(AppearanceOption.CornerRadius.set(changed, Corners.Radius(8)), PreferencesAppearanceSettings(context).read())
     }
 
     @Test

@@ -22,7 +22,8 @@ feature/settings/
     │   │   ├── SettingsActivity.kt   the settings panel: lists the domain's settingsMenu, opens entries
     │   │   ├── HideAppsActivity.kt   the Hide apps list: every app by name; OK hides or shows one
     │   │   ├── AppearanceActivity.kt the appearance editor: the options, Left and Right step them
-    │   │   └── AppearancePreviewView.kt  the editor's preview: an illustration of the home screen
+    │   │   ├── AppearancePreviewView.kt  the editor's preview: an illustration of the home screen
+    │   │   └── AppearanceEditorLayout.kt the editor's columns: the options level with the title
     │   └── res/                  the panels' themes (Theme.Luncher.Settings, .Panel, .FullScreen), window and
     │                             focused entry, layouts, settings_* colors, dimensions and strings,
     │                             their translations in values-el/ and values-ar/ (docs/TRANSLATIONS.md)
@@ -102,8 +103,9 @@ from the screen's edges, still ending on half a row.
 ### Appearance
 
 Appearance (`AppearanceActivity`) is the editor of the home screen's
-[appearance](../../docs/ARCHITECTURE.md#appearance): full-screen, with its title right above a
-preview of the home screen at the left, and the options at the right. The options are in groups
+[appearance](../../docs/ARCHITECTURE.md#appearance): full-screen, with its large title right above a
+preview of the home screen at the left, the two centered in the height, and the options at the
+right, starting level with the title. The options are in groups
 (the tiles', the top bar's), each an entry of its own, closed at first: OK on one shows its options
 below it and closes the group that was open, so the list stays short; OK again closes it. Each
 option shows its value between arrows; Left and Right step it through its values, around from the

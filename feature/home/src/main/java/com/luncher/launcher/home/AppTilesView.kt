@@ -65,7 +65,7 @@ internal class AppTilesView(context: Context, attrs: AttributeSet?) : ViewGroup(
         set(value) {
             if (field == value) return
             field = value
-            paints.cornerRadius = value.cornerRadiusDp * pixelsPerDp
+            paints.corners = value.corners
             for (i in 0 until childCount) getChildAt(i).invalidate()
         }
 
@@ -239,7 +239,8 @@ internal class AppTilesView(context: Context, attrs: AttributeSet?) : ViewGroup(
             val inset = slotPaint.strokeWidth / 2
             val top = paddingTop + layout.top(empty).toFloat()
             slot.set(left + inset, top + inset, left + layout.tileWidth - inset, top + layout.tileHeight - inset)
-            canvas.drawRect(slot, slotPaint)
+            val radius = (paints.cornerRadius(layout.tileHeight) - inset).coerceAtLeast(0f)
+            canvas.drawRoundRect(slot, radius, radius, slotPaint)
 
             val width = (layout.tileWidth - 2 * captionPadding).coerceAtLeast(0)
             val text = caption?.takeIf { it.width == width } ?: captionLayout(width).also { caption = it }

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The appearance editor: the title and the preview at the start, the options at the end.
-     Mirrored in a right-to-left language, like the other settings panels; the preview's content
-     isn't. -->
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<!-- The appearance editor: the title and the preview at the start, the options at the end, level
+     with the title (AppearanceEditorLayout). Mirrored in a right-to-left language, like the other
+     settings panels; the preview's content isn't. -->
+<com.luncher.launcher.settings.AppearanceEditorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:baselineAligned="false"
@@ -28,7 +28,7 @@
             android:includeFontPadding="false"
             android:text="@string/settings_appearance"
             android:textColor="@color/text_primary"
-            android:textSize="@dimen/settings_title_text" />
+            android:textSize="@dimen/settings_appearance_title_text" />
 
         <!-- As tall as its 16:9 screen, at most the rest of the height. Not focusable: only the
              options are. -->
@@ -39,7 +39,8 @@
     </LinearLayout>
 
     <!-- AppearanceActivity sets the width: settings_appearance_options_width, or half the screen.
-         Scrolls when the options are taller than the screen; moving the focus scrolls it. The
+         Scrolls when the options are taller than the screen; moving the focus scrolls it. Its top
+         padding is where the title is, set by AppearanceEditorLayout. The
          overscan margin at the end only: the preview's margin is at the start (and lint's
          RtlSymmetry wants both sides set). -->
     <ScrollView
@@ -60,4 +61,4 @@
             android:layout_height="wrap_content"
             android:orientation="vertical" />
     </ScrollView>
-</LinearLayout>
+</com.luncher.launcher.settings.AppearanceEditorLayout>

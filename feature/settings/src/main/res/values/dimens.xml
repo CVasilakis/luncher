@@ -23,10 +23,12 @@
     <dimen name="settings_list_scrollbar_negative">-12dp</dimen>
     <!-- The appearance editor, full-screen: its content inside the TV's overscan margin, as the
          home screen's; the options at most this wide, and half the screen on a narrow one; an
-         option set in from its group; the gap around a value between its arrows. -->
+         option set in from its group; the gap around a value between its arrows; the title,
+         large in the room beside the options. -->
     <dimen name="settings_appearance_margin_horizontal">48dp</dimen>
     <dimen name="settings_appearance_margin_vertical">32dp</dimen>
     <dimen name="settings_appearance_options_width">440dp</dimen>
     <dimen name="settings_appearance_option_indent">32dp</dimen>
     <dimen name="settings_appearance_value_gap">8dp</dimen>
+    <dimen name="settings_appearance_title_text">40sp</dimen>
 </resources>

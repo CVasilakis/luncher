@@ -6,6 +6,7 @@ import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
 import com.luncher.domain.appearance.Appearance
+import com.luncher.domain.appearance.Corners
 import com.luncher.domain.appearance.FakeAppearanceSettings
 import com.luncher.domain.appearance.Side
 import com.luncher.domain.appearance.TileGeometry
@@ -103,7 +104,7 @@ class AppearanceActivityTest {
 
         activity.toggle("Tiles")
         assertEquals(
-            listOf("Tiles open", "Placement: Top left", "Full bottom row: Off", "Corner radius: 0 dp", "Top bar", "Reset to defaults"),
+            listOf("Tiles open", "Placement: Top left", "Full bottom row: Off", "Corner radius: 8 dp", "Top bar", "Reset to defaults"),
             activity.lines(),
         )
         assertTrue(activity.group("Tiles").isFocused)
@@ -122,7 +123,7 @@ class AppearanceActivityTest {
     fun `shows the stored values`() {
         settings.appearance = Appearance(
             TileGeometry(placement = TilePlacement.BOTTOM_RIGHT, fullBottomRow = true),
-            TileStyle(cornerRadiusDp = 12),
+            TileStyle(Corners.Radius(12)),
             TopBarAppearance(clockSide = Side.RIGHT, timeSide = Side.RIGHT),
         )
 
@@ -216,7 +217,7 @@ class AppearanceActivityTest {
 
     @Test
     fun `OK on the reset entry puts every option back to its default, and stores it`() {
-        settings.appearance = Appearance(TileGeometry(placement = TilePlacement.BOTTOM_LEFT), TileStyle(cornerRadiusDp = 8))
+        settings.appearance = Appearance(TileGeometry(placement = TilePlacement.BOTTOM_LEFT), TileStyle(Corners.Pill))
         val activity = start()
         val reset = activity.children().last()
 
@@ -225,7 +226,7 @@ class AppearanceActivityTest {
 
         assertEquals(Appearance(), settings.appearance)
         assertEquals("Top left", activity.value("Placement"))
-        assertEquals("0 dp", activity.value("Corner radius"))
+        assertEquals("8 dp", activity.value("Corner radius"))
     }
 
     @Test
@@ -238,6 +239,22 @@ class AppearanceActivityTest {
         val gap = activity.resources.getDimensionPixelSize(R.dimen.settings_title_gap)
         assertEquals(title.bottom + gap, preview.top)
         assertFalse(preview.isFocusable)
+    }
+
+    @Test
+    fun `the options start level with the title`() {
+        val activity = start()
+
+        val title = bounds(activity.findViewById(R.id.settings_appearance_title))
+        val first = bounds(activity.group("Tiles"))
+        assertEquals(title.centerY(), first.centerY(), 1f)
+    }
+
+    @Test
+    fun `the corner radius's last value is a pill`() {
+        settings.appearance = Appearance(tileStyle = TileStyle(Corners.Pill))
+
+        assertEquals("Pill", start().value("Corner radius"))
     }
 
     // A TV switched from 1080p to 720p (HDMI), or a new language, recreates the editor.

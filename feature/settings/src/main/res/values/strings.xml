@@ -30,6 +30,9 @@
     <string name="settings_appearance_corner_radius">Corner radius</string>
     <!-- Its values: the radius in dp, the unit of size Android uses, 0 for square corners. -->
     <string name="settings_appearance_radius_dp"><xliff:g id="radius" example="8">%1$d</xliff:g> dp</string>
+    <!-- Its last value: the tiles' ends fully round, half circles, their top and bottom straight,
+         like a pill or a capsule. -->
+    <string name="settings_appearance_pill">Pill</string>
     <!-- An option: which side of the top bar the clock is on; the settings gear goes on the other. -->
     <string name="settings_appearance_clock_side">Clock</string>
     <!-- An option: on which side of the date the time is. -->

@@ -84,7 +84,7 @@ internal class AppTileView(
     }
 
     override fun onDraw(canvas: Canvas) {
-        val radius = paints.cornerRadius
+        val radius = paints.cornerRadius(height)
         val image = image
         if (image != null) {
             if (radius == 0f) {

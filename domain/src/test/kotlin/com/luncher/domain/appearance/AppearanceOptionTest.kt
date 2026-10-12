@@ -26,16 +26,16 @@ class AppearanceOptionTest {
     fun `the options read and change their part of the appearance`() {
         val appearance = Appearance(
             TileGeometry(placement = TilePlacement.BOTTOM_RIGHT, fullBottomRow = true),
-            TileStyle(cornerRadiusDp = 8),
+            TileStyle(Corners.Radius(8)),
             TopBarAppearance(clockSide = Side.RIGHT, timeSide = Side.RIGHT),
         )
 
         assertEquals(TilePlacement.BOTTOM_RIGHT, AppearanceOption.Placement.get(appearance))
         assertEquals(true, AppearanceOption.FullBottomRow.get(appearance))
-        assertEquals(8, AppearanceOption.CornerRadius.get(appearance))
+        assertEquals(Corners.Radius(8), AppearanceOption.CornerRadius.get(appearance))
         assertEquals(Side.RIGHT, AppearanceOption.ClockSide.get(appearance))
         assertEquals(Side.RIGHT, AppearanceOption.TimeSide.get(appearance))
-        assertEquals(TileStyle(cornerRadiusDp = 12), AppearanceOption.CornerRadius.set(appearance, 12).tileStyle)
+        assertEquals(TileStyle(Corners.Radius(12)), AppearanceOption.CornerRadius.set(appearance, Corners.Radius(12)).tileStyle)
         assertEquals(TileGeometry(placement = TilePlacement.TOP_LEFT, fullBottomRow = true), AppearanceOption.Placement.set(appearance, TilePlacement.TOP_LEFT).tileGeometry)
         assertEquals(TopBarAppearance(clockSide = Side.LEFT, timeSide = Side.RIGHT), AppearanceOption.ClockSide.set(appearance, Side.LEFT).topBar)
     }
@@ -46,7 +46,7 @@ class AppearanceOptionTest {
         for (option in options) assertTrue("$option", option.default in option.values)
         assertEquals(TilePlacement.TOP_LEFT, AppearanceOption.Placement.default)
         assertEquals(false, AppearanceOption.FullBottomRow.default)
-        assertEquals(0, AppearanceOption.CornerRadius.default)
+        assertEquals(Corners.Radius(8), AppearanceOption.CornerRadius.default)
         assertEquals(Side.LEFT, AppearanceOption.ClockSide.default)
         assertEquals(Side.LEFT, AppearanceOption.TimeSide.default)
     }
@@ -60,8 +60,11 @@ class AppearanceOptionTest {
     }
 
     @Test
-    fun `the corner radius steps from square to 16 dp`() {
-        assertEquals(listOf(0, 4, 8, 12, 16), AppearanceOption.CornerRadius.values)
+    fun `the corner radius steps from square to round ends`() {
+        assertEquals(
+            listOf(0, 4, 8, 12, 16, 24, 32).map { Corners.Radius(it) } + Corners.Pill,
+            AppearanceOption.CornerRadius.values,
+        )
     }
 
     @Test
@@ -69,18 +72,18 @@ class AppearanceOptionTest {
         val radius = AppearanceOption.CornerRadius
 
         val next = radius.step(Appearance(), forward = true)
-        assertEquals(4, radius.get(next))
-        assertEquals(0, radius.get(radius.step(next, forward = false)))
+        assertEquals(Corners.Radius(12), radius.get(next))
+        assertEquals(Corners.Radius(8), radius.get(radius.step(next, forward = false)))
     }
 
     @Test
     fun `wraps around at the first and the last value`() {
         val radius = AppearanceOption.CornerRadius
-        val first = Appearance()
-        val last = radius.set(first, 16)
+        val first = radius.set(Appearance(), Corners.Radius(0))
+        val last = radius.set(first, Corners.Pill)
 
-        assertEquals(16, radius.get(radius.step(first, forward = false)))
-        assertEquals(0, radius.get(radius.step(last, forward = true)))
+        assertEquals(Corners.Pill, radius.get(radius.step(first, forward = false)))
+        assertEquals(Corners.Radius(0), radius.get(radius.step(last, forward = true)))
     }
 
     @Test
@@ -105,16 +108,16 @@ class AppearanceOptionTest {
     // An appearance made in code with a value the option doesn't offer: the next step goes back to the default.
     @Test
     fun `steps from a value it doesn't offer to the default`() {
-        val odd = Appearance(tileStyle = TileStyle(cornerRadiusDp = 5))
+        val odd = Appearance(tileStyle = TileStyle(Corners.Radius(5)))
 
-        assertEquals(0, AppearanceOption.CornerRadius.get(AppearanceOption.CornerRadius.step(odd, forward = true)))
+        assertEquals(Corners.Radius(8), AppearanceOption.CornerRadius.get(AppearanceOption.CornerRadius.step(odd, forward = true)))
     }
 
     @Test
     fun `a value it doesn't offer falls back to its default`() {
-        assertEquals(0, AppearanceOption.CornerRadius.valueOrDefault(5))
-        assertEquals(0, AppearanceOption.CornerRadius.valueOrDefault(null))
-        assertEquals(12, AppearanceOption.CornerRadius.valueOrDefault(12))
+        assertEquals(Corners.Radius(8), AppearanceOption.CornerRadius.valueOrDefault(Corners.Radius(5)))
+        assertEquals(Corners.Radius(8), AppearanceOption.CornerRadius.valueOrDefault(null))
+        assertEquals(Corners.Radius(12), AppearanceOption.CornerRadius.valueOrDefault(Corners.Radius(12)))
         assertEquals(TilePlacement.TOP_LEFT, AppearanceOption.Placement.valueOrDefault(null))
         assertEquals(Side.RIGHT, AppearanceOption.ClockSide.valueOrDefault(Side.RIGHT))
     }

@@ -2,12 +2,14 @@ package com.luncher.launcher.home
 
 import android.content.Context
 import android.graphics.Paint
+import com.luncher.domain.appearance.Corners
+import com.luncher.domain.appearance.TileStyle
 import com.luncher.launcher.ui.color
 import com.luncher.launcher.ui.R as UiR
 
 /**
  * What every tile draws with besides its own image: the focus frame, the held frame, the dimming
- * of a hidden app, and the corner radius from the home screen's [com.luncher.domain.appearance.TileStyle].
+ * of a hidden app, and the corners from the home screen's [TileStyle].
  * [AppTilesView] holds the one set its tiles share, so a style change updates it once and redraws,
  * without touching each tile's own state.
  */
@@ -22,8 +24,13 @@ internal class TilePaints(context: Context) {
     /** Draws a hidden app's image, dimmed. */
     val dim = Paint().apply { alpha = HIDDEN_ALPHA }
 
-    /** The radius of the tiles' corners, in pixels; 0 draws them square. */
-    var cornerRadius = 0f
+    /** The tiles' corners, from the home screen's style. */
+    var corners: Corners = TileStyle().corners
+
+    private val pixelsPerDp = context.resources.displayMetrics.density
+
+    /** The radius of the corners of a tile [tileHeight] pixels high; 0 draws it square. */
+    fun cornerRadius(tileHeight: Int): Float = corners.pixels(tileHeight, pixelsPerDp)
 
     private fun frame(color: Int, context: Context) = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE

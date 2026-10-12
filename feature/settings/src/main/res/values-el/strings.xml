@@ -16,6 +16,7 @@
     <string name="settings_appearance_full_bottom_row">Γεμάτη κάτω σειρά</string>
     <string name="settings_appearance_corner_radius">Στρογγύλεμα γωνιών</string>
     <string name="settings_appearance_radius_dp"><xliff:g id="radius" example="8">%1$d</xliff:g> dp</string>
+    <string name="settings_appearance_pill">Κάψουλα</string>
     <string name="settings_appearance_clock_side">Ρολόι</string>
     <string name="settings_appearance_time_side">Ώρα δίπλα στην ημερομηνία</string>
     <string name="settings_appearance_left">Αριστερά</string>

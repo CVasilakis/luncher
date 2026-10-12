@@ -4,12 +4,14 @@ import android.content.Context
 import com.luncher.domain.appearance.Appearance
 import com.luncher.domain.appearance.AppearanceOption
 import com.luncher.domain.appearance.AppearanceSettings
+import com.luncher.domain.appearance.Corners
 import com.luncher.domain.appearance.appearanceOptions
 import com.luncher.domain.appearance.valueOrDefault
 
 /**
  * [AppearanceSettings] in SharedPreferences: one string per option of the catalog, under the key
- * [key] assigns it; a choice by its name, never its position, a number in digits. A stored value
+ * [key] assigns it; a choice by its name, never its position, a number in digits (a corner radius
+ * too, in dp, or "pill"). A stored value
  * that isn't one of the option's values (an older or newer version's, or of another type) reads
  * as that option's default, and changes nothing else. An option never written has no key.
  *
@@ -57,6 +59,8 @@ class PreferencesAppearanceSettings(context: Context) : AppearanceSettings {
     private fun encode(value: Any?): String = when (value) {
         is Enum<*> -> value.name
         is Int, is Boolean -> value.toString()
+        is Corners.Radius -> value.dp.toString()
+        Corners.Pill -> "pill"
         else -> error("no stored form for $value")
     }
 

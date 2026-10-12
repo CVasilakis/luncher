@@ -4,6 +4,7 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.view.View
 import com.luncher.domain.appearance.Appearance
+import com.luncher.domain.appearance.Corners
 import com.luncher.domain.appearance.TileGeometry
 import com.luncher.domain.appearance.TilePlacement
 import com.luncher.domain.appearance.TileStyle
@@ -61,7 +62,7 @@ class AppearancePreviewViewTest {
     // Rule 5 (docs/ARCHITECTURE.md): drawing allocates nothing.
     @Test
     fun `drawing allocates nothing`() {
-        preview.appearance = Appearance(TileGeometry(placement = TilePlacement.BOTTOM_RIGHT), TileStyle(cornerRadiusDp = 12))
+        preview.appearance = Appearance(TileGeometry(placement = TilePlacement.BOTTOM_RIGHT), TileStyle(Corners.Radius(12)))
 
         val perDraw = allocated { preview.draw(canvas) }
 
@@ -73,7 +74,7 @@ class AppearancePreviewViewTest {
     // read gives, makes nothing anew.
     @Test
     fun `an equal appearance makes nothing anew`() {
-        val appearance = Appearance(TileGeometry(placement = TilePlacement.BOTTOM_RIGHT), TileStyle(cornerRadiusDp = 12))
+        val appearance = Appearance(TileGeometry(placement = TilePlacement.BOTTOM_RIGHT), TileStyle(Corners.Radius(12)))
         val equal = appearance.copy()
         preview.appearance = appearance
 
@@ -87,7 +88,7 @@ class AppearancePreviewViewTest {
     @Test
     fun `a new tile style lays nothing out again`() {
         val square = Appearance()
-        val round = Appearance(tileStyle = TileStyle(cornerRadiusDp = 12))
+        val round = Appearance(tileStyle = TileStyle(Corners.Radius(12)))
         val bottom = Appearance(TileGeometry(placement = TilePlacement.BOTTOM_LEFT))
 
         val perStyle = allocated { preview.appearance = if (preview.appearance == square) round else square }

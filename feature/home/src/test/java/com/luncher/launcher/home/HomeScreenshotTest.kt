@@ -4,6 +4,7 @@ import android.view.KeyEvent
 import android.view.View
 import com.github.takahirom.roborazzi.captureRoboImage
 import com.luncher.domain.appearance.Appearance
+import com.luncher.domain.appearance.Corners
 import com.luncher.domain.appearance.FakeAppearanceSettings
 import com.luncher.domain.appearance.Side
 import com.luncher.domain.appearance.TileGeometry
@@ -86,7 +87,7 @@ class HomeScreenshotTest {
     fun homeScreenWithAnAppearance() {
         val appearance = Appearance(
             TileGeometry(placement = TilePlacement.BOTTOM_RIGHT, fullBottomRow = true),
-            TileStyle(cornerRadiusDp = 12),
+            TileStyle(Corners.Radius(12)),
             TopBarAppearance(clockSide = Side.RIGHT, timeSide = Side.RIGHT),
         )
         start(appearance = appearance).window.decorView.captureRoboImage("src/test/screenshots/home/home_screen_appearance.png")

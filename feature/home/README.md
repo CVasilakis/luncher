@@ -25,7 +25,7 @@ feature/home/
     │   │   ├── ClockView.kt      the top bar's time and date, following the Clock port
     │   │   ├── AppTilesView.kt   places the tiles where the domain's TileLayout says; scrolls
     │   │   ├── AppTileView.kt    one app: its image, focus frame and zoom; held or hidden while arranging
-    │   │   ├── TilePaints.kt     what every tile draws with: frames, dimming, the corner radius
+    │   │   ├── TilePaints.kt     what every tile draws with: frames, dimming, the corners
     │   │   └── ArrangeMode.kt    arrange mode: keys to the domain's ArrangeSession, the shelf, the top bar's title and hint
     │   └── res/                  the focused tile's zoom (animator/), the settings gear and its focus
     │                             disc, home_activity.xml, home_* dimensions and strings, and their
@@ -71,7 +71,7 @@ one job, so a new arrangement, image source or top bar item changes one of them:
 | Part | Job |
 |---|---|
 | `homeApps` (`:domain`) | which apps show, in which order, and which are hidden: the installed apps matched to the stored `AppArrangement` ([Hidden apps](../settings/README.md#hidden-apps)) |
-| `Appearance` (`:domain`) | how the home screen looks, as the user set it in the [appearance editor](../settings/README.md#appearance), in parts: `TileGeometry` (the tiles' width, the gap between them, the corner they gather in), `TileStyle` (their corner radius), `TopBarAppearance` (the clock's side, the time's side of the date). [Below](#appearance): how each part is applied. |
+| `Appearance` (`:domain`) | how the home screen looks, as the user set it in the [appearance editor](../settings/README.md#appearance), in parts: `TileGeometry` (the tiles' width, the gap between them, the corner they gather in), `TileStyle` (their corners: a radius, 8 dp by default, or round ends), `TopBarAppearance` (the clock's side, the time's side of the date). [Below](#appearance): how each part is applied. |
 | `AppearanceSettings` (`:domain`), `PreferencesAppearanceSettings` (`:platform`) | the stored appearance, and when it changes |
 | `TileLayout`, `TileLayouts` (`:domain`) | where each tile goes and how big it is; `TileGrid` is the only one so far, with as many columns as fit tiles of about the geometry's width (`TileGrid.columnsFor`), so tiles keep their size next to the top bar's text on any screen. `TileLayouts` is the only place that picks the arrangement, for the tiles' places and for moves in arrange mode alike. |
 | `AppTilesView` | lays tiles out where the `TileLayout` says, and scrolls to the focused one; holds the `TilePaints` its tiles share |
@@ -142,8 +142,10 @@ keep the apps' order, and a row that isn't full lines up on the placement's side
 the rows end at the bottom of the space if they fit it, and otherwise start at the top and scroll
 as at the top. With a full bottom row, the short row is the first rather than the last.
 
-With rounded corners, each tile fills a rounded rectangle with its bitmap through a shader made
-with the bitmap, when its size changes; the focus and held frames follow the same corners. A new
+With rounded corners (the default), each tile fills a rounded rectangle with its bitmap through a
+shader made with the bitmap, when its size changes; the focus and held frames, and the shelf's
+empty slot, follow the same corners. The radius in pixels is the domain's (`Corners`): at most
+half the tile's height, which is what round ends are, so they're half circles on any screen. A new
 radius draws the same bitmaps, so no banner is drawn again. Drawing allocates nothing, with or
 without rounded corners.
 

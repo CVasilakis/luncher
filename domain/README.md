@@ -27,7 +27,8 @@ domain/src/
 │   │   ├── Appearance.kt        model: how the home screen looks, as far as the user can change it, in parts (docs/ARCHITECTURE.md#appearance)
 │   │   ├── TileGeometry.kt      model: where tiles go and how big they are, in dp; the corner they gather in
 │   │   ├── TilePlacement.kt     model: the four corners the tiles can gather in
-│   │   ├── TileStyle.kt         model: how each tile is drawn (its corner radius)
+│   │   ├── TileStyle.kt         model: how each tile is drawn (its corners)
+│   │   ├── Corners.kt           model and rule: a corner radius or round ends, in pixels for a tile's height
 │   │   ├── TopBarAppearance.kt  model: the clock's side of the top bar, the time's side of the date
 │   │   ├── Side.kt              model: left or right, the screen's, in every language
 │   │   ├── AppearanceOption.kt  models and rules: each option the user can change, its values, stepping through them, around

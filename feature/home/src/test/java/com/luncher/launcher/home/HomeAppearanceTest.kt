@@ -5,6 +5,7 @@ import android.graphics.Canvas
 import android.os.Looper
 import android.view.View
 import com.luncher.domain.appearance.Appearance
+import com.luncher.domain.appearance.Corners
 import com.luncher.domain.appearance.FakeAppearanceSettings
 import com.luncher.domain.appearance.Side
 import com.luncher.domain.appearance.TileGeometry
@@ -74,12 +75,14 @@ class HomeAppearanceTest {
     }
 
     @Test
-    fun `rounds the tiles' corners as the appearance says`() {
-        appearance.appearance = Appearance(tileStyle = TileStyle(cornerRadiusDp = 8))
+    fun `rounds the tiles' ends into half circles as the appearance says`() {
+        appearance.appearance = Appearance(tileStyle = TileStyle(Corners.Pill))
 
         val activity = start().get()
 
-        assertEquals(8 * activity.resources.displayMetrics.density, activity.grid().paints.cornerRadius)
+        val tile = activity.tiles().first()
+        assertEquals(Corners.Pill, activity.grid().paints.corners)
+        assertEquals(tile.height / 2f, activity.grid().paints.cornerRadius(tile.height))
     }
 
     @Test
@@ -128,11 +131,11 @@ class HomeAppearanceTest {
         val activity = start().get()
         idle()
 
-        appearance.write(Appearance(tileStyle = TileStyle(cornerRadiusDp = 12)))
+        appearance.write(Appearance(tileStyle = TileStyle(Corners.Radius(12))))
 
         assertFalse(activity.grid().isLayoutRequested)
         assertFalse(activity.topBar().isLayoutRequested)
-        assertEquals(12 * activity.resources.displayMetrics.density, activity.grid().paints.cornerRadius)
+        assertEquals(Corners.Radius(12), activity.grid().paints.corners)
     }
 
     // A screen that changes the appearance covers the home screen whole, so it changes once, after.
@@ -143,12 +146,12 @@ class HomeAppearanceTest {
 
         controller.pause().stop()
         assertEquals(0, appearance.listenerCount)
-        appearance.write(Appearance(tileStyle = TileStyle(cornerRadiusDp = 4)))
-        assertEquals(0f, controller.get().grid().paints.cornerRadius)
+        appearance.write(Appearance(tileStyle = TileStyle(Corners.Radius(4))))
+        assertEquals(Corners.Radius(8), controller.get().grid().paints.corners)   // the default still
 
         controller.restart().resume()   // restart() starts it too, as Android does
         assertEquals(1, appearance.listenerCount)
-        assertEquals(4 * controller.get().resources.displayMetrics.density, controller.get().grid().paints.cornerRadius)
+        assertEquals(Corners.Radius(4), controller.get().grid().paints.corners)
     }
 
     @Test
@@ -167,7 +170,7 @@ class HomeAppearanceTest {
     fun `drawing the tiles allocates nothing after a new tile style`() {
         val activity = start().get()
         idle()
-        appearance.write(Appearance(tileStyle = TileStyle(cornerRadiusDp = 12)))
+        appearance.write(Appearance(tileStyle = TileStyle(Corners.Radius(12))))
         val grid = activity.grid()
         val canvas = Canvas(Bitmap.createBitmap(grid.width, grid.height, Bitmap.Config.ARGB_8888))
         val threads = ManagementFactory.getThreadMXBean() as com.sun.management.ThreadMXBean

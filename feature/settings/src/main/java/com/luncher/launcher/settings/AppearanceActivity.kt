@@ -9,6 +9,7 @@ import android.widget.TextView
 import com.luncher.domain.appearance.Appearance
 import com.luncher.domain.appearance.AppearanceOption
 import com.luncher.domain.appearance.AppearanceTopic
+import com.luncher.domain.appearance.Corners
 import com.luncher.domain.appearance.Side
 import com.luncher.domain.appearance.TilePlacement
 import com.luncher.domain.appearance.appearanceOptions
@@ -105,8 +106,10 @@ class AppearanceActivity : Activity() {
     private fun valueLabel(option: AppearanceOption<*>, appearance: Appearance): String = when (option) {
         AppearanceOption.Placement -> getString(placement(AppearanceOption.Placement.get(appearance)))
         AppearanceOption.FullBottomRow -> getString(onOff(AppearanceOption.FullBottomRow.get(appearance)))
-        AppearanceOption.CornerRadius ->
-            getString(R.string.settings_appearance_radius_dp, AppearanceOption.CornerRadius.get(appearance))
+        AppearanceOption.CornerRadius -> when (val corners = AppearanceOption.CornerRadius.get(appearance)) {
+            is Corners.Radius -> getString(R.string.settings_appearance_radius_dp, corners.dp)
+            Corners.Pill -> getString(R.string.settings_appearance_pill)
+        }
         AppearanceOption.ClockSide -> getString(side(AppearanceOption.ClockSide.get(appearance)))
         AppearanceOption.TimeSide -> getString(side(AppearanceOption.TimeSide.get(appearance)))
     }

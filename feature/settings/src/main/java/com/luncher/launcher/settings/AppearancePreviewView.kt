@@ -35,7 +35,8 @@ internal class AppearancePreviewView(context: Context, attrs: AttributeSet?) : V
             if (old == value) return
             field = value
             if (value.tileGeometry != old.tileGeometry) placeTiles()
-            if (value.tileStyle != old.tileStyle) styleTiles()
+            // The radius depends on the tiles' height too, at most half of it.
+            if (value.tileStyle != old.tileStyle || value.tileGeometry != old.tileGeometry) styleTiles()
             if (value.topBar != old.topBar) placeBar()
             invalidate()
         }
@@ -44,6 +45,7 @@ internal class AppearancePreviewView(context: Context, attrs: AttributeSet?) : V
     private var scale = 0f
     private val screen = RectF()
     private val tiles = Array(TILES) { RectF() }
+    private var tileHeight = 0
     private var tileRadius = 0f
     private val time = RectF()
     private val date = RectF()
@@ -99,6 +101,7 @@ internal class AppearancePreviewView(context: Context, attrs: AttributeSet?) : V
         if (scale == 0f) return
         val grid = TileLayouts(appearance.tileGeometry, scale)
             .tiles(TILES, (TILES_WIDTH * scale).roundToInt(), (TILES_HEIGHT * scale).roundToInt())
+        tileHeight = grid.tileHeight
         val left = screen.left + PADDING_HORIZONTAL * scale
         val top = screen.top + TILES_TOP * scale
         for (i in tiles.indices) {
@@ -109,7 +112,7 @@ internal class AppearancePreviewView(context: Context, attrs: AttributeSet?) : V
     }
 
     private fun styleTiles() {
-        tileRadius = appearance.tileStyle.cornerRadiusDp * scale
+        tileRadius = appearance.tileStyle.corners.pixels(tileHeight, scale)
     }
 
     /** Each item of the top bar as a block of its size, at the edge the domain's layout puts it. */

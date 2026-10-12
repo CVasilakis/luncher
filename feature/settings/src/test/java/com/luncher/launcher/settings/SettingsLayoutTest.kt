@@ -132,6 +132,8 @@ class SettingsLayoutTest(private val screen: TvScreen) {
         val groups = children.filter { it.findViewById<View>(R.id.settings_group_title) != null }
 
         assertWhole(screen, title)
+        val first = bounds(groups.first())
+        assertEquals("first group's middle on $screen", bounds(title).centerY(), first.centerY(), 1f)
         assertApart(screen, "title and preview", bounds(title), bounds(preview))
         assertApart(screen, "preview and options", bounds(preview), bounds(activity.findViewById(R.id.settings_appearance_scroll)))
         assertTrue("preview ${preview.width} px wide on $screen", preview.width >= metrics.widthPixels / 3)

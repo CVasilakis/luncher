@@ -7,6 +7,7 @@ import android.widget.ListView
 import android.widget.TextView
 import com.github.takahirom.roborazzi.captureRoboImage
 import com.luncher.domain.appearance.Appearance
+import com.luncher.domain.appearance.Corners
 import com.luncher.domain.appearance.FakeAppearanceSettings
 import com.luncher.domain.appearance.Side
 import com.luncher.domain.appearance.TileGeometry
@@ -70,7 +71,7 @@ class SettingsScreenshotTest {
         val activity = appearanceEditor(
             Appearance(
                 TileGeometry(placement = TilePlacement.BOTTOM_RIGHT, fullBottomRow = true),
-                TileStyle(cornerRadiusDp = 16),
+                TileStyle(Corners.Radius(16)),
                 TopBarAppearance(clockSide = Side.RIGHT, timeSide = Side.RIGHT),
             ),
             open = "Tiles",
