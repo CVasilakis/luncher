@@ -14,11 +14,13 @@ data class TileGeometry(
     val tileWidthDp: Int = 154,
     /** Between tiles; more than a tile grows when it zooms, so neighbors never overlap. */
     val gapDp: Int = 24,
-    /** The corner the tiles gather in. */
-    val placement: TilePlacement = TilePlacement.TOP_LEFT,
+    /** Where the rows go in the height. */
+    val verticalAlignment: VerticalAlignment = VerticalAlignment.TOP,
+    /** Where a row that isn't full goes in the width. */
+    val horizontalAlignment: HorizontalAlignment = HorizontalAlignment.LEFT,
     /**
-     * With the tiles at the bottom, the row that isn't full is the first one rather than the last,
-     * so the bottom row is always full. Nothing changes with the tiles at the top.
+     * With the rows centered or at the bottom, the row that isn't full is the first one rather than
+     * the last, so the bottom row is always full. Nothing changes with the rows at the top.
      */
     val fullBottomRow: Boolean = false,
 )

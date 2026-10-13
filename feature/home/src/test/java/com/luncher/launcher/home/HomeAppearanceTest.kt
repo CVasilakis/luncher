@@ -7,17 +7,19 @@ import android.view.View
 import com.luncher.domain.appearance.Appearance
 import com.luncher.domain.appearance.Corners
 import com.luncher.domain.appearance.FakeAppearanceSettings
+import com.luncher.domain.appearance.HorizontalAlignment
 import com.luncher.domain.appearance.Side
 import com.luncher.domain.appearance.TileGeometry
-import com.luncher.domain.appearance.TilePlacement
 import com.luncher.domain.appearance.TileStyle
 import com.luncher.domain.appearance.TopBarAppearance
+import com.luncher.domain.appearance.VerticalAlignment
 import com.luncher.domain.appearance.appearanceChanges
 import com.luncher.domain.apps.FakeInstalledApps
 import com.luncher.domain.apps.FakeInstalledApps.Companion.app
 import com.luncher.launcher.testing.TV_1080P
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -64,7 +66,7 @@ class HomeAppearanceTest {
 
     @Test
     fun `places the tiles where the appearance says`() {
-        appearance.appearance = Appearance(TileGeometry(placement = TilePlacement.BOTTOM_RIGHT))
+        appearance.appearance = Appearance(TileGeometry(verticalAlignment = VerticalAlignment.BOTTOM, horizontalAlignment = HorizontalAlignment.RIGHT))
 
         val activity = start().get()
 
@@ -72,6 +74,67 @@ class HomeAppearanceTest {
         val tiles = activity.tiles()
         assertEquals(grid.height - grid.paddingBottom, tiles.last().bottom)   // at the bottom
         assertEquals(tiles[4].left, tiles[6].left)                            // the short row at the right
+    }
+
+    @Test
+    fun `centers the tiles as the appearance says`() {
+        appearance.appearance = Appearance(TileGeometry(verticalAlignment = VerticalAlignment.CENTER, horizontalAlignment = HorizontalAlignment.CENTER))
+
+        val activity = start().get()
+
+        val grid = activity.grid()
+        val tiles = activity.tiles()
+        val above = tiles.first().top - grid.paddingTop
+        val below = grid.height - grid.paddingBottom - tiles.last().bottom
+        assertTrue("$above above, $below below", above - below in 0..1)
+        val leftOfRow = tiles[5].left - tiles[0].left
+        val rightOfRow = tiles[4].right - tiles[6].right
+        assertTrue("$leftOfRow left of the short row, $rightOfRow right of it", leftOfRow - rightOfRow in -1..1)
+    }
+
+    // Two tiles centered under five are half a column off: Up and Down take the nearest, the left
+    // one of two as near, and the opposite key goes back where the focus came from.
+    @Test
+    fun `with a centered row, Up and Down go where the domain's rule says`() {
+        appearance.appearance = Appearance(TileGeometry(horizontalAlignment = HorizontalAlignment.CENTER))
+        val activity = start().get()
+        val tiles = activity.tiles()
+
+        assertSame(tiles[5], tiles[2].focusSearch(View.FOCUS_DOWN))   // 5 and 6 as near
+        assertSame(tiles[6], tiles[4].focusSearch(View.FOCUS_DOWN))
+        assertSame(tiles[4], tiles[6].focusSearch(View.FOCUS_UP))     // back, not to 2, the nearest
+        assertSame(tiles[1], tiles[5].focusSearch(View.FOCUS_UP))     // 1 and 2 as near
+        assertSame(activity.findViewById<View>(R.id.home_settings), tiles[1].focusSearch(View.FOCUS_UP))   // Android's
+    }
+
+    // The full bottom row's last tile ends a pixel left of the settings entry, and the short row
+    // centered above it starts and ends between columns: Left and Right stay in the row.
+    @Test
+    fun `centered with a full bottom row, Left and Right stay in the row`() {
+        appearance.appearance = Appearance(
+            TileGeometry(
+                verticalAlignment = VerticalAlignment.CENTER,
+                horizontalAlignment = HorizontalAlignment.CENTER,
+                fullBottomRow = true,
+            ),
+        )
+        val tiles = start().get().tiles()   // two centered, then five
+
+        assertSame(tiles[6], tiles[6].focusSearch(View.FOCUS_RIGHT))   // not the settings entry
+        assertSame(tiles[2], tiles[2].focusSearch(View.FOCUS_LEFT))
+        assertSame(tiles[1], tiles[1].focusSearch(View.FOCUS_RIGHT))   // not down to the full row
+        assertSame(tiles[0], tiles[0].focusSearch(View.FOCUS_LEFT))
+        assertSame(tiles[1], tiles[0].focusSearch(View.FOCUS_RIGHT))
+    }
+
+    // The clock on the right puts the settings entry at the left, above the first tile.
+    @Test
+    fun `with the settings entry at the left, Left and Right on it stay in the top bar`() {
+        appearance.appearance = Appearance(topBar = TopBarAppearance(clockSide = Side.RIGHT))
+        val settings = start().get().findViewById<View>(R.id.home_settings)
+
+        assertSame(settings, settings.focusSearch(View.FOCUS_RIGHT))
+        assertSame(settings, settings.focusSearch(View.FOCUS_LEFT))
     }
 
     @Test

@@ -10,8 +10,9 @@ import com.luncher.domain.appearance.Appearance
 import com.luncher.domain.appearance.AppearanceOption
 import com.luncher.domain.appearance.AppearanceTopic
 import com.luncher.domain.appearance.Corners
+import com.luncher.domain.appearance.HorizontalAlignment
 import com.luncher.domain.appearance.Side
-import com.luncher.domain.appearance.TilePlacement
+import com.luncher.domain.appearance.VerticalAlignment
 import com.luncher.domain.appearance.appearanceOptions
 import com.luncher.domain.appearance.step
 
@@ -95,7 +96,8 @@ class AppearanceActivity : Activity() {
     }
 
     private fun label(option: AppearanceOption<*>): Int = when (option) {
-        AppearanceOption.Placement -> R.string.settings_appearance_placement
+        AppearanceOption.VerticalAlignment -> R.string.settings_appearance_vertical_alignment
+        AppearanceOption.HorizontalAlignment -> R.string.settings_appearance_horizontal_alignment
         AppearanceOption.FullBottomRow -> R.string.settings_appearance_full_bottom_row
         AppearanceOption.CornerRadius -> R.string.settings_appearance_corner_radius
         AppearanceOption.ShowTime -> R.string.settings_appearance_time
@@ -106,7 +108,8 @@ class AppearanceActivity : Activity() {
 
     /** What [option]'s value in [appearance] is called. */
     private fun valueLabel(option: AppearanceOption<*>, appearance: Appearance): String = when (option) {
-        AppearanceOption.Placement -> getString(placement(AppearanceOption.Placement.get(appearance)))
+        AppearanceOption.VerticalAlignment -> getString(vertical(AppearanceOption.VerticalAlignment.get(appearance)))
+        AppearanceOption.HorizontalAlignment -> getString(horizontal(AppearanceOption.HorizontalAlignment.get(appearance)))
         AppearanceOption.FullBottomRow -> getString(onOff(AppearanceOption.FullBottomRow.get(appearance)))
         AppearanceOption.CornerRadius -> when (val corners = AppearanceOption.CornerRadius.get(appearance)) {
             is Corners.Radius -> getString(R.string.settings_appearance_radius_dp, corners.dp)
@@ -118,11 +121,16 @@ class AppearanceActivity : Activity() {
         AppearanceOption.TimeSide -> getString(order(AppearanceOption.TimeSide.get(appearance)))
     }
 
-    private fun placement(placement: TilePlacement): Int = when (placement) {
-        TilePlacement.TOP_LEFT -> R.string.settings_appearance_top_left
-        TilePlacement.TOP_RIGHT -> R.string.settings_appearance_top_right
-        TilePlacement.BOTTOM_LEFT -> R.string.settings_appearance_bottom_left
-        TilePlacement.BOTTOM_RIGHT -> R.string.settings_appearance_bottom_right
+    private fun vertical(alignment: VerticalAlignment): Int = when (alignment) {
+        VerticalAlignment.TOP -> R.string.settings_appearance_top
+        VerticalAlignment.CENTER -> R.string.settings_appearance_center
+        VerticalAlignment.BOTTOM -> R.string.settings_appearance_bottom
+    }
+
+    private fun horizontal(alignment: HorizontalAlignment): Int = when (alignment) {
+        HorizontalAlignment.LEFT -> R.string.settings_appearance_left
+        HorizontalAlignment.CENTER -> R.string.settings_appearance_center
+        HorizontalAlignment.RIGHT -> R.string.settings_appearance_right
     }
 
     private fun onOff(on: Boolean): Int = if (on) R.string.settings_appearance_on else R.string.settings_appearance_off

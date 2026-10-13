@@ -110,7 +110,7 @@ right, starting level with the title. The options are in groups
 below it and closes the group that was open, so the list stays short; OK again closes it. Each
 option shows its value between arrows; Left and Right step it through its values, around from the
 last to the first, and each change is stored at once, the preview following. An option that
-changes nothing with the others as they are (a full bottom row with the tiles at the top; the
+changes nothing with the others as they are (a full bottom row with the rows at the top; the
 side with the time and the date hidden; their order with either hidden) is dimmed, and the focus
 passes it by. The last entry, Reset to defaults, puts every option back.
 Back returns to the settings panel; the home screen shows the result when it comes back.

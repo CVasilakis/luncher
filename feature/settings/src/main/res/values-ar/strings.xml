@@ -8,11 +8,11 @@
     <string name="settings_appearance">المظهر</string>
     <string name="settings_appearance_tiles">المربعات</string>
     <string name="settings_appearance_top_bar">الشريط العلوي</string>
-    <string name="settings_appearance_placement">الموضع</string>
-    <string name="settings_appearance_top_left">أعلى اليسار</string>
-    <string name="settings_appearance_top_right">أعلى اليمين</string>
-    <string name="settings_appearance_bottom_left">أسفل اليسار</string>
-    <string name="settings_appearance_bottom_right">أسفل اليمين</string>
+    <string name="settings_appearance_vertical_alignment">المحاذاة العمودية</string>
+    <string name="settings_appearance_top">أعلى</string>
+    <string name="settings_appearance_bottom">أسفل</string>
+    <string name="settings_appearance_center">وسط</string>
+    <string name="settings_appearance_horizontal_alignment">المحاذاة الأفقية</string>
     <string name="settings_appearance_full_bottom_row">صف سفلي كامل</string>
     <string name="settings_appearance_corner_radius">استدارة الزوايا</string>
     <string name="settings_appearance_radius_dp"><xliff:g id="radius" example="8">%1$d</xliff:g> dp</string>

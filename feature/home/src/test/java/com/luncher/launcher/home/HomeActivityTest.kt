@@ -336,6 +336,39 @@ class HomeActivityTest {
 
     private fun HomeActivity.firstRowSize() = tiles().count { it.top == tiles().first().top }
 
+    // Nothing else in the bar takes the focus, and Android's own search would go on to a tile,
+    // which ends a pixel left of the settings entry's right edge on a 1080p TV.
+    @Test
+    fun `Left and Right on the settings entry stay in the top bar`() {
+        val settings = start().get().settingsEntry()
+
+        assertSame(settings, settings.focusSearch(View.FOCUS_LEFT))
+        assertSame(settings, settings.focusSearch(View.FOCUS_RIGHT))
+    }
+
+    @Test
+    fun `Down from the settings entry goes to the tiles`() {
+        val activity = start().get()
+
+        assertTrue(activity.settingsEntry().focusSearch(View.FOCUS_DOWN) in activity.tiles())
+    }
+
+    // Android's own search goes to the nearest view that way anywhere: past the end of a row, to a
+    // tile in another row, or to the settings entry, which on a 1080p TV ends a pixel further right
+    // than the last tile, as the tiles' width rounds down.
+    @Test
+    fun `Left and Right stay in the row, and do nothing at its ends`() {
+        installedApps.apps = (1..7).map { app("app%02d".format(it)) }   // five, then two
+        val tiles = start().get().tiles()
+
+        assertSame(tiles[1], tiles[0].focusSearch(View.FOCUS_RIGHT))
+        assertSame(tiles[3], tiles[4].focusSearch(View.FOCUS_LEFT))
+        assertSame(tiles[4], tiles[4].focusSearch(View.FOCUS_RIGHT))   // not the settings entry
+        assertSame(tiles[6], tiles[6].focusSearch(View.FOCUS_RIGHT))   // not up to the first row
+        assertSame(tiles[5], tiles[5].focusSearch(View.FOCUS_LEFT))
+        assertSame(tiles[0], tiles[0].focusSearch(View.FOCUS_LEFT))
+    }
+
     // A TV switched from 1080p to 720p (HDMI), or a new language, recreates the activity.
     @Test
     fun `after a configuration change, shows the same apps at the new screen's size`() {

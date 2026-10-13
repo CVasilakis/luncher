@@ -66,7 +66,8 @@ class PreferencesAppearanceSettings(context: Context) : AppearanceSettings {
 
     /** Where each option is kept. A key, once released, is never given to another option. */
     private fun key(option: AppearanceOption<*>): String = when (option) {
-        AppearanceOption.Placement -> "tile_placement"
+        AppearanceOption.VerticalAlignment -> "tile_vertical_alignment"
+        AppearanceOption.HorizontalAlignment -> "tile_horizontal_alignment"
         AppearanceOption.FullBottomRow -> "tile_full_bottom_row"
         AppearanceOption.CornerRadius -> "tile_corner_radius"
         AppearanceOption.ClockSide -> "clock_side"

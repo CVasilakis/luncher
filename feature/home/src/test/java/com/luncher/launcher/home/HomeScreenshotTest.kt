@@ -6,11 +6,12 @@ import com.github.takahirom.roborazzi.captureRoboImage
 import com.luncher.domain.appearance.Appearance
 import com.luncher.domain.appearance.Corners
 import com.luncher.domain.appearance.FakeAppearanceSettings
+import com.luncher.domain.appearance.HorizontalAlignment
 import com.luncher.domain.appearance.Side
 import com.luncher.domain.appearance.TileGeometry
-import com.luncher.domain.appearance.TilePlacement
 import com.luncher.domain.appearance.TileStyle
 import com.luncher.domain.appearance.TopBarAppearance
+import com.luncher.domain.appearance.VerticalAlignment
 import com.luncher.domain.apps.AppArrangement
 import com.luncher.domain.apps.FakeAppArrangements
 import com.luncher.domain.apps.FakeInstalledApps
@@ -82,12 +83,12 @@ class HomeScreenshotTest {
     }
 
     // Every option away from its default but the time's and the date's, which would hide what the
-    // others move: the tiles at the bottom right, the bottom row full, round corners; the clock on
+    // others move: the rows centered both ways, the bottom row full, round corners; the clock on
     // the right, the time after the date.
     @Test
     fun homeScreenWithAnAppearance() {
         val appearance = Appearance(
-            TileGeometry(placement = TilePlacement.BOTTOM_RIGHT, fullBottomRow = true),
+            TileGeometry(verticalAlignment = VerticalAlignment.CENTER, horizontalAlignment = HorizontalAlignment.CENTER, fullBottomRow = true),
             TileStyle(Corners.Radius(12)),
             TopBarAppearance(clockSide = Side.RIGHT, timeSide = Side.RIGHT),
         )
@@ -104,10 +105,20 @@ class HomeScreenshotTest {
     // Arrange mode with the tiles at the bottom right: the shelf below them, all at the bottom.
     @Test
     fun arrangingAtTheBottomRight() {
-        val activity = start(hidden = listOf("weather"), appearance = Appearance(TileGeometry(placement = TilePlacement.BOTTOM_RIGHT)))
+        val activity = start(hidden = listOf("weather"), appearance = Appearance(TileGeometry(verticalAlignment = VerticalAlignment.BOTTOM, horizontalAlignment = HorizontalAlignment.RIGHT)))
         activity.arrange("Music")
 
         activity.window.decorView.captureRoboImage("src/test/screenshots/home/home_arranging_bottom_right.png")
+    }
+
+    // Arrange mode centered both ways: the shown tiles, the label and the shelf in the middle of the
+    // space, the rows that aren't full and the label in the middle of the width.
+    @Test
+    fun arrangingCentered() {
+        val activity = start(hidden = listOf("weather"), appearance = Appearance(TileGeometry(verticalAlignment = VerticalAlignment.CENTER, horizontalAlignment = HorizontalAlignment.CENTER)))
+        activity.arrange("Music")
+
+        activity.window.decorView.captureRoboImage("src/test/screenshots/home/home_arranging_centered.png")
     }
 
     @Test

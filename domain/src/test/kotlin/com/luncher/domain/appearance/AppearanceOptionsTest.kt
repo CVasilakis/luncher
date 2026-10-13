@@ -12,7 +12,12 @@ class AppearanceOptionsTest {
     fun `lists the tiles' options, then the top bar's`() {
         assertEquals(listOf(AppearanceTopic.TILES, AppearanceTopic.TOP_BAR), catalog.groups.map { it.topic })
         assertEquals(
-            listOf(AppearanceOption.Placement, AppearanceOption.FullBottomRow, AppearanceOption.CornerRadius),
+            listOf(
+                AppearanceOption.VerticalAlignment,
+                AppearanceOption.HorizontalAlignment,
+                AppearanceOption.FullBottomRow,
+                AppearanceOption.CornerRadius,
+            ),
             catalog.groups[0].options,
         )
         assertEquals(
@@ -48,6 +53,6 @@ class AppearanceOptionsTest {
             assertTrue("$change", change.changed != change.base)
         }
         val fullRow = changes.single { it.option == AppearanceOption.FullBottomRow }
-        assertTrue(fullRow.base.tileGeometry.placement.atBottom)
+        assertEquals(VerticalAlignment.CENTER, fullRow.base.tileGeometry.verticalAlignment)
     }
 }

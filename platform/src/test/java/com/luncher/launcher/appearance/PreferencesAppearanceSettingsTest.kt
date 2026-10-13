@@ -5,11 +5,12 @@ import android.content.SharedPreferences
 import com.luncher.domain.appearance.Appearance
 import com.luncher.domain.appearance.AppearanceOption
 import com.luncher.domain.appearance.Corners
+import com.luncher.domain.appearance.HorizontalAlignment
 import com.luncher.domain.appearance.Side
 import com.luncher.domain.appearance.TileGeometry
-import com.luncher.domain.appearance.TilePlacement
 import com.luncher.domain.appearance.TileStyle
 import com.luncher.domain.appearance.TopBarAppearance
+import com.luncher.domain.appearance.VerticalAlignment
 import com.luncher.domain.appearance.appearanceOptions
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -27,7 +28,11 @@ class PreferencesAppearanceSettingsTest {
     private val preferences: SharedPreferences = context.getSharedPreferences("appearance", Context.MODE_PRIVATE)
 
     private val changed = Appearance(
-        TileGeometry(placement = TilePlacement.BOTTOM_RIGHT, fullBottomRow = true),
+        TileGeometry(
+            verticalAlignment = VerticalAlignment.CENTER,
+            horizontalAlignment = HorizontalAlignment.RIGHT,
+            fullBottomRow = true,
+        ),
         TileStyle(Corners.Radius(12)),
         TopBarAppearance(clockSide = Side.RIGHT, timeSide = Side.RIGHT, showTime = true, showDate = false),
     )
@@ -35,7 +40,8 @@ class PreferencesAppearanceSettingsTest {
     // The stored format, written out: a TV keeps it across updates, so a change of it has to read
     // this one too. The other tests write and read back, which a change of both sides would pass.
     private val stored = mapOf(
-        "tile_placement" to "BOTTOM_RIGHT",
+        "tile_vertical_alignment" to "CENTER",
+        "tile_horizontal_alignment" to "RIGHT",
         "tile_full_bottom_row" to "true",
         "tile_corner_radius" to "12",
         "clock_side" to "RIGHT",
@@ -111,7 +117,8 @@ class PreferencesAppearanceSettingsTest {
     @Test
     fun `a stored value it doesn't know reads as that option's default, and changes nothing else`() {
         val unknown = listOf(
-            Triple("tile_placement", "MIDDLE", AppearanceOption.Placement),
+            Triple("tile_vertical_alignment", "MIDDLE", AppearanceOption.VerticalAlignment),
+            Triple("tile_horizontal_alignment", "center", AppearanceOption.HorizontalAlignment),   // names are exact
             Triple("tile_full_bottom_row", "maybe", AppearanceOption.FullBottomRow),
             Triple("tile_corner_radius", "5", AppearanceOption.CornerRadius),
             Triple("clock_side", "right", AppearanceOption.ClockSide),   // names are exact

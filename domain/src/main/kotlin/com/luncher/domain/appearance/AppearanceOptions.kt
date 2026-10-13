@@ -19,7 +19,12 @@ fun appearanceOptions(): AppearanceOptions =
         listOf(
             AppearanceGroup(
                 AppearanceTopic.TILES,
-                listOf(AppearanceOption.Placement, AppearanceOption.FullBottomRow, AppearanceOption.CornerRadius),
+                listOf(
+                    AppearanceOption.VerticalAlignment,
+                    AppearanceOption.HorizontalAlignment,
+                    AppearanceOption.FullBottomRow,
+                    AppearanceOption.CornerRadius,
+                ),
             ),
             AppearanceGroup(
                 AppearanceTopic.TOP_BAR,

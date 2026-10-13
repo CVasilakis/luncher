@@ -5,9 +5,10 @@ import android.graphics.Canvas
 import android.view.View
 import com.luncher.domain.appearance.Appearance
 import com.luncher.domain.appearance.Corners
+import com.luncher.domain.appearance.HorizontalAlignment
 import com.luncher.domain.appearance.TileGeometry
-import com.luncher.domain.appearance.TilePlacement
 import com.luncher.domain.appearance.TileStyle
+import com.luncher.domain.appearance.VerticalAlignment
 import com.luncher.domain.appearance.appearanceChanges
 import com.luncher.launcher.testing.TV_1080P
 import org.junit.Assert.assertFalse
@@ -62,7 +63,7 @@ class AppearancePreviewViewTest {
     // Rule 5 (docs/ARCHITECTURE.md): drawing allocates nothing.
     @Test
     fun `drawing allocates nothing`() {
-        preview.appearance = Appearance(TileGeometry(placement = TilePlacement.BOTTOM_RIGHT), TileStyle(Corners.Radius(12)))
+        preview.appearance = Appearance(TileGeometry(verticalAlignment = VerticalAlignment.BOTTOM, horizontalAlignment = HorizontalAlignment.RIGHT), TileStyle(Corners.Radius(12)))
 
         val perDraw = allocated { preview.draw(canvas) }
 
@@ -74,7 +75,7 @@ class AppearancePreviewViewTest {
     // read gives, makes nothing anew.
     @Test
     fun `an equal appearance makes nothing anew`() {
-        val appearance = Appearance(TileGeometry(placement = TilePlacement.BOTTOM_RIGHT), TileStyle(Corners.Radius(12)))
+        val appearance = Appearance(TileGeometry(verticalAlignment = VerticalAlignment.BOTTOM, horizontalAlignment = HorizontalAlignment.RIGHT), TileStyle(Corners.Radius(12)))
         val equal = appearance.copy()
         preview.appearance = appearance
 
@@ -89,7 +90,7 @@ class AppearancePreviewViewTest {
     fun `a new tile style lays nothing out again`() {
         val square = Appearance()
         val round = Appearance(tileStyle = TileStyle(Corners.Radius(12)))
-        val bottom = Appearance(TileGeometry(placement = TilePlacement.BOTTOM_LEFT))
+        val bottom = Appearance(TileGeometry(verticalAlignment = VerticalAlignment.BOTTOM))
 
         val perStyle = allocated { preview.appearance = if (preview.appearance == square) round else square }
         val perGeometry = allocated { preview.appearance = if (preview.appearance == square) bottom else square }

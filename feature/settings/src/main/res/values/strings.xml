@@ -16,15 +16,20 @@
     <!-- In the appearance editor: the title of the options for the bar at the top of the home
          screen, which has the time, the date and the settings gear. -->
     <string name="settings_appearance_top_bar">Top bar</string>
-    <!-- An option: which corner of the home screen the app tiles gather in. -->
-    <string name="settings_appearance_placement">Placement</string>
-    <!-- Its values: the corners of the screen. Left and right are the screen's, in every language. -->
-    <string name="settings_appearance_top_left">Top left</string>
-    <string name="settings_appearance_top_right">Top right</string>
-    <string name="settings_appearance_bottom_left">Bottom left</string>
-    <string name="settings_appearance_bottom_right">Bottom right</string>
-    <!-- An option, with the tiles at the bottom: the bottom row of tiles is always full, and the
-         row that isn't goes at the top. Its values are On and Off. -->
+    <!-- An option: where the rows of app tiles go in the height of the home screen, below the top
+         bar. Its values are Top, Center and Bottom. -->
+    <string name="settings_appearance_vertical_alignment">Vertical alignment</string>
+    <!-- Its values. -->
+    <string name="settings_appearance_top">Top</string>
+    <string name="settings_appearance_bottom">Bottom</string>
+    <!-- A value of both alignments: the rows in the middle of the height, or the row of tiles that
+         isn't full in the middle of the width. -->
+    <string name="settings_appearance_center">Center</string>
+    <!-- An option: where the row of app tiles that isn't full goes in the width of the home screen
+         (the full rows are as wide as the screen). Its values are Left, Center and Right. -->
+    <string name="settings_appearance_horizontal_alignment">Horizontal alignment</string>
+    <!-- An option, with the tiles centered or at the bottom: the bottom row of tiles is always
+         full, and the row that isn't goes at the top. Its values are On and Off. -->
     <string name="settings_appearance_full_bottom_row">Full bottom row</string>
     <!-- An option: how round the corners of the app tiles are. -->
     <string name="settings_appearance_corner_radius">Corner radius</string>
@@ -43,7 +48,8 @@
     <!-- An option: which side of the top bar the time and the date are on; the settings gear goes
          on the other. Its values are Left and Right. -->
     <string name="settings_appearance_clock_side">Side</string>
-    <!-- Values of the option above: the screen's left and right, in every language. -->
+    <!-- Values of the option above and of the horizontal alignment: the screen's left and right,
+         in every language. -->
     <string name="settings_appearance_left">Left</string>
     <string name="settings_appearance_right">Right</string>
     <!-- An option: in which order the time and the date are, side by side, left to right in every

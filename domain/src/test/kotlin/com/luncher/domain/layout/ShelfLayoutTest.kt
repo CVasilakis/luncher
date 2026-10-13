@@ -1,5 +1,7 @@
 package com.luncher.domain.layout
 
+import com.luncher.domain.appearance.HorizontalAlignment
+import com.luncher.domain.appearance.VerticalAlignment
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -51,7 +53,7 @@ class ShelfLayoutTest {
     @Test
     fun `at the bottom of a height it fits, moves down as a whole`() {
         val top = shelf(shown = 7, hidden = 2)
-        val bottom = ShelfLayout(grid(7), grid(2), 7, 2, labelHeight = 40, gap = 30, height = 1000, atBottom = true)
+        val bottom = ShelfLayout(grid(7), grid(2), 7, 2, labelHeight = 40, gap = 30, height = 1000, verticalAlignment = VerticalAlignment.BOTTOM)
         val down = 1000 - top.contentHeight
 
         assertEquals(1000, bottom.contentHeight)
@@ -62,7 +64,7 @@ class ShelfLayoutTest {
 
     @Test
     fun `at the bottom of a height it doesn't fit, starts at the top`() {
-        val bottom = ShelfLayout(grid(7), grid(2), 7, 2, labelHeight = 40, gap = 30, height = 300, atBottom = true)
+        val bottom = ShelfLayout(grid(7), grid(2), 7, 2, labelHeight = 40, gap = 30, height = 300, verticalAlignment = VerticalAlignment.BOTTOM)
 
         assertEquals(0, bottom.top(0))
     }
@@ -70,7 +72,25 @@ class ShelfLayoutTest {
     @Test
     fun `the label lines up with the shelf's first tile, or its last one's right edge`() {
         assertEquals(0, shelf(shown = 7, hidden = 2).labelLeft(labelWidth = 60))
-        val right = ShelfLayout(grid(7), grid(2), 7, 2, labelHeight = 40, gap = 30, labelAtRight = true)
+        val right = ShelfLayout(grid(7), grid(2), 7, 2, labelHeight = 40, gap = 30, labelAlignment = HorizontalAlignment.RIGHT)
         assertEquals(205 + 180 - 60, right.labelLeft(labelWidth = 60))
+    }
+
+    @Test
+    fun `a centered label is in the middle of the shelf's width`() {
+        val centered = ShelfLayout(grid(7), grid(2), 7, 2, labelHeight = 40, gap = 30, labelAlignment = HorizontalAlignment.CENTER)
+
+        assertEquals((1000 - 60) / 2, centered.labelLeft(labelWidth = 60))
+    }
+
+    @Test
+    fun `centered in a height it fits, moves down as a whole by half the room left`() {
+        val top = shelf(shown = 7, hidden = 2)
+        val centered = ShelfLayout(grid(7), grid(2), 7, 2, labelHeight = 40, gap = 30, height = 1000, verticalAlignment = VerticalAlignment.CENTER)
+        val down = (1000 - top.contentHeight) / 2
+
+        assertEquals(top.top(0) + down, centered.top(0))
+        assertEquals(top.labelTop + down, centered.labelTop)
+        assertEquals(top.top(8) + down, centered.top(8))
     }
 }

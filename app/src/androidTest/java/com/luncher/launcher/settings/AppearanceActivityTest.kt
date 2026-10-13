@@ -18,7 +18,7 @@ import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.luncher.domain.appearance.FakeAppearanceSettings
-import com.luncher.domain.appearance.TilePlacement
+import com.luncher.domain.appearance.VerticalAlignment
 import com.luncher.launcher.AppGraph
 import com.luncher.launcher.LuncherApplication
 import com.luncher.launcher.testing.RetryWhenCovered
@@ -106,20 +106,20 @@ class AppearanceActivityTest {
             waitUntil(group(R.string.settings_appearance_tiles), hasFocus())
 
             press(KeyEvent.KEYCODE_DPAD_CENTER)
-            waitUntil(option(R.string.settings_appearance_placement), isDisplayed())
+            waitUntil(option(R.string.settings_appearance_vertical_alignment), isDisplayed())
             press(KeyEvent.KEYCODE_DPAD_DOWN)
-            waitUntil(option(R.string.settings_appearance_placement), hasFocus())
+            waitUntil(option(R.string.settings_appearance_vertical_alignment), hasFocus())
 
             press(KeyEvent.KEYCODE_DPAD_RIGHT)
 
-            waitUntil(allOf(withText(R.string.settings_appearance_top_right), withId(R.id.settings_option_value)), isDisplayed())
-            assertEquals(TilePlacement.TOP_RIGHT, settings.appearance.tileGeometry.placement)
+            waitUntil(allOf(withText(R.string.settings_appearance_center), withId(R.id.settings_option_value)), isDisplayed())
+            assertEquals(VerticalAlignment.CENTER, settings.appearance.tileGeometry.verticalAlignment)
 
             press(KeyEvent.KEYCODE_DPAD_LEFT)
             press(KeyEvent.KEYCODE_DPAD_LEFT)   // around, from the first value to the last
 
-            waitUntil(allOf(withText(R.string.settings_appearance_bottom_right), withId(R.id.settings_option_value)), isDisplayed())
-            assertEquals(TilePlacement.BOTTOM_RIGHT, settings.appearance.tileGeometry.placement)
+            waitUntil(allOf(withText(R.string.settings_appearance_bottom), withId(R.id.settings_option_value)), isDisplayed())
+            assertEquals(VerticalAlignment.BOTTOM, settings.appearance.tileGeometry.verticalAlignment)
 
             pressBack()
 

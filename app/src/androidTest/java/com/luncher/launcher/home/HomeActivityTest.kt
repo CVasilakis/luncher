@@ -23,6 +23,10 @@ import androidx.test.espresso.matcher.ViewMatchers.withContentDescription
 import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.luncher.domain.appearance.Appearance
+import com.luncher.domain.appearance.FakeAppearanceSettings
+import com.luncher.domain.appearance.HorizontalAlignment
+import com.luncher.domain.appearance.TileGeometry
 import com.luncher.domain.apps.FakeAppArrangements
 import com.luncher.domain.apps.FakeInstalledApps
 import com.luncher.domain.apps.FakeInstalledApps.Companion.app
@@ -55,11 +59,13 @@ class HomeActivityTest {
 
     private val application = ApplicationProvider.getApplicationContext<LuncherApplication>()
 
-    private fun launchWith(vararg names: String): ActivityScenario<HomeActivity> {
+    private fun launchWith(vararg names: String, appearance: Appearance = Appearance()): ActivityScenario<HomeActivity> {
         application.graph = object : AppGraph(application) {
             override val installedApps = FakeInstalledApps(names.map { app(it) })
-            // Not the device's stored arrangement: every test starts with all apps shown, by name.
+            // Not the device's stored arrangement and appearance: every test starts with all apps
+            // shown, by name, where the test says.
             override val appArrangements = FakeAppArrangements()
+            override val appearanceSettings = FakeAppearanceSettings(appearance)
         }
         return ActivityScenario.launch(HomeActivity::class.java)
     }
@@ -156,6 +162,26 @@ class HomeActivityTest {
         }
     }
 
+    // Android's own search would go on to the settings entry, which on a 1080p TV ends a pixel
+    // right of the last app, or from the short row's end up to the first row.
+    @Test
+    fun dpadRight_atTheEndOfARow_keepsTheFocusThere() {
+        launchWith(*appNames(7)).use {
+            waitUntilTile("App01", hasFocus())
+            repeat(4) { press(KeyEvent.KEYCODE_DPAD_RIGHT) }
+            waitUntilTile("App05", hasFocus())
+
+            press(KeyEvent.KEYCODE_DPAD_RIGHT)
+            waitUntilTile("App05", hasFocus())
+            waitUntil(withId(R.id.home_settings), not(hasFocus()))
+
+            press(KeyEvent.KEYCODE_DPAD_DOWN)
+            waitUntilTile("App07", hasFocus())
+            press(KeyEvent.KEYCODE_DPAD_RIGHT)
+            waitUntilTile("App07", hasFocus())
+        }
+    }
+
     @Test
     fun dpadDown_movesFocusToTheAppBelow() {
         // Five per row: app06 is below app01.
@@ -165,6 +191,32 @@ class HomeActivityTest {
             press(KeyEvent.KEYCODE_DPAD_DOWN)
 
             waitUntilTile("App06", hasFocus())
+        }
+    }
+
+    // Two apps centered under five are half a column off. Down takes the nearest app, the left one
+    // of two as near, and Up goes back where the focus came from, though another is nearer.
+    @Test
+    fun dpadDownAndUp_withACenteredRow_takeTheNearestApp_andGoBack() {
+        val centered = Appearance(TileGeometry(horizontalAlignment = HorizontalAlignment.CENTER))
+        launchWith(*appNames(7), appearance = centered).use {
+            waitUntilTile("App01", hasFocus())
+            press(KeyEvent.KEYCODE_DPAD_RIGHT)
+            press(KeyEvent.KEYCODE_DPAD_RIGHT)
+            waitUntilTile("App03", hasFocus())
+
+            press(KeyEvent.KEYCODE_DPAD_DOWN)
+            waitUntilTile("App06", hasFocus())   // App06 and App07 as near
+            press(KeyEvent.KEYCODE_DPAD_UP)
+            waitUntilTile("App03", hasFocus())
+
+            press(KeyEvent.KEYCODE_DPAD_RIGHT)
+            press(KeyEvent.KEYCODE_DPAD_RIGHT)
+            waitUntilTile("App05", hasFocus())
+            press(KeyEvent.KEYCODE_DPAD_DOWN)
+            waitUntilTile("App07", hasFocus())
+            press(KeyEvent.KEYCODE_DPAD_UP)
+            waitUntilTile("App05", hasFocus())   // not App03, the nearest
         }
     }
 
@@ -188,6 +240,24 @@ class HomeActivityTest {
             press(KeyEvent.KEYCODE_DPAD_UP)
 
             waitUntil(withId(R.id.home_settings), hasFocus())
+        }
+    }
+
+    // Android's own search would go on to the tile below the settings entry.
+    @Test
+    fun dpadLeftAndRight_onTheSettingsEntry_keepTheFocusThere() {
+        launchWith("games", "movies", "music").use {
+            waitUntilTile("Games", hasFocus())
+            press(KeyEvent.KEYCODE_DPAD_UP)
+            waitUntil(withId(R.id.home_settings), hasFocus())
+
+            press(KeyEvent.KEYCODE_DPAD_LEFT)
+            waitUntil(withId(R.id.home_settings), hasFocus())
+            press(KeyEvent.KEYCODE_DPAD_RIGHT)
+            waitUntil(withId(R.id.home_settings), hasFocus())
+
+            press(KeyEvent.KEYCODE_DPAD_DOWN)
+            waitUntil(withId(R.id.home_settings), not(hasFocus()))
         }
     }
 

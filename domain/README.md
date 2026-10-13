@@ -25,8 +25,9 @@ domain/src/
 │   │   └── Banner.kt            model and rule: which image a tile shows (the app's banner or its icon)
 │   ├── appearance/
 │   │   ├── Appearance.kt        model: how the home screen looks, as far as the user can change it, in parts (docs/ARCHITECTURE.md#appearance)
-│   │   ├── TileGeometry.kt      model: where tiles go and how big they are, in dp; the corner they gather in
-│   │   ├── TilePlacement.kt     model: the four corners the tiles can gather in
+│   │   ├── TileGeometry.kt      model: where tiles go and how big they are, in dp; their alignment
+│   │   ├── VerticalAlignment.kt model: the rows at the top, centered or at the bottom of the height
+│   │   ├── HorizontalAlignment.kt model: a row that isn't full at the left, centered or at the right
 │   │   ├── TileStyle.kt         model: how each tile is drawn (its corners)
 │   │   ├── Corners.kt           model and rule: a corner radius or round ends, in pixels for a tile's height
 │   │   ├── TopBarAppearance.kt  model: whether the time and the date show, the clock's side of the top bar, the time's side of the date
@@ -44,9 +45,10 @@ domain/src/
 │   │   └── ArrangeSession.kt    rule: the user arranging apps, holding one and moving it among and between shown and hidden
 │   └── layout/
 │       ├── TileLayout.kt        how an arrangement of tiles reports sizes and positions
-│       ├── TileMoves.kt         how it says where a tile the user moves goes
+│       ├── TileMoves.kt         how it says where a tile the user moves goes, and which tile is nearest across
 │       ├── Direction.kt         model: a D-pad arrow
-│       ├── TileGrid.kt          rule: the grid (rows of tiles as wide as a width; the short row first or last, at the left or right; at the top or bottom of a height), and moves in it
+│       ├── TileGrid.kt          rule: the grid (rows of tiles as wide as a width; the short row first or last, at the left, centered or at the right; at the top, centered or at the bottom of a height), and moves in it
+│       ├── TileFocus.kt         rule: where each arrow takes the focus among the tiles: along the row, the nearest tile up or down, and back the way it came
 │       ├── TileLayouts.kt       rule: the layouts for a TileGeometry, in pixels at a density; picks the arrangement and placement
 │       ├── ShelfLayout.kt       rule: the shown apps' tiles above a shelf of the hidden ones, while arranging
 │       └── TopBarLayout.kt      rule: which edge of the top bar each of its items is at, for a TopBarAppearance
@@ -66,9 +68,9 @@ models, rules and ports of that topic.
 
 - Models are immutable (`data class` with `val`s).
 - Rules are plain functions or classes that take models and return models. They have no side effects,
-  so they're testable without fakes. The one exception is a rule that follows the user's key
-  presses, `ArrangeSession`: it keeps state and changes it in place, so a key press allocates
-  nothing ([`ARCHITECTURE.md`](../docs/ARCHITECTURE.md#rules), rule 5). It's still pure Kotlin,
+  so they're testable without fakes. The exceptions are the rules that follow the user's key
+  presses, `ArrangeSession` and `TileFocus`: they keep state (the held app, the last move) and
+  change it in place, so a key press allocates nothing ([`ARCHITECTURE.md`](../docs/ARCHITECTURE.md#rules), rule 5). It's still pure Kotlin,
   tested the same way.
 - Ports are interfaces named after what they provide (`InstalledApps`), not how
   (`PackageManagerApps`); adapters in `:platform` implement them. A port whose result is a UI type

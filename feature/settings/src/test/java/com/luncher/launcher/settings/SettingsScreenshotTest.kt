@@ -9,11 +9,12 @@ import com.github.takahirom.roborazzi.captureRoboImage
 import com.luncher.domain.appearance.Appearance
 import com.luncher.domain.appearance.Corners
 import com.luncher.domain.appearance.FakeAppearanceSettings
+import com.luncher.domain.appearance.HorizontalAlignment
 import com.luncher.domain.appearance.Side
 import com.luncher.domain.appearance.TileGeometry
-import com.luncher.domain.appearance.TilePlacement
 import com.luncher.domain.appearance.TileStyle
 import com.luncher.domain.appearance.TopBarAppearance
+import com.luncher.domain.appearance.VerticalAlignment
 import com.luncher.domain.appearance.appearanceChanges
 import com.luncher.domain.apps.AppArrangement
 import com.luncher.domain.apps.FakeAppArrangements
@@ -65,13 +66,13 @@ class SettingsScreenshotTest {
     }
 
     // Every option away from its default but the time's and the date's, which would hide what the
-    // others move; the tiles at the bottom, so the full bottom row can be changed. The tiles' group
+    // others move; the rows centered, so the full bottom row can be changed. The tiles' group
     // open, the focus on the corner radius.
     @Test
     fun appearanceEditorChanged() {
         val activity = appearanceEditor(
             Appearance(
-                TileGeometry(placement = TilePlacement.BOTTOM_RIGHT, fullBottomRow = true),
+                TileGeometry(verticalAlignment = VerticalAlignment.CENTER, horizontalAlignment = HorizontalAlignment.CENTER, fullBottomRow = true),
                 TileStyle(Corners.Radius(16)),
                 TopBarAppearance(clockSide = Side.RIGHT, timeSide = Side.RIGHT),
             ),

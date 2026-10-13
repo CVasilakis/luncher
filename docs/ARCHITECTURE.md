@@ -166,11 +166,11 @@ Adding an aspect, e.g. the focus frame's color:
 | Its label and its values' labels, in every translation | `:feature:settings` | the exhaustive `when` doesn't compile; lint ([`TRANSLATIONS.md`](TRANSLATIONS.md)) |
 | Its effect on the home screen, and on the preview where it shows | `:feature:home`, `:feature:settings` | a test that sets each option of the catalog to a value other than its default, and fails if the home screen, or the preview, draws the same |
 
-Today `Appearance` has three parts: `TileGeometry` (the tiles' size, spacing and the corner they
-gather in), `TileStyle` (their corners) and `TopBarAppearance` (whether the time and the
-date show, the clock's side, and the time's side of the date). The catalog's options, placement, a
-full bottom row, the corner radius, the time and the date shown or hidden, the clock's side and the
-time's side, are changed in the settings' appearance editor
+Today `Appearance` has three parts: `TileGeometry` (the tiles' size, spacing and alignment),
+`TileStyle` (their corners) and `TopBarAppearance` (whether the time and the
+date show, the clock's side, and the time's side of the date). The catalog's options, the vertical
+and the horizontal alignment, a full bottom row, the corner radius, the time and the date shown or
+hidden, the clock's side and the time's side, are changed in the settings' appearance editor
 ([`feature/settings/README.md`](../feature/settings/README.md#appearance)).
 
 ## Where things go
@@ -183,7 +183,7 @@ time's side, are changed in the settings' appearance editor
 | How the home screen arranges apps (grid, apps per row, alignment, a carousel) | a `TileLayout` in `:domain`'s `layout/` that computes sizes and positions, and `TileMoves` for where a tile the user moves goes, with unit tests; `TileLayouts` picks it, so everything that shows tiles lays them out alike; the view that shows the tiles only places them where the layout says ([`feature/home/README.md`](../feature/home/README.md#the-home-screen)) |
 | What the user can do while arranging apps (moving, hiding, which key does what to the held app) | `ArrangeSession` in `:domain`'s `arrange/`, with unit tests; `ArrangeMode` in `:feature:home` turns keys into its moves ([`feature/home/README.md`](../feature/home/README.md#arrange-mode)) |
 | Something the home screen's top bar shows (the clock, the settings entry; later status indicators) | a view in `:feature:home`, placed in the bar; device state it shows (the time, the network) comes from a port you can watch ([above](#background-work-and-changes-while-shown)). Details: [`feature/home/README.md`](../feature/home/README.md#the-top-bar) |
-| Something the user can change about how the home screen looks (tile placement, corner radius, a color) | a value in `Appearance` and an option in its catalog, in `:domain`; the steps and what checks each: [Appearance](#appearance) |
+| Something the user can change about how the home screen looks (the tiles' alignment, corner radius, a color) | a value in `Appearance` and an option in its catalog, in `:domain`; the steps and what checks each: [Appearance](#appearance) |
 | A new setting | its entry: `settingsMenu` in `:domain`'s `settings/`, and its label and action in `:feature:settings`; a value it stores comes through a port you can watch, so the screens it affects update while it changes; a screen of its own (a list, like Hide apps) is another activity in `:feature:settings`. Steps: [`feature/settings/README.md`](../feature/settings/README.md#the-settings-panel) |
 | A new screen of its own (e.g. a wallpaper picker) | a new feature module (below) |
 | A shared view, style or UI helper | `:ui`, resources without a prefix |

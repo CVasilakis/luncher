@@ -25,12 +25,17 @@ class AppearanceOptionTest {
     @Test
     fun `the options read and change their part of the appearance`() {
         val appearance = Appearance(
-            TileGeometry(placement = TilePlacement.BOTTOM_RIGHT, fullBottomRow = true),
+            TileGeometry(
+                verticalAlignment = VerticalAlignment.BOTTOM,
+                horizontalAlignment = HorizontalAlignment.RIGHT,
+                fullBottomRow = true,
+            ),
             TileStyle(Corners.Radius(8)),
             TopBarAppearance(clockSide = Side.RIGHT, timeSide = Side.RIGHT, showTime = true, showDate = false),
         )
 
-        assertEquals(TilePlacement.BOTTOM_RIGHT, AppearanceOption.Placement.get(appearance))
+        assertEquals(VerticalAlignment.BOTTOM, AppearanceOption.VerticalAlignment.get(appearance))
+        assertEquals(HorizontalAlignment.RIGHT, AppearanceOption.HorizontalAlignment.get(appearance))
         assertEquals(true, AppearanceOption.FullBottomRow.get(appearance))
         assertEquals(Corners.Radius(8), AppearanceOption.CornerRadius.get(appearance))
         assertEquals(Side.RIGHT, AppearanceOption.ClockSide.get(appearance))
@@ -38,7 +43,14 @@ class AppearanceOptionTest {
         assertEquals(true, AppearanceOption.ShowTime.get(appearance))
         assertEquals(false, AppearanceOption.ShowDate.get(appearance))
         assertEquals(TileStyle(Corners.Radius(12)), AppearanceOption.CornerRadius.set(appearance, Corners.Radius(12)).tileStyle)
-        assertEquals(TileGeometry(placement = TilePlacement.TOP_LEFT, fullBottomRow = true), AppearanceOption.Placement.set(appearance, TilePlacement.TOP_LEFT).tileGeometry)
+        assertEquals(
+            TileGeometry(verticalAlignment = VerticalAlignment.TOP, horizontalAlignment = HorizontalAlignment.RIGHT, fullBottomRow = true),
+            AppearanceOption.VerticalAlignment.set(appearance, VerticalAlignment.TOP).tileGeometry,
+        )
+        assertEquals(
+            TileGeometry(verticalAlignment = VerticalAlignment.BOTTOM, horizontalAlignment = HorizontalAlignment.CENTER, fullBottomRow = true),
+            AppearanceOption.HorizontalAlignment.set(appearance, HorizontalAlignment.CENTER).tileGeometry,
+        )
         assertEquals(
             TopBarAppearance(clockSide = Side.LEFT, timeSide = Side.RIGHT, showTime = true, showDate = false),
             AppearanceOption.ClockSide.set(appearance, Side.LEFT).topBar,
@@ -53,7 +65,8 @@ class AppearanceOptionTest {
     @Test
     fun `each option's default is one of its values, and today's look`() {
         for (option in options) assertTrue("$option", option.default in option.values)
-        assertEquals(TilePlacement.TOP_LEFT, AppearanceOption.Placement.default)
+        assertEquals(VerticalAlignment.TOP, AppearanceOption.VerticalAlignment.default)
+        assertEquals(HorizontalAlignment.LEFT, AppearanceOption.HorizontalAlignment.default)
         assertEquals(false, AppearanceOption.FullBottomRow.default)
         assertEquals(Corners.Radius(8), AppearanceOption.CornerRadius.default)
         assertEquals(Side.LEFT, AppearanceOption.ClockSide.default)
@@ -99,13 +112,21 @@ class AppearanceOptionTest {
 
     @Test
     fun `steps through every value in order, then back to the first`() {
-        val placement = AppearanceOption.Placement
-        val seen = generateSequence(Appearance()) { placement.step(it, forward = true) }
-            .take(TilePlacement.entries.size + 1)
-            .map(placement::get)
+        val vertical = AppearanceOption.VerticalAlignment
+        val seen = generateSequence(Appearance()) { vertical.step(it, forward = true) }
+            .take(VerticalAlignment.entries.size + 1)
+            .map(vertical::get)
             .toList()
 
-        assertEquals(TilePlacement.entries + TilePlacement.TOP_LEFT, seen)
+        assertEquals(listOf(VerticalAlignment.TOP, VerticalAlignment.CENTER, VerticalAlignment.BOTTOM, VerticalAlignment.TOP), seen)
+    }
+
+    @Test
+    fun `the horizontal alignment steps from left through center to right`() {
+        assertEquals(
+            listOf(HorizontalAlignment.LEFT, HorizontalAlignment.CENTER, HorizontalAlignment.RIGHT),
+            AppearanceOption.HorizontalAlignment.values,
+        )
     }
 
     @Test
@@ -129,19 +150,21 @@ class AppearanceOptionTest {
         assertEquals(Corners.Radius(8), AppearanceOption.CornerRadius.valueOrDefault(Corners.Radius(5)))
         assertEquals(Corners.Radius(8), AppearanceOption.CornerRadius.valueOrDefault(null))
         assertEquals(Corners.Radius(12), AppearanceOption.CornerRadius.valueOrDefault(Corners.Radius(12)))
-        assertEquals(TilePlacement.TOP_LEFT, AppearanceOption.Placement.valueOrDefault(null))
+        assertEquals(VerticalAlignment.TOP, AppearanceOption.VerticalAlignment.valueOrDefault(null))
         assertEquals(Side.RIGHT, AppearanceOption.ClockSide.valueOrDefault(Side.RIGHT))
     }
 
     @Test
-    fun `a full bottom row applies only with the tiles at the bottom`() {
+    fun `a full bottom row applies only with the rows centered or at the bottom`() {
         val full = AppearanceOption.FullBottomRow
-        fun at(placement: TilePlacement) = Appearance(TileGeometry(placement = placement))
+        fun at(vertical: VerticalAlignment, horizontal: HorizontalAlignment) =
+            Appearance(TileGeometry(verticalAlignment = vertical, horizontalAlignment = horizontal))
 
-        assertFalse(full.appliesTo(at(TilePlacement.TOP_LEFT)))
-        assertFalse(full.appliesTo(at(TilePlacement.TOP_RIGHT)))
-        assertTrue(full.appliesTo(at(TilePlacement.BOTTOM_LEFT)))
-        assertTrue(full.appliesTo(at(TilePlacement.BOTTOM_RIGHT)))
+        for (horizontal in HorizontalAlignment.entries) {
+            assertFalse(full.appliesTo(at(VerticalAlignment.TOP, horizontal)))
+            assertTrue(full.appliesTo(at(VerticalAlignment.CENTER, horizontal)))
+            assertTrue(full.appliesTo(at(VerticalAlignment.BOTTOM, horizontal)))
+        }
     }
 
     @Test
@@ -171,7 +194,7 @@ class AppearanceOptionTest {
         for (option in options) assertTrue("$option", option.appliesTo(Appearance()) || option == AppearanceOption.FullBottomRow)
         val conditional = setOf(AppearanceOption.FullBottomRow, AppearanceOption.ClockSide, AppearanceOption.TimeSide)
         val nothingShown = Appearance(
-            TileGeometry(placement = TilePlacement.TOP_LEFT),
+            TileGeometry(verticalAlignment = VerticalAlignment.TOP),
             topBar = TopBarAppearance(showTime = false, showDate = false),
         )
         for (option in options - conditional) assertTrue("$option", option.appliesTo(nothingShown))

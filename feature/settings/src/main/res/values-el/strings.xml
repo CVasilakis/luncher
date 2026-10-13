@@ -8,11 +8,11 @@
     <string name="settings_appearance">Εμφάνιση</string>
     <string name="settings_appearance_tiles">Πλακίδια</string>
     <string name="settings_appearance_top_bar">Πάνω γραμμή</string>
-    <string name="settings_appearance_placement">Θέση</string>
-    <string name="settings_appearance_top_left">Πάνω αριστερά</string>
-    <string name="settings_appearance_top_right">Πάνω δεξιά</string>
-    <string name="settings_appearance_bottom_left">Κάτω αριστερά</string>
-    <string name="settings_appearance_bottom_right">Κάτω δεξιά</string>
+    <string name="settings_appearance_vertical_alignment">Κατακόρυφη στοίχιση</string>
+    <string name="settings_appearance_top">Πάνω</string>
+    <string name="settings_appearance_bottom">Κάτω</string>
+    <string name="settings_appearance_center">Στο κέντρο</string>
+    <string name="settings_appearance_horizontal_alignment">Οριζόντια στοίχιση</string>
     <string name="settings_appearance_full_bottom_row">Γεμάτη κάτω σειρά</string>
     <string name="settings_appearance_corner_radius">Στρογγύλεμα γωνιών</string>
     <string name="settings_appearance_radius_dp"><xliff:g id="radius" example="8">%1$d</xliff:g> dp</string>

@@ -2,6 +2,7 @@ package com.luncher.launcher.home
 
 import android.content.Context
 import android.util.AttributeSet
+import android.view.FocusFinder
 import android.view.View
 import android.widget.LinearLayout
 import com.luncher.domain.appearance.TopBarAppearance
@@ -13,6 +14,9 @@ import com.luncher.domain.layout.topBarLayout
  * the domain's [topBarLayout] gives for the home screen's [appearance], and the time on its side of
  * the date, each of the two only if it shows. Arrange mode's title and key hint stay between them,
  * in the order the layout file gives, since they replace both.
+ *
+ * Left and Right move the focus only among the bar's own items, in the order the layout gives
+ * them, and do nothing at its ends; Up and Down are Android's search, Down to the tiles.
  */
 internal class TopBarView(context: Context, attrs: AttributeSet?) : LinearLayout(context, attrs) {
 
@@ -43,6 +47,13 @@ internal class TopBarView(context: Context, attrs: AttributeSet?) : LinearLayout
         move(if (settingsAtLeft) clock else settings, childCount - 1)
         requestLayout()
         invalidate()
+    }
+
+    // Android's own search would go on to the nearest tile that way, below the bar: from the
+    // settings entry at the right, the one a pixel left of its right edge on a 1080p TV.
+    override fun focusSearch(focused: View, direction: Int): View? {
+        if (direction != FOCUS_LEFT && direction != FOCUS_RIGHT) return super.focusSearch(focused, direction)
+        return FocusFinder.getInstance().findNextFocus(this, focused, direction) ?: focused
     }
 
     /** Moves [view] to [index] among the bar's children. Detached, not removed: removing would take the focus away from it. */

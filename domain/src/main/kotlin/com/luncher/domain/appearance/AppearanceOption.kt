@@ -1,5 +1,8 @@
 package com.luncher.domain.appearance
 
+import com.luncher.domain.appearance.HorizontalAlignment as Horizontal
+import com.luncher.domain.appearance.VerticalAlignment as Vertical
+
 /**
  * Something the user can change about how the home screen looks: the part of [Appearance] it
  * reads and changes, and the values it can take, in the order the user steps through them. A
@@ -23,21 +26,29 @@ sealed interface AppearanceOption<T> {
      */
     fun appliesTo(appearance: Appearance): Boolean = true
 
-    /** The corner the tiles gather in. */
-    data object Placement : AppearanceOption<TilePlacement> {
-        override val values: List<TilePlacement> = TilePlacement.entries
-        override fun get(appearance: Appearance) = appearance.tileGeometry.placement
-        override fun set(appearance: Appearance, value: TilePlacement) =
-            appearance.copy(tileGeometry = appearance.tileGeometry.copy(placement = value))
+    /** Where the rows of tiles go in the height. */
+    data object VerticalAlignment : AppearanceOption<Vertical> {
+        override val values: List<Vertical> = Vertical.entries
+        override fun get(appearance: Appearance) = appearance.tileGeometry.verticalAlignment
+        override fun set(appearance: Appearance, value: Vertical) =
+            appearance.copy(tileGeometry = appearance.tileGeometry.copy(verticalAlignment = value))
     }
 
-    /** With the tiles at the bottom, whether the bottom row is always full. */
+    /** Where a row of tiles that isn't full goes in the width. */
+    data object HorizontalAlignment : AppearanceOption<Horizontal> {
+        override val values: List<Horizontal> = Horizontal.entries
+        override fun get(appearance: Appearance) = appearance.tileGeometry.horizontalAlignment
+        override fun set(appearance: Appearance, value: Horizontal) =
+            appearance.copy(tileGeometry = appearance.tileGeometry.copy(horizontalAlignment = value))
+    }
+
+    /** With the rows centered or at the bottom, whether the bottom row is always full. */
     data object FullBottomRow : AppearanceOption<Boolean> {
         override val values: List<Boolean> = listOf(false, true)
         override fun get(appearance: Appearance) = appearance.tileGeometry.fullBottomRow
         override fun set(appearance: Appearance, value: Boolean) =
             appearance.copy(tileGeometry = appearance.tileGeometry.copy(fullBottomRow = value))
-        override fun appliesTo(appearance: Appearance) = appearance.tileGeometry.placement.atBottom
+        override fun appliesTo(appearance: Appearance) = appearance.tileGeometry.verticalAlignment != Vertical.TOP
     }
 
     /** How round the tiles' corners are: radii in dp, then round ends. */

@@ -14,7 +14,9 @@ import android.view.ViewGroup
 import android.widget.Scroller
 import com.luncher.domain.appearance.TileGeometry
 import com.luncher.domain.appearance.TileStyle
+import com.luncher.domain.layout.Direction
 import com.luncher.domain.layout.ShelfLayout
+import com.luncher.domain.layout.TileFocus
 import com.luncher.domain.layout.TileLayout
 import com.luncher.domain.layout.TileLayouts
 import com.luncher.domain.layout.TileMoves
@@ -31,9 +33,11 @@ import com.luncher.launcher.ui.R as UiR
  * While the user arranges apps ([shownCount] set), the tiles after the shown ones are the hidden
  * apps, on a shelf below a label ([ShelfLayout]); with none, an empty slot shows where hiding is.
  *
- * D-pad focus needs no code here: Android moves focus to the nearest tile in the key's direction,
- * including tiles scrolled out of view, and [requestChildFocus] then scrolls to it. Padding is
- * the TV's overscan margin, and leaves room for the focused tile's zoom.
+ * D-pad focus goes where the layout's [TileFocus] says, a rule of :domain: Android's own search
+ * would go to the nearest view that way anywhere, past the end of a row to another row or to the
+ * top bar, and pick one of two tiles as near by itself. Only Up out of the first row is left to
+ * Android's search, which finds the top bar. [requestChildFocus] then scrolls to the focused tile.
+ * Padding is the TV's overscan margin, and leaves room for the focused tile's zoom.
  */
 internal class AppTilesView(context: Context, attrs: AttributeSet?) : ViewGroup(context, attrs) {
 
@@ -99,9 +103,17 @@ internal class AppTilesView(context: Context, attrs: AttributeSet?) : ViewGroup(
     private var layoutShownCount: Int? = null
     private var layoutGeometry = tileGeometry
 
+    /** Where the D-pad takes the focus among the tiles as [tileLayout] places them: made with it. */
+    private var tileFocus: TileFocus = createFocus(width = 0)
+
     private fun createLayout(width: Int, height: Int): TileLayout {
         val shown = shownCount ?: return layouts.tiles(childCount, width, height)
         return layouts.shelf(shown, childCount - shown, width, height, shelf.labelHeight)
+    }
+
+    private fun createFocus(width: Int): TileFocus {
+        val shown = shownCount ?: return layouts.focus(childCount, width)
+        return layouts.shelfFocus(shown, childCount - shown, width)
     }
 
     /** How tiles move among [tileCount] of them, in the arrangement this view shows them in. */
@@ -114,6 +126,7 @@ internal class AppTilesView(context: Context, attrs: AttributeSet?) : ViewGroup(
         // Detached, not removed: removing would take the focus away from it.
         detachViewFromParent(from)
         attachViewToParent(tile, to, tile.layoutParams)
+        tileFocus.forget()   // the tile the focus came from may have moved
         requestLayout()
         invalidate()
     }
@@ -127,6 +140,7 @@ internal class AppTilesView(context: Context, attrs: AttributeSet?) : ViewGroup(
             shownCount != layoutShownCount || tileGeometry != layoutGeometry
         ) {
             tileLayout = createLayout(tilesWidth, tilesHeight)
+            tileFocus = createFocus(tilesWidth)
             layoutWidth = tilesWidth
             layoutHeight = tilesHeight
             layoutTileCount = childCount
@@ -158,6 +172,24 @@ internal class AppTilesView(context: Context, attrs: AttributeSet?) : ViewGroup(
     override fun onDraw(canvas: Canvas) {
         val layout = tileLayout as? ShelfLayout ?: return
         shelf.draw(canvas, layout)
+    }
+
+    override fun focusSearch(focused: View, direction: Int): View? {
+        val arrow = when (direction) {
+            FOCUS_LEFT -> Direction.LEFT
+            FOCUS_RIGHT -> Direction.RIGHT
+            FOCUS_UP -> Direction.UP
+            FOCUS_DOWN -> Direction.DOWN
+            else -> null
+        }
+        val index = indexOfChild(focused)
+        // Until the next measure, tiles added or removed, or a new geometry, aren't in tileFocus yet.
+        val current = childCount == layoutTileCount && shownCount == layoutShownCount && tileGeometry == layoutGeometry
+        if (arrow != null && index >= 0 && current) {
+            // The focused tile itself where the focus stays, which moves nothing.
+            tileFocus.toward(index, arrow)?.let { return getChildAt(it) }
+        }
+        return super.focusSearch(focused, direction)
     }
 
     override fun requestChildFocus(child: View, focused: View) {

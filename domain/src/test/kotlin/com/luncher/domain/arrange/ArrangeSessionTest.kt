@@ -1,5 +1,6 @@
 package com.luncher.domain.arrange
 
+import com.luncher.domain.appearance.HorizontalAlignment
 import com.luncher.domain.apps.AppArrangement
 import com.luncher.domain.apps.FakeInstalledApps.Companion.app
 import com.luncher.domain.apps.InstalledApp
@@ -20,14 +21,18 @@ import org.junit.Test
 class ArrangeSessionTest {
 
     // Rows of three. Apps "a" to "h" by label; "x", "y" hidden unless a test says otherwise.
-    private fun session(shown: String = "abcdefgh", hidden: String = "xy"): ArrangeSession {
+    private fun session(
+        shown: String = "abcdefgh",
+        hidden: String = "xy",
+        rows: HorizontalAlignment = HorizontalAlignment.LEFT,
+    ): ArrangeSession {
         val names = (shown + hidden).map { it.toString() }
         val arrangement = AppArrangement(
             order = shown.map { app(it.toString()).launchable },
             hidden = hidden.map { app(it.toString()).launchable },
         )
         val arranged = homeApps(names.map { app(it) }, "com.luncher.launcher", arrangement, Locale.ENGLISH)
-        return ArrangeSession(arranged) { TileGrid(it, columns = 3, width = 300, gap = 0) }
+        return ArrangeSession(arranged) { TileGrid(it, columns = 3, width = 300, gap = 0, rows) }
     }
 
     private fun names(apps: List<InstalledApp>) = apps.joinToString("") { it.label.lowercase() }
@@ -61,6 +66,44 @@ class ArrangeSessionTest {
 
         assertEquals("acdebfgh", names(session.shown))
         assertEquals(4, session.heldPlace)
+    }
+
+    // Centered, the last row "gh" is half a column off the others: g between d and e, h between e and f.
+
+    @Test
+    fun `centered, down then up puts the held app back where it was`() {
+        val session = session(rows = HorizontalAlignment.CENTER).holding("e")
+
+        session.move(DOWN)
+        assertEquals("abcdfgeh", names(session.shown))   // e between g and h, the left of two as near
+        session.move(UP)
+
+        assertEquals("abcdefgh", names(session.shown))   // not between c and d, the nearest
+        assertEquals(4, session.heldPlace)
+    }
+
+    @Test
+    fun `centered, down onto the shelf then up puts the held app back where it was`() {
+        val session = session(rows = HorizontalAlignment.CENTER).holding("h")
+
+        session.move(DOWN)
+        assertEquals("xhy", names(session.hidden))
+        session.move(UP)
+
+        assertEquals("abcdefgh", names(session.shown))   // not before g, which is as near
+        assertEquals("xy", names(session.hidden))
+    }
+
+    @Test
+    fun `a move left or right forgets the way back`() {
+        val session = session(rows = HorizontalAlignment.CENTER).holding("e")
+
+        session.move(DOWN)   // abcdfgeh
+        session.move(LEFT)   // abcdfegh: e at the end of the second row
+        session.move(UP)
+
+        assertEquals("abecdfgh", names(session.shown))   // above, not back to where it started
+        assertEquals(2, session.heldPlace)
     }
 
     @Test
