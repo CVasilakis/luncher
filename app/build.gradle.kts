@@ -46,6 +46,14 @@ android {
         }
     }
 
+    // Leaves the Kotlin standard library's kotlin/*.kotlin_builtins out of the APK: ~14 KB (~17 KB
+    // signed) that only kotlin-reflect reads, which Luncher doesn't use. Remove this before adding
+    // kotlin-reflect, or a library that uses it: it would fail at runtime, not at build time. The
+    // whole folder goes, so a future library's file under kotlin/ would be lost too.
+    packaging {
+        resources.excludes += "kotlin/**"
+    }
+
     // Lint runs here, over every module the app depends on (`:app:lintDebug`): a library alone
     // lacks what the app's merged manifest has, such as the TV banner and launcher intent filters.
     lint {
