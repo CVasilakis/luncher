@@ -52,6 +52,12 @@ so the adapter of `com.luncher.domain.clock.Clock` is in `clock/`.
   the last.
 - **Another app's resources can fail** (uninstalled a moment ago, broken): an adapter returns what
   it can (`BannerImages` draws a card) rather than crashing the home screen.
+- **An image file is decoded by the adapter, and freed once drawn.** The bitmap in a `Drawable`
+  from Android may be shared through Android's drawable cache, so it can't be freed, and from API
+  33 on it stays in memory until a garbage collection, which an idle home screen doesn't get: with
+  200 apps on API 36, 260 MB instead of 78 MB. `BannerImages` decodes a banner file at the file's
+  own size, draws it scaled to the tile and recycles it; only a banner that isn't an image file (a
+  vector, a color) or is a nine-patch goes through a `Drawable`.
 - **Public,** since `AppGraph` in `:app` creates them; no other module depends on this one.
 
 ## Manifest
