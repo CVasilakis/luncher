@@ -186,8 +186,18 @@ and Google TV image that release is tested with, from API 22 on, named `android_
 
 It boots them with `start-emulator.sh --wait-for-home`, which returns once the home app's screen is
 in front, has finished starting and has the focus, rather than as soon as Android has booted: on
-API 34, tests started right after the boot once found no window with the focus, ever. When a job
-fails, it uploads its test reports as artifacts, and the device's log, its windows
-(`dumpsys window`: `mCurrentFocus` is the focused window, `mFocusedApp` the focused activity), a
-screenshot, and adb's server log. The reasons for its individual steps are in comments in the
-workflow file.
+API 34, tests started right after the boot once found no window with the focus, ever.
+
+To find out why a job failed:
+
+- **Which tests failed:** the run's page lists each one with the first line of its error, as an
+  annotation naming the emulator, and so does each job's summary. The job's log has each
+  error in full, under "List the failed tests".
+- **Which test was running:** the log of "Run the instrumented tests" shows each test as it
+  starts, finishes or fails (the test runner's `TestRunner` lines), with the device's time. When
+  a job hangs or is cancelled, AGP never writes the results, and these lines are the only record.
+- **What the device was doing:** a failed or cancelled job uploads its test reports as artifacts,
+  and the device's log, its windows (`dumpsys window`: `mCurrentFocus` is the focused window,
+  `mFocusedApp` the focused activity), a screenshot, and adb's server log.
+
+The reasons for its individual steps are in comments in the workflow file.

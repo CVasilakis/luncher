@@ -134,18 +134,73 @@ jobs:
           create-avd.sh --api "$API" "${google_tv[@]}" --if-missing "$AVD"
           serial="$(start-emulator.sh --wait-for-home "$AVD" -no-snapshot-save)"
           echo "ANDROID_SERIAL=$serial" >> "$GITHUB_ENV"
+      # With each test as it starts, finishes or fails (the test runner's TestRunner lines in the
+      # device's log), so a job that hangs or is cancelled shows which test it was in: AGP writes
+      # the results only once the run ends. Read as they come, they can't be lost to a full log
+      # buffer. The AVD is new, so the log holds no earlier run's lines.
       - name: Run the instrumented tests
-        run: ./gradlew connectedDebugAndroidTest
+        run: |
+          adb logcat -v time -s TestRunner:I &
+          trap 'kill $!' EXIT
+          ./gradlew connectedDebugAndroidTest
+
+      # Each failed test in the job's log, with its error, as an annotation on the run's page, and
+      # in the job's summary, so the failures of every emulator show without downloading the
+      # reports.
+      - name: List the failed tests
+        if: failure() || cancelled()
+        run: |
+          python3 - app/build/outputs/androidTest-results/connected/debug <<'EOF'
+          import glob, os, sys, xml.etree.ElementTree as ET
+
+          def escape(text, *, property=False):   # a workflow command's message or property
+              text = text.replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A')
+              return text.replace(':', '%3A').replace(',', '%2C') if property else text
+
+          avd = os.environ['AVD']
+          files = glob.glob(os.path.join(sys.argv[1], '*.xml'))
+          failed, total = [], 0
+          for file in files:
+              for case in ET.parse(file).iter('testcase'):
+                  total += 1
+                  problem = case.find('failure')
+                  if problem is None:
+                      problem = case.find('error')
+                  if problem is not None:
+                      name = f"{case.get('classname').rsplit('.', 1)[-1]}.{case.get('name')}"
+                      failed.append((name, (problem.text or problem.get('message') or '').strip()))
+
+          if not files:
+              summary = (f"### {avd}: no test results\n\nThe tests didn't run, or didn't finish: "
+                         "the TestRunner lines in the step that runs them show the last test "
+                         "that started.\n")
+          else:
+              summary = f"### {avd}: {len(failed)} of {total} tests failed\n\n"
+              if failed:
+                  summary += '| Test | Error |\n|---|---|\n'
+          for name, text in failed:
+              first = text.splitlines()[0] if text else '(no message)'
+              title = escape(f'{avd}: {name}', property=True)
+              print(f'::error title={title}::{escape(first[:1000])}')
+              print(f'::group::{name}')
+              print(text)
+              print('::endgroup::')
+              cell = first[:300].replace('|', '\\|')
+              summary += f"| `{name}` | {cell} |\n"
+          print(summary)
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as out:
+              out.write(summary)
+          EOF
 
       - name: Show the emulator's log and the free disk space
-        if: failure()
+        if: failure() || cancelled()
         run: |
           cat "${TMPDIR:-/tmp}/emulator-$AVD.log" || true
           df -h /
       # adb can fail without a message (AGP's test engine once got exit code 255 while the
       # emulator's log showed it running normally). adb's own server log records its side.
       - name: Show what adb sees, and the end of adb's server log
-        if: failure()
+        if: failure() || cancelled()
         run: |
           timeout 15 adb devices -l || true
           adb_log="${TMPDIR:-/tmp}/adb.$(id -u).log"
@@ -153,19 +208,19 @@ jobs:
           mkdir -p app/build
           cp "$adb_log" app/build/adb-server.log || true
       - name: Save the device log
-        if: failure()
+        if: failure() || cancelled()
         run: timeout 30 adb logcat -d > app/build/logcat.txt || true
       # What was in front: the focused activity and window (mFocusedApp, mCurrentFocus; Espresso
       # sends keys only to a focused window of the app), every window, and the screen itself.
       - name: Save the windows and a screenshot
-        if: failure()
+        if: failure() || cancelled()
         run: |
           mkdir -p app/build
           timeout 30 adb shell dumpsys window > app/build/windows.txt || true
           grep -E 'mCurrentFocus|mFocusedApp' app/build/windows.txt || true
           timeout 30 adb exec-out screencap -p > app/build/screen.png || true
       - name: Upload the test reports, the device's log, windows and screen, and adb's server log
-        if: failure()
+        if: failure() || cancelled()
         uses: actions/upload-artifact@v7
         with:
           name: connected-test-reports-${{ matrix.avd }}
