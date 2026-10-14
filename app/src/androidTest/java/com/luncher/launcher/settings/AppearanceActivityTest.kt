@@ -17,7 +17,9 @@ import androidx.test.espresso.matcher.ViewMatchers.withChild
 import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.luncher.domain.appearance.Appearance
 import com.luncher.domain.appearance.FakeAppearanceSettings
+import com.luncher.domain.appearance.TileGeometry
 import com.luncher.domain.appearance.VerticalAlignment
 import com.luncher.launcher.AppGraph
 import com.luncher.launcher.LuncherApplication
@@ -46,7 +48,8 @@ class AppearanceActivityTest {
     private lateinit var settings: FakeAppearanceSettings
 
     private fun launchThePanel(): ActivityScenario<SettingsActivity> {
-        settings = FakeAppearanceSettings()
+        // The rows at the top, the first of the vertical alignments, which the test steps from.
+        settings = FakeAppearanceSettings(Appearance(TileGeometry(verticalAlignment = VerticalAlignment.TOP)))
         application.graph = object : AppGraph(application) {
             override val appearanceSettings = this@AppearanceActivityTest.settings
         }
@@ -74,6 +77,9 @@ class AppearanceActivityTest {
 
     /** The editor's row of the option labeled [label]. */
     private fun option(label: Int) = allOf(withChild(withText(label)), withChild(withId(R.id.settings_option_value)))
+
+    /** An option's row showing [value]; another option can show the same value. */
+    private fun hasValue(value: Int) = withChild(allOf(withText(value), withId(R.id.settings_option_value)))
 
     /**
      * Checks [condition] on the view [view] matches, retrying while a window comes up. Espresso
@@ -112,13 +118,13 @@ class AppearanceActivityTest {
 
             press(KeyEvent.KEYCODE_DPAD_RIGHT)
 
-            waitUntil(allOf(withText(R.string.settings_appearance_center), withId(R.id.settings_option_value)), isDisplayed())
+            waitUntil(option(R.string.settings_appearance_vertical_alignment), hasValue(R.string.settings_appearance_center))
             assertEquals(VerticalAlignment.CENTER, settings.appearance.tileGeometry.verticalAlignment)
 
             press(KeyEvent.KEYCODE_DPAD_LEFT)
             press(KeyEvent.KEYCODE_DPAD_LEFT)   // around, from the first value to the last
 
-            waitUntil(allOf(withText(R.string.settings_appearance_bottom), withId(R.id.settings_option_value)), isDisplayed())
+            waitUntil(option(R.string.settings_appearance_vertical_alignment), hasValue(R.string.settings_appearance_bottom))
             assertEquals(VerticalAlignment.BOTTOM, settings.appearance.tileGeometry.verticalAlignment)
 
             pressBack()
