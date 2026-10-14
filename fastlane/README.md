@@ -3,7 +3,7 @@
 Luncher's store listing: its name, descriptions, the changes of each version, and its images.
 F-Droid shows it on Luncher's page, reading it from the repository at each release's tag; Google
 Play takes the same files, uploaded by hand or with fastlane's `supply`. The root
-[`README.md`](../README.md) shows the first four screenshots too, under a wider cut of the feature
+[`README.md`](../README.md) shows the same screenshots too, under a wider cut of the feature
 graphic ([below](#icon-banner-and-feature-graphic)). Nothing
 here is part of the build.
 
@@ -63,16 +63,18 @@ the `NOTICE`.
 
 ## Screenshots
 
-Taken on the `tv_api36` emulator in English, of a release build, which carries Luncher's own name
-(a debug build is labeled "Luncher (debug)"), with the debug build disabled so that it doesn't
-appear among the apps. The apps shown are the emulator's own; their banners belong to their
-owners.
+Taken on the `gtv_api36` emulator (Google TV, the newest system) in English, of a release build
+(`assembleRelease`, signed with the debug key to install it), which carries Luncher's own name (a
+debug build is labeled "Luncher (debug)"), with the debug build uninstalled so that it doesn't
+appear among the apps. Luncher's appearance settings are at their defaults. The emulator's own apps
+are turned off (`pm disable-user`), and nine others installed so that they fill the default layout
+(five in the bottom row, four above): ERTFLIX, Jellyfin, Kodi, Launcher Manager, Material Files,
+NewPipe, Next Player, RadioDroid and Tailscale. Their banners belong to their owners.
 
 1. The home screen.
 2. Arrange mode, holding an app.
-3. Arrange mode, the app moved onto the hidden shelf.
-4. The settings panel.
-5. Hide apps, with that app hidden.
+3. The settings panel.
+4. Appearance, with Tiles open.
 
 `screencap` saves PNGs with an alpha channel, which `convert` (ImageMagick) removes:
 

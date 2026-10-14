@@ -1,1 +1,1 @@
-A lightweight and customizable launcher for Android TV.
+A lightweight and customizable home screen (launcher) for Android TV.

@@ -8,7 +8,7 @@
   <a href="https://f-droid.org/packages/com.luncher.launcher/"><img src="https://img.shields.io/f-droid/v/com.luncher.launcher?logo=fdroid" alt="F-Droid version"></a>
   <a href="https://github.com/CVasilakis/luncher/releases/latest"><img src="https://img.shields.io/github/v/release/CVasilakis/luncher?logo=github" alt="GitHub release"></a>
   <img src="https://img.shields.io/badge/Android_TV-5.1%2B-3DDC84?logo=android&logoColor=white" alt="Android TV 5.1+">
-  <img src="https://img.shields.io/badge/APK-~86_KB-blue" alt="APK ~86 KB">
+  <img src="https://img.shields.io/badge/APK-~98_KB-blue" alt="APK ~98 KB">
 </p>
 
 It's made with performance in mind, to run smoothly even on old and weak Android TV devices, and still gives you plenty of customization options to shape it to your taste.
@@ -19,8 +19,8 @@ It's made with performance in mind, to run smoothly even on old and weak Android
 |---|---|
 | ![The home screen](fastlane/metadata/android/en-US/images/tvScreenshots/1.png) | ![Moving an app](fastlane/metadata/android/en-US/images/tvScreenshots/2.png) |
 | Your apps, the time and the date | Hold OK on an app to move it |
-| ![Hiding an app](fastlane/metadata/android/en-US/images/tvScreenshots/3.png) | ![The settings](fastlane/metadata/android/en-US/images/tvScreenshots/4.png) |
-| Move apps onto the shelf to hide them | Settings |
+| ![The settings](fastlane/metadata/android/en-US/images/tvScreenshots/3.png) | ![The appearance settings](fastlane/metadata/android/en-US/images/tvScreenshots/4.png) |
+| Settings | Choose where your apps sit and how round their corners are |
 
 ## Features
 

@@ -71,7 +71,7 @@ dependencies, and it has no token that can change the repository.
    - The version's changes in the store listing, as
      `fastlane/metadata/android/en-US/changelogs/<versionCode>.txt`
      ([`fastlane/`](../fastlane/README.md)).
-   - The release's notes, in `.github/release-notes/v1.2.3.md` ([Release notes](#release-notes)).
+   - The release's notes, in `.github/release-notes/v1.2.3/notes.md` ([Release notes](#release-notes)).
    - **Wherever Luncher is described to its users, what the release changes:** a new or changed
      feature, setting or requirement. In the [root README](../README.md): its features (one that
      ships moves up from "On the way"), what Luncher runs on, and how to install it. In
@@ -104,9 +104,12 @@ commit the new run releases.
 
 ## Release notes
 
-Each release's notes are written in `.github/release-notes/vX.Y.Z.md`, in the commit that raises
-the version, and are the start of the release's page on GitHub. They are Markdown, for the people
-reading the Releases page: a "What's new" section, and "Fixes" when there are any. The workflow
+Each release's notes are written in `.github/release-notes/vX.Y.Z/notes.md`, in the commit that
+raises the version, and are the start of the release's page on GitHub. They are Markdown, for the
+people reading the Releases page: a "What's new" section, and "Fixes" when there are any. Their
+images go in the same folder, linked by their full address at the release's tag, e.g.
+`https://github.com/CVasilakis/luncher/raw/v1.2.3/.github/release-notes/v1.2.3/shot.png`: a
+release's page doesn't resolve a relative path. The workflow
 adds two sections of its own after them, the same in every release: how to install the APK, and
 both checksums (the APK's, and the signing certificate's that `apksigner verify --print-certs`
 shows). The store listing's changelog, `changelogs/<versionCode>.txt`, is a separate, shorter text

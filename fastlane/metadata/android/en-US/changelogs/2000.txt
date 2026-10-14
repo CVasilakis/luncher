@@ -1,0 +1,3 @@
+- New appearance settings: place the apps where you want on the screen, round the tile corners, arrange the status bar, or hide the time and date
+- A new default look: apps centered at the bottom, with rounded corners
+- Apps you install, update, remove or hide show up on the home screen immediately

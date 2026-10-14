@@ -1,7 +1,7 @@
 # Releases main at the version app/build.gradle.kts holds: builds the release APK, signs it, tags
 # the commit vX.Y.Z, and publishes a GitHub release with the APK, its SHA-256, and the notes from
-# .github/release-notes/vX.Y.Z.md. Started by hand (Actions → Release → Run workflow), once the
-# version has been raised and the notes written. Setup and steps: docs/RELEASING.md.
+# .github/release-notes/vX.Y.Z/notes.md. Started by hand (Actions → Release → Run workflow), once
+# the version has been raised and the notes written. Setup and steps: docs/RELEASING.md.
 #
 # Separate jobs, so the signing key never meets Gradle and the token that can write to the
 # repository never meets the key: Gradle runs the build's plugins and dependencies, any of which
@@ -49,7 +49,7 @@ jobs:
           fi
           # The release's notes, written in the commit that raises the version: checked first, as a
           # run without them could only fail at its end, after the builds.
-          notes=".github/release-notes/v$version.md"
+          notes=".github/release-notes/v$version/notes.md"
           if ! grep -q '[^[:space:]]' "$notes" 2>/dev/null; then
             echo "::error::$notes is missing or empty: write the release's notes there (docs/RELEASING.md#release-notes)."
             exit 1
@@ -248,7 +248,7 @@ jobs:
             exit 1
           fi
           {
-            cat ".github/release-notes/$TAG.md"
+            cat ".github/release-notes/$TAG/notes.md"
             cat <<EOF
 
           ## Install
