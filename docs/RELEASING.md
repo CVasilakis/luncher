@@ -105,15 +105,14 @@ commit the new run releases.
 ## Release notes
 
 Each release's notes are written in `.github/release-notes/vX.Y.Z/notes.md`, in the commit that
-raises the version, and are the start of the release's page on GitHub. They are Markdown, for the
-people reading the Releases page: a "What's new" section, and "Fixes" when there are any. Their
-images go in the same folder, linked by their full address at the release's tag, e.g.
+raises the version, and are the release's page on GitHub as they are: the workflow adds nothing
+to them. They are Markdown, for the people reading the Releases page: a "What's new" section,
+and "Fixes" when there are any. Their images go in the same folder, linked by their full address
+at the release's tag, e.g.
 `https://github.com/CVasilakis/luncher/raw/v1.2.3/.github/release-notes/v1.2.3/shot.png`: a
-release's page doesn't resolve a relative path. The workflow
-adds two sections of its own after them, the same in every release: how to install the APK, and
-both checksums (the APK's, and the signing certificate's that `apksigner verify --print-certs`
-shows). The store listing's changelog, `changelogs/<versionCode>.txt`, is a separate, shorter text
-in plain words, at most 500 characters ([`fastlane/`](../fastlane/README.md)).
+release's page doesn't resolve a relative path. The store listing's changelog,
+`changelogs/<versionCode>.txt`, is a separate, shorter text in plain words, at most 500
+characters ([`fastlane/`](../fastlane/README.md)).
 
 ## F-Droid
 
