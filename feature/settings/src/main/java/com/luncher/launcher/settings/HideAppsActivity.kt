@@ -22,23 +22,52 @@ import java.util.Locale
  */
 class HideAppsActivity : Activity() {
 
+    private val installedApps by lazy { graph.installedApps }
     private val arrangements by lazy { graph.appArrangements }
     private lateinit var arranged: ArrangedApps
     private var rows: List<AppVisibility> = emptyList()
     private val adapter = Rows()
+    private lateinit var list: ListView
+
+    // Installed, updated or removed while the list shows: in it at once.
+    private val showAppChanges: () -> Unit = {
+        readApps()
+        adapter.notifyDataSetChanged()
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.settings_hide_apps_activity)
-        arranged = homeApps(graph.installedApps.tvApps(), packageName, arrangements.read(), Locale.getDefault())
-        rows = arranged.byLabel()
-
-        val list = findViewById<ListView>(R.id.settings_apps)
-        list.layoutParams.height = listHeight(rows.size)
+        list = findViewById(R.id.settings_apps)
+        readApps()
         list.adapter = adapter
         list.setOnItemClickListener { _, _, position, _ -> toggle(rows[position]) }
         list.requestFocus()
-        if (rows.isEmpty()) findViewById<View>(R.id.settings_no_apps).visibility = View.VISIBLE
+    }
+
+    // The apps are watched only while the list shows; back from elsewhere, they're read again.
+    override fun onStart() {
+        super.onStart()
+        installedApps.addListener(showAppChanges)
+    }
+
+    override fun onRestart() {
+        super.onRestart()
+        showAppChanges()
+    }
+
+    override fun onStop() {
+        super.onStop()
+        installedApps.removeListener(showAppChanges)
+    }
+
+    /** The rows for the apps installed now, the list as tall as they need, and why it's empty if it is. */
+    private fun readApps() {
+        arranged = homeApps(installedApps.tvApps(), packageName, arrangements.read(), Locale.getDefault())
+        rows = arranged.byLabel()
+        list.layoutParams.height = listHeight(rows.size)
+        list.requestLayout()
+        findViewById<View>(R.id.settings_no_apps).visibility = if (rows.isEmpty()) View.VISIBLE else View.GONE
     }
 
     /**

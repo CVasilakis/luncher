@@ -290,6 +290,19 @@ class ArrangeModeTest {
     }
 
     @Test
+    fun `an app installed while arranging shows once arranging ends`() {
+        val activity = start().get()
+        activity.longPress("b")
+
+        installedApps.apps += app("f")          // the tiles stay the user's work in progress
+        assertEquals("aBcde[x]", activity.state())
+        @Suppress("DEPRECATION")
+        activity.onBackPressed()
+
+        assertEquals("abcdef", activity.state())
+    }
+
+    @Test
     fun `the new order stays after arranging`() {
         val controller = start()
         controller.get().longPress("e")

@@ -16,7 +16,7 @@ domain/src/
 │   ├── apps/
 │   │   ├── LaunchableApp.kt     model: an app's TV launcher activity (package + activity), its identity
 │   │   ├── InstalledApp.kt      model: a launchable app with its label, whether it has a banner, and when it was installed or updated
-│   │   ├── InstalledApps.kt     port: the TV apps installed on the device
+│   │   ├── InstalledApps.kt     port: the TV apps installed on the device, and when apps change
 │   │   ├── AppImages.kt         port: an app's image drawn at a size, in the UI's image type
 │   │   ├── AppArrangement.kt    model: the user's order of the shown apps, and the hidden apps, as stored
 │   │   ├── AppArrangements.kt   port: where the arrangement is kept, and when it changes
@@ -78,5 +78,5 @@ models, rules and ports of that topic.
 - Ports are interfaces named after what they provide (`InstalledApps`), not how
   (`PackageManagerApps`); adapters in `:platform` implement them. A port whose result is a UI type
   this module can't name is generic in it (`AppImages<Image>`).
-- A port for state that changes while it's shown (`Clock`, `AppearanceSettings`, `AppArrangements`) is a port you can watch
+- A port for state that changes while it's shown (`Clock`, `AppearanceSettings`, `AppArrangements`, `InstalledApps`) is a port you can watch
   ([`ARCHITECTURE.md`](../docs/ARCHITECTURE.md#background-work-and-changes-while-shown)).

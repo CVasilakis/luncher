@@ -83,7 +83,7 @@ one job, so a new arrangement, image source or top bar item changes one of them:
 | `AndroidClock` (`:platform`) | reads those from Android, and watches the time broadcasts only while something listens |
 | `ClockView` | formats a reading in the device's language; the time and the date side by side, in the order the top bar gives, either or both hidden |
 | `topBarLayout` (`:domain`), `TopBarView` | which edge of the top bar the clock and the settings entry are at, the time's side of the date, and whether each of the two shows; the view moves its items there |
-| `HomeActivity` | reads the apps and their arrangement in `onResume`; when the shown apps changed, creates tiles for new ones (an updated app is new: its banner may have changed) and drops the others. Without tiles, says why: nothing installed, or everything hidden. Starts the clock and follows the appearance and the arrangement in `onStart`, and stops all three in `onStop`: an app hidden or shown in the settings shows at once, behind the panel; arrange mode's own saves don't read the apps again. Opens the [settings panel](../settings/README.md#the-settings-panel) on OK on the gear or on the Menu key. A long press of OK on a tile starts [arrange mode](#arrange-mode), which gets every key first while it's on. |
+| `HomeActivity` | reads the apps and their arrangement in `onResume`; when the shown apps changed, creates tiles for new ones (an updated app is new: its banner may have changed) and drops the others. Without tiles, says why: nothing installed, or everything hidden. Starts the clock and follows the appearance, the arrangement and the installed apps in `onStart`, and stops all four in `onStop`: an app hidden or shown in the settings shows at once, behind the panel, and so does an app installed, updated or removed; arrange mode's own saves don't read the apps again, and an app changed while arranging shows when the mode ends. Opens the [settings panel](../settings/README.md#the-settings-panel) on OK on the gear or on the Menu key. A long press of OK on a tile starts [arrange mode](#arrange-mode), which gets every key first while it's on. |
 
 ### The top bar
 
@@ -113,9 +113,11 @@ What keeps it light:
 
 - **One bitmap per tile, at the tile's size.** A banner resource is usually 640×360 px or more;
   only the scaled copy is kept, and drawing a tile copies it once.
-- **Only new apps cost a bitmap.** Coming back to the home screen reads the app list again, but
-  keeps the tiles, their bitmaps and the focus when it's the same; when an app was installed,
-  only its tile is new.
+- **Only new apps cost a bitmap.** Coming back to the home screen, or an app changing while it's
+  shown, reads the app list again, but keeps the tiles, their bitmaps and the focus when it's the
+  same; when an app was installed or updated, only its tile is new. Changes are heard from
+  Android, not looked for: nothing runs between them, and a burst of them (an app store's
+  updates) reads the list once.
 - **Nothing allocated per key press in Luncher's code.** `TileFocus` keeps its last move in place;
   the zoom is a state animator created with each tile; scrolling reuses one `Scroller`.
   Android 5 still allocates inside its animators each time they start, about 2 KB a focus move.
@@ -220,5 +222,5 @@ What keeps it light:
   keeps it while the width and height, the number of tiles, `shownCount` and the `TileGeometry`
   stay the same, each compared with what the layout was made from, and a move changes none of them. Only an app crossing between the shown and the hidden ones creates new ones: the
   view's `ShelfLayout` and its two `TileGrid`s, and `ArrangeSession`'s `TileMoves`.
-- **Nothing is read while arranging.** The apps are read again when the home screen comes back
-  after the mode, not while the user's changes are on screen.
+- **Nothing is read while arranging.** The apps are read again when the mode ends if one changed
+  meanwhile, and when the home screen comes back, not while the user's changes are on screen.

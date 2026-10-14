@@ -232,6 +232,27 @@ class HomeActivityTest {
     }
 
     @Test
+    fun `shows an app installed or removed while it's shown, at once`() {
+        val activity = start().get()
+
+        installedApps.apps = installedApps.apps.filter { it.label != "News" } + app("games")
+
+        assertEquals(listOf("Games", "Movies", "Music"), activity.labels())
+    }
+
+    @Test
+    fun `doesn't watch the apps while hidden, and reads them when it comes back`() {
+        val controller = start()
+
+        controller.pause().stop()
+        installedApps.apps += app("games")
+        assertEquals(listOf("Movies", "Music", "News"), controller.get().labels())
+        controller.restart().start().resume()
+
+        assertEquals(listOf("Games", "Movies", "Music", "News"), controller.get().labels())
+    }
+
+    @Test
     fun `makes a new tile for an app updated since, as its banner may have changed`() {
         val controller = start()
         val movies = controller.get().tiles().single { it.app.label == "Movies" }

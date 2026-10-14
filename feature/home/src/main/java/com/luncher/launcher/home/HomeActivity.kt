@@ -52,6 +52,15 @@ class HomeActivity : Activity() {
     // whose own saves these are, with the tiles showing them already.
     private val showArrangement: () -> Unit = { if (!arrange.active) refresh() }
 
+    /** Apps installed, updated or removed while the user arranges apps, read when the mode ends. */
+    private var appsChangedWhileArranging = false
+
+    // Installed, updated or removed while shown: shown at once, or, while arranging, whose tiles
+    // are the user's work in progress, once it ends.
+    private val showAppChanges: () -> Unit = {
+        if (arrange.active) appsChangedWhileArranging = true else refresh()
+    }
+
     private val openApp = View.OnClickListener { open((it as AppTileView).app) }
 
     private val startArranging = View.OnLongClickListener {
@@ -90,15 +99,16 @@ class HomeActivity : Activity() {
     }
 
     // Visible from onStart to onStop; paused only, e.g. behind a dialog, it still shows.
-    // The appearance and the arrangement, as the clock, only while visible: a change made meanwhile
-    // (in the appearance editor, which covers the home screen whole) is applied once, when it comes
-    // back. The apps are read in onResume.
+    // The appearance, the arrangement and the installed apps, as the clock, only while visible: a
+    // change made meanwhile (in the appearance editor, which covers the home screen whole) is
+    // applied once, when it comes back. The apps are read again in onResume.
     override fun onStart() {
         super.onStart()
         clockView.start(clock)
         appearanceSettings.addListener(showAppearance)
         showAppearance()
         arrangements.addListener(showArrangement)
+        installedApps.addListener(showAppChanges)
     }
 
     override fun onStop() {
@@ -107,6 +117,7 @@ class HomeActivity : Activity() {
         clockView.stop()
         appearanceSettings.removeListener(showAppearance)
         arrangements.removeListener(showArrangement)
+        installedApps.removeListener(showAppChanges)
     }
 
     override fun onResume() {
@@ -143,11 +154,15 @@ class HomeActivity : Activity() {
         topBar.appearance = appearance.topBar
     }
 
-    /** Arrange mode ended: the tiles show [arranged] already. */
+    /** Arrange mode ended: the tiles show [arranged] already, unless apps changed meanwhile. */
     private fun arrangingEnded(arranged: ArrangedApps) {
         this.arranged = arranged
         shown = arranged.shown
         showWhyEmpty(arranged)
+        if (appsChangedWhileArranging) {
+            appsChangedWhileArranging = false
+            refresh()
+        }
     }
 
     private fun show(apps: List<InstalledApp>) {

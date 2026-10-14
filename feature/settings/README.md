@@ -79,7 +79,8 @@ again when the panel closes, keeping its tiles when nothing changed.
 Hide apps (`HideAppsActivity`) is a panel of its own, opened in the settings panel's place: it
 lists every app by name; OK on one hides it or shows it again, and Back returns to the settings
 panel. The home screen behind shows each change at once: it follows the stored arrangement while
-it's started, as it stays behind the floating panels.
+it's started, as it stays behind the floating panels. The list itself follows the installed apps
+while it shows: an app installed or removed meanwhile appears in it, or leaves it, at once.
 
 A panel of its own is another activity in this module, started from the settings panel with
 `openOwnPanel`. The settings panel's window stays behind it, invisible (its alpha is 0 until it
@@ -93,7 +94,7 @@ nothing itself.
 | `AppArrangements` (`:domain`) / `PreferencesAppArrangements` (`:platform`) | port and adapter: reads the arrangement once per process, and saves each change at once, in the background, telling the listeners (the home screen behind) |
 | `homeApps` (`:domain`) | matches the stored apps to the installed ones: an update that renamed an app's activity keeps its place and hidden state, and apps that aren't installed right now keep theirs for when they come back |
 | `ArrangedApps` (`:domain`) | the shown and hidden apps: hiding one puts it first among the hidden apps, showing one puts it last in the user's order (or in its place by name while there's none), and `byLabel` is the list's content |
-| `HideAppsActivity` | shows that list, stores each change |
+| `HideAppsActivity` | shows that list, stores each change; reads the apps again when they change while it shows, and when it comes back |
 
 The list is a platform `ListView`: it creates views only for the rows on screen, and reuses them
 while scrolling. It shows at most six and a half rows, so the half row says there's more; on a

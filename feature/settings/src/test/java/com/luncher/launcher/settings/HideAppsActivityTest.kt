@@ -1,5 +1,6 @@
 package com.luncher.launcher.settings
 
+import android.os.Looper
 import android.view.KeyEvent
 import android.view.View
 import android.widget.ListView
@@ -17,7 +18,9 @@ import org.junit.runner.RunWith
 import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
+import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
+import java.time.Duration
 
 @RunWith(RobolectricTestRunner::class)
 @Config(qualifiers = "en-rUS-$TV_1080P")
@@ -179,5 +182,27 @@ class HideAppsActivityTest {
         val activity = start()
 
         assertEquals(View.VISIBLE, activity.findViewById<View>(R.id.settings_no_apps).visibility)
+    }
+
+    @Test
+    fun `lists an app installed or removed while it shows, at once`() {
+        val activity = start()
+
+        installedApps.apps = installedApps.apps.filter { it.label != "News" } + app("games")
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(100))   // the next frames
+
+        assertEquals(listOf("Games", "Movies", "Music (hidden)"), activity.rows())
+    }
+
+    @Test
+    fun `reads the apps again when it comes back`() {
+        val controller = Robolectric.buildActivity(HideAppsActivity::class.java).setup()
+
+        controller.pause().stop()
+        installedApps.apps += app("games")      // not watched while hidden
+        controller.restart().start().resume()
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(100))
+
+        assertEquals(listOf("Games", "Movies", "Music (hidden)", "News"), controller.get().rows())
     }
 }

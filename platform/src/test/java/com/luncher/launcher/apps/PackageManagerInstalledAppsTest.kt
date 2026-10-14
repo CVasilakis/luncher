@@ -1,12 +1,15 @@
 package com.luncher.launcher.apps
 
 import android.content.ComponentName
+import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.ActivityInfo
 import android.content.pm.ApplicationInfo
+import android.content.pm.LauncherApps
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
+import android.os.Looper
 import com.luncher.domain.apps.LaunchableApp
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -20,6 +23,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
 import java.io.File
+import java.time.Duration
 
 @RunWith(RobolectricTestRunner::class)
 class PackageManagerInstalledAppsTest {
@@ -34,7 +38,7 @@ class PackageManagerInstalledAppsTest {
     @Before
     fun setUp() {
         packageManager = RuntimeEnvironment.getApplication().packageManager
-        installedApps = PackageManagerInstalledApps(packageManager)
+        installedApps = PackageManagerInstalledApps(RuntimeEnvironment.getApplication())
     }
 
     /** Installs an app whose activity handles MAIN + [category], as its manifest would declare. */
@@ -132,6 +136,43 @@ class PackageManagerInstalledAppsTest {
 
         assertEquals(1_700_000_000_000, installed(movies).updated)
         assertEquals(0, installed(unreadable).updated)
+    }
+
+    /** Android reports a change, as LauncherApps does for each app installed, updated or removed. */
+    private fun androidReportsAChange() {
+        val launcherApps = RuntimeEnvironment.getApplication().getSystemService(Context.LAUNCHER_APPS_SERVICE) as LauncherApps
+        shadowOf(launcherApps).notifyPackageAdded("com.example.movies")
+    }
+
+    private fun after(millis: Long) = shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(millis))
+
+    @Test
+    fun `tells its listeners once changes that come together settle, once for all of them`() {
+        var told = 0
+        installedApps.addListener { told++ }
+
+        androidReportsAChange()
+        after(400)
+        androidReportsAChange()
+        after(400)
+        assertEquals(0, told)
+        after(100)
+
+        assertEquals(1, told)
+    }
+
+    @Test
+    fun `tells nobody once the last listener is removed, a change pending included`() {
+        var told = 0
+        val listener: () -> Unit = { told++ }
+        installedApps.addListener(listener)
+
+        androidReportsAChange()
+        installedApps.removeListener(listener)
+        androidReportsAChange()
+        after(1000)
+
+        assertEquals(0, told)
     }
 
     private companion object {

@@ -23,7 +23,7 @@ platform/
     │   │   ├── appearance/
     │   │   │   └── PreferencesAppearanceSettings.kt AppearanceSettings on SharedPreferences: a key per option, and its stored form
     │   │   ├── apps/
-    │   │   │   ├── PackageManagerInstalledApps.kt   InstalledApps on PackageManager
+    │   │   │   ├── PackageManagerInstalledApps.kt   InstalledApps on PackageManager, and LauncherApps for when apps change
     │   │   │   ├── PreferencesAppArrangements.kt    AppArrangements on SharedPreferences: the file and its format
     │   │   │   ├── BannerImages.kt                  AppImages<Bitmap>: draws an app's Banner into a bitmap of the tile's size
     │   │   │   └── CachedBannerImages.kt            AppImages<Bitmap> in front of BannerImages: each tile's image kept in a file for the next start

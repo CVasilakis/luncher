@@ -31,7 +31,7 @@ open class AppGraph(context: Context) : HomeGraph, SettingsGraph {
 
     protected val appContext: Context = context.applicationContext
 
-    override val installedApps: InstalledApps by lazy { PackageManagerInstalledApps(appContext.packageManager) }
+    override val installedApps: InstalledApps by lazy { PackageManagerInstalledApps(appContext) }
 
     override val appArrangements: AppArrangements by lazy { PreferencesAppArrangements(appContext) }
 
