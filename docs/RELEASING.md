@@ -79,7 +79,7 @@ dependencies, and it has no token that can change the repository.
      `short_description.txt`, and the screenshots, which the root README shows too. F-Droid reads
      the listing from the release's tag, so a change made after the release shows there only
      with the next one.
-   - The APK's size in the [root README](../README.md#light-by-design), if it has changed: the
+   - The APK's size in the [root README](../README.md)'s badge, if it has changed: the
      signed APK's, the size users download. `./gradlew assembleRelease` builds it unsigned, as
      `app/build/outputs/apk/release/app-release-unsigned.apk`; signing adds about 16 KB
      ([The signing key](#the-signing-key)).
