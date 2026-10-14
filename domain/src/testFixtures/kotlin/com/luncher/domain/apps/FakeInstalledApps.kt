@@ -12,10 +12,11 @@ class FakeInstalledApps(var apps: List<InstalledApp> = emptyList()) : InstalledA
          * An installed app with a plausible package and activity name, labeled [name] with a
          * capital first letter ("movies" is "Movies").
          */
-        fun app(name: String, hasBanner: Boolean = false) = InstalledApp(
+        fun app(name: String, hasBanner: Boolean = false, updated: Long = 0) = InstalledApp(
             LaunchableApp("com.example.$name", "com.example.$name.MainActivity"),
             label = name.replaceFirstChar { it.uppercaseChar() },
             hasBanner = hasBanner,
+            updated = updated,
         )
     }
 }

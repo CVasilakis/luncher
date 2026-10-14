@@ -77,7 +77,7 @@ class HomeAppsTest {
 
     @Test
     fun `leaves out the launcher itself`() {
-        val self = InstalledApp(LaunchableApp(launcher, "$launcher.home.HomeActivity"), "Luncher", hasBanner = true)
+        val self = InstalledApp(LaunchableApp(launcher, "$launcher.home.HomeActivity"), "Luncher", hasBanner = true, updated = 0)
 
         assertEquals(listOf("Movies"), shown(listOf(self, app("movies"))))
     }

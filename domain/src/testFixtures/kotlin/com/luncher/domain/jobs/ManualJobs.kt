@@ -1,0 +1,28 @@
+package com.luncher.domain.jobs
+
+/** [Jobs] that run when the test says ([runAll]), in the order the real ones would. */
+class ManualJobs : Jobs {
+
+    private class Queued(val priority: Int, val order: Int, val job: () -> Unit)
+
+    private val queue = mutableListOf<Queued>()
+    private var count = 0
+
+    /** How many jobs are queued, not run yet. */
+    val pending: Int get() = queue.size
+
+    override fun run(priority: Int, job: () -> Unit): Cancellable {
+        val queued = Queued(priority, count++, job)
+        queue += queued
+        return Cancellable { queue.remove(queued) }
+    }
+
+    /** Runs the queued jobs, and those they queue, the highest priority first, then the oldest. */
+    fun runAll() {
+        while (queue.isNotEmpty()) {
+            val next = queue.maxWith(compareBy<Queued> { it.priority }.thenByDescending { it.order })
+            queue.remove(next)
+            next.job()
+        }
+    }
+}

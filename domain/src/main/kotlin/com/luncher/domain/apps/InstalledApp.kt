@@ -9,4 +9,9 @@ data class InstalledApp(
     val label: String,
     /** Whether the app declares a TV banner (on its launcher activity or its application). */
     val hasBanner: Boolean,
+    /**
+     * When the app was last installed or updated, as the device tells: another value means its
+     * banner may have changed. Only compared, never shown.
+     */
+    val updated: Long,
 )

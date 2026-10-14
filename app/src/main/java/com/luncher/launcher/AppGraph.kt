@@ -7,12 +7,15 @@ import com.luncher.domain.apps.AppArrangements
 import com.luncher.domain.apps.AppImages
 import com.luncher.domain.apps.InstalledApps
 import com.luncher.domain.clock.Clock
+import com.luncher.domain.jobs.Jobs
 import com.luncher.launcher.appearance.PreferencesAppearanceSettings
 import com.luncher.launcher.apps.BannerImages
+import com.luncher.launcher.apps.CachedBannerImages
 import com.luncher.launcher.apps.PackageManagerInstalledApps
 import com.luncher.launcher.apps.PreferencesAppArrangements
 import com.luncher.launcher.clock.AndroidClock
 import com.luncher.launcher.home.HomeGraph
+import com.luncher.launcher.jobs.BackgroundThreadJobs
 import com.luncher.launcher.settings.SettingsGraph
 
 /**
@@ -32,7 +35,10 @@ open class AppGraph(context: Context) : HomeGraph, SettingsGraph {
 
     override val appArrangements: AppArrangements by lazy { PreferencesAppArrangements(appContext) }
 
-    override val appImages: AppImages<Bitmap> by lazy { BannerImages(appContext) }
+    override val appImages: AppImages<Bitmap> by lazy { CachedBannerImages(appContext, BannerImages(appContext), jobs) }
+
+    /** The background thread, for the adapters' jobs; open so a test can run them when it says. */
+    open val jobs: Jobs by lazy { BackgroundThreadJobs() }
 
     override val clock: Clock by lazy { AndroidClock(appContext) }
 

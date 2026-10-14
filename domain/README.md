@@ -15,7 +15,7 @@ domain/src/
 ├── main/kotlin/com/luncher/domain/
 │   ├── apps/
 │   │   ├── LaunchableApp.kt     model: an app's TV launcher activity (package + activity), its identity
-│   │   ├── InstalledApp.kt      model: a launchable app with its label and whether it has a banner
+│   │   ├── InstalledApp.kt      model: a launchable app with its label, whether it has a banner, and when it was installed or updated
 │   │   ├── InstalledApps.kt     port: the TV apps installed on the device
 │   │   ├── AppImages.kt         port: an app's image drawn at a size, in the UI's image type
 │   │   ├── AppArrangement.kt    model: the user's order of the shown apps, and the hidden apps, as stored
@@ -35,6 +35,8 @@ domain/src/
 │   │   ├── AppearanceOption.kt  models and rules: each option the user can change, its values, stepping through them, around
 │   │   ├── AppearanceOptions.kt models and rule: which options the editor lists, in groups
 │   │   └── AppearanceSettings.kt port: the stored appearance, and when it changes
+│   ├── jobs/
+│   │   └── Jobs.kt              port: the background thread; cancelling a queued job; every job's priority (JobPriority)
 │   ├── clock/
 │   │   ├── ClockReading.kt      model: the time, time zone and hour format at one moment
 │   │   └── Clock.kt             port: the device's clock, and when what it shows changes
@@ -58,10 +60,11 @@ domain/src/
     ├── apps/FakeAppArrangements.kt fake of the AppArrangements port: the arrangement in memory
     ├── appearance/FakeAppearanceSettings.kt  fake of the AppearanceSettings port: the appearance in memory
     ├── appearance/AppearanceChanges.kt       each option at each value but its default: what the catalog-wide tests draw
-    └── clock/FakeClock.kt          fake of the Clock port: a fixed time the test moves
+    ├── clock/FakeClock.kt          fake of the Clock port: a fixed time the test moves
+    └── jobs/ManualJobs.kt          fake of the Jobs port: the queued jobs run when the test says, in the real order
 ```
 
-Packages are by topic (`appearance/`, `apps/`, `arrange/`, `clock/`, `layout/`, `settings/`, and later e.g. `wallpaper/`), each holding the
+Packages are by topic (`appearance/`, `apps/`, `arrange/`, `clock/`, `jobs/`, `layout/`, `settings/`, and later e.g. `wallpaper/`), each holding the
 models, rules and ports of that topic.
 
 ## Writing models, rules and ports

@@ -17,6 +17,7 @@ import com.luncher.launcher.settings.SettingsActivity
 import com.luncher.launcher.testing.TV_1080P
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotSame
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
@@ -80,6 +81,7 @@ class HomeActivityTest {
             LaunchableApp(application.packageName, HomeActivity::class.java.name),
             label = "Luncher",
             hasBanner = true,
+            updated = 0,
         )
 
         assertEquals(listOf("Movies", "Music", "News"), start().get().labels())
@@ -227,6 +229,18 @@ class HomeActivityTest {
         controller.restart().start().resume()
 
         assertSame(movies, controller.get().tiles().single { it.app.label == "Movies" })
+    }
+
+    @Test
+    fun `makes a new tile for an app updated since, as its banner may have changed`() {
+        val controller = start()
+        val movies = controller.get().tiles().single { it.app.label == "Movies" }
+
+        controller.pause().stop()
+        installedApps.apps = installedApps.apps.map { if (it.label == "Movies") it.copy(updated = 1) else it }
+        controller.restart().start().resume()
+
+        assertNotSame(movies, controller.get().tiles().single { it.app.label == "Movies" })
     }
 
     @Test

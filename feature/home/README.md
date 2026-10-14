@@ -77,13 +77,13 @@ one job, so a new arrangement, image source or top bar item changes one of them:
 | `TileFocus` (`:domain`) | where each arrow takes the focus among the tiles ([below](#focus)) |
 | `AppTilesView` | lays tiles out where the `TileLayout` says, moves the focus where the `TileFocus` says, and scrolls to the focused one; holds the `TilePaints` its tiles share |
 | `bannerFor` (`:domain`) | which image a tile shows |
-| `AppImages` (`:domain`), `BannerImages` (`:platform`) | draws that image into a bitmap of the tile's size |
+| `AppImages` (`:domain`), `CachedBannerImages` and `BannerImages` (`:platform`) | draws that image into a bitmap of the tile's size, or reads the one an earlier start drew |
 | `AppTileView` | draws that bitmap, the focus frame and zoom, with the corners `TilePaints` gives; in arrange mode, a white frame and a bigger zoom when held, dimmed when hidden |
 | `Clock` (`:domain`) | what time it is, in which time zone and hour format, and when that changes |
 | `AndroidClock` (`:platform`) | reads those from Android, and watches the time broadcasts only while something listens |
 | `ClockView` | formats a reading in the device's language; the time and the date side by side, in the order the top bar gives, either or both hidden |
 | `topBarLayout` (`:domain`), `TopBarView` | which edge of the top bar the clock and the settings entry are at, the time's side of the date, and whether each of the two shows; the view moves its items there |
-| `HomeActivity` | reads the apps and their arrangement in `onResume`; when the shown apps changed, creates tiles for new ones and drops the others. Without tiles, says why: nothing installed, or everything hidden. Starts the clock and follows the appearance and the arrangement in `onStart`, and stops all three in `onStop`: an app hidden or shown in the settings shows at once, behind the panel; arrange mode's own saves don't read the apps again. Opens the [settings panel](../settings/README.md#the-settings-panel) on OK on the gear or on the Menu key. A long press of OK on a tile starts [arrange mode](#arrange-mode), which gets every key first while it's on. |
+| `HomeActivity` | reads the apps and their arrangement in `onResume`; when the shown apps changed, creates tiles for new ones (an updated app is new: its banner may have changed) and drops the others. Without tiles, says why: nothing installed, or everything hidden. Starts the clock and follows the appearance and the arrangement in `onStart`, and stops all three in `onStop`: an app hidden or shown in the settings shows at once, behind the panel; arrange mode's own saves don't read the apps again. Opens the [settings panel](../settings/README.md#the-settings-panel) on OK on the gear or on the Menu key. A long press of OK on a tile starts [arrange mode](#arrange-mode), which gets every key first while it's on. |
 
 ### The top bar
 

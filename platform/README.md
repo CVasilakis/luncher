@@ -25,14 +25,17 @@ platform/
     │   │   ├── apps/
     │   │   │   ├── PackageManagerInstalledApps.kt   InstalledApps on PackageManager
     │   │   │   ├── PreferencesAppArrangements.kt    AppArrangements on SharedPreferences: the file and its format
-    │   │   │   └── BannerImages.kt                  AppImages<Bitmap>: draws an app's Banner into a bitmap of the tile's size
-    │   │   └── clock/
-    │   │       └── AndroidClock.kt                  Clock on the system time, settings and time broadcasts
+    │   │   │   ├── BannerImages.kt                  AppImages<Bitmap>: draws an app's Banner into a bitmap of the tile's size
+    │   │   │   └── CachedBannerImages.kt            AppImages<Bitmap> in front of BannerImages: each tile's image kept in a file for the next start
+    │   │   ├── clock/
+    │   │   │   └── AndroidClock.kt                  Clock on the system time, settings and time broadcasts
+    │   │   └── jobs/
+    │   │       └── BackgroundThreadJobs.kt          Jobs on one thread at background priority, with a priority queue
     │   └── res/values/colors.xml the card drawn for an app without a banner
     └── test/java/…/              JVM tests (Robolectric), same packages as the code
 ```
 
-Packages follow `:domain`'s topics (`appearance/`, `apps/`, `clock/`, and later e.g. `wallpaper/`, `network/`),
+Packages follow `:domain`'s topics (`appearance/`, `apps/`, `clock/`, `jobs/`, and later e.g. `wallpaper/`, `network/`),
 so the adapter of `com.luncher.domain.clock.Clock` is in `clock/`.
 
 ## Writing adapters
@@ -58,6 +61,12 @@ so the adapter of `com.luncher.domain.clock.Clock` is in `clock/`.
   200 apps on API 36, 260 MB instead of 78 MB. `BannerImages` decodes a banner file at the file's
   own size, draws it scaled to the tile and recycles it; only a banner that isn't an image file (a
   vector, a color) or is a nine-patch goes through a `Drawable`.
+- **A cache's format can change freely.** `CachedBannerImages` keeps each tile's image in
+  `cacheDir`, one file per app, so a cold start reads it rather than drawing it, which takes a
+  large part of a start with many apps. A file that doesn't match (another format version, size,
+  install of the app or of Luncher, label) is drawn and written again, so unlike a stored setting
+  it needs no test of its format and no migration, and Android may delete it. Writing waits until
+  the main thread is idle, so it doesn't slow the start that draws, and is then a job per image.
 - **Public,** since `AppGraph` in `:app` creates them; no other module depends on this one.
 
 ## Manifest

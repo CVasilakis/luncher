@@ -60,7 +60,7 @@ class BannerImagesTest {
                 banner = activityBanner
             },
         )
-        return InstalledApp(app, label = appName, hasBanner = true)
+        return InstalledApp(app, label = appName, hasBanner = true, updated = 0)
     }
 
     /** [drawable] drawn [width] x [height] px, as Android's own `Drawable` draws it. */

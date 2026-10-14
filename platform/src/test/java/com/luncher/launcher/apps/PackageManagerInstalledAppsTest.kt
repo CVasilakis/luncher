@@ -12,14 +12,20 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.TemporaryFolder
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
+import java.io.File
 
 @RunWith(RobolectricTestRunner::class)
 class PackageManagerInstalledAppsTest {
+
+    @get:Rule
+    val folder = TemporaryFolder()
 
     private lateinit var packageManager: PackageManager
     private lateinit var installedApps: PackageManagerInstalledApps
@@ -39,6 +45,7 @@ class PackageManagerInstalledAppsTest {
         label: String? = null,
         banner: Int = 0,
         applicationBanner: Int = 0,
+        apk: File? = null,
     ): LaunchableApp {
         val shadow = shadowOf(packageManager)
         if (installedPackages.add(packageName)) {   // installing again would replace the package
@@ -48,6 +55,7 @@ class PackageManagerInstalledAppsTest {
                     applicationInfo = ApplicationInfo().apply {
                         this.packageName = packageName
                         this.banner = applicationBanner
+                        sourceDir = apk?.path
                     }
                 },
             )
@@ -114,6 +122,16 @@ class PackageManagerInstalledAppsTest {
         assertTrue(installed(onActivity).hasBanner)
         assertTrue(installed(onApplication).hasBanner)
         assertFalse(installed(without).hasBanner)
+    }
+
+    @Test
+    fun `tells when an app was installed or updated, from when its APK was written`() {
+        val apk = folder.newFile("base.apk").apply { setLastModified(1_700_000_000_000) }
+        val movies = install("com.example.movies", "com.example.movies.Main", Intent.CATEGORY_LEANBACK_LAUNCHER, apk = apk)
+        val unreadable = install("com.example.music", "com.example.music.Main", Intent.CATEGORY_LEANBACK_LAUNCHER, apk = File(folder.root, "gone.apk"))
+
+        assertEquals(1_700_000_000_000, installed(movies).updated)
+        assertEquals(0, installed(unreadable).updated)
     }
 
     private companion object {

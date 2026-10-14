@@ -101,23 +101,27 @@ the main thread (decoding a wallpaper). Neither may delay a key press.
    setting changed there shows on it at once, and a hidden screen does nothing. A change that's
    quick to apply (another `TileLayout`) is applied right there, on the main thread.
 3. **Slow work is a job:** a computation from immutable inputs to an immutable result (a file and
-   a size to a bitmap), which touches no view and no state. Jobs run one at a time on a single
-   background thread that `AppGraph` creates on first use, and post their result to the main
-   thread with a `Handler`. One at a time also bounds memory: only one large image is decoded at
-   once.
+   a size to a bitmap), which touches no view and no state, or an adapter's writing of a file only
+   it reads, replaced in one step. Jobs run one at a time on a single background thread, at
+   Android's background priority, through the `Jobs` port, which `AppGraph` creates on first use:
+   the highest priority first, in the order they came among equals, every priority listed in
+   `JobPriority`. A running job isn't interrupted, so a job is small: one image, not all of them.
+   A job posts its result to the main thread with a `Handler`. One at a time also bounds memory:
+   only one large image is decoded at once.
 4. **The latest request wins.** Each thing a screen loads (its wallpaper) is requested through a
    small helper that drops any earlier request: one not started yet is cancelled, and the result
    of one that finishes late is ignored. The screen stops it in `onStop`, which drops everything.
    What a screen ends up showing depends only on the last request, never on which job finished
    first.
-5. **Tests decide when jobs run.** The background thread is replaceable like a port; tests give an
-   executor that runs the queued jobs when the test says, so a loading state, a finished load and
-   two loads finishing out of order are each tested on the JVM, without waiting
+5. **Tests decide when jobs run.** The background thread is a port, `Jobs`; tests give
+   `ManualJobs`, which runs the queued jobs when the test says, so a loading state, a finished
+   load and two loads finishing out of order are each tested on the JVM, without waiting
    ([`TESTING.md`](TESTING.md)).
 
-No job runs today: the app list and the banners are read on the main thread, as they're quick
-enough so far. The first slow job, the wallpaper, brings the background thread and the helper,
-and moves to them whatever measures slow.
+The one job today writes the tiles' images for the next cold start
+([`platform/README.md`](../platform/README.md#writing-adapters)); the app list and the images are
+read on the main thread, as they're quick enough so far. The helper of rule 4 comes with the first
+thing a screen loads in the background, the wallpaper.
 
 ## Appearance
 
@@ -179,7 +183,7 @@ hidden, the clock's side and the time's side, are changed in the settings' appea
 |---|---|
 | A launcher decision (which apps show, sort order, banner choice, validation of a setting) | a rule in `:domain`, plus unit tests next to it |
 | New data the rules or screens need from the device (settings, wallpaper, installed apps) | a port (interface) in `:domain` with a fake in its test fixtures; an adapter in `:platform`, in the package of the port's topic; one line in `AppGraph`; the port in the graph interface of each feature that uses it |
-| An image the UI shows (banners, later the wallpaper) | which image: a model and rule in `:domain` (like `Banner`); drawing it: an adapter in `:platform` behind a port generic in the image type (`AppImages<Bitmap>`), since `:domain` can't name `Bitmap`. It draws at the size shown ([rule 5](#rules)), and is slow work if it's slow ([above](#background-work-and-changes-while-shown)). |
+| An image the UI shows (banners, later the wallpaper) | which image: a model and rule in `:domain` (like `Banner`); drawing it: an adapter in `:platform` behind a port generic in the image type (`AppImages<Bitmap>`), since `:domain` can't name `Bitmap`. It draws at the size shown ([rule 5](#rules)), and is slow work if it's slow ([above](#background-work-and-changes-while-shown)). Kept for the next start, it's a cache adapter in front of the one that draws (`CachedBannerImages`). |
 | How the home screen arranges apps (grid, apps per row, alignment, a carousel) | a `TileLayout` in `:domain`'s `layout/` that computes sizes and positions, and `TileMoves` for where a tile the user moves goes, with unit tests; `TileLayouts` picks it, so everything that shows tiles lays them out alike; the view that shows the tiles only places them where the layout says ([`feature/home/README.md`](../feature/home/README.md#the-home-screen)) |
 | What the user can do while arranging apps (moving, hiding, which key does what to the held app) | `ArrangeSession` in `:domain`'s `arrange/`, with unit tests; `ArrangeMode` in `:feature:home` turns keys into its moves ([`feature/home/README.md`](../feature/home/README.md#arrange-mode)) |
 | Something the home screen's top bar shows (the clock, the settings entry; later status indicators) | a view in `:feature:home`, placed in the bar; device state it shows (the time, the network) comes from a port you can watch ([above](#background-work-and-changes-while-shown)). Details: [`feature/home/README.md`](../feature/home/README.md#the-top-bar) |
