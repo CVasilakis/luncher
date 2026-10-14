@@ -15,7 +15,7 @@
     <string name="settings_appearance_tiles">Tiles</string>
     <!-- In the appearance editor: the title of the options for the bar at the top of the home
          screen, which has the time, the date and the settings gear. -->
-    <string name="settings_appearance_top_bar">Top bar</string>
+    <string name="settings_appearance_top_bar">Status bar</string>
     <!-- An option: where the rows of app tiles go in the height of the home screen, below the top
          bar. Its values are Top, Center and Bottom. -->
     <string name="settings_appearance_vertical_alignment">Vertical alignment</string>
@@ -38,14 +38,14 @@
     <!-- Its last value: the tiles' ends fully round, half circles, their top and bottom straight,
          like a pill or a capsule. -->
     <string name="settings_appearance_pill">Pill</string>
-    <!-- An option: whether the top bar shows the time of day. -->
+    <!-- An option: whether the status bar shows the time of day. -->
     <string name="settings_appearance_time">Time</string>
-    <!-- An option: whether the top bar shows the date. -->
+    <!-- An option: whether the status bar shows the date. -->
     <string name="settings_appearance_date">Date</string>
     <!-- Values of the two options above. -->
     <string name="settings_appearance_shown">Shown</string>
     <string name="settings_appearance_hidden">Hidden</string>
-    <!-- An option: which side of the top bar the time and the date are on; the settings gear goes
+    <!-- An option: which side of the status bar the time and the date are on; the settings gear goes
          on the other. Its values are Left and Right. -->
     <string name="settings_appearance_clock_side">Side</string>
     <!-- Values of the option above and of the horizontal alignment: the screen's left and right,

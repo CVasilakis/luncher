@@ -66,7 +66,7 @@ class HomeAppearanceTest {
 
     @Test
     fun `places the tiles where the appearance says`() {
-        appearance.appearance = Appearance(TileGeometry(verticalAlignment = VerticalAlignment.BOTTOM, horizontalAlignment = HorizontalAlignment.RIGHT))
+        appearance.appearance = Appearance(TileGeometry(verticalAlignment = VerticalAlignment.BOTTOM, horizontalAlignment = HorizontalAlignment.RIGHT, fullBottomRow = false))
 
         val activity = start().get()
 
@@ -78,7 +78,7 @@ class HomeAppearanceTest {
 
     @Test
     fun `centers the tiles as the appearance says`() {
-        appearance.appearance = Appearance(TileGeometry(verticalAlignment = VerticalAlignment.CENTER, horizontalAlignment = HorizontalAlignment.CENTER))
+        appearance.appearance = Appearance(TileGeometry(verticalAlignment = VerticalAlignment.CENTER, horizontalAlignment = HorizontalAlignment.CENTER, fullBottomRow = false))
 
         val activity = start().get()
 
@@ -96,7 +96,7 @@ class HomeAppearanceTest {
     // one of two as near, and the opposite key goes back where the focus came from.
     @Test
     fun `with a centered row, Up and Down go where the domain's rule says`() {
-        appearance.appearance = Appearance(TileGeometry(horizontalAlignment = HorizontalAlignment.CENTER))
+        appearance.appearance = Appearance(topLeftTiles.copy(horizontalAlignment = HorizontalAlignment.CENTER))
         val activity = start().get()
         val tiles = activity.tiles()
 
@@ -232,11 +232,11 @@ class HomeAppearanceTest {
         val activity = start().get()
         idle()
 
-        appearance.write(Appearance(tileStyle = TileStyle(Corners.Radius(12))))
+        appearance.write(Appearance(tileStyle = TileStyle(Corners.Radius(16))))
 
         assertFalse(activity.grid().isLayoutRequested)
         assertFalse(activity.topBar().isLayoutRequested)
-        assertEquals(Corners.Radius(12), activity.grid().paints.corners)
+        assertEquals(Corners.Radius(16), activity.grid().paints.corners)
     }
 
     // A screen that changes the appearance covers the home screen whole, so it changes once, after.
@@ -248,7 +248,7 @@ class HomeAppearanceTest {
         controller.pause().stop()
         assertEquals(0, appearance.listenerCount)
         appearance.write(Appearance(tileStyle = TileStyle(Corners.Radius(4))))
-        assertEquals(Corners.Radius(8), controller.get().grid().paints.corners)   // the default still
+        assertEquals(Corners.Radius(12), controller.get().grid().paints.corners)   // the default still
 
         controller.restart().resume()   // restart() starts it too, as Android does
         assertEquals(1, appearance.listenerCount)
@@ -271,7 +271,7 @@ class HomeAppearanceTest {
     fun `drawing the tiles allocates nothing after a new tile style`() {
         val activity = start().get()
         idle()
-        appearance.write(Appearance(tileStyle = TileStyle(Corners.Radius(12))))
+        appearance.write(Appearance(tileStyle = TileStyle(Corners.Radius(16))))
         val grid = activity.grid()
         val canvas = Canvas(Bitmap.createBitmap(grid.width, grid.height, Bitmap.Config.ARGB_8888))
         val threads = ManagementFactory.getThreadMXBean() as com.sun.management.ThreadMXBean

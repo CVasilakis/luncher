@@ -88,12 +88,12 @@ class AppearancePreviewViewTest {
     // style only scales the radius again.
     @Test
     fun `a new tile style lays nothing out again`() {
-        val square = Appearance()
+        val square = Appearance(tileStyle = TileStyle(Corners.Radius(0)))
         val round = Appearance(tileStyle = TileStyle(Corners.Radius(12)))
-        val bottom = Appearance(TileGeometry(verticalAlignment = VerticalAlignment.BOTTOM))
+        val top = square.copy(tileGeometry = TileGeometry(verticalAlignment = VerticalAlignment.TOP))
 
         val perStyle = allocated { preview.appearance = if (preview.appearance == square) round else square }
-        val perGeometry = allocated { preview.appearance = if (preview.appearance == square) bottom else square }
+        val perGeometry = allocated { preview.appearance = if (preview.appearance == square) top else square }
 
         assertTrue("$perStyle bytes per new style", perStyle < 16)
         assertTrue("$perGeometry bytes per new geometry", perGeometry >= 16)

@@ -15,12 +15,12 @@ data class TileGeometry(
     /** Between tiles; more than a tile grows when it zooms, so neighbors never overlap. */
     val gapDp: Int = 24,
     /** Where the rows go in the height. */
-    val verticalAlignment: VerticalAlignment = VerticalAlignment.TOP,
+    val verticalAlignment: VerticalAlignment = VerticalAlignment.BOTTOM,
     /** Where a row that isn't full goes in the width. */
-    val horizontalAlignment: HorizontalAlignment = HorizontalAlignment.LEFT,
+    val horizontalAlignment: HorizontalAlignment = HorizontalAlignment.CENTER,
     /**
      * With the rows centered or at the bottom, the row that isn't full is the first one rather than
      * the last, so the bottom row is always full. Nothing changes with the rows at the top.
      */
-    val fullBottomRow: Boolean = false,
+    val fullBottomRow: Boolean = true,
 )

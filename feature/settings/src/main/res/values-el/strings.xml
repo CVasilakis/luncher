@@ -7,7 +7,7 @@
     <string name="settings_no_apps">Δεν υπάρχουν εγκατεστημένες εφαρμογές TV</string>
     <string name="settings_appearance">Εμφάνιση</string>
     <string name="settings_appearance_tiles">Πλακίδια</string>
-    <string name="settings_appearance_top_bar">Πάνω γραμμή</string>
+    <string name="settings_appearance_top_bar">Γραμμή κατάστασης</string>
     <string name="settings_appearance_vertical_alignment">Κατακόρυφη στοίχιση</string>
     <string name="settings_appearance_top">Πάνω</string>
     <string name="settings_appearance_bottom">Κάτω</string>

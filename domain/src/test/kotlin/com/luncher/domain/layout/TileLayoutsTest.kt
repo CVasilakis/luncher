@@ -16,9 +16,16 @@ class TileLayoutsTest {
     // The space below the top bar, 540 dp less the bar and the paddings.
     private val height = 380
 
+    // The default size, in rows from the top left, so a tile's slot is its column.
+    private val topLeft = TileGeometry(
+        verticalAlignment = VerticalAlignment.TOP,
+        horizontalAlignment = HorizontalAlignment.LEFT,
+        fullBottomRow = false,
+    )
+
     @Test
     fun `the default geometry fits five tiles in a 16-9 TV's row`() {
-        val layouts = TileLayouts(TileGeometry(), pixelsPerDp = 1f)
+        val layouts = TileLayouts(topLeft, pixelsPerDp = 1f)
 
         val tiles = layouts.tiles(tileCount = 7, width, height)
 
@@ -29,14 +36,14 @@ class TileLayoutsTest {
 
     @Test
     fun `wider tiles make fewer columns`() {
-        val tiles = TileLayouts(TileGeometry(tileWidthDp = 300), pixelsPerDp = 1f).tiles(tileCount = 7, width, height)
+        val tiles = TileLayouts(topLeft.copy(tileWidthDp = 300), pixelsPerDp = 1f).tiles(tileCount = 7, width, height)
 
         assertEquals(0, tiles.slot(3))   // (864 + 24) / (300 + 24) = 2.7: three columns
     }
 
     @Test
     fun `pixels follow the density`() {
-        val layouts = TileLayouts(TileGeometry(), pixelsPerDp = 2f)
+        val layouts = TileLayouts(topLeft, pixelsPerDp = 2f)
 
         val tiles = layouts.tiles(tileCount = 7, width * 2, height * 2)
 
@@ -54,7 +61,7 @@ class TileLayoutsTest {
 
     @Test
     fun `the shelf's tiles are laid out like the shown ones, below them`() {
-        val layouts = TileLayouts(TileGeometry(), pixelsPerDp = 1f)
+        val layouts = TileLayouts(topLeft, pixelsPerDp = 1f)
 
         val shelf = layouts.shelf(shownCount = 5, hiddenCount = 2, width, height, labelHeight = 20)
 

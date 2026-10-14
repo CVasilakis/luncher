@@ -52,7 +52,6 @@ class AppearanceOptionsTest {
             assertTrue("$change", change.option.appliesTo(change.base))
             assertTrue("$change", change.changed != change.base)
         }
-        val fullRow = changes.single { it.option == AppearanceOption.FullBottomRow }
-        assertEquals(VerticalAlignment.CENTER, fullRow.base.tileGeometry.verticalAlignment)
+        for (change in changes) assertEquals("$change", Appearance(), change.base)   // each applies to the defaults
     }
 }

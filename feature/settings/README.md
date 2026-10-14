@@ -107,7 +107,7 @@ Appearance (`AppearanceActivity`) is the editor of the home screen's
 [appearance](../../docs/ARCHITECTURE.md#appearance): full-screen, with its large title right above a
 preview of the home screen at the left, the two centered in the height, and the options at the
 right, starting level with the title. The options are in groups
-(the tiles', the top bar's), each an entry of its own, closed at first: OK on one shows its options
+(Tiles, Status bar), each an entry of its own, closed at first: OK on one shows its options
 below it and closes the group that was open, so the list stays short; OK again closes it. Each
 option shows its value between arrows; Left and Right step it through its values, around from the
 last to the first, and each change is stored at once, the preview following. An option that

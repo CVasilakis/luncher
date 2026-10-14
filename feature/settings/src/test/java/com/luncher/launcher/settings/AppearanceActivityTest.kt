@@ -91,7 +91,7 @@ class AppearanceActivityTest {
 
     @Test
     fun `lists the groups, their options hidden, then the reset entry`() {
-        assertEquals(listOf("Tiles", "Top bar", "Reset to defaults"), start().lines())
+        assertEquals(listOf("Tiles", "Status bar", "Reset to defaults"), start().lines())
     }
 
     @Test
@@ -106,21 +106,21 @@ class AppearanceActivityTest {
         activity.toggle("Tiles")
         assertEquals(
             listOf(
-                "Tiles open", "Vertical alignment: Top", "Horizontal alignment: Left", "Full bottom row: Off",
-                "Corner radius: 8 dp", "Top bar", "Reset to defaults",
+                "Tiles open", "Vertical alignment: Bottom", "Horizontal alignment: Center", "Full bottom row: On",
+                "Corner radius: 12 dp", "Status bar", "Reset to defaults",
             ),
             activity.lines(),
         )
         assertTrue(activity.group("Tiles").isFocused)
 
-        activity.toggle("Top bar")
+        activity.toggle("Status bar")
         assertEquals(
-            listOf("Tiles", "Top bar open", "Time: Shown", "Date: Shown", "Side: Left", "Order: Time first", "Reset to defaults"),
+            listOf("Tiles", "Status bar open", "Time: Shown", "Date: Shown", "Side: Left", "Order: Time first", "Reset to defaults"),
             activity.lines(),
         )
 
-        activity.toggle("Top bar")
-        assertEquals(listOf("Tiles", "Top bar", "Reset to defaults"), activity.lines())
+        activity.toggle("Status bar")
+        assertEquals(listOf("Tiles", "Status bar", "Reset to defaults"), activity.lines())
     }
 
     @Test
@@ -145,20 +145,21 @@ class AppearanceActivityTest {
     @Test
     fun `Right steps to the next value and stores it at once, Left back`() {
         val activity = start()
-        activity.focus("Tiles", "Vertical alignment")
+        activity.focus("Tiles", "Corner radius")
 
         activity.press(KeyEvent.KEYCODE_DPAD_RIGHT)
-        assertEquals("Center", activity.value("Vertical alignment"))
-        assertEquals(VerticalAlignment.CENTER, settings.appearance.tileGeometry.verticalAlignment)
+        assertEquals("16 dp", activity.value("Corner radius"))
+        assertEquals(Corners.Radius(16), settings.appearance.tileStyle.corners)
 
         activity.press(KeyEvent.KEYCODE_DPAD_LEFT)
-        assertEquals("Top", activity.value("Vertical alignment"))
+        assertEquals("12 dp", activity.value("Corner radius"))
         assertEquals(Appearance(), settings.appearance)
-        assertTrue(activity.row("Vertical alignment").isFocused)
+        assertTrue(activity.row("Corner radius").isFocused)
     }
 
     @Test
     fun `the horizontal alignment steps from left through center to right`() {
+        settings.appearance = Appearance(TileGeometry(horizontalAlignment = HorizontalAlignment.LEFT))
         val activity = start()
         activity.focus("Tiles", "Horizontal alignment")
 
@@ -182,13 +183,13 @@ class AppearanceActivityTest {
     @Test
     fun `steps around from the last value to the first, and back`() {
         val activity = start()
-        activity.focus("Tiles", "Vertical alignment")
-
-        activity.press(KeyEvent.KEYCODE_DPAD_LEFT)
-        assertEquals("Bottom", activity.value("Vertical alignment"))
+        activity.focus("Tiles", "Vertical alignment")   // at Bottom, the last
 
         activity.press(KeyEvent.KEYCODE_DPAD_RIGHT)
         assertEquals("Top", activity.value("Vertical alignment"))
+
+        activity.press(KeyEvent.KEYCODE_DPAD_LEFT)
+        assertEquals("Bottom", activity.value("Vertical alignment"))
         assertTrue(activity.row("Vertical alignment").isFocused)
     }
 
@@ -207,6 +208,7 @@ class AppearanceActivityTest {
     // It only does something with the rows centered or at the bottom.
     @Test
     fun `with the rows at the top, the full bottom row is dimmed and the focus passes it by`() {
+        settings.appearance = Appearance(TileGeometry(verticalAlignment = VerticalAlignment.TOP))
         val activity = start()
         activity.focus("Tiles", "Horizontal alignment")
         val fullRow = activity.row("Full bottom row")
@@ -218,6 +220,7 @@ class AppearanceActivityTest {
 
     @Test
     fun `with the rows centered, the full bottom row can be changed`() {
+        settings.appearance = Appearance(TileGeometry(verticalAlignment = VerticalAlignment.TOP))
         val activity = start()
         activity.focus("Tiles", "Vertical alignment")
         activity.press(KeyEvent.KEYCODE_DPAD_RIGHT)   // center
@@ -228,14 +231,14 @@ class AppearanceActivityTest {
         assertTrue(activity.row("Horizontal alignment").requestFocus())
         assertTrue(activity.row("Horizontal alignment").focusSearch(View.FOCUS_DOWN)!!.requestFocus())
         activity.press(KeyEvent.KEYCODE_DPAD_RIGHT)
-        assertEquals("On", activity.value("Full bottom row"))
-        assertTrue(settings.appearance.tileGeometry.fullBottomRow)
+        assertEquals("Off", activity.value("Full bottom row"))
+        assertFalse(settings.appearance.tileGeometry.fullBottomRow)
     }
 
     @Test
     fun `hides the date, and dims the order, which needs both`() {
         val activity = start()
-        activity.focus("Top bar", "Date")
+        activity.focus("Status bar", "Date")
 
         activity.press(KeyEvent.KEYCODE_DPAD_RIGHT)
 
@@ -251,7 +254,7 @@ class AppearanceActivityTest {
     fun `with the time and the date hidden, the side and the order are dimmed and the focus passes them by`() {
         settings.appearance = Appearance(topBar = TopBarAppearance(showTime = false, showDate = false))
         val activity = start()
-        activity.focus("Top bar", "Date")
+        activity.focus("Status bar", "Date")
 
         assertEquals("Hidden", activity.value("Time"))
         assertEquals("Hidden", activity.value("Date"))
@@ -262,7 +265,7 @@ class AppearanceActivityTest {
 
     @Test
     fun `OK on the reset entry puts every option back to its default, and stores it`() {
-        settings.appearance = Appearance(TileGeometry(verticalAlignment = VerticalAlignment.BOTTOM), TileStyle(Corners.Pill))
+        settings.appearance = Appearance(TileGeometry(verticalAlignment = VerticalAlignment.TOP), TileStyle(Corners.Pill))
         val activity = start()
         val reset = activity.children().last()
 
@@ -270,8 +273,8 @@ class AppearanceActivityTest {
         activity.press(KeyEvent.KEYCODE_DPAD_CENTER)
 
         assertEquals(Appearance(), settings.appearance)
-        assertEquals("Top", activity.value("Vertical alignment"))
-        assertEquals("8 dp", activity.value("Corner radius"))
+        assertEquals("Bottom", activity.value("Vertical alignment"))
+        assertEquals("12 dp", activity.value("Corner radius"))
     }
 
     @Test
@@ -312,7 +315,7 @@ class AppearanceActivityTest {
         RuntimeEnvironment.setQualifiers("+tvdpi")   // 960x540 dp at 720p
         controller.configurationChange().visible()   // Robolectric shows the new window only when told
 
-        assertEquals("Center", controller.get().value("Vertical alignment"))
+        assertEquals("Top", controller.get().value("Vertical alignment"))
     }
 
     // Like the other settings panels (HideAppsActivityTest): the options at the left, each value at
@@ -335,8 +338,8 @@ class AppearanceActivityTest {
         assertEquals(label.layout.width.toFloat(), label.layout.getLineRight(0))
 
         activity.press(KeyEvent.KEYCODE_DPAD_LEFT)
-        assertEquals(VerticalAlignment.CENTER, settings.appearance.tileGeometry.verticalAlignment)
-        activity.press(KeyEvent.KEYCODE_DPAD_RIGHT)
         assertEquals(VerticalAlignment.TOP, settings.appearance.tileGeometry.verticalAlignment)
+        activity.press(KeyEvent.KEYCODE_DPAD_RIGHT)
+        assertEquals(VerticalAlignment.BOTTOM, settings.appearance.tileGeometry.verticalAlignment)
     }
 }

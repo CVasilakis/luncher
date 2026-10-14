@@ -5,7 +5,6 @@ import android.os.Looper
 import android.view.KeyEvent
 import android.view.View
 import android.widget.TextView
-import com.luncher.domain.appearance.TileGeometry
 import com.luncher.domain.apps.AppArrangement
 import com.luncher.domain.apps.FakeAppArrangements
 import com.luncher.domain.apps.FakeInstalledApps
@@ -475,7 +474,7 @@ class HomeActivityTest {
         val grid = activity.findViewById<AppTilesView>(R.id.home_apps)
         val width = activity.tiles().first().width
 
-        grid.tileGeometry = TileGeometry(tileWidthDp = 300)
+        grid.tileGeometry = topLeftTiles.copy(tileWidthDp = 300)
         shadowOf(Looper.getMainLooper()).idle()   // the layout pass
 
         assertEquals(3, activity.firstRowSize())
@@ -488,7 +487,7 @@ class HomeActivityTest {
         val activity = start().get()
         val grid = activity.findViewById<AppTilesView>(R.id.home_apps)
 
-        grid.tileGeometry = TileGeometry()
+        grid.tileGeometry = topLeftTiles.copy()
 
         assertFalse(grid.isLayoutRequested)
     }

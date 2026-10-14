@@ -65,10 +65,10 @@ class AppearanceOptionTest {
     @Test
     fun `each option's default is one of its values, and today's look`() {
         for (option in options) assertTrue("$option", option.default in option.values)
-        assertEquals(VerticalAlignment.TOP, AppearanceOption.VerticalAlignment.default)
-        assertEquals(HorizontalAlignment.LEFT, AppearanceOption.HorizontalAlignment.default)
-        assertEquals(false, AppearanceOption.FullBottomRow.default)
-        assertEquals(Corners.Radius(8), AppearanceOption.CornerRadius.default)
+        assertEquals(VerticalAlignment.BOTTOM, AppearanceOption.VerticalAlignment.default)
+        assertEquals(HorizontalAlignment.CENTER, AppearanceOption.HorizontalAlignment.default)
+        assertEquals(true, AppearanceOption.FullBottomRow.default)
+        assertEquals(Corners.Radius(12), AppearanceOption.CornerRadius.default)
         assertEquals(Side.LEFT, AppearanceOption.ClockSide.default)
         assertEquals(Side.LEFT, AppearanceOption.TimeSide.default)
         assertEquals(true, AppearanceOption.ShowTime.default)
@@ -96,8 +96,8 @@ class AppearanceOptionTest {
         val radius = AppearanceOption.CornerRadius
 
         val next = radius.step(Appearance(), forward = true)
-        assertEquals(Corners.Radius(12), radius.get(next))
-        assertEquals(Corners.Radius(8), radius.get(radius.step(next, forward = false)))
+        assertEquals(Corners.Radius(16), radius.get(next))
+        assertEquals(Corners.Radius(12), radius.get(radius.step(next, forward = false)))
     }
 
     @Test
@@ -118,7 +118,7 @@ class AppearanceOptionTest {
             .map(vertical::get)
             .toList()
 
-        assertEquals(listOf(VerticalAlignment.TOP, VerticalAlignment.CENTER, VerticalAlignment.BOTTOM, VerticalAlignment.TOP), seen)
+        assertEquals(listOf(VerticalAlignment.BOTTOM, VerticalAlignment.TOP, VerticalAlignment.CENTER, VerticalAlignment.BOTTOM), seen)
     }
 
     @Test
@@ -142,15 +142,15 @@ class AppearanceOptionTest {
     fun `steps from a value it doesn't offer to the default`() {
         val odd = Appearance(tileStyle = TileStyle(Corners.Radius(5)))
 
-        assertEquals(Corners.Radius(8), AppearanceOption.CornerRadius.get(AppearanceOption.CornerRadius.step(odd, forward = true)))
+        assertEquals(Corners.Radius(12), AppearanceOption.CornerRadius.get(AppearanceOption.CornerRadius.step(odd, forward = true)))
     }
 
     @Test
     fun `a value it doesn't offer falls back to its default`() {
-        assertEquals(Corners.Radius(8), AppearanceOption.CornerRadius.valueOrDefault(Corners.Radius(5)))
-        assertEquals(Corners.Radius(8), AppearanceOption.CornerRadius.valueOrDefault(null))
-        assertEquals(Corners.Radius(12), AppearanceOption.CornerRadius.valueOrDefault(Corners.Radius(12)))
-        assertEquals(VerticalAlignment.TOP, AppearanceOption.VerticalAlignment.valueOrDefault(null))
+        assertEquals(Corners.Radius(12), AppearanceOption.CornerRadius.valueOrDefault(Corners.Radius(5)))
+        assertEquals(Corners.Radius(12), AppearanceOption.CornerRadius.valueOrDefault(null))
+        assertEquals(Corners.Radius(16), AppearanceOption.CornerRadius.valueOrDefault(Corners.Radius(16)))
+        assertEquals(VerticalAlignment.BOTTOM, AppearanceOption.VerticalAlignment.valueOrDefault(null))
         assertEquals(Side.RIGHT, AppearanceOption.ClockSide.valueOrDefault(Side.RIGHT))
     }
 
@@ -191,7 +191,7 @@ class AppearanceOptionTest {
 
     @Test
     fun `every option applies to the defaults, and the others always`() {
-        for (option in options) assertTrue("$option", option.appliesTo(Appearance()) || option == AppearanceOption.FullBottomRow)
+        for (option in options) assertTrue("$option", option.appliesTo(Appearance()))
         val conditional = setOf(AppearanceOption.FullBottomRow, AppearanceOption.ClockSide, AppearanceOption.TimeSide)
         val nothingShown = Appearance(
             TileGeometry(verticalAlignment = VerticalAlignment.TOP),

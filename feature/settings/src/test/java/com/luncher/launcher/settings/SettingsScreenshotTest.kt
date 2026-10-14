@@ -86,7 +86,7 @@ class SettingsScreenshotTest {
     // The top bar's group open, the date hidden: the order, which needs both, dimmed.
     @Test
     fun appearanceEditorTopBar() {
-        val activity = appearanceEditor(Appearance(topBar = TopBarAppearance(showDate = false)), open = "Top bar")
+        val activity = appearanceEditor(Appearance(topBar = TopBarAppearance(showDate = false)), open = "Status bar")
         activity.child { it.findViewById<TextView>(R.id.settings_option_label)?.text == "Date" }.requestFocus()
 
         activity.window.decorView.captureRoboImage("src/test/screenshots/settings/settings_appearance_top_bar.png")

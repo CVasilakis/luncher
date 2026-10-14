@@ -31,9 +31,9 @@ class PreferencesAppearanceSettingsTest {
         TileGeometry(
             verticalAlignment = VerticalAlignment.CENTER,
             horizontalAlignment = HorizontalAlignment.RIGHT,
-            fullBottomRow = true,
+            fullBottomRow = false,
         ),
-        TileStyle(Corners.Radius(12)),
+        TileStyle(Corners.Radius(16)),
         TopBarAppearance(clockSide = Side.RIGHT, timeSide = Side.RIGHT, showTime = true, showDate = false),
     )
 
@@ -42,8 +42,8 @@ class PreferencesAppearanceSettingsTest {
     private val stored = mapOf(
         "tile_vertical_alignment" to "CENTER",
         "tile_horizontal_alignment" to "RIGHT",
-        "tile_full_bottom_row" to "true",
-        "tile_corner_radius" to "12",
+        "tile_full_bottom_row" to "false",
+        "tile_corner_radius" to "16",
         "clock_side" to "RIGHT",
         "time_side" to "RIGHT",
         "show_time" to "true",
@@ -135,9 +135,9 @@ class PreferencesAppearanceSettingsTest {
 
     @Test
     fun `a value stored as another type reads as that option's default`() {
-        store(stored - "tile_corner_radius" + ("tile_corner_radius" to 12))
+        store(stored - "tile_corner_radius" + ("tile_corner_radius" to 16))
 
-        assertEquals(AppearanceOption.CornerRadius.set(changed, Corners.Radius(8)), PreferencesAppearanceSettings(context).read())
+        assertEquals(AppearanceOption.CornerRadius.set(changed, Corners.Radius(12)), PreferencesAppearanceSettings(context).read())
     }
 
     @Test

@@ -6,5 +6,5 @@ package com.luncher.domain.appearance
  */
 data class TileStyle(
     /** The tiles' corners, and their focus frame's. */
-    val corners: Corners = Corners.Radius(8),
+    val corners: Corners = Corners.Radius(12),
 )
