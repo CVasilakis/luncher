@@ -13,6 +13,15 @@
     <string name="pictures_how_folder">• Ή αντιγράψτε εικόνες σε αυτόν τον φάκελο, στην τηλεόραση ή σε ένα USB, και μετά επιλέξτε Προσθήκη από φάκελο:</string>
     <string name="pictures_add_from_folder">Προσθήκη από φάκελο</string>
     <string name="pictures_details"><xliff:g id="width" example="1920">%1$d</xliff:g> × <xliff:g id="height" example="1080">%2$d</xliff:g> · <xliff:g id="size" example="3,1 MB">%3$s</xliff:g></string>
+    <string name="pictures_in_use">Σε χρήση: <xliff:g id="use" example="Ταπετσαρία">%1$s</xliff:g></string>
+    <string name="pictures_not_in_use">Δεν χρησιμοποιείται</string>
+    <string name="pictures_wallpaper">Ταπετσαρία</string>
+    <string name="pictures_dialog_details"><xliff:g id="details" example="1920 × 1080 · 3,1 MB">%1$s</xliff:g> · <xliff:g id="use" example="Δεν χρησιμοποιείται">%2$s</xliff:g></string>
+    <string name="pictures_use_as_wallpaper">Ορισμός ως ταπετσαρία</string>
+    <string name="pictures_delete_wallpaper">Είναι η ταπετσαρία: η αρχική οθόνη επιστρέφει στο απλό της φόντο.</string>
+    <string name="pictures_choose_wallpaper">Επιλογή ταπετσαρίας</string>
+    <string name="pictures_choose_hint">Το OK σε μια εικόνα την επιλέγει</string>
+    <string name="pictures_no_picture">Χωρίς εικόνα</string>
     <string name="pictures_unnamed">Εικόνα</string>
     <string name="pictures_delete_unused">Διαγραφή αχρησιμοποίητων (<xliff:g id="count" example="2">%1$d</xliff:g> · <xliff:g id="size" example="4,1 MB">%2$s</xliff:g>)</string>
     <plurals name="pictures_delete_unused_question">

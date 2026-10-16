@@ -22,6 +22,7 @@ import androidx.test.espresso.matcher.ViewMatchers.withChild
 import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.luncher.domain.appearance.FakeAppearanceSettings
 import com.luncher.domain.pictures.FakePictureImages
 import com.luncher.domain.pictures.FakePictures
 import com.luncher.domain.pictures.FakePictures.Companion.picture
@@ -64,6 +65,7 @@ class PicturesActivityTest {
 
     /** New at each launch: [RetryWhenCovered] runs a covered test again on the same instance. */
     private lateinit var fake: FakePictures<Uri>
+    private lateinit var appearance: FakeAppearanceSettings
 
     /** Not while the home app is still starting, which can open windows over the screen. */
     @Before
@@ -83,12 +85,14 @@ class PicturesActivityTest {
     /** Pictures with these [pictures], in memory. */
     private fun launchWith(vararg pictures: com.luncher.domain.pictures.Picture): ActivityScenario<PicturesActivity> {
         fake = FakePictures(*pictures)
+        appearance = FakeAppearanceSettings()
         application.graph = object : AppGraph(application) {
             override val pictures: Pictures = this@PicturesActivityTest.fake
             override val pictureImport: PictureImport<Uri> = this@PicturesActivityTest.fake
             override val pictureImages: PictureImages<Bitmap> = FakePictureImages { _, width, height, _ ->
                 Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888).apply { eraseColor(0xFF336699.toInt()) }
             }
+            override val appearanceSettings = this@PicturesActivityTest.appearance
         }
         return ActivityScenario.launch(PicturesActivity::class.java)
     }
@@ -101,6 +105,7 @@ class PicturesActivityTest {
             override val pictureImport: PictureImport<Uri> get() = library
             override val folderPictures: FolderPictures<Uri, Bitmap> by lazy { MediaFolderPictures(application, jobs) { listOf(dropFolder) } }
             override val pictureImages: PictureImages<Bitmap> by lazy { CachedPictureImages(application, FilePictureImages(application, folder), images) }
+            override val appearanceSettings = FakeAppearanceSettings()
         }
         application.graph = graph
     }
@@ -144,6 +149,8 @@ class PicturesActivityTest {
             waitUntil(tile("beach.png"), hasFocus())
             press(KeyEvent.KEYCODE_DPAD_CENTER)
 
+            waitUntil(withText(R.string.pictures_use_as_wallpaper), hasFocus(), inDialog = true)
+            pressInDialog(KeyEvent.KEYCODE_DPAD_DOWN)
             waitUntil(withText(R.string.pictures_delete), hasFocus(), inDialog = true)
             pressInDialog(KeyEvent.KEYCODE_DPAD_CENTER)
             waitUntil(withText(R.string.pictures_cancel), hasFocus(), inDialog = true)
@@ -205,6 +212,24 @@ class PicturesActivityTest {
         application.startActivity(share)
 
         waitUntil(tile("progressive.jpg"), hasFocus())
+    }
+
+    // Another app's picture, shared without giving access to it: Android refuses to pass on access
+    // Luncher hasn't got, which must not crash it.
+    @Test
+    fun aShareWithoutAccess_saysItCantReadIt() {
+        useTheTestsFolders()
+        // "Set as", which Android doesn't give a read grant of its own, as it does a Share's stream.
+        val share = Intent(Intent.ACTION_ATTACH_DATA)
+            .setClassName(application, SharePictureActivity::class.java.name)
+            .setDataAndType(Uri.parse("content://media/external/images/media/1"), "image/jpeg")
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+
+        application.startActivity(share)
+
+        waitUntil(withId(R.id.pictures_dialog_text), withText(containsString("Android/media/${application.packageName}")), inDialog = true)
+        pressInDialog(KeyEvent.KEYCODE_DPAD_CENTER)
+        waitUntil(withId(R.id.pictures_empty_add), hasFocus())
     }
 
     @Test

@@ -4,6 +4,10 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import com.luncher.domain.pictures.Blur
+import com.luncher.domain.pictures.Fit
+import com.luncher.domain.pictures.PictureId
+import com.luncher.domain.pictures.PicturePosition
 
 class AppearanceOptionTest {
 
@@ -73,6 +77,11 @@ class AppearanceOptionTest {
         assertEquals(Side.LEFT, AppearanceOption.TimeSide.default)
         assertEquals(true, AppearanceOption.ShowTime.default)
         assertEquals(true, AppearanceOption.ShowDate.default)
+        assertEquals(Fit.FILL, AppearanceOption.BackgroundFit.default)
+        assertEquals(PicturePosition.CENTER, AppearanceOption.BackgroundPosition.default)
+        assertEquals(0, AppearanceOption.BackgroundDim.default)
+        assertEquals(Blur.OFF, AppearanceOption.BackgroundBlur.default)
+        assertEquals("no wallpaper", null, Appearance().background.picture)
     }
 
     @Test
@@ -190,9 +199,44 @@ class AppearanceOptionTest {
     }
 
     @Test
-    fun `every option applies to the defaults, and the others always`() {
-        for (option in options) assertTrue("$option", option.appliesTo(Appearance()))
-        val conditional = setOf(AppearanceOption.FullBottomRow, AppearanceOption.ClockSide, AppearanceOption.TimeSide)
+    fun `the background's options apply only while it has a picture, its position only while it fills`() {
+        val picture = Background(picture = PictureId("sunset"))
+        val background = listOf(AppearanceOption.BackgroundFit, AppearanceOption.BackgroundPosition, AppearanceOption.BackgroundDim, AppearanceOption.BackgroundBlur)
+
+        for (option in background) {
+            assertFalse("$option", option.appliesTo(Appearance()))
+            assertTrue("$option", option.appliesTo(Appearance(background = picture)))
+        }
+        val stretched = Appearance(background = picture.copy(fit = Fit.STRETCH))
+        assertFalse(AppearanceOption.BackgroundPosition.appliesTo(stretched))
+        assertTrue(AppearanceOption.BackgroundDim.appliesTo(stretched))
+    }
+
+    @Test
+    fun `the background's options change its part, keeping the picture`() {
+        val appearance = Appearance(background = Background(picture = PictureId("sunset")))
+
+        assertEquals(
+            Background(PictureId("sunset"), Fit.STRETCH, PicturePosition.TOP, 40, Blur.STRONG),
+            listOf(
+                { a: Appearance -> AppearanceOption.BackgroundFit.set(a, Fit.STRETCH) },
+                { a: Appearance -> AppearanceOption.BackgroundPosition.set(a, PicturePosition.TOP) },
+                { a: Appearance -> AppearanceOption.BackgroundDim.set(a, 40) },
+                { a: Appearance -> AppearanceOption.BackgroundBlur.set(a, Blur.STRONG) },
+            ).fold(appearance) { a, step -> step(a) }.background,
+        )
+    }
+
+    @Test
+    fun `dim steps by a fifth, up to three fifths`() {
+        assertEquals(listOf(0, 20, 40, 60), AppearanceOption.BackgroundDim.values)
+    }
+
+    @Test
+    fun `every option but the background's applies to the defaults, and the others always`() {
+        val background = setOf(AppearanceOption.BackgroundFit, AppearanceOption.BackgroundPosition, AppearanceOption.BackgroundDim, AppearanceOption.BackgroundBlur)
+        for (option in options - background) assertTrue("$option", option.appliesTo(Appearance()))
+        val conditional = setOf(AppearanceOption.FullBottomRow, AppearanceOption.ClockSide, AppearanceOption.TimeSide) + background
         val nothingShown = Appearance(
             TileGeometry(verticalAlignment = VerticalAlignment.TOP),
             topBar = TopBarAppearance(showTime = false, showDate = false),

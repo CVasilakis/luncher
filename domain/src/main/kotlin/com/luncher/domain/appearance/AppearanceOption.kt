@@ -1,5 +1,8 @@
 package com.luncher.domain.appearance
 
+import com.luncher.domain.pictures.Blur
+import com.luncher.domain.pictures.Fit
+import com.luncher.domain.pictures.PicturePosition
 import com.luncher.domain.appearance.HorizontalAlignment as Horizontal
 import com.luncher.domain.appearance.VerticalAlignment as Vertical
 
@@ -91,6 +94,43 @@ sealed interface AppearanceOption<T> {
         override fun set(appearance: Appearance, value: Side) =
             appearance.copy(topBar = appearance.topBar.copy(timeSide = value))
         override fun appliesTo(appearance: Appearance) = appearance.topBar.showTime && appearance.topBar.showDate
+    }
+
+    /** How the background's picture fills the screen, while there's one. */
+    data object BackgroundFit : AppearanceOption<Fit> {
+        override val values: List<Fit> = Fit.entries
+        override fun get(appearance: Appearance) = appearance.background.fit
+        override fun set(appearance: Appearance, value: Fit) =
+            appearance.copy(background = appearance.background.copy(fit = value))
+        override fun appliesTo(appearance: Appearance) = appearance.background.picture != null
+    }
+
+    /** Which part of the background's picture shows, while it fills the screen. */
+    data object BackgroundPosition : AppearanceOption<PicturePosition> {
+        override val values: List<PicturePosition> = PicturePosition.entries
+        override fun get(appearance: Appearance) = appearance.background.position
+        override fun set(appearance: Appearance, value: PicturePosition) =
+            appearance.copy(background = appearance.background.copy(position = value))
+        override fun appliesTo(appearance: Appearance) =
+            appearance.background.picture != null && appearance.background.fit == Fit.FILL
+    }
+
+    /** How much darker the background's picture is drawn, in percent, while there's one. */
+    data object BackgroundDim : AppearanceOption<Int> {
+        override val values: List<Int> = listOf(0, 20, 40, 60)
+        override fun get(appearance: Appearance) = appearance.background.dim
+        override fun set(appearance: Appearance, value: Int) =
+            appearance.copy(background = appearance.background.copy(dim = value))
+        override fun appliesTo(appearance: Appearance) = appearance.background.picture != null
+    }
+
+    /** How blurred the background's picture is drawn, while there's one. */
+    data object BackgroundBlur : AppearanceOption<Blur> {
+        override val values: List<Blur> = Blur.entries
+        override fun get(appearance: Appearance) = appearance.background.blur
+        override fun set(appearance: Appearance, value: Blur) =
+            appearance.copy(background = appearance.background.copy(blur = value))
+        override fun appliesTo(appearance: Appearance) = appearance.background.picture != null
     }
 }
 

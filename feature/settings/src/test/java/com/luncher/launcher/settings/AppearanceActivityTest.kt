@@ -14,6 +14,11 @@ import com.luncher.domain.appearance.TileGeometry
 import com.luncher.domain.appearance.TileStyle
 import com.luncher.domain.appearance.TopBarAppearance
 import com.luncher.domain.appearance.VerticalAlignment
+import com.luncher.domain.appearance.Background
+import com.luncher.domain.appearance.SAMPLE_WALLPAPER
+import com.luncher.domain.pictures.Blur
+import com.luncher.domain.pictures.Fit
+import com.luncher.launcher.pictures.ChooseWallpaperActivity
 import com.luncher.launcher.testing.TV_1080P
 import com.luncher.launcher.testing.bounds
 import org.junit.Assert.assertEquals
@@ -56,9 +61,11 @@ class AppearanceActivityTest {
     private fun AppearanceActivity.lines() = children().filter { it.visibility == View.VISIBLE }.map { child ->
         val title = child.findViewById<TextView>(R.id.settings_group_title)
         val value = child.findViewById<TextView>(R.id.settings_option_value)
+        val picture = child.findViewById<TextView>(R.id.settings_picture_value)
         when {
             title != null -> if (child.findViewById<View>(R.id.settings_group_arrow).rotation != 0f) "${title.text} open" else title.text.toString()
             value != null -> "${child.findViewById<TextView>(R.id.settings_option_label).text}: ${value.text}"
+            picture != null -> "Picture: ${picture.text}"
             else -> (child as TextView).text.toString()
         }
     }
@@ -91,7 +98,7 @@ class AppearanceActivityTest {
 
     @Test
     fun `lists the groups, their options hidden, then the reset entry`() {
-        assertEquals(listOf("Tiles", "Status bar", "Reset to defaults"), start().lines())
+        assertEquals(listOf("Tiles", "Status bar", "Background", "Reset to defaults"), start().lines())
     }
 
     @Test
@@ -107,7 +114,7 @@ class AppearanceActivityTest {
         assertEquals(
             listOf(
                 "Tiles open", "Vertical alignment: Bottom", "Horizontal alignment: Center", "Full bottom row: On",
-                "Corner radius: 12 dp", "Status bar", "Reset to defaults",
+                "Corner radius: 12 dp", "Status bar", "Background", "Reset to defaults",
             ),
             activity.lines(),
         )
@@ -115,12 +122,79 @@ class AppearanceActivityTest {
 
         activity.toggle("Status bar")
         assertEquals(
-            listOf("Tiles", "Status bar open", "Time: Shown", "Date: Shown", "Side: Left", "Order: Time first", "Reset to defaults"),
+            listOf("Tiles", "Status bar open", "Time: Shown", "Date: Shown", "Side: Left", "Order: Time first", "Background", "Reset to defaults"),
             activity.lines(),
         )
 
         activity.toggle("Status bar")
-        assertEquals(listOf("Tiles", "Status bar", "Reset to defaults"), activity.lines())
+        assertEquals(listOf("Tiles", "Status bar", "Background", "Reset to defaults"), activity.lines())
+    }
+
+    @Test
+    fun `the background starts with its picture, none at first, its options dimmed and passed by`() {
+        val activity = start()
+
+        activity.toggle("Background")
+
+        assertEquals(
+            listOf("Tiles", "Status bar", "Background open", "Picture: None", "Fit: Fill", "Position: Center", "Dim: 0 %", "Blur: Off", "Reset to defaults"),
+            activity.lines(),
+        )
+        for (label in listOf("Fit", "Position", "Dim", "Blur")) assertFalse(label, activity.row(label).isFocusable)
+    }
+
+    @Test
+    fun `with a picture, names it, and its options can be changed`() {
+        settings.appearance = Appearance(background = Background(picture = SAMPLE_WALLPAPER, dim = 40, blur = Blur.LIGHT))
+        val activity = start()
+
+        activity.focus("Background", "Dim")
+        activity.press(KeyEvent.KEYCODE_DPAD_RIGHT)
+
+        assertEquals("Picture: sunset.jpg", activity.lines()[3])
+        assertEquals("60 %", activity.value("Dim"))
+        assertEquals(60, settings.appearance.background.dim)
+        assertEquals("Light", activity.value("Blur"))
+    }
+
+    @Test
+    fun `stretched, the position is dimmed`() {
+        settings.appearance = Appearance(background = Background(picture = SAMPLE_WALLPAPER, fit = Fit.STRETCH))
+        val activity = start()
+
+        activity.toggle("Background")
+
+        assertFalse(activity.row("Position").isFocusable)
+        assertTrue(activity.row("Fit").isFocusable)
+    }
+
+    @Test
+    fun `OK on the picture opens the picture library to choose the wallpaper, and shows the choice after`() {
+        val controller = Robolectric.buildActivity(AppearanceActivity::class.java).setup()
+        val activity = controller.get()
+        activity.toggle("Background")
+
+        activity.children().single { it.findViewById<View>(R.id.settings_picture_value) != null }.performClick()
+
+        assertEquals(ChooseWallpaperActivity::class.java.name, shadowOf(activity).nextStartedActivity.component?.className)
+        settings.appearance = Appearance(background = Background(picture = SAMPLE_WALLPAPER))   // chosen there
+        controller.pause().resume()   // back before it was stopped, as a quick choice can be
+        assertEquals("Picture: sunset.jpg", activity.lines()[3])
+    }
+
+    @Test
+    fun `the preview shows the wallpaper once it's drawn, the latest one`() {
+        val graph = (RuntimeEnvironment.getApplication() as SettingsTestApplication).graph as TestSettingsGraph
+        settings.appearance = Appearance(background = Background(picture = SAMPLE_WALLPAPER))
+        val activity = start()
+        activity.focus("Background", "Dim")
+        activity.press(KeyEvent.KEYCODE_DPAD_RIGHT)
+        activity.press(KeyEvent.KEYCODE_DPAD_RIGHT)
+
+        graph.jobs.runAll()
+        shadowOf(Looper.getMainLooper()).idle()
+
+        assertEquals(listOf(40), graph.pictureImages.rendered.map { it.second.dim })
     }
 
     @Test
@@ -260,7 +334,7 @@ class AppearanceActivityTest {
         assertEquals("Hidden", activity.value("Date"))
         assertFalse(activity.row("Side").isFocusable)
         assertFalse(activity.row("Order").isFocusable)
-        assertSame(activity.children().last(), activity.row("Date").focusSearch(View.FOCUS_DOWN))
+        assertSame(activity.group("Background"), activity.row("Date").focusSearch(View.FOCUS_DOWN))
     }
 
     @Test

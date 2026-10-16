@@ -6,6 +6,7 @@ import com.luncher.domain.pictures.ImportResult
 import com.luncher.domain.pictures.Picture
 import com.luncher.domain.pictures.PictureFormat
 import com.luncher.domain.pictures.PictureLimits
+import com.luncher.domain.pictures.PictureUse
 
 // What the pictures' screens call things, in the user's language.
 
@@ -37,4 +38,23 @@ internal fun Context.whyNotAdded(result: ImportResult): String? = when (result) 
     }
     ImportResult.Unreadable -> getString(R.string.pictures_unreadable, dropFolder())
     ImportResult.NoSpace -> getString(R.string.pictures_no_space)
+}
+
+/** What a picture is used for, as its tile says it: the uses, or that it has none. */
+internal fun Context.useOf(uses: List<PictureUse>): String =
+    if (uses.isEmpty()) getString(R.string.pictures_not_in_use) else getString(R.string.pictures_in_use, uses.joinToString { nameOf(it) })
+
+/** A use's name. */
+internal fun Context.nameOf(use: PictureUse): String = when (use) {
+    PictureUse.Wallpaper -> getString(R.string.pictures_wallpaper)
+}
+
+/** What deleting a picture with [use] does to it, said before deleting. */
+internal fun Context.afterDeleting(use: PictureUse): String = when (use) {
+    PictureUse.Wallpaper -> getString(R.string.pictures_delete_wallpaper)
+}
+
+/** The title of Pictures opened to choose a picture for [use]. */
+internal fun Context.chooseTitle(use: PictureUse): String = when (use) {
+    PictureUse.Wallpaper -> getString(R.string.pictures_choose_wallpaper)
 }

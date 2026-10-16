@@ -12,6 +12,12 @@
             android:exported="false"
             android:theme="@style/Theme.Luncher.Pictures" />
 
+        <!-- Pictures opened to choose the wallpaper, from the appearance editor. -->
+        <activity
+            android:name=".ChooseWallpaperActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Luncher.Pictures" />
+
         <!-- The pictures in the drop folders, opened from Pictures. -->
         <activity
             android:name=".AddFromFolderActivity"

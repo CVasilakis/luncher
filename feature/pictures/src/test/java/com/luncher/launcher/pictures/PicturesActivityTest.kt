@@ -10,10 +10,13 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.TextView
+import com.luncher.domain.appearance.Appearance
+import com.luncher.domain.appearance.Background
 import com.luncher.domain.pictures.FakePictures
 import com.luncher.domain.pictures.FakePictures.Companion.picture
 import com.luncher.domain.pictures.ImportResult
 import com.luncher.domain.pictures.PictureFormat
+import com.luncher.domain.pictures.PictureStyle
 import androidx.test.platform.app.InstrumentationRegistry
 import com.luncher.launcher.testing.TV_1080P
 import org.junit.Assert.assertEquals
@@ -124,7 +127,7 @@ class PicturesActivityTest {
     @Test
     fun `shows the kept thumbnails at once, and draws the others in the background`() {
         val graph = graph(beach, sunset)
-        graph.pictureImages.cache[beach.id] = sample("kept", 384, 216)
+        graph.pictureImages.cache[beach.id to PictureStyle()] = sample("kept", 384, 216)
 
         start()
         assertEquals("only the one not kept is waiting", 1, graph.jobs.pending)
@@ -133,7 +136,7 @@ class PicturesActivityTest {
         graph.jobs.runAll()
         idle()
 
-        assertEquals(listOf(sunset), graph.pictureImages.rendered)
+        assertEquals(listOf(sunset.id to PictureStyle()), graph.pictureImages.rendered)
     }
 
     @Test
@@ -144,7 +147,7 @@ class PicturesActivityTest {
         val sized = object : TestPicturesGraph(graph.library) {
             override val pictureImages = com.luncher.domain.pictures.FakePictureImages { picture, width, height, _ ->
                 size = width to height
-                sample(picture.name, width, height)
+                sample(picture.value, width, height)
             }
         }
         application.graph = sized
@@ -188,8 +191,8 @@ class PicturesActivityTest {
         activity.ok(1)
         val (title, text, entries) = dialog()!!
         assertEquals("beach.png", title)
-        assertEquals("1920 × 1080 · 3.1 MB", text)
-        assertEquals(listOf("Delete"), entries.map { it.text.toString() })
+        assertEquals("1920 × 1080 · 3.1 MB · Not in use", text)
+        assertEquals(listOf("Use as wallpaper", "Delete"), entries.map { it.text.toString() })
 
         choose("Delete")
         val (question, _, answers) = dialog()!!
@@ -364,6 +367,102 @@ class PicturesActivityTest {
         idle()
 
         assertEquals("old.jpg", activity.focusedTile())
+    }
+
+    /** The use line below each tile's name. */
+    private fun Activity.uses(): List<String> = tileViews().mapNotNull { it.findViewById<TextView>(R.id.pictures_details)?.text?.toString() }
+
+    @Test
+    fun `says what each picture is used for`() {
+        val graph = graph(beach, sunset)
+        graph.appearanceSettings.appearance = Appearance(background = Background(picture = beach.id))
+
+        val activity = start().get()
+
+        assertEquals(listOf("Not in use", "In use: Wallpaper"), activity.uses())
+        assertEquals("Delete unused (1 · 1.5 MB)", activity.findViewById<TextView>(R.id.pictures_delete_unused).text.toString())
+    }
+
+    @Test
+    fun `Use as wallpaper makes the picture the wallpaper, keeping how it's drawn, and says so`() {
+        val graph = graph(beach)
+        graph.appearanceSettings.appearance = Appearance(background = Background(dim = 40))
+        val activity = start().get()
+
+        activity.ok(0)
+        assertEquals("1920 × 1080 · 3.1 MB · Not in use", dialog()!!.second)
+        choose("Use as wallpaper")
+
+        assertEquals(Background(picture = beach.id, dim = 40), graph.appearanceSettings.appearance.background)
+        assertEquals(listOf("In use: Wallpaper"), activity.uses())
+        activity.ok(0)
+        assertEquals("the wallpaper's actions", listOf("Delete"), dialog()!!.third.map { it.text.toString() })
+    }
+
+    @Test
+    fun `deleting the wallpaper's picture says so first, and leaves no wallpaper`() {
+        val graph = graph(beach, sunset)
+        graph.appearanceSettings.appearance = Appearance(background = Background(picture = beach.id, dim = 20))
+        val activity = start().get()
+
+        activity.ok(1)
+        choose("Delete")
+        assertEquals(
+            "Luncher deletes its own copy; the file you added it from stays.\nIt's the wallpaper: the home screen goes back to its plain background.",
+            dialog()!!.second,
+        )
+        choose("Delete")
+
+        assertEquals(listOf(sunset), graph.library.pictures)
+        assertEquals(Background(picture = null, dim = 20), graph.appearanceSettings.appearance.background)
+    }
+
+    @Test
+    fun `Delete unused keeps the wallpaper's picture`() {
+        val graph = graph(beach, sunset)
+        graph.appearanceSettings.appearance = Appearance(background = Background(picture = beach.id))
+        val activity = start().get()
+
+        activity.findViewById<View>(R.id.pictures_delete_unused).performClick()
+        idle()
+        choose("Delete")
+
+        assertEquals(listOf(beach), graph.library.pictures)
+        assertEquals(beach.id, graph.appearanceSettings.appearance.background.picture)
+    }
+
+    /** Pictures opened to choose the wallpaper. */
+    private fun choosing(): ChooseWallpaperActivity {
+        val activity = Robolectric.buildActivity(ChooseWallpaperActivity::class.java).setup().get()
+        idle()
+        return activity
+    }
+
+    @Test
+    fun `choosing the wallpaper, OK on a picture makes it the wallpaper and closes`() {
+        val graph = graph(beach, sunset)
+        val activity = choosing()
+
+        assertEquals("Choose the wallpaper", activity.findViewById<TextView>(R.id.pictures_title).text.toString())
+        assertEquals(listOf("+", "sunset.jpg", "beach.png", "+"), activity.tiles())
+        activity.ok(2)
+
+        assertEquals(beach.id, graph.appearanceSettings.appearance.background.picture)
+        assertTrue(activity.isFinishing)
+        assertNull(dialog())
+    }
+
+    @Test
+    fun `choosing the wallpaper, the first tile is none, focused`() {
+        val graph = graph(beach)
+        graph.appearanceSettings.appearance = Appearance(background = Background(picture = beach.id))
+        val activity = choosing()
+
+        assertEquals("No picture", (activity.window.decorView.findFocus() as ViewGroup).let { (it.getChildAt(0) as TextView).text.toString() })
+        activity.ok(0)
+
+        assertEquals(null, graph.appearanceSettings.appearance.background.picture)
+        assertTrue(activity.isFinishing)
     }
 
     /**

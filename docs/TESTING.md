@@ -65,8 +65,8 @@ outside a broken Back looks the same as a working one.
   `com.luncher.launcher.testing`, with the tests of that infrastructure itself: for the JVM tests,
   `:ui`'s test fixtures (the TV screens, layout checks), which every module's tests can use; for
   the instrumented tests, `app/src/androidTest/…/testing/` (the waits for the home screen and the
-  focus, keys, `RetryWhenCovered`, `SystemTierFilter`). A feature's test package holds only that
-  feature's tests.
+  focus, keys, `RetryWhenCovered`, `SystemTierFilter`, `SamplePictures`). A feature's test package
+  holds only that feature's tests.
 - **Name tests after behavior.** JVM tests use backtick sentences
   (`` `reads the apps again when the home screen comes back` ``). `androidTest` uses
   `action_expectedResult` (`backKey_doesNotCloseTheHomeScreen`), because DEX files before API 30
@@ -97,6 +97,13 @@ outside a broken Back looks the same as a working one.
   activity: `RuntimeEnvironment.setQualifiers("+tvdpi")`, then
   `controller.configurationChange().visible()`. Robolectric attaches the new activity's window
   only on `visible()`; without it, nothing in the new activity is laid out.
+- **Focus and keys under Robolectric.** Its window never gets the input focus, so
+  `Activity.currentFocus` stays null: find the focused view with `window.decorView.findFocus()`.
+  For the same reason an arrow sent with `dispatchKeyEvent` moves no focus, since Android moves it
+  outside the views; a test of where an arrow goes asks the focused view's `focusSearch`, as
+  Android does (`HomeActivityTest`, `PicturesActivityTest`), and the real keys are Espresso's. Robolectric also starts in touch mode, where a list selects nothing:
+  leave it with `InstrumentationRegistry.getInstrumentation().setInTouchMode(false)`, or
+  `requestFocusFromTouch()` on the list.
 
 ## Screenshot tests
 
@@ -107,7 +114,9 @@ outside a broken Back looks the same as a working one.
 ```
 
 Reference images are committed. When a change alters a screen on purpose, record, look at the new
-image, and commit it with the change. A plain `testDebugUnitTest` runs the screenshot tests without
+image, and commit it with the change. A dialog is a window of its own: `captureScreenRoboImage`
+draws it over its screen, every window at once (an experimental Roborazzi API, opted in where
+it's used, `PicturesScreenshotTest`). A plain `testDebugUnitTest` runs the screenshot tests without
 comparing images. Screenshots need Robolectric's native graphics
 (`@GraphicsMode(GraphicsMode.Mode.NATIVE)`), available on Linux x86-64, macOS and Windows.
 

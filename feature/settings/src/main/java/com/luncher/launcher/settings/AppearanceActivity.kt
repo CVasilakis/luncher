@@ -1,6 +1,7 @@
 package com.luncher.launcher.settings
 
 import android.app.Activity
+import android.content.Intent
 import android.os.Bundle
 import android.view.KeyEvent
 import android.view.View
@@ -15,6 +16,10 @@ import com.luncher.domain.appearance.Side
 import com.luncher.domain.appearance.VerticalAlignment
 import com.luncher.domain.appearance.appearanceOptions
 import com.luncher.domain.appearance.step
+import com.luncher.domain.pictures.Blur
+import com.luncher.domain.pictures.Fit
+import com.luncher.domain.pictures.PicturePosition
+import com.luncher.launcher.pictures.ChooseWallpaperActivity
 
 /**
  * The editor of the home screen's appearance, full-screen: the groups of options of the domain's
@@ -26,12 +31,18 @@ import com.luncher.domain.appearance.step
  * option that changes nothing with the others as they are is dimmed, and the focus passes it by.
  * OK on the last entry puts every option back to its default. Back closes it, as any activity.
  *
+ * The background's group starts with its picture: its name, and OK on it opens the picture
+ * library to choose one ([ChooseWallpaperActivity]), which stores it; back here, the editor reads
+ * the appearance again.
+ *
  * Which options there are, in which groups, their values and what a step does are the domain's;
  * what each one is called is decided here, per option, in [label] and [valueLabel].
  */
 class AppearanceActivity : Activity() {
 
     private val settings by lazy { graph.appearanceSettings }
+    private val pictures by lazy { graph.pictures }
+    private val pictureRows = mutableListOf<TextView>()
     private lateinit var appearance: Appearance
     private lateinit var preview: AppearancePreviewView
     private val rows = mutableListOf<Row>()
@@ -54,13 +65,14 @@ class AppearanceActivity : Activity() {
         for (group in appearanceOptions().groups) {
             val header = layoutInflater.inflate(R.layout.settings_appearance_group, options, false)
             options.addView(header)
+            val picture = if (group.choosesPicture) pictureRow(options) else null
             val rows = group.options.map { option ->
                 val view = layoutInflater.inflate(R.layout.settings_appearance_option, options, false)
                 options.addView(view)
                 Row(option, view).also { view.setOnKeyListener(it) }
             }
             this.rows += rows
-            groups += Group(header, topic(group.topic), rows)
+            groups += Group(header, topic(group.topic), listOfNotNull(picture) + rows.map { it.view })
         }
         val reset = layoutInflater.inflate(R.layout.settings_entry, options, false) as TextView
         reset.setText(R.string.settings_appearance_reset)
@@ -68,8 +80,39 @@ class AppearanceActivity : Activity() {
         options.addView(reset)
 
         appearance = settings.read()
+        preview.showWallpapers(graph.pictureImages, graph.jobs)
         show()
         groups.first().header.requestFocus()
+    }
+
+    // Back from choosing the wallpaper, which stored it. In onResume: the chooser can close
+    // before this screen was ever stopped.
+    override fun onResume() {
+        super.onResume()
+        val stored = settings.read()
+        if (stored != appearance) {
+            appearance = stored
+            show()
+        }
+    }
+
+    override fun onRestart() {
+        super.onRestart()
+        preview.resumeWallpaper()
+    }
+
+    override fun onStop() {
+        super.onStop()
+        preview.stopWallpaper()
+    }
+
+    /** The background's picture, a row like an option's: OK opens the picture library to choose it. */
+    private fun pictureRow(options: LinearLayout): View {
+        val view = layoutInflater.inflate(R.layout.settings_appearance_picture, options, false)
+        options.addView(view)
+        view.setOnClickListener { startActivity(Intent(this, ChooseWallpaperActivity::class.java)) }
+        pictureRows += view.findViewById<TextView>(R.id.settings_picture_value)
+        return view
     }
 
     /** Shows [group]'s options, and hides any other group's; or hides [group]'s if they show. */
@@ -87,12 +130,22 @@ class AppearanceActivity : Activity() {
 
     private fun show() {
         for (row in rows) row.show()
+        val picture = appearance.background.picture
+        val name = picture?.let { id -> pictures.read().firstOrNull { it.id == id } }?.name
+        for (row in pictureRows) {
+            row.text = when {
+                picture == null -> getString(R.string.settings_appearance_no_picture)
+                name.isNullOrEmpty() -> getString(R.string.settings_appearance_picture)
+                else -> name
+            }
+        }
         preview.appearance = appearance
     }
 
     private fun topic(topic: AppearanceTopic): Int = when (topic) {
         AppearanceTopic.TILES -> R.string.settings_appearance_tiles
         AppearanceTopic.TOP_BAR -> R.string.settings_appearance_top_bar
+        AppearanceTopic.BACKGROUND -> R.string.settings_appearance_background
     }
 
     private fun label(option: AppearanceOption<*>): Int = when (option) {
@@ -104,6 +157,10 @@ class AppearanceActivity : Activity() {
         AppearanceOption.ShowDate -> R.string.settings_appearance_date
         AppearanceOption.ClockSide -> R.string.settings_appearance_clock_side
         AppearanceOption.TimeSide -> R.string.settings_appearance_time_side
+        AppearanceOption.BackgroundFit -> R.string.settings_appearance_fit
+        AppearanceOption.BackgroundPosition -> R.string.settings_appearance_position
+        AppearanceOption.BackgroundDim -> R.string.settings_appearance_dim
+        AppearanceOption.BackgroundBlur -> R.string.settings_appearance_blur
     }
 
     /** What [option]'s value in [appearance] is called. */
@@ -119,6 +176,29 @@ class AppearanceActivity : Activity() {
         AppearanceOption.ShowDate -> getString(shown(AppearanceOption.ShowDate.get(appearance)))
         AppearanceOption.ClockSide -> getString(side(AppearanceOption.ClockSide.get(appearance)))
         AppearanceOption.TimeSide -> getString(order(AppearanceOption.TimeSide.get(appearance)))
+        AppearanceOption.BackgroundFit -> getString(fit(AppearanceOption.BackgroundFit.get(appearance)))
+        AppearanceOption.BackgroundPosition -> getString(position(AppearanceOption.BackgroundPosition.get(appearance)))
+        AppearanceOption.BackgroundDim -> getString(R.string.settings_appearance_percent, AppearanceOption.BackgroundDim.get(appearance))
+        AppearanceOption.BackgroundBlur -> getString(blur(AppearanceOption.BackgroundBlur.get(appearance)))
+    }
+
+    private fun fit(fit: Fit): Int = when (fit) {
+        Fit.FILL -> R.string.settings_appearance_fill
+        Fit.STRETCH -> R.string.settings_appearance_stretch
+    }
+
+    private fun position(position: PicturePosition): Int = when (position) {
+        PicturePosition.CENTER -> R.string.settings_appearance_center
+        PicturePosition.TOP -> R.string.settings_appearance_top
+        PicturePosition.BOTTOM -> R.string.settings_appearance_bottom
+        PicturePosition.LEFT -> R.string.settings_appearance_left
+        PicturePosition.RIGHT -> R.string.settings_appearance_right
+    }
+
+    private fun blur(blur: Blur): Int = when (blur) {
+        Blur.OFF -> R.string.settings_appearance_off
+        Blur.LIGHT -> R.string.settings_appearance_light
+        Blur.STRONG -> R.string.settings_appearance_strong
     }
 
     private fun vertical(alignment: VerticalAlignment): Int = when (alignment) {
@@ -149,8 +229,8 @@ class AppearanceActivity : Activity() {
         Side.RIGHT -> R.string.settings_appearance_date_first
     }
 
-    /** A group's entry, which shows or hides its options' [rows] below it. Hidden at first. */
-    private inner class Group(val header: View, title: Int, private val rows: List<Row>) {
+    /** A group's entry, which shows or hides its options' [rows] below it (a picture's too). Hidden at first. */
+    private inner class Group(val header: View, title: Int, private val rows: List<View>) {
 
         private val arrow = header.findViewById<View>(R.id.settings_group_arrow)
 
@@ -161,7 +241,7 @@ class AppearanceActivity : Activity() {
         }
 
         fun show(open: Boolean) {
-            for (row in rows) row.view.visibility = if (open) View.VISIBLE else View.GONE
+            for (row in rows) row.visibility = if (open) View.VISIBLE else View.GONE
             // The arrow turns to point down, at the options: the other way round when mirrored.
             val down = if (header.layoutDirection == View.LAYOUT_DIRECTION_RTL) -90f else 90f
             arrow.rotation = if (open) down else 0f

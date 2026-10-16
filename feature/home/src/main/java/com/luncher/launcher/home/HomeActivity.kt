@@ -25,7 +25,8 @@ import java.util.Locale
  * hides apps; it gets every key first while it's on.
  *
  * How it looks follows the user's [Appearance] while it's shown: each part goes to the view that
- * draws it, which compares it with what it has, so an unchanged part costs nothing.
+ * draws it (the background to the window, [HomeWallpaper]), which compares it with what it has, so
+ * an unchanged part costs nothing.
  */
 class HomeActivity : Activity() {
 
@@ -39,6 +40,7 @@ class HomeActivity : Activity() {
     private lateinit var clockView: ClockView
     private lateinit var empty: TextView
     private lateinit var arrange: ArrangeMode
+    private lateinit var wallpaper: HomeWallpaper
 
     /** What the tiles show; null until the first [onResume]. */
     private var shown: List<InstalledApp>? = null
@@ -78,6 +80,7 @@ class HomeActivity : Activity() {
         clockView = findViewById(R.id.home_clock)
         val settingsEntry = findViewById<View>(R.id.home_settings)
         settingsEntry.setOnClickListener { openSettings() }
+        wallpaper = HomeWallpaper(window, graph.pictureImages, graph.jobs)
         arrange = ArrangeMode(
             tiles,
             normalBar = listOf(clockView, settingsEntry),
@@ -115,6 +118,7 @@ class HomeActivity : Activity() {
         super.onStop()
         arrange.end()   // leaving the home screen (another app, the screen off) ends it
         clockView.stop()
+        wallpaper.stop()
         appearanceSettings.removeListener(showAppearance)
         arrangements.removeListener(showArrangement)
         installedApps.removeListener(showAppChanges)
@@ -152,6 +156,7 @@ class HomeActivity : Activity() {
         tiles.tileGeometry = appearance.tileGeometry
         tiles.tileStyle = appearance.tileStyle
         topBar.appearance = appearance.topBar
+        wallpaper.show(appearance.background)
     }
 
     /** Arrange mode ended: the tiles show [arranged] already, unless apps changed meanwhile. */

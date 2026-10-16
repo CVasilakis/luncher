@@ -1,5 +1,7 @@
 package com.luncher.launcher.settings
 
+import android.graphics.Bitmap
+import android.net.Uri
 import android.os.SystemClock
 import android.view.KeyEvent
 import android.view.View
@@ -21,6 +23,12 @@ import com.luncher.domain.appearance.Appearance
 import com.luncher.domain.appearance.FakeAppearanceSettings
 import com.luncher.domain.appearance.TileGeometry
 import com.luncher.domain.appearance.VerticalAlignment
+import com.luncher.domain.pictures.FakePictureImages
+import com.luncher.domain.pictures.FakePictures
+import com.luncher.domain.pictures.FakePictures.Companion.picture
+import com.luncher.domain.pictures.PictureImages
+import com.luncher.domain.pictures.PictureImport
+import com.luncher.domain.pictures.Pictures
 import com.luncher.launcher.AppGraph
 import com.luncher.launcher.LuncherApplication
 import com.luncher.launcher.testing.RetryWhenCovered
@@ -132,6 +140,44 @@ class AppearanceActivityTest {
             // The panel, in front again, with the focus where it was.
             waitUntil(withText(R.string.settings_appearance), hasFocus())
             waitUntil(withText(R.string.settings_system), isDisplayed())
+        }
+    }
+
+    @Test
+    fun okOnTheBackgroundsPicture_opensThePictureLibrary_andOkOnAPictureMakesItTheWallpaper() {
+        settings = FakeAppearanceSettings(Appearance(TileGeometry(verticalAlignment = VerticalAlignment.TOP)))
+        val library = FakePictures<Uri>(picture("sunset.jpg"))
+        application.graph = object : AppGraph(application) {
+            override val appearanceSettings = this@AppearanceActivityTest.settings
+            override val pictures: Pictures = library
+            override val pictureImport: PictureImport<Uri> = library
+            override val pictureImages: PictureImages<Bitmap> = FakePictureImages { _, width, height, _ ->
+                Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888).apply { eraseColor(0xFF336699.toInt()) }
+            }
+        }
+        ActivityScenario.launch(AppearanceActivity::class.java).use {
+            waitUntil(group(R.string.settings_appearance_tiles), hasFocus())
+            press(KeyEvent.KEYCODE_DPAD_DOWN)
+            press(KeyEvent.KEYCODE_DPAD_DOWN)
+            waitUntil(group(R.string.settings_appearance_background), hasFocus())
+            press(KeyEvent.KEYCODE_DPAD_CENTER)
+            waitUntil(withChild(withText(R.string.settings_appearance_picture)), isDisplayed())
+            press(KeyEvent.KEYCODE_DPAD_DOWN)
+            waitUntil(withChild(withText(R.string.settings_appearance_picture)), hasFocus())
+            press(KeyEvent.KEYCODE_DPAD_CENTER)
+
+            // The picture library, choosing: No picture first, then the pictures.
+            waitUntil(withChild(withText("sunset.jpg")), isDisplayed())
+            waitUntil(withChild(withText(com.luncher.launcher.pictures.R.string.pictures_no_picture)), hasFocus())
+            press(KeyEvent.KEYCODE_DPAD_RIGHT)
+            waitUntil(withChild(withText("sunset.jpg")), hasFocus())
+            press(KeyEvent.KEYCODE_DPAD_CENTER)
+
+            // Stored, and back in the editor, which names it.
+            val deadline = SystemClock.uptimeMillis() + TIMEOUT_MS
+            while (settings.appearance.background.picture == null && SystemClock.uptimeMillis() < deadline) SystemClock.sleep(POLL_MS)
+            assertEquals(picture("sunset.jpg").id, settings.appearance.background.picture)
+            waitUntil(allOf(withId(R.id.settings_picture_value), withText("sunset.jpg")), isDisplayed())
         }
     }
 

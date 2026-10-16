@@ -1,5 +1,7 @@
 package com.luncher.launcher.home
 
+import android.graphics.Bitmap
+import android.graphics.drawable.BitmapDrawable
 import android.os.SystemClock
 import android.view.KeyEvent
 import android.view.View
@@ -24,6 +26,7 @@ import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.luncher.domain.appearance.Appearance
+import com.luncher.domain.appearance.Background
 import com.luncher.domain.appearance.FakeAppearanceSettings
 import com.luncher.domain.appearance.HorizontalAlignment
 import com.luncher.domain.appearance.TileGeometry
@@ -31,6 +34,9 @@ import com.luncher.domain.appearance.VerticalAlignment
 import com.luncher.domain.apps.FakeAppArrangements
 import com.luncher.domain.apps.FakeInstalledApps
 import com.luncher.domain.apps.FakeInstalledApps.Companion.app
+import com.luncher.domain.pictures.FakePictureImages
+import com.luncher.domain.pictures.PictureId
+import com.luncher.domain.pictures.PictureImages
 import com.luncher.launcher.AppGraph
 import com.luncher.launcher.LuncherApplication
 import com.luncher.launcher.testing.RetryWhenCovered
@@ -67,6 +73,10 @@ class HomeActivityTest {
             // shown, by name, where the test says.
             override val appArrangements = FakeAppArrangements()
             override val appearanceSettings = FakeAppearanceSettings(appearance)
+            // Not the device's library either: a wallpaper is drawn as a plain color.
+            override val pictureImages: PictureImages<Bitmap> = FakePictureImages { _, width, height, _ ->
+                Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888).apply { eraseColor(WALLPAPER) }
+            }
         }
         return ActivityScenario.launch(HomeActivity::class.java)
     }
@@ -390,7 +400,25 @@ class HomeActivityTest {
     /** "app01" to "app<count>", zero-padded so label order is number order. */
     private fun appNames(count: Int) = Array(count) { "app%02d".format(it + 1) }
 
+    @Test
+    fun aWallpaper_isTheHomeScreensBackground() {
+        val wallpaper = Appearance(topLeftTiles, background = Background(picture = PictureId("sunset")))
+        launchWith("movies", appearance = wallpaper).use { scenario ->
+            val deadline = SystemClock.uptimeMillis() + 10_000
+            var color = 0
+            while (SystemClock.uptimeMillis() < deadline) {
+                scenario.onActivity { color = ((it.window.decorView.background as? BitmapDrawable)?.bitmap?.getPixel(10, 10)) ?: 0 }
+                if (color == WALLPAPER) break
+                SystemClock.sleep(50)
+            }
+            assertEquals("the wallpaper drawn, as the window's background", WALLPAPER, color)
+        }
+    }
+
     private companion object {
+        /** The color the tests' wallpapers are drawn in. */
+        const val WALLPAPER = 0xFF336699.toInt()
+
         /**
          * The default tile size, in rows from the top left with the short row last, so a tile's
          * index tells its row and column: what these tests of keys and focus are written for.

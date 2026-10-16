@@ -1,8 +1,8 @@
 # platform/
 
 The adapters, `:platform`: the domain's ports implemented on Android APIs (PackageManager,
-SharedPreferences, the system clock and its broadcasts, files), and the images the screens show. Only
-`:app` depends on this module; `AppGraph` there creates the adapters, and the features see the
+SharedPreferences, the system clock and its broadcasts, files), and the images the screens show.
+Only `:app` depends on this module; `AppGraph` there creates the adapters, and the features see the
 ports only, so a screen can't call an Android data API or create an adapter itself. Why, and the
 rules adapters follow: [`../docs/ARCHITECTURE.md`](../docs/ARCHITECTURE.md).
 
@@ -21,7 +21,7 @@ platform/
     │   ├── AndroidManifest.xml   package visibility (below)
     │   ├── java/com/luncher/launcher/
     │   │   ├── appearance/
-    │   │   │   └── PreferencesAppearanceSettings.kt AppearanceSettings on SharedPreferences: a key per option, and its stored form
+    │   │   │   └── PreferencesAppearanceSettings.kt AppearanceSettings on SharedPreferences: a key per option, and its stored form; the wallpaper's picture
     │   │   ├── apps/
     │   │   │   ├── PackageManagerInstalledApps.kt   InstalledApps on PackageManager, and LauncherApps for when apps change
     │   │   │   ├── PreferencesAppArrangements.kt    AppArrangements on SharedPreferences: the file and its format
@@ -34,7 +34,7 @@ platform/
     │   │   ├── pictures/
     │   │   │   ├── FilesPictures.kt                 Pictures and PictureImport<Uri> on files: the library's pictures and their index
     │   │   │   ├── MediaFolderPictures.kt           FolderPictures<Uri, Bitmap> in the drop folders, Android/media/<applicationId>
-    │   │   │   ├── FilePictureImages.kt             PictureImages<Bitmap>: draws a picture of the library, framed, at a size
+    │   │   │   ├── FilePictureImages.kt             PictureImages<Bitmap>: draws a picture of the library at a size, framed, dimmed, blurred
     │   │   │   ├── CachedPictureImages.kt           PictureImages<Bitmap> in front of FilePictureImages: what it drew kept in files
     │   │   │   ├── PictureFiles.kt                  reading a picture file: its size, upright, its format; drawing it framed in ARGB_8888
     │   │   │   └── JpegOrientation.kt               a JPEG's orientation tag, read without ExifInterface
@@ -44,8 +44,8 @@ platform/
     └── test/java/…/              JVM tests (Robolectric), same packages as the code
 ```
 
-Packages follow `:domain`'s topics (`appearance/`, `apps/`, `clock/`, `jobs/`, `pictures/`, and later e.g. `network/`),
-so the adapter of `com.luncher.domain.clock.Clock` is in `clock/`. What two topics' adapters share
+Packages follow `:domain`'s topics (`appearance/`, `apps/`, `clock/`, `jobs/`, `pictures/`, and
+later e.g. `network/`), so the adapter of `com.luncher.domain.clock.Clock` is in `clock/`. What two topics' adapters share
 is in a package of its own (`images/`: the caches' file format).
 
 ## Writing adapters
@@ -90,8 +90,8 @@ adapters on files, and a cache:
 |---|---|---|
 | `FilesPictures` | `Pictures`, `PictureImport<Uri>` | each picture's original file, unchanged, in `filesDir/pictures/`, named after a hash of its content, so the same picture added twice is stored once; and `index.json`, the pictures' names, sizes as shown and when they were added, written whole to a new file that then replaces the old one. Its format is kept across updates, so `FilesPicturesTest` writes it out. |
 | `MediaFolderPictures` | `FolderPictures<Uri, Bitmap>` | nothing: it lists the drop folders (below) |
-| `FilePictureImages` | `PictureImages<Bitmap>` | nothing: it draws a picture of the library at a size, framed by the domain's `frame` |
-| `CachedPictureImages` | `PictureImages<Bitmap>` | what `FilePictureImages` drew, in `cacheDir/pictures/<picture>/`, one file per size (the thumbnails, at the grid's tile size in pixels) |
+| `FilePictureImages` | `PictureImages<Bitmap>` | nothing: it draws a picture of the library at a size, framed by the domain's `frame`, blurred and dimmed as its `PictureStyle` says |
+| `CachedPictureImages` | `PictureImages<Bitmap>` | what `FilePictureImages` drew, in `cacheDir/pictures/<picture>/`, one file per size, its style in the header: the thumbnails at the grid's tile size in pixels, the wallpaper at the screen's, the editor's preview at its own |
 
 - **Adding a picture is a job,** of `JobPriority.PICTURE_LIBRARY`, as is everything that changes
   the library's files (moving a new picture's file into place, deleting, writing the index), so
@@ -113,6 +113,9 @@ adapters on files, and a cache:
   draws the framed part into a bitmap of exactly that size, over the home screen's background
   color (for a transparent picture); then frees the decoded one. A decoder may give another config
   (16-bit PNG: RGBA_F16 from API 26 on; GIF: none up to 26), which the drawing turns into ARGB_8888.
+- **Blur and dim** are drawn into the picture's bitmap, after its framing: blurred by drawing it at
+  an eighth of its size, blurring that (a box blur, twice each way), and drawing it back up with
+  filtering, so it costs little at any screen size; dimmed by a black fill of the dim's share.
 - **The orientation tag** of a JPEG is read by `jpegOrientation`, not `android.media.ExifInterface`,
   whose native code up to Android 6 has known security bugs, while any app can share a crafted
   file. A HEIF photo's is read by `ExifInterface`, which reads HEIF from API 28 on, the first
@@ -127,8 +130,8 @@ adapters on files, and a cache:
 card (`Context.getExternalMediaDirs()`, which creates them): a file manager on the TV, or a computer
 writing a USB drive, puts pictures there, and Luncher reads them without any permission. Not
 `Android/data/<applicationId>`, which file managers can't write from Android 11 on. From Android
-16 on, a file another app put there can't be read; `MediaFolderPictures` lists only what it can
-read, so there a picture comes in through a share.
+16 on, a file another app (or adb) put there can't be read; `MediaFolderPictures` lists only what
+it can read, so there a picture comes in through a share.
 
 ## Manifest
 

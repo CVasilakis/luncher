@@ -10,7 +10,11 @@ import com.luncher.domain.appearance.TileGeometry
 import com.luncher.domain.appearance.TileStyle
 import com.luncher.domain.appearance.VerticalAlignment
 import com.luncher.domain.appearance.appearanceChanges
+import android.os.Looper
+import com.luncher.domain.jobs.ManualJobs
+import com.luncher.domain.pictures.FakePictureImages
 import com.luncher.launcher.testing.TV_1080P
+import org.robolectric.Shadows.shadowOf
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -27,9 +31,12 @@ import java.lang.management.ManagementFactory
 @Config(qualifiers = TV_1080P)
 class AppearancePreviewViewTest {
 
+    private val jobs = ManualJobs()
+
     private val preview = AppearancePreviewView(RuntimeEnvironment.getApplication(), null).apply {
         measure(exactly(WIDTH), exactly(HEIGHT))
         layout(0, 0, WIDTH, HEIGHT)
+        showWallpapers(FakePictureImages(::wallpaper), jobs)
     }
 
     private val canvas = Canvas(Bitmap.createBitmap(WIDTH, HEIGHT, Bitmap.Config.ARGB_8888))
@@ -40,6 +47,8 @@ class AppearancePreviewViewTest {
 
     private fun draw(appearance: Appearance): Bitmap {
         preview.appearance = appearance
+        jobs.runAll()                                   // its wallpaper, drawn in the background
+        shadowOf(Looper.getMainLooper()).idle()        // and shown
         return Bitmap.createBitmap(WIDTH, HEIGHT, Bitmap.Config.ARGB_8888).also { preview.draw(Canvas(it)) }
     }
 

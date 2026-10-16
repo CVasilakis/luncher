@@ -31,4 +31,7 @@ object JobPriority {
      * the order they came, and a picture's file is in place before anything draws it.
      */
     const val PICTURE_LIBRARY = 2
+
+    /** The home screen's wallpaper, which it shows without until it's drawn: first. */
+    const val WALLPAPER = 3
 }

@@ -3,6 +3,7 @@ package com.luncher.launcher.pictures
 import android.app.Activity
 import android.graphics.Bitmap
 import android.net.Uri
+import com.luncher.domain.appearance.AppearanceSettings
 import com.luncher.domain.jobs.Jobs
 import com.luncher.domain.pictures.FolderPictures
 import com.luncher.domain.pictures.PictureImages
@@ -18,6 +19,9 @@ interface PicturesGraph {
     val pictureImport: PictureImport<Uri>
     val folderPictures: FolderPictures<Uri, Bitmap>
     val pictureImages: PictureImages<Bitmap>
+
+    /** The wallpaper, which a picture of the library is made or stops being. */
+    val appearanceSettings: AppearanceSettings
 
     /** The background thread, for what the screens load (thumbnails, previews). */
     val jobs: Jobs

@@ -44,7 +44,8 @@ The test fixtures are what the screens' JVM tests share, in every module
 
 `Theme.Luncher` is the application's theme and the home screen's; a feature whose screens look
 different has its own (the settings panels' dialog theme,
-[`feature/settings/`](../feature/settings/README.md#the-settings-panel)). They're all platform
+[`feature/settings/`](../feature/settings/README.md#the-settings-panel); Pictures' dialogs and its
+share entry point without a window, [`feature/pictures/`](../feature/pictures/README.md#manifest)). They're all platform
 themes (`Theme.DeviceDefault…`), not AppCompat, like every activity's `android.app.Activity`
 ([`ARCHITECTURE.md`](../docs/ARCHITECTURE.md#rules), rule 5).
 

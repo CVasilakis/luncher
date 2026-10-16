@@ -28,6 +28,18 @@
     <string name="settings_appearance_time_side">Σειρά</string>
     <string name="settings_appearance_time_first">Ώρα αριστερά</string>
     <string name="settings_appearance_date_first">Ώρα δεξιά</string>
+    <string name="settings_appearance_background">Φόντο</string>
+    <string name="settings_appearance_picture">Εικόνα</string>
+    <string name="settings_appearance_no_picture">Καμία</string>
+    <string name="settings_appearance_fit">Προσαρμογή</string>
+    <string name="settings_appearance_fill">Γέμισμα</string>
+    <string name="settings_appearance_stretch">Τέντωμα</string>
+    <string name="settings_appearance_position">Θέση</string>
+    <string name="settings_appearance_dim">Σκίαση</string>
+    <string name="settings_appearance_percent"><xliff:g id="percent" example="20">%1$d</xliff:g> %%</string>
+    <string name="settings_appearance_blur">Θόλωμα</string>
+    <string name="settings_appearance_light">Ελαφρύ</string>
+    <string name="settings_appearance_strong">Έντονο</string>
     <string name="settings_appearance_on">Ναι</string>
     <string name="settings_appearance_off">Όχι</string>
     <string name="settings_appearance_reset">Επαναφορά προεπιλογών</string>

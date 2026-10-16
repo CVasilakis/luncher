@@ -8,6 +8,10 @@ import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.ListView
 import android.widget.TextView
+import com.luncher.domain.appearance.Appearance
+import com.luncher.domain.appearance.Background
+import com.luncher.domain.appearance.FakeAppearanceSettings
+import com.luncher.domain.appearance.SAMPLE_WALLPAPER
 import com.luncher.domain.appearance.appearanceOptions
 import com.luncher.domain.apps.AppArrangement
 import com.luncher.domain.apps.FakeAppArrangements
@@ -67,6 +71,8 @@ class SettingsLayoutTest(private val screen: TvScreen) {
         application.graph = object : TestSettingsGraph() {
             override val installedApps = FakeInstalledApps(apps.map(::app))
             override val appArrangements = FakeAppArrangements(AppArrangement(order = null, hidden = listOf(app("zz last app").launchable)))
+            // A wallpaper, so that the background's options apply and can be stepped through.
+            override val appearanceSettings = FakeAppearanceSettings(Appearance(background = Background(picture = SAMPLE_WALLPAPER)))
         }
     }
 
@@ -157,6 +163,7 @@ class SettingsLayoutTest(private val screen: TvScreen) {
                 if (child is TextView) assertWhole(screen, child)
             }
             assertWhole(screen, group.findViewById(R.id.settings_group_title))
+            shown.mapNotNull { it.findViewById<TextView>(R.id.settings_picture_label) }.forEach { assertWhole(screen, it) }
             val rows = shown.filter { it.findViewById<View>(R.id.settings_option_value) != null }
             for ((i, pair) in rows.zip(catalog[index].options).withIndex()) {
                 val (row, option) = pair

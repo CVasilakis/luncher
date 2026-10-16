@@ -16,6 +16,7 @@ import com.luncher.domain.appearance.VerticalAlignment
 import com.luncher.domain.appearance.appearanceChanges
 import com.luncher.domain.apps.FakeInstalledApps
 import com.luncher.domain.apps.FakeInstalledApps.Companion.app
+import com.luncher.domain.jobs.ManualJobs
 import com.luncher.launcher.testing.TV_1080P
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -306,6 +307,7 @@ class HomeAppearanceTest {
 
     private fun draw(activity: HomeActivity, appearance: Appearance): Bitmap {
         this.appearance.write(appearance)
+        ((RuntimeEnvironment.getApplication() as HomeTestApplication).graph.jobs as ManualJobs).runAll()   // a wallpaper's
         shadowOf(Looper.getMainLooper()).idleFor(Duration.ofSeconds(1))   // layout, and the focused tile's zoom
         val window = activity.window.decorView
         return Bitmap.createBitmap(window.width, window.height, Bitmap.Config.ARGB_8888).also { window.draw(Canvas(it)) }

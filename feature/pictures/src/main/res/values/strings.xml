@@ -28,6 +28,24 @@
     <string name="pictures_plus" translatable="false">+</string>
     <!-- A picture's width and height in pixels, and its file's size. -->
     <string name="pictures_details"><xliff:g id="width" example="1920">%1$d</xliff:g> × <xliff:g id="height" example="1080">%2$d</xliff:g> · <xliff:g id="size" example="3.1 MB">%3$s</xliff:g></string>
+    <!-- Below a picture's name: what it's used for; %1$s is a use, such as Wallpaper. -->
+    <string name="pictures_in_use">In use: <xliff:g id="use" example="Wallpaper">%1$s</xliff:g></string>
+    <!-- Below a picture's name when nothing uses it. -->
+    <string name="pictures_not_in_use">Not in use</string>
+    <!-- A use of a picture: the home screen's background. -->
+    <string name="pictures_wallpaper">Wallpaper</string>
+    <!-- Below a picture's name in its actions: its size, then what it's used for. -->
+    <string name="pictures_dialog_details"><xliff:g id="details" example="1920 × 1080 · 3.1 MB">%1$s</xliff:g> · <xliff:g id="use" example="Not in use">%2$s</xliff:g></string>
+    <!-- An action on a picture: makes it the home screen's background. -->
+    <string name="pictures_use_as_wallpaper">Use as wallpaper</string>
+    <!-- Before deleting the wallpaper's picture, what that does. -->
+    <string name="pictures_delete_wallpaper">It\'s the wallpaper: the home screen goes back to its plain background.</string>
+    <!-- The title of Pictures opened from the appearance editor to choose the wallpaper. -->
+    <string name="pictures_choose_wallpaper">Choose the wallpaper</string>
+    <!-- Below that title. -->
+    <string name="pictures_choose_hint">OK on a picture chooses it</string>
+    <!-- Choosing the wallpaper, the first tile: no picture, the plain background. -->
+    <string name="pictures_no_picture">No picture</string>
     <!-- The name of a picture whose app gave it none. -->
     <string name="pictures_unnamed">Picture</string>
     <!-- Below the pictures: deletes every picture nothing uses; how many there are, and how much

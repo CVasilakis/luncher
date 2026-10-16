@@ -6,9 +6,9 @@ module's README. What a feature module may use, and how a new one is added:
 
 | Module | Screens |
 |---|---|
-| [`home/`](home/README.md), `:feature:home` | the home screen: the top bar, the app tiles, arrange mode |
+| [`home/`](home/README.md), `:feature:home` | the home screen: the top bar, the app tiles, arrange mode, the wallpaper |
 | [`settings/`](settings/README.md), `:feature:settings` | the settings panel, Hide apps, and the appearance editor |
-| [`pictures/`](pictures/README.md), `:feature:pictures` | the picture library: Pictures, Add from folder, and the way in for a picture another app shares |
+| [`pictures/`](pictures/README.md), `:feature:pictures` | the picture library: Pictures, choosing the wallpaper, Add from folder, and the way in for a picture another app shares |
 
 Each holds the same parts:
 

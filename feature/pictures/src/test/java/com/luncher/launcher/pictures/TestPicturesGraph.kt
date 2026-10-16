@@ -8,6 +8,7 @@ import android.graphics.LinearGradient
 import android.graphics.Paint
 import android.graphics.Shader
 import android.net.Uri
+import com.luncher.domain.appearance.FakeAppearanceSettings
 import com.luncher.domain.jobs.ManualJobs
 import com.luncher.domain.pictures.FakeFolderPictures
 import com.luncher.domain.pictures.FakePictureImages
@@ -23,8 +24,9 @@ open class TestPicturesGraph(val library: FakePictures<Uri> = FakePictures()) : 
     override val pictures get() = library
     override val pictureImport get() = library
     override val folderPictures = FakeFolderPictures<Uri, Bitmap>(draw = { picture, width, height -> sample(picture.name, width, height) })
-    override val pictureImages = FakePictureImages { picture, width, height, _ -> sample(picture.name, width, height) }
+    override val pictureImages = FakePictureImages { picture, width, height, _ -> sample(picture.value, width, height) }
     override val jobs = ManualJobs()
+    override val appearanceSettings = FakeAppearanceSettings()
 }
 
 /** The Application of this module's JVM tests (robolectric.properties): it holds the graph a test sets. */

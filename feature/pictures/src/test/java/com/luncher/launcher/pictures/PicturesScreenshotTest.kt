@@ -8,6 +8,8 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.github.takahirom.roborazzi.ExperimentalRoborazziApi
 import com.github.takahirom.roborazzi.captureRoboImage
 import com.github.takahirom.roborazzi.captureScreenRoboImage
+import com.luncher.domain.appearance.Appearance
+import com.luncher.domain.appearance.Background
 import com.luncher.domain.pictures.FakeFolderPictures
 import com.luncher.domain.pictures.FakePictures
 import com.luncher.domain.pictures.FakePictures.Companion.picture
@@ -53,10 +55,11 @@ class PicturesScreenshotTest {
 
     private fun idle() = shadowOf(Looper.getMainLooper()).idle()
 
-    /** Pictures with [pictures], every thumbnail drawn, the first selected. */
-    private fun pictures(vararg pictures: com.luncher.domain.pictures.Picture, intent: Intent? = null): PicturesActivity {
+    /** Pictures with [pictures], the first one the wallpaper, every thumbnail drawn, the first focused. */
+    private fun pictures(vararg pictures: com.luncher.domain.pictures.Picture, intent: Intent? = null, screen: Class<out PicturesActivity> = PicturesActivity::class.java): PicturesActivity {
         val graph = TestPicturesGraph(FakePictures(*pictures)).also { application.graph = it }
-        val activity = Robolectric.buildActivity(PicturesActivity::class.java, intent).setup().get()
+        pictures.firstOrNull()?.let { graph.appearanceSettings.appearance = Appearance(background = Background(picture = it.id)) }
+        val activity = Robolectric.buildActivity(screen, intent).setup().get()
         idle()
         graph.jobs.runAll()
         idle()
@@ -72,6 +75,13 @@ class PicturesScreenshotTest {
     @Test
     fun picturesGrid() {
         pictures(*library).window.decorView.captureRoboImage("src/test/screenshots/pictures/pictures.png")
+    }
+
+    // From the appearance editor: No picture first, focused.
+    @Test
+    fun chooseTheWallpaper() {
+        pictures(*library, screen = ChooseWallpaperActivity::class.java).window.decorView
+            .captureRoboImage("src/test/screenshots/pictures/pictures_choose_wallpaper.png")
     }
 
     @Test

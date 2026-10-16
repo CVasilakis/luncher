@@ -98,9 +98,11 @@ class AddFromFolderActivity : Activity() {
     private fun showPreview(picture: FolderPicture<*>?) {
         preview.setImageDrawable(null)
         val shown = pictures.firstOrNull { it.source == picture?.source }
-        if (shown == null || shown.unsupported != null) return previewing.stop()
         val (width, height) = side.previewSize
-        if (width <= 0 || height <= 0) return previewing.stop()
+        if (shown == null || shown.unsupported != null || width <= 0 || height <= 0) {
+            previewing.stop()
+            return
+        }
         previewing.load({ folders.preview(shown, width, height, Framing()) }) { preview.setImageBitmap(it) }
     }
 

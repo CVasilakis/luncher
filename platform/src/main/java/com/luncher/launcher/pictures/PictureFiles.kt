@@ -3,12 +3,15 @@ package com.luncher.launcher.pictures
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
+import android.graphics.Color
 import android.graphics.ColorSpace
 import android.graphics.Matrix
 import android.graphics.Paint
+import android.graphics.Rect
 import android.graphics.RectF
 import android.annotation.SuppressLint
 import android.os.Build
+import com.luncher.domain.pictures.Blur
 import com.luncher.domain.pictures.Framing
 import com.luncher.domain.pictures.PICTURE_HEADER_BYTES
 import com.luncher.domain.pictures.PictureFormat
@@ -93,6 +96,67 @@ internal object PictureFiles {
     }
 
     /**
+     * [image] blurred in place, as [blur] says: drawn at an eighth of its size, blurred there (a
+     * box blur, twice each way, which looks like a Gaussian one), and drawn back up with
+     * filtering, which smooths it further. Blurring the small copy costs little, whatever the
+     * screen's size.
+     */
+    fun blur(image: Bitmap, blur: Blur) {
+        val radius = when (blur) {
+            Blur.OFF -> return
+            Blur.LIGHT -> 1
+            Blur.STRONG -> 4
+        }
+        val width = (image.width / BLUR_SCALE).coerceAtLeast(1)
+        val height = (image.height / BLUR_SCALE).coerceAtLeast(1)
+        val small = Bitmap.createScaledBitmap(image, width, height, true)
+        val pixels = IntArray(width * height)
+        small.getPixels(pixels, 0, width, 0, 0, width, height)
+        val scratch = IntArray(pixels.size)
+        repeat(2) {
+            boxBlur(pixels, scratch, width, height, radius, horizontal = true)
+            boxBlur(scratch, pixels, width, height, radius, horizontal = false)
+        }
+        small.setPixels(pixels, 0, width, 0, 0, width, height)
+        Canvas(image).drawBitmap(small, null, Rect(0, 0, image.width, image.height), Paint(Paint.FILTER_BITMAP_FLAG or Paint.DITHER_FLAG))
+        small.recycle()
+    }
+
+    /** [image] darkened in place by [percent] percent, as if seen through that much black. */
+    fun dim(image: Bitmap, percent: Int) {
+        if (percent <= 0) return
+        Canvas(image).drawColor(Color.argb(percent.coerceAtMost(100) * 255 / 100, 0, 0, 0))
+    }
+
+    /** Each pixel of [source] the average of those [radius] around it along one direction, edges repeated, into [target]. */
+    private fun boxBlur(source: IntArray, target: IntArray, width: Int, height: Int, radius: Int, horizontal: Boolean) {
+        val lines = if (horizontal) height else width
+        val length = if (horizontal) width else height
+        val window = 2 * radius + 1
+        for (line in 0 until lines) {
+            fun at(i: Int) = source[if (horizontal) line * width + i.coerceIn(0, length - 1) else i.coerceIn(0, length - 1) * width + line]
+            var a = 0
+            var r = 0
+            var g = 0
+            var b = 0
+            for (i in -radius..radius) {
+                val p = at(i)
+                a += p ushr 24; r += p shr 16 and 0xFF; g += p shr 8 and 0xFF; b += p and 0xFF
+            }
+            for (i in 0 until length) {
+                target[if (horizontal) line * width + i else i * width + line] =
+                    (a / window shl 24) or (r / window shl 16) or (g / window shl 8) or (b / window)
+                val out = at(i - radius)
+                val into = at(i + radius + 1)
+                a += (into ushr 24) - (out ushr 24)
+                r += (into shr 16 and 0xFF) - (out shr 16 and 0xFF)
+                g += (into shr 8 and 0xFF) - (out shr 8 and 0xFF)
+                b += (into and 0xFF) - (out and 0xFF)
+            }
+        }
+    }
+
+    /**
      * The orientation tag of [file] (EXIF), which BitmapFactory doesn't apply: a phone's photo is
      * often stored on its side, with a tag saying how to turn it. Normal when there's none. A
      * JPEG's is read by [jpegOrientation]; a HEIF photo's (an iPhone's) by the platform's
@@ -162,6 +226,9 @@ internal object PictureFiles {
         while (sample * 2 <= scale) sample *= 2
         return sample
     }
+
+    /** How much smaller [blur] blurs a picture. */
+    private const val BLUR_SCALE = 8
 
     /** The longest side [decodes] decodes at, at most. */
     private const val CHECK_SIZE = 512
