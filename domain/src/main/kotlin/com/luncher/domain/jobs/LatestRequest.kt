@@ -30,10 +30,15 @@ class LatestRequest(private val jobs: Jobs, private val priority: Int, private v
         }
     }
 
-    /** Drops the latest request: cancelled if it hasn't started, its result ignored if it has. */
-    fun stop() {
+    /**
+     * Drops the latest request: cancelled if it hasn't started, its result ignored if it has.
+     * Whether one was dropped, rather than done or dropped before.
+     */
+    fun stop(): Boolean {
         latest++
+        val dropped = queued != null
         queued?.cancel()
         queued = null
+        return dropped
     }
 }

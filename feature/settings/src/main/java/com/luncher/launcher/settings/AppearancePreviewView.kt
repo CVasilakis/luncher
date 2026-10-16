@@ -1,22 +1,31 @@
 package com.luncher.launcher.settings
 
 import android.content.Context
+import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.RectF
+import android.os.Handler
+import android.os.Looper
 import android.util.AttributeSet
 import android.view.View
 import com.luncher.domain.appearance.Appearance
+import com.luncher.domain.appearance.Background
+import com.luncher.domain.jobs.JobPriority
+import com.luncher.domain.jobs.Jobs
+import com.luncher.domain.jobs.LatestRequest
 import com.luncher.domain.layout.TileLayouts
 import com.luncher.domain.layout.TopBarItem
 import com.luncher.domain.layout.topBarLayout
+import com.luncher.domain.pictures.PictureImages
 import com.luncher.launcher.ui.color
 import com.luncher.launcher.ui.R as UiR
 import kotlin.math.roundToInt
 
 /**
- * An illustration of the home screen with an [appearance]: outlines of tiles on its background,
- * plain blocks for the time, the date and the settings gear; no names, images or text. Not the
+ * An illustration of the home screen with an [appearance]: outlines of tiles on its background
+ * (the wallpaper's picture, drawn at the sample screen's size, or the plain color), plain blocks
+ * for the time, the date and the settings gear; no names, images or text. Not the
  * real home screen: a made-up one, a 16:9 screen of [SCREEN_WIDTH] by [SCREEN_HEIGHT] dp with
  * [TILES] tiles, chosen so every option's values look different: a full row and a short one, so
  * left and right differ, and the first tile focused, so the focus frame shows.
@@ -25,7 +34,8 @@ import kotlin.math.roundToInt
  * density (its pixels per sample dp), so every dp value scales with it, and it can't disagree with
  * the home screen. Left to right in every language, like the home screen. What it draws from is
  * made anew only when the part of the appearance it comes from changes, compared with `==`, and
- * drawing allocates nothing.
+ * drawing allocates nothing. The wallpaper is drawn in the background ([showWallpapers]), the
+ * latest request winning, and kept while the background and the size stay the same.
  */
 internal class AppearancePreviewView(context: Context, attrs: AttributeSet?) : View(context, attrs) {
 
@@ -38,8 +48,54 @@ internal class AppearancePreviewView(context: Context, attrs: AttributeSet?) : V
             // The radius depends on the tiles' height too, at most half of it.
             if (value.tileStyle != old.tileStyle || value.tileGeometry != old.tileGeometry) styleTiles()
             if (value.topBar != old.topBar) placeBar()
+            if (value.background != old.background) loadWallpaper()
             invalidate()
         }
+
+    private var images: PictureImages<Bitmap>? = null
+    private var loading: LatestRequest? = null
+
+    /** The background's picture as last drawn, at the screen's size; null for none. */
+    private var wallpaper: Bitmap? = null
+
+    /** Draws the background's picture with [images], in [jobs]; until then, none is drawn. */
+    fun showWallpapers(images: PictureImages<Bitmap>, jobs: Jobs) {
+        this.images = images
+        loading = LatestRequest(jobs, JobPriority.PICTURE_SCREENS) { Handler(Looper.getMainLooper()).post(it) }
+        loadWallpaper()
+    }
+
+    /** Drops the picture being drawn, which [resumeWallpaper] draws again. */
+    fun stopWallpaper() {
+        loading?.stop()
+    }
+
+    fun resumeWallpaper() = loadWallpaper()
+
+    /** The background's picture: the one kept if it's drawn at this size already, else drawn in the background. */
+    private fun loadWallpaper() {
+        val images = images ?: return
+        val loading = loading ?: return
+        val background: Background = appearance.background
+        val picture = background.picture
+        val width = screen.width().roundToInt()
+        val height = screen.height().roundToInt()
+        if (picture == null || width <= 0 || height <= 0) {
+            loading.stop()
+            wallpaper = null
+            return invalidate()
+        }
+        val kept = images.cached(picture, width, height, background.style)
+        if (kept != null) {
+            loading.stop()
+            wallpaper = kept
+            return invalidate()
+        }
+        loading.load({ images.render(picture, width, height, background.style) }) { image ->
+            wallpaper = image
+            invalidate()
+        }
+    }
 
     /** Pixels per dp of the sample screen. */
     private var scale = 0f
@@ -52,6 +108,7 @@ internal class AppearancePreviewView(context: Context, attrs: AttributeSet?) : V
     private val gear = RectF()
 
     private val screenPaint = Paint().apply { color = context.color(UiR.color.background) }
+    private val wallpaperPaint = Paint(Paint.FILTER_BITMAP_FLAG)
     private val tilePaint = stroke(context.color(UiR.color.text_secondary))
     private val focusPaint = stroke(context.color(UiR.color.accent))
     private val primaryPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = context.color(UiR.color.text_primary) }
@@ -78,10 +135,12 @@ internal class AppearancePreviewView(context: Context, attrs: AttributeSet?) : V
         placeTiles()
         styleTiles()
         placeBar()
+        loadWallpaper()
     }
 
     override fun onDraw(canvas: Canvas) {
-        canvas.drawRect(screen, screenPaint)
+        val wallpaper = wallpaper
+        if (wallpaper != null) canvas.drawBitmap(wallpaper, null, screen, wallpaperPaint) else canvas.drawRect(screen, screenPaint)
         canvas.drawRoundRect(time, BLOCK_RADIUS * scale, BLOCK_RADIUS * scale, primaryPaint)
         canvas.drawRoundRect(date, BLOCK_RADIUS * scale, BLOCK_RADIUS * scale, secondaryPaint)
         canvas.drawOval(gear, primaryPaint)

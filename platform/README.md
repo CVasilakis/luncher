@@ -21,7 +21,7 @@ platform/
     │   ├── AndroidManifest.xml   package visibility (below)
     │   ├── java/com/luncher/launcher/
     │   │   ├── appearance/
-    │   │   │   └── PreferencesAppearanceSettings.kt AppearanceSettings on SharedPreferences: a key per option, and its stored form
+    │   │   │   └── PreferencesAppearanceSettings.kt AppearanceSettings on SharedPreferences: a key per option, and its stored form; the wallpaper's picture
     │   │   ├── apps/
     │   │   │   ├── PackageManagerInstalledApps.kt   InstalledApps on PackageManager, and LauncherApps for when apps change
     │   │   │   ├── PreferencesAppArrangements.kt    AppArrangements on SharedPreferences: the file and its format
@@ -90,8 +90,8 @@ adapters on files, and a cache:
 |---|---|---|
 | `FilesPictures` | `Pictures`, `PictureImport<Uri>` | each picture's original file, unchanged, in `filesDir/pictures/`, named after a hash of its content, so the same picture added twice is stored once; and `index.json`, the pictures' names, sizes as shown and when they were added, written whole to a new file that then replaces the old one. Its format is kept across updates, so `FilesPicturesTest` writes it out. |
 | `MediaFolderPictures` | `FolderPictures<Uri, Bitmap>` | nothing: it lists the drop folders (below) |
-| `FilePictureImages` | `PictureImages<Bitmap>` | nothing: it draws a picture of the library at a size, framed by the domain's `frame` |
-| `CachedPictureImages` | `PictureImages<Bitmap>` | what `FilePictureImages` drew, in `cacheDir/pictures/<picture>/`, one file per size (the thumbnails, at the grid's tile size in pixels) |
+| `FilePictureImages` | `PictureImages<Bitmap>` | nothing: it draws a picture of the library at a size, framed by the domain's `frame`, blurred and dimmed as its `PictureStyle` says |
+| `CachedPictureImages` | `PictureImages<Bitmap>` | what `FilePictureImages` drew, in `cacheDir/pictures/<picture>/`, one file per size, its style in the header: the thumbnails at the grid's tile size in pixels, the wallpaper at the screen's, the editor's preview at its own |
 
 - **Adding a picture is a job,** of `JobPriority.PICTURE_LIBRARY`, as is everything that changes
   the library's files (moving a new picture's file into place, deleting, writing the index), so
@@ -113,6 +113,9 @@ adapters on files, and a cache:
   draws the framed part into a bitmap of exactly that size, over the home screen's background
   color (for a transparent picture); then frees the decoded one. A decoder may give another config
   (16-bit PNG: RGBA_F16 from API 26 on; GIF: none up to 26), which the drawing turns into ARGB_8888.
+- **Blur and dim** are drawn into the picture's bitmap, after its framing: blurred by drawing it at
+  an eighth of its size, blurring that (a box blur, twice each way), and drawing it back up with
+  filtering, so it costs little at any screen size; dimmed by a black fill of the dim's share.
 - **The orientation tag** of a JPEG is read by `jpegOrientation`, not `android.media.ExifInterface`,
   whose native code up to Android 6 has known security bugs, while any app can share a crafted
   file. A HEIF photo's is read by `ExifInterface`, which reads HEIF from API 28 on, the first

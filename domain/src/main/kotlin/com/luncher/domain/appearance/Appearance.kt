@@ -11,4 +11,5 @@ data class Appearance(
     val tileGeometry: TileGeometry = TileGeometry(),
     val tileStyle: TileStyle = TileStyle(),
     val topBar: TopBarAppearance = TopBarAppearance(),
+    val background: Background = Background(),
 )

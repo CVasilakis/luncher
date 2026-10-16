@@ -18,13 +18,23 @@ import com.luncher.domain.pictures.ImportResult
 import com.luncher.domain.pictures.Picture
 import com.luncher.domain.pictures.PictureId
 import com.luncher.domain.pictures.PictureLibrary
+import com.luncher.domain.pictures.PictureStyle
+import com.luncher.domain.pictures.PictureUse
+import com.luncher.domain.pictures.pictureUses
+import com.luncher.domain.pictures.withoutPictures
+import com.luncher.launcher.ui.color
+import com.luncher.launcher.ui.R as UiR
 
 /**
  * Luncher's picture library: a grid of thumbnails, the newest first, as many a row as fit the
- * width, ending in a tile that opens [AddFromFolderActivity], and Delete unused below it; while
- * it's empty, how to add a picture. The screen scrolls as the focus moves. OK on a picture opens
- * its actions (Delete); deleting asks first. It follows the library while it shows, so a picture
- * added or deleted shows at once.
+ * width, each saying what it's used for, ending in a tile that opens [AddFromFolderActivity], and
+ * Delete unused below it; while it's empty, how to add a picture. The screen scrolls as the focus
+ * moves. OK on a picture opens its actions (Use as wallpaper, Delete); deleting asks first, naming
+ * what the picture is used for, which goes back to its default. It follows the library and the
+ * appearance while it shows, so a picture added, deleted or chosen elsewhere shows at once.
+ *
+ * Opened to choose a picture for a use ([choosing], [ChooseWallpaperActivity]), OK on a picture
+ * uses it and closes the screen, and a first tile chooses none.
  *
  * Opened with a picture's Uri as its data ([SharePictureActivity] passes another app's share), it
  * adds it, saying so below the title meanwhile, then selects it; or says why it couldn't. Every
@@ -34,9 +44,13 @@ import com.luncher.domain.pictures.PictureLibrary
  * those not kept (a picture just added, a new screen size) are drawn in the background and show
  * as each is done.
  */
-class PicturesActivity : Activity() {
+open class PicturesActivity : Activity() {
+
+    /** What a picture is being chosen for; null when the library is just shown. */
+    internal open val choosing: PictureUse? get() = null
 
     private val pictures by lazy { graph.pictures }
+    private val appearanceSettings by lazy { graph.appearanceSettings }
     private val pictureImport by lazy { graph.pictureImport }
     private val images by lazy { graph.pictureImages }
     private val main = Handler(Looper.getMainLooper())
@@ -51,6 +65,7 @@ class PicturesActivity : Activity() {
     /** Each picture's tile, kept while it's in the library, so its thumbnail is read or drawn once. */
     private val tiles = LinkedHashMap<PictureId, View>()
     private lateinit var addTile: View
+    private lateinit var noneTile: View
 
     /** The thumbnails being drawn, each a request of its own, all dropped in [onStop]. */
     private val drawing = HashMap<PictureId, LatestRequest>()
@@ -84,6 +99,9 @@ class PicturesActivity : Activity() {
         columns = ((resources.displayMetrics.widthPixels - margins + gap) / (thumbnailWidth + gap)).coerceAtLeast(1)
         addTile = layoutInflater.inflate(R.layout.pictures_add_tile, grid, false)
         addTile.setOnClickListener { addFromFolder() }
+        noneTile = layoutInflater.inflate(R.layout.pictures_none_tile, grid, false)
+        noneTile.setOnClickListener { choose(null) }
+        choosing?.let { findViewById<TextView>(R.id.pictures_title).text = chooseTitle(it) }
         emptyAdd.setOnClickListener { addFromFolder() }
         deleteUnused.setOnClickListener { confirmDeleteUnused() }
         // Not again when recreated (a new screen size): the library has it, or said why not.
@@ -95,6 +113,7 @@ class PicturesActivity : Activity() {
         super.onStart()
         started = true
         pictures.addListener(showChanges)
+        appearanceSettings.addListener(showChanges)
         show()
     }
 
@@ -102,6 +121,7 @@ class PicturesActivity : Activity() {
         super.onStop()
         started = false
         pictures.removeListener(showChanges)
+        appearanceSettings.removeListener(showChanges)
         for (request in drawing.values) request.stop()
         drawing.clear()
     }
@@ -153,12 +173,13 @@ class PicturesActivity : Activity() {
         val focused = window.decorView.findFocus()
         val focusedPicture = tiles.entries.firstOrNull { it.value == focused }?.key
         val focusedIndex = focusedPicture?.let(library::indexOf) ?: -1
-        library = PictureLibrary(pictures.read())
+        library = PictureLibrary(pictures.read(), pictureUses(appearanceSettings.read()))
         val ids = library.pictures.mapTo(HashSet()) { it.id }
         tiles.keys.retainAll(ids)
         drawing.keys.filter { it !in ids }.forEach { drawing.remove(it)?.stop() }
         for (picture in library.pictures) {
-            if (picture.id !in tiles) tiles[picture.id] = tile(picture)
+            val tile = tiles.getOrPut(picture.id) { tile(picture) }
+            showUse(tile, library.usesOf(picture.id))
             if (picture.id !in drawing && thumbnailOf(picture.id).drawable == null) draw(picture)
         }
         layOutGrid()
@@ -166,7 +187,8 @@ class PicturesActivity : Activity() {
         val none = library.pictures.isEmpty()
         empty.visibility = if (none) View.VISIBLE else View.GONE
         val unused = library.unused
-        deleteUnused.visibility = if (unused.isEmpty()) View.GONE else View.VISIBLE
+        // Not while choosing a picture, which is the screen's one job then.
+        deleteUnused.visibility = if (unused.isEmpty() || choosing != null) View.GONE else View.VISIBLE
         deleteUnused.text = getString(R.string.pictures_delete_unused, unused.size, size(library.unusedBytes))
         showStatus()
 
@@ -180,7 +202,7 @@ class PicturesActivity : Activity() {
             focused != null && focused.isShown -> focused.requestFocus()
             none -> emptyAdd.requestFocus()
             focusedIndex >= 0 -> tiles.values.elementAt(focusedIndex.coerceAtMost(tiles.size - 1)).requestFocus()
-            else -> (tiles.values.firstOrNull() ?: addTile).requestFocus()
+            else -> (if (choosing != null) noneTile else tiles.values.firstOrNull() ?: addTile).requestFocus()
         }
     }
 
@@ -190,7 +212,7 @@ class PicturesActivity : Activity() {
         grid.removeAllViews()
         if (library.pictures.isEmpty()) return
         val gap = resources.getDimensionPixelSize(R.dimen.pictures_tile_gap)
-        val all = library.pictures.map { tiles.getValue(it.id) } + addTile
+        val all = listOfNotNull(noneTile.takeIf { choosing != null }) + library.pictures.map { tiles.getValue(it.id) } + addTile
         for ((index, tile) in all.withIndex()) {
             val column = index % columns
             if (column == 0) {
@@ -206,16 +228,40 @@ class PicturesActivity : Activity() {
         }
     }
 
-    /** A new tile showing [picture]: its thumbnail if it's kept, its name and size. */
+    /** A new tile showing [picture]: its thumbnail if it's kept, and its name. */
     private fun tile(picture: Picture): View {
         val tile = layoutInflater.inflate(R.layout.pictures_tile, grid, false)
         val thumbnail = tile.findViewById<ImageView>(R.id.pictures_thumbnail)
         thumbnail.clipToOutline = true
-        images.cached(picture, thumbnailWidth, thumbnailHeight, THUMBNAIL)?.let(thumbnail::setImageBitmap)
+        images.cached(picture.id, thumbnailWidth, thumbnailHeight, THUMBNAIL)?.let(thumbnail::setImageBitmap)
         tile.findViewById<TextView>(R.id.pictures_name).text = nameOf(picture)
-        tile.findViewById<TextView>(R.id.pictures_details).text = details(picture.width, picture.height, picture.bytes)
-        tile.setOnClickListener { actions(picture) }
+        tile.setOnClickListener { if (choosing != null) choose(picture.id) else actions(picture) }
         return tile
+    }
+
+    /** Below a tile's name: what its picture is used for, in the accent color, or that it isn't. */
+    private fun showUse(tile: View, uses: List<PictureUse>) {
+        tile.findViewById<TextView>(R.id.pictures_details).apply {
+            text = useOf(uses)
+            setTextColor(color(if (uses.isEmpty()) UiR.color.text_secondary else UiR.color.accent))
+        }
+    }
+
+    /** Uses the picture [id] (none if null) as what's being chosen, and closes the screen. */
+    private fun choose(id: PictureId?) {
+        when (choosing ?: return) {
+            PictureUse.Wallpaper -> {
+                val appearance = appearanceSettings.read()
+                appearanceSettings.write(appearance.copy(background = appearance.background.copy(picture = id)))
+            }
+        }
+        finish()
+    }
+
+    /** Makes [picture] the home screen's wallpaper, keeping how the wallpaper is drawn. */
+    private fun useAsWallpaper(picture: Picture) {
+        val appearance = appearanceSettings.read()
+        appearanceSettings.write(appearance.copy(background = appearance.background.copy(picture = picture.id)))
     }
 
     private fun thumbnailOf(id: PictureId) = tiles.getValue(id).findViewById<ImageView>(R.id.pictures_thumbnail)
@@ -225,7 +271,7 @@ class PicturesActivity : Activity() {
         if (picture.id in drawing) return
         val request = LatestRequest(graph.jobs, JobPriority.PICTURE_SCREENS) { main.post(it) }
         drawing[picture.id] = request
-        request.load({ images.render(picture, thumbnailWidth, thumbnailHeight, THUMBNAIL) }) { image ->
+        request.load({ images.render(picture.id, thumbnailWidth, thumbnailHeight, THUMBNAIL) }) { image ->
             drawing.remove(picture.id)
             if (image != null && picture.id in tiles) thumbnailOf(picture.id).setImageBitmap(image)
         }
@@ -235,6 +281,7 @@ class PicturesActivity : Activity() {
         status.text = when {
             adding > 0 -> getString(R.string.pictures_adding)
             library.pictures.isEmpty() -> getString(R.string.pictures_none)
+            choosing != null -> getString(R.string.pictures_choose_hint)
             else -> resources.getQuantityString(R.plurals.pictures_count, library.pictures.size, library.pictures.size, size(library.bytes))
         }
     }
@@ -244,14 +291,19 @@ class PicturesActivity : Activity() {
         startActivityForResult(Intent(this, AddFromFolderActivity::class.java), ADD_FROM_FOLDER)
     }
 
-    /** [picture]'s actions. */
+    /** [picture]'s actions: Use as wallpaper (unless it is), Delete. */
     private fun actions(picture: Picture) {
+        val uses = library.usesOf(picture.id)
+        val actions = listOfNotNull(
+            (getString(R.string.pictures_use_as_wallpaper) to { useAsWallpaper(picture) }).takeIf { PictureUse.Wallpaper !in uses },
+            getString(R.string.pictures_delete) to { confirmDelete(picture) },
+        )
         show(
             PicturesDialog(
                 this,
                 nameOf(picture),
-                details(picture.width, picture.height, picture.bytes),
-                listOf(getString(R.string.pictures_delete) to { confirmDelete(picture) }),
+                getString(R.string.pictures_dialog_details, details(picture.width, picture.height, picture.bytes), useOf(uses)),
+                actions,
             ),
         )
     }
@@ -261,9 +313,9 @@ class PicturesActivity : Activity() {
             PicturesDialog(
                 this,
                 getString(R.string.pictures_delete_question, nameOf(picture)),
-                getString(R.string.pictures_delete_text),
+                (listOf(getString(R.string.pictures_delete_text)) + library.usesOf(picture.id).map(::afterDeleting)).joinToString("\n"),
                 // Cancel first, so a repeated OK doesn't delete.
-                listOf(getString(R.string.pictures_cancel) to {}, getString(R.string.pictures_delete) to { pictures.delete(setOf(picture.id)) }),
+                listOf(getString(R.string.pictures_cancel) to {}, getString(R.string.pictures_delete) to { delete(setOf(picture.id)) }),
             ),
         )
     }
@@ -278,10 +330,18 @@ class PicturesActivity : Activity() {
                 getString(R.string.pictures_delete_unused_text, size(library.unusedBytes)),
                 listOf(
                     getString(R.string.pictures_cancel) to {},
-                    getString(R.string.pictures_delete) to { pictures.delete(unused.mapTo(HashSet()) { it.id }) },
+                    getString(R.string.pictures_delete) to { delete(unused.mapTo(HashSet()) { it.id }) },
                 ),
             ),
         )
+    }
+
+    /** Deletes [ids], and puts what used them back to its default (the wallpaper to none). */
+    private fun delete(ids: Set<PictureId>) {
+        val appearance = appearanceSettings.read()
+        val without = withoutPictures(appearance, ids)
+        if (without != appearance) appearanceSettings.write(without)
+        pictures.delete(ids)
     }
 
     /** Says why [result]'s picture wasn't added. */
@@ -303,6 +363,6 @@ class PicturesActivity : Activity() {
         private const val ADD_FROM_FOLDER = 1
 
         /** How a thumbnail shows its picture: filling the tile, its middle. */
-        private val THUMBNAIL = Framing()
+        private val THUMBNAIL = PictureStyle(Framing())
     }
 }

@@ -7,6 +7,8 @@ import com.luncher.domain.apps.AppArrangements
 import com.luncher.domain.apps.AppImages
 import com.luncher.domain.apps.InstalledApps
 import com.luncher.domain.clock.Clock
+import com.luncher.domain.jobs.Jobs
+import com.luncher.domain.pictures.PictureImages
 
 /**
  * The ports the home screen needs. The app's composition root implements it with the adapters,
@@ -18,6 +20,12 @@ interface HomeGraph {
     val appImages: AppImages<Bitmap>
     val clock: Clock
     val appearanceSettings: AppearanceSettings
+
+    /** The wallpaper, drawn at the screen's size. */
+    val pictureImages: PictureImages<Bitmap>
+
+    /** The background thread, for a wallpaper not drawn yet. */
+    val jobs: Jobs
 
     /** Implemented by the Application, which holds the process's graph. */
     interface Owner {

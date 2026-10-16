@@ -122,9 +122,10 @@ the main thread (decoding a picture). Neither may delay a key press.
 
 The jobs today write the tiles' images for the next cold start
 ([`platform/README.md`](../platform/README.md#writing-adapters)), add and delete the pictures of
-the picture library, and draw the pictures' thumbnails and previews
-([`platform/README.md`](../platform/README.md#pictures)); the app list and the tiles' images are
-read on the main thread, as they're quick enough so far.
+the picture library, and draw the pictures' thumbnails and previews, and the home screen's
+wallpaper when it isn't drawn yet ([`platform/README.md`](../platform/README.md#pictures)); the app
+list, the tiles' images and a wallpaper drawn before are read on the main thread, as they're quick
+enough so far.
 
 ## Appearance
 
@@ -173,12 +174,16 @@ Adding an aspect, e.g. the focus frame's color:
 | Its label and its values' labels, in every translation | `:feature:settings` | the exhaustive `when` doesn't compile; lint ([`TRANSLATIONS.md`](TRANSLATIONS.md)) |
 | Its effect on the home screen, and on the preview where it shows | `:feature:home`, `:feature:settings` | a test that sets each option of the catalog to a value other than its default, and fails if the home screen, or the preview, draws the same |
 
-Today `Appearance` has three parts: `TileGeometry` (the tiles' size, spacing and alignment),
-`TileStyle` (their corners) and `TopBarAppearance` (whether the time and the
-date show, the clock's side, and the time's side of the date). The catalog's options, the vertical
+Today `Appearance` has four parts: `TileGeometry` (the tiles' size, spacing and alignment),
+`TileStyle` (their corners), `TopBarAppearance` (whether the time and the
+date show, the clock's side, and the time's side of the date) and `Background` (the wallpaper: a
+picture of the picture library, or none, and how it's drawn). The catalog's options, the vertical
 and the horizontal alignment, a full bottom row, the corner radius, the time and the date shown or
-hidden, the clock's side and the time's side, are changed in the settings' appearance editor
-([`feature/settings/README.md`](../feature/settings/README.md#appearance)).
+hidden, the clock's side and the time's side, the wallpaper's fit, position, dim and blur, are
+changed in the settings' appearance editor
+([`feature/settings/README.md`](../feature/settings/README.md#appearance)). The wallpaper's picture
+isn't an option, since its values are the library's pictures, not a list known in `:domain`: its
+group says so (`choosesPicture`), and the editor has the user choose it in the picture library.
 
 ## Where things go
 

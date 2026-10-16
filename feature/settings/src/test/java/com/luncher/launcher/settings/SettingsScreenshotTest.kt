@@ -16,6 +16,9 @@ import com.luncher.domain.appearance.TileStyle
 import com.luncher.domain.appearance.TopBarAppearance
 import com.luncher.domain.appearance.VerticalAlignment
 import com.luncher.domain.appearance.appearanceChanges
+import com.luncher.domain.appearance.Background
+import com.luncher.domain.appearance.SAMPLE_WALLPAPER
+import com.luncher.domain.pictures.Blur
 import com.luncher.domain.apps.AppArrangement
 import com.luncher.domain.apps.FakeAppArrangements
 import com.luncher.domain.apps.FakeInstalledApps
@@ -118,6 +121,16 @@ class SettingsScreenshotTest {
             .captureRoboImage("src/test/screenshots/settings/settings_appearance_arabic.png")
     }
 
+    // The background's group open, with a picture, dimmed and blurred: the preview draws it under
+    // the tiles. The focus on the picture.
+    @Test
+    fun appearanceEditorBackground() {
+        val activity = appearanceEditor(Appearance(background = Background(picture = SAMPLE_WALLPAPER, dim = 20, blur = Blur.LIGHT)), open = "Background")
+        activity.child { it.findViewById<View>(R.id.settings_picture_value) != null }.requestFocus()
+
+        activity.window.decorView.captureRoboImage("src/test/screenshots/settings/settings_appearance_background.png")
+    }
+
     // The preview alone, with the defaults and with each value of each option: a loop over the
     // catalog, so a new option's values get images too.
     @Test
@@ -126,9 +139,16 @@ class SettingsScreenshotTest {
         preview.captureRoboImage("src/test/screenshots/settings/preview/default.png")
         for (change in appearanceChanges()) {
             preview.appearance = change.changed
+            drawWallpaper()
             val name = "${change.option}_${change.value}".lowercase()
             preview.captureRoboImage("src/test/screenshots/settings/preview/$name.png")
         }
+    }
+
+    /** The preview's wallpaper, drawn in the background, and shown. */
+    private fun drawWallpaper() {
+        ((RuntimeEnvironment.getApplication() as SettingsTestApplication).graph as TestSettingsGraph).jobs.runAll()
+        shadowOf(Looper.getMainLooper()).idle()
     }
 
     /** The appearance editor showing [appearance], with the group titled [open] open and focused, or the first focused. */
@@ -138,6 +158,7 @@ class SettingsScreenshotTest {
             override val appearanceSettings = FakeAppearanceSettings(appearance)
         }
         val activity = Robolectric.buildActivity(AppearanceActivity::class.java).setup().get()
+        drawWallpaper()
         if (open != null) {
             activity.child { it.findViewById<TextView>(R.id.settings_group_title)?.text == open }.performClick()
             shadowOf(Looper.getMainLooper()).idle()   // the layout pass, for the options it shows

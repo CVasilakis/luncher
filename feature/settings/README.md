@@ -111,13 +111,17 @@ Appearance (`AppearanceActivity`) is the editor of the home screen's
 [appearance](../../docs/ARCHITECTURE.md#appearance): full-screen, with its large title right above a
 preview of the home screen at the left, the two centered in the height, and the options at the
 right, starting level with the title. The options are in groups
-(Tiles, Status bar), each an entry of its own, closed at first: OK on one shows its options
+(Tiles, Status bar, Background), each an entry of its own, closed at first: OK on one shows its options
 below it and closes the group that was open, so the list stays short; OK again closes it. Each
 option shows its value between arrows; Left and Right step it through its values, around from the
 last to the first, and each change is stored at once, the preview following. An option that
 changes nothing with the others as they are (a full bottom row with the rows at the top; the
-side with the time and the date hidden; their order with either hidden) is dimmed, and the focus
-passes it by. The last entry, Reset to defaults, puts every option back.
+side with the time and the date hidden; their order with either hidden; the background's options
+without a picture, its position with the picture stretched) is dimmed, and the focus passes it by.
+The Background group starts with its picture, which isn't an option: its row shows the picture's
+name, or None, and OK on it opens the picture library to choose one
+([`ChooseWallpaperActivity`](../pictures/README.md#pictures), started by its class), which stores
+the choice; back in the editor, the appearance is read again. The last entry, Reset to defaults, puts every option back.
 Back returns to the settings panel; the home screen shows the result when it comes back.
 
 It's started with `openOwnPanel`, like Hide apps, but covers the settings panel and the home screen
@@ -133,11 +137,13 @@ they scroll when they're taller than the screen.
 | `appearanceOptions`, `AppearanceOption` (`:domain`) | which options there are, in which groups; each one's values, in order, the part of `Appearance` it reads and changes, whether it applies, and what a step does |
 | `AppearanceSettings` (`:domain`) / `PreferencesAppearanceSettings` (`:platform`) | port and adapter: the stored `Appearance`, read once per process; each write is stored at once, in the background, and told to the listeners (the home screen, while it's shown) |
 | `TileLayouts`, `topBarLayout` (`:domain`) | where the preview's tiles and top bar items go, by the home screen's own rules |
-| `AppearanceActivity` | the groups' entries, opening one at a time; the options' rows, what each option and value is called (exhaustive `when`s, so a new option doesn't compile until it has its labels), the keys, and the reset entry |
+| `AppearanceActivity` | the groups' entries, opening one at a time; the options' rows, what each option and value is called (exhaustive `when`s, so a new option doesn't compile until it has its labels), the keys, the background's picture, and the reset entry |
+| `Pictures`, `PictureImages` (`:domain`) | the wallpaper's name, and its picture drawn at the preview's size |
 | `AppearancePreviewView` | draws the preview: an illustration, not the real home screen (below) |
 
-**The preview** draws outlines of tiles on the home screen's background, the first one framed and
-zoomed as focused, and plain blocks for the time, the date and the settings gear: no names, images
+**The preview** draws outlines of tiles on the home screen's background (the wallpaper's picture,
+drawn at the sample screen's size in the background's style, in the background, the latest
+request winning, or the plain color), the first one framed and zoomed as focused, and plain blocks for the time, the date and the settings gear: no names, images
 or text. It's a made-up sample, not the user's apps or the TV's shape: a 16:9 screen of 960 by 540
 dp with seven tiles, a full row and a short one, so that every option's values look different. It
 lays them out with `TileLayouts` and `topBarLayout` at its own density (its pixels per sample dp),

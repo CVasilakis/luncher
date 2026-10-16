@@ -12,6 +12,11 @@ import com.luncher.domain.appearance.TileStyle
 import com.luncher.domain.appearance.TopBarAppearance
 import com.luncher.domain.appearance.VerticalAlignment
 import com.luncher.domain.appearance.appearanceOptions
+import com.luncher.domain.appearance.Background
+import com.luncher.domain.pictures.Blur
+import com.luncher.domain.pictures.Fit
+import com.luncher.domain.pictures.PictureId
+import com.luncher.domain.pictures.PicturePosition
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -35,6 +40,7 @@ class PreferencesAppearanceSettingsTest {
         ),
         TileStyle(Corners.Radius(16)),
         TopBarAppearance(clockSide = Side.RIGHT, timeSide = Side.RIGHT, showTime = true, showDate = false),
+        Background(PictureId("0123456789abcdef0123456789abcdef"), Fit.STRETCH, PicturePosition.LEFT, 40, Blur.LIGHT),
     )
 
     // The stored format, written out: a TV keeps it across updates, so a change of it has to read
@@ -48,6 +54,11 @@ class PreferencesAppearanceSettingsTest {
         "time_side" to "RIGHT",
         "show_time" to "true",
         "show_date" to "false",
+        "background_fit" to "STRETCH",
+        "background_position" to "LEFT",
+        "background_dim" to "40",
+        "background_blur" to "LIGHT",
+        "background_picture" to "0123456789abcdef0123456789abcdef",
     )
 
     private fun store(values: Map<String, Any>) {
@@ -93,6 +104,24 @@ class PreferencesAppearanceSettingsTest {
     }
 
     @Test
+    fun `stores no picture as no key, and reads it back as none`() {
+        val none = changed.copy(background = changed.background.copy(picture = null))
+
+        PreferencesAppearanceSettings(context).write(none)
+
+        assertEquals(stored - "background_picture", preferences.all)
+        assertEquals(none, PreferencesAppearanceSettings(context).read())
+    }
+
+    // The background was added after the other options: an older version stored none of it.
+    @Test
+    fun `stored before the background, has none`() {
+        store(stored.filterKeys { !it.startsWith("background_") })
+
+        assertEquals(changed.copy(background = Background()), PreferencesAppearanceSettings(context).read())
+    }
+
+    @Test
     fun `has the defaults before anything is written`() {
         assertEquals(Appearance(), PreferencesAppearanceSettings(context).read())
     }
@@ -124,6 +153,8 @@ class PreferencesAppearanceSettingsTest {
             Triple("clock_side", "right", AppearanceOption.ClockSide),   // names are exact
             Triple("time_side", "1", AppearanceOption.TimeSide),         // a position, never stored
             Triple("show_date", "hidden", AppearanceOption.ShowDate),
+            Triple("background_dim", "25", AppearanceOption.BackgroundDim),
+            Triple("background_blur", "HEAVY", AppearanceOption.BackgroundBlur),
         )
         for ((key, value, option) in unknown) {
             preferences.edit().clear().commit()

@@ -26,6 +26,7 @@ feature/home/
     │   │   ├── AppTilesView.kt   places the tiles where the domain's TileLayout says; scrolls
     │   │   ├── AppTileView.kt    one app: its image, focus frame and zoom; held or hidden while arranging
     │   │   ├── TilePaints.kt     what every tile draws with: frames, dimming, the corners
+│   │   ├── HomeWallpaper.kt  the wallpaper, the window's background: read at once if drawn before, else drawn in a job
     │   │   └── ArrangeMode.kt    arrange mode: keys to the domain's ArrangeSession, the shelf, the top bar's title and hint
     │   └── res/                  the focused tile's zoom (animator/), the settings gear and its focus
     │                             disc, home_activity.xml, home_* dimensions and strings, and their
@@ -71,7 +72,7 @@ one job, so a new arrangement, image source or top bar item changes one of them:
 | Part | Job |
 |---|---|
 | `homeApps` (`:domain`) | which apps show, in which order, and which are hidden: the installed apps matched to the stored `AppArrangement` ([Hidden apps](../settings/README.md#hidden-apps)) |
-| `Appearance` (`:domain`) | how the home screen looks, as the user set it in the [appearance editor](../settings/README.md#appearance), in parts: `TileGeometry` (the tiles' width, the gap between them, their vertical and horizontal alignment), `TileStyle` (their corners: a radius, 12 dp by default, or round ends), `TopBarAppearance` (whether the time and the date show, the clock's side, the time's side of the date). [Below](#appearance): how each part is applied. |
+| `Appearance` (`:domain`) | how the home screen looks, as the user set it in the [appearance editor](../settings/README.md#appearance), in parts: `TileGeometry` (the tiles' width, the gap between them, their vertical and horizontal alignment), `TileStyle` (their corners: a radius, 12 dp by default, or round ends), `TopBarAppearance` (whether the time and the date show, the clock's side, the time's side of the date), `Background` (the wallpaper: a picture of the picture library, or none, its fit, position, dim and blur). [Below](#appearance): how each part is applied. |
 | `AppearanceSettings` (`:domain`), `PreferencesAppearanceSettings` (`:platform`) | the stored appearance, and when it changes |
 | `TileLayout`, `TileLayouts` (`:domain`) | where each tile goes and how big it is; `TileGrid` is the only one so far, with as many columns as fit tiles of about the geometry's width (`TileGrid.columnsFor`), so tiles keep their size next to the top bar's text on any screen. `TileLayouts` is the only place that picks the arrangement, for the tiles' places and for moves in arrange mode alike. |
 | `TileFocus` (`:domain`) | where each arrow takes the focus among the tiles ([below](#focus)) |
@@ -139,6 +140,7 @@ screen reads an equal appearance. What a change costs depends on the part:
 | `TileGeometry` | `AppTilesView.tileGeometry` | a new layout from `TileLayouts` (it's an input of the layout, with the width, the height, the number of tiles and `shownCount`), and a layout pass; new banner bitmaps only for tiles whose size changes, so a new placement draws none |
 | `TileStyle` | `AppTilesView.tileStyle` | the radius in the `TilePaints` all tiles share, and a redraw: no layout pass, no new bitmaps |
 | `TopBarAppearance` | `TopBarView.appearance` | the bar's items moved (focus on the gear stays), and a layout pass of the bar only |
+| `Background` | `HomeWallpaper.show` | the window's background: the picture drawn at the screen's size, read from what an earlier start drew or drawn in the background ([below](#the-wallpaper)); nothing else is laid out or drawn anew |
 
 The appearance editor covers the home screen whole, so the home screen is stopped while the user
 changes it, and applies the result once, when it comes back
@@ -158,6 +160,20 @@ empty slot, follow the same corners. The radius in pixels is the domain's (`Corn
 half the tile's height, which is what round ends are, so they're half circles on any screen. A new
 radius draws the same bitmaps, so no banner is drawn again. Drawing allocates nothing, with or
 without rounded corners.
+
+### The wallpaper
+
+The `Background` part's picture is the window's background (`HomeWallpaper`), behind the top bar
+and the tiles, drawn at the screen's size in the background's style by `PictureImages`
+([`platform/README.md`](../../platform/README.md#pictures)): filling the screen at the position the
+user chose, or stretched, dimmed and blurred as set. A cold start reads it on the main thread from
+what an earlier start drew, as the tiles' images, so the home screen's first frame has it. One not
+drawn yet (a new picture or style, another screen size) is drawn in the background, the first job
+in line (`JobPriority.WALLPAPER`), the plain background showing meanwhile, the latest request
+winning; one still being drawn when the home screen stops is drawn again when it comes back. A
+picture that's gone (deleted in Pictures, which sets the wallpaper to none, or its file lost) is no
+wallpaper. The picture's drawing is kept at the screen's size in a file, about 8 MB in memory at
+1080p while shown.
 
 ### Focus
 

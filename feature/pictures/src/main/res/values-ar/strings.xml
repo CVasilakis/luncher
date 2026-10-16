@@ -17,6 +17,15 @@
     <string name="pictures_how_folder">• أو انسخ الصور إلى هذا المجلد، على التلفزيون أو على وحدة USB، ثم اختر «إضافة من مجلد»:</string>
     <string name="pictures_add_from_folder">إضافة من مجلد</string>
     <string name="pictures_details">⁦<xliff:g id="width" example="1920">%1$d</xliff:g> × <xliff:g id="height" example="1080">%2$d</xliff:g>⁩ · <xliff:g id="size" example="3.1 MB">%3$s</xliff:g></string>
+    <string name="pictures_in_use">قيد الاستخدام: <xliff:g id="use" example="الخلفية">%1$s</xliff:g></string>
+    <string name="pictures_not_in_use">غير مستخدمة</string>
+    <string name="pictures_wallpaper">الخلفية</string>
+    <string name="pictures_dialog_details"><xliff:g id="details" example="1920 × 1080 · 3.1 MB">%1$s</xliff:g> · <xliff:g id="use" example="غير مستخدمة">%2$s</xliff:g></string>
+    <string name="pictures_use_as_wallpaper">استخدامها خلفية</string>
+    <string name="pictures_delete_wallpaper">إنها الخلفية: تعود الشاشة الرئيسية إلى خلفيتها العادية.</string>
+    <string name="pictures_choose_wallpaper">اختيار الخلفية</string>
+    <string name="pictures_choose_hint">زر OK على صورة يختارها</string>
+    <string name="pictures_no_picture">بلا صورة</string>
     <string name="pictures_unnamed">صورة</string>
     <string name="pictures_delete_unused">حذف غير المستخدمة (<xliff:g id="count" example="2">%1$d</xliff:g> · <xliff:g id="size" example="4.1 MB">%2$s</xliff:g>)</string>
     <plurals name="pictures_delete_unused_question">

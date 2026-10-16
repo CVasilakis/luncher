@@ -6,7 +6,7 @@ import android.os.Build
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
-import com.luncher.domain.pictures.Framing
+import com.luncher.domain.pictures.PictureStyle
 import com.luncher.domain.pictures.ImportResult
 import com.luncher.domain.pictures.PictureFormat
 import com.luncher.launcher.jobs.BackgroundThreadJobs
@@ -80,7 +80,7 @@ class PictureFormatsTest {
 
         assertEquals(54 to 96, photo.width to photo.height)
         // Stored red left and blue right, the tag says to turn it right: red on top.
-        val image = FilePictureImages(context, folder).render(photo, 54, 96, Framing())!!
+        val image = FilePictureImages(context, folder).render(photo.id, 54, 96, PictureStyle())!!
         assertTrue(isRed(image.getPixel(27, 10)))
         assertTrue(isBlue(image.getPixel(27, 86)))
     }
@@ -105,7 +105,7 @@ class PictureFormatsTest {
     fun everyPictureIsDrawnIntoArgb8888_whateverItDecodesTo() {
         val drawer = FilePictureImages(context, folder)
         for (name in listOf("16bit.png", "animated.gif", "lossless-alpha.webp", "cmyk.jpg")) {
-            val image = drawer.render(added(name), 48, 27, Framing())!!
+            val image = drawer.render(added(name).id, 48, 27, PictureStyle())!!
 
             assertEquals(name, Bitmap.Config.ARGB_8888, image.config)
             assertTrue("$name: left not red", isRed(image.getPixel(4, 13)) || name == "lossless-alpha.webp")

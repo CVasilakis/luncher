@@ -20,6 +20,7 @@ feature/pictures/
     │   ├── java/com/luncher/launcher/pictures/
     │   │   ├── PicturesGraph.kt  the ports the pictures' screens need; Activity.graph
     │   │   ├── PicturesActivity.kt     Pictures: the grid, a picture's actions, Delete unused; adds a picture it's given
+    │   │   ├── ChooseWallpaperActivity.kt  Pictures choosing the wallpaper, for the appearance editor
     │   │   ├── AddFromFolderActivity.kt  the drop folders' pictures, a preview of the selected one; OK returns it
     │   │   ├── SharePictureActivity.kt   where another app's share arrives: passes the picture to Pictures, no screen
     │   │   ├── PicturesDialog.kt the dialogs over Pictures: a picture's actions, a question, a message
@@ -44,7 +45,7 @@ declares how the activities behave, and the build merges the two.
 
 | Element | Reason (don't remove without replacing it) |
 |---|---|
-| `PicturesActivity`, `AddFromFolderActivity`: `exported="false"` | Only Luncher opens them: the settings panel, Pictures, and `SharePictureActivity` with a shared picture. |
+| `PicturesActivity`, `ChooseWallpaperActivity`, `AddFromFolderActivity`: `exported="false"` | Only Luncher opens them: the settings panel, the appearance editor, Pictures, and `SharePictureActivity` with a shared picture. |
 | `PicturesActivity`, `AddFromFolderActivity`: `Theme.Luncher.Pictures` | Full-screen and opaque, on the home screen's background, like the appearance editor. |
 | `SharePictureActivity`: `exported="true"` | Other apps' shares arrive there. |
 | `SharePictureActivity`: `Theme.Luncher.Pictures.NoDisplay`, `noHistory`, `excludeFromRecents` | It shows nothing, and finishes in `onCreate`, before `onResume`, as a `windowNoDisplay` activity must; its backgrounds are still the home screen's dark ones, in case a device shows one ([`ui/README.md`](../../ui/README.md#the-theme)). |
@@ -54,10 +55,13 @@ declares how the activities behave, and the build merges the two.
 
 Pictures (`PicturesActivity`) is Luncher's own picture library, opened from the settings panel's
 Pictures entry: a grid of thumbnails, the newest first, as many a row as fit the width, ending in
-an Add from folder tile, with Delete unused below. The whole screen scrolls as the focus moves, so
-a short screen shows as much as it can. OK on a picture opens its actions (Delete), and deleting
-asks first, Cancel focused, so a repeated OK deletes nothing; Delete unused asks too, saying how
-much room the pictures take. While the library is empty, the screen says how to add a picture: a
+an Add from folder tile, with Delete unused below; each picture says what it's used for (the
+wallpaper), or that nothing uses it. The whole screen scrolls as the focus moves, so a short screen
+shows as much as it can. OK on a picture opens its actions: Use as wallpaper (unless it is), which
+keeps how the wallpaper is drawn, and Delete. Deleting asks first, Cancel focused, so a repeated OK
+deletes nothing, and names what the picture is used for, which goes back to its default (the
+wallpaper to none, `withoutPictures`). Delete unused asks too, saying how much room the pictures
+take, and keeps those in use. While the library is empty, the screen says how to add a picture: a
 share from another app, or a drop folder ([`platform/README.md`](../../platform/README.md#the-drop-folders)),
 with its path. Back closes it, back to the settings panel. In a right-to-left language it mirrors
 like the settings panels; the pictures don't.
@@ -67,7 +71,13 @@ like the settings panels; the pictures don't.
 | `Picture`, `PictureLibrary` (`:domain`) | a picture of the library; the library in the screen's order, the newest first, the room it takes, the pictures nothing uses |
 | `Pictures`, `PictureImport` (`:domain`) / `FilesPictures` (`:platform`) | the library, which the screen follows while it shows, and adding to it |
 | `PictureImages` (`:domain`) / `CachedPictureImages` (`:platform`) | the thumbnails, drawn at the tile's size in pixels |
+| `pictureUses`, `withoutPictures` (`:domain`), `AppearanceSettings` | what each picture is used for, from the appearance, which the screen follows too; the uses a deletion resets |
 | `PicturesActivity` | the grid's tiles, the focus, a picture's actions and the questions; adds the picture it's opened with, or the one Add from folder returns, and selects it, or says why it wasn't added (`ImportResult`, an exhaustive `when` in `whyNotAdded`) |
+
+**Choosing the wallpaper** (`ChooseWallpaperActivity`, Pictures opened from the appearance editor's
+Background group): the title says so, a first tile, No picture, chooses none, and OK on a picture
+makes it the wallpaper; either closes the screen. It's a class of its own, so the editor starts it
+by its class alone ([`ARCHITECTURE.md`](../../docs/ARCHITECTURE.md#features)).
 
 All thumbnails are read at once when the screen shows, from what `CachedPictureImages` kept, on the
 main thread, so the grid shows them with its first frame; one not kept (a picture just added, a
@@ -82,7 +92,8 @@ of a picture (`SEND` or `ATTACH_DATA`, `image/*`). It takes the picture's Uri ou
 passes it, with the read access the other app gave, to Pictures, and finishes at once; Pictures
 adds it, saying so below the title meanwhile, and selects it, or says why it couldn't. A picture
 the library has already (the same content) is selected, and nothing is said. An intent with no
-picture it can pass on becomes the message that Luncher can't read it. What the Uri points to is
+picture it can pass on (none in it, or one the other app gave no access to, which Android won't
+let Luncher pass on) becomes the message that Luncher can't read it, never a crash. What the Uri points to is
 the library's to judge: a `file://` one, as Android up to 9 shares files, can't be read without a
 storage permission, and the message says to use a drop folder instead, with its path.
 

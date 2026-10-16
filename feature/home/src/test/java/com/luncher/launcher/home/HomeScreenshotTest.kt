@@ -1,9 +1,18 @@
 package com.luncher.launcher.home
 
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.LinearGradient
+import android.graphics.Paint
+import android.graphics.Path
+import android.graphics.Shader
+import android.os.Looper
 import android.view.KeyEvent
 import android.view.View
 import com.github.takahirom.roborazzi.captureRoboImage
 import com.luncher.domain.appearance.Appearance
+import com.luncher.domain.appearance.Background
 import com.luncher.domain.appearance.Corners
 import com.luncher.domain.appearance.FakeAppearanceSettings
 import com.luncher.domain.appearance.HorizontalAlignment
@@ -17,14 +26,21 @@ import com.luncher.domain.apps.FakeAppArrangements
 import com.luncher.domain.apps.FakeInstalledApps
 import com.luncher.domain.apps.FakeInstalledApps.Companion.app
 import com.luncher.domain.clock.FakeClock
+import com.luncher.domain.pictures.Blur
+import com.luncher.domain.pictures.Fit
+import com.luncher.domain.pictures.PictureId
+import com.luncher.domain.pictures.PicturePosition
+import com.luncher.launcher.pictures.FilePictureImages
 import com.luncher.launcher.testing.TV_1080P
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
+import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
+import java.io.File
 
 /**
  * Reference images live in src/test/screenshots/home/ of this module. `recordRoborazziDebug` writes
@@ -41,7 +57,7 @@ class HomeScreenshotTest {
 
     private fun start(hidden: List<String> = emptyList(), appearance: Appearance = Appearance()): HomeActivity {
         val application = RuntimeEnvironment.getApplication() as HomeTestApplication
-        application.graph = object : TestHomeGraph(application) {
+        val graph = object : TestHomeGraph(application) {
             // Seven apps shown: a full row, and a second one that starts at the left.
             override val installedApps = FakeInstalledApps(
                 (listOf("games", "movies", "music", "news", "photos", "radio", "an app name too long for its tile") + hidden)
@@ -50,8 +66,58 @@ class HomeScreenshotTest {
             override val appArrangements = FakeAppArrangements(AppArrangement(order = null, hidden = hidden.map { app(it).launchable }))
             override val clock = FakeClock()
             override val appearanceSettings = FakeAppearanceSettings(appearance)
+            // The real drawing, of a picture stored as the library stores it (landscape()).
+            override val pictureImages = FilePictureImages(application)
         }
-        return Robolectric.buildActivity(HomeActivity::class.java).setup().get()
+        application.graph = graph
+        val activity = Robolectric.buildActivity(HomeActivity::class.java).setup().get()
+        graph.jobs.runAll()                          // the wallpaper, drawn in the background
+        shadowOf(Looper.getMainLooper()).idle()      // and shown
+        return activity
+    }
+
+    /**
+     * A picture in the library's folder, as one added there: a made-up landscape, a sky and two
+     * ranges of hills, its sharp edges showing the blur.
+     */
+    private fun landscape(): PictureId {
+        val id = PictureId("landscape")
+        val picture = Bitmap.createBitmap(1600, 1200, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(picture)
+        canvas.drawPaint(Paint().apply { shader = LinearGradient(0f, 0f, 0f, 1200f, Color.rgb(40, 50, 110), Color.rgb(220, 110, 120), Shader.TileMode.CLAMP) })
+        canvas.drawCircle(1150f, 640f, 110f, Paint().apply { color = Color.rgb(250, 200, 120) })
+        for ((top, shade) in listOf(560f to Color.rgb(70, 50, 100), 760f to Color.rgb(40, 30, 60))) {
+            val hills = Path().apply {
+                moveTo(0f, top + 120)
+                for (x in 0..1600 step 200) lineTo(x.toFloat(), top + if (x / 200 % 2 == 0) 120f else 0f)
+                lineTo(1600f, 1200f)
+                lineTo(0f, 1200f)
+                close()
+            }
+            canvas.drawPath(hills, Paint(Paint.ANTI_ALIAS_FLAG).apply { color = shade })
+        }
+        val folder = File(RuntimeEnvironment.getApplication().filesDir, "pictures").apply { mkdirs() }
+        File(folder, id.value).outputStream().use { picture.compress(Bitmap.CompressFormat.PNG, 100, it) }
+        return id
+    }
+
+    // The wallpaper, a landscape photo filling the screen from its bottom, dimmed and lightly
+    // blurred behind the tiles.
+    @Test
+    fun homeScreenWithAWallpaper() {
+        val background = Background(landscape(), Fit.FILL, PicturePosition.BOTTOM, dim = 20, blur = Blur.LIGHT)
+
+        start(appearance = Appearance(background = background)).window.decorView
+            .captureRoboImage("src/test/screenshots/home/home_screen_wallpaper.png")
+    }
+
+    // The same, sharp and not dimmed, stretched: all of the 4:3 picture, wider.
+    @Test
+    fun homeScreenWithAStretchedWallpaper() {
+        val background = Background(landscape(), Fit.STRETCH)
+
+        start(appearance = Appearance(background = background)).window.decorView
+            .captureRoboImage("src/test/screenshots/home/home_screen_wallpaper_stretched.png")
     }
 
     /** Starts arranging as a long press of OK on the tile of [label] would. */

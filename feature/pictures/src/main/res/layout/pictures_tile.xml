@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- A picture in the grid: its thumbnail, framed while the tile has the focus, its name (which
-     may end in "…", it's the user's), and its size (on two lines if large text needs them). OK on
-     it opens its actions. -->
+     may end in "…", it's the user's), and what it's used for (on two lines if large text needs
+     them). OK on it opens its actions. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="@dimen/pictures_tile_width"
     android:layout_height="wrap_content"

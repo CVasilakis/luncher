@@ -103,6 +103,18 @@ class PicturesLayoutTest(private val screen: TvScreen) {
     }
 
     @Test
+    fun `choosing the wallpaper fits`() {
+        application.graph = TestPicturesGraph(FakePictures(*library))
+        val activity = Robolectric.buildActivity(ChooseWallpaperActivity::class.java).setup().get()
+        idle()
+        val first = (activity.findViewById<ViewGroup>(R.id.pictures_grid).getChildAt(0) as ViewGroup).getChildAt(0) as ViewGroup
+
+        activity.assertShown("title", activity.findViewById(R.id.pictures_title))
+        activity.assertShown("status", activity.findViewById(R.id.pictures_status))
+        activity.assertShown("No picture", first.getChildAt(0))
+    }
+
+    @Test
     fun `Pictures fits while empty`() {
         val activity = start()
         val empty = activity.findViewById<ViewGroup>(R.id.pictures_empty)

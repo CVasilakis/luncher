@@ -61,6 +61,30 @@
          right-to-left language, where "first" would mean the right, say which is on the left. -->
     <string name="settings_appearance_time_first">Time first</string>
     <string name="settings_appearance_date_first">Date first</string>
+    <!-- In the appearance editor: the title of the options for the home screen's background, a
+         picture (a wallpaper) or none. -->
+    <string name="settings_appearance_background">Background</string>
+    <!-- The background's picture; OK on it opens the picture library to choose one. Also the
+         value shown for a picture that has no name. -->
+    <string name="settings_appearance_picture">Picture</string>
+    <!-- Its value while the background has no picture. -->
+    <string name="settings_appearance_no_picture">None</string>
+    <!-- An option: how the picture covers the screen. Its values: Fill (keeping its shape, what
+         doesn't fit cut off) and Stretch (all of it, its shape changed to the screen's). -->
+    <string name="settings_appearance_fit">Fit</string>
+    <string name="settings_appearance_fill">Fill</string>
+    <string name="settings_appearance_stretch">Stretch</string>
+    <!-- An option, while the picture fills the screen: which part of it shows. Its values are
+         Center, Top, Bottom, Left and Right. -->
+    <string name="settings_appearance_position">Position</string>
+    <!-- An option: how much darker the picture is drawn, so the tiles stand out. -->
+    <string name="settings_appearance_dim">Dim</string>
+    <!-- Its values: a percentage, 0 for not darkened. -->
+    <string name="settings_appearance_percent"><xliff:g id="percent" example="20">%1$d</xliff:g> %%</string>
+    <!-- An option: how blurred the picture is drawn. Its values are Off, Light and Strong. -->
+    <string name="settings_appearance_blur">Blur</string>
+    <string name="settings_appearance_light">Light</string>
+    <string name="settings_appearance_strong">Strong</string>
     <!-- Values of an option that's on or off. -->
     <string name="settings_appearance_on">On</string>
     <string name="settings_appearance_off">Off</string>
