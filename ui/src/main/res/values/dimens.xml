@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- A panel's corners; the focus frame of an entry in it (entry_background). -->
+    <dimen name="panel_corner">12dp</dimen>
+    <dimen name="entry_frame">3dp</dimen>
+    <dimen name="entry_corner">8dp</dimen>
+</resources>

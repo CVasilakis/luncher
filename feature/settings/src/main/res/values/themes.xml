@@ -2,9 +2,9 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- The settings panel: a floating window over the dimmed home screen. -->
     <style name="Theme.Luncher.Settings" parent="@android:style/Theme.DeviceDefault.Dialog.NoActionBar">
-        <item name="android:windowBackground">@drawable/settings_panel_background</item>
-        <item name="android:colorBackground">@color/settings_panel</item>
-        <item name="android:windowSplashScreenBackground" tools:targetApi="31">@color/settings_panel</item>
+        <item name="android:windowBackground">@drawable/panel_background</item>
+        <item name="android:colorBackground">@color/panel</item>
+        <item name="android:windowSplashScreenBackground" tools:targetApi="31">@color/panel</item>
         <item name="android:colorAccent">@color/accent</item>
         <item name="android:backgroundDimAmount">0.6</item>
         <!-- As in Theme.Luncher: in a right-to-left language every text lines up at the right,
@@ -24,8 +24,8 @@
     <!-- The appearance editor: full-screen and opaque, unlike the panels, so the home screen
          behind it is stopped, and applies a change once, when it comes back. -->
     <style name="Theme.Luncher.Settings.FullScreen" parent="@style/Theme.Luncher">
-        <item name="android:windowBackground">@color/settings_panel</item>
-        <item name="android:colorBackground">@color/settings_panel</item>
-        <item name="android:windowSplashScreenBackground" tools:targetApi="31">@color/settings_panel</item>
+        <item name="android:windowBackground">@color/panel</item>
+        <item name="android:colorBackground">@color/panel</item>
+        <item name="android:windowSplashScreenBackground" tools:targetApi="31">@color/panel</item>
     </style>
 </resources>

@@ -84,6 +84,7 @@ dependencies {
     implementation(project(":platform"))
     implementation(project(":feature:home"))
     implementation(project(":feature:settings"))
+    implementation(project(":feature:pictures"))
 
     // Tests only: none of this reaches the APK. Tiers and their tools: docs/TESTING.md.
     testImplementation(testFixtures(project(":ui")))

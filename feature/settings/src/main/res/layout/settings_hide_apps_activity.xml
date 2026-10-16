@@ -28,7 +28,7 @@
         android:layout_marginEnd="@dimen/settings_list_scrollbar_negative"
         android:divider="@null"
         android:dividerHeight="0dp"
-        android:listSelector="@drawable/settings_entry_background"
+        android:listSelector="@drawable/entry_background"
         android:paddingStart="0dp"
         android:paddingEnd="@dimen/settings_list_scrollbar"
         android:scrollbarStyle="outsideOverlay" />

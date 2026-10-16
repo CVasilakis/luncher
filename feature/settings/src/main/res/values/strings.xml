@@ -11,6 +11,8 @@
     <string name="settings_no_apps">No TV apps installed</string>
     <!-- The entry that opens the editor of the home screen's look, and that editor's title. -->
     <string name="settings_appearance">Appearance</string>
+    <!-- The entry that opens Luncher's own picture library, which the wallpaper is chosen from. -->
+    <string name="settings_pictures">Pictures</string>
     <!-- In the appearance editor: the title of the options for the home screen's app tiles. -->
     <string name="settings_appearance_tiles">Tiles</string>
     <!-- In the appearance editor: the title of the options for the bar at the top of the home

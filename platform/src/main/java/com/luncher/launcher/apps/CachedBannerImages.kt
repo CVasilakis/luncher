@@ -12,19 +12,8 @@ import com.luncher.domain.apps.LaunchableApp
 import com.luncher.domain.jobs.Cancellable
 import com.luncher.domain.jobs.JobPriority
 import com.luncher.domain.jobs.Jobs
-import java.io.BufferedInputStream
-import java.io.BufferedOutputStream
-import java.io.ByteArrayOutputStream
-import java.io.DataInputStream
-import java.io.DataOutputStream
+import com.luncher.launcher.images.PixelFiles
 import java.io.File
-import java.io.FileInputStream
-import java.io.FileOutputStream
-import java.io.IOException
-import java.nio.ByteBuffer
-import java.util.zip.DataFormatException
-import java.util.zip.Deflater
-import java.util.zip.Inflater
 
 /**
  * [AppImages] that keeps each tile's image in a file, so that a cold start reads it rather than
@@ -74,9 +63,7 @@ class CachedBannerImages(
     private var waitingForIdle = false
     private var cleaned = false
 
-    private val inflater = Inflater()
-    private var packed = ByteArray(0)
-    private var pixels = ByteArray(0)
+    private val pixelFiles = PixelFiles(MAGIC, FORMAT)
 
     override fun render(app: InstalledApp, banner: Banner, width: Int, height: Int): Bitmap {
         val kind = when (banner) {
@@ -120,69 +107,23 @@ class CachedBannerImages(
 
     /**
      * [file]'s image if it was drawn from [drawing], else null: none yet, another drawing, or a
-     * file that can't be read. The format: a header ([MAGIC], [FORMAT], [drawing]'s fields), then
-     * the image's pixels as they are in memory (ARGB_8888, premultiplied), compressed with
-     * [Deflater], so a pixel reads back exactly as it was drawn, its transparency too.
+     * file that can't be read. The format: [PixelFiles], with [drawing]'s fields as the header.
      */
-    private fun read(file: File, drawing: Drawing): Bitmap? {
-        if (!file.isFile) return null
-        try {
-            DataInputStream(BufferedInputStream(FileInputStream(file), BUFFER)).use { input ->
-                if (input.readInt() != MAGIC || input.readInt() != FORMAT) return null
-                val stored = Drawing(input.readInt(), input.readInt(), input.readInt(), input.readLong(), input.readLong(), input.readUTF())
-                if (stored != drawing) return null
-                val length = input.readInt()
-                if (length < 0 || length > file.length()) return null
-                if (packed.size < length) packed = ByteArray(length)
-                input.readFully(packed, 0, length)
-                val size = drawing.width * drawing.height * 4
-                if (pixels.size < size) pixels = ByteArray(size)
-                inflater.reset()
-                inflater.setInput(packed, 0, length)
-                if (inflater.inflate(pixels, 0, size) != size || !inflater.finished()) return null
-                val image = Bitmap.createBitmap(drawing.width, drawing.height, Bitmap.Config.ARGB_8888)
-                image.copyPixelsFromBuffer(ByteBuffer.wrap(pixels, 0, size))
-                return image
-            }
-        } catch (e: IOException) {
-            return null
-        } catch (e: DataFormatException) {
-            return null
+    private fun read(file: File, drawing: Drawing): Bitmap? =
+        pixelFiles.read(file, drawing.width, drawing.height) { input ->
+            Drawing(input.readInt(), input.readInt(), input.readInt(), input.readLong(), input.readLong(), input.readUTF()) == drawing
         }
-    }
 
-    /** A job: writes [write]'s image in [read]'s format, to a new file that then replaces the old one at once. */
+    /** A job: writes [write]'s image in [read]'s format. */
     private fun write(write: Unwritten) {
-        val pixels = ByteBuffer.allocate(write.image.byteCount)
-        write.image.copyPixelsToBuffer(pixels)
-        val packed = ByteArrayOutputStream(pixels.capacity() / 4)
-        val deflater = Deflater(Deflater.BEST_SPEED)
-        deflater.setInput(pixels.array())
-        deflater.finish()
-        val chunk = ByteArray(BUFFER)
-        while (!deflater.finished()) packed.write(chunk, 0, deflater.deflate(chunk))
-        deflater.end()
-
-        val temporary = File(write.file.parentFile, write.file.name + TEMPORARY)
-        try {
-            write.file.parentFile?.mkdirs()
-            DataOutputStream(BufferedOutputStream(FileOutputStream(temporary), BUFFER)).use { output ->
-                val drawing = write.drawing
-                output.writeInt(MAGIC)
-                output.writeInt(FORMAT)
-                output.writeInt(drawing.width)
-                output.writeInt(drawing.height)
-                output.writeInt(drawing.kind)
-                output.writeLong(drawing.appUpdated)
-                output.writeLong(drawing.luncherUpdated)
-                output.writeUTF(drawing.label)
-                output.writeInt(packed.size())
-                packed.writeTo(output)
-            }
-            if (!temporary.renameTo(write.file)) temporary.delete()
-        } catch (e: IOException) {
-            // A full disk, say: no file, so the next start draws the image again.
-            temporary.delete()
+        pixelFiles.write(write.file, write.image) { output ->
+            val drawing = write.drawing
+            output.writeInt(drawing.width)
+            output.writeInt(drawing.height)
+            output.writeInt(drawing.kind)
+            output.writeLong(drawing.appUpdated)
+            output.writeLong(drawing.luncherUpdated)
+            output.writeUTF(drawing.label)
         }
     }
 
@@ -190,7 +131,7 @@ class CachedBannerImages(
     private fun deleteUninstalled() {
         for (packageFolder in folder.listFiles().orEmpty()) {
             for (file in packageFolder.listFiles().orEmpty()) {
-                if (file.name.endsWith(TEMPORARY) || !isInstalled(ComponentName(packageFolder.name, file.name))) file.delete()
+                if (file.name.endsWith(PixelFiles.TEMPORARY) || !isInstalled(ComponentName(packageFolder.name, file.name))) file.delete()
             }
             packageFolder.delete()   // only if it's empty now
         }
@@ -206,14 +147,11 @@ class CachedBannerImages(
 
     private companion object {
         const val FOLDER = "banners"
-        const val TEMPORARY = ".new"
 
         /** "LBNR": a file of this class. */
         const val MAGIC = 0x4C424E52
 
         /** The file format's version: another one is a mismatch, drawn and written again. */
         const val FORMAT = 1
-
-        const val BUFFER = 64 * 1024
     }
 }

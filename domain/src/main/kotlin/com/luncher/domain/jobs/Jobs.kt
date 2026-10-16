@@ -22,4 +22,13 @@ object JobPriority {
 
     /** Writing the tiles' images for the next start: after anything a screen waits for. */
     const val BANNER_CACHE = 0
+
+    /** What the pictures' screens load: thumbnails, previews, the drop folders' list. */
+    const val PICTURE_SCREENS = 1
+
+    /**
+     * Adding and deleting pictures, and writing the library's index: one priority, so they run in
+     * the order they came, and a picture's file is in place before anything draws it.
+     */
+    const val PICTURE_LIBRARY = 2
 }

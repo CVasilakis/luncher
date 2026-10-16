@@ -2,12 +2,17 @@ package com.luncher.launcher
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.net.Uri
 import com.luncher.domain.appearance.AppearanceSettings
 import com.luncher.domain.apps.AppArrangements
 import com.luncher.domain.apps.AppImages
 import com.luncher.domain.apps.InstalledApps
 import com.luncher.domain.clock.Clock
 import com.luncher.domain.jobs.Jobs
+import com.luncher.domain.pictures.FolderPictures
+import com.luncher.domain.pictures.PictureImages
+import com.luncher.domain.pictures.PictureImport
+import com.luncher.domain.pictures.Pictures
 import com.luncher.launcher.appearance.PreferencesAppearanceSettings
 import com.luncher.launcher.apps.BannerImages
 import com.luncher.launcher.apps.CachedBannerImages
@@ -16,6 +21,11 @@ import com.luncher.launcher.apps.PreferencesAppArrangements
 import com.luncher.launcher.clock.AndroidClock
 import com.luncher.launcher.home.HomeGraph
 import com.luncher.launcher.jobs.BackgroundThreadJobs
+import com.luncher.launcher.pictures.CachedPictureImages
+import com.luncher.launcher.pictures.FilePictureImages
+import com.luncher.launcher.pictures.FilesPictures
+import com.luncher.launcher.pictures.MediaFolderPictures
+import com.luncher.launcher.pictures.PicturesGraph
 import com.luncher.launcher.settings.SettingsGraph
 
 /**
@@ -27,7 +37,7 @@ import com.luncher.launcher.settings.SettingsGraph
  * Open so instrumented tests can replace single ports with fakes (`object : AppGraph(app) {
  * override … }`) and install the result as [LuncherApplication.graph]; see docs/TESTING.md.
  */
-open class AppGraph(context: Context) : HomeGraph, SettingsGraph {
+open class AppGraph(context: Context) : HomeGraph, SettingsGraph, PicturesGraph {
 
     protected val appContext: Context = context.applicationContext
 
@@ -37,10 +47,21 @@ open class AppGraph(context: Context) : HomeGraph, SettingsGraph {
 
     override val appImages: AppImages<Bitmap> by lazy { CachedBannerImages(appContext, BannerImages(appContext), jobs) }
 
-    /** The background thread, for the adapters' jobs; open so a test can run them when it says. */
-    open val jobs: Jobs by lazy { BackgroundThreadJobs() }
+    /** The background thread, for the adapters' and screens' jobs; open so a test can run them when it says. */
+    override val jobs: Jobs by lazy { BackgroundThreadJobs() }
 
     override val clock: Clock by lazy { AndroidClock(appContext) }
 
     override val appearanceSettings: AppearanceSettings by lazy { PreferencesAppearanceSettings(appContext) }
+
+    /** The picture library: both ports on the same files and index. */
+    private val library by lazy { FilesPictures(appContext, jobs) }
+
+    override val pictures: Pictures by lazy { library }
+
+    override val pictureImport: PictureImport<Uri> by lazy { library }
+
+    override val folderPictures: FolderPictures<Uri, Bitmap> by lazy { MediaFolderPictures(appContext, jobs) }
+
+    override val pictureImages: PictureImages<Bitmap> by lazy { CachedPictureImages(appContext, FilePictureImages(appContext)) }
 }

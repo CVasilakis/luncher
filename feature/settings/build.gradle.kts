@@ -11,6 +11,8 @@ android {
 dependencies {
     api(project(":domain"))
     implementation(project(":ui"))
+    // Opens Pictures by its activity's class, the one thing it uses of that feature.
+    implementation(project(":feature:pictures"))
 
     testImplementation(testFixtures(project(":domain")))
     testImplementation(testFixtures(project(":ui")))

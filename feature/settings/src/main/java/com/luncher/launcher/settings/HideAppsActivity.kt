@@ -65,27 +65,10 @@ class HideAppsActivity : Activity() {
     private fun readApps() {
         arranged = homeApps(installedApps.tvApps(), packageName, arrangements.read(), Locale.getDefault())
         rows = arranged.byLabel()
-        list.layoutParams.height = listHeight(rows.size)
+        // At most six and a half rows: a ListView as tall as its content would create a view for every app.
+        list.layoutParams.height = listHeight(findViewById(R.id.settings_hide_apps_panel), rows.size, resources.getDimensionPixelSize(R.dimen.settings_list_max_height))
         list.requestLayout()
         findViewById<View>(R.id.settings_no_apps).visibility = if (rows.isEmpty()) View.VISIBLE else View.GONE
-    }
-
-    /**
-     * As tall as its rows, up to six and a half of them (a ListView as tall as its content would
-     * create a view for every app), and no taller than the screen leaves room for beside the
-     * panel's title and margins, e.g. on a 720p screen at high density. When the rows don't fit,
-     * the list ends on half a row, which shows there's more.
-     */
-    private fun listHeight(rowCount: Int): Int {
-        val row = resources.getDimensionPixelSize(R.dimen.settings_entry_height)
-        val panel = findViewById<View>(R.id.settings_hide_apps_panel)
-        val unspecified = View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
-        panel.measure(unspecified, unspecified)   // without the list, which is 0 px tall so far
-        val margin = resources.getDimensionPixelSize(R.dimen.settings_panel_margin)
-        val room = resources.displayMetrics.heightPixels - 2 * margin - panel.measuredHeight
-        val max = minOf(resources.getDimensionPixelSize(R.dimen.settings_list_max_height), room)
-        if (rowCount * row <= max) return rowCount * row
-        return ((max - row / 2) / row).coerceAtLeast(0) * row + row / 2
     }
 
     private fun toggle(row: AppVisibility) {

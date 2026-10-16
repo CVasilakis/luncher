@@ -2,10 +2,11 @@ package com.luncher.launcher
 
 import android.app.Application
 import com.luncher.launcher.home.HomeGraph
+import com.luncher.launcher.pictures.PicturesGraph
 import com.luncher.launcher.settings.SettingsGraph
 
 /** Holds the single [AppGraph] for the process, and gives each feature its part of it. */
-class LuncherApplication : Application(), HomeGraph.Owner, SettingsGraph.Owner {
+class LuncherApplication : Application(), HomeGraph.Owner, SettingsGraph.Owner, PicturesGraph.Owner {
 
     private var current: AppGraph? = null
 
@@ -22,4 +23,6 @@ class LuncherApplication : Application(), HomeGraph.Owner, SettingsGraph.Owner {
     override val homeGraph: HomeGraph get() = graph
 
     override val settingsGraph: SettingsGraph get() = graph
+
+    override val picturesGraph: PicturesGraph get() = graph
 }

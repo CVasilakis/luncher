@@ -138,6 +138,22 @@ filesystem's journal (`sync`); its KDoc says how on each API level. Found as it 
 what's on screen: it presses Home once the stock launcher is back, so that launcher starts now,
 cold, and the test ends on the settled home screen.
 
+### Pictures from another app, and the test's own folders
+
+The picture library's tests (`pictures/`) add pictures as another app shares them: through
+`SamplePictures` (`testing/`), a content provider of the test package serving the sample files of
+`app/src/androidTest/assets/pictures/`. It runs in the test package's own process, which has no
+Kotlin standard library (the test APK leaves out what the app under test has), so it's written in
+Java. It's exported: the shares are sent from the app's own process, which the instrumentation runs
+in, and couldn't grant access to another package's provider. The tests add into folders of their
+own (`FilesPictures` and `MediaFolderPictures` take them as parameters), never the device's
+library or drop folder, and delete them after.
+
+`PictureFormatsTest` checks which sample decodes on the device's Android version. There's no HEIF
+sample: nothing on the development machine can write one, and a phone's photo carries its owner's
+data. HEIF is checked by hand: on API 27 and older, adding one must give the message that this TV
+can't show it; from API 28 on, it must be added and show upright.
+
 ### The system tier from API 24 on
 
 The system tier runs only on API 24 and newer; on API 22 and 23 the in-app tier still runs.

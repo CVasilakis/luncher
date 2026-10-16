@@ -13,10 +13,11 @@ written so that it translates well, and what a new string or language needs.
 |---|---|---|
 | `:feature:home` | the home screen and arrange mode | `res/values/strings.xml` (English), `res/values-el/` (Greek), `res/values-ar/` (Arabic) |
 | `:feature:settings` | the settings panels | the same |
+| `:feature:pictures` | the picture library's screens | the same |
 | `:app` | the app's name | `translatable="false"`: a name, the same in every language |
 
 Strings stay with the screen that shows them, each module's prefixed with its name (`home_…`,
-`settings_…`), and each translation sits next to its English, in `values-<language>/`. A string
+`settings_…`, `pictures_…`), and each translation sits next to its English, in `values-<language>/`. A string
 both screens show ("Settings", "Hidden") is in each, so either module's translation is complete on
 its own.
 
@@ -60,8 +61,8 @@ editor's preview of it ([`app/README.md`](../app/README.md#manifest-why-each-par
 
 ## Checking a translation
 
-- **The layout tests** (`HomeLayoutTest`, `SettingsLayoutTest`) run every screen in every
-  language, with the longest date each has: nothing cut, except where the layout allows it, and
+- **The layout tests** (`HomeLayoutTest`, `SettingsLayoutTest`, `PicturesLayoutTest`) run every
+  screen in every language, with the longest date each has: nothing cut, except where the layout allows it, and
   everything fits ([`TESTING.md`](TESTING.md#layouts-on-other-screens)). In Arabic, that's the
   mirrored settings panels too.
 - **On an emulator,** from API 33 on, Luncher's own language can change without the device's:

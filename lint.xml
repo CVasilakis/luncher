@@ -10,4 +10,11 @@
     <issue id="GradleDependency" severity="ignore" />
     <issue id="AndroidGradlePluginVersion" severity="ignore" />
     <issue id="OldTargetApi" severity="ignore" />
+
+    <!-- A focusable entry's background (:ui's entry_background) is transparent until it has the
+         focus, so it paints nothing over the window's background. Lint can't see into a drawable
+         of another module, and takes it for an opaque one. -->
+    <issue id="Overdraw">
+        <ignore regexp="@drawable/entry_background" />
+    </issue>
 </lint>

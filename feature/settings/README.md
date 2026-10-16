@@ -7,7 +7,7 @@ editor. What a feature module holds and may use: [`../README.md`](../README.md);
 | | |
 |---|---|
 | Package | `com.luncher.launcher.settings` |
-| Depends on | `:domain`, `:ui` |
+| Depends on | `:domain`, `:ui`; `:feature:pictures`, for `PicturesActivity`'s class, which the Pictures entry starts |
 
 ## Layout
 
@@ -21,11 +21,12 @@ feature/settings/
     │   │   ├── SettingsGraph.kt  the ports the settings screens need; Activity.graph
     │   │   ├── SettingsActivity.kt   the settings panel: lists the domain's settingsMenu, opens entries
     │   │   ├── HideAppsActivity.kt   the Hide apps list: every app by name; OK hides or shows one
+    │   │   ├── PanelHeight.kt    a panel's list as tall as the screen leaves room for, ending on half a row
     │   │   ├── AppearanceActivity.kt the appearance editor: the options, Left and Right step them
     │   │   ├── AppearancePreviewView.kt  the editor's preview: an illustration of the home screen
     │   │   └── AppearanceEditorLayout.kt the editor's columns: the options level with the title
-    │   └── res/                  the panels' themes (Theme.Luncher.Settings, .Panel, .FullScreen), window and
-    │                             focused entry, layouts, settings_* colors, dimensions and strings,
+    │   └── res/                  the panels' themes (Theme.Luncher.Settings, .Panel, .FullScreen), layouts,
+    │                             settings_* dimensions and strings (the window and the focused entry are :ui's),
     │                             their translations in values-el/ and values-ar/ (docs/TRANSLATIONS.md)
     └── test/
         ├── java/…/settings/      JVM tests; TestSettingsGraph.kt: the ports a test gives the screens,
@@ -47,8 +48,11 @@ Everything but the activities and `SettingsGraph` is `internal`.
 
 ## The settings panel
 
-Its entries are Hide apps ([below](#hidden-apps)), Appearance ([below](#appearance)) and the
-device's own settings.
+Its entries are Hide apps ([below](#hidden-apps)), Appearance ([below](#appearance)), Pictures
+(the picture library, [`:feature:pictures`](../pictures/README.md), full-screen like the editor)
+and the device's own settings. On a screen too short for them all (720p at the 1080p density),
+the entries scroll, as many showing as leave the panel a margin from the screen's edges, ending
+on half an entry, as Hide apps' list does.
 `SettingsActivity` is a floating window over the dimmed home screen (its theme,
 `Theme.Luncher.Settings`, is a platform dialog theme). Back closes it, as any activity, and so does
 Home: the home screen is `singleTask`, and Android closes what's above it in its task. The home

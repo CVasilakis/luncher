@@ -1,7 +1,7 @@
 # platform/
 
 The adapters, `:platform`: the domain's ports implemented on Android APIs (PackageManager,
-SharedPreferences, the system clock and its broadcasts), and the images the screens show. Only
+SharedPreferences, the system clock and its broadcasts, files), and the images the screens show. Only
 `:app` depends on this module; `AppGraph` there creates the adapters, and the features see the
 ports only, so a screen can't call an Android data API or create an adapter itself. Why, and the
 rules adapters follow: [`../docs/ARCHITECTURE.md`](../docs/ARCHITECTURE.md).
@@ -29,14 +29,24 @@ platform/
     │   │   │   └── CachedBannerImages.kt            AppImages<Bitmap> in front of BannerImages: each tile's image kept in a file for the next start
     │   │   ├── clock/
     │   │   │   └── AndroidClock.kt                  Clock on the system time, settings and time broadcasts
+    │   │   ├── images/
+    │   │   │   └── PixelFiles.kt                    the image caches' file format: a header, then the pixels, compressed
+    │   │   ├── pictures/
+    │   │   │   ├── FilesPictures.kt                 Pictures and PictureImport<Uri> on files: the library's pictures and their index
+    │   │   │   ├── MediaFolderPictures.kt           FolderPictures<Uri, Bitmap> in the drop folders, Android/media/<applicationId>
+    │   │   │   ├── FilePictureImages.kt             PictureImages<Bitmap>: draws a picture of the library, framed, at a size
+    │   │   │   ├── CachedPictureImages.kt           PictureImages<Bitmap> in front of FilePictureImages: what it drew kept in files
+    │   │   │   ├── PictureFiles.kt                  reading a picture file: its size, upright, its format; drawing it framed in ARGB_8888
+    │   │   │   └── JpegOrientation.kt               a JPEG's orientation tag, read without ExifInterface
     │   │   └── jobs/
     │   │       └── BackgroundThreadJobs.kt          Jobs on one thread at background priority, with a priority queue
     │   └── res/values/colors.xml the card drawn for an app without a banner
     └── test/java/…/              JVM tests (Robolectric), same packages as the code
 ```
 
-Packages follow `:domain`'s topics (`appearance/`, `apps/`, `clock/`, `jobs/`, and later e.g. `wallpaper/`, `network/`),
-so the adapter of `com.luncher.domain.clock.Clock` is in `clock/`.
+Packages follow `:domain`'s topics (`appearance/`, `apps/`, `clock/`, `jobs/`, `pictures/`, and later e.g. `network/`),
+so the adapter of `com.luncher.domain.clock.Clock` is in `clock/`. What two topics' adapters share
+is in a package of its own (`images/`: the caches' file format).
 
 ## Writing adapters
 
@@ -67,7 +77,58 @@ so the adapter of `com.luncher.domain.clock.Clock` is in `clock/`.
   install of the app or of Luncher, label) is drawn and written again, so unlike a stored setting
   it needs no test of its format and no migration, and Android may delete it. Writing waits until
   the main thread is idle, so it doesn't slow the start that draws, and is then a job per image.
+  `CachedPictureImages` keeps the pictures' images the same way, in the same file format
+  (`PixelFiles`), but draws them in jobs, so it writes each in the job that drew it.
 - **Public,** since `AppGraph` in `:app` creates them; no other module depends on this one.
+
+## Pictures
+
+The picture library ([`feature/pictures/README.md`](../feature/pictures/README.md)) is three
+adapters on files, and a cache:
+
+| Adapter | Port | What it keeps, and how |
+|---|---|---|
+| `FilesPictures` | `Pictures`, `PictureImport<Uri>` | each picture's original file, unchanged, in `filesDir/pictures/`, named after a hash of its content, so the same picture added twice is stored once; and `index.json`, the pictures' names, sizes as shown and when they were added, written whole to a new file that then replaces the old one. Its format is kept across updates, so `FilesPicturesTest` writes it out. |
+| `MediaFolderPictures` | `FolderPictures<Uri, Bitmap>` | nothing: it lists the drop folders (below) |
+| `FilePictureImages` | `PictureImages<Bitmap>` | nothing: it draws a picture of the library at a size, framed by the domain's `frame` |
+| `CachedPictureImages` | `PictureImages<Bitmap>` | what `FilePictureImages` drew, in `cacheDir/pictures/<picture>/`, one file per size (the thumbnails, at the grid's tile size in pixels) |
+
+- **Adding a picture is a job,** of `JobPriority.PICTURE_LIBRARY`, as is everything that changes
+  the library's files (moving a new picture's file into place, deleting, writing the index), so
+  they run in the order they came, and a picture's file is in place before the library names it.
+  Adding streams the source into a new file, stopping past the size limit, hashing it on the way;
+  decodes its size and then all of it, small (`inSampleSize`), since a size alone can decode where
+  the picture can't (AVIF on API 31); and then, on the main thread, either finds it in the index
+  already or has it moved into place and named. Once per process, a job deletes the files and
+  drawn images the index doesn't name, which a killed process can leave; an index that can't be
+  read keeps every file.
+- **What another app gives is read, never trusted.** A source is opened through `ContentResolver`
+  as a stream, its name kept as a label only, never as a path. A `file://` Uri is refused
+  (`Unreadable`): only an app with storage permission could read it, as older Android versions
+  share files, and Luncher asks for none ([`app/README.md`](../app/README.md#manifest-why-each-part-is-there)).
+  The one exception is a file of Luncher's own drop folders, which Add from folder passes.
+- **A picture is drawn into ARGB_8888, at the size it's shown, upright.** `PictureFiles.draw`
+  decodes it at no more than the size needed (`inSampleSize`), into sRGB from API 26 on (an iPhone's
+  photo is in Display P3), turns it as its orientation tag says, which BitmapFactory doesn't, and
+  draws the framed part into a bitmap of exactly that size, over the home screen's background
+  color (for a transparent picture); then frees the decoded one. A decoder may give another config
+  (16-bit PNG: RGBA_F16 from API 26 on; GIF: none up to 26), which the drawing turns into ARGB_8888.
+- **The orientation tag** of a JPEG is read by `jpegOrientation`, not `android.media.ExifInterface`,
+  whose native code up to Android 6 has known security bugs, while any app can share a crafted
+  file. A HEIF photo's is read by `ExifInterface`, which reads HEIF from API 28 on, the first
+  version that decodes it, and is written in Java from API 24 on.
+- **A format a TV can't decode is named,** from the file's header (`pictureFormatOf`, in
+  `:domain`), never its name: HEIF before API 28, AVIF before API 33. Anything else that doesn't
+  decode is `NotAPicture`.
+
+### The drop folders
+
+`Android/media/<applicationId>` on every mounted volume, the TV's storage and each USB drive or SD
+card (`Context.getExternalMediaDirs()`, which creates them): a file manager on the TV, or a computer
+writing a USB drive, puts pictures there, and Luncher reads them without any permission. Not
+`Android/data/<applicationId>`, which file managers can't write from Android 11 on. From Android
+16 on, a file another app put there can't be read; `MediaFolderPictures` lists only what it can
+read, so there a picture comes in through a share.
 
 ## Manifest
 

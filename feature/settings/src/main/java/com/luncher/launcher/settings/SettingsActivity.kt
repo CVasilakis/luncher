@@ -5,11 +5,13 @@ import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.os.Bundle
 import android.provider.Settings
+import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import com.luncher.domain.settings.SettingsEntry
 import com.luncher.domain.settings.settingsMenu
+import com.luncher.launcher.pictures.PicturesActivity
 
 /**
  * The settings panel: a floating window over the home screen that lists the entries of
@@ -27,6 +29,10 @@ class SettingsActivity : Activity() {
         setContentView(R.layout.settings_activity)
         entries = findViewById(R.id.settings_entries)
         show(settingsMenu())
+        // The entries scroll on a screen too short for them all.
+        val scroll = findViewById<View>(R.id.settings_entries_scroll)
+        scroll.layoutParams.height = 0
+        scroll.layoutParams.height = listHeight(findViewById(R.id.settings_panel), entries.childCount)
         entries.getChildAt(0)?.requestFocus()
     }
 
@@ -47,12 +53,14 @@ class SettingsActivity : Activity() {
     private fun label(entry: SettingsEntry): Int = when (entry) {
         SettingsEntry.HideApps -> R.string.settings_hide_apps
         SettingsEntry.Appearance -> R.string.settings_appearance
+        SettingsEntry.Pictures -> R.string.settings_pictures
         SettingsEntry.SystemSettings -> R.string.settings_system
     }
 
     private fun open(entry: SettingsEntry) = when (entry) {
         SettingsEntry.HideApps -> openOwnPanel(Intent(this, HideAppsActivity::class.java))
         SettingsEntry.Appearance -> openOwnPanel(Intent(this, AppearanceActivity::class.java))
+        SettingsEntry.Pictures -> openOwnPanel(Intent(this, PicturesActivity::class.java))
         SettingsEntry.SystemSettings -> openSystemSettings()
     }
 
@@ -60,7 +68,7 @@ class SettingsActivity : Activity() {
      * Opens a panel of its own over this one (its theme is `Theme.Luncher.Settings.Panel`), in its
      * place: this panel disappears meanwhile, since the other one may be smaller and would show
      * it around its edges. Its window stays, and with it the dimming of the home screen behind.
-     * The appearance editor is full-screen (`Theme.Luncher.Settings.FullScreen`), and covers both.
+     * The appearance editor and Pictures are full-screen, and cover both.
      */
     private fun openOwnPanel(intent: Intent) {
         startActivity(intent)

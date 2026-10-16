@@ -13,6 +13,9 @@ sealed interface SettingsEntry {
     /** Opens the editor of the home screen's appearance. */
     data object Appearance : SettingsEntry
 
+    /** Opens Luncher's picture library, which the wallpaper is chosen from. */
+    data object Pictures : SettingsEntry
+
     /** Opens the device's own settings app. */
     data object SystemSettings : SettingsEntry
 }

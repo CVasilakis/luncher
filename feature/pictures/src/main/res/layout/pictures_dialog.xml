@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A dialog over Pictures: a title, a text, and its entries (a picture's actions, a
+     confirmation's choices, a message's OK). PicturesDialog adds the entries. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/pictures_dialog_panel"
+    android:layout_width="@dimen/pictures_dialog_width"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="@dimen/pictures_dialog_padding">
+
+    <TextView
+        android:id="@+id/pictures_dialog_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:includeFontPadding="false"
+        android:textColor="@color/text_primary"
+        android:textSize="@dimen/pictures_status_text"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/pictures_dialog_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/pictures_tile_text_gap"
+        android:layout_marginBottom="@dimen/pictures_tile_text_gap"
+        android:textColor="@color/text_secondary"
+        android:textSize="@dimen/pictures_small_text" />
+
+    <LinearLayout
+        android:id="@+id/pictures_dialog_entries"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical" />
+</LinearLayout>

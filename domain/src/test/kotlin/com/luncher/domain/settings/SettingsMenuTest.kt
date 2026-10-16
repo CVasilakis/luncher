@@ -8,7 +8,7 @@ class SettingsMenuTest {
     @Test
     fun `lists Luncher's own settings, then the system settings`() {
         assertEquals(
-            listOf(SettingsEntry.HideApps, SettingsEntry.Appearance, SettingsEntry.SystemSettings),
+            listOf(SettingsEntry.HideApps, SettingsEntry.Appearance, SettingsEntry.Pictures, SettingsEntry.SystemSettings),
             settingsMenu(),
         )
     }

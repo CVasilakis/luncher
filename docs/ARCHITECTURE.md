@@ -13,7 +13,8 @@ slow CPU and storage). Two goals shape the structure:
 ```
 :app               ──▶  every module below; the composition root
 :feature:home      ──▶  :domain, :ui; :feature:settings, for its activity's class
-:feature:settings  ──▶  :domain, :ui
+:feature:settings  ──▶  :domain, :ui; :feature:pictures, for its activity's class
+:feature:pictures  ──▶  :domain, :ui
 :platform          ──▶  :domain, :ui
 :ui                     depends on nothing
 :domain                 depends on nothing; pure Kotlin
@@ -24,7 +25,7 @@ slow CPU and storage). Two goals shape the structure:
 | [`domain/`](../domain/README.md) | **Models** (data), **rules** (what the launcher decides: which apps show, in which order, with which banner) and **ports** (interfaces for what the rules and screens need from the device) | Kotlin standard library only. Android isn't on its classpath, so an `android.*` import doesn't compile. |
 | [`feature/<name>/`](../feature/README.md) | One feature's **UI**: its activities, views, layouts and resources | `:domain`, `:ui`; another feature only to start its activity by class |
 | [`ui/`](../ui/README.md) | What every screen shares, UI only: the app-wide theme and colors, shared views and helpers | Android platform APIs |
-| [`platform/`](../platform/README.md) | The **adapters**: port implementations on Android APIs (PackageManager, SharedPreferences, the clock, later WallpaperManager and files) | Android platform APIs, `:domain`, `:ui` |
+| [`platform/`](../platform/README.md) | The **adapters**: port implementations on Android APIs (PackageManager, SharedPreferences, the clock, files) | Android platform APIs, `:domain`, `:ui` |
 | [`app/`](../app/README.md) | The **composition root** (`AppGraph`), which creates the adapters and gives each feature its ports; the application's manifest, icon, version and release build | every module |
 
 Dependencies only point down: `:domain` depends on nothing, no module depends on `:app`, and only
@@ -88,7 +89,7 @@ theme, colors.
 
 Two needs, with one pattern each: a screen that must update while it's shown, because something
 changed (a setting changed in the settings panel, over the home screen), and work too slow for
-the main thread (decoding a wallpaper). Neither may delay a key press.
+the main thread (decoding a picture). Neither may delay a key press.
 
 1. **All state lives on the main thread.** Activities, views and port listeners run there only;
    nothing else reads or writes them, so nothing needs a lock.
@@ -108,8 +109,9 @@ the main thread (decoding a wallpaper). Neither may delay a key press.
    `JobPriority`. A running job isn't interrupted, so a job is small: one image, not all of them.
    A job posts its result to the main thread with a `Handler`. One at a time also bounds memory:
    only one large image is decoded at once.
-4. **The latest request wins.** Each thing a screen loads (its wallpaper) is requested through a
-   small helper that drops any earlier request: one not started yet is cancelled, and the result
+4. **The latest request wins.** Each thing a screen loads (a picture's thumbnail, a preview) is
+   requested through a small helper, `LatestRequest` in `:domain`'s `jobs/`, that drops any
+   earlier request: one not started yet is cancelled, and the result
    of one that finishes late is ignored. The screen stops it in `onStop`, which drops everything.
    What a screen ends up showing depends only on the last request, never on which job finished
    first.
@@ -118,10 +120,11 @@ the main thread (decoding a wallpaper). Neither may delay a key press.
    load and two loads finishing out of order are each tested on the JVM, without waiting
    ([`TESTING.md`](TESTING.md)).
 
-The one job today writes the tiles' images for the next cold start
-([`platform/README.md`](../platform/README.md#writing-adapters)); the app list and the images are
-read on the main thread, as they're quick enough so far. The helper of rule 4 comes with the first
-thing a screen loads in the background, the wallpaper.
+The jobs today write the tiles' images for the next cold start
+([`platform/README.md`](../platform/README.md#writing-adapters)), add and delete the pictures of
+the picture library, and draw the pictures' thumbnails and previews
+([`platform/README.md`](../platform/README.md#pictures)); the app list and the tiles' images are
+read on the main thread, as they're quick enough so far.
 
 ## Appearance
 
@@ -182,14 +185,15 @@ hidden, the clock's side and the time's side, are changed in the settings' appea
 | Change | Where |
 |---|---|
 | A launcher decision (which apps show, sort order, banner choice, validation of a setting) | a rule in `:domain`, plus unit tests next to it |
-| New data the rules or screens need from the device (settings, wallpaper, installed apps) | a port (interface) in `:domain` with a fake in its test fixtures; an adapter in `:platform`, in the package of the port's topic; one line in `AppGraph`; the port in the graph interface of each feature that uses it |
-| An image the UI shows (banners, later the wallpaper) | which image: a model and rule in `:domain` (like `Banner`); drawing it: an adapter in `:platform` behind a port generic in the image type (`AppImages<Bitmap>`), since `:domain` can't name `Bitmap`. It draws at the size shown ([rule 5](#rules)), and is slow work if it's slow ([above](#background-work-and-changes-while-shown)). Kept for the next start, it's a cache adapter in front of the one that draws (`CachedBannerImages`). |
+| New data the rules or screens need from the device (settings, pictures, installed apps) | a port (interface) in `:domain` with a fake in its test fixtures; an adapter in `:platform`, in the package of the port's topic; one line in `AppGraph`; the port in the graph interface of each feature that uses it |
+| An image the UI shows (banners, a picture's thumbnail) | which image: a model and rule in `:domain` (like `Banner`, or a picture's `Framing`); drawing it: an adapter in `:platform` behind a port generic in the image type (`AppImages<Bitmap>`, `PictureImages<Bitmap>`), since `:domain` can't name `Bitmap`. It draws at the size shown ([rule 5](#rules)), and is slow work if it's slow ([above](#background-work-and-changes-while-shown)). Kept for the next start, it's a cache adapter in front of the one that draws (`CachedBannerImages`, `CachedPictureImages`). |
+| A picture the user brings in, and what it's used for | the picture library: `:domain`'s `pictures/` (the models, the rules of framing, limits and formats, and the ports), its adapters in `:platform`'s `pictures/`, its screens in `:feature:pictures` ([`feature/pictures/README.md`](../feature/pictures/README.md)) |
 | How the home screen arranges apps (grid, apps per row, alignment, a carousel) | a `TileLayout` in `:domain`'s `layout/` that computes sizes and positions, and `TileMoves` for where a tile the user moves goes, with unit tests; `TileLayouts` picks it, so everything that shows tiles lays them out alike; the view that shows the tiles only places them where the layout says ([`feature/home/README.md`](../feature/home/README.md#the-home-screen)) |
 | What the user can do while arranging apps (moving, hiding, which key does what to the held app) | `ArrangeSession` in `:domain`'s `arrange/`, with unit tests; `ArrangeMode` in `:feature:home` turns keys into its moves ([`feature/home/README.md`](../feature/home/README.md#arrange-mode)) |
 | Something the home screen's top bar shows (the clock, the settings entry; later status indicators) | a view in `:feature:home`, placed in the bar; device state it shows (the time, the network) comes from a port you can watch ([above](#background-work-and-changes-while-shown)). Details: [`feature/home/README.md`](../feature/home/README.md#the-top-bar) |
 | Something the user can change about how the home screen looks (the tiles' alignment, corner radius, a color) | a value in `Appearance` and an option in its catalog, in `:domain`; the steps and what checks each: [Appearance](#appearance) |
 | A new setting | its entry: `settingsMenu` in `:domain`'s `settings/`, and its label and action in `:feature:settings`; a value it stores comes through a port you can watch, so the screens it affects update while it changes; a screen of its own (a list, like Hide apps) is another activity in `:feature:settings`. Steps: [`feature/settings/README.md`](../feature/settings/README.md#the-settings-panel) |
-| A new screen of its own (e.g. a wallpaper picker) | a new feature module (below) |
+| A new screen of its own (e.g. the picture library) | a new feature module (below) |
 | A shared view, style or UI helper | `:ui`, resources without a prefix |
 | Text the user sees | a string in the `strings.xml` of the module that shows it, with a comment for translators, and in every translation ([`TRANSLATIONS.md`](TRANSLATIONS.md)) |
 | Build or version changes | [`gradle/`](../gradle/README.md); settings every Android module shares: [`build-logic/`](../build-logic/README.md) |

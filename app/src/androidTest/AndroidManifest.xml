@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Another app's pictures, as a gallery shares them: the test package's own provider, in its
+         own process, serving the sample files in assets/pictures/ (SamplePictures). Exported, as
+         the app under test reads it without a grant (the tests send the share from its process). -->
+    <application>
+        <provider
+            android:name="com.luncher.launcher.testing.SamplePictures"
+            android:authorities="${applicationId}.samples"
+            android:exported="true" />
+    </application>
+
+</manifest>

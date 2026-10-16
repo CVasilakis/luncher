@@ -36,7 +36,18 @@ domain/src/
 │   │   ├── AppearanceOptions.kt models and rule: which options the editor lists, in groups
 │   │   └── AppearanceSettings.kt port: the stored appearance, and when it changes
 │   ├── jobs/
-│   │   └── Jobs.kt              port: the background thread; cancelling a queued job; every job's priority (JobPriority)
+│   │   ├── Jobs.kt              port: the background thread; cancelling a queued job; every job's priority (JobPriority)
+│   │   └── LatestRequest.kt     rule: one thing a screen loads in the background, only the latest request counting
+│   ├── pictures/
+│   │   ├── Picture.kt           model: a picture of the library (PictureId, from its content), its name, size as shown, bytes, when added
+│   │   ├── Pictures.kt          port: the library's pictures, deleting them, and when they change
+│   │   ├── PictureImport.kt     port: adding a picture from a source, slow, and how that went (ImportResult)
+│   │   ├── PictureLibrary.kt    rule: the library as its screen shows it, the newest first; the room it takes; the pictures nothing uses
+│   │   ├── PictureLimits.kt     rule: the largest picture the library takes (bytes, megapixels)
+│   │   ├── PictureFormat.kt     model and rule: the formats a TV may not show (HEIF, AVIF), recognized by a file's header
+│   │   ├── Framing.kt           model and rule: how a picture fills a space of another shape (Fit, PicturePosition), and which part of it shows
+│   │   ├── PictureImages.kt     port: a picture drawn at a size with a framing, in the UI's image type; kept or drawn anew
+│   │   └── FolderPictures.kt    port, model and rule: the pictures in the drop folders, their preview, and the order they're listed in
 │   ├── clock/
 │   │   ├── ClockReading.kt      model: the time, time zone and hour format at one moment
 │   │   └── Clock.kt             port: the device's clock, and when what it shows changes
@@ -61,10 +72,13 @@ domain/src/
     ├── appearance/FakeAppearanceSettings.kt  fake of the AppearanceSettings port: the appearance in memory
     ├── appearance/AppearanceChanges.kt       each option at each value but its default: what the catalog-wide tests draw
     ├── clock/FakeClock.kt          fake of the Clock port: a fixed time the test moves
-    └── jobs/ManualJobs.kt          fake of the Jobs port: the queued jobs run when the test says, in the real order
+    ├── jobs/ManualJobs.kt          fake of the Jobs port: the queued jobs run when the test says, in the real order
+    ├── pictures/FakePictures.kt    fake of the Pictures and PictureImport ports: the library in memory, each source's answer set by the test
+    ├── pictures/FakePictureImages.kt  fake of the PictureImages port: draws what the test says, keeps what it drew
+    └── pictures/FakeFolderPictures.kt fake of the FolderPictures port: the drop folders' pictures in memory
 ```
 
-Packages are by topic (`appearance/`, `apps/`, `arrange/`, `clock/`, `jobs/`, `layout/`, `settings/`, and later e.g. `wallpaper/`), each holding the
+Packages are by topic (`appearance/`, `apps/`, `arrange/`, `clock/`, `jobs/`, `layout/`, `pictures/`, `settings/`), each holding the
 models, rules and ports of that topic.
 
 ## Writing models, rules and ports
@@ -77,6 +91,9 @@ models, rules and ports of that topic.
   tested the same way.
 - Ports are interfaces named after what they provide (`InstalledApps`), not how
   (`PackageManagerApps`); adapters in `:platform` implement them. A port whose result is a UI type
-  this module can't name is generic in it (`AppImages<Image>`).
-- A port for state that changes while it's shown (`Clock`, `AppearanceSettings`, `AppArrangements`, `InstalledApps`) is a port you can watch
+  this module can't name is generic in it (`AppImages<Image>`), and so is one that takes an
+  Android type (`PictureImport<Source>`, a Uri in the app). A slow port answers later, on the main
+  thread, through a function it's given (`PictureImport.add`), with a sealed result each screen
+  handles in an exhaustive `when` (`ImportResult`).
+- A port for state that changes while it's shown (`Clock`, `AppearanceSettings`, `AppArrangements`, `InstalledApps`, `Pictures`) is a port you can watch
   ([`ARCHITECTURE.md`](../docs/ARCHITECTURE.md#background-work-and-changes-while-shown)).

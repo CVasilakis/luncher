@@ -16,11 +16,14 @@ app/
 ├── lint.xml                          lint's exceptions for this module's files
 ├── src/test/                         JVM tests of the whole app: ThemesTest (../ui/README.md)
 ├── src/androidTest/                  instrumented tests on the emulator, of every module
+│   ├── AndroidManifest.xml           SamplePictures: the test package's provider of the sample pictures
+│   ├── assets/pictures/              sample pictures, 96 × 54 px, one per format, for PictureFormatsTest
 │   └── java/com/luncher/launcher/
-│       ├── <feature>/                Espresso: one screen, real key events
+│       ├── <feature>/                Espresso: one screen, real key events; pictures/ also which picture
+│       │                             formats this Android version decodes (PictureFormatsTest)
 │       ├── system/                   UI Automator: Home key, other apps
 │       └── testing/                  shared by the tests: waits for the home screen and the focus, keys,
-│                                     RetryWhenCovered, SystemTierFilter; and their own tests
+│                                     RetryWhenCovered, SystemTierFilter, SamplePictures; and their own tests
 ├── src/debug/res/
 │   ├── values/strings.xml            the debug build's name, "Luncher (debug)"
 │   └── drawable/                     its banner and icon: the release's with an amber DEBUG stripe
@@ -52,10 +55,11 @@ built.
 | `supportsRtl="true"` | Luncher follows a right-to-left language set on the device, with no setting of its own, but only where the language should decide. The settings panels mirror. The home screen stays left to right (`layoutDirection="ltr"` on the root of `home_activity.xml`): where its clock, settings entry and tiles go is for settings to decide, not the language, and arrange mode's Left and Right stay the remote's. Texts read in their own direction but line up at their view's start, whatever that direction (`textAlignment` in `Theme.Luncher` and `Theme.Luncher.Settings`): otherwise English app names would sit at the left of a mirrored Hide apps list and Arabic ones at the right. The feature modules declare `supportsRtl` too, for their JVM tests. |
 | `HomeActivity`'s intent filter `MAIN` + `HOME` + `DEFAULT` | Makes Luncher a home screen app. |
 | `HomeActivity`'s intent filter `MAIN` + `LEANBACK_LAUNCHER` | Also lists it as a normal TV app, so it can be opened while another launcher is home. |
+| `SharePictureActivity`'s intent filters `SEND` and `ATTACH_DATA` (`image/*`) | Luncher among the apps a picture can be shared with, or "set as": the way a picture comes into its library without any permission ([`feature/pictures/README.md`](../feature/pictures/README.md#adding-a-picture)). No `VIEW` filter ("Open with"): Luncher would be offered whenever any picture is opened. |
 
 The intent filters are the app's to declare, as its entry points; how the home screen's activity
 behaves is declared with it, in [`:feature:home`](../feature/home/README.md#manifest), and the
-build merges the two. The settings panels' entries:
+build merges the two; the share's, in [`:feature:pictures`](../feature/pictures/README.md#manifest). The settings panels' entries:
 [`:feature:settings`](../feature/settings/README.md#manifest); package visibility:
 [`:platform`](../platform/README.md#manifest).
 

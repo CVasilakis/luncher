@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Full-screen, as the appearance editor: the content inside the TV's overscan margin. -->
+    <dimen name="pictures_margin_horizontal">48dp</dimen>
+    <dimen name="pictures_margin_vertical">32dp</dimen>
+    <!-- Pictures' scrolling page: the scrollbar this far in from the screen's edges, the content
+         the rest of the margin further in. -->
+    <dimen name="pictures_scrollbar_inset">24dp</dimen>
+    <dimen name="pictures_content_inset">24dp</dimen>
+    <dimen name="pictures_title_text">40sp</dimen>
+    <dimen name="pictures_status_text">20sp</dimen>
+    <dimen name="pictures_text">20sp</dimen>
+    <dimen name="pictures_small_text">16sp</dimen>
+    <!-- Below the title and its status line. -->
+    <dimen name="pictures_title_gap">24dp</dimen>
+    <!-- A grid tile: its thumbnail, 16:9, the size the thumbnails are drawn at; the gaps between
+         tiles; between the thumbnail and its name. -->
+    <dimen name="pictures_tile_width">192dp</dimen>
+    <dimen name="pictures_tile_height">108dp</dimen>
+    <dimen name="pictures_tile_gap">24dp</dimen>
+    <dimen name="pictures_tile_text_gap">8dp</dimen>
+    <dimen name="pictures_tile_corner">8dp</dimen>
+    <!-- The focus frame around a thumbnail, and the dashes of the Add from folder tile. -->
+    <dimen name="pictures_frame">3dp</dimen>
+    <dimen name="pictures_dash">8dp</dimen>
+    <dimen name="pictures_dash_line">2dp</dimen>
+    <!-- An entry (Add from folder, Delete unused, a dialog's), as the settings panel's. -->
+    <dimen name="pictures_entry_height">56dp</dimen>
+    <dimen name="pictures_entry_padding">16dp</dimen>
+    <!-- Add from folder: a row of the list at least, and the preview of the selected one beside
+         it at most, 16:9. -->
+    <dimen name="pictures_row_height">72dp</dimen>
+    <dimen name="pictures_preview_width">288dp</dimen>
+    <!-- The preview's column and the gap before it: the list's margin at its end. -->
+    <dimen name="pictures_side_width">320dp</dimen>
+    <!-- A dialog: its width at most, its padding. -->
+    <dimen name="pictures_dialog_width">480dp</dimen>
+    <dimen name="pictures_dialog_padding">24dp</dimen>
+    <dimen name="pictures_dialog_margin">32dp</dimen>
+</resources>

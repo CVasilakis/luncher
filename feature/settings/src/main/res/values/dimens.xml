@@ -3,15 +3,12 @@
 
     <dimen name="settings_panel_width">420dp</dimen>
     <dimen name="settings_panel_padding">24dp</dimen>
-    <dimen name="settings_panel_corner">12dp</dimen>
     <dimen name="settings_title_text">24sp</dimen>
     <!-- Between the title and the first entry. -->
     <dimen name="settings_title_gap">16dp</dimen>
     <dimen name="settings_entry_height">56dp</dimen>
     <dimen name="settings_entry_padding">16dp</dimen>
     <dimen name="settings_entry_text">20sp</dimen>
-    <dimen name="settings_entry_frame">3dp</dimen>
-    <dimen name="settings_entry_corner">8dp</dimen>
     <!-- The Hide apps list: at most six and a half rows tall, then it scrolls; the half row shows
          there's more. On a small screen fewer, so the panel keeps the margin from the screen's
          top and bottom edges. Between an app's name and its state. -->

@@ -46,6 +46,16 @@ class SettingsScreenshotTest {
         activity.window.decorView.captureRoboImage("src/test/screenshots/settings/settings_panel.png")
     }
 
+    // 720p at the 1080p density, 640x360 dp: as many entries as leave the panel its margin, ending
+    // on half an entry; they scroll.
+    @Test
+    @Config(qualifiers = "+w640dp-h360dp")
+    fun settingsPanelOnASmallScreen() {
+        val activity = Robolectric.buildActivity(SettingsActivity::class.java).setup().get()
+
+        activity.window.decorView.captureRoboImage("src/test/screenshots/settings/settings_panel_small_screen.png")
+    }
+
     // Nine apps, two of them hidden, and a name too long for its row: six and a half rows show, the rest scroll.
     @Test
     fun hideAppsPanel() {

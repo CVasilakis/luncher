@@ -19,9 +19,13 @@ ui/
     ├── main/
     │   ├── java/com/luncher/launcher/ui/
     │   │   └── Colors.kt         color(id): a color resource on every API level
-    │   └── res/values/
-    │       ├── colors.xml        background, accent, primary and secondary text
-    │       └── themes.xml        Theme.Luncher, the app's and the home screen's theme
+    │   └── res/
+    │       ├── drawable/         entry_background, a focusable entry's frame while focused; panel_background,
+    │       │                     a floating panel's window (the settings panels, Pictures' dialogs)
+    │       └── values/
+    │           ├── colors.xml    background, accent, primary and secondary text, a panel and its focused entry
+    │           ├── dimens.xml    a panel's corners, an entry's frame
+    │           └── themes.xml    Theme.Luncher, the app's and the home screen's theme
     └── testFixtures/java/com/luncher/launcher/testing/
         ├── TvDevice.kt           the TV screens the JVM tests run on (TV_1080P, TV_SCREENS)
         └── LayoutChecks.kt       the layout tests' checks: bounds, inside, apart, whole text
