@@ -7,7 +7,7 @@ editor. What a feature module holds and may use: [`../README.md`](../README.md);
 | | |
 |---|---|
 | Package | `com.luncher.launcher.settings` |
-| Depends on | `:domain`, `:ui`; `:feature:pictures`, for `PicturesActivity`'s class, which the Pictures entry starts |
+| Depends on | `:domain`, `:ui`; `:feature:pictures`, for the classes of `PicturesActivity`, which the Pictures entry starts, and `ChooseWallpaperActivity`, which the appearance editor's picture starts |
 
 ## Layout
 
@@ -121,8 +121,9 @@ without a picture, its position with the picture stretched) is dimmed, and the f
 The Background group starts with its picture, which isn't an option: its row shows the picture's
 name, or None, and OK on it opens the picture library to choose one
 ([`ChooseWallpaperActivity`](../pictures/README.md#pictures), started by its class), which stores
-the choice; back in the editor, the appearance is read again. The last entry, Reset to defaults, puts every option back.
-Back returns to the settings panel; the home screen shows the result when it comes back.
+the choice; back in the editor (`onResume`), the appearance is read again. The last entry, Reset
+to defaults, puts every option back, and the wallpaper to none. Back returns to the settings
+panel; the home screen shows the result when it comes back.
 
 It's started with `openOwnPanel`, like Hide apps, but covers the settings panel and the home screen
 whole (its theme). In a right-to-left language it mirrors like the other panels: the options at
@@ -142,9 +143,9 @@ they scroll when they're taller than the screen.
 | `AppearancePreviewView` | draws the preview: an illustration, not the real home screen (below) |
 
 **The preview** draws outlines of tiles on the home screen's background (the wallpaper's picture,
-drawn at the sample screen's size in the background's style, in the background, the latest
-request winning, or the plain color), the first one framed and zoomed as focused, and plain blocks for the time, the date and the settings gear: no names, images
-or text. It's a made-up sample, not the user's apps or the TV's shape: a 16:9 screen of 960 by 540
+drawn at the sample screen's size in the background's style, or the plain color), the first one
+framed and zoomed as focused, and plain blocks for the time, the date and the settings gear: no
+names, images or text. It's a made-up sample, not the user's apps or the TV's shape: a 16:9 screen of 960 by 540
 dp with seven tiles, a full row and a short one, so that every option's values look different. It
 lays them out with `TileLayouts` and `topBarLayout` at its own density (its pixels per sample dp),
 so every dp value scales with it and it can't disagree with the home screen. It isn't focusable.
@@ -154,5 +155,7 @@ its labels go in `label` and `valueLabel`, in every translation.
 
 What keeps it light: the preview draws from shapes it keeps, made anew only when the part of the
 appearance they come from changes (compared with `==`), so a new corner radius lays out nothing,
-and drawing allocates nothing. Only the options' rows are views; the preview is one view. Nothing
-of the home screen runs meanwhile.
+and drawing allocates nothing. The wallpaper's picture is drawn in the background, the latest
+request winning, read at once if it was drawn at the preview's size before, and dropped when the
+editor stops. Only the options' rows are views; the preview is one view. Nothing of the home
+screen runs meanwhile.

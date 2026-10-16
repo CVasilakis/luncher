@@ -1,7 +1,7 @@
 # feature/home/
 
 The home screen, `:feature:home`: the top bar with the time and the settings entry, the app tiles,
-and arrange mode. What a feature module holds and may use: [`../README.md`](../README.md); the
+arrange mode, and the wallpaper behind them. What a feature module holds and may use: [`../README.md`](../README.md); the
 rules it follows: [`../../docs/ARCHITECTURE.md`](../../docs/ARCHITECTURE.md).
 
 | | |
@@ -26,7 +26,7 @@ feature/home/
     │   │   ├── AppTilesView.kt   places the tiles where the domain's TileLayout says; scrolls
     │   │   ├── AppTileView.kt    one app: its image, focus frame and zoom; held or hidden while arranging
     │   │   ├── TilePaints.kt     what every tile draws with: frames, dimming, the corners
-│   │   ├── HomeWallpaper.kt  the wallpaper, the window's background: read at once if drawn before, else drawn in a job
+    │   │   ├── HomeWallpaper.kt  the wallpaper, the window's background: read at once if drawn before, else drawn in a job
     │   │   └── ArrangeMode.kt    arrange mode: keys to the domain's ArrangeSession, the shelf, the top bar's title and hint
     │   └── res/                  the focused tile's zoom (animator/), the settings gear and its focus
     │                             disc, home_activity.xml, home_* dimensions and strings, and their
@@ -39,7 +39,7 @@ feature/home/
 
 Everything but `HomeActivity` and `HomeGraph` is `internal`. The JVM tests' `TestHomeGraph` has
 fakes of the ports but the real `BannerImages`, so the screenshots show tiles as the app draws
-them.
+them; the screenshots of a wallpaper draw it with the real `FilePictureImages` too.
 
 ## Manifest
 
@@ -142,8 +142,9 @@ screen reads an equal appearance. What a change costs depends on the part:
 | `TopBarAppearance` | `TopBarView.appearance` | the bar's items moved (focus on the gear stays), and a layout pass of the bar only |
 | `Background` | `HomeWallpaper.show` | the window's background: the picture drawn at the screen's size, read from what an earlier start drew or drawn in the background ([below](#the-wallpaper)); nothing else is laid out or drawn anew |
 
-The appearance editor covers the home screen whole, so the home screen is stopped while the user
-changes it, and applies the result once, when it comes back
+The appearance editor, and Pictures, where a picture can be made the wallpaper, cover the home
+screen whole, so the home screen is stopped while the user changes it, and applies the result
+once, when it comes back
 ([`ARCHITECTURE.md`](../../docs/ARCHITECTURE.md#appearance)).
 
 Where the tiles go is the layout's decision (`TileLayouts`, from the geometry's alignments): rows

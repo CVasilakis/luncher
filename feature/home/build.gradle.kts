@@ -16,7 +16,8 @@ dependencies {
 
     testImplementation(testFixtures(project(":domain")))
     testImplementation(testFixtures(project(":ui")))
-    // The real BannerImages, so the screenshots show tiles as the app draws them.
+    // The real BannerImages and FilePictureImages, so the screenshots show tiles and a wallpaper
+    // as the app draws them.
     testImplementation(project(":platform"))
     testImplementation(libs.junit)
     testImplementation(libs.robolectric)

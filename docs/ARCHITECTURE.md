@@ -29,8 +29,8 @@ slow CPU and storage). Two goals shape the structure:
 | [`app/`](../app/README.md) | The **composition root** (`AppGraph`), which creates the adapters and gives each feature its ports; the application's manifest, icon, version and release build | every module |
 
 Dependencies only point down: `:domain` depends on nothing, no module depends on `:app`, and only
-`:app` depends on `:platform` (and `:feature:home`'s JVM tests, which draw tiles with the real
-`BannerImages`). A decision made in `:domain` is testable in milliseconds on the JVM,
+`:app` depends on `:platform` (and `:feature:home`'s JVM tests, which draw tiles and a wallpaper
+with the real `BannerImages` and `FilePictureImages`). A decision made in `:domain` is testable in milliseconds on the JVM,
 and survives a rewrite of the UI. The build files set every boundary, so the compiler enforces
 them: a feature can't name an adapter or another feature's views, since it doesn't depend on
 them or they're `internal` there. The settings every Android module's build shares are in
@@ -52,7 +52,7 @@ string wouldn't. Such links go one way; one that would close a cycle goes throug
 
 Resources are named after their feature (`home_activity.xml`, `home_apps`, `home_no_apps`), since
 the app's resources all end up in one namespace. Only `:ui`'s app-wide resources have no prefix:
-theme, colors.
+the theme, colors, and the look of a panel and its focused entry.
 
 ## Rules
 
@@ -120,12 +120,10 @@ the main thread (decoding a picture). Neither may delay a key press.
    load and two loads finishing out of order are each tested on the JVM, without waiting
    ([`TESTING.md`](TESTING.md)).
 
-The jobs today write the tiles' images for the next cold start
-([`platform/README.md`](../platform/README.md#writing-adapters)), add and delete the pictures of
-the picture library, and draw the pictures' thumbnails and previews, and the home screen's
-wallpaper when it isn't drawn yet ([`platform/README.md`](../platform/README.md#pictures)); the app
-list, the tiles' images and a wallpaper drawn before are read on the main thread, as they're quick
-enough so far.
+Every kind of job has its priority in `JobPriority`, which lists them all; what each one does is
+in the README of the module that runs it ([`platform/`](../platform/README.md), the features). What
+a screen needs at once (the app list, the tiles' images, a wallpaper drawn before) is read on the
+main thread, as it's quick enough.
 
 ## Appearance
 
@@ -155,7 +153,8 @@ a test.
 4. **One port you can watch stores the whole `Appearance`**
    ([above](#background-work-and-changes-while-shown)). Its adapter in `:platform` keeps one value
    per option, under a key it assigns in an exhaustive `when`; a value it doesn't know (stored by
-   an older or newer version) becomes that option's default, and nothing else changes.
+   an older or newer version) becomes that option's default, and nothing else changes. A value
+   that isn't an option (the wallpaper's picture, below) has a key of its own.
 5. **The home screen applies a change once, not at every step.** A screen where the user changes
    the appearance covers the home screen whole, so the home screen is stopped meanwhile, doesn't
    listen, and applies the result when it comes back (a tile size's steps would otherwise redraw

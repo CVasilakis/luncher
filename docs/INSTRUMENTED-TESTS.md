@@ -146,8 +146,11 @@ The picture library's tests (`pictures/`) add pictures as another app shares the
 Kotlin standard library (the test APK leaves out what the app under test has), so it's written in
 Java. It's exported: the shares are sent from the app's own process, which the instrumentation runs
 in, and couldn't grant access to another package's provider. The tests add into folders of their
-own (`FilesPictures` and `MediaFolderPictures` take them as parameters), never the device's
-library or drop folder, and delete them after.
+own (`FilesPictures` and `MediaFolderPictures` take them as parameters): a library of their own,
+and a folder of their own inside the drop folder, never the device's library or the files in its
+drop folder; they delete them after. A share that Luncher may read but not pass on (a picture of
+the device's media store, which Luncher has no access to) is sent as "Set as" (`ATTACH_DATA`):
+Android adds a read grant to a Share's stream itself, which the test's sender couldn't give.
 
 `PictureFormatsTest` checks which sample decodes on the device's Android version. There's no HEIF
 sample: nothing on the development machine can write one, and a phone's photo carries its owner's

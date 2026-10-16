@@ -38,7 +38,7 @@ domain/src/
 │   │   └── AppearanceSettings.kt port: the stored appearance, and when it changes
 │   ├── jobs/
 │   │   ├── Jobs.kt              port: the background thread; cancelling a queued job; every job's priority (JobPriority)
-│   │   └── LatestRequest.kt     rule: one thing a screen loads in the background, only the latest request counting
+│   │   └── LatestRequest.kt     helper: one thing a screen loads in the background, only the latest request counting
 │   ├── pictures/
 │   │   ├── Picture.kt           model: a picture of the library (PictureId, from its content), its name, size as shown, bytes, when added
 │   │   ├── Pictures.kt          port: the library's pictures, deleting them, and when they change
@@ -81,8 +81,8 @@ domain/src/
     └── pictures/FakeFolderPictures.kt fake of the FolderPictures port: the drop folders' pictures in memory
 ```
 
-Packages are by topic (`appearance/`, `apps/`, `arrange/`, `clock/`, `jobs/`, `layout/`, `pictures/`, `settings/`), each holding the
-models, rules and ports of that topic.
+Packages are by topic (`appearance/`, `apps/`, `arrange/`, `clock/`, `jobs/`, `layout/`,
+`pictures/`, `settings/`), each holding the models, rules and ports of that topic.
 
 ## Writing models, rules and ports
 
@@ -90,13 +90,19 @@ models, rules and ports of that topic.
 - Rules are plain functions or classes that take models and return models. They have no side effects,
   so they're testable without fakes. The exceptions are the rules that follow the user's key
   presses, `ArrangeSession` and `TileFocus`: they keep state (the held app, the last move) and
-  change it in place, so a key press allocates nothing ([`ARCHITECTURE.md`](../docs/ARCHITECTURE.md#rules), rule 5). It's still pure Kotlin,
-  tested the same way.
+  change it in place, so a key press allocates nothing
+  ([`ARCHITECTURE.md`](../docs/ARCHITECTURE.md#rules), rule 5). It's still pure Kotlin, tested the
+  same way.
+- A helper the screens share that isn't a rule lives with its topic too: `LatestRequest`, in
+  `jobs/`, the "latest request wins" of
+  [`ARCHITECTURE.md`](../docs/ARCHITECTURE.md#background-work-and-changes-while-shown), built on the
+  `Jobs` port and tested with `ManualJobs`.
 - Ports are interfaces named after what they provide (`InstalledApps`), not how
   (`PackageManagerApps`); adapters in `:platform` implement them. A port whose result is a UI type
   this module can't name is generic in it (`AppImages<Image>`), and so is one that takes an
   Android type (`PictureImport<Source>`, a Uri in the app). A slow port answers later, on the main
   thread, through a function it's given (`PictureImport.add`), with a sealed result each screen
   handles in an exhaustive `when` (`ImportResult`).
-- A port for state that changes while it's shown (`Clock`, `AppearanceSettings`, `AppArrangements`, `InstalledApps`, `Pictures`) is a port you can watch
+- A port for state that changes while it's shown (`Clock`, `AppearanceSettings`, `AppArrangements`,
+  `InstalledApps`, `Pictures`) is a port you can watch
   ([`ARCHITECTURE.md`](../docs/ARCHITECTURE.md#background-work-and-changes-while-shown)).

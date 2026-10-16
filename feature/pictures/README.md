@@ -1,7 +1,7 @@
 # feature/pictures/
 
-The picture library's screens, `:feature:pictures`: Pictures, Add from folder, and the way in for
-a picture another app shares. What a feature module holds and may use: [`../README.md`](../README.md);
+The picture library's screens, `:feature:pictures`: Pictures, choosing the wallpaper in it, Add
+from folder, and the way in for a picture another app shares. What a feature module holds and may use: [`../README.md`](../README.md);
 the rules it follows: [`../../docs/ARCHITECTURE.md`](../../docs/ARCHITECTURE.md).
 
 | | |
@@ -46,7 +46,7 @@ declares how the activities behave, and the build merges the two.
 | Element | Reason (don't remove without replacing it) |
 |---|---|
 | `PicturesActivity`, `ChooseWallpaperActivity`, `AddFromFolderActivity`: `exported="false"` | Only Luncher opens them: the settings panel, the appearance editor, Pictures, and `SharePictureActivity` with a shared picture. |
-| `PicturesActivity`, `AddFromFolderActivity`: `Theme.Luncher.Pictures` | Full-screen and opaque, on the home screen's background, like the appearance editor. |
+| `PicturesActivity`, `ChooseWallpaperActivity`, `AddFromFolderActivity`: `Theme.Luncher.Pictures` | Full-screen and opaque, on the home screen's background, like the appearance editor. |
 | `SharePictureActivity`: `exported="true"` | Other apps' shares arrive there. |
 | `SharePictureActivity`: `Theme.Luncher.Pictures.NoDisplay`, `noHistory`, `excludeFromRecents` | It shows nothing, and finishes in `onCreate`, before `onResume`, as a `windowNoDisplay` activity must; its backgrounds are still the home screen's dark ones, in case a device shows one ([`ui/README.md`](../../ui/README.md#the-theme)). |
 | `supportsRtl="true"` | As the app declares it ([why](../../app/README.md#manifest-why-each-part-is-there)), so the JVM tests mirror the screens in a right-to-left language as the app does. |
@@ -76,7 +76,7 @@ like the settings panels; the pictures don't.
 
 **Choosing the wallpaper** (`ChooseWallpaperActivity`, Pictures opened from the appearance editor's
 Background group): the title says so, a first tile, No picture, chooses none, and OK on a picture
-makes it the wallpaper; either closes the screen. It's a class of its own, so the editor starts it
+makes it the wallpaper; either closes the screen. Delete unused isn't offered there. It's a class of its own, so the editor starts it
 by its class alone ([`ARCHITECTURE.md`](../../docs/ARCHITECTURE.md#features)).
 
 All thumbnails are read at once when the screen shows, from what `CachedPictureImages` kept, on the
@@ -93,20 +93,23 @@ passes it, with the read access the other app gave, to Pictures, and finishes at
 adds it, saying so below the title meanwhile, and selects it, or says why it couldn't. A picture
 the library has already (the same content) is selected, and nothing is said. An intent with no
 picture it can pass on (none in it, or one the other app gave no access to, which Android won't
-let Luncher pass on) becomes the message that Luncher can't read it, never a crash. What the Uri points to is
-the library's to judge: a `file://` one, as Android up to 9 shares files, can't be read without a
-storage permission, and the message says to use a drop folder instead, with its path.
+let Luncher pass on) becomes the message that Luncher can't read it, never a crash. What the Uri
+points to is the library's to judge ([`platform/README.md`](../../platform/README.md#pictures)): a
+`file://` one, as Android up to 9 shares files, gets the message that says to use a drop folder
+instead, with its path.
 
 **From a drop folder** (`AddFromFolderActivity`): the pictures a file manager or a computer put in
 `Android/media/<applicationId>`, on the TV or a USB drive, listed the TV's first, then the drives',
 each by name (`inListOrder`), with a preview of the selected one beside them, drawn in the
 background. OK returns the picture to Pictures, which adds it as a shared one. A file in a format
-this TV can't show (HEIF before API 28, AVIF before API 33) is listed, marked, and OK on it says so;
+this TV can't show ([which](../../platform/README.md#pictures)) is listed, marked, and OK on it says so;
 anything else that isn't a picture isn't listed. The folders are read again each time the screen
 shows, so a USB drive plugged in meanwhile counts. On a screen too short for the preview and its
 note, the preview gets smaller (`PreviewColumn`).
 
-To try it on an emulator, put a picture in the debug build's drop folder:
+To try it on an emulator, put a picture in the debug build's drop folder, up to API 34 (from
+Android 16 on Luncher can't read a file adb put there either,
+[`platform/README.md`](../../platform/README.md#the-drop-folders); share one instead):
 
 ```bash
 adb push holiday.jpg /sdcard/Android/media/com.luncher.launcher.debug/
@@ -114,8 +117,8 @@ adb push holiday.jpg /sdcard/Android/media/com.luncher.launcher.debug/
 
 ## What keeps it light
 
-- **Nothing runs while it's hidden.** The library is followed from `onStart` to `onStop`, and the
-  thumbnails and previews being drawn are dropped in `onStop`.
+- **Nothing runs while it's hidden.** The library and the appearance are followed from `onStart`
+  to `onStop`, and the thumbnails and previews being drawn are dropped in `onStop`.
 - **Pictures are decoded at the size shown**, one at a time on the background thread, and freed
   once drawn ([`platform/README.md`](../../platform/README.md#pictures)): a 12 MP photo is never
   held whole.

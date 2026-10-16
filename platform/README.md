@@ -1,8 +1,8 @@
 # platform/
 
 The adapters, `:platform`: the domain's ports implemented on Android APIs (PackageManager,
-SharedPreferences, the system clock and its broadcasts, files), and the images the screens show. Only
-`:app` depends on this module; `AppGraph` there creates the adapters, and the features see the
+SharedPreferences, the system clock and its broadcasts, files), and the images the screens show.
+Only `:app` depends on this module; `AppGraph` there creates the adapters, and the features see the
 ports only, so a screen can't call an Android data API or create an adapter itself. Why, and the
 rules adapters follow: [`../docs/ARCHITECTURE.md`](../docs/ARCHITECTURE.md).
 
@@ -34,7 +34,7 @@ platform/
     │   │   ├── pictures/
     │   │   │   ├── FilesPictures.kt                 Pictures and PictureImport<Uri> on files: the library's pictures and their index
     │   │   │   ├── MediaFolderPictures.kt           FolderPictures<Uri, Bitmap> in the drop folders, Android/media/<applicationId>
-    │   │   │   ├── FilePictureImages.kt             PictureImages<Bitmap>: draws a picture of the library, framed, at a size
+    │   │   │   ├── FilePictureImages.kt             PictureImages<Bitmap>: draws a picture of the library at a size, framed, dimmed, blurred
     │   │   │   ├── CachedPictureImages.kt           PictureImages<Bitmap> in front of FilePictureImages: what it drew kept in files
     │   │   │   ├── PictureFiles.kt                  reading a picture file: its size, upright, its format; drawing it framed in ARGB_8888
     │   │   │   └── JpegOrientation.kt               a JPEG's orientation tag, read without ExifInterface
@@ -44,8 +44,8 @@ platform/
     └── test/java/…/              JVM tests (Robolectric), same packages as the code
 ```
 
-Packages follow `:domain`'s topics (`appearance/`, `apps/`, `clock/`, `jobs/`, `pictures/`, and later e.g. `network/`),
-so the adapter of `com.luncher.domain.clock.Clock` is in `clock/`. What two topics' adapters share
+Packages follow `:domain`'s topics (`appearance/`, `apps/`, `clock/`, `jobs/`, `pictures/`, and
+later e.g. `network/`), so the adapter of `com.luncher.domain.clock.Clock` is in `clock/`. What two topics' adapters share
 is in a package of its own (`images/`: the caches' file format).
 
 ## Writing adapters
@@ -130,8 +130,8 @@ adapters on files, and a cache:
 card (`Context.getExternalMediaDirs()`, which creates them): a file manager on the TV, or a computer
 writing a USB drive, puts pictures there, and Luncher reads them without any permission. Not
 `Android/data/<applicationId>`, which file managers can't write from Android 11 on. From Android
-16 on, a file another app put there can't be read; `MediaFolderPictures` lists only what it can
-read, so there a picture comes in through a share.
+16 on, a file another app (or adb) put there can't be read; `MediaFolderPictures` lists only what
+it can read, so there a picture comes in through a share.
 
 ## Manifest
 

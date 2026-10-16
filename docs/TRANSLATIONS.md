@@ -17,18 +17,20 @@ written so that it translates well, and what a new string or language needs.
 | `:app` | the app's name | `translatable="false"`: a name, the same in every language |
 
 Strings stay with the screen that shows them, each module's prefixed with its name (`home_…`,
-`settings_…`, `pictures_…`), and each translation sits next to its English, in `values-<language>/`. A string
-both screens show ("Settings", "Hidden") is in each, so either module's translation is complete on
-its own.
+`settings_…`, `pictures_…`), and each translation sits next to its English, in
+`values-<language>/`. A string two modules show ("Settings", "Hidden", "Pictures") is in each, so
+each module's translation is complete on its own.
 
 `:domain` has no text: it returns data (`SettingsEntry.HideApps`, whether every app is hidden),
 and the screens turn it into strings. Texts that aren't Luncher's come in the device's language
 already: the apps' names, from Android, which `:domain` sorts as that language sorts words
-(`LabelOrder`: "Άρης" after "Αθήνα" in Greek), and the time and date, which `ClockView` formats
-with the language's own patterns.
+(`LabelOrder`: "Άρης" after "Αθήνα" in Greek), the time and date, which `ClockView` formats
+with the language's own patterns, a file's size, which Android formats (`Formatter`), and the
+pictures' names, which are their files'.
 
-A right-to-left language mirrors the settings panels but not the home screen, nor the appearance
-editor's preview of it ([`app/README.md`](../app/README.md#manifest-why-each-part-is-there)).
+A right-to-left language mirrors the settings panels and the picture library's screens, but not
+the home screen, nor the appearance editor's preview of it, nor a picture
+([`app/README.md`](../app/README.md#manifest-why-each-part-is-there)).
 
 ## Writing a string
 
