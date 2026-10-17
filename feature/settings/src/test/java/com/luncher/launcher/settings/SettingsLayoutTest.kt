@@ -150,7 +150,9 @@ class SettingsLayoutTest(private val screen: TvScreen) {
         // the date): then around to the first. The next value is toward the arrow on its side:
         // Left when mirrored.
         val next = if (options.layoutDirection == View.LAYOUT_DIRECTION_RTL) KeyEvent.KEYCODE_DPAD_LEFT else KeyEvent.KEYCODE_DPAD_RIGHT
-        val catalog = appearanceOptions().groups
+        // The background's group is one entry, edited in its own screen (BackgroundLayoutTest).
+        val catalog = appearanceOptions().groups.filter { !it.editedApart }
+        children.mapNotNull { it.findViewById<TextView>(R.id.settings_apart_title) }.forEach { assertWhole(screen, it) }
         for ((index, group) in groups.withIndex()) {
             assertTrue(group.requestFocus())
             activity.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DPAD_CENTER))
@@ -163,7 +165,6 @@ class SettingsLayoutTest(private val screen: TvScreen) {
                 if (child is TextView) assertWhole(screen, child)
             }
             assertWhole(screen, group.findViewById(R.id.settings_group_title))
-            shown.mapNotNull { it.findViewById<TextView>(R.id.settings_picture_label) }.forEach { assertWhole(screen, it) }
             val rows = shown.filter { it.findViewById<View>(R.id.settings_option_value) != null }
             for ((i, pair) in rows.zip(catalog[index].options).withIndex()) {
                 val (row, option) = pair

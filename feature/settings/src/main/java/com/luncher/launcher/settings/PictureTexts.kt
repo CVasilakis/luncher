@@ -40,21 +40,7 @@ internal fun Context.whyNotAdded(result: ImportResult): String? = when (result) 
     ImportResult.NoSpace -> getString(R.string.settings_pictures_no_space)
 }
 
-/** What a picture is used for, as its tile says it: the uses, or that it has none. */
-internal fun Context.useOf(uses: List<PictureUse>): String =
-    if (uses.isEmpty()) getString(R.string.settings_pictures_not_in_use) else getString(R.string.settings_pictures_in_use, uses.joinToString { nameOf(it) })
-
-/** A use's name. */
-internal fun Context.nameOf(use: PictureUse): String = when (use) {
-    PictureUse.Wallpaper -> getString(R.string.settings_pictures_wallpaper)
-}
-
 /** What deleting a picture with [use] does to it, said before deleting. */
 internal fun Context.afterDeleting(use: PictureUse): String = when (use) {
     PictureUse.Wallpaper -> getString(R.string.settings_pictures_delete_wallpaper)
-}
-
-/** The title of Pictures opened to choose a picture for [use]. */
-internal fun Context.chooseTitle(use: PictureUse): String = when (use) {
-    PictureUse.Wallpaper -> getString(R.string.settings_pictures_choose_wallpaper)
 }

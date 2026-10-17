@@ -56,21 +56,27 @@ class AppearanceActivityTest {
     /** The options' rows, shown or not. */
     private fun AppearanceActivity.rows() = children().filter { it.findViewById<View>(R.id.settings_option_value) != null }
 
-    /** What shows: each group's title, "open" after it while its options show; each option as "Label: value"; the last entry. */
+    /**
+     * What shows: each group's title, "open" after it while its options show; each option as
+     * "Label: value"; a group edited apart as "Title: its picture"; the last entry.
+     */
     private fun AppearanceActivity.lines() = children().filter { it.visibility == View.VISIBLE }.map { child ->
         val title = child.findViewById<TextView>(R.id.settings_group_title)
         val value = child.findViewById<TextView>(R.id.settings_option_value)
-        val picture = child.findViewById<TextView>(R.id.settings_picture_value)
+        val apart = child.findViewById<TextView>(R.id.settings_apart_title)
         when {
             title != null -> if (child.findViewById<View>(R.id.settings_group_arrow).rotation != 0f) "${title.text} open" else title.text.toString()
             value != null -> "${child.findViewById<TextView>(R.id.settings_option_label).text}: ${value.text}"
-            picture != null -> "Picture: ${picture.text}"
+            apart != null -> "${apart.text}: ${child.findViewById<TextView>(R.id.settings_apart_value).text}"
             else -> (child as TextView).text.toString()
         }
     }
 
+    /** The entry of the group titled [title], edited here or apart. */
     private fun AppearanceActivity.group(title: String) =
-        children().single { it.findViewById<TextView>(R.id.settings_group_title)?.text?.toString() == title }
+        children().single { child ->
+            listOf(R.id.settings_group_title, R.id.settings_apart_title).any { child.findViewById<TextView>(it)?.text?.toString() == title }
+        }
 
     private fun AppearanceActivity.row(label: String) =
         rows().single { it.findViewById<TextView>(R.id.settings_option_label).text.toString() == label }
@@ -97,7 +103,7 @@ class AppearanceActivityTest {
 
     @Test
     fun `lists the groups, their options hidden, then the reset entry`() {
-        assertEquals(listOf("Tiles", "Status bar", "Background", "Reset to defaults"), start().lines())
+        assertEquals(listOf("Tiles", "Status bar", "Background: None", "Reset to defaults"), start().lines())
     }
 
     @Test
@@ -113,7 +119,7 @@ class AppearanceActivityTest {
         assertEquals(
             listOf(
                 "Tiles open", "Vertical alignment: Bottom", "Horizontal alignment: Center", "Full bottom row: On",
-                "Corner radius: 12 dp", "Status bar", "Background", "Reset to defaults",
+                "Corner radius: 12 dp", "Status bar", "Background: None", "Reset to defaults",
             ),
             activity.lines(),
         )
@@ -121,79 +127,33 @@ class AppearanceActivityTest {
 
         activity.toggle("Status bar")
         assertEquals(
-            listOf("Tiles", "Status bar open", "Time: Shown", "Date: Shown", "Side: Left", "Order: Time first", "Background", "Reset to defaults"),
+            listOf("Tiles", "Status bar open", "Time: Shown", "Date: Shown", "Side: Left", "Order: Time first", "Background: None", "Reset to defaults"),
             activity.lines(),
         )
 
         activity.toggle("Status bar")
-        assertEquals(listOf("Tiles", "Status bar", "Background", "Reset to defaults"), activity.lines())
+        assertEquals(listOf("Tiles", "Status bar", "Background: None", "Reset to defaults"), activity.lines())
     }
 
     @Test
-    fun `the background starts with its picture, none at first, its options dimmed and passed by`() {
-        val activity = start()
+    fun `the background is one entry, its picture's name beside it`() {
+        assertEquals("Background: None", start().lines()[2])
 
-        activity.toggle("Background")
-
-        assertEquals(
-            listOf("Tiles", "Status bar", "Background open", "Picture: None", "Fit: Fill", "Position: Center", "Dim: 0 %", "Blur: Off", "Reset to defaults"),
-            activity.lines(),
-        )
-        for (label in listOf("Fit", "Position", "Dim", "Blur")) assertFalse(label, activity.row(label).isFocusable)
-    }
-
-    @Test
-    fun `with a picture, names it, and its options can be changed`() {
         settings.appearance = Appearance(background = Background(picture = SAMPLE_WALLPAPER, dim = 40, blur = Blur.LIGHT))
-        val activity = start()
-
-        activity.focus("Background", "Dim")
-        activity.press(KeyEvent.KEYCODE_DPAD_RIGHT)
-
-        assertEquals("Picture: sunset.jpg", activity.lines()[3])
-        assertEquals("60 %", activity.value("Dim"))
-        assertEquals(60, settings.appearance.background.dim)
-        assertEquals("Light", activity.value("Blur"))
+        assertEquals("Background: sunset.jpg", start().lines()[2])
     }
 
     @Test
-    fun `stretched, the position is dimmed`() {
-        settings.appearance = Appearance(background = Background(picture = SAMPLE_WALLPAPER, fit = Fit.STRETCH))
-        val activity = start()
-
-        activity.toggle("Background")
-
-        assertFalse(activity.row("Position").isFocusable)
-        assertTrue(activity.row("Fit").isFocusable)
-    }
-
-    @Test
-    fun `OK on the picture opens the picture library to choose the wallpaper, and shows the choice after`() {
+    fun `OK on the background opens the background editor, and shows what it saved after`() {
         val controller = Robolectric.buildActivity(AppearanceActivity::class.java).setup()
         val activity = controller.get()
-        activity.toggle("Background")
 
-        activity.children().single { it.findViewById<View>(R.id.settings_picture_value) != null }.performClick()
+        activity.group("Background").performClick()
 
-        assertEquals(ChooseWallpaperActivity::class.java.name, shadowOf(activity).nextStartedActivity.component?.className)
-        settings.appearance = Appearance(background = Background(picture = SAMPLE_WALLPAPER))   // chosen there
-        controller.pause().resume()   // back before it was stopped, as a quick choice can be
-        assertEquals("Picture: sunset.jpg", activity.lines()[3])
-    }
-
-    @Test
-    fun `the preview shows the wallpaper once it's drawn, the latest one`() {
-        val graph = (RuntimeEnvironment.getApplication() as SettingsTestApplication).graph as TestSettingsGraph
-        settings.appearance = Appearance(background = Background(picture = SAMPLE_WALLPAPER))
-        val activity = start()
-        activity.focus("Background", "Dim")
-        activity.press(KeyEvent.KEYCODE_DPAD_RIGHT)
-        activity.press(KeyEvent.KEYCODE_DPAD_RIGHT)
-
-        graph.jobs.runAll()
-        shadowOf(Looper.getMainLooper()).idle()
-
-        assertEquals(listOf(40), graph.pictureImages.rendered.map { it.second.dim })
+        assertEquals(BackgroundActivity::class.java.name, shadowOf(activity).nextStartedActivity.component?.className)
+        settings.appearance = Appearance(background = Background(picture = SAMPLE_WALLPAPER))   // saved there
+        controller.pause().resume()   // back before it was stopped, as a quick save can be
+        assertEquals("Background: sunset.jpg", activity.lines()[2])
     }
 
     @Test

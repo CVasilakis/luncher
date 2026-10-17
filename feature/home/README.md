@@ -142,8 +142,7 @@ screen reads an equal appearance. What a change costs depends on the part:
 | `TopBarAppearance` | `TopBarView.appearance` | the bar's items moved (focus on the gear stays), and a layout pass of the bar only |
 | `Background` | `HomeWallpaper.show` | the window's background: the picture kept at the screen's size, or drawn again in the background while a window says so ([below](#the-wallpaper)); nothing else is laid out or drawn anew |
 
-The appearance editor, and Pictures, where a picture can be made the wallpaper, cover the home
-screen whole, so the home screen is stopped while the user changes it, and applies the result
+The appearance editor, and the background editor it opens, cover the home screen whole, so the home screen is stopped while the user changes it, and applies the result
 once, when it comes back
 ([`ARCHITECTURE.md`](../../docs/ARCHITECTURE.md#appearance)).
 
@@ -180,9 +179,12 @@ done. Meanwhile the home screen shows its plain color, and a window over it (`Wo
 stuck: "Fitting the background to this screen…" for a screen of another size (the TV switched to
 4K, say), "Updating the background…" when the one kept is of something else, was drawn by another
 version, or is lost. The window shows for half a second at least, so it never just flashes. A
-drawing goes on when the home screen stops, and shows when it's back.
+drawing goes on when the home screen stops, and shows when it's back. A wallpaper saved in the
+background editor is drawn the same way; if the user goes home before it's done, the window says
+"Applying effects…", as the editor's did.
 
-A picture that's gone (deleted in Pictures, which sets the wallpaper to none, or its file lost) is
+A picture that's gone (deleted in the background editor, which sets the wallpaper to none, or its
+file lost) is
 no wallpaper, and without one, none is kept. The wallpaper takes about 8 MB of memory at 1080p
 while shown.
 

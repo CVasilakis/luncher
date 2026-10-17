@@ -6,7 +6,6 @@
     <string name="settings_hidden">مخفي</string>
     <string name="settings_no_apps">لا توجد تطبيقات تلفزيون مثبّتة</string>
     <string name="settings_appearance">المظهر</string>
-    <string name="settings_pictures">الصور</string>
     <string name="settings_appearance_tiles">المربعات</string>
     <string name="settings_appearance_top_bar">شريط الحالة</string>
     <string name="settings_appearance_vertical_alignment">المحاذاة العمودية</string>
@@ -47,43 +46,19 @@
     <string name="settings_system">إعدادات النظام</string>
     <string name="settings_system_unavailable">لا يتوفّر تطبيق إعدادات على هذا الجهاز</string>
 
-    <!-- The picture library's screens: Pictures, Add from folder, and a share's messages. -->
-    <string name="settings_pictures_title">الصور</string>
-    <plurals name="settings_pictures_count">
-        <item quantity="zero">لا صور · <xliff:g id="size" example="0 MB">%2$s</xliff:g></item>
-        <item quantity="one">صورة واحدة · <xliff:g id="size" example="9.8 MB">%2$s</xliff:g></item>
-        <item quantity="two">صورتان · <xliff:g id="size" example="9.8 MB">%2$s</xliff:g></item>
-        <item quantity="few"><xliff:g id="count" example="4">%1$d</xliff:g> صور · <xliff:g id="size" example="9.8 MB">%2$s</xliff:g></item>
-        <item quantity="many"><xliff:g id="count" example="11">%1$d</xliff:g> صورة · <xliff:g id="size" example="9.8 MB">%2$s</xliff:g></item>
-        <item quantity="other"><xliff:g id="count" example="100">%1$d</xliff:g> صورة · <xliff:g id="size" example="9.8 MB">%2$s</xliff:g></item>
-    </plurals>
-    <string name="settings_pictures_none">لا توجد صور بعد</string>
+    <string name="settings_background_hint">اضغط مطولًا على OK فوق صورة لحذفها</string>
+    <string name="settings_background_save">حفظ</string>
+    <string name="settings_background_applying">جارٍ تطبيق التأثيرات…</string>
+
     <string name="settings_pictures_adding">جارٍ إضافة صورة…</string>
     <string name="settings_pictures_how">لإضافة صورة:</string>
     <string name="settings_pictures_how_share">• في مدير ملفات أو معرض، اختر «مشاركة» على صورة، ثم Luncher.</string>
     <string name="settings_pictures_how_folder">• أو انسخ الصور إلى هذا المجلد، على التلفزيون أو على وحدة USB، ثم اختر «إضافة من مجلد»:</string>
     <string name="settings_pictures_add_from_folder">إضافة من مجلد</string>
     <string name="settings_pictures_details">⁦<xliff:g id="width" example="1920">%1$d</xliff:g> × <xliff:g id="height" example="1080">%2$d</xliff:g>⁩ · <xliff:g id="size" example="3.1 MB">%3$s</xliff:g></string>
-    <string name="settings_pictures_in_use">قيد الاستخدام: <xliff:g id="use" example="الخلفية">%1$s</xliff:g></string>
-    <string name="settings_pictures_not_in_use">غير مستخدمة</string>
-    <string name="settings_pictures_wallpaper">الخلفية</string>
-    <string name="settings_pictures_dialog_details"><xliff:g id="details" example="1920 × 1080 · 3.1 MB">%1$s</xliff:g> · <xliff:g id="use" example="غير مستخدمة">%2$s</xliff:g></string>
-    <string name="settings_pictures_use_as_wallpaper">استخدامها خلفية</string>
     <string name="settings_pictures_delete_wallpaper">إنها الخلفية: تعود الشاشة الرئيسية إلى خلفيتها العادية.</string>
-    <string name="settings_pictures_choose_wallpaper">اختيار الخلفية</string>
-    <string name="settings_pictures_choose_hint">زر OK على صورة يختارها</string>
     <string name="settings_pictures_no_picture">بلا صورة</string>
     <string name="settings_pictures_unnamed">صورة</string>
-    <string name="settings_pictures_delete_unused">حذف غير المستخدمة (<xliff:g id="count" example="2">%1$d</xliff:g> · <xliff:g id="size" example="4.1 MB">%2$s</xliff:g>)</string>
-    <plurals name="settings_pictures_delete_unused_question">
-        <item quantity="zero">حذف <xliff:g id="count" example="0">%1$d</xliff:g> صورة غير مستخدمة؟</item>
-        <item quantity="one">حذف صورة واحدة غير مستخدمة؟</item>
-        <item quantity="two">حذف صورتين غير مستخدمتين؟</item>
-        <item quantity="few">حذف <xliff:g id="count" example="3">%1$d</xliff:g> صور غير مستخدمة؟</item>
-        <item quantity="many">حذف <xliff:g id="count" example="11">%1$d</xliff:g> صورة غير مستخدمة؟</item>
-        <item quantity="other">حذف <xliff:g id="count" example="100">%1$d</xliff:g> صورة غير مستخدمة؟</item>
-    </plurals>
-    <string name="settings_pictures_delete_unused_text">تشغل <xliff:g id="size" example="4.1 MB">%1$s</xliff:g>. تبقى الصور المستخدمة.</string>
     <string name="settings_pictures_delete">حذف</string>
     <string name="settings_pictures_delete_question">حذف <xliff:g id="name" example="beach.png">%1$s</xliff:g>؟</string>
     <string name="settings_pictures_delete_text">يحذف Luncher نسخته فقط؛ يبقى الملف الذي أضفتها منه.</string>

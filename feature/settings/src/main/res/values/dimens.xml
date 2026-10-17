@@ -28,32 +28,30 @@
     <dimen name="settings_appearance_option_indent">32dp</dimen>
     <dimen name="settings_appearance_value_gap">8dp</dimen>
     <dimen name="settings_appearance_title_text">40sp</dimen>
+    <!-- The background editor's pictures: a row's padding above and below; its thumbnail, 16:9,
+         the size the thumbnails are drawn at. -->
+    <dimen name="settings_background_row_padding">8dp</dimen>
+    <dimen name="settings_background_thumbnail_width">96dp</dimen>
+    <dimen name="settings_background_thumbnail_height">54dp</dimen>
 
-    <!-- Full-screen, as the appearance editor: the content inside the TV's overscan margin. -->
+    <!-- Add from folder, full-screen as the appearance editor: the content inside the TV's overscan
+         margin. -->
     <dimen name="settings_pictures_margin_horizontal">48dp</dimen>
     <dimen name="settings_pictures_margin_vertical">32dp</dimen>
-    <!-- Pictures' scrolling page: the scrollbar this far in from the screen's edges, the content
-         the rest of the margin further in. -->
-    <dimen name="settings_pictures_scrollbar_inset">24dp</dimen>
-    <dimen name="settings_pictures_content_inset">24dp</dimen>
     <dimen name="settings_pictures_title_text">40sp</dimen>
     <dimen name="settings_pictures_status_text">20sp</dimen>
     <dimen name="settings_pictures_text">20sp</dimen>
     <dimen name="settings_pictures_small_text">16sp</dimen>
     <!-- Below the title and its status line. -->
     <dimen name="settings_pictures_title_gap">24dp</dimen>
-    <!-- A grid tile: its thumbnail, 16:9, the size the thumbnails are drawn at; the gaps between
-         tiles; between the thumbnail and its name. -->
-    <dimen name="settings_pictures_tile_width">192dp</dimen>
-    <dimen name="settings_pictures_tile_height">108dp</dimen>
-    <dimen name="settings_pictures_tile_gap">24dp</dimen>
+    <!-- Between a picture and its text; a thumbnail's corners. -->
     <dimen name="settings_pictures_tile_text_gap">8dp</dimen>
     <dimen name="settings_pictures_tile_corner">8dp</dimen>
-    <!-- The focus frame around a thumbnail, and the dashes of the Add from folder tile. -->
+    <!-- The focus frame and the dashes of Add from folder's empty thumbnail. -->
     <dimen name="settings_pictures_frame">3dp</dimen>
     <dimen name="settings_pictures_dash">8dp</dimen>
     <dimen name="settings_pictures_dash_line">2dp</dimen>
-    <!-- An entry (Add from folder, Delete unused, a dialog's), as the settings panel's. -->
+    <!-- An entry (a dialog's, Add from folder's), as the settings panel's. -->
     <dimen name="settings_pictures_entry_height">56dp</dimen>
     <dimen name="settings_pictures_entry_padding">16dp</dimen>
     <!-- Add from folder: a row of the list at least, and the preview of the selected one beside

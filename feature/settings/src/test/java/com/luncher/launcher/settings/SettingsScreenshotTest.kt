@@ -121,12 +121,12 @@ class SettingsScreenshotTest {
             .captureRoboImage("src/test/screenshots/settings/settings_appearance_arabic.png")
     }
 
-    // The background's group open, with a picture, dimmed and blurred: the preview draws it under
-    // the tiles. The focus on the picture.
+    // With a picture, dimmed and blurred: the preview draws it under the tiles. The focus on the
+    // background's entry, the picture's name beside it.
     @Test
     fun appearanceEditorBackground() {
-        val activity = appearanceEditor(Appearance(background = Background(picture = SAMPLE_WALLPAPER, dim = 20, blur = Blur.LIGHT)), open = "Background")
-        activity.child { it.findViewById<View>(R.id.settings_picture_value) != null }.requestFocus()
+        val activity = appearanceEditor(Appearance(background = Background(picture = SAMPLE_WALLPAPER, dim = 20, blur = Blur.LIGHT)))
+        activity.child { it.findViewById<View>(R.id.settings_apart_value) != null }.requestFocus()
 
         activity.window.decorView.captureRoboImage("src/test/screenshots/settings/settings_appearance_background.png")
     }

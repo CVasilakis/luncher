@@ -31,13 +31,13 @@ class SharePictureActivityTest {
     }
 
     private fun assertPassesThePicture(started: Intent) {
-        assertEquals(PicturesActivity::class.java.name, started.component?.className)
+        assertEquals(BackgroundActivity::class.java.name, started.component?.className)
         assertEquals(picture, started.data)
         assertTrue("the read access passed on", started.flags and Intent.FLAG_GRANT_READ_URI_PERMISSION != 0)
     }
 
     @Test
-    fun `passes a shared picture to Pictures, with the access to read it`() {
+    fun `passes a shared picture to the background editor, with the access to read it`() {
         assertPassesThePicture(send(Intent(Intent.ACTION_SEND).setType("image/jpeg").putExtra(Intent.EXTRA_STREAM, picture)))
     }
 
@@ -55,13 +55,13 @@ class SharePictureActivityTest {
     }
 
     @Test
-    fun `with no picture to pass, has Pictures say it couldn't read one`() {
+    fun `with no picture to pass, has the background editor say it couldn't read one`() {
         for (intent in listOf(Intent(Intent.ACTION_SEND).setType("image/jpeg"), Intent(Intent.ACTION_SEND).putExtra(Intent.EXTRA_STREAM, "not a Uri"), Intent("com.example.OTHER"))) {
             val started = send(intent)
 
-            assertEquals(PicturesActivity::class.java.name, started.component?.className)
+            assertEquals(BackgroundActivity::class.java.name, started.component?.className)
             assertNull(started.data)
-            assertTrue(started.getBooleanExtra(PicturesActivity.EXTRA_NOTHING_READABLE, false))
+            assertTrue(started.getBooleanExtra(BackgroundActivity.EXTRA_NOTHING_READABLE, false))
             assertFalse(started.flags and Intent.FLAG_GRANT_READ_URI_PERMISSION != 0)
         }
     }

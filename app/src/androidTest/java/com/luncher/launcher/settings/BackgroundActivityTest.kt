@@ -1,4 +1,4 @@
-package com.luncher.launcher.pictures
+package com.luncher.launcher.settings
 
 import android.content.Intent
 import android.graphics.Bitmap
@@ -32,11 +32,14 @@ import com.luncher.domain.pictures.PictureImport
 import com.luncher.domain.pictures.Pictures
 import com.luncher.launcher.AppGraph
 import com.luncher.launcher.LuncherApplication
-import com.luncher.launcher.settings.PicturesActivity
-import com.luncher.launcher.settings.R
-import com.luncher.launcher.settings.SharePictureActivity
+import com.luncher.launcher.pictures.CachedPictureImages
+import com.luncher.launcher.pictures.FilePictureImages
+import com.luncher.launcher.pictures.FilesPictures
+import com.luncher.launcher.pictures.MediaFolderPictures
 import com.luncher.launcher.testing.RetryWhenCovered
 import com.luncher.launcher.testing.SamplePictures
+import com.luncher.launcher.testing.longPressOk
+import com.luncher.launcher.testing.waitForFocus
 import com.luncher.launcher.testing.waitForHomeScreen
 import junit.framework.AssertionFailedError
 import org.hamcrest.Matcher
@@ -50,9 +53,9 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import java.io.File
 
-/** Pictures and Add from folder on a real device, driven by real key events, and a share reaching them. */
+/** The background editor and Add from folder on a real device, driven by real key events, and a share reaching them. */
 @RunWith(AndroidJUnit4::class)
-class PicturesActivityTest {
+class BackgroundActivityTest {
 
     @get:Rule
     val retryWhenCovered = RetryWhenCovered()
@@ -85,19 +88,19 @@ class PicturesActivityTest {
         dropFolder.deleteRecursively()
     }
 
-    /** Pictures with these [pictures], in memory. */
-    private fun launchWith(vararg pictures: com.luncher.domain.pictures.Picture): ActivityScenario<PicturesActivity> {
+    /** The background editor with these [pictures], in memory. */
+    private fun launchWith(vararg pictures: com.luncher.domain.pictures.Picture): ActivityScenario<BackgroundActivity> {
         fake = FakePictures(*pictures)
         appearance = FakeAppearanceSettings()
         application.graph = object : AppGraph(application) {
-            override val pictures: Pictures = this@PicturesActivityTest.fake
-            override val pictureImport: PictureImport<Uri> = this@PicturesActivityTest.fake
+            override val pictures: Pictures = this@BackgroundActivityTest.fake
+            override val pictureImport: PictureImport<Uri> = this@BackgroundActivityTest.fake
             override val pictureImages: PictureImages<Bitmap> = FakePictureImages { _, width, height, _ ->
                 Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888).apply { eraseColor(0xFF336699.toInt()) }
             }
-            override val appearanceSettings = this@PicturesActivityTest.appearance
+            override val appearanceSettings = this@BackgroundActivityTest.appearance
         }
-        return ActivityScenario.launch(PicturesActivity::class.java)
+        return ActivityScenario.launch(BackgroundActivity::class.java)
     }
 
     /** The real library and drop folder, but the test's own folders. */
@@ -121,8 +124,10 @@ class PicturesActivityTest {
         onView(isRoot()).inRoot(isDialog()).perform(pressKey(keyCode))
     }
 
-    /** The grid's tile of the picture named [name]. */
-    private fun tile(name: String) = withChild(allOf(withId(R.id.settings_pictures_name), withText(name)))
+    /** The list's row named [name]. */
+    private fun row(name: String) = withChild(allOf(withId(R.id.settings_background_name), withText(name)))
+
+    private fun row(name: Int) = withChild(allOf(withId(R.id.settings_background_name), withText(name)))
 
     /** Checks [condition] on the view [view] matches, retrying while a window comes up. */
     private fun waitUntil(view: Matcher<View>, condition: Matcher<View>, inDialog: Boolean = false) {
@@ -144,67 +149,50 @@ class PicturesActivityTest {
     }
 
     @Test
-    fun arrowsMoveAlongTheGrid_okOnAPictureDeletesItAfterAsking() {
+    fun arrowsMoveAlongTheList_aLongPressOfOkOnAPictureDeletesItAfterAsking() {
         launchWith(picture("old.jpg", added = 1), picture("beach.png", added = 2), picture("sunset.jpg", added = 3)).use {
-            waitUntil(tile("sunset.jpg"), hasFocus())
+            waitUntil(row(R.string.settings_pictures_no_picture), hasFocus())
+            press(KeyEvent.KEYCODE_DPAD_DOWN)
+            waitUntil(row("sunset.jpg"), hasFocus())
+            press(KeyEvent.KEYCODE_DPAD_DOWN)
+            waitUntil(row("beach.png"), hasFocus())
+            waitForFocus(BackgroundActivity::class.java)
+            longPressOk()
 
-            press(KeyEvent.KEYCODE_DPAD_RIGHT)
-            waitUntil(tile("beach.png"), hasFocus())
-            press(KeyEvent.KEYCODE_DPAD_CENTER)
-
-            waitUntil(withText(R.string.settings_pictures_use_as_wallpaper), hasFocus(), inDialog = true)
-            pressInDialog(KeyEvent.KEYCODE_DPAD_DOWN)
-            waitUntil(withText(R.string.settings_pictures_delete), hasFocus(), inDialog = true)
-            pressInDialog(KeyEvent.KEYCODE_DPAD_CENTER)
             waitUntil(withText(R.string.settings_pictures_cancel), hasFocus(), inDialog = true)
             pressInDialog(KeyEvent.KEYCODE_DPAD_DOWN)
             waitUntil(withText(R.string.settings_pictures_delete), hasFocus(), inDialog = true)
             pressInDialog(KeyEvent.KEYCODE_DPAD_CENTER)
 
-            waitUntil(tile("old.jpg"), hasFocus())
-            onView(tile("beach.png")).check(doesNotExist())
+            waitUntil(row("old.jpg"), hasFocus())
+            onView(row("beach.png")).check(doesNotExist())
             assertEquals(listOf("old.jpg", "sunset.jpg"), fake.pictures.map { it.name }.sorted())
         }
     }
 
     @Test
-    fun deleteUnused_asksFirst_thenDeletesThem() {
-        launchWith(picture("beach.png", added = 2), picture("sunset.jpg", added = 3)).use {
-            waitUntil(tile("sunset.jpg"), hasFocus())
-
-            press(KeyEvent.KEYCODE_DPAD_DOWN)   // below the row, to Delete unused
-            waitUntil(withId(R.id.settings_pictures_delete_unused), hasFocus())
-            press(KeyEvent.KEYCODE_DPAD_CENTER)
-            waitUntil(withText(R.string.settings_pictures_cancel), hasFocus(), inDialog = true)
-            pressInDialog(KeyEvent.KEYCODE_DPAD_DOWN)
-            pressInDialog(KeyEvent.KEYCODE_DPAD_CENTER)
-
-            waitUntil(withId(R.id.settings_pictures_empty_add), hasFocus())
-            assertEquals(emptyList<Any>(), fake.pictures)
-        }
-    }
-
-    @Test
-    fun addFromFolder_addsAPictureFromTheDropFolder_andFocusesIt() {
+    fun addFromFolder_addsAPictureFromTheDropFolder_andChoosesIt() {
         useTheTestsFolders()
         dropFolder.mkdirs()
         InstrumentationAssets.copy("pictures/baseline.jpg", File(dropFolder, "holiday.jpg"))
 
-        ActivityScenario.launch(PicturesActivity::class.java).use {
-            waitUntil(withId(R.id.settings_pictures_empty_add), hasFocus())
+        ActivityScenario.launch(BackgroundActivity::class.java).use {
+            waitUntil(row(R.string.settings_pictures_no_picture), hasFocus())
+            press(KeyEvent.KEYCODE_DPAD_DOWN)
+            waitUntil(row(R.string.settings_pictures_add_from_folder), hasFocus())
             press(KeyEvent.KEYCODE_DPAD_CENTER)
 
             waitUntil(withText(containsString("holiday.jpg")), isDisplayed())
             waitUntil(withId(R.id.settings_pictures_folder_list), hasFocus())
             press(KeyEvent.KEYCODE_DPAD_CENTER)
 
-            waitUntil(tile("holiday.jpg"), hasFocus())
-            waitUntil(withId(R.id.settings_pictures_status), withText(containsString("1")))
+            waitUntil(row("holiday.jpg"), hasFocus())
+            waitUntil(allOf(withId(R.id.settings_background_chosen), isDisplayed()), isDisplayed())
         }
     }
 
     @Test
-    fun aShareFromAnotherApp_addsThePicture_andShowsItInPictures() {
+    fun aShareFromAnotherApp_addsThePicture_andChoosesItInTheBackgroundEditor() {
         useTheTestsFolders()
         val share = Intent(Intent.ACTION_SEND)
             .setClassName(application, SharePictureActivity::class.java.name)
@@ -214,7 +202,7 @@ class PicturesActivityTest {
 
         application.startActivity(share)
 
-        waitUntil(tile("progressive.jpg"), hasFocus())
+        waitUntil(row("progressive.jpg"), hasFocus())
     }
 
     // Another app's picture, shared without giving access to it: Android refuses to pass on access
@@ -232,7 +220,7 @@ class PicturesActivityTest {
 
         waitUntil(withId(R.id.settings_pictures_dialog_text), withText(containsString("Android/media/${application.packageName}")), inDialog = true)
         pressInDialog(KeyEvent.KEYCODE_DPAD_CENTER)
-        waitUntil(withId(R.id.settings_pictures_empty_add), hasFocus())
+        waitUntil(row(R.string.settings_pictures_no_picture), hasFocus())
     }
 
     @Test
@@ -248,7 +236,7 @@ class PicturesActivityTest {
 
         waitUntil(withId(R.id.settings_pictures_dialog_text), withText(containsString("Android/media/${application.packageName}")), inDialog = true)
         pressInDialog(KeyEvent.KEYCODE_DPAD_CENTER)
-        waitUntil(withId(R.id.settings_pictures_empty_add), hasFocus())
+        waitUntil(row(R.string.settings_pictures_no_picture), hasFocus())
     }
 
     private companion object {

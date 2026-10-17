@@ -183,8 +183,17 @@ and the horizontal alignment, a full bottom row, the corner radius, the time and
 hidden, the clock's side and the time's side, the wallpaper's fit, position, dim and blur, are
 changed in the settings' appearance editor
 ([`feature/settings/README.md`](../feature/settings/README.md#appearance)). The wallpaper's picture
-isn't an option, since its values are the library's pictures, not a list known in `:domain`: its
-group says so (`choosesPicture`), and the editor has the user choose it in the picture library.
+isn't an option, since its values are the library's pictures, not a list known in `:domain`.
+
+**The one exception to storing each change at once: the background.** Its group is edited apart
+(`editedApart`), in the background editor
+([`feature/settings/README.md`](../feature/settings/README.md#background)), where the user
+chooses the picture and steps its options in a draft, which only Save stores: applying a
+background draws the wallpaper at the screen's size, up to a second or two on a TV, too slow for
+each step of an option. Save goes through `Wallpaper` in `:domain`'s `wallpaper/`, which draws and
+keeps the picture first, then stores the background, so the setting never names a wallpaper that
+isn't drawn and the home screen always has one to show
+([`feature/home/README.md`](../feature/home/README.md#the-wallpaper)).
 
 ## Where things go
 

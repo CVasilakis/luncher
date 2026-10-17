@@ -25,7 +25,7 @@ import java.util.Locale
 /**
  * The pictures in Luncher's drop folders, on the TV and on USB drives ([FolderPictures][graph]):
  * a list, in the order of [inListOrder], with a preview of the selected one beside it. OK on one
- * returns it to [PicturesActivity], which adds it; OK on one in a format this TV can't show says so
+ * returns it to [BackgroundActivity], which adds it; OK on one in a format this TV can't show says so
  * instead. The folders are read again each time it shows, so a drive plugged in meanwhile counts.
  */
 class AddFromFolderActivity : Activity() {

@@ -2,6 +2,8 @@ package com.luncher.launcher.settings
 
 import android.graphics.Bitmap
 import android.net.Uri
+import android.os.Handler
+import android.os.Looper
 import android.os.SystemClock
 import android.view.KeyEvent
 import android.view.View
@@ -29,9 +31,12 @@ import com.luncher.domain.pictures.FakePictures.Companion.picture
 import com.luncher.domain.pictures.PictureImages
 import com.luncher.domain.pictures.PictureImport
 import com.luncher.domain.pictures.Pictures
+import com.luncher.domain.wallpaper.FakeStoredWallpaper
+import com.luncher.domain.wallpaper.Wallpaper
 import com.luncher.launcher.AppGraph
 import com.luncher.launcher.LuncherApplication
 import com.luncher.launcher.testing.RetryWhenCovered
+import com.luncher.launcher.testing.waitForFocus
 import com.luncher.launcher.testing.waitForHomeScreen
 import junit.framework.AssertionFailedError
 import org.hamcrest.Matcher
@@ -144,45 +149,68 @@ class AppearanceActivityTest {
     }
 
     @Test
-    fun okOnTheBackgroundsPicture_opensThePictureLibrary_andOkOnAPictureMakesItTheWallpaper() {
+    fun okOnTheBackground_opensTheBackgroundEditor_andSaveMakesTheChosenPictureTheWallpaper() {
         settings = FakeAppearanceSettings(Appearance(TileGeometry(verticalAlignment = VerticalAlignment.TOP)))
         val library = FakePictures<Uri>(picture("sunset.jpg"))
         application.graph = object : AppGraph(application) {
             override val appearanceSettings = this@AppearanceActivityTest.settings
             override val pictures: Pictures = library
             override val pictureImport: PictureImport<Uri> = library
-            override val pictureImages: PictureImages<Bitmap> = FakePictureImages { _, width, height, _ ->
-                Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888).apply { eraseColor(0xFF336699.toInt()) }
-            }
+            override val pictureImages: PictureImages<Bitmap> = plainImages
+            // Not the device's kept wallpaper: one in memory, drawn as a plain color.
+            override val wallpaper = Wallpaper(FakeStoredWallpaper(), plainImages, settings, jobs) { Handler(Looper.getMainLooper()).post(it) }
         }
         ActivityScenario.launch(AppearanceActivity::class.java).use {
             waitUntil(group(R.string.settings_appearance_tiles), hasFocus())
             press(KeyEvent.KEYCODE_DPAD_DOWN)
             press(KeyEvent.KEYCODE_DPAD_DOWN)
-            waitUntil(group(R.string.settings_appearance_background), hasFocus())
-            press(KeyEvent.KEYCODE_DPAD_CENTER)
-            waitUntil(withChild(withText(R.string.settings_appearance_picture)), isDisplayed())
-            press(KeyEvent.KEYCODE_DPAD_DOWN)
-            waitUntil(withChild(withText(R.string.settings_appearance_picture)), hasFocus())
+            waitUntil(apart(R.string.settings_appearance_background), hasFocus())
             press(KeyEvent.KEYCODE_DPAD_CENTER)
 
-            // The picture library, choosing: No picture first, then the pictures.
-            waitUntil(withChild(withText("sunset.jpg")), isDisplayed())
+            // The background editor: No picture chosen and focused, then the pictures.
             waitUntil(withChild(withText(R.string.settings_pictures_no_picture)), hasFocus())
-            press(KeyEvent.KEYCODE_DPAD_RIGHT)
+            press(KeyEvent.KEYCODE_DPAD_DOWN)
             waitUntil(withChild(withText("sunset.jpg")), hasFocus())
             press(KeyEvent.KEYCODE_DPAD_CENTER)
+            waitUntil(allOf(withId(R.id.settings_background_chosen), isDisplayed()), isDisplayed())
+            // Left, to the options, and down them to Save.
+            press(KeyEvent.KEYCODE_DPAD_LEFT)
+            repeat(5) { if (!hasFocus(withId(R.id.settings_background_save))) press(KeyEvent.KEYCODE_DPAD_DOWN) }
+            waitUntil(withId(R.id.settings_background_save), hasFocus())
+            assertEquals("nothing stored before Save", null, settings.appearance.background.picture)
+            press(KeyEvent.KEYCODE_DPAD_CENTER)
 
-            // Stored, and back in the editor, which names it.
+            // Drawn, stored, and back in the appearance editor, which names it.
             val deadline = SystemClock.uptimeMillis() + TIMEOUT_MS
             while (settings.appearance.background.picture == null && SystemClock.uptimeMillis() < deadline) SystemClock.sleep(POLL_MS)
             assertEquals(picture("sunset.jpg").id, settings.appearance.background.picture)
-            waitUntil(allOf(withId(R.id.settings_picture_value), withText("sunset.jpg")), isDisplayed())
+            // The editor's window is closing: keys and checks go to the appearance editor once it has the focus.
+            waitForFocus(AppearanceActivity::class.java)
+            waitUntil(allOf(withId(R.id.settings_apart_value), withText("sunset.jpg")), isDisplayed())
         }
     }
 
+    /** Pictures drawn as a plain color. */
+    private val plainImages = FakePictureImages { _, width, height, _ ->
+        Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888).apply { eraseColor(0xFF336699.toInt()) }
+    }
+
+    /** The editor's entry of the group titled [title], edited in a screen of its own. */
+    private fun apart(title: Int) = allOf(withChild(withText(title)), withChild(withId(R.id.settings_apart_value)))
+
+    /** Whether the view [view] matches has the focus now. */
+    private fun hasFocus(view: Matcher<View>): Boolean =
+        try {
+            onView(view).check(matches(hasFocus()))
+            true
+        } catch (e: AssertionFailedError) {
+            false
+        } catch (e: NoMatchingViewException) {
+            false
+        }
+
     private companion object {
-        const val TIMEOUT_MS = 5_000L
+        const val TIMEOUT_MS = 10_000L
         const val POLL_MS = 50L
     }
 }

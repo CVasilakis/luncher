@@ -8,15 +8,16 @@ data class AppearanceOptions(val groups: List<AppearanceGroup>) {
 }
 
 /**
- * Options shown together under a title: what part of the home screen they change. A group whose
- * options are about a picture ([choosesPicture]) starts with the choice of that picture, which
- * isn't an option: the pictures aren't a list of values known here, so the editor has the user
- * choose one in the picture library.
+ * Options shown together under a title: what part of the home screen they change. A group
+ * [editedApart] is one entry of the appearance editor that opens a screen of its own, where the
+ * user chooses a picture with the options and saves them together: the pictures aren't a list of
+ * values known here, and applying them is slow (the wallpaper is drawn), so they're stored only
+ * when the user says so, not at each step as the other options are.
  */
 data class AppearanceGroup(
     val topic: AppearanceTopic,
     val options: List<AppearanceOption<*>>,
-    val choosesPicture: Boolean = false,
+    val editedApart: Boolean = false,
 )
 
 /** The part of the home screen a group's options change; each screen names it in its language. */
@@ -52,7 +53,7 @@ fun appearanceOptions(): AppearanceOptions =
                     AppearanceOption.BackgroundDim,
                     AppearanceOption.BackgroundBlur,
                 ),
-                choosesPicture = true,
+                editedApart = true,
             ),
         ),
     )

@@ -12,4 +12,5 @@
     <string name="home_hidden_empty">انقل التطبيقات إلى هنا لإخفائها</string>
     <string name="home_wallpaper_screen_changed">جارٍ ملاءمة الخلفية لهذه الشاشة…</string>
     <string name="home_wallpaper_outdated">جارٍ تحديث الخلفية…</string>
+    <string name="home_wallpaper_saving">جارٍ تطبيق التأثيرات…</string>
 </resources>

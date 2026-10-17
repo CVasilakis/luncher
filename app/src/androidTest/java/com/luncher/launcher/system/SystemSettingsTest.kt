@@ -62,8 +62,7 @@ class SystemSettingsTest {
         waitForFocus(SettingsActivity::class.java)   // shown isn't enough: keys go where the focus is
 
         device.pressDPadDown()      // past Hide apps
-        device.pressDPadDown()      // Appearance
-        device.pressDPadDown()      // and Pictures
+        device.pressDPadDown()      // and Appearance
         device.pressDPadCenter()
 
         sayingWhetherItCrashed(settings, startedAt) {

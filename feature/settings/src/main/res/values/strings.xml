@@ -12,8 +12,6 @@
     <string name="settings_no_apps">No TV apps installed</string>
     <!-- The entry that opens the editor of the home screen's look, and that editor's title. -->
     <string name="settings_appearance">Appearance</string>
-    <!-- The entry that opens Luncher's own picture library, which the wallpaper is chosen from. -->
-    <string name="settings_pictures">Pictures</string>
     <!-- In the appearance editor: the title of the options for the home screen's app tiles. -->
     <string name="settings_appearance_tiles">Tiles</string>
     <!-- In the appearance editor: the title of the options for the bar at the top of the home
@@ -100,16 +98,17 @@
     <!-- A message, when the device has no settings app to open. -->
     <string name="settings_system_unavailable">This device has no settings app</string>
 
+    <!-- The background editor (its title is settings_appearance_background): at the top of its
+         pictures, how to delete one; OK is the remote's button. -->
+    <string name="settings_background_hint">Hold OK on a picture to delete it</string>
+    <!-- Its last entry: stores the picture and options chosen, which the editor only shows until then. -->
+    <string name="settings_background_save">Save</string>
+    <!-- In a window over the editor while the wallpaper is drawn after Save, which takes a moment. -->
+    <string name="settings_background_applying">Applying effects…</string>
+    <!-- Beside the picture chosen. -->
+    <string name="settings_background_chosen" translatable="false">✓</string>
+
     <!-- The picture library's screens: Pictures, Add from folder, and a share's messages. -->
-    <!-- The screen of Luncher's own picture library (later used for the wallpaper), its title. -->
-    <string name="settings_pictures_title">Pictures</string>
-    <!-- Below the title: how many pictures the library has, and how much storage they take. -->
-    <plurals name="settings_pictures_count">
-        <item quantity="one"><xliff:g id="count" example="1">%1$d</xliff:g> picture · <xliff:g id="size" example="9.8 MB">%2$s</xliff:g></item>
-        <item quantity="other"><xliff:g id="count" example="4">%1$d</xliff:g> pictures · <xliff:g id="size" example="9.8 MB">%2$s</xliff:g></item>
-    </plurals>
-    <!-- Below the title, while the library is empty. -->
-    <string name="settings_pictures_none">No pictures yet</string>
     <!-- Below the title, while a picture is being copied into the library. -->
     <string name="settings_pictures_adding">Adding a picture…</string>
     <!-- While the library is empty, the steps to add a picture: the heading. -->
@@ -124,40 +123,14 @@
     <!-- The tile at the end of the pictures, and an entry, that open the list of pictures in that
          folder; and that list's title. -->
     <string name="settings_pictures_add_from_folder">Add from folder</string>
-    <!-- Before "Add from folder" on its tile. -->
-    <string name="settings_pictures_plus" translatable="false">+</string>
     <!-- A picture's width and height in pixels, and its file's size. -->
     <string name="settings_pictures_details"><xliff:g id="width" example="1920">%1$d</xliff:g> × <xliff:g id="height" example="1080">%2$d</xliff:g> · <xliff:g id="size" example="3.1 MB">%3$s</xliff:g></string>
-    <!-- Below a picture's name: what it's used for; %1$s is a use, such as Wallpaper. -->
-    <string name="settings_pictures_in_use">In use: <xliff:g id="use" example="Wallpaper">%1$s</xliff:g></string>
-    <!-- Below a picture's name when nothing uses it. -->
-    <string name="settings_pictures_not_in_use">Not in use</string>
-    <!-- A use of a picture: the home screen's background. -->
-    <string name="settings_pictures_wallpaper">Wallpaper</string>
-    <!-- Below a picture's name in its actions: its size, then what it's used for. -->
-    <string name="settings_pictures_dialog_details"><xliff:g id="details" example="1920 × 1080 · 3.1 MB">%1$s</xliff:g> · <xliff:g id="use" example="Not in use">%2$s</xliff:g></string>
-    <!-- An action on a picture: makes it the home screen's background. -->
-    <string name="settings_pictures_use_as_wallpaper">Use as wallpaper</string>
     <!-- Before deleting the wallpaper's picture, what that does. -->
     <string name="settings_pictures_delete_wallpaper">It\'s the wallpaper: the home screen goes back to its plain background.</string>
-    <!-- The title of Pictures opened from the appearance editor to choose the wallpaper. -->
-    <string name="settings_pictures_choose_wallpaper">Choose the wallpaper</string>
-    <!-- Below that title. -->
-    <string name="settings_pictures_choose_hint">OK on a picture chooses it</string>
     <!-- Choosing the wallpaper, the first tile: no picture, the plain background. -->
     <string name="settings_pictures_no_picture">No picture</string>
     <!-- The name of a picture whose app gave it none. -->
     <string name="settings_pictures_unnamed">Picture</string>
-    <!-- Below the pictures: deletes every picture nothing uses; how many there are, and how much
-         storage they take. -->
-    <string name="settings_pictures_delete_unused">Delete unused (<xliff:g id="count" example="2">%1$d</xliff:g> · <xliff:g id="size" example="4.1 MB">%2$s</xliff:g>)</string>
-    <!-- The question before deleting them. -->
-    <plurals name="settings_pictures_delete_unused_question">
-        <item quantity="one">Delete <xliff:g id="count" example="1">%1$d</xliff:g> unused picture?</item>
-        <item quantity="other">Delete <xliff:g id="count" example="2">%1$d</xliff:g> unused pictures?</item>
-    </plurals>
-    <!-- Below that question. -->
-    <string name="settings_pictures_delete_unused_text">They take <xliff:g id="size" example="4.1 MB">%1$s</xliff:g>. Pictures in use stay.</string>
     <!-- An action on a picture, and the answer that confirms it. -->
     <string name="settings_pictures_delete">Delete</string>
     <!-- The question before deleting one picture, named. -->

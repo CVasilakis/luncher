@@ -11,8 +11,11 @@ data class WallpaperDrawing(val picture: PictureId, val style: PictureStyle, val
 fun wallpaperDrawing(background: Background, width: Int, height: Int): WallpaperDrawing? =
     background.picture?.let { WallpaperDrawing(it, background.style, width, height) }
 
-/** Why a wallpaper is being drawn again. Each screen says it in its language, in an exhaustive `when`. */
+/** Why a wallpaper is being drawn. Each screen says it in its language, in an exhaustive `when`. */
 enum class DrawingCause {
+    /** The user saved a new one in the background editor, which is stored once it's drawn. */
+    SAVING,
+
     /** The one kept is the same picture, drawn the same way, for a screen of another size (the TV switched to 4K, say). */
     SCREEN_CHANGED,
 

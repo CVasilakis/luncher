@@ -11,6 +11,7 @@ import com.luncher.domain.pictures.FolderPictures
 import com.luncher.domain.pictures.PictureImages
 import com.luncher.domain.pictures.PictureImport
 import com.luncher.domain.pictures.Pictures
+import com.luncher.domain.wallpaper.Wallpaper
 
 /**
  * The ports the settings screens need. The app's composition root implements it with the
@@ -37,6 +38,9 @@ interface SettingsGraph {
 
     /** The background thread, for what the screens load (thumbnails, previews). */
     val jobs: Jobs
+
+    /** The home screen's wallpaper, which the background editor saves through: drawn, then stored. */
+    val wallpaper: Wallpaper<Bitmap>
 
     /** Implemented by the Application, which holds the process's graph. */
     interface Owner {

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A picture to choose in the background editor: its thumbnail, its name, on two lines at most
+     (Add from folder needs both on the smallest screens), and a check while it's the draft's. Also No picture (the plain background as its thumbnail) and Add from folder
+     (a dashed frame). -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/entry_background"
+    android:focusable="true"
+    android:focusableInTouchMode="true"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingLeft="@dimen/settings_entry_padding"
+    android:paddingTop="@dimen/settings_background_row_padding"
+    android:paddingRight="@dimen/settings_entry_padding"
+    android:paddingBottom="@dimen/settings_background_row_padding">
+
+    <ImageView
+        android:id="@+id/settings_background_thumbnail"
+        android:layout_width="@dimen/settings_background_thumbnail_width"
+        android:layout_height="@dimen/settings_background_thumbnail_height"
+        android:background="@drawable/settings_pictures_thumbnail_background"
+        android:importantForAccessibility="no"
+        android:scaleType="centerCrop" />
+
+    <TextView
+        android:id="@+id/settings_background_name"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/settings_entry_padding"
+        android:layout_weight="1"
+        android:ellipsize="end"
+        android:maxLines="2"
+        android:textColor="@color/text_primary"
+        android:textSize="@dimen/settings_entry_text" />
+
+    <TextView
+        android:id="@+id/settings_background_chosen"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/settings_appearance_value_gap"
+        android:text="@string/settings_background_chosen"
+        android:textColor="@color/accent"
+        android:textSize="@dimen/settings_entry_text"
+        android:visibility="gone" />
+</LinearLayout>

@@ -24,7 +24,7 @@ ui/
     │   │                         shown half a second at least: for work the user waits for (the wallpaper drawn)
     │   └── res/
     │       ├── drawable/         entry_background, a focusable entry's frame while focused; panel_background,
-    │       │                     a floating panel's window (the settings panels, Pictures' dialogs, WorkingDialog)
+    │       │                     a floating panel's window (the settings panels, the picture dialogs, WorkingDialog)
     │       ├── layout/           working_dialog: WorkingDialog's wheel and message
     │       └── values/
     │           ├── colors.xml    background, accent, primary and secondary text, a panel and its focused entry
@@ -48,7 +48,7 @@ The test fixtures are what the screens' JVM tests share, in every module
 
 `Theme.Luncher` is the application's theme and the home screen's; a feature whose screens look
 different has its own (the settings panels' dialog theme,
-[`feature/settings/`](../feature/settings/README.md#the-settings-panel), with Pictures' dialogs and
+[`feature/settings/`](../feature/settings/README.md#the-settings-panel), with the picture dialogs and
 the share entry point without a window, [its manifest](../feature/settings/README.md#manifest)). They're all platform
 themes (`Theme.DeviceDefault…`), not AppCompat, like every activity's `android.app.Activity`
 ([`ARCHITECTURE.md`](../docs/ARCHITECTURE.md#rules), rule 5).

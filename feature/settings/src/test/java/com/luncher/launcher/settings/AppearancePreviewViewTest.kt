@@ -36,7 +36,7 @@ class AppearancePreviewViewTest {
     private val preview = AppearancePreviewView(RuntimeEnvironment.getApplication(), null).apply {
         measure(exactly(WIDTH), exactly(HEIGHT))
         layout(0, 0, WIDTH, HEIGHT)
-        showWallpapers(FakePictureImages(::wallpaper), jobs)
+        showWallpapers(FakePictureImages(::sampleWallpaper), jobs)
     }
 
     private val canvas = Canvas(Bitmap.createBitmap(WIDTH, HEIGHT, Bitmap.Config.ARGB_8888))

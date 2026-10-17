@@ -101,7 +101,7 @@ outside a broken Back looks the same as a working one.
   `Activity.currentFocus` stays null: find the focused view with `window.decorView.findFocus()`.
   For the same reason an arrow sent with `dispatchKeyEvent` moves no focus, since Android moves it
   outside the views; a test of where an arrow goes asks the focused view's `focusSearch`, as
-  Android does (`HomeActivityTest`, `PicturesActivityTest`), and the real keys are Espresso's. Robolectric also starts in touch mode, where a list selects nothing:
+  Android does (`HomeActivityTest`, `BackgroundActivityTest`), and the real keys are Espresso's. Robolectric also starts in touch mode, where a list selects nothing:
   leave it with `InstrumentationRegistry.getInstrumentation().setInTouchMode(false)`, or
   `requestFocusFromTouch()` on the list.
 

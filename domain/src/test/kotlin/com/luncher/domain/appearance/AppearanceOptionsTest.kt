@@ -15,7 +15,7 @@ class AppearanceOptionsTest {
             listOf(AppearanceOption.BackgroundFit, AppearanceOption.BackgroundPosition, AppearanceOption.BackgroundDim, AppearanceOption.BackgroundBlur),
             catalog.groups[2].options,
         )
-        assertEquals(listOf(false, false, true), catalog.groups.map { it.choosesPicture })
+        assertEquals(listOf(false, false, true), catalog.groups.map { it.editedApart })
         assertEquals(
             listOf(
                 AppearanceOption.VerticalAlignment,

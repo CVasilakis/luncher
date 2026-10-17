@@ -34,7 +34,7 @@ domain/src/
 │   │   ├── Background.kt        model: the wallpaper, a picture of the library or none, and how it's drawn
 │   │   ├── Side.kt              model: left or right, the screen's, in every language
 │   │   ├── AppearanceOption.kt  models and rules: each option the user can change, its values, stepping through them, around
-│   │   ├── AppearanceOptions.kt models and rule: which options the editor lists, in groups
+│   │   ├── AppearanceOptions.kt models and rule: which options the editor lists, in groups; a group edited apart (the background's)
 │   │   └── AppearanceSettings.kt port: the stored appearance, and when it changes
 │   ├── jobs/
 │   │   ├── Jobs.kt              port: the background thread; cancelling a queued job; every job's priority (JobPriority)
@@ -43,7 +43,7 @@ domain/src/
 │   │   ├── Picture.kt           model: a picture of the library (PictureId, from its content), its name, size as shown, bytes, when added
 │   │   ├── Pictures.kt          port: the library's pictures, deleting them, and when they change
 │   │   ├── PictureImport.kt     port: adding a picture from a source, slow, and how that went (ImportResult)
-│   │   ├── PictureLibrary.kt    rule: the library as its screen shows it, the newest first; the room it takes; what each one is used for, and the pictures nothing uses
+│   │   ├── PictureLibrary.kt    rule: the library as the background editor lists it, the newest first, and what each one is used for
 │   │   ├── PictureLimits.kt     rule: the largest picture the library takes (bytes, megapixels)
 │   │   ├── PictureFormat.kt     model and rule: the formats a TV may not show (HEIF, AVIF), recognized by a file's header
 │   │   ├── Framing.kt           model and rule: how a picture fills a space of another shape (Fit, PicturePosition), and which part of it shows
@@ -54,7 +54,7 @@ domain/src/
 │   ├── wallpaper/
 │   │   ├── WallpaperDrawing.kt  model and rule: what a wallpaper is drawn from (a picture, its style, the screen's size), and why the one kept won't do (DrawingCause)
 │   │   ├── StoredWallpaper.kt   port: the one wallpaper kept, drawn at the screen's size, so a start shows it at once
-│   │   └── Wallpaper.kt         helper: the wallpaper as it stands (none, ready, or being drawn and why), one per process, which a screen watches
+│   │   └── Wallpaper.kt         helper: the wallpaper as it stands (none, ready, or being drawn and why), one per process, which a screen watches; saving a background (drawn, kept, then stored), and forgetting a deleted picture
 │   ├── clock/
 │   │   ├── ClockReading.kt      model: the time, time zone and hour format at one moment
 │   │   └── Clock.kt             port: the device's clock, and when what it shows changes
