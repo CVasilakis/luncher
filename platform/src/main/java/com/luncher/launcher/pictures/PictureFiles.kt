@@ -20,6 +20,10 @@ import com.luncher.domain.pictures.pictureFormatOf
 import java.io.File
 import java.io.FileInputStream
 import java.io.IOException
+import java.nio.IntBuffer
+import kotlin.math.floor
+import kotlin.math.roundToInt
+import kotlin.math.sqrt
 
 /**
  * Reading and drawing a picture file, for the library, its images and the drop folders: what
@@ -96,30 +100,26 @@ internal object PictureFiles {
     }
 
     /**
-     * [image] blurred in place, as [blur] says: drawn at an eighth of its size, blurred there (a
-     * box blur, twice each way, which looks like a Gaussian one), and drawn back up with
-     * filtering, which smooths it further. Blurring the small copy costs little, whatever the
-     * screen's size.
+     * [image] blurred in place, as [blur] says: [Blur.spread] of its width. Three box blurs each
+     * way, which add up to nearly a Gaussian blur, each a running sum, so the cost doesn't depend on
+     * how strong it is. In place, in one array of the pixels: the rows through a line buffer, the
+     * columns by a running sum per column, top to bottom, keeping only the rows the sums still
+     * need as they were. [image] must be opaque, as [draw] makes it: its alpha isn't blurred.
      */
     fun blur(image: Bitmap, blur: Blur) {
-        val radius = when (blur) {
-            Blur.OFF -> return
-            Blur.LIGHT -> 1
-            Blur.STRONG -> 4
-        }
-        val width = (image.width / BLUR_SCALE).coerceAtLeast(1)
-        val height = (image.height / BLUR_SCALE).coerceAtLeast(1)
-        val small = Bitmap.createScaledBitmap(image, width, height, true)
+        if (blur == Blur.OFF) return
+        val width = image.width
+        val height = image.height
+        val radii = boxRadii(blur.spread * width)
         val pixels = IntArray(width * height)
-        small.getPixels(pixels, 0, width, 0, 0, width, height)
-        val scratch = IntArray(pixels.size)
-        repeat(2) {
-            boxBlur(pixels, scratch, width, height, radius, horizontal = true)
-            boxBlur(scratch, pixels, width, height, radius, horizontal = false)
-        }
-        small.setPixels(pixels, 0, width, 0, 0, width, height)
-        Canvas(image).drawBitmap(small, null, Rect(0, 0, image.width, image.height), Paint(Paint.FILTER_BITMAP_FLAG or Paint.DITHER_FLAG))
-        small.recycle()
+        // As stored, without the conversion getPixels makes: red and blue may be swapped, which a blur doesn't mind.
+        image.copyPixelsToBuffer(IntBuffer.wrap(pixels))
+        val most = radii.max()
+        val line = IntArray(width + 2 * most + 1)
+        for (y in 0 until height) for (radius in radii) blurRow(pixels, y * width, width, line, radius)
+        val columns = Columns(width, most)
+        for (radius in radii) columns.blur(pixels, height, radius)
+        image.copyPixelsFromBuffer(IntBuffer.wrap(pixels))
     }
 
     /** [image] darkened in place by [percent] percent, as if seen through that much black. */
@@ -128,30 +128,90 @@ internal object PictureFiles {
         Canvas(image).drawColor(Color.argb(percent.coerceAtMost(100) * 255 / 100, 0, 0, 0))
     }
 
-    /** Each pixel of [source] the average of those [radius] around it along one direction, edges repeated, into [target]. */
-    private fun boxBlur(source: IntArray, target: IntArray, width: Int, height: Int, radius: Int, horizontal: Boolean) {
-        val lines = if (horizontal) height else width
-        val length = if (horizontal) width else height
-        val window = 2 * radius + 1
-        for (line in 0 until lines) {
-            fun at(i: Int) = source[if (horizontal) line * width + i.coerceIn(0, length - 1) else i.coerceIn(0, length - 1) * width + line]
-            var a = 0
-            var r = 0
-            var g = 0
-            var b = 0
+    /** [image] drawn into a new bitmap of [width] x [height] px, filtered and dithered, and freed. */
+    fun enlarge(image: Bitmap, width: Int, height: Int): Bitmap {
+        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        Canvas(bitmap).drawBitmap(image, null, Rect(0, 0, width, height), Paint(Paint.FILTER_BITMAP_FLAG or Paint.DITHER_FLAG))
+        image.recycle()
+        return bitmap
+    }
+
+    /**
+     * The radii of three box blurs that together blur about as much as a Gaussian blur of standard
+     * deviation [sigma] px: boxes of two widths next to each other, the mix whose variances add
+     * up closest to sigma² (Kutskir's "boxesForGauss"); at most [MOST_RADIUS], which only a
+     * picture drawn wider than 8000 px would reach.
+     */
+    private fun boxRadii(sigma: Double): IntArray {
+        val ideal = sqrt(12 * sigma * sigma / BOXES + 1)
+        var lower = floor(ideal).toInt()
+        if (lower % 2 == 0) lower--
+        val narrow = ((12 * sigma * sigma - BOXES * lower * lower - 4 * BOXES * lower - 3 * BOXES) / (-4.0 * lower - 4)).roundToInt()
+        return IntArray(BOXES) { i -> (((if (i < narrow) lower else lower + 2) - 1) / 2).coerceAtMost(MOST_RADIUS) }
+    }
+
+    /**
+     * The [width] pixels of [pixels] from [start] each the average of those [radius] around it, the
+     * edge pixels repeated, through [line]. Red and blue are summed in one Int, each in 16 bits,
+     * which hold the sum of up to 257 pixels; a multiplication stands for the division.
+     */
+    private fun blurRow(pixels: IntArray, start: Int, width: Int, line: IntArray, radius: Int) {
+        if (radius == 0) return
+        line.fill(pixels[start], 0, radius)
+        pixels.copyInto(line, radius, start, start + width)
+        line.fill(pixels[start + width - 1], radius + width, radius + width + radius + 1)
+        val times = DIVIDE / (2 * radius + 1) + 1
+        var redBlue = 0
+        var green = 0
+        for (i in 0..2 * radius) {
+            redBlue += line[i] and RED_BLUE
+            green += line[i] shr 8 and 0xFF
+        }
+        for (x in 0 until width) {
+            pixels[start + x] = average(redBlue, green, times)
+            val into = line[x + 2 * radius + 1]
+            val out = line[x]
+            redBlue += (into and RED_BLUE) - (out and RED_BLUE)
+            green += (into shr 8 and 0xFF) - (out shr 8 and 0xFF)
+        }
+    }
+
+    /** The opaque pixel whose channels are the sums, each times [times] / 65536: their average. */
+    private fun average(redBlue: Int, green: Int, times: Int) =
+        OPAQUE or ((redBlue ushr 16) * times ushr 16 shl 16) or (green * times ushr 16 shl 8) or ((redBlue and 0xFFFF) * times ushr 16)
+
+    /** Box blurs down the columns of a picture [width] px wide, of radius [most] at most, as [blurRow] across. */
+    private class Columns(private val width: Int, most: Int) {
+        private val redBlue = IntArray(width)
+        private val green = IntArray(width)
+
+        /** The last rows as they were before they were blurred, as many as the sums still need. */
+        private val kept = Array(most + 1) { IntArray(width) }
+
+        fun blur(pixels: IntArray, height: Int, radius: Int) {
+            if (radius == 0) return
+            val times = DIVIDE / (2 * radius + 1) + 1
+            redBlue.fill(0)
+            green.fill(0)
             for (i in -radius..radius) {
-                val p = at(i)
-                a += p ushr 24; r += p shr 16 and 0xFF; g += p shr 8 and 0xFF; b += p and 0xFF
+                val row = i.coerceIn(0, height - 1) * width
+                for (x in 0 until width) {
+                    redBlue[x] += pixels[row + x] and RED_BLUE
+                    green[x] += pixels[row + x] shr 8 and 0xFF
+                }
             }
-            for (i in 0 until length) {
-                target[if (horizontal) line * width + i else i * width + line] =
-                    (a / window shl 24) or (r / window shl 16) or (g / window shl 8) or (b / window)
-                val out = at(i - radius)
-                val into = at(i + radius + 1)
-                a += (into ushr 24) - (out ushr 24)
-                r += (into shr 16 and 0xFF) - (out shr 16 and 0xFF)
-                g += (into shr 8 and 0xFF) - (out shr 8 and 0xFF)
-                b += (into and 0xFF) - (out and 0xFF)
+            for (y in 0 until height) {
+                val row = y * width
+                pixels.copyInto(kept[y % (radius + 1)], 0, row, row + width)
+                for (x in 0 until width) pixels[row + x] = average(redBlue[x], green[x], times)
+                if (y == height - 1) break
+                // The row coming into the sums isn't blurred yet; the one leaving is, so it's read as kept.
+                val into = (y + radius + 1).coerceAtMost(height - 1) * width
+                val out = kept[(y - radius).coerceAtLeast(0) % (radius + 1)]
+                for (x in 0 until width) {
+                    redBlue[x] += (pixels[into + x] and RED_BLUE) - (out[x] and RED_BLUE)
+                    green[x] += (pixels[into + x] shr 8 and 0xFF) - (out[x] shr 8 and 0xFF)
+                }
             }
         }
     }
@@ -227,8 +287,19 @@ internal object PictureFiles {
         return sample
     }
 
-    /** How much smaller [blur] blurs a picture. */
-    private const val BLUR_SCALE = 8
+    /** How many box blurs [blur] adds up, each way. */
+    private const val BOXES = 3
+
+    /** The widest box [blur] can sum, 2 x 128 + 1 = 257 pixels: what 16 bits a channel hold. */
+    private const val MOST_RADIUS = 128
+
+    /** 1 in 16 bits: [blur]'s averages multiply by this over the box's width, then shift it away. */
+    private const val DIVIDE = 65536
+
+    /** The two channels [blur] sums in one Int, 16 bits apart. */
+    private const val RED_BLUE = 0xFF00FF
+
+    private const val OPAQUE = 0xFF shl 24
 
     /** The longest side [decodes] decodes at, at most. */
     private const val CHECK_SIZE = 512

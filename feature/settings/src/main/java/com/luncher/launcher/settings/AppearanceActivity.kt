@@ -198,6 +198,7 @@ class AppearanceActivity : Activity() {
     private fun blur(blur: Blur): Int = when (blur) {
         Blur.OFF -> R.string.settings_appearance_off
         Blur.LIGHT -> R.string.settings_appearance_light
+        Blur.MEDIUM -> R.string.settings_appearance_medium
         Blur.STRONG -> R.string.settings_appearance_strong
     }
 

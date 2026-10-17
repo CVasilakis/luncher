@@ -113,9 +113,17 @@ adapters on files, and a cache:
   draws the framed part into a bitmap of exactly that size, over the home screen's background
   color (for a transparent picture); then frees the decoded one. A decoder may give another config
   (16-bit PNG: RGBA_F16 from API 26 on; GIF: none up to 26), which the drawing turns into ARGB_8888.
-- **Blur and dim** are drawn into the picture's bitmap, after its framing: blurred by drawing it at
-  an eighth of its size, blurring that (a box blur, twice each way), and drawing it back up with
-  filtering, so it costs little at any screen size; dimmed by a black fill of the dim's share.
+- **Blur and dim** are drawn into the picture's bitmap, after its framing; dim is a black fill of
+  its share. A blurred picture is drawn at half the size: it decodes smaller (a 12 MP photo for a
+  1080p screen: 3 MB rather than 12), and blurring and dimming it costs a quarter, which the
+  blur's softness hides. It's blurred in place, its strength a share of its width (the domain's
+  `Blur.spread`), by three box blurs each way, nearly a Gaussian blur, each a running sum, so a
+  stronger blur costs no more: the rows through a line buffer, the columns by a sum per column,
+  keeping only the rows the sums still need, so one array of the pixels is all it takes. Then
+  it's dimmed and drawn up to the size asked, filtered and dithered, so the dither also covers
+  the dim's fill. Measured on an emulator at 1080p with a 12 MP JPEG: about 130 ms, half of
+  drawing it whole and halving it after; the result differs from a Gaussian blur at full size by
+  half a level of 255 on average.
 - **The orientation tag** of a JPEG is read by `jpegOrientation`, not `android.media.ExifInterface`,
   whose native code up to Android 6 has known security bugs, while any app can share a crafted
   file. A HEIF photo's is read by `ExifInterface`, which reads HEIF from API 28 on, the first

@@ -39,6 +39,7 @@
     <string name="settings_appearance_percent"><xliff:g id="percent" example="20">%1$d</xliff:g>٪</string>
     <string name="settings_appearance_blur">التمويه</string>
     <string name="settings_appearance_light">خفيف</string>
+    <string name="settings_appearance_medium">متوسط</string>
     <string name="settings_appearance_strong">قوي</string>
     <string name="settings_appearance_on">تشغيل</string>
     <string name="settings_appearance_off">إيقاف</string>
