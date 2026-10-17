@@ -28,4 +28,30 @@
         <item name="android:colorBackground">@color/panel</item>
         <item name="android:windowSplashScreenBackground" tools:targetApi="31">@color/panel</item>
     </style>
+
+    <!-- Pictures and Add from folder: full-screen, on the home screen's background. -->
+    <style name="Theme.Luncher.Settings.Pictures" parent="@style/Theme.Luncher" />
+
+    <!-- A dialog over Pictures (a picture's actions, a confirmation, a message): a floating panel
+         like the settings panel, over the dimmed screen. -->
+    <style name="Theme.Luncher.Settings.Pictures.Dialog" parent="@android:style/Theme.DeviceDefault.Dialog.NoActionBar">
+        <item name="android:windowBackground">@drawable/panel_background</item>
+        <item name="android:colorBackground">@color/panel</item>
+        <item name="android:colorAccent">@color/accent</item>
+        <item name="android:backgroundDimAmount">0.6</item>
+        <item name="android:textAlignment">viewStart</item>
+        <!-- The dialog theme's minimum width is a share of the screen; the layout sets the width. -->
+        <item name="android:windowMinWidthMajor">0dp</item>
+        <item name="android:windowMinWidthMinor">0dp</item>
+    </style>
+
+    <!-- SharePictureActivity: no window, as Theme.NoDisplay, but the home screen's dark
+         backgrounds, in case a device shows one anyway (never a white screen, ThemesTest). It
+         finishes before onResume, as a windowNoDisplay activity must. -->
+    <style name="Theme.Luncher.Settings.Pictures.NoDisplay">
+        <item name="android:windowNoDisplay">true</item>
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowAnimationStyle">@null</item>
+        <item name="android:windowContentOverlay">@null</item>
+    </style>
 </resources>

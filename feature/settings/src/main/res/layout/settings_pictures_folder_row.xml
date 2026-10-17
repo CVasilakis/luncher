@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A picture of the drop folders: where it is and its name, then its size, or that this TV
+     can't show it, on more lines where it needs them. Not focusable: the list moves its
+     selection. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center_vertical"
+    android:minHeight="@dimen/settings_pictures_row_height"
+    android:orientation="vertical"
+    android:paddingLeft="@dimen/settings_pictures_entry_padding"
+    android:paddingTop="@dimen/settings_pictures_tile_text_gap"
+    android:paddingRight="@dimen/settings_pictures_entry_padding"
+    android:paddingBottom="@dimen/settings_pictures_tile_text_gap">
+
+    <TextView
+        android:id="@+id/settings_pictures_folder_name"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ellipsize="end"
+        android:singleLine="true"
+        android:textColor="@color/text_primary"
+        android:textSize="@dimen/settings_pictures_text" />
+
+    <TextView
+        android:id="@+id/settings_pictures_folder_details"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ellipsize="end"
+        android:maxLines="3"
+        android:textColor="@color/text_secondary"
+        android:textSize="@dimen/settings_pictures_small_text" />
+</LinearLayout>

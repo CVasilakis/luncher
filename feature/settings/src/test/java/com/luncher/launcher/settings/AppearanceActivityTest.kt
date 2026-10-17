@@ -18,7 +18,6 @@ import com.luncher.domain.appearance.Background
 import com.luncher.domain.appearance.SAMPLE_WALLPAPER
 import com.luncher.domain.pictures.Blur
 import com.luncher.domain.pictures.Fit
-import com.luncher.launcher.pictures.ChooseWallpaperActivity
 import com.luncher.launcher.testing.TV_1080P
 import com.luncher.launcher.testing.bounds
 import org.junit.Assert.assertEquals

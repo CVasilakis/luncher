@@ -27,6 +27,35 @@
             android:exported="false"
             android:launchMode="singleTop"
             android:theme="@style/Theme.Luncher.Settings.FullScreen" />
+        <!-- The picture library, full-screen, opened from the settings panel or with a shared
+             picture. Not exported: other apps reach it through SharePictureActivity. -->
+        <activity
+            android:name=".PicturesActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Luncher.Settings.Pictures" />
+
+        <!-- Pictures opened to choose the wallpaper, from the appearance editor. -->
+        <activity
+            android:name=".ChooseWallpaperActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Luncher.Settings.Pictures" />
+
+        <!-- The pictures in the drop folders, opened from Pictures. -->
+        <activity
+            android:name=".AddFromFolderActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Luncher.Settings.Pictures" />
+
+        <!-- Where another app's Share (or "Set as") of a picture arrives: no screen of its own,
+             it passes the picture to Pictures and finishes at once. Exported, so any app can send
+             it anything; its intent filters are the app's to declare, in its manifest, which the
+             build merges with this one. -->
+        <activity
+            android:name=".SharePictureActivity"
+            android:excludeFromRecents="true"
+            android:exported="true"
+            android:noHistory="true"
+            android:theme="@style/Theme.Luncher.Settings.Pictures.NoDisplay" />
     </application>
 
 </manifest>

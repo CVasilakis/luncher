@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The Add from folder tile: a dashed outline where a picture would be, the accent color's frame
+     while it has the focus. -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_focused="true">
+        <shape>
+            <solid android:color="@color/entry_focused" />
+            <stroke
+                android:width="@dimen/settings_pictures_frame"
+                android:color="@color/accent" />
+            <corners android:radius="@dimen/settings_pictures_tile_corner" />
+        </shape>
+    </item>
+    <item>
+        <shape>
+            <stroke
+                android:width="@dimen/settings_pictures_dash_line"
+                android:color="@color/settings_pictures_dash"
+                android:dashGap="@dimen/settings_pictures_dash"
+                android:dashWidth="@dimen/settings_pictures_dash" />
+            <corners android:radius="@dimen/settings_pictures_tile_corner" />
+        </shape>
+    </item>
+</selector>

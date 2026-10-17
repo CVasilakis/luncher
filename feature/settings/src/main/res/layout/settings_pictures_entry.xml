@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- An entry of a dialog: OK on it does what it says. -->
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="@dimen/settings_pictures_entry_height"
+    android:background="@drawable/entry_background"
+    android:ellipsize="end"
+    android:focusable="true"
+    android:focusableInTouchMode="true"
+    android:gravity="center_vertical"
+    android:paddingLeft="@dimen/settings_pictures_entry_padding"
+    android:paddingRight="@dimen/settings_pictures_entry_padding"
+    android:singleLine="true"
+    android:textColor="@color/text_primary"
+    android:textSize="@dimen/settings_pictures_text" />

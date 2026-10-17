@@ -11,7 +11,6 @@ import android.widget.TextView
 import android.widget.Toast
 import com.luncher.domain.settings.SettingsEntry
 import com.luncher.domain.settings.settingsMenu
-import com.luncher.launcher.pictures.PicturesActivity
 
 /**
  * The settings panel: a floating window over the home screen that lists the entries of

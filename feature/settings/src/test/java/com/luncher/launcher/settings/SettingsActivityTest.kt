@@ -5,7 +5,6 @@ import android.provider.Settings
 import android.view.KeyEvent
 import android.widget.LinearLayout
 import android.widget.TextView
-import com.luncher.launcher.pictures.PicturesActivity
 import com.luncher.launcher.testing.TV_1080P
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull

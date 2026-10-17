@@ -13,8 +13,7 @@ slow CPU and storage). Two goals shape the structure:
 ```
 :app               ──▶  every module below; the composition root
 :feature:home      ──▶  :domain, :ui; :feature:settings, for its activity's class
-:feature:settings  ──▶  :domain, :ui; :feature:pictures, for its activity's class
-:feature:pictures  ──▶  :domain, :ui
+:feature:settings  ──▶  :domain, :ui
 :platform          ──▶  :domain, :ui
 :ui                     depends on nothing
 :domain                 depends on nothing; pure Kotlin
@@ -191,7 +190,7 @@ group says so (`choosesPicture`), and the editor has the user choose it in the p
 | A launcher decision (which apps show, sort order, banner choice, validation of a setting) | a rule in `:domain`, plus unit tests next to it |
 | New data the rules or screens need from the device (settings, pictures, installed apps) | a port (interface) in `:domain` with a fake in its test fixtures; an adapter in `:platform`, in the package of the port's topic; one line in `AppGraph`; the port in the graph interface of each feature that uses it |
 | An image the UI shows (banners, a picture's thumbnail) | which image: a model and rule in `:domain` (like `Banner`, or a picture's `Framing`); drawing it: an adapter in `:platform` behind a port generic in the image type (`AppImages<Bitmap>`, `PictureImages<Bitmap>`), since `:domain` can't name `Bitmap`. It draws at the size shown ([rule 5](#rules)), and is slow work if it's slow ([above](#background-work-and-changes-while-shown)). Kept for the next start, it's a cache adapter in front of the one that draws (`CachedBannerImages`, `CachedPictureImages`). |
-| A picture the user brings in, and what it's used for | the picture library: `:domain`'s `pictures/` (the models, the rules of framing, limits and formats, and the ports), its adapters in `:platform`'s `pictures/`, its screens in `:feature:pictures` ([`feature/pictures/README.md`](../feature/pictures/README.md)) |
+| A picture the user brings in, and what it's used for | the picture library: `:domain`'s `pictures/` (the models, the rules of framing, limits and formats, and the ports), its adapters in `:platform`'s `pictures/`, its screens in `:feature:settings` ([`feature/settings/README.md`](../feature/settings/README.md#pictures)) |
 | How the home screen arranges apps (grid, apps per row, alignment, a carousel) | a `TileLayout` in `:domain`'s `layout/` that computes sizes and positions, and `TileMoves` for where a tile the user moves goes, with unit tests; `TileLayouts` picks it, so everything that shows tiles lays them out alike; the view that shows the tiles only places them where the layout says ([`feature/home/README.md`](../feature/home/README.md#the-home-screen)) |
 | What the user can do while arranging apps (moving, hiding, which key does what to the held app) | `ArrangeSession` in `:domain`'s `arrange/`, with unit tests; `ArrangeMode` in `:feature:home` turns keys into its moves ([`feature/home/README.md`](../feature/home/README.md#arrange-mode)) |
 | Something the home screen's top bar shows (the clock, the settings entry; later status indicators) | a view in `:feature:home`, placed in the bar; device state it shows (the time, the network) comes from a port you can watch ([above](#background-work-and-changes-while-shown)). Details: [`feature/home/README.md`](../feature/home/README.md#the-top-bar) |

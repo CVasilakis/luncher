@@ -2,11 +2,14 @@ package com.luncher.launcher.settings
 
 import android.app.Activity
 import android.graphics.Bitmap
+import android.net.Uri
 import com.luncher.domain.appearance.AppearanceSettings
 import com.luncher.domain.apps.AppArrangements
 import com.luncher.domain.apps.InstalledApps
 import com.luncher.domain.jobs.Jobs
+import com.luncher.domain.pictures.FolderPictures
 import com.luncher.domain.pictures.PictureImages
+import com.luncher.domain.pictures.PictureImport
 import com.luncher.domain.pictures.Pictures
 
 /**
@@ -16,15 +19,23 @@ import com.luncher.domain.pictures.Pictures
 interface SettingsGraph {
     val installedApps: InstalledApps
     val appArrangements: AppArrangements
+
+    /** The home screen's appearance; also the wallpaper, which a picture of the library is made or stops being. */
     val appearanceSettings: AppearanceSettings
 
-    /** The picture library, for the wallpaper's name in the appearance editor. */
+    /** The picture library: its screens, and the wallpaper's name in the appearance editor. */
     val pictures: Pictures
 
-    /** The wallpaper in the appearance editor's preview, drawn at its size. */
+    /** Adding a picture to the library, from a share or a drop folder. */
+    val pictureImport: PictureImport<Uri>
+
+    /** The drop folders' pictures, for Add from folder. */
+    val folderPictures: FolderPictures<Uri, Bitmap>
+
+    /** The pictures as the screens show them: thumbnails, previews, the appearance editor's wallpaper. */
     val pictureImages: PictureImages<Bitmap>
 
-    /** The background thread, for the preview's wallpaper. */
+    /** The background thread, for what the screens load (thumbnails, previews). */
     val jobs: Jobs
 
     /** Implemented by the Application, which holds the process's graph. */

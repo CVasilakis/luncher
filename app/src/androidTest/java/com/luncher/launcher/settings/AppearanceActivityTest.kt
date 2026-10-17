@@ -168,7 +168,7 @@ class AppearanceActivityTest {
 
             // The picture library, choosing: No picture first, then the pictures.
             waitUntil(withChild(withText("sunset.jpg")), isDisplayed())
-            waitUntil(withChild(withText(com.luncher.launcher.pictures.R.string.pictures_no_picture)), hasFocus())
+            waitUntil(withChild(withText(R.string.settings_pictures_no_picture)), hasFocus())
             press(KeyEvent.KEYCODE_DPAD_RIGHT)
             waitUntil(withChild(withText("sunset.jpg")), hasFocus())
             press(KeyEvent.KEYCODE_DPAD_CENTER)

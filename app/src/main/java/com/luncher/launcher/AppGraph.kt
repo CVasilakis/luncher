@@ -25,7 +25,6 @@ import com.luncher.launcher.pictures.CachedPictureImages
 import com.luncher.launcher.pictures.FilePictureImages
 import com.luncher.launcher.pictures.FilesPictures
 import com.luncher.launcher.pictures.MediaFolderPictures
-import com.luncher.launcher.pictures.PicturesGraph
 import com.luncher.launcher.settings.SettingsGraph
 
 /**
@@ -37,7 +36,7 @@ import com.luncher.launcher.settings.SettingsGraph
  * Open so instrumented tests can replace single ports with fakes (`object : AppGraph(app) {
  * override … }`) and install the result as [LuncherApplication.graph]; see docs/TESTING.md.
  */
-open class AppGraph(context: Context) : HomeGraph, SettingsGraph, PicturesGraph {
+open class AppGraph(context: Context) : HomeGraph, SettingsGraph {
 
     protected val appContext: Context = context.applicationContext
 
