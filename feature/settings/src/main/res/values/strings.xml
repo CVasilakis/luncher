@@ -60,13 +60,13 @@
          right-to-left language, where "first" would mean the right, say which is on the left. -->
     <string name="settings_appearance_time_first">Time first</string>
     <string name="settings_appearance_date_first">Date first</string>
-    <!-- In the appearance editor: the title of the options for the home screen's background, a
-         picture (a wallpaper) or none. -->
+    <!-- In the appearance editor: the entry of the home screen's background, a picture (a
+         wallpaper) or none, which opens the background editor; also the entry, in the window
+         after another app shared a picture, that opens it with that picture. -->
     <string name="settings_appearance_background">Background</string>
-    <!-- The background's picture; OK on it opens the picture library to choose one. Also the
-         value shown for a picture that has no name. -->
+    <!-- Beside the Background entry: the name of a picture that has none. -->
     <string name="settings_appearance_picture">Picture</string>
-    <!-- Its value while the background has no picture. -->
+    <!-- Beside the Background entry while the background has no picture. -->
     <string name="settings_appearance_no_picture">None</string>
     <!-- An option: how the picture covers the screen. Its values: Fill (keeping its shape, what
          doesn't fit cut off) and Stretch (all of it, its shape changed to the screen's). -->

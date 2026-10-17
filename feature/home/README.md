@@ -39,7 +39,8 @@ feature/home/
 
 Everything but `HomeActivity` and `HomeGraph` is `internal`. The JVM tests' `TestHomeGraph` has
 fakes of the ports but the real `BannerImages`, so the screenshots show tiles as the app draws
-them; the screenshots of a wallpaper draw it with the real `FilePictureImages` too.
+them, and a real `Wallpaper` over a kept wallpaper in memory (`FakeStoredWallpaper`); the
+screenshots of a wallpaper draw it with the real `FilePictureImages` too.
 
 ## Manifest
 
@@ -52,7 +53,7 @@ The build merges the two.
 | `launchMode="singleTask"` | Pressing Home returns to the same instance instead of stacking new ones. |
 | `stateNotNeeded`, `clearTaskOnLaunch`, `excludeFromRecents` | Standard for home activities: always starts clean, never in Recents. |
 | `screenOrientation="landscape"` | TVs are landscape. |
-| `exported="true"` | Android starts it for Home and from the TV's app list. |
+| `exported="true"` | Android starts it for Home and from the TV's app list, which is also how a shared picture opens it ([`settings/README.md`](../settings/README.md#adding-a-picture)). |
 | `theme="@style/Theme.Luncher"` | Set on the activity rather than only on the app, so the JVM tests, which have no app manifest, show it as the app does. |
 | `supportsRtl="true"` | As the app declares it ([why](../../app/README.md#manifest-why-each-part-is-there)), so the JVM tests follow a right-to-left language as the app does: there the home screen still stays left to right. |
 
@@ -84,7 +85,7 @@ one job, so a new arrangement, image source or top bar item changes one of them:
 | `AndroidClock` (`:platform`) | reads those from Android, and watches the time broadcasts only while something listens |
 | `ClockView` | formats a reading in the device's language; the time and the date side by side, in the order the top bar gives, either or both hidden |
 | `topBarLayout` (`:domain`), `TopBarView` | which edge of the top bar the clock and the settings entry are at, the time's side of the date, and whether each of the two shows; the view moves its items there |
-| `HomeActivity` | reads the apps and their arrangement in `onResume`; when the shown apps changed, creates tiles for new ones (an updated app is new: its banner may have changed) and drops the others. Without tiles, says why: nothing installed, or everything hidden. Starts the clock and follows the appearance, the arrangement and the installed apps in `onStart`, and stops all four in `onStop`: an app hidden or shown in the settings shows at once, behind the panel, and so does an app installed, updated or removed; arrange mode's own saves don't read the apps again, and an app changed while arranging shows when the mode ends. Opens the [settings panel](../settings/README.md#the-settings-panel) on OK on the gear or on the Menu key. A long press of OK on a tile starts [arrange mode](#arrange-mode), which gets every key first while it's on. |
+| `HomeActivity` | reads the apps and their arrangement in `onResume`; when the shown apps changed, creates tiles for new ones (an updated app is new: its banner may have changed) and drops the others. Without tiles, says why: nothing installed, or everything hidden. Starts the clock and follows the wallpaper, the appearance, the arrangement and the installed apps in `onStart`, and stops all five in `onStop`: an app hidden or shown in the settings shows at once, behind the panel, and so does an app installed, updated or removed; arrange mode's own saves don't read the apps again, and an app changed while arranging shows when the mode ends. Opens the [settings panel](../settings/README.md#the-settings-panel) on OK on the gear or on the Menu key. A long press of OK on a tile starts [arrange mode](#arrange-mode), which gets every key first while it's on. |
 
 ### The top bar
 
@@ -126,7 +127,9 @@ What keeps it light:
   measuring or laying out again. The clock's text changes once a minute, which lays out the top
   bar only, not the tiles.
 - **Nothing runs while the home screen is hidden.** The clock's broadcast receiver exists only
-  from `onStart` to `onStop`, and the appearance and the arrangement are followed only then.
+  from `onStart` to `onStop`, and the wallpaper, the appearance and the arrangement are followed
+  only then; a wallpaper being drawn goes on, as it's the process's
+  ([below](#the-wallpaper)).
 
 ### Appearance
 
@@ -142,9 +145,10 @@ screen reads an equal appearance. What a change costs depends on the part:
 | `TopBarAppearance` | `TopBarView.appearance` | the bar's items moved (focus on the gear stays), and a layout pass of the bar only |
 | `Background` | `HomeWallpaper.show` | the window's background: the picture kept at the screen's size, or drawn again in the background while a window says so ([below](#the-wallpaper)); nothing else is laid out or drawn anew |
 
-The appearance editor, and the background editor it opens, cover the home screen whole, so the home screen is stopped while the user changes it, and applies the result
-once, when it comes back
-([`ARCHITECTURE.md`](../../docs/ARCHITECTURE.md#appearance)).
+The appearance editor, and the background editor it opens, cover the home screen whole, so the
+home screen is stopped while the user changes it, and applies the result once, when it comes back
+([`ARCHITECTURE.md`](../../docs/ARCHITECTURE.md#appearance)); a background saved there is drawn
+before it's stored, so it's ready by then.
 
 Where the tiles go is the layout's decision (`TileLayouts`, from the geometry's alignments): rows
 keep the apps' order and are as wide as the space, and a row that isn't full goes at the left,
@@ -184,9 +188,18 @@ background editor is drawn the same way; if the user goes home before it's done,
 "Applying effects…", as the editor's did.
 
 A picture that's gone (deleted in the background editor, which sets the wallpaper to none, or its
-file lost) is
-no wallpaper, and without one, none is kept. The wallpaper takes about 8 MB of memory at 1080p
-while shown.
+file lost) is no wallpaper, and without one, none is kept: asked for none, `Wallpaper` deletes the
+kept file. The wallpaper takes about 8 MB of memory at 1080p while shown.
+
+| Part | Job |
+|---|---|
+| `Background` (`:domain`) | the picture, or none, and how it's drawn: fit, position, dim, blur |
+| `WallpaperDrawing`, `whyDraw` (`:domain`) | what a wallpaper is drawn from (the picture, its style, the screen's size), and why the one kept won't do |
+| `Wallpaper` (`:domain`) | the wallpaper as it stands, one per process, made by `AppGraph`: reads the one kept, draws it again when it won't do, saves a new background (drawn, then stored), forgets a deleted picture |
+| `StoredWallpaper` (`:domain`) / `FileStoredWallpaper` (`:platform`) | the one wallpaper kept, a file replaced in one step |
+| `PictureImages` (`:domain`) / `FilePictureImages` (`:platform`) | draws the picture at the screen's size, keeping nothing |
+| `HomeWallpaper` | the window's background as `Wallpaper` says, and its window while it's drawn |
+| `WorkingDialog` (`:ui`) | that window: a spinning wheel and why, taking every key, half a second at least |
 
 ### Focus
 

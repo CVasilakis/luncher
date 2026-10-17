@@ -26,10 +26,10 @@ import com.luncher.launcher.home.HomeGraph
 import com.luncher.launcher.jobs.BackgroundThreadJobs
 import com.luncher.launcher.pictures.CachedPictureImages
 import com.luncher.launcher.pictures.FilePictureImages
-import com.luncher.launcher.pictures.FileStoredWallpaper
 import com.luncher.launcher.pictures.FilesPictures
 import com.luncher.launcher.pictures.MediaFolderPictures
 import com.luncher.launcher.settings.SettingsGraph
+import com.luncher.launcher.wallpaper.FileStoredWallpaper
 
 /**
  * Composition root: the only place that creates adapters and decides which implementation

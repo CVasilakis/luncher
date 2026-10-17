@@ -36,17 +36,18 @@ platform/
     │   │   │   ├── MediaFolderPictures.kt           FolderPictures<Uri, Bitmap> in the drop folders, Android/media/<applicationId>
     │   │   │   ├── FilePictureImages.kt             PictureImages<Bitmap>: draws a picture of the library at a size, framed, dimmed, blurred
     │   │   │   ├── CachedPictureImages.kt           PictureImages<Bitmap> in front of FilePictureImages: what it drew kept in files
-    │   │   │   ├── FileStoredWallpaper.kt           StoredWallpaper<Bitmap>: the one wallpaper kept, a file in the app's private files
     │   │   │   ├── PictureFiles.kt                  reading a picture file: its size, upright, its format; drawing it framed in ARGB_8888
     │   │   │   └── JpegOrientation.kt               a JPEG's orientation tag, read without ExifInterface
-    │   │   └── jobs/
-    │   │       └── BackgroundThreadJobs.kt          Jobs on one thread at background priority, with a priority queue
+    │   │   ├── jobs/
+    │   │   │   └── BackgroundThreadJobs.kt          Jobs on one thread at background priority, with a priority queue
+    │   │   └── wallpaper/
+    │   │       └── FileStoredWallpaper.kt           StoredWallpaper<Bitmap>: the one wallpaper kept, a file in the app's private files
     │   └── res/values/colors.xml the card drawn for an app without a banner
     └── test/java/…/              JVM tests (Robolectric), same packages as the code
 ```
 
-Packages follow `:domain`'s topics (`appearance/`, `apps/`, `clock/`, `jobs/`, `pictures/`, and
-later e.g. `network/`), so the adapter of `com.luncher.domain.clock.Clock` is in `clock/`. What two topics' adapters share
+Packages follow `:domain`'s topics (`appearance/`, `apps/`, `clock/`, `jobs/`, `pictures/`,
+`wallpaper/`, and later e.g. `network/`), so the adapter of `com.luncher.domain.clock.Clock` is in `clock/`. What two topics' adapters share
 is in a package of its own (`images/`: the caches' file format).
 
 ## Writing adapters
@@ -84,7 +85,7 @@ is in a package of its own (`images/`: the caches' file format).
 
 ## Pictures
 
-The picture library ([`feature/settings/README.md`](../feature/settings/README.md#pictures)) is three
+The picture library ([`feature/settings/README.md`](../feature/settings/README.md#background)) is three
 adapters on files and a cache; the wallpaper drawn from it is kept by a fourth:
 
 | Adapter | Port | What it keeps, and how |
@@ -123,9 +124,8 @@ adapters on files and a cache; the wallpaper drawn from it is kept by a fourth:
   stronger blur costs no more: the rows through a line buffer, the columns by a sum per column,
   keeping only the rows the sums still need, so one array of the pixels is all it takes. Then
   it's dimmed and drawn up to the size asked, filtered and dithered, so the dither also covers
-  the dim's fill. Measured on an emulator at 1080p with a 12 MP JPEG: about 130 ms, half of
-  drawing it whole and halving it after; the result differs from a Gaussian blur at full size by
-  half a level of 255 on average.
+  the dim's fill. That takes about half as long as drawing it whole and halving it after, and
+  differs from a Gaussian blur at full size by half a level of 255 on average.
 - **The orientation tag** of a JPEG is read by `jpegOrientation`, not `android.media.ExifInterface`,
   whose native code up to Android 6 has known security bugs, while any app can share a crafted
   file. A HEIF photo's is read by `ExifInterface`, which reads HEIF from API 28 on, the first

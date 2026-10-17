@@ -49,8 +49,7 @@ class SettingsScreenshotTest {
         activity.window.decorView.captureRoboImage("src/test/screenshots/settings/settings_panel.png")
     }
 
-    // 720p at the 1080p density, 640x360 dp: as many entries as leave the panel its margin, ending
-    // on half an entry; they scroll.
+    // 720p at the 1080p density, 640x360 dp, the shortest TV screen: all three entries fit.
     @Test
     @Config(qualifiers = "+w640dp-h360dp")
     fun settingsPanelOnASmallScreen() {

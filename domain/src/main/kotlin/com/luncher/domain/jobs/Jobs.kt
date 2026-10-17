@@ -32,6 +32,6 @@ object JobPriority {
      */
     const val PICTURE_LIBRARY = 2
 
-    /** The home screen's wallpaper, which it shows without until it's drawn: first. */
+    /** The wallpaper drawn and kept, or deleted: saved, or drawn again, while a screen waits for it. First. */
     const val WALLPAPER = 3
 }

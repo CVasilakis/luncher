@@ -46,8 +46,9 @@ The test fixtures are what the screens' JVM tests share, in every module
 
 ## The theme
 
-`Theme.Luncher` is the application's theme and the home screen's; a feature whose screens look
-different has its own (the settings panels' dialog theme,
+`Theme.Luncher` is the application's theme and the home screen's; `Theme.Luncher.Working` is
+`WorkingDialog`'s, a floating panel like the settings panel, which two features show. A feature
+whose screens look different has its own (the settings panels' dialog theme,
 [`feature/settings/`](../feature/settings/README.md#the-settings-panel), with the picture dialogs and
 the share entry point without a window, [its manifest](../feature/settings/README.md#manifest)). They're all platform
 themes (`Theme.DeviceDefault…`), not AppCompat, like every activity's `android.app.Activity`
@@ -82,7 +83,8 @@ whole.
   its theme (AOSP `ActivityRecord.getStartingWindowType`).
 - **At boot**, on every version, the first home activity gets no starting window: the boot
   animation stays until Luncher draws.
-- **Opened as an app** rather than as the home screen, on Android 12 and 13 it still gets a
+- **Opened as an app** rather than as the home screen (from the TV's app list, or by a shared
+  picture, [`feature/settings/`](../feature/settings/README.md#adding-a-picture)), on Android 12 and 13 it still gets a
   splash screen: from 12 on, Android ignores `windowDisablePreview` for an activity started from
   the launcher, System UI or the system (`launchedFromSystemSurface`). On TV, Android's window
   manager overrides every app's splash screen (AOSP `TvStartingWindowTypeAlgorithm`): only its

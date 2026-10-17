@@ -1,4 +1,4 @@
-package com.luncher.launcher.pictures
+package com.luncher.launcher.wallpaper
 
 import android.graphics.Bitmap
 import android.graphics.Color
@@ -10,6 +10,7 @@ import com.luncher.domain.pictures.PicturePosition
 import com.luncher.domain.pictures.PictureStyle
 import com.luncher.domain.wallpaper.WallpaperDrawing
 import com.luncher.launcher.images.PixelFiles
+import com.luncher.launcher.pictures.FilePictureImages
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull

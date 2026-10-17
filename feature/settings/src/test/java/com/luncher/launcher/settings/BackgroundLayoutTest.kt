@@ -110,6 +110,13 @@ class BackgroundLayoutTest(private val screen: TvScreen) {
         activity.assertShown("hint", activity.findViewById(R.id.settings_background_hint))
         assertApart(screen, "preview and pictures", bounds(preview), bounds(end))
         assertTrue("preview ${preview.width} px wide on $screen", preview.width >= metrics.widthPixels / 3)
+        // Save above the overscan margin without scrolling, where the screen is as tall as 1080p's
+        // 540 dp or more; a shorter one scrolls the column instead.
+        if (metrics.heightPixels / metrics.density >= 540) {
+            val margin = activity.resources.getDimension(R.dimen.settings_appearance_margin_vertical)
+            val save = bounds(activity.findViewById(R.id.settings_background_save))
+            assertTrue("Save at $save, below the margin on $screen", save.bottom <= metrics.heightPixels - margin + 1)
+        }
         for (row in activity.children(R.id.settings_background_list)) {
             activity.assertAcross("a picture's row", row)
             row.findViewById<TextView>(R.id.settings_background_chosen)?.let { activity.assertAcross("its check", it) }
