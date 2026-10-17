@@ -1,6 +1,8 @@
 package com.luncher.domain.wallpaper
 
+import com.luncher.domain.appearance.Appearance
 import com.luncher.domain.appearance.Background
+import com.luncher.domain.appearance.FakeAppearanceSettings
 import com.luncher.domain.jobs.ManualJobs
 import com.luncher.domain.pictures.FakePictureImages
 import com.luncher.domain.pictures.PictureId
@@ -20,10 +22,11 @@ class WallpaperTest {
     private val stored = FakeStoredWallpaper<String>()
     private val images = FakePictureImages { picture, width, height, style -> "${picture.value} ${width}x$height dim ${style.dim}" }
     private val jobs = ManualJobs()
+    private val settings = FakeAppearanceSettings(Appearance(background = background))
 
     /** Results the main thread hasn't run yet, as a Handler would queue them. */
     private val onMain = mutableListOf<() -> Unit>()
-    private val wallpaper = Wallpaper(stored, images, jobs) { onMain += it }
+    private val wallpaper = Wallpaper(stored, images, settings, jobs) { onMain += it }
 
     /** Every state the listeners were told of, in order. */
     private val told = mutableListOf<State<String>>().also { told -> wallpaper.addListener { told += wallpaper.state } }
@@ -170,5 +173,110 @@ class WallpaperTest {
         drawInTheBackground()
 
         assertEquals(1, calls)
+    }
+
+    // Saving, from the background editor.
+
+    @Test
+    fun `saving draws and keeps the picture first, then stores the background, then says it's done`() {
+        val chosen = Background(forest, dim = 40)
+        var done = 0
+
+        wallpaper.save(chosen, 1920, 1080) { done++ }
+        assertEquals(State.Drawing(DrawingCause.SAVING), wallpaper.state)
+        assertEquals("not stored before it's drawn", background, settings.appearance.background)
+        jobs.runAll()
+        assertEquals("still not stored before its result is back", background, settings.appearance.background)
+        assertEquals(WallpaperDrawing(forest, PictureStyle(dim = 40), 1920, 1080), stored.kept?.first)
+
+        drawInTheBackground()
+
+        assertEquals(chosen, settings.appearance.background)
+        assertEquals(State.Ready("forest 1920x1080 dim 40"), wallpaper.state)
+        assertEquals(1, done)
+    }
+
+    @Test
+    fun `while saving, the home screen asking for the background it replaces stops nothing`() {
+        val chosen = Background(forest)
+        wallpaper.save(chosen, 1920, 1080) {}
+
+        wallpaper.show(background, 1920, 1080)
+        drawInTheBackground()
+
+        assertEquals(listOf(forest), images.rendered.map { it.first })
+        assertEquals(chosen, settings.appearance.background)
+        wallpaper.show(chosen, 1920, 1080)
+        assertEquals(State.Ready("forest 1920x1080 dim 0"), wallpaper.state)
+    }
+
+    @Test
+    fun `saving no picture stores it at once, and deletes the one kept`() {
+        stored.kept = drawing to "kept"
+        var done = 0
+
+        wallpaper.save(Background(dim = 40), 1920, 1080) { done++ }
+
+        assertEquals(Background(dim = 40), settings.appearance.background)
+        assertEquals(State.None, wallpaper.state)
+        assertEquals(1, done)
+        drawInTheBackground()
+        assertNull(stored.kept)
+    }
+
+    @Test
+    fun `saving what's kept already stores it at once, drawing nothing`() {
+        stored.kept = WallpaperDrawing(forest, PictureStyle(), 1920, 1080) to "kept forest"
+        var done = 0
+
+        wallpaper.save(Background(forest), 1920, 1080) { done++ }
+
+        assertEquals(Background(forest), settings.appearance.background)
+        assertEquals(State.Ready("kept forest"), wallpaper.state)
+        assertEquals(1, done)
+        assertEquals(0, jobs.pending)
+    }
+
+    @Test
+    fun `saving a picture that's gone meanwhile changes nothing, the stored background's showing, kept`() {
+        stored.kept = drawing to "kept"
+        images.missing += forest
+        var done = 0
+
+        wallpaper.save(Background(forest), 1920, 1080) { done++ }
+        drawInTheBackground()
+
+        assertEquals(background, settings.appearance.background)
+        assertEquals(1, done)
+        assertEquals(State.Ready("kept"), wallpaper.state)
+        assertEquals(drawing to "kept", stored.kept)
+    }
+
+    // Deleting pictures.
+
+    @Test
+    fun `forgetting the wallpaper's picture stores no picture at once, then deletes the one kept`() {
+        stored.kept = drawing to "kept"
+        wallpaper.show(background, 1920, 1080)
+
+        wallpaper.forget(setOf(sunset))
+
+        assertNull(settings.appearance.background.picture)
+        assertEquals("the rest of the background stays", 20, settings.appearance.background.dim)
+        assertEquals(State.None, wallpaper.state)
+        jobs.runAll()
+        assertNull(stored.kept)
+    }
+
+    @Test
+    fun `forgetting other pictures changes nothing`() {
+        stored.kept = drawing to "kept"
+        wallpaper.show(background, 1920, 1080)
+
+        wallpaper.forget(setOf(forest))
+
+        assertEquals(background, settings.appearance.background)
+        assertEquals(State.Ready("kept"), wallpaper.state)
+        assertEquals(0, jobs.pending)
     }
 }

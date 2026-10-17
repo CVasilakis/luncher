@@ -67,7 +67,7 @@ open class TestHomeGraph(context: Context) : HomeGraph {
     open val jobs = ManualJobs()
 
     // Made on first use, from what a test's subclass gives.
-    override val wallpaper by lazy { Wallpaper(storedWallpaper, pictureImages, jobs) { Handler(Looper.getMainLooper()).post(it) } }
+    override val wallpaper by lazy { Wallpaper(storedWallpaper, pictureImages, appearanceSettings, jobs) { Handler(Looper.getMainLooper()).post(it) } }
 }
 
 /**

@@ -73,6 +73,6 @@ open class AppGraph(context: Context) : HomeGraph, SettingsGraph {
      * the image cache keeps none of it.
      */
     override val wallpaper: Wallpaper<Bitmap> by lazy {
-        Wallpaper(FileStoredWallpaper(appContext), FilePictureImages(appContext), jobs) { Handler(Looper.getMainLooper()).post(it) }
+        Wallpaper(FileStoredWallpaper(appContext), FilePictureImages(appContext), appearanceSettings, jobs) { Handler(Looper.getMainLooper()).post(it) }
     }
 }

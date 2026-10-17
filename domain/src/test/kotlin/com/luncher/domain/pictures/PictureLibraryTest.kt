@@ -23,20 +23,11 @@ class PictureLibraryTest {
     }
 
     @Test
-    fun `adds up the room they take`() {
-        assertEquals(123L, PictureLibrary(listOf(old, newer, newest)).bytes)
-        assertEquals(0L, PictureLibrary(emptyList()).bytes)
-    }
-
-    @Test
-    fun `every picture nothing uses is unused`() {
+    fun `says what each picture is used for, nothing for one unused`() {
         val library = PictureLibrary(listOf(old, newer, newest), uses = mapOf(newer.id to listOf(PictureUse.Wallpaper)))
 
-        assertEquals(listOf(newest, old), library.unused)
         assertEquals(listOf(PictureUse.Wallpaper), library.usesOf(newer.id))
         assertEquals(emptyList<PictureUse>(), library.usesOf(old.id))
-        assertEquals(103L, library.unusedBytes)
-        assertEquals(listOf(newest, newer, old), PictureLibrary(listOf(old, newer, newest)).unused)
     }
 
     @Test

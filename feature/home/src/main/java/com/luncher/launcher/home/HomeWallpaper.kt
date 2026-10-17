@@ -15,8 +15,8 @@ import com.luncher.launcher.ui.R as UiR
 /**
  * The home screen's wallpaper: the process's [Wallpaper], at the screen's size, as [activity]'s
  * window background, followed from [start] to [stop]. The picture once it's ready, the home
- * screen's plain color without one. While it's drawn again (the screen changed size, Luncher was
- * updated), the plain color, and a [WorkingDialog] over the home screen says why, taking every key
+ * screen's plain color without one. While it's drawn (saved in the background editor; again, as
+ * the screen changed size or Luncher was updated), the plain color, and a [WorkingDialog] over the home screen says why, taking every key
  * until the picture shows: a wait the user is told of, not a screen that seems stuck.
  *
  * A start reads a wallpaper kept on the main thread (in [Wallpaper.show]), so the first frame has
@@ -70,6 +70,7 @@ internal class HomeWallpaper(private val activity: Activity, private val wallpap
     }
 
     private fun message(cause: DrawingCause): Int = when (cause) {
+        DrawingCause.SAVING -> R.string.home_wallpaper_saving
         DrawingCause.SCREEN_CHANGED -> R.string.home_wallpaper_screen_changed
         DrawingCause.OUTDATED -> R.string.home_wallpaper_outdated
     }

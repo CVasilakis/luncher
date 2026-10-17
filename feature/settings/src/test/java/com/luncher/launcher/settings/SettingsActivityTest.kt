@@ -36,7 +36,7 @@ class SettingsActivityTest {
 
     @Test
     fun `lists hiding apps, the appearance and the pictures, then the system settings`() {
-        assertEquals(listOf("Hide apps", "Appearance", "Pictures", "System settings"), start().entries().map { it.text.toString() })
+        assertEquals(listOf("Hide apps", "Appearance", "System settings"), start().entries().map { it.text.toString() })
     }
 
     @Test
@@ -44,7 +44,7 @@ class SettingsActivityTest {
         val entries = start().entries()
 
         val gaps = entries.zipWithNext { above, below -> below.top - above.bottom }
-        assertEquals(listOf(0, 0, 0), gaps)
+        assertEquals(listOf(0, 0), gaps)
     }
 
     @Test
@@ -61,7 +61,7 @@ class SettingsActivityTest {
         controller.configurationChange().visible()   // Robolectric shows the new window only when told
 
         val activity = controller.get()
-        assertEquals(listOf("Hide apps", "Appearance", "Pictures", "System settings"), activity.entries().map { it.text.toString() })
+        assertEquals(listOf("Hide apps", "Appearance", "System settings"), activity.entries().map { it.text.toString() })
         assertTrue(activity.entries().first().isFocused)
     }
 
@@ -97,21 +97,10 @@ class SettingsActivityTest {
     }
 
     @Test
-    fun `OK on Pictures opens the picture library, and the panel disappears meanwhile`() {
-        val activity = start()
-
-        activity.entries()[2].requestFocus()
-        activity.press(KeyEvent.KEYCODE_DPAD_CENTER)
-
-        assertEquals(PicturesActivity::class.java.name, shadowOf(activity).nextStartedActivity.component?.className)
-        assertEquals(0f, activity.window.attributes.alpha)
-    }
-
-    @Test
     fun `OK on the system settings opens them in a task of their own`() {
         val activity = start()
 
-        activity.entries()[3].requestFocus()
+        activity.entries()[2].requestFocus()
         activity.press(KeyEvent.KEYCODE_DPAD_CENTER)
 
         val intent = shadowOf(activity).nextStartedActivity
@@ -125,7 +114,7 @@ class SettingsActivityTest {
         // Nothing handles ACTION_SETTINGS here, so starting it now throws, as on such a device.
         shadowOf(activity.application).checkActivities(true)
 
-        activity.entries()[3].requestFocus()
+        activity.entries()[2].requestFocus()
         activity.press(KeyEvent.KEYCODE_DPAD_CENTER)
 
         assertNull(shadowOf(activity).nextStartedActivity)

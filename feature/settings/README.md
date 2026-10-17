@@ -1,8 +1,9 @@
 # feature/settings/
 
 The settings panel, `:feature:settings`, and the screens it opens: Hide apps, the appearance
-editor and the picture library (Pictures, choosing the wallpaper in it, Add from folder); and the
-way in for a picture another app shares. What a feature module holds and may use: [`../README.md`](../README.md); the rules it follows:
+editor, and from it the background editor, where the wallpaper is chosen from Luncher's picture
+library, with Add from folder; and the way in for a picture another app shares. What a feature
+module holds and may use: [`../README.md`](../README.md); the rules it follows:
 [`../../docs/ARCHITECTURE.md`](../../docs/ARCHITECTURE.md).
 
 | | |
@@ -26,15 +27,17 @@ feature/settings/
     │   │   ├── AppearanceActivity.kt the appearance editor: the options, Left and Right step them
     │   │   ├── AppearancePreviewView.kt  the editor's preview: an illustration of the home screen
     │   │   ├── AppearanceEditorLayout.kt the editor's columns: the options level with the title
-    │   │   ├── PicturesActivity.kt     Pictures: the grid, a picture's actions, Delete unused; adds a picture it's given
-    │   │   ├── ChooseWallpaperActivity.kt  Pictures choosing the wallpaper, for the appearance editor
+    │   │   ├── OptionRow.kt      an option's row, Left and Right stepping it: both editors'
+    │   │   ├── OptionLabels.kt   what the options, their values and groups are called
+    │   │   ├── BackgroundActivity.kt the background editor: the pictures, the draft, Save; deletes and adds pictures
+    │   │   ├── BackgroundStartColumn.kt  its preview, options and Save, the preview as large as the room left
     │   │   ├── AddFromFolderActivity.kt  the drop folders' pictures, a preview of the selected one; OK returns it
-    │   │   ├── SharePictureActivity.kt   where another app's share arrives: passes the picture to Pictures, no screen
-    │   │   ├── PicturesDialog.kt the dialogs over Pictures: a picture's actions, a question, a message
+    │   │   ├── SharePictureActivity.kt   where another app's share arrives: passes the picture to the background editor, no screen
+    │   │   ├── PicturesDialog.kt the dialogs over the picture screens: a question, a message
     │   │   ├── PreviewColumn.kt  Add from folder's preview and note, the preview smaller on a short screen
     │   │   └── PictureTexts.kt   what the picture screens call things: sizes, names, why a picture wasn't added
     │   └── res/                  the themes (Theme.Luncher.Settings, .Panel, .FullScreen, .Pictures, .Pictures.Dialog,
-    │                             .Pictures.NoDisplay), layouts, the picture tiles' frames, settings_* dimensions,
+    │                             .Pictures.NoDisplay), layouts, the thumbnails' frames, settings_* dimensions,
     │                             colors and strings (the window and the focused entry are :ui's), their
     │                             translations in values-el/ and values-ar/ (docs/TRANSLATIONS.md)
     └── test/
@@ -54,7 +57,8 @@ Everything but the activities and `SettingsGraph` is `internal`.
 | `HideAppsActivity`: `Theme.Luncher.Settings.Panel` | Opens in the settings panel's place, which already dims the home screen ([below](#hidden-apps)). |
 | `AppearanceActivity`: `Theme.Luncher.Settings.FullScreen` | Full-screen and opaque: it covers the home screen whole, so the home screen is stopped meanwhile and applies the changes once, when it comes back ([`ARCHITECTURE.md`](../../docs/ARCHITECTURE.md#appearance), point 5). |
 | No `screenOrientation` | Android 8.0 (API 26) refuses one on a floating activity; it shows over the landscape home screen anyway, as the editor does. |
-| `PicturesActivity`, `ChooseWallpaperActivity`, `AddFromFolderActivity`: `Theme.Luncher.Settings.Pictures` | Full-screen and opaque, on the home screen's background, like the appearance editor. |
+| `BackgroundActivity`: `Theme.Luncher.Settings.FullScreen` | Full-screen and opaque, as the appearance editor, which opens it. |
+| `AddFromFolderActivity`: `Theme.Luncher.Settings.Pictures` | Full-screen and opaque, on the home screen's background. |
 | `SharePictureActivity`: `exported="true"` | Other apps' shares arrive there. |
 | `SharePictureActivity`: `Theme.Luncher.Settings.Pictures.NoDisplay`, `noHistory`, `excludeFromRecents` | It shows nothing, and finishes in `onCreate`, before `onResume`, as a `windowNoDisplay` activity must; its backgrounds are still the home screen's dark ones, in case a device shows one ([`ui/README.md`](../../ui/README.md#the-theme)). |
 | `supportsRtl="true"` | As the app declares it ([why](../../app/README.md#manifest-why-each-part-is-there)), so the JVM tests mirror the screens in a right-to-left language as the app does. |
@@ -65,9 +69,8 @@ declares how the activities behave, and the build merges the two.
 
 ## The settings panel
 
-Its entries are Hide apps ([below](#hidden-apps)), Appearance ([below](#appearance)), Pictures
-(the picture library, [below](#pictures), full-screen like the editor)
-and the device's own settings. On a screen too short for them all (720p at the 1080p density),
+Its entries are Hide apps ([below](#hidden-apps)), Appearance ([below](#appearance)) and the
+device's own settings. On a screen too short for them all (720p at the 1080p density),
 the entries scroll, as many showing as leave the panel a margin from the screen's edges, ending
 on half an entry, as Hide apps' list does.
 `SettingsActivity` is a floating window over the dimmed home screen (its theme,
@@ -133,12 +136,12 @@ below it and closes the group that was open, so the list stays short; OK again c
 option shows its value between arrows; Left and Right step it through its values, around from the
 last to the first, and each change is stored at once, the preview following. An option that
 changes nothing with the others as they are (a full bottom row with the rows at the top; the
-side with the time and the date hidden; their order with either hidden; the background's options
-without a picture, its position with the picture stretched) is dimmed, and the focus passes it by.
-The Background group starts with its picture, which isn't an option: its row shows the picture's
-name, or None, and OK on it opens the picture library to choose one
-([`ChooseWallpaperActivity`](#pictures)), which stores
-the choice; back in the editor (`onResume`), the appearance is read again. The last entry, Reset
+side with the time and the date hidden; their order with either hidden) is dimmed, and the focus
+passes it by.
+The Background group is edited apart (`editedApart`): it's one entry, the picture's name, or
+None, beside it, and OK on it opens the background editor ([below](#background)), where the
+picture and its options are saved together; back in the editor (`onResume`), the appearance is
+read again. The last entry, Reset
 to defaults, puts every option back, and the wallpaper to none. Back returns to the settings
 panel; the home screen shows the result when it comes back.
 
@@ -155,7 +158,7 @@ they scroll when they're taller than the screen.
 | `appearanceOptions`, `AppearanceOption` (`:domain`) | which options there are, in which groups; each one's values, in order, the part of `Appearance` it reads and changes, whether it applies, and what a step does |
 | `AppearanceSettings` (`:domain`) / `PreferencesAppearanceSettings` (`:platform`) | port and adapter: the stored `Appearance`, read once per process; each write is stored at once, in the background, and told to the listeners (the home screen, while it's shown) |
 | `TileLayouts`, `topBarLayout` (`:domain`) | where the preview's tiles and top bar items go, by the home screen's own rules |
-| `AppearanceActivity` | the groups' entries, opening one at a time; the options' rows, what each option and value is called (exhaustive `when`s, so a new option doesn't compile until it has its labels), the keys, the background's picture, and the reset entry |
+| `AppearanceActivity` | the groups' entries, opening one at a time; a group edited apart as one entry; the options' rows (`OptionRow`, `OptionLabels.kt`'s exhaustive `when`s, so a new option doesn't compile until it has its labels) and the reset entry |
 | `Pictures`, `PictureImages` (`:domain`) | the wallpaper's name, and its picture drawn at the preview's size |
 | `AppearancePreviewView` | draws the preview: an illustration, not the real home screen (below) |
 
@@ -168,7 +171,7 @@ lays them out with `TileLayouts` and `topBarLayout` at its own density (its pixe
 so every dp value scales with it and it can't disagree with the home screen. It isn't focusable.
 
 To add an option: [`ARCHITECTURE.md`](../../docs/ARCHITECTURE.md#appearance), "Adding an aspect";
-its labels go in `label` and `valueLabel`, in every translation.
+its labels go in `optionLabel` and `optionValue` (`OptionLabels.kt`), in every translation.
 
 What keeps it light: the preview draws from shapes it keeps, made anew only when the part of the
 appearance they come from changes (compared with `==`), so a new corner radius lays out nothing,
@@ -177,46 +180,64 @@ request winning, read at once if it was drawn at the preview's size before, and 
 editor stops. Only the options' rows are views; the preview is one view. Nothing of the home
 screen runs meanwhile.
 
-### Pictures
+### Background
 
-Pictures (`PicturesActivity`) is Luncher's own picture library, opened from the settings panel's
-Pictures entry: a grid of thumbnails, the newest first, as many a row as fit the width, ending in
-an Add from folder tile, with Delete unused below; each picture says what it's used for (the
-wallpaper), or that nothing uses it. The whole screen scrolls as the focus moves, so a short screen
-shows as much as it can. OK on a picture opens its actions: Use as wallpaper (unless it is), which
-keeps how the wallpaper is drawn, and Delete. Deleting asks first, Cancel focused, so a repeated OK
-deletes nothing, and names what the picture is used for, which goes back to its default (the
-wallpaper to none, `withoutPictures`). Delete unused asks too, saying how much room the pictures
-take, and keeps those in use. While the library is empty, the screen says how to add a picture: a
-share from another app, or a drop folder ([`platform/README.md`](../../platform/README.md#the-drop-folders)),
-with its path. Back closes it, back to the settings panel. In a right-to-left language it mirrors
-like the settings panels; the pictures don't.
+The background editor (`BackgroundActivity`) is where the wallpaper is chosen and saved, opened
+from the appearance editor's Background entry, full-screen like it. At the end, Luncher's picture
+library as a list: No picture, the pictures, the newest first, each with its thumbnail and name,
+then Add from folder ([below](#adding-a-picture)); a hint above them says a long press of OK
+deletes a picture, as arrange mode's says what its keys do. While the library is empty, how to add
+a picture follows: a share from another app, or the drop folder
+([`platform/README.md`](../../platform/README.md#the-drop-folders)), with its path. At the start, a
+preview of the home screen with the chosen background, the background's options (Fit, Position,
+Dim, Blur, as the appearance editor's rows) and Save. There's no title: the preview gets that room.
+The preview is as large as the room the others leave (`BackgroundStartColumn`), at most 16:9 at the
+column's width, at least a quarter of that, so Save shows without scrolling on a 1080p screen;
+on the smallest screens the column scrolls. In a right-to-left language it mirrors like the other
+settings screens; the preview's content and the pictures don't.
+
+What the user changes is a draft, the one exception to the appearance editor's rule of storing each
+change at once ([`ARCHITECTURE.md`](../../docs/ARCHITECTURE.md#appearance)): OK on a picture
+chooses it (its name in the accent color, a check beside it), Left and Right step the options,
+dimmed without a picture (the position also with the picture stretched), and the preview follows;
+nothing is stored. Back, or Home, leaves the background as it was. **Save** stores the draft,
+through the process's `Wallpaper` ([`feature/home/README.md`](../home/README.md#the-wallpaper)):
+- unchanged, the editor just closes;
+- without a picture, it's stored at once, the kept wallpaper deleted, and the editor closes;
+- with one, a window (`WorkingDialog`, from `:ui`) says "Applying effects…" at once, taking every
+  key, Back too, while the picture is drawn at the screen's size and kept; only then is the
+  background stored, and the window closes, after half a second at least, and the editor with
+  it. If the user goes home meanwhile, the drawing goes on, and the home screen says so instead.
+
+A **long press of OK** on a picture asks to delete it, Cancel focused, so a repeated OK deletes
+nothing, saying what deleting it does: Luncher's copy goes, the file it came from stays, and the
+wallpaper's picture leaves the home screen with its plain background. That happens at once
+(`Wallpaper.forget`): the background stored without a picture, then the kept wallpaper deleted,
+then the picture. A draft's picture deleted is no picture in the draft.
 
 | Part | Job |
 |---|---|
-| `Picture`, `PictureLibrary` (`:domain`) | a picture of the library; the library in the screen's order, the newest first, the room it takes, the pictures nothing uses |
+| `Picture`, `PictureLibrary` (`:domain`) | a picture of the library; the library in the list's order, the newest first, and what each one is used for |
 | `Pictures`, `PictureImport` (`:domain`) / `FilesPictures` (`:platform`) | the library, which the screen follows while it shows, and adding to it |
-| `PictureImages` (`:domain`) / `CachedPictureImages` (`:platform`) | the thumbnails, drawn at the tile's size in pixels |
-| `pictureUses`, `withoutPictures` (`:domain`), `AppearanceSettings` | what each picture is used for, from the appearance, which the screen follows too; the uses a deletion resets |
-| `PicturesActivity` | the grid's tiles, the focus, a picture's actions and the questions; adds the picture it's opened with, or the one Add from folder returns, and selects it, or says why it wasn't added (`ImportResult`, an exhaustive `when` in `whyNotAdded`) |
-
-**Choosing the wallpaper** (`ChooseWallpaperActivity`, Pictures opened from the appearance editor's
-Background group): the title says so, a first tile, No picture, chooses none, and OK on a picture
-makes it the wallpaper; either closes the screen. Delete unused isn't offered there.
+| `PictureImages` (`:domain`) / `CachedPictureImages` (`:platform`) | the thumbnails, drawn at the row's size in pixels, and the preview's wallpaper |
+| `pictureUses`, `withoutPictures` (`:domain`) | what each picture is used for, which deleting it says, and the background without it |
+| `Wallpaper` (`:domain`) | Save (`save`: drawn, kept, then stored) and deleting the wallpaper's picture (`forget`) |
+| `BackgroundActivity` | the list, the draft, Save and its window, the questions; adds the picture it's opened with, or the one Add from folder returns, and chooses it, or says why it wasn't added (`ImportResult`, an exhaustive `when` in `whyNotAdded`) |
 
 All thumbnails are read at once when the screen shows, from what `CachedPictureImages` kept, on the
-main thread, so the grid shows them with its first frame; one not kept (a picture just added, a
+main thread, so the list shows them with its first frame; one not kept (a picture just added, a
 screen of another size) is drawn in the background, a `LatestRequest` each, and shows when it's
-done. The screen keeps each picture's tile while the picture is in the library, so its thumbnail is
-read or drawn once, and drops the requests in `onStop`.
+done. The screen keeps each picture's row while the picture is in the library, so its thumbnail is
+read or drawn once, and drops the requests in `onStop`. A draft survives a configuration change
+(a TV switching resolution), kept in the instance state.
 
 ### Adding a picture
 
 **From another app** (`SharePictureActivity`): a file manager's or a gallery's Share, or "Set as",
 of a picture (`SEND` or `ATTACH_DATA`, `image/*`). It takes the picture's Uri out of the intent and
-passes it, with the read access the other app gave, to Pictures, and finishes at once; Pictures
-adds it, saying so below the title meanwhile, and selects it, or says why it couldn't. A picture
-the library has already (the same content) is selected, and nothing is said. An intent with no
+passes it, with the read access the other app gave, to the background editor, and finishes at
+once; the editor adds it, saying so in its hint meanwhile, and chooses it, or says why it couldn't. A picture
+the library has already (the same content) is chosen, and nothing is said. An intent with no
 picture it can pass on (none in it, or one the other app gave no access to, which Android won't
 let Luncher pass on) becomes the message that Luncher can't read it, never a crash. What the Uri
 points to is the library's to judge ([`platform/README.md`](../../platform/README.md#pictures)): a
@@ -226,7 +247,7 @@ instead, with its path.
 **From a drop folder** (`AddFromFolderActivity`): the pictures a file manager or a computer put in
 `Android/media/<applicationId>`, on the TV or a USB drive, listed the TV's first, then the drives',
 each by name (`inListOrder`), with a preview of the selected one beside them, drawn in the
-background. OK returns the picture to Pictures, which adds it as a shared one. A file in a format
+background. OK returns the picture to the background editor, which adds it as a shared one. A file in a format
 this TV can't show ([which](../../platform/README.md#pictures)) is listed, marked, and OK on it says so;
 anything else that isn't a picture isn't listed. The folders are read again each time the screen
 shows, so a USB drive plugged in meanwhile counts. On a screen too short for the preview and its

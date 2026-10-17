@@ -6,7 +6,6 @@
     <string name="settings_hidden">Κρυφή</string>
     <string name="settings_no_apps">Δεν υπάρχουν εγκατεστημένες εφαρμογές TV</string>
     <string name="settings_appearance">Εμφάνιση</string>
-    <string name="settings_pictures">Εικόνες</string>
     <string name="settings_appearance_tiles">Πλακίδια</string>
     <string name="settings_appearance_top_bar">Γραμμή κατάστασης</string>
     <string name="settings_appearance_vertical_alignment">Κατακόρυφη στοίχιση</string>
@@ -47,35 +46,19 @@
     <string name="settings_system">Ρυθμίσεις συστήματος</string>
     <string name="settings_system_unavailable">Αυτή η συσκευή δεν έχει εφαρμογή ρυθμίσεων</string>
 
-    <!-- The picture library's screens: Pictures, Add from folder, and a share's messages. -->
-    <string name="settings_pictures_title">Εικόνες</string>
-    <plurals name="settings_pictures_count">
-        <item quantity="one"><xliff:g id="count" example="1">%1$d</xliff:g> εικόνα · <xliff:g id="size" example="9,8 MB">%2$s</xliff:g></item>
-        <item quantity="other"><xliff:g id="count" example="4">%1$d</xliff:g> εικόνες · <xliff:g id="size" example="9,8 MB">%2$s</xliff:g></item>
-    </plurals>
-    <string name="settings_pictures_none">Δεν υπάρχουν εικόνες ακόμη</string>
+    <string name="settings_background_hint">Κρατήστε πατημένο το OK σε μια εικόνα για να τη διαγράψετε</string>
+    <string name="settings_background_save">Αποθήκευση</string>
+    <string name="settings_background_applying">Εφαρμογή εφέ…</string>
+
     <string name="settings_pictures_adding">Προσθήκη εικόνας…</string>
     <string name="settings_pictures_how">Για να προσθέσετε μια εικόνα:</string>
     <string name="settings_pictures_how_share">• Σε μια διαχείριση αρχείων ή συλλογή, επιλέξτε Κοινοποίηση σε μια εικόνα και μετά Luncher.</string>
     <string name="settings_pictures_how_folder">• Ή αντιγράψτε εικόνες σε αυτόν τον φάκελο, στην τηλεόραση ή σε ένα USB, και μετά επιλέξτε Προσθήκη από φάκελο:</string>
     <string name="settings_pictures_add_from_folder">Προσθήκη από φάκελο</string>
     <string name="settings_pictures_details"><xliff:g id="width" example="1920">%1$d</xliff:g> × <xliff:g id="height" example="1080">%2$d</xliff:g> · <xliff:g id="size" example="3,1 MB">%3$s</xliff:g></string>
-    <string name="settings_pictures_in_use">Σε χρήση: <xliff:g id="use" example="Ταπετσαρία">%1$s</xliff:g></string>
-    <string name="settings_pictures_not_in_use">Δεν χρησιμοποιείται</string>
-    <string name="settings_pictures_wallpaper">Ταπετσαρία</string>
-    <string name="settings_pictures_dialog_details"><xliff:g id="details" example="1920 × 1080 · 3,1 MB">%1$s</xliff:g> · <xliff:g id="use" example="Δεν χρησιμοποιείται">%2$s</xliff:g></string>
-    <string name="settings_pictures_use_as_wallpaper">Ορισμός ως ταπετσαρία</string>
     <string name="settings_pictures_delete_wallpaper">Είναι η ταπετσαρία: η αρχική οθόνη επιστρέφει στο απλό της φόντο.</string>
-    <string name="settings_pictures_choose_wallpaper">Επιλογή ταπετσαρίας</string>
-    <string name="settings_pictures_choose_hint">Το OK σε μια εικόνα την επιλέγει</string>
     <string name="settings_pictures_no_picture">Χωρίς εικόνα</string>
     <string name="settings_pictures_unnamed">Εικόνα</string>
-    <string name="settings_pictures_delete_unused">Διαγραφή αχρησιμοποίητων (<xliff:g id="count" example="2">%1$d</xliff:g> · <xliff:g id="size" example="4,1 MB">%2$s</xliff:g>)</string>
-    <plurals name="settings_pictures_delete_unused_question">
-        <item quantity="one">Διαγραφή <xliff:g id="count" example="1">%1$d</xliff:g> αχρησιμοποίητης εικόνας;</item>
-        <item quantity="other">Διαγραφή <xliff:g id="count" example="2">%1$d</xliff:g> αχρησιμοποίητων εικόνων;</item>
-    </plurals>
-    <string name="settings_pictures_delete_unused_text">Πιάνουν <xliff:g id="size" example="4,1 MB">%1$s</xliff:g>. Οι εικόνες που χρησιμοποιούνται μένουν.</string>
     <string name="settings_pictures_delete">Διαγραφή</string>
     <string name="settings_pictures_delete_question">Διαγραφή του <xliff:g id="name" example="beach.png">%1$s</xliff:g>;</string>
     <string name="settings_pictures_delete_text">Το Luncher διαγράφει το δικό του αντίγραφο· το αρχείο από το οποίο το προσθέσατε μένει.</string>

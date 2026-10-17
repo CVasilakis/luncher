@@ -21,7 +21,11 @@ class WorkingDialog(context: Context) {
     }
     private val message: TextView = dialog.findViewById(R.id.working_message)
     private val main = Handler(Looper.getMainLooper())
-    private val closing = Runnable { dialog.dismiss() }
+    private var afterClosing: () -> Unit = {}
+    private val closing = Runnable {
+        dialog.dismiss()
+        afterClosing().also { afterClosing = {} }
+    }
     private var shownAt = 0L
 
     val isShowing: Boolean get() = dialog.isShowing
@@ -29,9 +33,10 @@ class WorkingDialog(context: Context) {
     /** The message it shows. */
     val text: CharSequence get() = message.text
 
-    /** Shows it with [text], or changes its message if it shows; a close on its way is called off. */
+    /** Shows it with [text], or changes its message if it shows; a close on its way is called off, and what it would have run. */
     fun show(text: CharSequence) {
         main.removeCallbacks(closing)
+        afterClosing = {}
         message.text = text
         if (!dialog.isShowing) {
             dialog.show()
@@ -39,16 +44,21 @@ class WorkingDialog(context: Context) {
         }
     }
 
-    /** Closes it once it has shown for [SHORTEST] ms, at once if it has; nothing if it isn't showing. */
-    fun close() {
-        if (!dialog.isShowing) return
+    /**
+     * Closes it once it has shown for [SHORTEST] ms, at once if it has, then runs [then]; if it
+     * isn't showing, runs [then] at once.
+     */
+    fun close(then: () -> Unit = {}) {
+        if (!dialog.isShowing) return then()
         main.removeCallbacks(closing)
+        afterClosing = then
         main.postAtTime(closing, shownAt + SHORTEST)
     }
 
-    /** Closes it at once, as the screen under it goes. */
+    /** Closes it at once, as the screen under it goes; what [close] would have run afterwards doesn't run. */
     fun dismiss() {
         main.removeCallbacks(closing)
+        afterClosing = {}
         dialog.dismiss()
     }
 

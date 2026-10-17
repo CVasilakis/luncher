@@ -9,11 +9,12 @@ import android.os.Bundle
 /**
  * Where another app's Share (`SEND`) or "Set as" (`ATTACH_DATA`) of a picture arrives, with no
  * screen of its own: it passes the picture's Uri, and the read access the other app gave with it,
- * to [PicturesActivity], which adds it and shows the result, and finishes before it's ever shown.
+ * to [BackgroundActivity], which adds it, chooses it and shows the result, and finishes before
+ * it's ever shown.
  *
  * Exported, so any app can send it anything: it reads nothing itself, only takes the Uri out of
  * the intent, and anything it can't take one from (extras that don't unparcel, no Uri at all) or
- * can't pass on (a Uri the other app gave no access to) becomes a message in Pictures, never a
+ * can't pass on (a Uri the other app gave no access to) becomes a message in the background editor, never a
  * crash. What the Uri points to is the library's to judge
  * ([PictureImport][com.luncher.domain.pictures.PictureImport]).
  */
@@ -21,13 +22,13 @@ class SharePictureActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val nothing = Intent(this, PicturesActivity::class.java).putExtra(PicturesActivity.EXTRA_NOTHING_READABLE, true)
+        val nothing = Intent(this, BackgroundActivity::class.java).putExtra(BackgroundActivity.EXTRA_NOTHING_READABLE, true)
         val picture = sharedPicture(intent)
         if (picture == null) {
             startActivity(nothing)
         } else {
             try {
-                startActivity(Intent(this, PicturesActivity::class.java).setData(picture).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION))
+                startActivity(Intent(this, BackgroundActivity::class.java).setData(picture).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION))
             } catch (e: SecurityException) {
                 // The other app gave no access to pass on (nor could Luncher read it): Android
                 // refuses the grant.

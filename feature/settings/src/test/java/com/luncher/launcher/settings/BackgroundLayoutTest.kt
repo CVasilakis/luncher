@@ -4,11 +4,14 @@ import android.app.Activity
 import android.graphics.RectF
 import android.net.Uri
 import android.os.Looper
+import android.view.KeyEvent
 import android.view.View
 import android.view.ViewGroup
-import android.widget.LinearLayout
 import android.widget.ListView
 import android.widget.TextView
+import com.luncher.domain.appearance.Appearance
+import com.luncher.domain.appearance.Background
+import com.luncher.domain.appearance.appearanceOptions
 import com.luncher.domain.pictures.FakeFolderPictures
 import com.luncher.domain.pictures.FakePictures
 import com.luncher.domain.pictures.FakePictures.Companion.picture
@@ -34,14 +37,15 @@ import org.robolectric.annotation.GraphicsMode
 import org.robolectric.shadows.ShadowDialog
 
 /**
- * The pictures' screens on every screen of [TV_SCREENS], in every language: everything inside the
- * TV's overscan margin across, no text of Luncher's own cut, the dialogs a margin from the
- * screen's edges. A picture's name may end in "…": it's the user's, and can be any length.
+ * The background editor and Add from folder on every screen of [TV_SCREENS], in every language:
+ * everything inside the TV's overscan margin across, no text of Luncher's own cut, the dialogs a
+ * margin from the screen's edges. A picture's name may end in "…": it's the user's, and can be any
+ * length.
  */
 @RunWith(ParameterizedRobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)   // real text widths; without it a character is 1 px wide
 @Config(sdk = [33, Config.TARGET_SDK])    // 33 for API 22 to 33, which scale large text more (TvDevice.kt)
-class PicturesLayoutTest(private val screen: TvScreen) {
+class BackgroundLayoutTest(private val screen: TvScreen) {
 
     companion object {
         @JvmStatic
@@ -73,69 +77,82 @@ class PicturesLayoutTest(private val screen: TvScreen) {
         if (view is TextView) assertWhole(screen, view)
     }
 
-    private fun start(vararg pictures: com.luncher.domain.pictures.Picture, results: Map<Uri, ImportResult> = emptyMap()): PicturesActivity {
+    /** Inside the overscan margin across: a row of a list, which may be scrolled out of sight. */
+    private fun Activity.assertAcross(what: String, view: View) {
+        val area = bounds(view)
+        assertTrue("$what at $area, outside the margins ${inside()} on $screen", area.left >= inside().left && area.right <= inside().right)
+    }
+
+    /** The background editor with [pictures], the first one the wallpaper, every thumbnail drawn. */
+    private fun start(vararg pictures: com.luncher.domain.pictures.Picture, intent: android.content.Intent? = null, results: Map<Uri, ImportResult> = emptyMap()): BackgroundActivity {
         val graph = TestPicturesGraph(FakePictures(*pictures, results = results.toMutableMap()))
+        pictures.firstOrNull()?.let { graph.appearanceSettings.appearance = Appearance(background = Background(it.id)) }
         application.graph = graph
-        val activity = Robolectric.buildActivity(PicturesActivity::class.java).setup().get()
+        val activity = Robolectric.buildActivity(BackgroundActivity::class.java, intent).setup().get()
         idle()
         graph.jobs.runAll()
         idle()
         return activity
     }
 
-    @Test
-    fun `Pictures fits, with every tile inside the margins`() {
-        val activity = start(*library)
-        val grid = activity.findViewById<ViewGroup>(R.id.settings_pictures_grid)
+    private fun Activity.children(id: Int): List<View> = findViewById<ViewGroup>(id).let { group -> (0 until group.childCount).map(group::getChildAt) }
 
-        activity.assertShown("title", activity.findViewById(R.id.settings_pictures_title))
-        activity.assertShown("status", activity.findViewById(R.id.settings_pictures_status))
-        val rows = (0 until grid.childCount).map { grid.getChildAt(it) as ViewGroup }
-        val tiles = rows.flatMap { row -> (0 until row.childCount).map(row::getChildAt) }
-        for (tile in tiles) {
-            activity.assertShown("tile", tile)
-            tile.findViewById<TextView>(R.id.settings_pictures_details)?.let { activity.assertShown("details", it) }
+    @Test
+    fun `the background editor fits, with every value of every option`() {
+        val activity = start(*library)
+        val preview = activity.findViewById<View>(R.id.settings_background_preview)
+        val end = activity.findViewById<View>(R.id.settings_background_end)
+        val metrics = activity.resources.displayMetrics
+
+        activity.assertShown("preview", preview)
+        activity.assertShown("Save", activity.findViewById(R.id.settings_background_save))
+        activity.assertShown("hint", activity.findViewById(R.id.settings_background_hint))
+        assertApart(screen, "preview and pictures", bounds(preview), bounds(end))
+        assertTrue("preview ${preview.width} px wide on $screen", preview.width >= metrics.widthPixels / 3)
+        for (row in activity.children(R.id.settings_background_list)) {
+            activity.assertAcross("a picture's row", row)
+            row.findViewById<TextView>(R.id.settings_background_chosen)?.let { activity.assertAcross("its check", it) }
         }
-        for (pair in tiles.zipWithNext()) assertApart(screen, "tiles", bounds(pair.first), bounds(pair.second))
-        val add = tiles.last() as LinearLayout
-        for (i in 0 until add.childCount) activity.assertShown("Add from folder", add.getChildAt(i))
-        activity.assertShown("Delete unused", activity.findViewById(R.id.settings_pictures_delete_unused))
+        // Luncher's own names whole: No picture, first, and Add from folder, last.
+        val rows = activity.children(R.id.settings_background_list)
+        for (row in listOf(rows.first(), rows.last())) assertWhole(screen, row.findViewById(R.id.settings_background_name))
+        // Each option through its values, in order; the next value is toward the arrow on its
+        // side: Left when mirrored.
+        val options = activity.children(R.id.settings_background_options)
+        val next = if (options.first().layoutDirection == View.LAYOUT_DIRECTION_RTL) KeyEvent.KEYCODE_DPAD_LEFT else KeyEvent.KEYCODE_DPAD_RIGHT
+        val catalog = appearanceOptions().groups.single { it.editedApart }.options
+        for ((row, option) in options.zip(catalog)) {
+            activity.assertShown("an option", row)
+            if (!row.requestFocus()) continue   // the position, with the picture stretched
+            repeat(option.values.size) { step ->
+                assertWhole(screen, row.findViewById(R.id.settings_option_label))
+                assertWhole(screen, row.findViewById(R.id.settings_option_value))
+                if (step < option.values.lastIndex) {
+                    activity.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, next))
+                    idle()
+                }
+            }
+        }
     }
 
     @Test
-    fun `choosing the wallpaper fits`() {
-        application.graph = TestPicturesGraph(FakePictures(*library))
-        val activity = Robolectric.buildActivity(ChooseWallpaperActivity::class.java).setup().get()
-        idle()
-        val first = (activity.findViewById<ViewGroup>(R.id.settings_pictures_grid).getChildAt(0) as ViewGroup).getChildAt(0) as ViewGroup
-
-        activity.assertShown("title", activity.findViewById(R.id.settings_pictures_title))
-        activity.assertShown("status", activity.findViewById(R.id.settings_pictures_status))
-        activity.assertShown("No picture", first.getChildAt(0))
-    }
-
-    @Test
-    fun `Pictures fits while empty`() {
+    fun `the background editor fits while the library is empty`() {
         val activity = start()
-        val empty = activity.findViewById<ViewGroup>(R.id.settings_pictures_empty)
+        val rows = activity.children(R.id.settings_background_list)
 
-        activity.assertShown("status", activity.findViewById(R.id.settings_pictures_status))
-        for (i in 0 until empty.childCount) activity.assertShown("how to add", empty.getChildAt(i))
+        for (row in rows) activity.assertAcross("a row of the list", row)
+        assertWhole(screen, rows.last() as TextView)   // how to add a picture
     }
 
     @Test
-    fun `a picture's actions and a message fit`() {
+    fun `the delete question and a message fit`() {
         val activity = start(*library)
-        val first = (activity.findViewById<ViewGroup>(R.id.settings_pictures_grid).getChildAt(0) as ViewGroup).getChildAt(0)
-        first.performClick()
+        activity.children(R.id.settings_background_list)[1].performLongClick()
         idle()
         assertDialogFits(activity)
 
         val shared = Uri.parse("content://com.example/x")
-        val graph = TestPicturesGraph(FakePictures(*library, results = mutableMapOf(shared to ImportResult.Unreadable)))
-        application.graph = graph
-        val other = Robolectric.buildActivity(PicturesActivity::class.java, android.content.Intent().setData(shared)).setup().get()
-        idle()
+        val other = start(*library, intent = android.content.Intent().setData(shared), results = mapOf(shared to ImportResult.Unreadable))
         assertDialogFits(other)
     }
 

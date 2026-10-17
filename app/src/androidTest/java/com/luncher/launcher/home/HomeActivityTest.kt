@@ -83,6 +83,7 @@ class HomeActivityTest {
                 FakePictureImages { _, width, height, _ ->
                     Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888).apply { eraseColor(WALLPAPER) }
                 },
+                appearanceSettings,
                 jobs,
             ) { Handler(Looper.getMainLooper()).post(it) }
         }

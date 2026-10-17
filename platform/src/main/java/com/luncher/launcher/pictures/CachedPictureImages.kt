@@ -10,7 +10,7 @@ import java.io.File
 
 /**
  * [PictureImages] that keep what [images] draw in files, so a screen shows them at once the next
- * time ([cached]), as `CachedBannerImages` does for the tiles: the thumbnails at the grid's tile
+ * time ([cached]), as `CachedBannerImages` does for the tiles: the thumbnails at the list's row
  * size in px, the appearance editor's preview at its own. Not the wallpaper, which is kept apart
  * ([FileStoredWallpaper]), where Android doesn't delete it. A file per picture
  * and size, in [folder]/<picture id>/, which [FilesPictures] deletes with the picture; another

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The background's picture in the appearance editor, below its group like an option: its name,
-     and the picture's name; OK opens the picture library to choose one. -->
+<!-- A group of the appearance editor edited in a screen of its own (the background): named like a
+     group, its picture's name beside it; OK opens that screen. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -10,24 +10,21 @@
     android:gravity="center_vertical"
     android:minHeight="@dimen/settings_entry_height"
     android:orientation="horizontal"
-    android:paddingStart="@dimen/settings_appearance_option_indent"
-    android:paddingTop="@dimen/settings_appearance_value_gap"
-    android:paddingEnd="@dimen/settings_entry_padding"
-    android:paddingBottom="@dimen/settings_appearance_value_gap">
+    android:paddingLeft="@dimen/settings_entry_padding"
+    android:paddingRight="@dimen/settings_entry_padding">
 
     <TextView
-        android:id="@+id/settings_picture_label"
+        android:id="@+id/settings_apart_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:ellipsize="end"
-        android:maxLines="3"
-        android:text="@string/settings_appearance_picture"
+        android:maxLines="2"
         android:textColor="@color/text_primary"
         android:textSize="@dimen/settings_entry_text" />
 
     <!-- The picture's name, the user's, which may end in "…". -->
     <TextView
-        android:id="@+id/settings_picture_value"
+        android:id="@+id/settings_apart_value"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="@dimen/settings_appearance_value_gap"
@@ -36,7 +33,7 @@
         android:ellipsize="end"
         android:singleLine="true"
         android:textAlignment="viewEnd"
-        android:textColor="@color/text_primary"
+        android:textColor="@color/text_secondary"
         android:textSize="@dimen/settings_entry_text" />
 
     <TextView
