@@ -48,9 +48,9 @@ import com.luncher.launcher.ui.R as UiR
  *
  * A long press of OK on a picture asks to delete it, Cancel focused; deleting the wallpaper's says
  * the home screen goes back to its plain background, which it does at once. Add from folder adds
- * the picture [AddFromFolderActivity] returns and chooses it; so does a picture's Uri the editor
- * is opened with ([SharePictureActivity] passes another app's share). Every [ImportResult] is
- * handled ([whyNotAdded]).
+ * the picture [AddFromFolderActivity] returns and chooses it, or says why not ([whyNotAdded]).
+ * Opened with a picture ([EXTRA_PICTURE], from the window after a share), it starts with that one
+ * chosen, not saved.
  *
  * All thumbnails are read at once when it shows, from what the [PictureImages][graph] kept;
  * those not kept are drawn in the background and show as each is done.
@@ -113,7 +113,9 @@ class BackgroundActivity : Activity() {
         thumbnailHeight = resources.getDimensionPixelSize(R.dimen.settings_background_thumbnail_height)
 
         stored = settings.read()
-        draft = savedInstanceState?.let(::draftIn) ?: stored.background
+        draft = savedInstanceState?.let(::draftIn)
+            ?: intent.getStringExtra(EXTRA_PICTURE)?.let { stored.background.copy(picture = PictureId(it)) }
+            ?: stored.background
 
         val optionsView = findViewById<LinearLayout>(R.id.settings_background_options)
         val indent = resources.getDimensionPixelSize(R.dimen.settings_entry_padding)
@@ -147,8 +149,6 @@ class BackgroundActivity : Activity() {
         }
 
         preview.showWallpapers(images, graph.jobs)
-        // Not again when recreated (a new screen size): the library has it, or said why not.
-        if (savedInstanceState == null) addShared(intent)
         show()
     }
 
@@ -316,11 +316,6 @@ class BackgroundActivity : Activity() {
         startActivityForResult(Intent(this, AddFromFolderActivity::class.java), ADD_FROM_FOLDER)
     }
 
-    private fun addShared(intent: Intent) {
-        if (intent.getBooleanExtra(EXTRA_NOTHING_READABLE, false)) return message(ImportResult.Unreadable)
-        intent.data?.let(::add)
-    }
-
     private fun add(source: Uri) {
         adding++
         showHint()
@@ -395,8 +390,8 @@ class BackgroundActivity : Activity() {
         }
 
     internal companion object {
-        /** Set by [SharePictureActivity] when what another app sent had no picture it could pass on. */
-        const val EXTRA_NOTHING_READABLE = "com.luncher.launcher.settings.NOTHING_READABLE"
+        /** The id of a picture to start with, chosen in the draft: one just received ([PictureReceivedActivity]). */
+        const val EXTRA_PICTURE = "com.luncher.launcher.settings.PICTURE"
 
         private const val ADD_FROM_FOLDER = 1
         private const val DRAFT_PICTURE = "draft_picture"

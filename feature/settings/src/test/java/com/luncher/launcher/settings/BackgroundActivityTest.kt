@@ -17,7 +17,6 @@ import com.luncher.domain.pictures.FakePictures.Companion.picture
 import com.luncher.domain.pictures.Fit
 import com.luncher.domain.pictures.ImportResult
 import com.luncher.domain.pictures.Picture
-import com.luncher.domain.pictures.PictureFormat
 import com.luncher.domain.pictures.PictureStyle
 import com.luncher.domain.wallpaper.Wallpaper
 import com.luncher.domain.wallpaper.WallpaperDrawing
@@ -351,30 +350,14 @@ class BackgroundActivityTest {
     }
 
     @Test
-    fun `opened with a shared picture, adds it and chooses it, or says why it can't`() {
-        val shared = Uri.parse("content://com.example.files/sunset.jpg")
-        graph(beach)
-        graph.library.results[shared] = ImportResult.Added(sunset)
+    fun `opened with a picture just received, starts with it chosen, not saved`() {
+        graph(beach, sunset, background = Background(beach.id, dim = 20))
 
-        val activity = start(Intent().setData(shared)).get()
+        val activity = start(Intent().putExtra(BackgroundActivity.EXTRA_PICTURE, sunset.id.value)).get()
 
         assertEquals(listOf("No picture", "sunset.jpg ✓", "beach.png", "Add from folder"), activity.list())
-        assertNull(dialog())
-
-        val heic = Uri.parse("content://com.example.files/IMG_0001.HEIC")
-        graph.library.results[heic] = ImportResult.UnsupportedFormat(PictureFormat.HEIF)
-        start(Intent().setData(heic))
-        assertEquals("This picture wasn't added", dialog()!!.first)
-        assertTrue(dialog()!!.second.contains("HEIF (HEIC)"))
-    }
-
-    @Test
-    fun `opened with nothing readable, says it can't read it`() {
-        graph()
-
-        start(Intent().putExtra(BackgroundActivity.EXTRA_NOTHING_READABLE, true))
-
-        assertTrue(dialog()!!.second.startsWith("Luncher can't read it."))
+        assertEquals("the stored options kept", "20 %", activity.value("Dim"))
+        assertEquals(Background(beach.id, dim = 20), stored)
     }
 
     @Test

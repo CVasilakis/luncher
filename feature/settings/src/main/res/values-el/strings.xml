@@ -81,4 +81,6 @@
     <string name="settings_pictures_folder_note">Το OK την αντιγράφει στις εικόνες του Luncher· μετά μπορείτε να αφαιρέσετε το αρχείο ή το USB.</string>
     <string name="settings_pictures_folder_looking">Αναζήτηση εικόνων…</string>
     <string name="settings_pictures_folder_empty">Δεν υπάρχουν ακόμη εικόνες στον φάκελο.</string>
+    <string name="settings_received_adding">Προσθήκη της εικόνας…</string>
+    <string name="settings_received_saved">Η εικόνα αποθηκεύτηκε</string>
 </resources>

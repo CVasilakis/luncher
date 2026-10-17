@@ -37,7 +37,8 @@ import org.robolectric.annotation.GraphicsMode
 import org.robolectric.shadows.ShadowDialog
 
 /**
- * The background editor and Add from folder on every screen of [TV_SCREENS], in every language:
+ * The background editor, Add from folder and the window after a share on every screen of
+ * [TV_SCREENS], in every language:
  * everything inside the TV's overscan margin across, no text of Luncher's own cut, the dialogs a
  * margin from the screen's edges. A picture's name may end in "…": it's the user's, and can be any
  * length.
@@ -84,11 +85,11 @@ class BackgroundLayoutTest(private val screen: TvScreen) {
     }
 
     /** The background editor with [pictures], the first one the wallpaper, every thumbnail drawn. */
-    private fun start(vararg pictures: com.luncher.domain.pictures.Picture, intent: android.content.Intent? = null, results: Map<Uri, ImportResult> = emptyMap()): BackgroundActivity {
-        val graph = TestPicturesGraph(FakePictures(*pictures, results = results.toMutableMap()))
+    private fun start(vararg pictures: com.luncher.domain.pictures.Picture): BackgroundActivity {
+        val graph = TestPicturesGraph(FakePictures(*pictures))
         pictures.firstOrNull()?.let { graph.appearanceSettings.appearance = Appearance(background = Background(it.id)) }
         application.graph = graph
-        val activity = Robolectric.buildActivity(BackgroundActivity::class.java, intent).setup().get()
+        val activity = Robolectric.buildActivity(BackgroundActivity::class.java).setup().get()
         idle()
         graph.jobs.runAll()
         idle()
@@ -145,15 +146,37 @@ class BackgroundLayoutTest(private val screen: TvScreen) {
     }
 
     @Test
-    fun `the delete question and a message fit`() {
+    fun `the delete question fits`() {
         val activity = start(*library)
         activity.children(R.id.settings_background_list)[1].performLongClick()
         idle()
         assertDialogFits(activity)
+    }
 
+    /** The window after a share of [shared], which adds as [result]. */
+    private fun received(shared: Uri, result: ImportResult): Activity {
+        application.graph = TestPicturesGraph(FakePictures(results = mutableMapOf(shared to result)))
+        val activity = Robolectric.buildActivity(PictureReceivedActivity::class.java, android.content.Intent().setData(shared)).setup().get()
+        idle()
+        return activity
+    }
+
+    @Test
+    fun `the window after a share fits, the picture saved or not`() {
         val shared = Uri.parse("content://com.example/x")
-        val other = start(*library, intent = android.content.Intent().setData(shared), results = mapOf(shared to ImportResult.Unreadable))
-        assertDialogFits(other)
+        for (result in listOf(ImportResult.Added(library.first()), ImportResult.Unreadable, ImportResult.TooLarge)) {
+            val activity = received(shared, result)
+            val panel = activity.findViewById<View>(R.id.settings_received_panel)
+            val metrics = activity.resources.displayMetrics
+            val margin = activity.resources.getDimensionPixelSize(R.dimen.settings_panel_margin)
+            assertTrue(
+                "window ${panel.width} x ${panel.height} on $screen, ${metrics.widthPixels} x ${metrics.heightPixels} less $margin around",
+                panel.width <= metrics.widthPixels - 2 * margin && panel.height <= metrics.heightPixels - 2 * margin,
+            )
+            assertWhole(screen, activity.findViewById(R.id.settings_received_title))
+            if (result !is ImportResult.Added) assertWhole(screen, activity.findViewById(R.id.settings_received_text))
+            for (entry in activity.children(R.id.settings_received_entries)) assertWhole(screen, entry as TextView)
+        }
     }
 
     /** The dialog showing: a margin from the screen's edges, its texts whole. */
