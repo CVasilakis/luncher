@@ -11,10 +11,11 @@ import java.io.File
 /**
  * [PictureImages] that keep what [images] draw in files, so a screen shows them at once the next
  * time ([cached]), as `CachedBannerImages` does for the tiles: the thumbnails at the grid's tile
- * size in px, the wallpaper at the screen's, the editor's preview at its own. A file per picture
+ * size in px, the appearance editor's preview at its own. Not the wallpaper, which is kept apart
+ * ([FileStoredWallpaper]), where Android doesn't delete it. A file per picture
  * and size, in [folder]/<picture id>/, which [FilesPictures] deletes with the picture; another
  * style at the same size replaces it. The format:
- * [PixelFiles], with what the image was drawn from as the header; a file that doesn't match is
+ * [PixelFiles], with how and from what the image was drawn as the header; a file that doesn't match is
  * drawn and written again, so it needs no migration, and Android may delete it.
  *
  * [cached] reads on the main thread. [render] is a job: it draws, then writes the file, in the
@@ -46,7 +47,8 @@ class CachedPictureImages(
     override fun cached(picture: PictureId, width: Int, height: Int, style: PictureStyle): Bitmap? {
         val drawing = Drawing(picture, width, height, style)
         return pixelFiles.read(fileOf(picture, width, height), width, height) { input ->
-            Drawing(input.readUTF(), input.readInt(), input.readInt(), input.readUTF(), input.readUTF(), input.readInt(), input.readUTF()) == drawing
+            input.readInt() == FilePictureImages.DRAWING &&
+                Drawing(input.readUTF(), input.readInt(), input.readInt(), input.readUTF(), input.readUTF(), input.readInt(), input.readUTF()) == drawing
         }
     }
 
@@ -55,6 +57,7 @@ class CachedPictureImages(
         val drawing = Drawing(picture, width, height, style)
         // Only for writing: the reading buffers stay the main thread's.
         PixelFiles(MAGIC, FORMAT).write(fileOf(picture, width, height), image) { output ->
+            output.writeInt(FilePictureImages.DRAWING)
             output.writeUTF(drawing.picture)
             output.writeInt(drawing.width)
             output.writeInt(drawing.height)
@@ -72,7 +75,10 @@ class CachedPictureImages(
         /** "LPIC": a file of this class. */
         const val MAGIC = 0x4C504943
 
-        /** The file format's version, and the drawing's: another one is a mismatch, drawn and written again. */
+        /**
+         * The file format's version; the drawing's, [FilePictureImages.DRAWING], is in the header.
+         * Another one of either is a mismatch, drawn and written again.
+         */
         const val FORMAT = 3
     }
 }

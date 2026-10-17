@@ -30,12 +30,13 @@ platform/
     │   │   ├── clock/
     │   │   │   └── AndroidClock.kt                  Clock on the system time, settings and time broadcasts
     │   │   ├── images/
-    │   │   │   └── PixelFiles.kt                    the image caches' file format: a header, then the pixels, compressed
+    │   │   │   └── PixelFiles.kt                    the image caches' and the kept wallpaper's file format: a header, then the pixels, compressed
     │   │   ├── pictures/
     │   │   │   ├── FilesPictures.kt                 Pictures and PictureImport<Uri> on files: the library's pictures and their index
     │   │   │   ├── MediaFolderPictures.kt           FolderPictures<Uri, Bitmap> in the drop folders, Android/media/<applicationId>
     │   │   │   ├── FilePictureImages.kt             PictureImages<Bitmap>: draws a picture of the library at a size, framed, dimmed, blurred
     │   │   │   ├── CachedPictureImages.kt           PictureImages<Bitmap> in front of FilePictureImages: what it drew kept in files
+    │   │   │   ├── FileStoredWallpaper.kt           StoredWallpaper<Bitmap>: the one wallpaper kept, a file in the app's private files
     │   │   │   ├── PictureFiles.kt                  reading a picture file: its size, upright, its format; drawing it framed in ARGB_8888
     │   │   │   └── JpegOrientation.kt               a JPEG's orientation tag, read without ExifInterface
     │   │   └── jobs/
@@ -84,14 +85,15 @@ is in a package of its own (`images/`: the caches' file format).
 ## Pictures
 
 The picture library ([`feature/settings/README.md`](../feature/settings/README.md#pictures)) is three
-adapters on files, and a cache:
+adapters on files and a cache; the wallpaper drawn from it is kept by a fourth:
 
 | Adapter | Port | What it keeps, and how |
 |---|---|---|
 | `FilesPictures` | `Pictures`, `PictureImport<Uri>` | each picture's original file, unchanged, in `filesDir/pictures/`, named after a hash of its content, so the same picture added twice is stored once; and `index.json`, the pictures' names, sizes as shown and when they were added, written whole to a new file that then replaces the old one. Its format is kept across updates, so `FilesPicturesTest` writes it out. |
 | `MediaFolderPictures` | `FolderPictures<Uri, Bitmap>` | nothing: it lists the drop folders (below) |
-| `FilePictureImages` | `PictureImages<Bitmap>` | nothing: it draws a picture of the library at a size, framed by the domain's `frame`, blurred and dimmed as its `PictureStyle` says |
-| `CachedPictureImages` | `PictureImages<Bitmap>` | what `FilePictureImages` drew, in `cacheDir/pictures/<picture>/`, one file per size, its style in the header: the thumbnails at the grid's tile size in pixels, the wallpaper at the screen's, the editor's preview at its own |
+| `FilePictureImages` | `PictureImages<Bitmap>` | nothing: it draws a picture of the library at a size, framed by the domain's `frame`, blurred and dimmed as its `PictureStyle` says. `DRAWING` is the drawing's version, up by one with each change to it, so what the others kept the old way is drawn again. |
+| `CachedPictureImages` | `PictureImages<Bitmap>` | what `FilePictureImages` drew, in `cacheDir/pictures/<picture>/`, one file per size, its style and `FilePictureImages.DRAWING` in the header: the thumbnails at the grid's tile size in pixels, the editor's preview at its own |
+| `FileStoredWallpaper` | `StoredWallpaper<Bitmap>` | the wallpaper, drawn at the screen's size, in `filesDir/wallpaper`, where Android doesn't delete it as it may a cache; in the `PixelFiles` format, what it was drawn from and `FilePictureImages.DRAWING` in the header, so one drawn by another version reads as none and is drawn again. One file only: a new one is written beside it, then replaces it in one step. |
 
 - **Adding a picture is a job,** of `JobPriority.PICTURE_LIBRARY`, as is everything that changes
   the library's files (moving a new picture's file into place, deleting, writing the index), so

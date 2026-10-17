@@ -16,13 +16,13 @@ import java.util.zip.Deflater
 import java.util.zip.Inflater
 
 /**
- * The file format of the image caches (`CachedBannerImages`, `CachedPictureImages`): one image a
- * file, after a header, [magic] and [format] first, then what the cache wrote of what the image
+ * The file format of the image caches (`CachedBannerImages`, `CachedPictureImages`) and the kept
+ * wallpaper (`FileStoredWallpaper`): one image a file, after a header, [magic] and [format] first, then what the cache wrote of what the image
  * was drawn from; then the image's pixels as they are in memory (ARGB_8888, premultiplied),
  * compressed with [Deflater], so a pixel reads back exactly as it was drawn, its transparency too.
  *
- * [read] is for the main thread, where screens read what's kept: it reuses this instance's
- * buffers, so each cache has its own. [write] is a job's, and allocates its own.
+ * [read] and [header] are for the main thread, where screens read what's kept: [read] reuses this
+ * instance's buffers, so each cache has its own. [write] is a job's, and allocates its own.
  */
 internal class PixelFiles(private val magic: Int, private val format: Int) {
 
@@ -57,6 +57,21 @@ internal class PixelFiles(private val magic: Int, private val format: Int) {
             return null
         } catch (e: DataFormatException) {
             return null
+        }
+    }
+
+    /**
+     * What [header] reads of [file]'s header (what follows [magic] and [format]), without its
+     * pixels; null without a file of this format, or one that can't be read.
+     */
+    fun <T> header(file: File, header: (DataInputStream) -> T?): T? {
+        if (!file.isFile) return null
+        return try {
+            DataInputStream(BufferedInputStream(FileInputStream(file), HEADER_BUFFER)).use { input ->
+                if (input.readInt() != magic || input.readInt() != format) null else header(input)
+            }
+        } catch (e: IOException) {
+            null
         }
     }
 
@@ -97,5 +112,8 @@ internal class PixelFiles(private val magic: Int, private val format: Int) {
         const val TEMPORARY = ".new"
 
         private const val BUFFER = 64 * 1024
+
+        /** Enough for any header, so [header] reads little. */
+        private const val HEADER_BUFFER = 1024
     }
 }

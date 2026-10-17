@@ -10,7 +10,9 @@ import android.graphics.Shader
 import android.os.Looper
 import android.view.KeyEvent
 import android.view.View
+import com.github.takahirom.roborazzi.ExperimentalRoborazziApi
 import com.github.takahirom.roborazzi.captureRoboImage
+import com.github.takahirom.roborazzi.captureScreenRoboImage
 import com.luncher.domain.appearance.Appearance
 import com.luncher.domain.appearance.Background
 import com.luncher.domain.appearance.Corners
@@ -30,7 +32,10 @@ import com.luncher.domain.pictures.Blur
 import com.luncher.domain.pictures.Fit
 import com.luncher.domain.pictures.PictureId
 import com.luncher.domain.pictures.PicturePosition
+import com.luncher.domain.wallpaper.FakeStoredWallpaper
+import com.luncher.domain.wallpaper.WallpaperDrawing
 import com.luncher.launcher.pictures.FilePictureImages
+import com.luncher.launcher.ui.WorkingDialog
 import com.luncher.launcher.testing.TV_1080P
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -39,6 +44,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
+import java.time.Duration
 import org.robolectric.annotation.GraphicsMode
 import java.io.File
 
@@ -55,7 +61,16 @@ import java.io.File
 @Config(qualifiers = "en-rUS-$TV_1080P")
 class HomeScreenshotTest {
 
-    private fun start(hidden: List<String> = emptyList(), appearance: Appearance = Appearance()): HomeActivity {
+    /**
+     * The home screen, its wallpaper drawn and shown unless [drawn] is false: then, its window
+     * saying it's being drawn, [kept] being what the last start kept.
+     */
+    private fun start(
+        hidden: List<String> = emptyList(),
+        appearance: Appearance = Appearance(),
+        drawn: Boolean = true,
+        kept: Pair<WallpaperDrawing, Bitmap>? = null,
+    ): HomeActivity {
         val application = RuntimeEnvironment.getApplication() as HomeTestApplication
         val graph = object : TestHomeGraph(application) {
             // Seven apps shown: a full row, and a second one that starts at the left.
@@ -68,11 +83,14 @@ class HomeScreenshotTest {
             override val appearanceSettings = FakeAppearanceSettings(appearance)
             // The real drawing, of a picture stored as the library stores it (landscape()).
             override val pictureImages = FilePictureImages(application)
+            override val storedWallpaper = FakeStoredWallpaper(kept)
         }
         application.graph = graph
         val activity = Robolectric.buildActivity(HomeActivity::class.java).setup().get()
+        if (!drawn) return activity
         graph.jobs.runAll()                          // the wallpaper, drawn in the background
-        shadowOf(Looper.getMainLooper()).idle()      // and shown
+        // and shown, the window that said so closed
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(WorkingDialog.SHORTEST))
         return activity
     }
 
@@ -118,6 +136,31 @@ class HomeScreenshotTest {
 
         start(appearance = Appearance(background = background)).window.decorView
             .captureRoboImage("src/test/screenshots/home/home_screen_wallpaper_stretched.png")
+    }
+
+    // The wallpaper drawn again for a TV that switched to another screen size: the plain
+    // background, and a window over it saying so, which takes every key meanwhile.
+    @Test
+    @OptIn(ExperimentalRoborazziApi::class)   // captureScreenRoboImage, the one capture of a dialog over its screen
+    fun homeScreenFittingTheWallpaper() {
+        fittingTheWallpaper()
+        captureScreenRoboImage("src/test/screenshots/home/home_screen_fitting_wallpaper.png")
+    }
+
+    // The same in Arabic: the window mirrors, the home screen doesn't.
+    @Test
+    @Config(qualifiers = "ar-rEG-$TV_1080P")
+    @OptIn(ExperimentalRoborazziApi::class)
+    fun homeScreenFittingTheWallpaperInArabic() {
+        fittingTheWallpaper()
+        captureScreenRoboImage("src/test/screenshots/home/home_screen_fitting_wallpaper_arabic.png")
+    }
+
+    private fun fittingTheWallpaper() {
+        val background = Background(landscape(), dim = 20)
+        val kept = WallpaperDrawing(background.picture!!, background.style, 1280, 720) to Bitmap.createBitmap(1280, 720, Bitmap.Config.ARGB_8888)
+        start(appearance = Appearance(background = background), drawn = false, kept = kept)
+        shadowOf(Looper.getMainLooper()).idle()
     }
 
     /** Starts arranging as a long press of OK on the tile of [label] would. */

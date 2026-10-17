@@ -18,14 +18,18 @@ ui/
 └── src/
     ├── main/
     │   ├── java/com/luncher/launcher/ui/
-    │   │   └── Colors.kt         color(id): a color resource on every API level
+    │   │   ├── Colors.kt         color(id): a color resource on every API level
+    │   │   ├── ScreenSize.kt     screenSize(): the screen's size in px, what the wallpaper is drawn at
+    │   │   └── WorkingDialog.kt  a floating panel with a spinning wheel and a message, taking every key,
+    │   │                         shown half a second at least: for work the user waits for (the wallpaper drawn)
     │   └── res/
     │       ├── drawable/         entry_background, a focusable entry's frame while focused; panel_background,
-    │       │                     a floating panel's window (the settings panels, Pictures' dialogs)
+    │       │                     a floating panel's window (the settings panels, Pictures' dialogs, WorkingDialog)
+    │       ├── layout/           working_dialog: WorkingDialog's wheel and message
     │       └── values/
     │           ├── colors.xml    background, accent, primary and secondary text, a panel and its focused entry
-    │           ├── dimens.xml    a panel's corners, an entry's frame
-    │           └── themes.xml    Theme.Luncher, the app's and the home screen's theme
+    │           ├── dimens.xml    a panel's corners, an entry's frame, WorkingDialog's sizes
+    │           └── themes.xml    Theme.Luncher, the app's and the home screen's theme; Theme.Luncher.Working
     └── testFixtures/java/com/luncher/launcher/testing/
         ├── TvDevice.kt           the TV screens the JVM tests run on (TV_1080P, TV_SCREENS)
         └── LayoutChecks.kt       the layout tests' checks: bounds, inside, apart, whole text

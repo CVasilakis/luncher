@@ -4,4 +4,11 @@
     <dimen name="panel_corner">12dp</dimen>
     <dimen name="entry_frame">3dp</dimen>
     <dimen name="entry_corner">8dp</dimen>
+    <!-- WorkingDialog: the panel's padding, its spinning wheel and the gap to the message, the
+         message's size and width at most. -->
+    <dimen name="working_padding">32dp</dimen>
+    <dimen name="working_spinner">40dp</dimen>
+    <dimen name="working_gap">24dp</dimen>
+    <dimen name="working_text">20sp</dimen>
+    <dimen name="working_text_width">400dp</dimen>
 </resources>

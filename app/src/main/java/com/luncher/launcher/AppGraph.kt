@@ -3,6 +3,8 @@ package com.luncher.launcher
 import android.content.Context
 import android.graphics.Bitmap
 import android.net.Uri
+import android.os.Handler
+import android.os.Looper
 import com.luncher.domain.appearance.AppearanceSettings
 import com.luncher.domain.apps.AppArrangements
 import com.luncher.domain.apps.AppImages
@@ -13,6 +15,7 @@ import com.luncher.domain.pictures.FolderPictures
 import com.luncher.domain.pictures.PictureImages
 import com.luncher.domain.pictures.PictureImport
 import com.luncher.domain.pictures.Pictures
+import com.luncher.domain.wallpaper.Wallpaper
 import com.luncher.launcher.appearance.PreferencesAppearanceSettings
 import com.luncher.launcher.apps.BannerImages
 import com.luncher.launcher.apps.CachedBannerImages
@@ -23,6 +26,7 @@ import com.luncher.launcher.home.HomeGraph
 import com.luncher.launcher.jobs.BackgroundThreadJobs
 import com.luncher.launcher.pictures.CachedPictureImages
 import com.luncher.launcher.pictures.FilePictureImages
+import com.luncher.launcher.pictures.FileStoredWallpaper
 import com.luncher.launcher.pictures.FilesPictures
 import com.luncher.launcher.pictures.MediaFolderPictures
 import com.luncher.launcher.settings.SettingsGraph
@@ -63,4 +67,12 @@ open class AppGraph(context: Context) : HomeGraph, SettingsGraph {
     override val folderPictures: FolderPictures<Uri, Bitmap> by lazy { MediaFolderPictures(appContext, jobs) }
 
     override val pictureImages: PictureImages<Bitmap> by lazy { CachedPictureImages(appContext, FilePictureImages(appContext)) }
+
+    /**
+     * The wallpaper, kept in its own file at the screen's size and drawn by the uncached drawing:
+     * the image cache keeps none of it.
+     */
+    override val wallpaper: Wallpaper<Bitmap> by lazy {
+        Wallpaper(FileStoredWallpaper(appContext), FilePictureImages(appContext), jobs) { Handler(Looper.getMainLooper()).post(it) }
+    }
 }

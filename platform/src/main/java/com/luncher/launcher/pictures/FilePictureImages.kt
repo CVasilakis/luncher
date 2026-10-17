@@ -38,4 +38,12 @@ class FilePictureImages(context: Context, private val folder: File = File(contex
         PictureFiles.dim(half, style.dim)
         return PictureFiles.enlarge(half, width, height)
     }
+
+    internal companion object {
+        /**
+         * How pictures are drawn, in its version: up by one with each change to the drawing, so
+         * what was kept drawn the old way (the caches, the wallpaper) is drawn again.
+         */
+        const val DRAWING = 1
+    }
 }
