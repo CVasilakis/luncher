@@ -104,7 +104,7 @@ class BackgroundActivityTest {
     /** The real library and drop folder, but the test's own folders. */
     private fun useTheTestsFolders() {
         val graph = object : AppGraph(application) {
-            private val library by lazy { FilesPictures(application, jobs, folder, images) }
+            private val library by lazy { FilesPictures(application, jobs, outsideCalls, folder, images) }
             override val pictures: Pictures get() = library
             override val pictureImport: PictureImport<Uri> get() = library
             override val folderPictures: FolderPictures<Uri, Bitmap> by lazy { MediaFolderPictures(application, jobs) { listOf(dropFolder) } }

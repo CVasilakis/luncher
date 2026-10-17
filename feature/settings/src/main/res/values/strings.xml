@@ -144,7 +144,8 @@
     <string name="settings_pictures_delete_question">Delete <xliff:g id="name" example="beach.png">%1$s</xliff:g>?</string>
     <!-- Below that question: what deleting it does and doesn't do. -->
     <string name="settings_pictures_delete_text">Luncher deletes its own copy; the file you added it from stays.</string>
-    <!-- The answer that changes nothing. -->
+    <!-- The answer that changes nothing; also, in the window after another app shared a
+         picture, the entry that stops adding it. -->
     <string name="settings_pictures_cancel">Cancel</string>
     <!-- The answer to a message. -->
     <string name="settings_pictures_ok">OK</string>

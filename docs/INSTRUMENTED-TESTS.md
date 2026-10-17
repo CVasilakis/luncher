@@ -152,7 +152,16 @@ them as parameters): a library of their own, and a folder of their own inside th
 never the device's library or the files in its drop folder; they delete them after. A share that
 Luncher may read but not pass on (a picture of the device's media store, which Luncher has no
 access to) is sent as "Set as" (`ATTACH_DATA`): Android adds a read grant to a Share's stream
-itself, which the test's sender couldn't give.
+itself, which the test's sender couldn't give. `StalledPictures`, another provider of the test
+package, in Java for the same reason, is an app whose picture never comes: it opens a stream it
+never sends on (`silent`), after which Luncher says it can't read it once its time limit has
+passed (15 s), or it never answers the open (`unopened`), which Cancel leaves; the library then
+adds the next picture, as nothing waits behind the stuck call. That one is added through the
+library, not shared: a second share sent with `NEW_TASK`, as the tests send them, matches the
+task the first one made, and Android only brings that task back. While the window adds a
+picture, the tests look at it with UI Automator: up to API 24 its spinning wheel keeps the main
+thread busy, and Espresso, which waits for it to be idle before each look, would see nothing
+until the wheel stops.
 
 A share opens Luncher's home screen, in a task of its own, with the window over it, though Luncher
 isn't the device's home app during the tests. So `PictureShareTest` ends each test by pressing

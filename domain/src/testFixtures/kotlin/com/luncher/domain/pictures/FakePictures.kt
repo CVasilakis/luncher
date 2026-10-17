@@ -1,9 +1,12 @@
 package com.luncher.domain.pictures
 
+import com.luncher.domain.jobs.Cancellable
+
 /**
  * [Pictures] and [PictureImport] in memory: [pictures] is the library, and [results] what each
  * [add] answers, by source, at once ([NotAPicture][ImportResult.NotAPicture] for one it doesn't
- * name). An [ImportResult.Added] picture joins the library, as the real one does.
+ * name). An [ImportResult.Added] picture joins the library, as the real one does. Cancelled
+ * before it answers ([answerLater]), it never does, and nothing joins.
  */
 class FakePictures<Source>(
     vararg pictures: Picture,
@@ -15,9 +18,15 @@ class FakePictures<Source>(
     /** Every source [add] was given, in order. */
     val added = mutableListOf<Source>()
 
+    /** Every source whose [add] was cancelled before it answered, in order. */
+    val cancelled = mutableListOf<Source>()
+
     /** When set, [add] keeps its answer here instead of giving it, for the test to give with [finishAdding]. */
     var answerLater = false
     private var pending: (() -> Unit)? = null
+
+    /** Whether an [add] waits for [finishAdding]. */
+    val adding: Boolean get() = pending != null
 
     private val listeners = mutableListOf<() -> Unit>()
 
@@ -31,7 +40,7 @@ class FakePictures<Source>(
         changed()
     }
 
-    override fun add(source: Source, done: (ImportResult) -> Unit) {
+    override fun add(source: Source, done: (ImportResult) -> Unit): Cancellable {
         added += source
         val result = results[source] ?: ImportResult.NotAPicture
         val answer = {
@@ -41,7 +50,17 @@ class FakePictures<Source>(
             }
             done(result)
         }
-        if (answerLater) pending = answer else answer()
+        if (!answerLater) {
+            answer()
+            return Cancellable {}
+        }
+        pending = answer
+        return Cancellable {
+            if (pending === answer) {
+                pending = null
+                cancelled += source
+            }
+        }
     }
 
     /** Gives the answer [add] kept, with [answerLater]. */

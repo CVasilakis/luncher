@@ -8,6 +8,7 @@ import android.os.Looper
 import android.provider.OpenableColumns
 import android.system.ErrnoException
 import android.system.OsConstants
+import com.luncher.domain.jobs.Cancellable
 import com.luncher.domain.jobs.JobPriority
 import com.luncher.domain.jobs.Jobs
 import com.luncher.domain.pictures.ImportResult
@@ -16,10 +17,13 @@ import com.luncher.domain.pictures.PictureId
 import com.luncher.domain.pictures.PictureImport
 import com.luncher.domain.pictures.PictureLimits
 import com.luncher.domain.pictures.Pictures
+import com.luncher.launcher.outside.OutsideCallEnded
+import com.luncher.launcher.outside.OutsideCalls
+import com.luncher.launcher.outside.OutsideReader
+import com.luncher.launcher.outside.Stop
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
-import java.io.InputStream
 import java.security.MessageDigest
 import org.json.JSONArray
 import org.json.JSONException
@@ -38,11 +42,21 @@ import org.json.JSONObject
  * once per process, deleting what no index entry names (files a killed process left). A source
  * other apps give is read as a stream, through [ContentResolver], never by a path it names: a
  * `file://` Uri is [ImportResult.Unreadable] (only an app with storage permission could read
- * it), except one of Luncher's own drop folders ([dropFolders]).
+ * it), except one of Luncher's own drop folders ([dropFolders]). It's asked and read through
+ * [OutsideReader], as the app may never answer: the job then gives up, after
+ * [OutsideReader.LIMIT_MS] without an answer ([ImportResult.Unreadable]), or once the import is
+ * cancelled.
+ *
+ * A cancelled import ([add]'s handle) is dropped wherever it is: its job taken out of the queue if
+ * it hasn't started, its reading stopped if it's reading, its copy deleted if it's made; on the
+ * main thread, the steps that follow see it and stop. A file already moved into place but not yet
+ * named stays, for the cleanup of the next start: deleting it could delete the same picture,
+ * added again meanwhile.
  */
 class FilesPictures(
     context: Context,
     private val jobs: Jobs,
+    private val outsideCalls: OutsideCalls,
     private val folder: File = File(context.filesDir, FOLDER),
     private val images: File = File(context.cacheDir, FOLDER),
     private val now: () -> Long = System::currentTimeMillis,
@@ -79,11 +93,39 @@ class FilesPictures(
         changed()
     }
 
-    override fun add(source: Uri, done: (ImportResult) -> Unit) {
+    override fun add(source: Uri, done: (ImportResult) -> Unit): Cancellable {
         index()   // its cleaning first, before this picture's files exist
-        jobs.run(JobPriority.PICTURE_LIBRARY) {
-            val copied = copy(source)
-            main.post { added(copied, done) }
+        val import = Import(done)
+        val queued = jobs.run(JobPriority.PICTURE_LIBRARY) {
+            val copied = copy(source, import.stop)
+            main.post { added(copied, import) }
+        }
+        return Cancellable {
+            queued.cancel()
+            import.cancel()
+        }
+    }
+
+    /**
+     * One picture being added, on the main thread: [stop] tells its job to give up reading, and
+     * [answer] answers unless it was cancelled, once.
+     */
+    private class Import(private val done: (ImportResult) -> Unit) {
+        val stop = Stop()
+        var cancelled = false
+            private set
+        private var answered = false
+
+        fun cancel() {
+            if (answered) return
+            cancelled = true
+            stop.stop()
+        }
+
+        fun answer(result: ImportResult) {
+            if (cancelled || answered) return
+            answered = true
+            done(result)
         }
     }
 
@@ -114,12 +156,16 @@ class FilesPictures(
     }
 
     /** On the main thread: what [copy] found becomes a picture of the library, or the reason it doesn't. */
-    private fun added(copied: Copied, done: (ImportResult) -> Unit) {
-        if (copied is Copied.Failed) return done(copied.result)
+    private fun added(copied: Copied, import: Import) {
+        if (copied is Copied.Failed) return import.answer(copied.result)
         copied as Copied.Copy
+        if (import.cancelled) {
+            jobs.run(JobPriority.PICTURE_LIBRARY) { copied.file.delete() }
+            return
+        }
         index()[copied.id]?.let { known ->
             jobs.run(JobPriority.PICTURE_LIBRARY) { copied.file.delete() }
-            return done(ImportResult.AlreadyThere(known))
+            return import.answer(ImportResult.AlreadyThere(known))
         }
         // Into place before the library names it, so whatever then draws it finds its file.
         jobs.run(JobPriority.PICTURE_LIBRARY) {
@@ -132,29 +178,31 @@ class FilesPictures(
                 copied.file.renameTo(target)
             }
             if (!placed) copied.file.delete()
-            main.post { placed(copied, placed, done) }
+            main.post { placed(copied, placed, import) }
         }
     }
 
-    private fun placed(copied: Copied.Copy, placed: Boolean, done: (ImportResult) -> Unit) {
-        if (!placed) return done(ImportResult.Unreadable)
+    private fun placed(copied: Copied.Copy, placed: Boolean, import: Import) {
+        if (import.cancelled) return   // a file moved into place stays unnamed, for the next start's cleanup
+        if (!placed) return import.answer(ImportResult.Unreadable)
         val index = index()
-        index[copied.id]?.let { return done(ImportResult.AlreadyThere(it)) }   // the same picture, added meanwhile
+        index[copied.id]?.let { return import.answer(ImportResult.AlreadyThere(it)) }   // the same picture, added meanwhile
         val picture = Picture(copied.id, copied.name, copied.width, copied.height, copied.bytes, now())
         index[picture.id] = picture
         val entries = index.values.toList()
         jobs.run(JobPriority.PICTURE_LIBRARY) { writeIndex(entries) }
         changed()
-        done(ImportResult.Added(picture))
+        import.answer(ImportResult.Added(picture))
     }
 
     /**
      * A job: [source]'s content copied into a new file of [folder], its hash computed on the way,
-     * stopping past [PictureLimits.MAX_BYTES]; then checked to be a picture this TV decodes whole,
-     * within [PictureLimits.MAX_PIXELS].
+     * stopping past [PictureLimits.MAX_BYTES] or once [stop] is set; then checked to be a picture
+     * this TV decodes whole, within [PictureLimits.MAX_PIXELS].
      */
-    private fun copy(source: Uri): Copied {
-        val described = describe(source) ?: return Copied.Failed(ImportResult.Unreadable)
+    private fun copy(source: Uri, stop: Stop): Copied {
+        val reader = OutsideReader(resolver, outsideCalls, stop)
+        val described = describe(source, reader) ?: return Copied.Failed(ImportResult.Unreadable)
         if (described.bytes != null && !PictureLimits.allowsBytes(described.bytes)) return Copied.Failed(ImportResult.TooLarge)
         folder.mkdirs()
         val file = try {
@@ -165,7 +213,7 @@ class FilesPictures(
         val digest = MessageDigest.getInstance("SHA-256")
         var bytes = 0L
         val failed = try {
-            open(source).use { input ->
+            reader.open(source).use { input ->
                 FileOutputStream(file).use { output ->
                     val buffer = ByteArray(BUFFER)
                     while (true) {
@@ -211,38 +259,36 @@ class FilesPictures(
 
     private class Described(val name: String, val bytes: Long?)
 
-    /** [source]'s name and size, as far as it says; null if it's a path Luncher may not read. */
-    private fun describe(source: Uri): Described? {
+    /** [source]'s name and size, as far as it says; null if it's a path Luncher may not read, or its app didn't answer. */
+    private fun describe(source: Uri, reader: OutsideReader): Described? {
         if (source.scheme == ContentResolver.SCHEME_FILE) {
             val file = File(source.path ?: return null)
             if (!inDropFolder(file)) return null
             return Described(clean(file.name), file.length())
         }
         if (source.scheme != ContentResolver.SCHEME_CONTENT) return null
-        var name: String? = null
-        var bytes: Long? = null
-        try {
-            resolver.query(source, arrayOf(OpenableColumns.DISPLAY_NAME, OpenableColumns.SIZE), null, null, null)?.use { row ->
-                if (row.moveToFirst()) {
-                    val nameColumn = row.getColumnIndex(OpenableColumns.DISPLAY_NAME)
-                    val sizeColumn = row.getColumnIndex(OpenableColumns.SIZE)
-                    if (nameColumn >= 0 && !row.isNull(nameColumn)) name = row.getString(nameColumn)
-                    if (sizeColumn >= 0 && !row.isNull(sizeColumn)) bytes = row.getLong(sizeColumn)
-                }
+        val said = try {
+            reader.query(source, arrayOf(OpenableColumns.DISPLAY_NAME, OpenableColumns.SIZE)) { row ->
+                if (row == null || !row.moveToFirst()) return@query null
+                val nameColumn = row.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                val sizeColumn = row.getColumnIndex(OpenableColumns.SIZE)
+                Pair(
+                    if (nameColumn >= 0 && !row.isNull(nameColumn)) row.getString(nameColumn) else null,
+                    if (sizeColumn >= 0 && !row.isNull(sizeColumn)) row.getLong(sizeColumn) else null,
+                )
             }
+        } catch (e: OutsideCallEnded) {
+            return null
         } catch (e: RuntimeException) {
-            // A provider that answers no query (SecurityException, a bad column): the stream may still open.
+            null   // A provider that answers no query (SecurityException, a bad column): the stream may still open.
         }
-        return Described(clean(name ?: source.lastPathSegment.orEmpty()), bytes)
+        return Described(clean(said?.first ?: source.lastPathSegment.orEmpty()), said?.second)
     }
 
     private fun inDropFolder(file: File): Boolean {
         val path = file.canonicalPath
         return dropFolders().any { path.startsWith(it.canonicalPath + File.separator) }
     }
-
-    private fun open(source: Uri): InputStream =
-        resolver.openInputStream(source) ?: throw IOException("no stream for $source")
 
     /**
      * A name another app gave, as a label only (never a path): without control characters, and

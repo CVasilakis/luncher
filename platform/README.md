@@ -40,6 +40,11 @@ platform/
     │   │   │   └── JpegOrientation.kt               a JPEG's orientation tag, read without ExifInterface
     │   │   ├── jobs/
     │   │   │   └── BackgroundThreadJobs.kt          Jobs on one thread at background priority, with a priority queue
+    │   │   ├── outside/                             asking another app, which may never answer (below)
+    │   │   │   ├── OutsideCalls.kt                  the calls that can't be stopped, each on a short-lived thread, at most 10 alive; the clock and the wait for data
+    │   │   │   ├── OutsideReader.kt                 asks and reads a Uri another app answers for, giving up when stopped or after 15 s without an answer
+    │   │   │   ├── Stop.kt                          tells a job that waits on another app to give up
+    │   │   │   └── OutsideCallEnded.kt              the IOException of a wait that gave up, and why
     │   │   └── wallpaper/
     │   │       └── FileStoredWallpaper.kt           StoredWallpaper<Bitmap>: the one wallpaper kept, a file in the app's private files
     │   └── res/values/colors.xml the card drawn for an app without a banner
@@ -48,7 +53,7 @@ platform/
 
 Packages follow `:domain`'s topics (`appearance/`, `apps/`, `clock/`, `jobs/`, `pictures/`,
 `wallpaper/`, and later e.g. `network/`), so the adapter of `com.luncher.domain.clock.Clock` is in `clock/`. What two topics' adapters share
-is in a package of its own (`images/`: the caches' file format).
+is in a package of its own (`images/`: the caches' file format; `outside/`: asking another app).
 
 ## Writing adapters
 
@@ -83,6 +88,39 @@ is in a package of its own (`images/`: the caches' file format).
   (`PixelFiles`), but draws them in jobs, so it writes each in the job that drew it.
 - **Public,** since `AppGraph` in `:app` creates them; no other module depends on this one.
 
+## Another app's answers
+
+What another app answers may never come: a cloud app on a dead network, a broken one. So an
+adapter that asks another app for something (today `FilesPictures`, for a shared picture) asks
+through `outside/`, and its job never waits on that app for good
+([`ARCHITECTURE.md`](../docs/ARCHITECTURE.md#background-work-and-changes-while-shown), point 6):
+
+- **`OutsideReader` asks and reads, for one job,** and gives up once its `Stop` is set (the user
+  cancelled) or the app has answered nothing for 15 s (`LIMIT_MS`). Each answer, the query's, the
+  open's or a piece of data, starts that time again, so a slow transfer that goes on isn't cut.
+  Giving up throws `OutsideCallEnded`, an `IOException`, so an adapter that handles a failed read
+  handles it too.
+- **Data is read only once `Os.poll` says some came,** waiting 250 ms at a time, and the job looks
+  in between whether to give up. Closing the stream from another thread would be simpler, but up
+  to API 35 it doesn't end a read that waits (measured on API 22, 24, 28 and 36).
+- **A query or an open can't be stopped once made:** the `CancellationSignal` reaches a query,
+  but Android drops it on the way to a read-only open. So `OutsideCalls` makes each on a
+  short-lived thread of its own (`luncher-outside-N`), which the job waits for until it answers,
+  the job is stopped or the time is up, and then leaves to its call. That thread ends when the app
+  answers, closing what comes so late, or when the app's process dies, which makes the call
+  throw; meanwhile it costs no CPU and some tens of KB, and nothing in Java can end it sooner.
+- **At most 10 such threads are alive at once** (`OutsideCalls.MOST`), whoever started them, the
+  one a job waits for and those left to their calls; past that a call fails at once. The bound
+  guards against a leak, a caller that asks an app that hangs again and again, and isn't a
+  setting to tune. A process of its own, which Luncher could kill with its threads, would cost a
+  weak TV more than the threads do.
+- **One `OutsideCalls` per process,** which `AppGraph` makes and gives each adapter that asks
+  another app, so the bound holds for all of them. It also has the clock and the wait for data
+  `OutsideReader` uses: a JVM test makes one with its own, as Robolectric's `Os.poll` doesn't
+  wait and its clock stands still, and the time another app takes passes when the test says. In
+  the tests, `AnotherApp` is another app's provider; it serves files, as Robolectric's pipes are
+  files too, which a reader that catches up finds ended.
+
 ## Pictures
 
 The picture library ([`feature/settings/README.md`](../feature/settings/README.md#background)) is three
@@ -109,7 +147,14 @@ adapters on files and a cache; the wallpaper drawn from it is kept by a fourth:
   as a stream, its name kept as a label only, never as a path. A `file://` Uri is refused
   (`Unreadable`): only an app with storage permission could read it, as older Android versions
   share files, and Luncher asks for none ([`app/README.md`](../app/README.md#manifest-why-each-part-is-there)).
-  The one exception is a file of Luncher's own drop folders, which Add from folder passes.
+  The one exception is a file of Luncher's own drop folders, which Add from folder passes. It's
+  asked and read through `outside/` ([above](#another-apps-answers)), as the app may never answer:
+  one that stops sending gives `Unreadable` after 15 s without an answer.
+- **An import can be cancelled wherever it is** (`add`'s handle): its job taken out of the queue
+  if it hasn't started, its reading stopped, its copy deleted if it's made, and on the main
+  thread, the steps that follow see it and stop. A file already moved into place but not yet named
+  stays for the next start's cleanup: deleting it could delete the same picture, added again
+  meanwhile.
 - **A picture is drawn into ARGB_8888, at the size it's shown, upright.** `PictureFiles.draw`
   decodes it at no more than the size needed (`inSampleSize`), into sRGB from API 26 on (an iPhone's
   photo is in Display P3), turns it as its orientation tag says, which BitmapFactory doesn't, and

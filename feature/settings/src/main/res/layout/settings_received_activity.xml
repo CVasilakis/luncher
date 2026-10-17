@@ -1,22 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- The window over the home screen after another app shared a picture: like the settings panel,
-     a title, a spinning wheel while the picture is added, its name or why it wasn't added, and
-     the entries. -->
+     a title, after a spinning wheel while the picture is added; the picture's name or why it
+     wasn't added; and the entries. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/settings_received_panel"
     android:layout_width="@dimen/settings_panel_width"
     android:layout_height="wrap_content"
     android:orientation="vertical"
     android:padding="@dimen/settings_panel_padding">
-
-    <TextView
-        android:id="@+id/settings_received_title"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="@dimen/settings_title_gap"
-        android:includeFontPadding="false"
-        android:textColor="@color/text_primary"
-        android:textSize="@dimen/settings_title_text" />
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -32,19 +23,30 @@
             android:indeterminate="true"
             android:indeterminateTint="@color/accent" />
 
-        <!-- The picture's name, the user's, which may end in "…"; or why it wasn't added, whole. -->
         <TextView
-            android:id="@+id/settings_received_text"
+            android:id="@+id/settings_received_title"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:ellipsize="end"
-            android:maxLines="8"
-            android:textColor="@color/text_secondary"
-            android:textSize="@dimen/settings_pictures_small_text" />
+            android:includeFontPadding="false"
+            android:textColor="@color/text_primary"
+            android:textSize="@dimen/settings_title_text" />
     </LinearLayout>
 
-    <!-- PictureReceivedActivity adds the entries: a use for each of pictureUseMenu, or OK. -->
+    <!-- The picture's name, the user's, which may end in "…"; or why it wasn't added, whole.
+         Gone while the picture is added. -->
+    <TextView
+        android:id="@+id/settings_received_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/settings_title_gap"
+        android:ellipsize="end"
+        android:maxLines="8"
+        android:textColor="@color/text_secondary"
+        android:textSize="@dimen/settings_pictures_small_text" />
+
+    <!-- PictureReceivedActivity adds the entries: Cancel while the picture is added; then a use
+         for each of pictureUseMenu, or OK. -->
     <LinearLayout
         android:id="@+id/settings_received_entries"
         android:layout_width="match_parent"

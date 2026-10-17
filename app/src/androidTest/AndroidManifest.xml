@@ -9,6 +9,12 @@
             android:name="com.luncher.launcher.testing.SamplePictures"
             android:authorities="${applicationId}.samples"
             android:exported="true" />
+        <!-- Another app whose picture never comes (StalledPictures): it opens a stream it never
+             sends on, or never answers the open. Exported, as SamplePictures. -->
+        <provider
+            android:name="com.luncher.launcher.testing.StalledPictures"
+            android:authorities="${applicationId}.stalled"
+            android:exported="true" />
     </application>
 
 </manifest>

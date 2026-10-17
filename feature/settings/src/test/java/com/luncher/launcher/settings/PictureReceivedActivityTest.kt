@@ -12,6 +12,7 @@ import com.luncher.domain.pictures.ImportResult
 import com.luncher.domain.pictures.PictureFormat
 import com.luncher.launcher.testing.TV_1080P
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -19,6 +20,7 @@ import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
+import org.robolectric.android.controller.ActivityController
 import org.robolectric.annotation.Config
 
 /** The window over the home screen after another app shared a picture: adding it, then what to use it for, or why not. */
@@ -31,10 +33,13 @@ class PictureReceivedActivityTest {
     private val holiday = picture("holiday.jpg", added = 9)
     private val library = FakePictures<Uri>().also { application.graph = TestPicturesGraph(it) }
 
-    private fun receive(intent: Intent = Intent().setData(shared)): PictureReceivedActivity {
-        val activity = Robolectric.buildActivity(PictureReceivedActivity::class.java, intent).setup().get()
+    private fun receive(intent: Intent = Intent().setData(shared)): PictureReceivedActivity = window(intent).get()
+
+    /** The window, shown, to close as the test says. */
+    private fun window(intent: Intent = Intent().setData(shared)): ActivityController<PictureReceivedActivity> {
+        val window = Robolectric.buildActivity(PictureReceivedActivity::class.java, intent).setup()
         shadowOf(Looper.getMainLooper()).idle()
-        return activity
+        return window
     }
 
     private fun PictureReceivedActivity.title() = findViewById<TextView>(R.id.settings_received_title).text.toString()
@@ -47,7 +52,7 @@ class PictureReceivedActivityTest {
         findViewById<LinearLayout>(R.id.settings_received_entries).let { list -> (0 until list.childCount).map { list.getChildAt(it) as TextView } }
 
     @Test
-    fun `says it's adding the picture, with a spinning wheel, until it's done`() {
+    fun `says it's adding the picture, with a spinning wheel and Cancel, focused, until it's done`() {
         library.results[shared] = ImportResult.Added(holiday)
         library.answerLater = true
 
@@ -55,10 +60,53 @@ class PictureReceivedActivityTest {
 
         assertEquals("Adding the picture…", activity.title())
         assertTrue(activity.spinning())
-        assertEquals(emptyList<String>(), activity.entries().map { it.text.toString() })
+        assertEquals(listOf("Cancel"), activity.entries().map { it.text.toString() })
+        assertTrue(activity.entries().single().isFocused)
         library.finishAdding()
         assertEquals("Picture saved", activity.title())
         assertTrue(!activity.spinning())
+        assertEquals(listOf("Background"), activity.entries().map { it.text.toString() })
+    }
+
+    @Test
+    fun `Cancel closes the window, and the picture isn't added`() {
+        library.results[shared] = ImportResult.Added(holiday)
+        library.answerLater = true
+        val window = window()
+
+        window.get().entries().single().performClick()
+        assertTrue(window.get().isFinishing)
+        window.pause().stop().destroy()
+
+        assertEquals(listOf(shared), library.cancelled)
+        assertFalse(library.adding)
+        assertEquals(emptyList<Any>(), library.pictures)
+    }
+
+    @Test
+    fun `Back while it's adding closes the window, and the picture isn't added`() {
+        library.results[shared] = ImportResult.Added(holiday)
+        library.answerLater = true
+        val window = window()
+
+        @Suppress("DEPRECATION")
+        window.get().onBackPressed()
+        assertTrue(window.get().isFinishing)
+        window.pause().stop().destroy()
+
+        assertEquals(listOf(shared), library.cancelled)
+        assertEquals(emptyList<Any>(), library.pictures)
+    }
+
+    @Test
+    fun `closing the window once the picture is added cancels nothing`() {
+        library.results[shared] = ImportResult.Added(holiday)
+        val window = window()
+
+        window.pause().stop().destroy()
+
+        assertEquals(emptyList<Uri>(), library.cancelled)
+        assertEquals(listOf(holiday), library.pictures)
     }
 
     @Test

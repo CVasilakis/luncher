@@ -24,6 +24,7 @@ import com.luncher.launcher.apps.PreferencesAppArrangements
 import com.luncher.launcher.clock.AndroidClock
 import com.luncher.launcher.home.HomeGraph
 import com.luncher.launcher.jobs.BackgroundThreadJobs
+import com.luncher.launcher.outside.OutsideCalls
 import com.luncher.launcher.pictures.CachedPictureImages
 import com.luncher.launcher.pictures.FilePictureImages
 import com.luncher.launcher.pictures.FilesPictures
@@ -53,12 +54,19 @@ open class AppGraph(context: Context) : HomeGraph, SettingsGraph {
     /** The background thread, for the adapters' and screens' jobs; open so a test can run them when it says. */
     override val jobs: Jobs by lazy { BackgroundThreadJobs() }
 
+    /**
+     * The threads for calls into another app that may never return: one for the process, so its
+     * bound on them holds for every adapter that makes such calls. Protected for the instrumented
+     * tests' graphs, which make those adapters on their own folders.
+     */
+    protected val outsideCalls: OutsideCalls by lazy { OutsideCalls() }
+
     override val clock: Clock by lazy { AndroidClock(appContext) }
 
     override val appearanceSettings: AppearanceSettings by lazy { PreferencesAppearanceSettings(appContext) }
 
     /** The picture library: both ports on the same files and index. */
-    private val library by lazy { FilesPictures(appContext, jobs) }
+    private val library by lazy { FilesPictures(appContext, jobs, outsideCalls) }
 
     override val pictures: Pictures by lazy { library }
 

@@ -12,7 +12,11 @@ interface Jobs {
     fun run(priority: Int, job: () -> Unit): Cancellable
 }
 
-/** Cancels a queued job that hasn't started. */
+/**
+ * Cancels what it was returned for: a queued job ([Jobs.run]), a picture being added
+ * ([PictureImport.add][com.luncher.domain.pictures.PictureImport.add]). Each function that returns
+ * one says what cancelling stops, and what still runs to its end.
+ */
 fun interface Cancellable {
     fun cancel()
 }

@@ -10,6 +10,7 @@ import com.luncher.domain.pictures.PictureStyle
 import com.luncher.domain.pictures.ImportResult
 import com.luncher.domain.pictures.PictureFormat
 import com.luncher.launcher.jobs.BackgroundThreadJobs
+import com.luncher.launcher.outside.OutsideCalls
 import com.luncher.launcher.testing.SamplePictures
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -34,13 +35,14 @@ class PictureFormatsTest {
     private val folder = File(context.filesDir, "picture-formats-test")
     private val images = File(context.cacheDir, "picture-formats-test")
     private val jobs = BackgroundThreadJobs()
+    private val outsideCalls = OutsideCalls()
     private lateinit var library: FilesPictures
 
     @Before
     fun newLibrary() {
         folder.deleteRecursively()
         images.deleteRecursively()
-        InstrumentationRegistry.getInstrumentation().runOnMainSync { library = FilesPictures(context, jobs, folder, images) }
+        InstrumentationRegistry.getInstrumentation().runOnMainSync { library = FilesPictures(context, jobs, outsideCalls, folder, images) }
     }
 
     @After

@@ -251,11 +251,15 @@ both open in the home screen's task, so Back from the window is the home screen.
 intent, which makes the task a home screen's: once closed, Android shows the device's home app,
 and up to Android 5.1, with no default, asks which one.
 
-The window, floating like the settings panel, says "Adding the picture…" with a spinning wheel
-while the library adds it, then "Picture saved", the picture's name and an entry for each use a
-picture can be put to (`pictureUseMenu` in `:domain`, today Background, which opens the
-background editor with the picture chosen, not saved, and closes the window); or why it wasn't
-added, and OK. Back closes it, the picture in the library. A picture the library has already (the
+The window, floating like the settings panel, says "Adding the picture…" after a spinning wheel,
+on one line, and Cancel, focused, while the library adds it, then "Picture saved", the picture's name and an
+entry for each use a picture can be put to (`pictureUseMenu` in `:domain`, today Background, which
+opens the background editor with the picture chosen, not saved, and closes the window); or why it
+wasn't added, and OK. Back closes it, the picture in the library. While it's being added, Cancel
+and Back close the window and stop the adding, the picture not added; closing the window any
+way stops it (`onDestroy`), so no answer comes to a window that's gone. An app that stops sending
+the picture gets the message that Luncher can't read it, after the library's time limit
+([`platform/README.md`](../../platform/README.md#another-apps-answers)). A picture the library has already (the
 same content) is saved as well. An intent with no picture it can pass on (none in it, or one the
 other app gave no access to, which Android won't let Luncher pass on) becomes the window's
 message that Luncher can't read it, never a crash. What the Uri

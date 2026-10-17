@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
+import com.luncher.domain.jobs.Cancellable
 import com.luncher.domain.pictures.ImportResult
 import com.luncher.domain.pictures.Picture
 import com.luncher.domain.pictures.PictureUse
@@ -15,13 +16,18 @@ import com.luncher.domain.pictures.pictureUseMenu
 /**
  * The window over the home screen after another app shared a picture ([SharePictureActivity]
  * opens the home screen, then this): a floating panel like the settings panel. While the picture
- * is added to the library, "Adding the picture…" and a spinning wheel; then "Picture saved", its
- * name, and an entry for each use of [pictureUseMenu] (Background opens the background editor
- * with it chosen, not saved); or why it wasn't added, and OK. Back closes it: the home screen, the
- * picture in the library. Every [ImportResult] is handled ([whyNotAdded]).
+ * is added to the library, "Adding the picture…" after a spinning wheel, and Cancel, focused; then
+ * "Picture saved", its name, and an entry for each use of [pictureUseMenu] (Background opens the
+ * background editor with it chosen, not saved); or why it wasn't added, and OK. Every
+ * [ImportResult] is handled ([whyNotAdded]); an app that stops sending the picture ends as
+ * Unreadable, after the library's time limit.
  *
- * A picture added twice (the window recreated, the same picture shared again) is the same one:
- * the library keeps one copy of the same content.
+ * Back closes it: the home screen, the picture in the library once it's added. While it's being
+ * added, Back does what Cancel does: the window closes, and the adding stops, the picture not
+ * added. Closing it any way stops it ([onDestroy]), so no answer comes to a window that's gone.
+ *
+ * A picture added twice (the window recreated, which starts adding it again, or the same picture
+ * shared again) is the same one: the library keeps one copy of the same content.
  */
 class PictureReceivedActivity : Activity() {
 
@@ -29,6 +35,9 @@ class PictureReceivedActivity : Activity() {
     private lateinit var text: TextView
     private lateinit var spinner: View
     private lateinit var entries: LinearLayout
+
+    /** The picture being added, until the library answers. */
+    private var adding: Cancellable? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -41,15 +50,27 @@ class PictureReceivedActivity : Activity() {
         if (picture == null || intent.getBooleanExtra(EXTRA_NOTHING_READABLE, false)) show(ImportResult.Unreadable) else add(picture)
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        adding?.cancel()
+    }
+
     private fun add(source: Uri) {
         title.setText(R.string.settings_received_adding)
-        text.text = ""
+        text.visibility = View.GONE
         spinner.visibility = View.VISIBLE
-        graph.pictureImport.add(source) { result -> if (!isDestroyed) show(result) }
+        entries.removeAllViews()
+        entry(getString(R.string.settings_pictures_cancel)) { finish() }
+        focusFirst()
+        adding = graph.pictureImport.add(source) { result ->
+            adding = null
+            show(result)
+        }
     }
 
     private fun show(result: ImportResult) {
         spinner.visibility = View.GONE
+        text.visibility = View.VISIBLE
         entries.removeAllViews()
         val picture = when (result) {
             is ImportResult.Added -> result.picture

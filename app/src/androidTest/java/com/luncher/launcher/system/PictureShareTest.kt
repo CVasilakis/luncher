@@ -18,8 +18,11 @@ import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.uiautomator.By
 import androidx.test.uiautomator.UiDevice
+import androidx.test.uiautomator.Until
 import com.luncher.domain.appearance.FakeAppearanceSettings
+import com.luncher.domain.pictures.ImportResult
 import com.luncher.domain.pictures.PictureImages
 import com.luncher.domain.pictures.PictureImport
 import com.luncher.domain.pictures.Pictures
@@ -35,6 +38,7 @@ import com.luncher.launcher.settings.R
 import com.luncher.launcher.settings.SharePictureActivity
 import com.luncher.launcher.testing.RetryWhenCovered
 import com.luncher.launcher.testing.SamplePictures
+import com.luncher.launcher.testing.StalledPictures
 import com.luncher.launcher.testing.resolvedHome
 import com.luncher.launcher.testing.waitForFocus
 import com.luncher.launcher.testing.waitForHomeScreen
@@ -44,11 +48,14 @@ import org.hamcrest.Matchers.allOf
 import org.hamcrest.Matchers.containsString
 import org.junit.After
 import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.io.File
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 /**
  * A picture shared from another app, on a real device: Luncher's home screen opens with the
@@ -95,7 +102,7 @@ class PictureShareTest {
     @Before
     fun useTheTestsFolders() {
         application.graph = object : AppGraph(application) {
-            private val library by lazy { FilesPictures(application, jobs, folder, images) }
+            private val library by lazy { FilesPictures(application, jobs, outsideCalls, folder, images) }
             override val pictures: Pictures get() = library
             override val pictureImport: PictureImport<Uri> get() = library
             override val pictureImages: PictureImages<Bitmap> by lazy { CachedPictureImages(application, FilePictureImages(application, folder), images) }
@@ -135,9 +142,9 @@ class PictureShareTest {
         InstrumentationRegistry.getInstrumentation().sendKeyDownUpSync(keyCode)
     }
 
-    /** Checks [condition] on the view [view] matches, retrying while a window comes up. */
-    private fun waitUntil(view: Matcher<View>, condition: Matcher<View>) {
-        val deadline = SystemClock.uptimeMillis() + TIMEOUT_MS
+    /** Checks [condition] on the view [view] matches, retrying while a window comes up, for [timeoutMs] at most. */
+    private fun waitUntil(view: Matcher<View>, condition: Matcher<View>, timeoutMs: Long = TIMEOUT_MS) {
+        val deadline = SystemClock.uptimeMillis() + timeoutMs
         while (true) {
             try {
                 onView(view).check(matches(condition))
@@ -202,6 +209,65 @@ class PictureShareTest {
         waitForFocus(HomeActivity::class.java)
     }
 
+    /**
+     * Waits until UI Automator sees [text], focused if [focused], for [timeoutMs] at most. For the
+     * window while it adds a picture: up to API 24 its wheel spins on the main thread, which
+     * Espresso waits to be idle before each look, so it would see nothing until the wheel stops.
+     */
+    private fun waitUntilSeen(text: String, focused: Boolean = false, timeoutMs: Long = TIMEOUT_MS) {
+        val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
+        val wanted = By.textContains(text).let { if (focused) it.focused(true) else it }
+        if (!device.wait(Until.hasObject(wanted), timeoutMs)) throw AssertionFailedError("\"$text\"${if (focused) ", focused," else ""} not seen in $timeoutMs ms")
+    }
+
+    // An app that opens the picture, then never sends it: after the library's time limit, the
+    // window says it can't read it.
+    @Test
+    fun aShareThatNeverComes_saysItCantReadIt_afterTheTimeLimit() {
+        share(
+            Intent(Intent.ACTION_SEND).setType("image/jpeg")
+                .putExtra(Intent.EXTRA_STREAM, StalledPictures.silent("cloud.jpg"))
+                .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION),
+        )
+
+        waitForFocus(PictureReceivedActivity::class.java)
+        waitUntilSeen(application.getString(R.string.settings_pictures_cancel), focused = true)
+        waitUntilSeen("Android/media/${application.packageName}", timeoutMs = STALLED_TIMEOUT_MS)
+        waitUntil(withText(R.string.settings_pictures_ok), hasFocus())
+        press(KeyEvent.KEYCODE_DPAD_CENTER)
+
+        waitForFocus(HomeActivity::class.java)
+    }
+
+    // An app that never answers the open, the one call Luncher can't stop: Cancel leaves the
+    // home screen at once, and the library adds the next picture, as nothing waits behind the
+    // stuck call. (Not through a second share: sent with NEW_TASK, as a test sends it, it would
+    // only bring back the task the first one made.)
+    @Test
+    fun cancel_leavesAShareThatNeverOpens_andTheLibraryAddsTheNextPicture() {
+        share(
+            Intent(Intent.ACTION_SEND).setType("image/jpeg")
+                .putExtra(Intent.EXTRA_STREAM, StalledPictures.unopened("cloud.jpg"))
+                .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION),
+        )
+        waitForFocus(PictureReceivedActivity::class.java)
+        waitUntilSeen(application.getString(R.string.settings_pictures_cancel), focused = true)
+
+        press(KeyEvent.KEYCODE_DPAD_CENTER)
+        waitForFocus(HomeActivity::class.java)
+
+        val answered = CountDownLatch(1)
+        var result: ImportResult? = null
+        InstrumentationRegistry.getInstrumentation().runOnMainSync {
+            application.graph.pictureImport.add(SamplePictures.uri("progressive.jpg")) {
+                result = it
+                answered.countDown()
+            }
+        }
+        assertTrue("the next picture got no answer in $TIMEOUT_MS ms", answered.await(TIMEOUT_MS, TimeUnit.MILLISECONDS))
+        assertTrue("the next picture: $result", result is ImportResult.Added)
+    }
+
     @Test
     fun aShareOfAPath_saysToUseTheDropFolder() {
         share(Intent(Intent.ACTION_SEND).setType("image/jpeg").putExtra(Intent.EXTRA_STREAM, Uri.parse("file:///sdcard/Pictures/holiday.jpg")))
@@ -212,6 +278,9 @@ class PictureShareTest {
 
     private companion object {
         const val TIMEOUT_MS = 10_000L
+
+        /** For a share that never comes: the library's time limit (15 s), and the usual margin. */
+        const val STALLED_TIMEOUT_MS = 25_000L
         const val POLL_MS = 50L
     }
 }

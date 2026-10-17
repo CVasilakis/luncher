@@ -37,12 +37,12 @@ domain/src/
 │   │   ├── AppearanceOptions.kt models and rule: which options the editor lists, in groups; a group edited apart (the background's)
 │   │   └── AppearanceSettings.kt port: the stored appearance, and when it changes
 │   ├── jobs/
-│   │   ├── Jobs.kt              port: the background thread; cancelling a queued job; every job's priority (JobPriority)
+│   │   ├── Jobs.kt              port: the background thread; cancelling (Cancellable) a queued job; every job's priority (JobPriority)
 │   │   └── LatestRequest.kt     helper: one thing a screen loads in the background, only the latest request counting
 │   ├── pictures/
 │   │   ├── Picture.kt           model: a picture of the library (PictureId, from its content), its name, size as shown, bytes, when added
 │   │   ├── Pictures.kt          port: the library's pictures, deleting them, and when they change
-│   │   ├── PictureImport.kt     port: adding a picture from a source, slow, and how that went (ImportResult)
+│   │   ├── PictureImport.kt     port: adding a picture from a source, slow, cancellable, and how that went (ImportResult)
 │   │   ├── PictureLibrary.kt    rule: the library as the background editor lists it, the newest first, and what each one is used for
 │   │   ├── PictureLimits.kt     rule: the largest picture the library takes (bytes, megapixels)
 │   │   ├── PictureFormat.kt     model and rule: the formats a TV may not show (HEIF, AVIF), recognized by a file's header
@@ -109,7 +109,9 @@ Packages are by topic (`appearance/`, `apps/`, `arrange/`, `clock/`, `jobs/`, `l
   this module can't name is generic in it (`AppImages<Image>`), and so is one that takes an
   Android type (`PictureImport<Source>`, a Uri in the app). A slow port answers later, on the main
   thread, through a function it's given (`PictureImport.add`), with a sealed result each screen
-  handles in an exhaustive `when` (`ImportResult`).
+  handles in an exhaustive `when` (`ImportResult`). One a screen may stop waiting for returns a
+  `Cancellable`, whose KDoc says what cancelling stops (`PictureImport.add`: no answer, nothing
+  added).
 - A port for state that changes while it's shown (`Clock`, `AppearanceSettings`, `AppArrangements`,
   `InstalledApps`, `Pictures`) is a port you can watch
   ([`ARCHITECTURE.md`](../docs/ARCHITECTURE.md#background-work-and-changes-while-shown)).

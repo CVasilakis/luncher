@@ -108,7 +108,8 @@ the main thread (decoding a picture). Neither may delay a key press.
    it reads, replaced in one step. Jobs run one at a time on a single background thread, at
    Android's background priority, through the `Jobs` port, which `AppGraph` creates on first use:
    the highest priority first, in the order they came among equals, every priority listed in
-   `JobPriority`. A running job isn't interrupted, so a job is small: one image, not all of them.
+   `JobPriority`. A running job isn't interrupted, so a job is small: one image, not all of them
+   (one that waits on another app gives up by itself, point 6).
    A job posts its result to the main thread with a `Handler`. One at a time also bounds memory:
    only one large image is decoded at once.
 4. **The latest request wins.** Each thing a screen loads (a picture's thumbnail, a preview) is
@@ -121,6 +122,18 @@ the main thread (decoding a picture). Neither may delay a key press.
    `ManualJobs`, which runs the queued jobs when the test says, so a loading state, a finished
    load and two loads finishing out of order are each tested on the JVM, without waiting
    ([`TESTING.md`](TESTING.md)).
+6. **A job never waits on another app.** What another app answers (its content provider's query,
+   its open, the data it sends) may never come: a cloud app on a dead network, a broken one. A
+   job that waited for it would hold up every job behind it, which the screens wait for. So an
+   adapter asks another app only through `:platform`'s `outside/`
+   ([`platform/README.md`](../platform/README.md#another-apps-answers)): its job gives up once the
+   caller cancels it, or once the app has answered nothing for a time limit, and a call that can't
+   be stopped once made is left on a short-lived thread of its own, which ends when the app
+   answers or its process dies. `OutsideCalls` there is the only place that starts such a thread,
+   and bounds how many are alive; nothing else starts a thread, as Luncher's own slow work is a
+   job. Android's own services (PackageManager, LauncherApps) aren't another app: Android answers
+   them. Tests give `outside/` a clock and a wait for data of their own, so the time another app
+   takes passes when the test says.
 
 Every kind of job has its priority in `JobPriority`, which lists them all; what each one does is
 in the README of the module that runs it ([`platform/`](../platform/README.md), the features). What
@@ -202,6 +215,7 @@ isn't drawn and the home screen always has one to show
 | A launcher decision (which apps show, sort order, banner choice, validation of a setting) | a rule in `:domain`, plus unit tests next to it |
 | New data the rules or screens need from the device (settings, pictures, installed apps) | a port (interface) in `:domain` with a fake in its test fixtures; an adapter in `:platform`, in the package of the port's topic; one line in `AppGraph`; the port in the graph interface of each feature that uses it |
 | An image the UI shows (banners, a picture's thumbnail) | which image: a model and rule in `:domain` (like `Banner`, or a picture's `Framing`); drawing it: an adapter in `:platform` behind a port generic in the image type (`AppImages<Bitmap>`, `PictureImages<Bitmap>`), since `:domain` can't name `Bitmap`. It draws at the size shown ([rule 5](#rules)), and is slow work if it's slow ([above](#background-work-and-changes-while-shown)). Kept for the next start, it's a cache adapter in front of the one that draws (`CachedBannerImages`, `CachedPictureImages`). |
+| Asking another app for something, or reading what it sends (a shared file, its provider) | an adapter in `:platform`, which asks through `outside/` ([point 6](#background-work-and-changes-while-shown)) with the one `OutsideCalls` `AppGraph` gives it; if a screen waits for the answer, its port returns a `Cancellable` (`PictureImport.add`) |
 | A picture the user brings in, and what it's used for | the picture library: `:domain`'s `pictures/` (the models, the rules of framing, limits and formats, and the ports), its adapters in `:platform`'s `pictures/`, its screens in `:feature:settings` ([`feature/settings/README.md`](../feature/settings/README.md#background)); the wallpaper drawn from one and kept: `:domain`'s `wallpaper/` and `FileStoredWallpaper` ([`feature/home/README.md`](../feature/home/README.md#the-wallpaper)) |
 | How the home screen arranges apps (grid, apps per row, alignment, a carousel) | a `TileLayout` in `:domain`'s `layout/` that computes sizes and positions, and `TileMoves` for where a tile the user moves goes, with unit tests; `TileLayouts` picks it, so everything that shows tiles lays them out alike; the view that shows the tiles only places them where the layout says ([`feature/home/README.md`](../feature/home/README.md#the-home-screen)) |
 | What the user can do while arranging apps (moving, hiding, which key does what to the held app) | `ArrangeSession` in `:domain`'s `arrange/`, with unit tests; `ArrangeMode` in `:feature:home` turns keys into its moves ([`feature/home/README.md`](../feature/home/README.md#arrange-mode)) |
