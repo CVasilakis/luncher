@@ -1,7 +1,17 @@
 package com.luncher.domain.pictures
 
-/** How blurred a picture is drawn: not, a little (the picture still recognizable), or a lot (only its colors left). */
-enum class Blur { OFF, LIGHT, STRONG }
+/**
+ * How blurred a picture is drawn: not, a little (the picture still recognizable), more, or a lot
+ * (only its colors left), in equal steps. [spread] is how far each point spreads, a Gaussian blur's
+ * standard deviation, as a share of the width the picture is drawn at, so it looks the same on any
+ * screen and in the appearance editor's preview.
+ */
+enum class Blur(val spread: Double) {
+    OFF(0.0),
+    LIGHT(0.005),
+    MEDIUM(0.010),
+    STRONG(0.015),
+}
 
 /**
  * How a picture is drawn into a space: its [framing], darkened by [dim] percent (0 is as it is,

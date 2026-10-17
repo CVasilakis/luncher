@@ -233,6 +233,14 @@ class AppearanceOptionTest {
     }
 
     @Test
+    fun `blur steps from off through light and medium to strong, in equal steps`() {
+        assertEquals(listOf(Blur.OFF, Blur.LIGHT, Blur.MEDIUM, Blur.STRONG), AppearanceOption.BackgroundBlur.values)
+        val steps = AppearanceOption.BackgroundBlur.values.zipWithNext { a, b -> b.spread - a.spread }
+        for (step in steps) assertEquals(steps.first(), step, 1e-9)
+        assertTrue(steps.first() > 0)
+    }
+
+    @Test
     fun `every option but the background's applies to the defaults, and the others always`() {
         val background = setOf(AppearanceOption.BackgroundFit, AppearanceOption.BackgroundPosition, AppearanceOption.BackgroundDim, AppearanceOption.BackgroundBlur)
         for (option in options - background) assertTrue("$option", option.appliesTo(Appearance()))

@@ -101,19 +101,46 @@ class FilePictureImagesTest {
     }
 
     @Test
-    fun `blurs the edge between colors, more when strong, and leaves the size`() {
+    fun `blurs the edge between colors, more at each level, and leaves the size`() {
         fun purpleAcross(blur: Blur): Int {
-            val image = images.render(redBlue, 200, 100, PictureStyle(Framing(Fit.STRETCH), blur = blur))!!
-            assertEquals(200, image.width)
-            // Pixels near the middle, where red meets blue, that are neither.
-            return (60 until 140).count { x -> image.getPixel(x, 50).let { !TestPictureFiles.isRed(it) && !TestPictureFiles.isBlue(it) } }
+            val image = images.render(redBlue, 800, 100, PictureStyle(Framing(Fit.STRETCH), blur = blur))!!
+            assertEquals(800, image.width)
+            // Pixels around the middle, where red meets blue, that are neither.
+            return (200 until 600).count { x -> image.getPixel(x, 50).let { !TestPictureFiles.isRed(it) && !TestPictureFiles.isBlue(it) } }
         }
-        val sharp = purpleAcross(Blur.OFF)
-        val light = purpleAcross(Blur.LIGHT)
-        val strong = purpleAcross(Blur.STRONG)
+        val purple = Blur.entries.map(::purpleAcross)
 
-        assertTrue("sharp $sharp, light $light", light > sharp)
-        assertTrue("light $light, strong $strong", strong > light)
+        for ((less, more) in purple.zipWithNext()) assertTrue("$purple", more > less)
+    }
+
+    @Test
+    fun `a blurred picture is opaque, of exactly the size asked, odd sizes too`() {
+        val image = images.render(redBlue, 37, 21, PictureStyle(Framing(), blur = Blur.MEDIUM))!!
+
+        assertEquals(37, image.width)
+        assertEquals(21, image.height)
+        assertEquals(Bitmap.Config.ARGB_8888, image.config)
+        for (x in 0 until 37) for (y in 0 until 21) assertEquals(255, Color.alpha(image.getPixel(x, y)))
+    }
+
+    @Test
+    fun `the blur keeps a plain color as it is, each channel in its place, up to the edges`() {
+        val color = Color.rgb(200, 100, 50)
+        val image = Bitmap.createBitmap(120, 60, Bitmap.Config.ARGB_8888).apply { eraseColor(color) }
+
+        PictureFiles.blur(image, Blur.STRONG)
+
+        for (x in 0 until 120) for (y in 0 until 60) assertEquals(color, image.getPixel(x, y))
+    }
+
+    @Test
+    fun `dims a blurred picture by the share asked too`() {
+        fun redAtTheLeft(dim: Int) = images.render(redBlue, 400, 100, PictureStyle(Framing(Fit.STRETCH), dim, Blur.MEDIUM))!!.getPixel(10, 50)
+        val plain = redAtTheLeft(0)
+        val dimmed = redAtTheLeft(40)
+
+        assertEquals(Color.red(plain) * 60 / 100.0, Color.red(dimmed).toDouble(), 3.0)
+        assertEquals(255, Color.alpha(dimmed))
     }
 
     @Test

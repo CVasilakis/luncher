@@ -81,9 +81,10 @@
     <string name="settings_appearance_dim">Dim</string>
     <!-- Its values: a percentage, 0 for not darkened. -->
     <string name="settings_appearance_percent"><xliff:g id="percent" example="20">%1$d</xliff:g> %%</string>
-    <!-- An option: how blurred the picture is drawn. Its values are Off, Light and Strong. -->
+    <!-- An option: how blurred the picture is drawn. Its values are Off, Light, Medium and Strong. -->
     <string name="settings_appearance_blur">Blur</string>
     <string name="settings_appearance_light">Light</string>
+    <string name="settings_appearance_medium">Medium</string>
     <string name="settings_appearance_strong">Strong</string>
     <!-- Values of an option that's on or off. -->
     <string name="settings_appearance_on">On</string>

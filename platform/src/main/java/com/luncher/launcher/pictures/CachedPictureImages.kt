@@ -73,6 +73,6 @@ class CachedPictureImages(
         const val MAGIC = 0x4C504943
 
         /** The file format's version, and the drawing's: another one is a mismatch, drawn and written again. */
-        const val FORMAT = 2
+        const val FORMAT = 3
     }
 }
