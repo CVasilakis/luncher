@@ -19,7 +19,6 @@ import com.luncher.domain.appearance.step
 import com.luncher.domain.pictures.Blur
 import com.luncher.domain.pictures.Fit
 import com.luncher.domain.pictures.PicturePosition
-import com.luncher.launcher.pictures.ChooseWallpaperActivity
 
 /**
  * The editor of the home screen's appearance, full-screen: the groups of options of the domain's

@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <!-- A thumbnail not drawn yet, and the Add from folder tile's dashes. -->
-    <color name="pictures_card">#FF1C232B</color>
-    <color name="pictures_dash">#80FFFFFF</color>
-</resources>

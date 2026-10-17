@@ -17,4 +17,4 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "Luncher"
-include(":app", ":domain", ":ui", ":platform", ":feature:home", ":feature:settings", ":feature:pictures")
+include(":app", ":domain", ":ui", ":platform", ":feature:home", ":feature:settings")

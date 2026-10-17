@@ -12,12 +12,11 @@ written so that it translates well, and what a new string or language needs.
 | Module | Texts | Languages |
 |---|---|---|
 | `:feature:home` | the home screen and arrange mode | `res/values/strings.xml` (English), `res/values-el/` (Greek), `res/values-ar/` (Arabic) |
-| `:feature:settings` | the settings panels | the same |
-| `:feature:pictures` | the picture library's screens | the same |
+| `:feature:settings` | the settings panels, the appearance editor and the picture library's screens | the same |
 | `:app` | the app's name | `translatable="false"`: a name, the same in every language |
 
 Strings stay with the screen that shows them, each module's prefixed with its name (`home_…`,
-`settings_…`, `pictures_…`), and each translation sits next to its English, in
+`settings_…`), and each translation sits next to its English, in
 `values-<language>/`. A string two modules show ("Settings", "Hidden", "Pictures") is in each, so
 each module's translation is complete on its own.
 

@@ -1,4 +1,5 @@
-// The settings panel and the screens it opens, such as Hide apps (README.md).
+// The settings panel and the screens it opens: Hide apps, the appearance editor, the picture
+// library, and the way in for a picture another app shares (README.md).
 plugins {
     alias(libs.plugins.luncher.android.library)
     alias(libs.plugins.roborazzi)
@@ -11,8 +12,6 @@ android {
 dependencies {
     api(project(":domain"))
     implementation(project(":ui"))
-    // Opens Pictures by its activities' classes, the one thing it uses of that feature.
-    implementation(project(":feature:pictures"))
 
     testImplementation(testFixtures(project(":domain")))
     testImplementation(testFixtures(project(":ui")))

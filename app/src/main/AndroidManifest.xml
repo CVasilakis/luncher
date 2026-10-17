@@ -42,7 +42,7 @@
              its picture library. Not VIEW ("Open with"): Luncher would be offered whenever any
              picture is opened. -->
         <activity
-            android:name="com.luncher.launcher.pictures.SharePictureActivity"
+            android:name="com.luncher.launcher.settings.SharePictureActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />

@@ -7,7 +7,7 @@ import android.graphics.Color
 import android.graphics.LinearGradient
 import android.graphics.Paint
 import android.graphics.Shader
-import com.luncher.domain.appearance.AppearanceSettings
+import android.net.Uri
 import com.luncher.domain.appearance.FakeAppearanceSettings
 import com.luncher.domain.apps.AppArrangements
 import com.luncher.domain.apps.FakeAppArrangements
@@ -15,6 +15,7 @@ import com.luncher.domain.apps.FakeInstalledApps
 import com.luncher.domain.apps.InstalledApps
 import com.luncher.domain.appearance.SAMPLE_WALLPAPER
 import com.luncher.domain.jobs.ManualJobs
+import com.luncher.domain.pictures.FakeFolderPictures
 import com.luncher.domain.pictures.FakePictureImages
 import com.luncher.domain.pictures.FakePictures
 import com.luncher.domain.pictures.Fit
@@ -24,13 +25,18 @@ import com.luncher.domain.pictures.PictureStyle
 
 /**
  * The ports a test gives the settings screens: fakes, which a test replaces with its own
- * (`object : TestSettingsGraph() { override … }`).
+ * (`object : TestSettingsGraph() { override … }`). [library] is both the library and what adds to
+ * it, as in the app: by default it holds the sample wallpaper's picture.
  */
-open class TestSettingsGraph : SettingsGraph {
+open class TestSettingsGraph(
+    val library: FakePictures<Uri> = FakePictures(Picture(SAMPLE_WALLPAPER, "sunset.jpg", 1920, 1080, 1, 0)),
+) : SettingsGraph {
     override val installedApps: InstalledApps = FakeInstalledApps()
     override val appArrangements: AppArrangements = FakeAppArrangements()
-    override val appearanceSettings: AppearanceSettings = FakeAppearanceSettings()
-    override val pictures = FakePictures<Any>(Picture(SAMPLE_WALLPAPER, "sunset.jpg", 1920, 1080, 1, 0))
+    override val appearanceSettings = FakeAppearanceSettings()
+    override val pictures get() = library
+    override val pictureImport get() = library
+    override val folderPictures = FakeFolderPictures<Uri, Bitmap>(draw = { picture, width, height -> sample(picture.name, width, height) })
     override val pictureImages = FakePictureImages(::wallpaper)
 
     /** The preview's wallpaper is drawn when a test runs these, and a result is shown when it runs the main looper. */

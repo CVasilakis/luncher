@@ -32,6 +32,9 @@ import com.luncher.domain.pictures.PictureImport
 import com.luncher.domain.pictures.Pictures
 import com.luncher.launcher.AppGraph
 import com.luncher.launcher.LuncherApplication
+import com.luncher.launcher.settings.PicturesActivity
+import com.luncher.launcher.settings.R
+import com.luncher.launcher.settings.SharePictureActivity
 import com.luncher.launcher.testing.RetryWhenCovered
 import com.luncher.launcher.testing.SamplePictures
 import com.luncher.launcher.testing.waitForHomeScreen
@@ -119,7 +122,7 @@ class PicturesActivityTest {
     }
 
     /** The grid's tile of the picture named [name]. */
-    private fun tile(name: String) = withChild(allOf(withId(R.id.pictures_name), withText(name)))
+    private fun tile(name: String) = withChild(allOf(withId(R.id.settings_pictures_name), withText(name)))
 
     /** Checks [condition] on the view [view] matches, retrying while a window comes up. */
     private fun waitUntil(view: Matcher<View>, condition: Matcher<View>, inDialog: Boolean = false) {
@@ -149,13 +152,13 @@ class PicturesActivityTest {
             waitUntil(tile("beach.png"), hasFocus())
             press(KeyEvent.KEYCODE_DPAD_CENTER)
 
-            waitUntil(withText(R.string.pictures_use_as_wallpaper), hasFocus(), inDialog = true)
+            waitUntil(withText(R.string.settings_pictures_use_as_wallpaper), hasFocus(), inDialog = true)
             pressInDialog(KeyEvent.KEYCODE_DPAD_DOWN)
-            waitUntil(withText(R.string.pictures_delete), hasFocus(), inDialog = true)
+            waitUntil(withText(R.string.settings_pictures_delete), hasFocus(), inDialog = true)
             pressInDialog(KeyEvent.KEYCODE_DPAD_CENTER)
-            waitUntil(withText(R.string.pictures_cancel), hasFocus(), inDialog = true)
+            waitUntil(withText(R.string.settings_pictures_cancel), hasFocus(), inDialog = true)
             pressInDialog(KeyEvent.KEYCODE_DPAD_DOWN)
-            waitUntil(withText(R.string.pictures_delete), hasFocus(), inDialog = true)
+            waitUntil(withText(R.string.settings_pictures_delete), hasFocus(), inDialog = true)
             pressInDialog(KeyEvent.KEYCODE_DPAD_CENTER)
 
             waitUntil(tile("old.jpg"), hasFocus())
@@ -170,13 +173,13 @@ class PicturesActivityTest {
             waitUntil(tile("sunset.jpg"), hasFocus())
 
             press(KeyEvent.KEYCODE_DPAD_DOWN)   // below the row, to Delete unused
-            waitUntil(withId(R.id.pictures_delete_unused), hasFocus())
+            waitUntil(withId(R.id.settings_pictures_delete_unused), hasFocus())
             press(KeyEvent.KEYCODE_DPAD_CENTER)
-            waitUntil(withText(R.string.pictures_cancel), hasFocus(), inDialog = true)
+            waitUntil(withText(R.string.settings_pictures_cancel), hasFocus(), inDialog = true)
             pressInDialog(KeyEvent.KEYCODE_DPAD_DOWN)
             pressInDialog(KeyEvent.KEYCODE_DPAD_CENTER)
 
-            waitUntil(withId(R.id.pictures_empty_add), hasFocus())
+            waitUntil(withId(R.id.settings_pictures_empty_add), hasFocus())
             assertEquals(emptyList<Any>(), fake.pictures)
         }
     }
@@ -188,15 +191,15 @@ class PicturesActivityTest {
         InstrumentationAssets.copy("pictures/baseline.jpg", File(dropFolder, "holiday.jpg"))
 
         ActivityScenario.launch(PicturesActivity::class.java).use {
-            waitUntil(withId(R.id.pictures_empty_add), hasFocus())
+            waitUntil(withId(R.id.settings_pictures_empty_add), hasFocus())
             press(KeyEvent.KEYCODE_DPAD_CENTER)
 
             waitUntil(withText(containsString("holiday.jpg")), isDisplayed())
-            waitUntil(withId(R.id.pictures_folder_list), hasFocus())
+            waitUntil(withId(R.id.settings_pictures_folder_list), hasFocus())
             press(KeyEvent.KEYCODE_DPAD_CENTER)
 
             waitUntil(tile("holiday.jpg"), hasFocus())
-            waitUntil(withId(R.id.pictures_status), withText(containsString("1")))
+            waitUntil(withId(R.id.settings_pictures_status), withText(containsString("1")))
         }
     }
 
@@ -227,9 +230,9 @@ class PicturesActivityTest {
 
         application.startActivity(share)
 
-        waitUntil(withId(R.id.pictures_dialog_text), withText(containsString("Android/media/${application.packageName}")), inDialog = true)
+        waitUntil(withId(R.id.settings_pictures_dialog_text), withText(containsString("Android/media/${application.packageName}")), inDialog = true)
         pressInDialog(KeyEvent.KEYCODE_DPAD_CENTER)
-        waitUntil(withId(R.id.pictures_empty_add), hasFocus())
+        waitUntil(withId(R.id.settings_pictures_empty_add), hasFocus())
     }
 
     @Test
@@ -243,9 +246,9 @@ class PicturesActivityTest {
 
         application.startActivity(share)
 
-        waitUntil(withId(R.id.pictures_dialog_text), withText(containsString("Android/media/${application.packageName}")), inDialog = true)
+        waitUntil(withId(R.id.settings_pictures_dialog_text), withText(containsString("Android/media/${application.packageName}")), inDialog = true)
         pressInDialog(KeyEvent.KEYCODE_DPAD_CENTER)
-        waitUntil(withId(R.id.pictures_empty_add), hasFocus())
+        waitUntil(withId(R.id.settings_pictures_empty_add), hasFocus())
     }
 
     private companion object {

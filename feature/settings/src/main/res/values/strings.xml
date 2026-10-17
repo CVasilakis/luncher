@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The settings panels' texts. Each translation, in values-<language>/, has every string here. -->
+<!-- The settings screens' texts: the panels, the appearance editor and the picture library. Each
+     translation, in values-<language>/, has every string here. -->
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <!-- The settings panel's title. -->
     <string name="settings_title">Settings</string>
@@ -98,4 +99,105 @@
     <string name="settings_system">System settings</string>
     <!-- A message, when the device has no settings app to open. -->
     <string name="settings_system_unavailable">This device has no settings app</string>
+
+    <!-- The picture library's screens: Pictures, Add from folder, and a share's messages. -->
+    <!-- The screen of Luncher's own picture library (later used for the wallpaper), its title. -->
+    <string name="settings_pictures_title">Pictures</string>
+    <!-- Below the title: how many pictures the library has, and how much storage they take. -->
+    <plurals name="settings_pictures_count">
+        <item quantity="one"><xliff:g id="count" example="1">%1$d</xliff:g> picture · <xliff:g id="size" example="9.8 MB">%2$s</xliff:g></item>
+        <item quantity="other"><xliff:g id="count" example="4">%1$d</xliff:g> pictures · <xliff:g id="size" example="9.8 MB">%2$s</xliff:g></item>
+    </plurals>
+    <!-- Below the title, while the library is empty. -->
+    <string name="settings_pictures_none">No pictures yet</string>
+    <!-- Below the title, while a picture is being copied into the library. -->
+    <string name="settings_pictures_adding">Adding a picture…</string>
+    <!-- While the library is empty, the steps to add a picture: the heading. -->
+    <string name="settings_pictures_how">To add a picture:</string>
+    <!-- The first way: sharing from another app. "Share" and "Luncher" are what those apps show. -->
+    <string name="settings_pictures_how_share">• In a file manager or gallery, choose Share on a picture, then Luncher.</string>
+    <!-- The second way: a folder on the TV or on a USB drive, whose path is shown below this. -->
+    <string name="settings_pictures_how_folder">• Or copy pictures into this folder, on the TV or a USB drive, then choose Add from folder:</string>
+    <!-- The folder Luncher reads pictures from, the same in every language; %1$s is Luncher's
+         package name, e.g. com.luncher.launcher. -->
+    <string name="settings_pictures_folder_path" translatable="false">Android/media/%1$s</string>
+    <!-- The tile at the end of the pictures, and an entry, that open the list of pictures in that
+         folder; and that list's title. -->
+    <string name="settings_pictures_add_from_folder">Add from folder</string>
+    <!-- Before "Add from folder" on its tile. -->
+    <string name="settings_pictures_plus" translatable="false">+</string>
+    <!-- A picture's width and height in pixels, and its file's size. -->
+    <string name="settings_pictures_details"><xliff:g id="width" example="1920">%1$d</xliff:g> × <xliff:g id="height" example="1080">%2$d</xliff:g> · <xliff:g id="size" example="3.1 MB">%3$s</xliff:g></string>
+    <!-- Below a picture's name: what it's used for; %1$s is a use, such as Wallpaper. -->
+    <string name="settings_pictures_in_use">In use: <xliff:g id="use" example="Wallpaper">%1$s</xliff:g></string>
+    <!-- Below a picture's name when nothing uses it. -->
+    <string name="settings_pictures_not_in_use">Not in use</string>
+    <!-- A use of a picture: the home screen's background. -->
+    <string name="settings_pictures_wallpaper">Wallpaper</string>
+    <!-- Below a picture's name in its actions: its size, then what it's used for. -->
+    <string name="settings_pictures_dialog_details"><xliff:g id="details" example="1920 × 1080 · 3.1 MB">%1$s</xliff:g> · <xliff:g id="use" example="Not in use">%2$s</xliff:g></string>
+    <!-- An action on a picture: makes it the home screen's background. -->
+    <string name="settings_pictures_use_as_wallpaper">Use as wallpaper</string>
+    <!-- Before deleting the wallpaper's picture, what that does. -->
+    <string name="settings_pictures_delete_wallpaper">It\'s the wallpaper: the home screen goes back to its plain background.</string>
+    <!-- The title of Pictures opened from the appearance editor to choose the wallpaper. -->
+    <string name="settings_pictures_choose_wallpaper">Choose the wallpaper</string>
+    <!-- Below that title. -->
+    <string name="settings_pictures_choose_hint">OK on a picture chooses it</string>
+    <!-- Choosing the wallpaper, the first tile: no picture, the plain background. -->
+    <string name="settings_pictures_no_picture">No picture</string>
+    <!-- The name of a picture whose app gave it none. -->
+    <string name="settings_pictures_unnamed">Picture</string>
+    <!-- Below the pictures: deletes every picture nothing uses; how many there are, and how much
+         storage they take. -->
+    <string name="settings_pictures_delete_unused">Delete unused (<xliff:g id="count" example="2">%1$d</xliff:g> · <xliff:g id="size" example="4.1 MB">%2$s</xliff:g>)</string>
+    <!-- The question before deleting them. -->
+    <plurals name="settings_pictures_delete_unused_question">
+        <item quantity="one">Delete <xliff:g id="count" example="1">%1$d</xliff:g> unused picture?</item>
+        <item quantity="other">Delete <xliff:g id="count" example="2">%1$d</xliff:g> unused pictures?</item>
+    </plurals>
+    <!-- Below that question. -->
+    <string name="settings_pictures_delete_unused_text">They take <xliff:g id="size" example="4.1 MB">%1$s</xliff:g>. Pictures in use stay.</string>
+    <!-- An action on a picture, and the answer that confirms it. -->
+    <string name="settings_pictures_delete">Delete</string>
+    <!-- The question before deleting one picture, named. -->
+    <string name="settings_pictures_delete_question">Delete <xliff:g id="name" example="beach.png">%1$s</xliff:g>?</string>
+    <!-- Below that question: what deleting it does and doesn't do. -->
+    <string name="settings_pictures_delete_text">Luncher deletes its own copy; the file you added it from stays.</string>
+    <!-- The answer that changes nothing. -->
+    <string name="settings_pictures_cancel">Cancel</string>
+    <!-- The answer to a message. -->
+    <string name="settings_pictures_ok">OK</string>
+    <!-- The title of a message when a picture couldn't be added; a text below says why. -->
+    <string name="settings_pictures_not_added">This picture wasn\'t added</string>
+    <string name="settings_pictures_not_a_picture">It isn\'t a picture, or it\'s damaged.</string>
+    <!-- %1$s is a picture format's name, e.g. HEIF (HEIC), the iPhone's. -->
+    <string name="settings_pictures_unsupported">This TV can\'t show <xliff:g id="format" example="HEIF (HEIC)">%1$s</xliff:g> pictures. Save it as a JPEG or PNG, and add that instead.</string>
+    <!-- The largest file, and the most pixels (in millions), a picture can have; the forms follow
+         the pixels'. -->
+    <plurals name="settings_pictures_too_large">
+        <item quantity="one">It\'s too large: a picture can have up to <xliff:g id="size" example="50 MB">%1$s</xliff:g> and <xliff:g id="megapixels" example="1">%2$d</xliff:g> megapixel.</item>
+        <item quantity="other">It\'s too large: a picture can have up to <xliff:g id="size" example="50 MB">%1$s</xliff:g> and <xliff:g id="megapixels" example="64">%2$d</xliff:g> megapixels.</item>
+    </plurals>
+    <!-- When Luncher can't read the picture, e.g. an older Android's way of sharing a file, which
+         only apps with storage permission can read; %1$s is the folder's path. -->
+    <string name="settings_pictures_unreadable">Luncher can\'t read it. Copy it into the folder <xliff:g id="folder" example="Android/media/com.luncher.launcher">%1$s</xliff:g> on this TV or a USB drive, then choose Add from folder.</string>
+    <string name="settings_pictures_no_space">There isn\'t enough free storage on this TV for it.</string>
+    <!-- Below the title of Add from folder: where its pictures are; %1$s is the folder's path. -->
+    <string name="settings_pictures_folder_where">Pictures in the folder <xliff:g id="folder" example="Android/media/com.luncher.launcher">%1$s</xliff:g>, on this TV or a USB drive</string>
+    <!-- Where a picture of that list is: the TV's own storage, or a USB drive (or a memory card). -->
+    <string name="settings_pictures_folder_this_tv">This TV</string>
+    <string name="settings_pictures_folder_usb">USB drive</string>
+    <!-- A picture of that list: where it is, then its file's name. -->
+    <string name="settings_pictures_folder_row"><xliff:g id="where" example="USB drive">%1$s</xliff:g> · <xliff:g id="name" example="holiday.jpg">%2$s</xliff:g></string>
+    <!-- Below a picture of that list in a format this TV can't show; %1$s is the format's name. -->
+    <string name="settings_pictures_folder_unsupported">This TV can\'t show <xliff:g id="format" example="HEIF (HEIC)">%1$s</xliff:g> pictures</string>
+    <!-- Beside that list, below the preview of the selected picture. -->
+    <string name="settings_pictures_folder_note">OK copies it into Luncher\'s pictures; the file or the drive can be removed afterwards.</string>
+    <!-- In place of that list, while Luncher looks for pictures, or when there are none. -->
+    <string name="settings_pictures_folder_looking">Looking for pictures…</string>
+    <string name="settings_pictures_folder_empty">There are no pictures in the folder yet.</string>
+    <!-- The names of picture formats some TVs can't show, the same in every language. -->
+    <string name="settings_pictures_format_heif" translatable="false">HEIF (HEIC)</string>
+    <string name="settings_pictures_format_avif" translatable="false">AVIF</string>
 </resources>

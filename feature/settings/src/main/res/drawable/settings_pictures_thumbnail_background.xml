@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Behind a thumbnail, and its outline, which rounds its corners (clipToOutline). -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="@color/settings_pictures_card" />
+    <corners android:radius="@dimen/settings_pictures_tile_corner" />
+</shape>

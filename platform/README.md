@@ -83,7 +83,7 @@ is in a package of its own (`images/`: the caches' file format).
 
 ## Pictures
 
-The picture library ([`feature/pictures/README.md`](../feature/pictures/README.md)) is three
+The picture library ([`feature/settings/README.md`](../feature/settings/README.md#pictures)) is three
 adapters on files, and a cache:
 
 | Adapter | Port | What it keeps, and how |
