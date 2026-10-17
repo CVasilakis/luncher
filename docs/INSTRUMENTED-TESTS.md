@@ -140,7 +140,8 @@ cold, and the test ends on the settled home screen.
 
 ### Pictures from another app, and the test's own folders
 
-The picture library's tests (`pictures/`) add pictures as another app shares them: through
+The picture library's tests (`PictureReceivedActivityTest`, `BackgroundActivityTest` in
+`settings/`, `PictureFormatsTest` in `pictures/`) add pictures as another app shares them: through
 `SamplePictures` (`testing/`), a content provider of the test package serving the sample files of
 `app/src/androidTest/assets/pictures/`. It runs in the test package's own process, which has no
 Kotlin standard library (the test APK leaves out what the app under test has), so it's written in
@@ -151,6 +152,9 @@ and a folder of their own inside the drop folder, never the device's library or 
 drop folder; they delete them after. A share that Luncher may read but not pass on (a picture of
 the device's media store, which Luncher has no access to) is sent as "Set as" (`ATTACH_DATA`):
 Android adds a read grant to a Share's stream itself, which the test's sender couldn't give.
+A share opens Luncher's home screen with the window over it, though Luncher isn't the device's
+home app during the tests; the runner finishes both after the test, and the stock launcher is in
+front again.
 
 `PictureFormatsTest` checks which sample decodes on the device's Android version. There's no HEIF
 sample: nothing on the development machine can write one, and a phone's photo carries its owner's

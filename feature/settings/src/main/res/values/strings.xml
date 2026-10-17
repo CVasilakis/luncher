@@ -108,7 +108,14 @@
     <!-- Beside the picture chosen. -->
     <string name="settings_background_chosen" translatable="false">✓</string>
 
-    <!-- The picture library's screens: Pictures, Add from folder, and a share's messages. -->
+    <!-- The window over the home screen after another app shared a picture with Luncher: its
+         title while the picture is added, then once it's in Luncher's pictures; below it, the
+         picture's name, and entries to use it (Background, settings_appearance_background). -->
+    <string name="settings_received_adding">Adding the picture…</string>
+    <string name="settings_received_saved">Picture saved</string>
+
+    <!-- The picture screens: the background editor's pictures, Add from folder, and why a picture
+         wasn't added. -->
     <!-- Below the title, while a picture is being copied into the library. -->
     <string name="settings_pictures_adding">Adding a picture…</string>
     <!-- While the library is empty, the steps to add a picture: the heading. -->

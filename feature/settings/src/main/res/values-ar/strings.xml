@@ -85,4 +85,6 @@
     <string name="settings_pictures_folder_note">زر OK ينسخها إلى صور Luncher؛ ويمكن إزالة الملف أو الوحدة بعد ذلك.</string>
     <string name="settings_pictures_folder_looking">جارٍ البحث عن صور…</string>
     <string name="settings_pictures_folder_empty">لا توجد صور في المجلد بعد.</string>
+    <string name="settings_received_adding">جارٍ إضافة الصورة…</string>
+    <string name="settings_received_saved">تم حفظ الصورة</string>
 </resources>

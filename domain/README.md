@@ -48,7 +48,7 @@ domain/src/
 │   │   ├── PictureFormat.kt     model and rule: the formats a TV may not show (HEIF, AVIF), recognized by a file's header
 │   │   ├── Framing.kt           model and rule: how a picture fills a space of another shape (Fit, PicturePosition), and which part of it shows
 │   │   ├── PictureStyle.kt      model and rule: a picture's framing, dim and blur (Blur: off, then three levels of equal steps), as it's drawn
-│   │   ├── PictureUse.kt        model and rule: what a picture is used for (the wallpaper), and an appearance without deleted pictures
+│   │   ├── PictureUse.kt        model and rule: what a picture is used for (the wallpaper), the uses a received picture offers (pictureUseMenu), and an appearance without deleted pictures
 │   │   ├── PictureImages.kt     port: a picture drawn at a size in a style, in the UI's image type; kept or drawn anew
 │   │   └── FolderPictures.kt    port, model and rule: the pictures in the drop folders, their preview, and the order they're listed in
 │   ├── wallpaper/

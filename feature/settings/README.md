@@ -32,7 +32,8 @@ feature/settings/
     │   │   ├── BackgroundActivity.kt the background editor: the pictures, the draft, Save; deletes and adds pictures
     │   │   ├── BackgroundStartColumn.kt  its preview, options and Save, the preview as large as the room left
     │   │   ├── AddFromFolderActivity.kt  the drop folders' pictures, a preview of the selected one; OK returns it
-    │   │   ├── SharePictureActivity.kt   where another app's share arrives: passes the picture to the background editor, no screen
+    │   │   ├── SharePictureActivity.kt   where another app's share arrives: opens the home screen and the window, no screen
+    │   │   ├── PictureReceivedActivity.kt the window over the home screen after a share: adds the picture, offers its uses
     │   │   ├── PicturesDialog.kt the dialogs over the picture screens: a question, a message
     │   │   ├── PreviewColumn.kt  Add from folder's preview and note, the preview smaller on a short screen
     │   │   └── PictureTexts.kt   what the picture screens call things: sizes, names, why a picture wasn't added
@@ -60,6 +61,7 @@ Everything but the activities and `SettingsGraph` is `internal`.
 | `BackgroundActivity`: `Theme.Luncher.Settings.FullScreen` | Full-screen and opaque, as the appearance editor, which opens it. |
 | `AddFromFolderActivity`: `Theme.Luncher.Settings.Pictures` | Full-screen and opaque, on the home screen's background. |
 | `SharePictureActivity`: `exported="true"` | Other apps' shares arrive there. |
+| `PictureReceivedActivity`: `Theme.Luncher.Settings` | A floating window over the dimmed home screen, like the settings panel. |
 | `SharePictureActivity`: `Theme.Luncher.Settings.Pictures.NoDisplay`, `noHistory`, `excludeFromRecents` | It shows nothing, and finishes in `onCreate`, before `onResume`, as a `windowNoDisplay` activity must; its backgrounds are still the home screen's dark ones, in case a device shows one ([`ui/README.md`](../../ui/README.md#the-theme)). |
 | `supportsRtl="true"` | As the app declares it ([why](../../app/README.md#manifest-why-each-part-is-there)), so the JVM tests mirror the screens in a right-to-left language as the app does. |
 
@@ -183,7 +185,8 @@ screen runs meanwhile.
 ### Background
 
 The background editor (`BackgroundActivity`) is where the wallpaper is chosen and saved, opened
-from the appearance editor's Background entry, full-screen like it. At the end, Luncher's picture
+from the appearance editor's Background entry, full-screen like it, or from the window after a
+share, with that picture chosen ([below](#adding-a-picture)). At the end, Luncher's picture
 library as a list: No picture, the pictures, the newest first, each with its thumbnail and name,
 then Add from folder ([below](#adding-a-picture)); a hint above them says a long press of OK
 deletes a picture, as arrange mode's says what its keys do. While the library is empty, how to add
@@ -222,7 +225,7 @@ then the picture. A draft's picture deleted is no picture in the draft.
 | `PictureImages` (`:domain`) / `CachedPictureImages` (`:platform`) | the thumbnails, drawn at the row's size in pixels, and the preview's wallpaper |
 | `pictureUses`, `withoutPictures` (`:domain`) | what each picture is used for, which deleting it says, and the background without it |
 | `Wallpaper` (`:domain`) | Save (`save`: drawn, kept, then stored) and deleting the wallpaper's picture (`forget`) |
-| `BackgroundActivity` | the list, the draft, Save and its window, the questions; adds the picture it's opened with, or the one Add from folder returns, and chooses it, or says why it wasn't added (`ImportResult`, an exhaustive `when` in `whyNotAdded`) |
+| `BackgroundActivity` | the list, the draft, Save and its window, the questions; adds the picture Add from folder returns, and chooses it, or says why it wasn't added (`ImportResult`, an exhaustive `when` in `whyNotAdded`); starts with a picture just received chosen (`EXTRA_PICTURE`) |
 
 All thumbnails are read at once when the screen shows, from what `CachedPictureImages` kept, on the
 main thread, so the list shows them with its first frame; one not kept (a picture just added, a
@@ -234,12 +237,24 @@ read or drawn once, and drops the requests in `onStop`. A draft survives a confi
 ### Adding a picture
 
 **From another app** (`SharePictureActivity`): a file manager's or a gallery's Share, or "Set as",
-of a picture (`SEND` or `ATTACH_DATA`, `image/*`). It takes the picture's Uri out of the intent and
-passes it, with the read access the other app gave, to the background editor, and finishes at
-once; the editor adds it, saying so in its hint meanwhile, and chooses it, or says why it couldn't. A picture
-the library has already (the same content) is chosen, and nothing is said. An intent with no
-picture it can pass on (none in it, or one the other app gave no access to, which Android won't
-let Luncher pass on) becomes the message that Luncher can't read it, never a crash. What the Uri
+of a picture (`SEND` or `ATTACH_DATA`, `image/*`). It takes the picture's Uri out of the intent,
+then opens, in one `startActivities`, Luncher's home screen and over it a window
+(`PictureReceivedActivity`) with the Uri and the read access the other app gave, and finishes at
+once. The home screen is opened as the TV's app list opens Luncher, with the intent Android gives
+for its `LEANBACK_LAUNCHER` entry (`getLeanbackLaunchIntentForPackage`), so it's Luncher's
+whether or not it's the device's home app, and this feature needs nothing of `:feature:home`'s;
+both open in the home screen's task, so Back from the window is the home screen. Not a `HOME`
+intent, which makes the task a home screen's: once closed, Android shows the device's home app,
+and up to Android 5.1, with no default, asks which one.
+
+The window, floating like the settings panel, says "Adding the picture…" with a spinning wheel
+while the library adds it, then "Picture saved", the picture's name and an entry for each use a
+picture can be put to (`pictureUseMenu` in `:domain`, today Background, which opens the
+background editor with the picture chosen, not saved, and closes the window); or why it wasn't
+added, and OK. Back closes it, the picture in the library. A picture the library has already (the
+same content) is saved as well. An intent with no picture it can pass on (none in it, or one the
+other app gave no access to, which Android won't let Luncher pass on) becomes the window's
+message that Luncher can't read it, never a crash. What the Uri
 points to is the library's to judge ([`platform/README.md`](../../platform/README.md#pictures)): a
 `file://` one, as Android up to 9 shares files, gets the message that says to use a drop folder
 instead, with its path.
@@ -247,7 +262,7 @@ instead, with its path.
 **From a drop folder** (`AddFromFolderActivity`): the pictures a file manager or a computer put in
 `Android/media/<applicationId>`, on the TV or a USB drive, listed the TV's first, then the drives',
 each by name (`inListOrder`), with a preview of the selected one beside them, drawn in the
-background. OK returns the picture to the background editor, which adds it as a shared one. A file in a format
+background. OK returns the picture to the background editor, which adds it and chooses it. A file in a format
 this TV can't show ([which](../../platform/README.md#pictures)) is listed, marked, and OK on it says so;
 anything else that isn't a picture isn't listed. The folders are read again each time the screen
 shows, so a USB drive plugged in meanwhile counts. On a screen too short for the preview and its

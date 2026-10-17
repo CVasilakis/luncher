@@ -31,7 +31,7 @@ import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
 /**
- * The background editor and Add from folder, in US English, with sample pictures drawn as
+ * The background editor, the window after a share and Add from folder, in US English, with sample pictures drawn as
  * gradients. Reference images: src/test/screenshots/settings/ and pictures/ of this module; see
  * docs/TESTING.md.
  */
@@ -61,10 +61,10 @@ class BackgroundScreenshotTest {
     private fun idle() = shadowOf(Looper.getMainLooper()).idle()
 
     /** The background editor with [pictures], the first one the wallpaper, dimmed and lightly blurred, every image drawn. */
-    private fun editor(vararg pictures: com.luncher.domain.pictures.Picture, intent: Intent? = null, results: Map<Uri, ImportResult> = emptyMap()): BackgroundActivity {
-        val graph = TestPicturesGraph(FakePictures(*pictures, results = results.toMutableMap())).also { application.graph = it }
+    private fun editor(vararg pictures: com.luncher.domain.pictures.Picture): BackgroundActivity {
+        val graph = TestPicturesGraph(FakePictures(*pictures)).also { application.graph = it }
         pictures.firstOrNull()?.let { graph.appearanceSettings.appearance = Appearance(background = Background(it.id, dim = 20, blur = Blur.LIGHT)) }
-        val activity = Robolectric.buildActivity(BackgroundActivity::class.java, intent).setup().get()
+        val activity = Robolectric.buildActivity(BackgroundActivity::class.java).setup().get()
         idle()
         graph.jobs.runAll()
         idle()
@@ -107,12 +107,35 @@ class BackgroundScreenshotTest {
         captureScreenRoboImage("src/test/screenshots/settings/settings_background_delete.png")
     }
 
+    /** The window over the home screen after a share of [shared], which adds as [result]. */
+    private fun received(shared: Uri, result: ImportResult?) {
+        val graph = TestPicturesGraph(FakePictures(*library)).also { application.graph = it }
+        if (result != null) graph.library.results[shared] = result else graph.library.answerLater = true
+        Robolectric.buildActivity(PictureReceivedActivity::class.java, Intent().setData(shared)).setup()
+        idle()
+    }
+
+    // A photo shared from a file manager, saved: what to use it for.
+    @Test
+    fun pictureReceived() {
+        val shared = Uri.parse("content://com.example.files/holiday.jpg")
+        received(shared, ImportResult.Added(picture("holiday.jpg", added = 9)))
+        captureScreenRoboImage("src/test/screenshots/settings/settings_received.png")
+    }
+
+    // While it's added.
+    @Test
+    fun pictureReceivedAdding() {
+        received(Uri.parse("content://com.example.files/holiday.jpg"), null)
+        captureScreenRoboImage("src/test/screenshots/settings/settings_received_adding.png")
+    }
+
     // A shared iPhone photo on a TV that can't show HEIC.
     @Test
-    fun unsupportedFormatMessage() {
+    fun pictureReceivedUnsupported() {
         val shared = Uri.parse("content://com.example.files/IMG_0001.HEIC")
-        editor(*library, intent = Intent().setData(shared), results = mapOf(shared to ImportResult.UnsupportedFormat(PictureFormat.HEIF)))
-        captureScreenRoboImage("src/test/screenshots/settings/settings_background_unsupported.png")
+        received(shared, ImportResult.UnsupportedFormat(PictureFormat.HEIF))
+        captureScreenRoboImage("src/test/screenshots/settings/settings_received_unsupported.png")
     }
 
     // 720p at the 1080p density, 640x360 dp: the pictures take half the screen; the start scrolls.

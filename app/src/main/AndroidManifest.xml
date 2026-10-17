@@ -31,7 +31,8 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
 
-            <!-- Also listed as a normal TV app, handy while developing. -->
+            <!-- Also listed as a normal TV app, handy while developing; and how a share opens
+                 Luncher's home screen under its window (SharePictureActivity). -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LEANBACK_LAUNCHER" />

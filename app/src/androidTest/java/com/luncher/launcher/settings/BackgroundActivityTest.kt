@@ -1,6 +1,5 @@
 package com.luncher.launcher.settings
 
-import android.content.Intent
 import android.graphics.Bitmap
 import android.net.Uri
 import android.os.SystemClock
@@ -37,7 +36,6 @@ import com.luncher.launcher.pictures.FilePictureImages
 import com.luncher.launcher.pictures.FilesPictures
 import com.luncher.launcher.pictures.MediaFolderPictures
 import com.luncher.launcher.testing.RetryWhenCovered
-import com.luncher.launcher.testing.SamplePictures
 import com.luncher.launcher.testing.longPressOk
 import com.luncher.launcher.testing.waitForFocus
 import com.luncher.launcher.testing.waitForHomeScreen
@@ -53,7 +51,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import java.io.File
 
-/** The background editor and Add from folder on a real device, driven by real key events, and a share reaching them. */
+/** The background editor and Add from folder on a real device, driven by real key events. */
 @RunWith(AndroidJUnit4::class)
 class BackgroundActivityTest {
 
@@ -189,54 +187,6 @@ class BackgroundActivityTest {
             waitUntil(row("holiday.jpg"), hasFocus())
             waitUntil(allOf(withId(R.id.settings_background_chosen), isDisplayed()), isDisplayed())
         }
-    }
-
-    @Test
-    fun aShareFromAnotherApp_addsThePicture_andChoosesItInTheBackgroundEditor() {
-        useTheTestsFolders()
-        val share = Intent(Intent.ACTION_SEND)
-            .setClassName(application, SharePictureActivity::class.java.name)
-            .setType("image/jpeg")
-            .putExtra(Intent.EXTRA_STREAM, SamplePictures.uri("progressive.jpg"))
-            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION)
-
-        application.startActivity(share)
-
-        waitUntil(row("progressive.jpg"), hasFocus())
-    }
-
-    // Another app's picture, shared without giving access to it: Android refuses to pass on access
-    // Luncher hasn't got, which must not crash it.
-    @Test
-    fun aShareWithoutAccess_saysItCantReadIt() {
-        useTheTestsFolders()
-        // "Set as", which Android doesn't give a read grant of its own, as it does a Share's stream.
-        val share = Intent(Intent.ACTION_ATTACH_DATA)
-            .setClassName(application, SharePictureActivity::class.java.name)
-            .setDataAndType(Uri.parse("content://media/external/images/media/1"), "image/jpeg")
-            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-
-        application.startActivity(share)
-
-        waitUntil(withId(R.id.settings_pictures_dialog_text), withText(containsString("Android/media/${application.packageName}")), inDialog = true)
-        pressInDialog(KeyEvent.KEYCODE_DPAD_CENTER)
-        waitUntil(row(R.string.settings_pictures_no_picture), hasFocus())
-    }
-
-    @Test
-    fun aShareOfAPath_saysToUseTheDropFolder() {
-        useTheTestsFolders()
-        val share = Intent(Intent.ACTION_SEND)
-            .setClassName(application, SharePictureActivity::class.java.name)
-            .setType("image/jpeg")
-            .putExtra(Intent.EXTRA_STREAM, Uri.parse("file:///sdcard/Pictures/holiday.jpg"))
-            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-
-        application.startActivity(share)
-
-        waitUntil(withId(R.id.settings_pictures_dialog_text), withText(containsString("Android/media/${application.packageName}")), inDialog = true)
-        pressInDialog(KeyEvent.KEYCODE_DPAD_CENTER)
-        waitUntil(row(R.string.settings_pictures_no_picture), hasFocus())
     }
 
     private companion object {

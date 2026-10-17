@@ -33,6 +33,8 @@
     <dimen name="settings_background_row_padding">8dp</dimen>
     <dimen name="settings_background_thumbnail_width">96dp</dimen>
     <dimen name="settings_background_thumbnail_height">54dp</dimen>
+    <!-- The window after a share: its spinning wheel while the picture is added. -->
+    <dimen name="settings_received_spinner">32dp</dimen>
 
     <!-- Add from folder, full-screen as the appearance editor: the content inside the TV's overscan
          margin. -->
