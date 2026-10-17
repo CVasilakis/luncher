@@ -4,6 +4,7 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.view.View
 import com.luncher.domain.appearance.Appearance
+import com.luncher.domain.appearance.Background
 import com.luncher.domain.appearance.Corners
 import com.luncher.domain.appearance.HorizontalAlignment
 import com.luncher.domain.appearance.TileGeometry
@@ -13,8 +14,10 @@ import com.luncher.domain.appearance.appearanceChanges
 import android.os.Looper
 import com.luncher.domain.jobs.ManualJobs
 import com.luncher.domain.pictures.FakePictureImages
+import com.luncher.domain.pictures.PictureId
 import com.luncher.launcher.testing.TV_1080P
 import org.robolectric.Shadows.shadowOf
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -106,6 +109,25 @@ class AppearancePreviewViewTest {
 
         assertTrue("$perStyle bytes per new style", perStyle < 16)
         assertTrue("$perGeometry bytes per new geometry", perGeometry >= 16)
+    }
+
+    // The sample screen has the TV's shape, as the wallpaper the home screen draws (screenSize),
+    // so a picture is cut there as on the home screen.
+    @Test
+    @Config(qualifiers = "w720dp-h540dp-land-television-xhdpi-notouch-dpad")   // 4:3
+    fun `takes the TV's shape, and draws the wallpaper at it`() {
+        val drawn = mutableListOf<Pair<Int, Int>>()
+        val preview = AppearancePreviewView(RuntimeEnvironment.getApplication(), null).apply {
+            measure(exactly(WIDTH), View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED))
+            layout(0, 0, measuredWidth, measuredHeight)
+            showWallpapers(FakePictureImages { picture, width, height, style -> sampleWallpaper(picture, width, height, style).also { drawn += width to height } }, jobs)
+        }
+
+        preview.appearance = Appearance(background = Background(PictureId("sunset")))
+        jobs.runAll()
+
+        assertEquals(WIDTH * 3 / 4, preview.measuredHeight)
+        assertEquals(listOf(WIDTH to WIDTH * 3 / 4), drawn)
     }
 
     private companion object {

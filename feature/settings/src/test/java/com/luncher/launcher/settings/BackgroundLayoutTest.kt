@@ -35,6 +35,7 @@ import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import org.robolectric.shadows.ShadowDialog
+import kotlin.math.abs
 
 /**
  * The background editor, Add from folder and the window after a share on every screen of
@@ -227,6 +228,11 @@ class BackgroundLayoutTest(private val screen: TvScreen) {
         activity.assertShown("preview", preview)
         activity.assertShown("note", activity.findViewById(R.id.settings_pictures_folder_note))
         assertApart(screen, "list and preview", bounds(list), bounds(preview))
+        // Of the TV's shape, as the wallpaper fills the screen, to a pixel's rounding.
+        assertTrue(
+            "preview ${preview.width} x ${preview.height} on $screen, ${metrics.widthPixels} x ${metrics.heightPixels}",
+            abs(preview.width.toLong() * metrics.heightPixels - preview.height.toLong() * metrics.widthPixels) < metrics.widthPixels + metrics.heightPixels,
+        )
         assertTrue("note below the screen on $screen", bounds(activity.findViewById(R.id.settings_pictures_folder_note)).bottom <= metrics.heightPixels - margin)
         for (i in 0 until list.childCount) activity.assertShown("a picture's details", list.getChildAt(i).findViewById(R.id.settings_pictures_folder_details))
     }

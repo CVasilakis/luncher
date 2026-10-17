@@ -19,7 +19,8 @@ ui/
     ├── main/
     │   ├── java/com/luncher/launcher/ui/
     │   │   ├── Colors.kt         color(id): a color resource on every API level
-    │   │   ├── ScreenSize.kt     screenSize(): the screen's size in px, what the wallpaper is drawn at
+    │   │   ├── ScreenSize.kt     screenSize(): the screen's size in px, what the wallpaper is drawn at and
+    │   │   │                     the previews' shape
     │   │   └── WorkingDialog.kt  a floating panel with a spinning wheel and a message, taking every key,
     │   │                         shown half a second at least: for work the user waits for (the wallpaper drawn)
     │   └── res/
