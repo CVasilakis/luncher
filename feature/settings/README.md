@@ -168,8 +168,10 @@ they scroll when they're taller than the screen.
 **The preview** draws outlines of tiles on the home screen's background (the wallpaper's picture,
 drawn at the sample screen's size in the background's style, or the plain color), the first one
 framed and zoomed as focused, and plain blocks for the time, the date and the settings gear: no
-names, images or text. It's a made-up sample, not the user's apps or the TV's shape: a 16:9 screen of 960 by 540
-dp with seven tiles, a full row and a short one, so that every option's values look different. It
+names, images or text. It's a made-up sample, not the user's apps: a screen 960 dp wide, of the
+TV's shape (`screenSize`, which the wallpaper is drawn at: 540 dp tall on a 16:9 TV), so a picture
+is cut as on the home screen, with seven tiles, a full row and a short one, so that every option's
+values look different. The width stays on every shape, so a row holds as many tiles. It
 lays them out with `TileLayouts` and `topBarLayout` at its own density (its pixels per sample dp),
 so every dp value scales with it and it can't disagree with the home screen. It isn't focusable.
 
@@ -196,8 +198,8 @@ a picture follows: a share from another app, or the drop folder
 ([`platform/README.md`](../../platform/README.md#the-drop-folders)), with its path. At the start, a
 preview of the home screen with the chosen background, the background's options (Fit, Position,
 Dim, Blur, as the appearance editor's rows) and Save. There's no title: the preview gets that room.
-The preview is as large as the room the others leave (`BackgroundStartColumn`), at most 16:9 at the
-column's width, at least a quarter of that, so Save shows without scrolling on a 1080p screen;
+The preview is as large as the room the others leave (`BackgroundStartColumn`), at most as tall
+as its screen at the column's width, at least a quarter of that, so Save shows without scrolling on a 1080p screen;
 on the smallest screens the column scrolls. In a right-to-left language it mirrors like the other
 settings screens; the preview's content and the pictures don't.
 
@@ -263,8 +265,8 @@ instead, with its path.
 
 **From a drop folder** (`AddFromFolderActivity`): the pictures a file manager or a computer put in
 `Android/media/<applicationId>`, on the TV or a USB drive, listed the TV's first, then the drives',
-each by name (`inListOrder`), with a preview of the selected one beside them, drawn in the
-background. OK returns the picture to the background editor, which adds it and chooses it. A file in a format
+each by name (`inListOrder`), with a preview of the selected one beside them, of the TV's shape
+as the wallpaper fills it, drawn in the background. OK returns the picture to the background editor, which adds it and chooses it. A file in a format
 this TV can't show ([which](../../platform/README.md#pictures)) is listed, marked, and OK on it says so;
 anything else that isn't a picture isn't listed. The folders are read again each time the screen
 shows, so a USB drive plugged in meanwhile counts. On a screen too short for the preview and its

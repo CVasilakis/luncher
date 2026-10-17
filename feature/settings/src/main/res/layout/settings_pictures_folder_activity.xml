@@ -68,7 +68,7 @@
             android:layout_gravity="end"
             android:orientation="vertical">
 
-            <!-- Drawn at exactly its size, as the picture fills a 16:9 screen; PreviewColumn sets
+            <!-- Drawn at exactly its size, as the picture fills the TV's screen; PreviewColumn sets
                  it. -->
             <ImageView
                 android:id="@+id/settings_pictures_folder_preview"

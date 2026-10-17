@@ -19,6 +19,7 @@ import com.luncher.domain.layout.TopBarItem
 import com.luncher.domain.layout.topBarLayout
 import com.luncher.domain.pictures.PictureImages
 import com.luncher.launcher.ui.color
+import com.luncher.launcher.ui.screenSize
 import com.luncher.launcher.ui.R as UiR
 import kotlin.math.roundToInt
 
@@ -26,9 +27,11 @@ import kotlin.math.roundToInt
  * An illustration of the home screen with an [appearance]: outlines of tiles on its background
  * (the wallpaper's picture, drawn at the sample screen's size, or the plain color), plain blocks
  * for the time, the date and the settings gear; no names, images or text. Not the
- * real home screen: a made-up one, a 16:9 screen of [SCREEN_WIDTH] by [SCREEN_HEIGHT] dp with
- * [TILES] tiles, chosen so every option's values look different: a full row and a short one, so
- * left and right differ, and the first tile focused, so the focus frame shows.
+ * real home screen: a made-up one, [SCREEN_WIDTH] dp wide and of the TV's shape ([screenSize],
+ * as the wallpaper is drawn: 540 dp tall on a 16:9 TV), with [TILES] tiles, chosen so every
+ * option's values look different: a full row and a short one, so left and right differ, and the
+ * first tile focused, so the focus frame shows. The width stays, so a row holds as many tiles on
+ * every shape.
  *
  * It's laid out by the same rules as the home screen, [TileLayouts] and [topBarLayout], at its own
  * density (its pixels per sample dp), so every dp value scales with it, and it can't disagree with
@@ -97,6 +100,10 @@ internal class AppearancePreviewView(context: Context, attrs: AttributeSet?) : V
         }
     }
 
+    /** The sample screen's height in dp, for its width: the TV's shape. */
+    private val screenHeight = context.screenSize().heightAt(SCREEN_WIDTH)
+    private val tilesHeight = screenHeight - TILES_TOP - PADDING_BOTTOM
+
     /** Pixels per dp of the sample screen. */
     private var scale = 0f
     private val screen = RectF()
@@ -122,14 +129,14 @@ internal class AppearancePreviewView(context: Context, attrs: AttributeSet?) : V
     /** As tall as its screen at its width, if there's the room. */
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         val width = MeasureSpec.getSize(widthMeasureSpec)
-        setMeasuredDimension(width, resolveSize(width * SCREEN_HEIGHT / SCREEN_WIDTH, heightMeasureSpec))
+        setMeasuredDimension(width, resolveSize(width * screenHeight / SCREEN_WIDTH, heightMeasureSpec))
     }
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
-        scale = minOf(w / SCREEN_WIDTH.toFloat(), h / SCREEN_HEIGHT.toFloat())
+        scale = minOf(w / SCREEN_WIDTH.toFloat(), h / screenHeight.toFloat())
         val left = (w - SCREEN_WIDTH * scale) / 2
-        val top = (h - SCREEN_HEIGHT * scale) / 2
-        screen.set(left, top, left + SCREEN_WIDTH * scale, top + SCREEN_HEIGHT * scale)
+        val top = (h - screenHeight * scale) / 2
+        screen.set(left, top, left + SCREEN_WIDTH * scale, top + screenHeight * scale)
         tilePaint.strokeWidth = maxOf(1f, OUTLINE * scale)
         focusPaint.strokeWidth = maxOf(2f, FRAME * scale)
         placeTiles()
@@ -159,7 +166,7 @@ internal class AppearancePreviewView(context: Context, attrs: AttributeSet?) : V
     private fun placeTiles() {
         if (scale == 0f) return
         val grid = TileLayouts(appearance.tileGeometry, scale)
-            .tiles(TILES, (TILES_WIDTH * scale).roundToInt(), (TILES_HEIGHT * scale).roundToInt())
+            .tiles(TILES, (TILES_WIDTH * scale).roundToInt(), (tilesHeight * scale).roundToInt())
         tileHeight = grid.tileHeight
         val left = screen.left + PADDING_HORIZONTAL * scale
         val top = screen.top + TILES_TOP * scale
@@ -225,7 +232,6 @@ internal class AppearancePreviewView(context: Context, attrs: AttributeSet?) : V
     // The sample screen, in dp: about the home screen's paddings and sizes (feature/home's dimens).
     private companion object {
         const val SCREEN_WIDTH = 960
-        const val SCREEN_HEIGHT = 540
         const val PADDING_HORIZONTAL = 48
         const val PADDING_TOP = 32
         const val PADDING_BOTTOM = 32
@@ -233,7 +239,6 @@ internal class AppearancePreviewView(context: Context, attrs: AttributeSet?) : V
         const val BAR_HEIGHT = 40
         const val TILES_TOP = PADDING_TOP + BAR_HEIGHT + 24
         const val TILES_WIDTH = SCREEN_WIDTH - 2 * PADDING_HORIZONTAL
-        const val TILES_HEIGHT = SCREEN_HEIGHT - TILES_TOP - PADDING_BOTTOM
         const val TILES = 7
         const val FOCUSED = 0
         const val FOCUSED_ZOOM = 1.1f

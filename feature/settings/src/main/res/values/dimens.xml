@@ -57,7 +57,7 @@
     <dimen name="settings_pictures_entry_height">56dp</dimen>
     <dimen name="settings_pictures_entry_padding">16dp</dimen>
     <!-- Add from folder: a row of the list at least, and the preview of the selected one beside
-         it at most, 16:9. -->
+         it at most, of the TV's shape. -->
     <dimen name="settings_pictures_row_height">72dp</dimen>
     <dimen name="settings_pictures_preview_width">288dp</dimen>
     <!-- The preview's column and the gap before it: the list's margin at its end. -->

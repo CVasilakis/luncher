@@ -30,7 +30,7 @@
             android:textColor="@color/text_primary"
             android:textSize="@dimen/settings_appearance_title_text" />
 
-        <!-- As tall as its 16:9 screen, at most the rest of the height. Not focusable: only the
+        <!-- As tall as its screen, of the TV's shape, at most the rest of the height. Not focusable: only the
              options are. -->
         <com.luncher.launcher.settings.AppearancePreviewView
             android:id="@+id/settings_appearance_preview"

@@ -3,11 +3,13 @@ package com.luncher.launcher.settings
 import android.content.Context
 import android.util.AttributeSet
 import android.widget.LinearLayout
+import com.luncher.launcher.ui.screenSize
 
 /**
- * Add from folder's column beside the list: the preview, 16:9, at most `settings_pictures_preview_width`
- * wide, and the note below it. On a screen too short for both, the preview gets smaller, so the
- * note still shows whole. The preview is drawn at the size it gets here.
+ * Add from folder's column beside the list: the preview, of the TV's shape as the wallpaper fills
+ * it, at most `settings_pictures_preview_width` wide, and the note below it. On a screen too short
+ * for both, the preview gets smaller, so the note still shows whole. The preview is drawn at the
+ * size it gets here.
  */
 internal class PreviewColumn(context: Context, attrs: AttributeSet?) : LinearLayout(context, attrs) {
 
@@ -15,13 +17,14 @@ internal class PreviewColumn(context: Context, attrs: AttributeSet?) : LinearLay
         val preview = getChildAt(0)
         val note = getChildAt(1)
         val width = MeasureSpec.getSize(widthMeasureSpec)
+        val screen = context.screenSize()
         val gap = (note.layoutParams as LayoutParams).topMargin
         note.measure(MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED))
-        var previewHeight = width * 9 / 16
+        var previewHeight = screen.heightAt(width)
         if (MeasureSpec.getMode(heightMeasureSpec) != MeasureSpec.UNSPECIFIED) {
             previewHeight = previewHeight.coerceAtMost(MeasureSpec.getSize(heightMeasureSpec) - note.measuredHeight - gap).coerceAtLeast(0)
         }
-        preview.layoutParams.width = previewHeight * 16 / 9
+        preview.layoutParams.width = screen.widthAt(previewHeight)
         preview.layoutParams.height = previewHeight
         super.onMeasure(widthMeasureSpec, heightMeasureSpec)
     }
