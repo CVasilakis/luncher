@@ -19,4 +19,9 @@
     <string name="home_hidden">Hidden</string>
     <!-- In the empty slot on the shelf, while no app is hidden. -->
     <string name="home_hidden_empty">Move apps here to hide them</string>
+    <!-- While the wallpaper is drawn again, in a window over the home screen, which waits for it:
+         the TV's screen changed size (it switched to 4K, say), so the wallpaper is drawn for it. -->
+    <string name="home_wallpaper_screen_changed">Fitting the background to this screen…</string>
+    <!-- The same, when the wallpaper kept is outdated: Luncher was updated, or it's lost. -->
+    <string name="home_wallpaper_outdated">Updating the background…</string>
 </resources>

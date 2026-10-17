@@ -51,6 +51,10 @@ domain/src/
 │   │   ├── PictureUse.kt        model and rule: what a picture is used for (the wallpaper), and an appearance without deleted pictures
 │   │   ├── PictureImages.kt     port: a picture drawn at a size in a style, in the UI's image type; kept or drawn anew
 │   │   └── FolderPictures.kt    port, model and rule: the pictures in the drop folders, their preview, and the order they're listed in
+│   ├── wallpaper/
+│   │   ├── WallpaperDrawing.kt  model and rule: what a wallpaper is drawn from (a picture, its style, the screen's size), and why the one kept won't do (DrawingCause)
+│   │   ├── StoredWallpaper.kt   port: the one wallpaper kept, drawn at the screen's size, so a start shows it at once
+│   │   └── Wallpaper.kt         helper: the wallpaper as it stands (none, ready, or being drawn and why), one per process, which a screen watches
 │   ├── clock/
 │   │   ├── ClockReading.kt      model: the time, time zone and hour format at one moment
 │   │   └── Clock.kt             port: the device's clock, and when what it shows changes
@@ -78,6 +82,7 @@ domain/src/
     ├── jobs/ManualJobs.kt          fake of the Jobs port: the queued jobs run when the test says, in the real order
     ├── pictures/FakePictures.kt    fake of the Pictures and PictureImport ports: the library in memory, each source's answer set by the test
     ├── pictures/FakePictureImages.kt  fake of the PictureImages port: draws what the test says, keeps what it drew
+    ├── wallpaper/FakeStoredWallpaper.kt fake of the StoredWallpaper port: the wallpaper kept in memory
     └── pictures/FakeFolderPictures.kt fake of the FolderPictures port: the drop folders' pictures in memory
 ```
 

@@ -8,6 +8,8 @@ import android.graphics.Color
 import android.graphics.LinearGradient
 import android.graphics.Paint
 import android.graphics.Shader
+import android.os.Handler
+import android.os.Looper
 import com.luncher.domain.appearance.Appearance
 import com.luncher.domain.appearance.AppearanceSettings
 import com.luncher.domain.appearance.FakeAppearanceSettings
@@ -28,6 +30,8 @@ import com.luncher.domain.pictures.PictureId
 import com.luncher.domain.pictures.PictureImages
 import com.luncher.domain.pictures.PicturePosition
 import com.luncher.domain.pictures.PictureStyle
+import com.luncher.domain.wallpaper.FakeStoredWallpaper
+import com.luncher.domain.wallpaper.Wallpaper
 import com.luncher.launcher.apps.BannerImages
 
 /**
@@ -52,10 +56,18 @@ open class TestHomeGraph(context: Context) : HomeGraph {
     override val appImages: AppImages<Bitmap> = BannerImages(context)
     override val clock: Clock = FakeClock()
     override val appearanceSettings: AppearanceSettings = FakeAppearanceSettings(Appearance(topLeftTiles))
-    override val pictureImages: PictureImages<Bitmap> = FakePictureImages(::wallpaper)
+
+    /** How [wallpaper] draws a picture; the screenshots give the real drawing. */
+    open val pictureImages: PictureImages<Bitmap> = FakePictureImages(::wallpaper)
+
+    /** What [wallpaper] keeps: nothing at first. */
+    open val storedWallpaper = FakeStoredWallpaper<Bitmap>()
 
     /** A wallpaper not drawn yet is drawn when a test runs these, and shown when it runs the main looper. */
-    override val jobs = ManualJobs()
+    open val jobs = ManualJobs()
+
+    // Made on first use, from what a test's subclass gives.
+    override val wallpaper by lazy { Wallpaper(storedWallpaper, pictureImages, jobs) { Handler(Looper.getMainLooper()).post(it) } }
 }
 
 /**

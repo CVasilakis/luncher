@@ -1,5 +1,6 @@
 package com.luncher.launcher.home
 
+import android.graphics.Bitmap
 import android.graphics.RectF
 import android.os.Looper
 import android.text.format.DateFormat
@@ -8,6 +9,7 @@ import android.view.View
 import android.view.ViewConfiguration
 import android.widget.TextView
 import com.luncher.domain.appearance.Appearance
+import com.luncher.domain.appearance.Background
 import com.luncher.domain.appearance.Corners
 import com.luncher.domain.appearance.FakeAppearanceSettings
 import com.luncher.domain.appearance.HorizontalAlignment
@@ -21,6 +23,10 @@ import com.luncher.domain.apps.FakeAppArrangements
 import com.luncher.domain.apps.FakeInstalledApps
 import com.luncher.domain.apps.FakeInstalledApps.Companion.app
 import com.luncher.domain.clock.FakeClock
+import com.luncher.domain.pictures.PictureId
+import com.luncher.domain.pictures.PictureStyle
+import com.luncher.domain.wallpaper.FakeStoredWallpaper
+import com.luncher.domain.wallpaper.WallpaperDrawing
 import com.luncher.launcher.testing.TV_SCREENS
 import com.luncher.launcher.testing.TV_SCREENS_IN_EVERY_LANGUAGE
 import com.luncher.launcher.testing.TvScreen
@@ -46,6 +52,8 @@ import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
+import org.robolectric.shadows.ShadowDialog
+import com.luncher.launcher.ui.R as UiR
 
 /**
  * The home screen's layout on every screen of [TV_SCREENS], in every language: everything inside
@@ -72,6 +80,7 @@ class HomeLayoutTest(private val screen: TvScreen) {
     private val defaultLocale = Locale.getDefault()
 
     private val appearance = FakeAppearanceSettings()
+    private val stored = FakeStoredWallpaper<Bitmap>()
 
     @After
     fun restoreLocale() = Locale.setDefault(defaultLocale)
@@ -89,6 +98,7 @@ class HomeLayoutTest(private val screen: TvScreen) {
             override val appArrangements = FakeAppArrangements(AppArrangement(order = null, hidden = hidden.map { app(it).launchable }))
             override val clock = longestDate().let { FakeClock(FakeClock.at(it.year, it.monthValue, it.dayOfMonth, 23, 55, uses24Hour = false)) }   // "11:55 PM"
             override val appearanceSettings = this@HomeLayoutTest.appearance
+            override val storedWallpaper = this@HomeLayoutTest.stored
         }
     }
 
@@ -189,5 +199,28 @@ class HomeLayoutTest(private val screen: TvScreen) {
         // The title may end in "…" where a language's title and hint don't both fit, never the hint.
         assertWhole(screen, hint)
         activity.checkTiles()
+    }
+
+    // A wallpaper drawn again, for either reason: its window's message whole, inside the screen.
+    @Test
+    fun `the window saying the wallpaper is drawn again fits`() {
+        val sunset = PictureId("sunset")
+        appearance.appearance = Appearance(background = Background(sunset))
+        for (kept in listOf(null, WallpaperDrawing(sunset, PictureStyle(), 1, 1) to Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888))) {
+            stored.kept = kept
+            val activity = start()
+            shadowOf(Looper.getMainLooper()).idle()
+            val dialog = ShadowDialog.getLatestDialog()
+            val message = dialog.findViewById<TextView>(UiR.id.working_message)
+            // A window of its own, centered, which Robolectric doesn't place: inside the TV's
+            // overscan margin if it fits within it.
+            val panel = dialog.window!!.decorView
+            val area = activity.safeArea()
+
+            assertTrue(dialog.isShowing)
+            assertTrue("the window ${panel.width} x ${panel.height} px, wider or taller than $area on $screen", panel.width <= area.width() && panel.height <= area.height())
+            assertWhole(screen, message)
+            dialog.dismiss()
+        }
     }
 }

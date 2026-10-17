@@ -9,4 +9,6 @@
     <string name="home_arrange_hint_browsing">OK Επιλογή · Πίσω Τέλος</string>
     <string name="home_hidden">Κρυφές</string>
     <string name="home_hidden_empty">Μετακινήστε εφαρμογές εδώ για να τις κρύψετε</string>
+    <string name="home_wallpaper_screen_changed">Προσαρμογή του φόντου σε αυτή την οθόνη…</string>
+    <string name="home_wallpaper_outdated">Ενημέρωση του φόντου…</string>
 </resources>

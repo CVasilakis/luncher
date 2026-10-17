@@ -80,7 +80,7 @@ class HomeActivity : Activity() {
         clockView = findViewById(R.id.home_clock)
         val settingsEntry = findViewById<View>(R.id.home_settings)
         settingsEntry.setOnClickListener { openSettings() }
-        wallpaper = HomeWallpaper(window, graph.pictureImages, graph.jobs)
+        wallpaper = HomeWallpaper(this, graph.wallpaper)
         arrange = ArrangeMode(
             tiles,
             normalBar = listOf(clockView, settingsEntry),
@@ -108,6 +108,7 @@ class HomeActivity : Activity() {
     override fun onStart() {
         super.onStart()
         clockView.start(clock)
+        wallpaper.start()
         appearanceSettings.addListener(showAppearance)
         showAppearance()
         arrangements.addListener(showArrangement)

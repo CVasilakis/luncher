@@ -26,7 +26,7 @@ feature/home/
     │   │   ├── AppTilesView.kt   places the tiles where the domain's TileLayout says; scrolls
     │   │   ├── AppTileView.kt    one app: its image, focus frame and zoom; held or hidden while arranging
     │   │   ├── TilePaints.kt     what every tile draws with: frames, dimming, the corners
-    │   │   ├── HomeWallpaper.kt  the wallpaper, the window's background: read at once if drawn before, else drawn in a job
+    │   │   ├── HomeWallpaper.kt  the wallpaper, the window's background, as the process's Wallpaper says; a window while it's drawn again
     │   │   └── ArrangeMode.kt    arrange mode: keys to the domain's ArrangeSession, the shelf, the top bar's title and hint
     │   └── res/                  the focused tile's zoom (animator/), the settings gear and its focus
     │                             disc, home_activity.xml, home_* dimensions and strings, and their
@@ -140,7 +140,7 @@ screen reads an equal appearance. What a change costs depends on the part:
 | `TileGeometry` | `AppTilesView.tileGeometry` | a new layout from `TileLayouts` (it's an input of the layout, with the width, the height, the number of tiles and `shownCount`), and a layout pass; new banner bitmaps only for tiles whose size changes, so a new placement draws none |
 | `TileStyle` | `AppTilesView.tileStyle` | the radius in the `TilePaints` all tiles share, and a redraw: no layout pass, no new bitmaps |
 | `TopBarAppearance` | `TopBarView.appearance` | the bar's items moved (focus on the gear stays), and a layout pass of the bar only |
-| `Background` | `HomeWallpaper.show` | the window's background: the picture drawn at the screen's size, read from what an earlier start drew or drawn in the background ([below](#the-wallpaper)); nothing else is laid out or drawn anew |
+| `Background` | `HomeWallpaper.show` | the window's background: the picture kept at the screen's size, or drawn again in the background while a window says so ([below](#the-wallpaper)); nothing else is laid out or drawn anew |
 
 The appearance editor, and Pictures, where a picture can be made the wallpaper, cover the home
 screen whole, so the home screen is stopped while the user changes it, and applies the result
@@ -165,16 +165,26 @@ without rounded corners.
 ### The wallpaper
 
 The `Background` part's picture is the window's background (`HomeWallpaper`), behind the top bar
-and the tiles, drawn at the screen's size in the background's style by `PictureImages`
-([`platform/README.md`](../../platform/README.md#pictures)): filling the screen at the position the
-user chose, or stretched, dimmed and blurred as set. A cold start reads it on the main thread from
-what an earlier start drew, as the tiles' images, so the home screen's first frame has it. One not
-drawn yet (a new picture or style, another screen size) is drawn in the background, the first job
-in line (`JobPriority.WALLPAPER`), the plain background showing meanwhile, the latest request
-winning; one still being drawn when the home screen stops is drawn again when it comes back. A
-picture that's gone (deleted in Pictures, which sets the wallpaper to none, or its file lost) is no
-wallpaper. The picture's drawing is kept at the screen's size in a file, about 8 MB in memory at
-1080p while shown.
+and the tiles, at the screen's size, filling the screen at the position the user chose, or
+stretched, dimmed and blurred as set. It's drawn once and kept, apart from the image caches, as
+one file in the app's private storage (`StoredWallpaper`,
+[`platform/README.md`](../../platform/README.md#pictures)), so a start reads it on the main thread
+and the home screen's first frame has it, as the tiles' images.
+
+`Wallpaper`, in `:domain`, says what the wallpaper is: none, ready, or being drawn and why. One
+per process, it's the same for every screen, and the home screen follows it from `onStart` to
+`onStop`. When the one kept won't do, `Wallpaper` draws it again in the background, the first job
+in line (`JobPriority.WALLPAPER`), the latest request winning, and replaces the kept one when it's
+done. Meanwhile the home screen shows its plain color, and a window over it (`WorkingDialog`, from
+`:ui`) says why, taking every key, Back too, so the wait reads as one, not as a screen that's
+stuck: "Fitting the background to this screen…" for a screen of another size (the TV switched to
+4K, say), "Updating the background…" when the one kept is of something else, was drawn by another
+version, or is lost. The window shows for half a second at least, so it never just flashes. A
+drawing goes on when the home screen stops, and shows when it's back.
+
+A picture that's gone (deleted in Pictures, which sets the wallpaper to none, or its file lost) is
+no wallpaper, and without one, none is kept. The wallpaper takes about 8 MB of memory at 1080p
+while shown.
 
 ### Focus
 

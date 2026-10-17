@@ -1,59 +1,83 @@
 package com.luncher.launcher.home
 
+import android.app.Activity
 import android.graphics.Bitmap
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.ColorDrawable
-import android.os.Handler
-import android.os.Looper
-import android.view.Window
 import com.luncher.domain.appearance.Background
-import com.luncher.domain.jobs.JobPriority
-import com.luncher.domain.jobs.Jobs
-import com.luncher.domain.jobs.LatestRequest
-import com.luncher.domain.pictures.PictureImages
+import com.luncher.domain.wallpaper.DrawingCause
+import com.luncher.domain.wallpaper.Wallpaper
+import com.luncher.launcher.ui.WorkingDialog
 import com.luncher.launcher.ui.color
+import com.luncher.launcher.ui.screenSize
 import com.luncher.launcher.ui.R as UiR
 
 /**
- * The home screen's wallpaper: the [Background]'s picture as [window]'s background, drawn at the
- * screen's size in the background's style, or the home screen's plain color without one. What it
- * shows follows the part with `==`, so an unchanged background costs nothing.
+ * The home screen's wallpaper: the process's [Wallpaper], at the screen's size, as [activity]'s
+ * window background, followed from [start] to [stop]. The picture once it's ready, the home
+ * screen's plain color without one. While it's drawn again (the screen changed size, Luncher was
+ * updated), the plain color, and a [WorkingDialog] over the home screen says why, taking every key
+ * until the picture shows: a wait the user is told of, not a screen that seems stuck.
  *
- * A picture is read from what an earlier start drew, on the main thread, so a cold start's first
- * frame has it, as the tiles' images are; one not drawn yet (a new picture, style or screen size)
- * is drawn in the background, the plain color showing meanwhile, the latest request winning. A
- * picture that's gone (deleted, its file lost) is no wallpaper.
+ * A start reads a wallpaper kept on the main thread (in [Wallpaper.show]), so the first frame has
+ * it, as the tiles' images. A drawing goes on when the home screen stops, and shows when it's back.
  */
-internal class HomeWallpaper(private val window: Window, private val images: PictureImages<Bitmap>, jobs: Jobs) {
+internal class HomeWallpaper(private val activity: Activity, private val wallpaper: Wallpaper<Bitmap>) {
 
-    private val resources = window.context.resources
-    private val plain = ColorDrawable(window.context.color(UiR.color.background))
-    private val loading = LatestRequest(jobs, JobPriority.WALLPAPER) { Handler(Looper.getMainLooper()).post(it) }
+    private val plain = ColorDrawable(activity.color(UiR.color.background))
 
-    /** What the window shows; null until the first [show], and after [stop] dropped a picture being drawn. */
-    private var shown: Background? = null
+    /** Made the first time the wallpaper is drawn while the home screen shows. */
+    private var working: WorkingDialog? = null
 
+    /** The image the window shows, null for the plain color, once [applied]. */
+    private var shown: Bitmap? = null
+    private var applied = false
+
+    private val follow: () -> Unit = { apply(wallpaper.state) }
+
+    fun start() {
+        wallpaper.addListener(follow)
+        apply(wallpaper.state)
+    }
+
+    fun stop() {
+        wallpaper.removeListener(follow)
+        working?.dismiss()
+    }
+
+    /** Asks for [background]'s wallpaper, which shows as [Wallpaper] tells, between [start] and [stop]. */
     fun show(background: Background) {
-        if (background == shown) return
-        shown = background
-        loading.stop()
-        val picture = background.picture ?: return setPlain()
-        val width = resources.displayMetrics.widthPixels
-        val height = resources.displayMetrics.heightPixels
-        val kept = images.cached(picture, width, height, background.style)
-        if (kept != null) return setPicture(kept)
-        setPlain()
-        loading.load({ images.render(picture, width, height, background.style) }) { image ->
-            if (image != null) setPicture(image)
+        val screen = activity.screenSize()
+        wallpaper.show(background, screen.width, screen.height)
+    }
+
+    private fun apply(state: Wallpaper.State<Bitmap>) {
+        when (state) {
+            is Wallpaper.State.Ready -> {
+                setImage(state.image)
+                working?.close()
+            }
+            Wallpaper.State.None -> {
+                setImage(null)
+                working?.close()
+            }
+            is Wallpaper.State.Drawing -> {
+                setImage(null)
+                val working = working ?: WorkingDialog(activity).also { working = it }
+                working.show(activity.getString(message(state.cause)))
+            }
         }
     }
 
-    /** Drops a picture being drawn, which the next [show] draws again. */
-    fun stop() {
-        if (loading.stop()) shown = null
+    private fun message(cause: DrawingCause): Int = when (cause) {
+        DrawingCause.SCREEN_CHANGED -> R.string.home_wallpaper_screen_changed
+        DrawingCause.OUTDATED -> R.string.home_wallpaper_outdated
     }
 
-    private fun setPlain() = window.setBackgroundDrawable(plain)
-
-    private fun setPicture(image: Bitmap) = window.setBackgroundDrawable(BitmapDrawable(resources, image))
+    private fun setImage(image: Bitmap?) {
+        if (applied && image === shown) return
+        applied = true
+        shown = image
+        activity.window.setBackgroundDrawable(if (image == null) plain else BitmapDrawable(activity.resources, image))
+    }
 }

@@ -10,4 +10,6 @@
     <string name="home_arrange_hint_browsing">OK التقاط · رجوع إنهاء</string>
     <string name="home_hidden">مخفية</string>
     <string name="home_hidden_empty">انقل التطبيقات إلى هنا لإخفائها</string>
+    <string name="home_wallpaper_screen_changed">جارٍ ملاءمة الخلفية لهذه الشاشة…</string>
+    <string name="home_wallpaper_outdated">جارٍ تحديث الخلفية…</string>
 </resources>

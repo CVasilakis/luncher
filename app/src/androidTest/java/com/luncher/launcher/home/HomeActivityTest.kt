@@ -1,6 +1,8 @@
 package com.luncher.launcher.home
 
 import android.graphics.Bitmap
+import android.os.Handler
+import android.os.Looper
 import android.graphics.drawable.BitmapDrawable
 import android.os.SystemClock
 import android.view.KeyEvent
@@ -36,7 +38,8 @@ import com.luncher.domain.apps.FakeInstalledApps
 import com.luncher.domain.apps.FakeInstalledApps.Companion.app
 import com.luncher.domain.pictures.FakePictureImages
 import com.luncher.domain.pictures.PictureId
-import com.luncher.domain.pictures.PictureImages
+import com.luncher.domain.wallpaper.FakeStoredWallpaper
+import com.luncher.domain.wallpaper.Wallpaper
 import com.luncher.launcher.AppGraph
 import com.luncher.launcher.LuncherApplication
 import com.luncher.launcher.testing.RetryWhenCovered
@@ -73,10 +76,15 @@ class HomeActivityTest {
             // shown, by name, where the test says.
             override val appArrangements = FakeAppArrangements()
             override val appearanceSettings = FakeAppearanceSettings(appearance)
-            // Not the device's library either: a wallpaper is drawn as a plain color.
-            override val pictureImages: PictureImages<Bitmap> = FakePictureImages { _, width, height, _ ->
-                Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888).apply { eraseColor(WALLPAPER) }
-            }
+            // Not the device's library and kept wallpaper either: a wallpaper is drawn as a plain
+            // color, and kept in memory.
+            override val wallpaper = Wallpaper(
+                FakeStoredWallpaper(),
+                FakePictureImages { _, width, height, _ ->
+                    Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888).apply { eraseColor(WALLPAPER) }
+                },
+                jobs,
+            ) { Handler(Looper.getMainLooper()).post(it) }
         }
         return ActivityScenario.launch(HomeActivity::class.java)
     }

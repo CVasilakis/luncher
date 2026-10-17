@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- WorkingDialog: a spinning wheel and a message beside it. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:padding="@dimen/working_padding">
+
+    <ProgressBar
+        android:id="@+id/working_spinner"
+        android:layout_width="@dimen/working_spinner"
+        android:layout_height="@dimen/working_spinner"
+        android:indeterminate="true"
+        android:indeterminateTint="@color/accent" />
+
+    <TextView
+        android:id="@+id/working_message"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/working_gap"
+        android:maxWidth="@dimen/working_text_width"
+        android:textColor="@color/text_primary"
+        android:textSize="@dimen/working_text" />
+</LinearLayout>
