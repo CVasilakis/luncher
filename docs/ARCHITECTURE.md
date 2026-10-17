@@ -180,17 +180,17 @@ Today `Appearance` has four parts: `TileGeometry` (the tiles' size, spacing and 
 date show, the clock's side, and the time's side of the date) and `Background` (the wallpaper: a
 picture of the picture library, or none, and how it's drawn). The catalog's options, the vertical
 and the horizontal alignment, a full bottom row, the corner radius, the time and the date shown or
-hidden, the clock's side and the time's side, the wallpaper's fit, position, dim and blur, are
-changed in the settings' appearance editor
-([`feature/settings/README.md`](../feature/settings/README.md#appearance)). The wallpaper's picture
+hidden, the clock's side and the time's side, are changed in the settings' appearance editor
+([`feature/settings/README.md`](../feature/settings/README.md#appearance)); the wallpaper's fit,
+position, dim and blur in the background editor it opens (below). The wallpaper's picture
 isn't an option, since its values are the library's pictures, not a list known in `:domain`.
 
 **The one exception to storing each change at once: the background.** Its group is edited apart
 (`editedApart`), in the background editor
 ([`feature/settings/README.md`](../feature/settings/README.md#background)), where the user
 chooses the picture and steps its options in a draft, which only Save stores: applying a
-background draws the wallpaper at the screen's size, up to a second or two on a TV, too slow for
-each step of an option. Save goes through `Wallpaper` in `:domain`'s `wallpaper/`, which draws and
+background decodes a photo and draws the wallpaper at the screen's size, a wait the user sees on
+a TV, too slow for each step of an option. Save goes through `Wallpaper` in `:domain`'s `wallpaper/`, which draws and
 keeps the picture first, then stores the background, so the setting never names a wallpaper that
 isn't drawn and the home screen always has one to show
 ([`feature/home/README.md`](../feature/home/README.md#the-wallpaper)).
@@ -202,13 +202,13 @@ isn't drawn and the home screen always has one to show
 | A launcher decision (which apps show, sort order, banner choice, validation of a setting) | a rule in `:domain`, plus unit tests next to it |
 | New data the rules or screens need from the device (settings, pictures, installed apps) | a port (interface) in `:domain` with a fake in its test fixtures; an adapter in `:platform`, in the package of the port's topic; one line in `AppGraph`; the port in the graph interface of each feature that uses it |
 | An image the UI shows (banners, a picture's thumbnail) | which image: a model and rule in `:domain` (like `Banner`, or a picture's `Framing`); drawing it: an adapter in `:platform` behind a port generic in the image type (`AppImages<Bitmap>`, `PictureImages<Bitmap>`), since `:domain` can't name `Bitmap`. It draws at the size shown ([rule 5](#rules)), and is slow work if it's slow ([above](#background-work-and-changes-while-shown)). Kept for the next start, it's a cache adapter in front of the one that draws (`CachedBannerImages`, `CachedPictureImages`). |
-| A picture the user brings in, and what it's used for | the picture library: `:domain`'s `pictures/` (the models, the rules of framing, limits and formats, and the ports), its adapters in `:platform`'s `pictures/`, its screens in `:feature:settings` ([`feature/settings/README.md`](../feature/settings/README.md#pictures)); the wallpaper drawn from one and kept: `:domain`'s `wallpaper/` and `FileStoredWallpaper` ([`feature/home/README.md`](../feature/home/README.md#the-wallpaper)) |
+| A picture the user brings in, and what it's used for | the picture library: `:domain`'s `pictures/` (the models, the rules of framing, limits and formats, and the ports), its adapters in `:platform`'s `pictures/`, its screens in `:feature:settings` ([`feature/settings/README.md`](../feature/settings/README.md#background)); the wallpaper drawn from one and kept: `:domain`'s `wallpaper/` and `FileStoredWallpaper` ([`feature/home/README.md`](../feature/home/README.md#the-wallpaper)) |
 | How the home screen arranges apps (grid, apps per row, alignment, a carousel) | a `TileLayout` in `:domain`'s `layout/` that computes sizes and positions, and `TileMoves` for where a tile the user moves goes, with unit tests; `TileLayouts` picks it, so everything that shows tiles lays them out alike; the view that shows the tiles only places them where the layout says ([`feature/home/README.md`](../feature/home/README.md#the-home-screen)) |
 | What the user can do while arranging apps (moving, hiding, which key does what to the held app) | `ArrangeSession` in `:domain`'s `arrange/`, with unit tests; `ArrangeMode` in `:feature:home` turns keys into its moves ([`feature/home/README.md`](../feature/home/README.md#arrange-mode)) |
 | Something the home screen's top bar shows (the clock, the settings entry; later status indicators) | a view in `:feature:home`, placed in the bar; device state it shows (the time, the network) comes from a port you can watch ([above](#background-work-and-changes-while-shown)). Details: [`feature/home/README.md`](../feature/home/README.md#the-top-bar) |
 | Something the user can change about how the home screen looks (the tiles' alignment, corner radius, a color) | a value in `Appearance` and an option in its catalog, in `:domain`; the steps and what checks each: [Appearance](#appearance) |
 | A new setting | its entry: `settingsMenu` in `:domain`'s `settings/`, and its label and action in `:feature:settings`; a value it stores comes through a port you can watch, so the screens it affects update while it changes; a screen of its own (a list, like Hide apps) is another activity in `:feature:settings`. Steps: [`feature/settings/README.md`](../feature/settings/README.md#the-settings-panel) |
-| A new screen of its own (e.g. the picture library) | a new feature module (below) |
+| A new screen of its own, which no feature's screens open or share anything with | a new feature module (below) |
 | A shared view, style or UI helper | `:ui`, resources without a prefix |
 | Text the user sees | a string in the `strings.xml` of the module that shows it, with a comment for translators, and in every translation ([`TRANSLATIONS.md`](TRANSLATIONS.md)) |
 | Build or version changes | [`gradle/`](../gradle/README.md); settings every Android module shares: [`build-logic/`](../build-logic/README.md) |

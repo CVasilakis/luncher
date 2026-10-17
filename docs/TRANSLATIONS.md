@@ -12,7 +12,7 @@ written so that it translates well, and what a new string or language needs.
 | Module | Texts | Languages |
 |---|---|---|
 | `:feature:home` | the home screen and arrange mode | `res/values/strings.xml` (English), `res/values-el/` (Greek), `res/values-ar/` (Arabic) |
-| `:feature:settings` | the settings panels, the appearance editor and the picture library's screens | the same |
+| `:feature:settings` | the settings panels, the appearance and background editors, Add from folder, the window after a share | the same |
 | `:app` | the app's name | `translatable="false"`: a name, the same in every language |
 
 Strings stay with the screen that shows them, each module's prefixed with its name (`home_…`,
@@ -27,8 +27,9 @@ already: the apps' names, from Android, which `:domain` sorts as that language s
 with the language's own patterns, a file's size, which Android formats (`Formatter`), and the
 pictures' names, which are their files'.
 
-A right-to-left language mirrors the settings panels and the picture library's screens, but not
-the home screen, nor the appearance editor's preview of it, nor a picture
+A right-to-left language mirrors the settings panels, the picture library's screens and the
+window over the home screen while its wallpaper is drawn, but not the home screen, nor the
+editors' preview of it, nor a picture
 ([`app/README.md`](../app/README.md#manifest-why-each-part-is-there)).
 
 ## Writing a string

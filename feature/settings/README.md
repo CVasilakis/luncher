@@ -54,7 +54,8 @@ Everything but the activities and `SettingsGraph` is `internal`.
 
 | Element | Reason (don't remove without replacing it) |
 |---|---|
-| The panels and the editor: `exported="false"`, `launchMode="singleTop"` | Only Luncher opens them; a repeated OK or Menu press doesn't stack a second panel. |
+| Every activity but `SharePictureActivity`: `exported="false"` | Only Luncher opens them. |
+| The panels and the two editors: `launchMode="singleTop"` | A repeated OK or Menu press doesn't stack a second one. |
 | `HideAppsActivity`: `Theme.Luncher.Settings.Panel` | Opens in the settings panel's place, which already dims the home screen ([below](#hidden-apps)). |
 | `AppearanceActivity`: `Theme.Luncher.Settings.FullScreen` | Full-screen and opaque: it covers the home screen whole, so the home screen is stopped meanwhile and applies the changes once, when it comes back ([`ARCHITECTURE.md`](../../docs/ARCHITECTURE.md#appearance), point 5). |
 | No `screenOrientation` | Android 8.0 (API 26) refuses one on a floating activity; it shows over the landscape home screen anyway, as the editor does. |
@@ -72,9 +73,9 @@ declares how the activities behave, and the build merges the two.
 ## The settings panel
 
 Its entries are Hide apps ([below](#hidden-apps)), Appearance ([below](#appearance)) and the
-device's own settings. On a screen too short for them all (720p at the 1080p density),
-the entries scroll, as many showing as leave the panel a margin from the screen's edges, ending
-on half an entry, as Hide apps' list does.
+device's own settings. On a screen too short for them all, the entries scroll, as many showing as
+leave the panel a margin from the screen's edges, ending on half an entry, as Hide apps' list
+does; the three of them fit on every TV screen the layout tests check.
 `SettingsActivity` is a floating window over the dimmed home screen (its theme,
 `Theme.Luncher.Settings`, is a platform dialog theme). Back closes it, as any activity, and so does
 Home: the home screen is `singleTask`, and Android closes what's above it in its task. The home
@@ -189,7 +190,8 @@ from the appearance editor's Background entry, full-screen like it, or from the 
 share, with that picture chosen ([below](#adding-a-picture)). At the end, Luncher's picture
 library as a list: No picture, the pictures, the newest first, each with its thumbnail and name,
 then Add from folder ([below](#adding-a-picture)); a hint above them says a long press of OK
-deletes a picture, as arrange mode's says what its keys do. While the library is empty, how to add
+deletes a picture, as arrange mode's says what its keys do, and "Adding a picture…" while Add
+from folder's picture is added. While the library is empty, how to add
 a picture follows: a share from another app, or the drop folder
 ([`platform/README.md`](../../platform/README.md#the-drop-folders)), with its path. At the start, a
 preview of the home screen with the chosen background, the background's options (Fit, Position,
@@ -278,8 +280,8 @@ adb push holiday.jpg /sdcard/Android/media/com.luncher.launcher.debug/
 
 ### What keeps the picture library light
 
-- **Nothing runs while it's hidden.** The library and the appearance are followed from `onStart`
-  to `onStop`, and the thumbnails and previews being drawn are dropped in `onStop`.
+- **Nothing runs while it's hidden.** The library is followed from `onStart` to `onStop`, and the
+  thumbnails and previews being drawn are dropped in `onStop`.
 - **Pictures are decoded at the size shown**, one at a time on the background thread, and freed
   once drawn ([`platform/README.md`](../../platform/README.md#pictures)): a 12 MP photo is never
   held whole.

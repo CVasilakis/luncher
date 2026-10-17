@@ -119,7 +119,7 @@ class AddFromFolderActivityTest {
     }
 
     @Test
-    fun `OK on a picture returns it to Pictures, which adds it`() {
+    fun `OK on a picture returns it to the background editor, which adds it`() {
         graph(wallpaper, holiday)
         val activity = start()
 

@@ -87,7 +87,7 @@ domain/src/
 ```
 
 Packages are by topic (`appearance/`, `apps/`, `arrange/`, `clock/`, `jobs/`, `layout/`,
-`pictures/`, `settings/`), each holding the models, rules and ports of that topic.
+`pictures/`, `settings/`, `wallpaper/`), each holding the models, rules and ports of that topic.
 
 ## Writing models, rules and ports
 
@@ -101,7 +101,9 @@ Packages are by topic (`appearance/`, `apps/`, `arrange/`, `clock/`, `jobs/`, `l
 - A helper the screens share that isn't a rule lives with its topic too: `LatestRequest`, in
   `jobs/`, the "latest request wins" of
   [`ARCHITECTURE.md`](../docs/ARCHITECTURE.md#background-work-and-changes-while-shown), built on the
-  `Jobs` port and tested with `ManualJobs`.
+  `Jobs` port and tested with `ManualJobs`; and `Wallpaper`, in `wallpaper/`, state that outlives a
+  screen, one per process, built on `StoredWallpaper`, `PictureImages`, `AppearanceSettings` and
+  `Jobs`, and tested with their fakes.
 - Ports are interfaces named after what they provide (`InstalledApps`), not how
   (`PackageManagerApps`); adapters in `:platform` implement them. A port whose result is a UI type
   this module can't name is generic in it (`AppImages<Image>`), and so is one that takes an

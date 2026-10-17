@@ -1,4 +1,4 @@
-package com.luncher.launcher.settings
+package com.luncher.launcher.system
 
 import android.content.Intent
 import android.graphics.Bitmap
@@ -18,6 +18,7 @@ import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.uiautomator.UiDevice
 import com.luncher.domain.appearance.FakeAppearanceSettings
 import com.luncher.domain.pictures.PictureImages
 import com.luncher.domain.pictures.PictureImport
@@ -28,6 +29,10 @@ import com.luncher.launcher.home.HomeActivity
 import com.luncher.launcher.pictures.CachedPictureImages
 import com.luncher.launcher.pictures.FilePictureImages
 import com.luncher.launcher.pictures.FilesPictures
+import com.luncher.launcher.settings.BackgroundActivity
+import com.luncher.launcher.settings.PictureReceivedActivity
+import com.luncher.launcher.settings.R
+import com.luncher.launcher.settings.SharePictureActivity
 import com.luncher.launcher.testing.RetryWhenCovered
 import com.luncher.launcher.testing.SamplePictures
 import com.luncher.launcher.testing.resolvedHome
@@ -48,9 +53,15 @@ import java.io.File
 /**
  * A picture shared from another app, on a real device: Luncher's home screen opens with the
  * window over it, which adds the picture; Back leaves the home screen, Background the editor.
+ *
+ * The share opens Luncher's home screen in a task of its own, which the runner closes after the
+ * test: closed in front, Android would bring forward the task next in line, which can be another
+ * app's (the device's settings, after HomeKeyTest), or on API 22 ask which home app, and the next
+ * test would wait for a home screen behind it. So each test ends by pressing Home ([goHome]), and
+ * the class is in the system tier (API 24 on).
  */
 @RunWith(AndroidJUnit4::class)
-class PictureReceivedActivityTest {
+class PictureShareTest {
 
     @get:Rule
     val retryWhenCovered = RetryWhenCovered()
@@ -90,6 +101,18 @@ class PictureReceivedActivityTest {
             override val pictureImages: PictureImages<Bitmap> by lazy { CachedPictureImages(application, FilePictureImages(application, folder), images) }
             override val appearanceSettings = FakeAppearanceSettings()
         }
+    }
+
+    /**
+     * Home, so the stock launcher is in front before the runner closes Luncher's tasks behind it:
+     * closed in front, Android would bring forward the task next in line, which can be another
+     * app's (the device's settings, left by an earlier test), and the next test would wait for the
+     * home screen behind it.
+     */
+    @After
+    fun goHome() {
+        UiDevice.getInstance(InstrumentationRegistry.getInstrumentation()).pressHome()
+        waitForHomeScreen()
     }
 
     @After

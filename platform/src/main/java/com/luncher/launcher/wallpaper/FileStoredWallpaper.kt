@@ -1,4 +1,4 @@
-package com.luncher.launcher.pictures
+package com.luncher.launcher.wallpaper
 
 import android.content.Context
 import android.graphics.Bitmap
@@ -11,6 +11,7 @@ import com.luncher.domain.pictures.PictureStyle
 import com.luncher.domain.wallpaper.StoredWallpaper
 import com.luncher.domain.wallpaper.WallpaperDrawing
 import com.luncher.launcher.images.PixelFiles
+import com.luncher.launcher.pictures.FilePictureImages
 import java.io.DataInputStream
 import java.io.DataOutputStream
 import java.io.File

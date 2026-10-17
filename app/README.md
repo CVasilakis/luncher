@@ -19,9 +19,10 @@ app/
 │   ├── AndroidManifest.xml           SamplePictures: the test package's provider of the sample pictures
 │   ├── assets/pictures/              sample pictures, 96 × 54 px, one per format, for PictureFormatsTest
 │   └── java/com/luncher/launcher/
-│       ├── <feature>/                Espresso: one screen, real key events; pictures/ also which picture
-│       │                             formats this Android version decodes (PictureFormatsTest)
-│       ├── system/                   UI Automator: Home key, other apps
+│       ├── <feature>/                Espresso: one screen, real key events
+│       ├── pictures/                 which picture formats this Android version decodes (PictureFormatsTest)
+│       ├── system/                   UI Automator, across apps: the Home key, the device's settings, a share
+│       │                             opening the home screen (API 24 on, SystemTierFilter)
 │       └── testing/                  shared by the tests: waits for the home screen and the focus, keys,
 │                                     RetryWhenCovered, SystemTierFilter, SamplePictures; and their own tests
 ├── src/debug/res/
@@ -52,7 +53,7 @@ built.
 | `uses-feature android.software.leanback required=true` | TV-only app. |
 | `uses-feature android.hardware.touchscreen required=false` | Touchscreen is otherwise assumed required, which excludes TVs (e.g. on Google Play). |
 | `android:banner` | The 16:9 image the Android TV launcher shows for an app. |
-| `supportsRtl="true"` | Luncher follows a right-to-left language set on the device, with no setting of its own, but only where the language should decide. The settings panels and the picture library's screens mirror; a picture doesn't. The home screen stays left to right (`layoutDirection="ltr"` on the root of `home_activity.xml`): where its clock, settings entry and tiles go is for settings to decide, not the language, and arrange mode's Left and Right stay the remote's. Texts read in their own direction but line up at their view's start, whatever that direction (`textAlignment` in `Theme.Luncher`, `Theme.Luncher.Settings` and `Theme.Luncher.Pictures.Dialog`): otherwise English app names would sit at the left of a mirrored Hide apps list and Arabic ones at the right. The feature modules declare `supportsRtl` too, for their JVM tests. |
+| `supportsRtl="true"` | Luncher follows a right-to-left language set on the device, with no setting of its own, but only where the language should decide. The settings panels, the picture library's screens and the window over the home screen while its wallpaper is drawn mirror; a picture doesn't. The home screen stays left to right (`layoutDirection="ltr"` on the root of `home_activity.xml`): where its clock, settings entry and tiles go is for settings to decide, not the language, and arrange mode's Left and Right stay the remote's. Texts read in their own direction but line up at their view's start, whatever that direction (`textAlignment` in `Theme.Luncher`, `Theme.Luncher.Settings` and `Theme.Luncher.Pictures.Dialog`): otherwise English app names would sit at the left of a mirrored Hide apps list and Arabic ones at the right. The feature modules declare `supportsRtl` too, for their JVM tests. |
 | `HomeActivity`'s intent filter `MAIN` + `HOME` + `DEFAULT` | Makes Luncher a home screen app. |
 | `HomeActivity`'s intent filter `MAIN` + `LEANBACK_LAUNCHER` | Also lists it as a normal TV app, so it can be opened while another launcher is home; and a share opens the home screen through it, under its window, whichever app is home ([`feature/settings/README.md`](../feature/settings/README.md#adding-a-picture)). |
 | `SharePictureActivity`'s intent filters `SEND` and `ATTACH_DATA` (`image/*`) | Luncher among the apps a picture can be shared with, or "set as": the way a picture comes into its library without any permission ([`feature/settings/README.md`](../feature/settings/README.md#adding-a-picture)): it opens the home screen, with a window over it that adds the picture. No `VIEW` filter ("Open with"): Luncher would be offered whenever any picture is opened. |

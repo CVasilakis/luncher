@@ -140,21 +140,26 @@ cold, and the test ends on the settled home screen.
 
 ### Pictures from another app, and the test's own folders
 
-The picture library's tests (`PictureReceivedActivityTest`, `BackgroundActivityTest` in
-`settings/`, `PictureFormatsTest` in `pictures/`) add pictures as another app shares them: through
-`SamplePictures` (`testing/`), a content provider of the test package serving the sample files of
-`app/src/androidTest/assets/pictures/`. It runs in the test package's own process, which has no
-Kotlin standard library (the test APK leaves out what the app under test has), so it's written in
-Java. It's exported: the shares are sent from the app's own process, which the instrumentation runs
-in, and couldn't grant access to another package's provider. The tests add into folders of their
-own (`FilesPictures` and `MediaFolderPictures` take them as parameters): a library of their own,
-and a folder of their own inside the drop folder, never the device's library or the files in its
-drop folder; they delete them after. A share that Luncher may read but not pass on (a picture of
-the device's media store, which Luncher has no access to) is sent as "Set as" (`ATTACH_DATA`):
-Android adds a read grant to a Share's stream itself, which the test's sender couldn't give.
-A share opens Luncher's home screen with the window over it, though Luncher isn't the device's
-home app during the tests; the runner finishes both after the test, and the stock launcher is in
-front again.
+The picture library's tests add pictures as another app shares them (`PictureShareTest` in
+`system/`, `PictureFormatsTest` in `pictures/`), or from a drop folder (`BackgroundActivityTest` in
+`settings/`). The shares go through `SamplePictures` (`testing/`), a content provider of the test
+package serving the sample files of `app/src/androidTest/assets/pictures/`. It runs in the test
+package's own process, which has no Kotlin standard library (the test APK leaves out what the app
+under test has), so it's written in Java. It's exported: the shares are sent from the app's own
+process, which the instrumentation runs in, and couldn't grant access to another package's
+provider. The tests add into folders of their own (`FilesPictures` and `MediaFolderPictures` take
+them as parameters): a library of their own, and a folder of their own inside the drop folder,
+never the device's library or the files in its drop folder; they delete them after. A share that
+Luncher may read but not pass on (a picture of the device's media store, which Luncher has no
+access to) is sent as "Set as" (`ATTACH_DATA`): Android adds a read grant to a Share's stream
+itself, which the test's sender couldn't give.
+
+A share opens Luncher's home screen, in a task of its own, with the window over it, though Luncher
+isn't the device's home app during the tests. So `PictureShareTest` ends each test by pressing
+Home, which brings the stock launcher in front before the runner closes Luncher's tasks behind it.
+Closed in front, they'd leave Android to bring forward the task next in line, which can be another
+app's (the device's settings, after `HomeKeyTest`), or, on API 22, to ask which home app; the next
+test would then wait for a home screen that can't come. That's also why it's in the system tier.
 
 `PictureFormatsTest` checks which sample decodes on the device's Android version. There's no HEIF
 sample: nothing on the development machine can write one, and a phone's photo carries its owner's
