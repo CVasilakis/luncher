@@ -63,7 +63,7 @@ editors' preview of it, nor a picture
 
 ## Checking a translation
 
-- **The layout tests** (`HomeLayoutTest`, `SettingsLayoutTest`, `PicturesLayoutTest`) run every
+- **The layout tests** (`HomeLayoutTest`, `SettingsLayoutTest`, `BackgroundLayoutTest`) run every
   screen in every language, with the longest date each has: nothing cut, except where the layout allows it, and
   everything fits ([`TESTING.md`](TESTING.md#layouts-on-other-screens)). In Arabic, that's the
   mirrored settings panels too.

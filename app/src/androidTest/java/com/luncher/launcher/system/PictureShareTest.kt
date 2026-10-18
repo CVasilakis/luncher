@@ -18,9 +18,7 @@ import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
-import androidx.test.uiautomator.By
 import androidx.test.uiautomator.UiDevice
-import androidx.test.uiautomator.Until
 import com.luncher.domain.appearance.FakeAppearanceSettings
 import com.luncher.domain.pictures.PictureImages
 import com.luncher.domain.pictures.PictureImport
@@ -41,6 +39,7 @@ import com.luncher.launcher.testing.StalledPictures
 import com.luncher.launcher.testing.resolvedHome
 import com.luncher.launcher.testing.waitForFocus
 import com.luncher.launcher.testing.waitForHomeScreen
+import com.luncher.launcher.testing.waitUntilSeen
 import junit.framework.AssertionFailedError
 import org.hamcrest.Matcher
 import org.hamcrest.Matchers.allOf
@@ -203,17 +202,6 @@ class PictureShareTest {
         press(KeyEvent.KEYCODE_DPAD_CENTER)
 
         waitForFocus(HomeActivity::class.java)
-    }
-
-    /**
-     * Waits until UI Automator sees [text], focused if [focused], for [timeoutMs] at most. For the
-     * window while it adds a picture: up to API 24 its wheel spins on the main thread, which
-     * Espresso waits to be idle before each look, so it would see nothing until the wheel stops.
-     */
-    private fun waitUntilSeen(text: String, focused: Boolean = false, timeoutMs: Long = TIMEOUT_MS) {
-        val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
-        val wanted = By.textContains(text).let { if (focused) it.focused(true) else it }
-        if (!device.wait(Until.hasObject(wanted), timeoutMs)) throw AssertionFailedError("\"$text\"${if (focused) ", focused," else ""} not seen in $timeoutMs ms")
     }
 
     // An app that opens the picture, then never sends it: after the library's time limit, the

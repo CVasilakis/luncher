@@ -38,7 +38,9 @@ Use the lowest tier that can catch the regression; each step up is slower and mo
   domain unit test. This is where most tests belong.
 - **An adapter** (does the PackageManager query or the preferences storage work): Android JVM test,
   with Robolectric's shadows standing in for the system (e.g. `shadowOf(packageManager)` to
-  install fake apps with intent filters).
+  install fake apps with intent filters). One that asks another app gets a test provider and a
+  clock of its own instead, since Robolectric doesn't wait for data or let time pass
+  ([`platform/README.md`](../platform/README.md#another-apps-answers)).
 - **What a screen shows, and how it reacts to lifecycle changes**: Android JVM test
   (`Robolectric.buildActivity(…)`). **How it looks**: screenshot test.
 - **That a key press or a frame allocates nothing** ([`ARCHITECTURE.md`](ARCHITECTURE.md#rules),
@@ -65,7 +67,8 @@ outside a broken Back looks the same as a working one.
   `com.luncher.launcher.testing`, with the tests of that infrastructure itself: for the JVM tests,
   `:ui`'s test fixtures (the TV screens, layout checks), which every module's tests can use; for
   the instrumented tests, `app/src/androidTest/…/testing/` (the waits for the home screen and the
-  focus, keys, `RetryWhenCovered`, `SystemTierFilter`, `SamplePictures`). A feature's test package
+  focus, the look at a screen that animates, keys, `RetryWhenCovered`, `SystemTierFilter`, the
+  test package's providers `SamplePictures` and `StalledPictures`). A feature's test package
   holds only that feature's tests.
 - **Name tests after behavior.** JVM tests use backtick sentences
   (`` `reads the apps again when the home screen comes back` ``). `androidTest` uses
@@ -117,7 +120,7 @@ outside a broken Back looks the same as a working one.
 Reference images are committed. When a change alters a screen on purpose, record, look at the new
 image, and commit it with the change. A dialog is a window of its own: `captureScreenRoboImage`
 draws it over its screen, every window at once (an experimental Roborazzi API, opted in where
-it's used, `PicturesScreenshotTest`). A plain `testDebugUnitTest` runs the screenshot tests without
+it's used, `BackgroundScreenshotTest` and `HomeScreenshotTest`). A plain `testDebugUnitTest` runs the screenshot tests without
 comparing images. Screenshots need Robolectric's native graphics
 (`@GraphicsMode(GraphicsMode.Mode.NATIVE)`), available on Linux x86-64, macOS and Windows.
 
@@ -125,7 +128,7 @@ comparing images. Screenshots need Robolectric's native graphics
 
 TVs aren't all 960×540 dp: 720p at the 1080p density is 640×360 dp, some TV boxes run 1080p at
 240 or 160 dpi (1280 or 1920 dp wide), screens can be 4:3, 16:10 or 21:9, and the user can make
-text larger. `HomeLayoutTest`, `SettingsLayoutTest` and `PicturesLayoutTest` run on each of these screens, `TV_SCREENS` in
+text larger. `HomeLayoutTest`, `SettingsLayoutTest` and `BackgroundLayoutTest` run on each of these screens, `TV_SCREENS` in
 `ui/src/testFixtures/…/testing/TvDevice.kt`, in each language Luncher's texts are in (`LANGUAGES`
 there, [`TRANSLATIONS.md`](TRANSLATIONS.md)), and check rules rather than pixels
 (`LayoutChecks.kt`): everything inside the TV's overscan margin, tiles clear of each other and of

@@ -16,7 +16,8 @@ import java.io.InputStream
  * own, as neither can be stopped once made; their `CancellationSignal` is cancelled when the job
  * gives up, so an app that heeds it stops its work too. What the app sends is read only once
  * [calls]' wait for data says some came, waiting at most [SLICE_MS] ms at a time, so the job sees a stop
- * soon: closing a stream doesn't end a read that waits on another thread, before API 36. Each
+ * soon: closing a stream doesn't end a read that waits on another thread (API 22, 24 and 28; it
+ * does on 36). Each
  * answer (the query's, the open's, each piece of data) starts the time limit again, so a slow
  * transfer that goes on isn't cut. Time is [calls]' clock. Used on one thread, a job's.
  */

@@ -127,6 +127,15 @@ error; and Android can give the focus to a window before its first layout.
   waits until the new window shows what it expects, focused, before the next key
   (`HomeActivityTest`'s `waitForTheSettingsPanel()`).
 
+### Look with UI Automator while a screen animates
+
+Espresso waits for the app's main thread to be idle before each look. On API 24 a spinning
+wheel keeps the main thread busy (from API 28 on it doesn't; 25 to 27 aren't among the
+emulators), so while one spins (the window that adds a shared picture), an Espresso check sees
+nothing until it stops. A test looks at such a screen with
+`waitUntilSeen()` (`Seen.kt`), which asks UI Automator, and uses Espresso again once the wheel is
+gone.
+
 ### Leave the device as it was, saved
 
 Instrumented tests that change system state restore it afterwards (`HomeKeyTest`, which disables
@@ -158,10 +167,9 @@ never sends on (`silent`), after which Luncher says it can't read it once its ti
 passed (15 s), or it never answers the open (`unopened`), which Cancel leaves; the next share is
 then added, as nothing waits behind the stuck call. The shares are sent to a task of their own
 (`NEW_TASK`), from the app's process, so two alike in a row also check that the second isn't
-taken for the first one's task ([`SharePictureActivity`'s affinity](../feature/settings/README.md#manifest)). While the window adds a
-picture, the tests look at it with UI Automator: up to API 24 its spinning wheel keeps the main
-thread busy, and Espresso, which waits for it to be idle before each look, would see nothing
-until the wheel stops.
+taken for the first one's task ([`SharePictureActivity`'s affinity](../feature/settings/README.md#manifest)).
+While the window adds a picture, its wheel spins, so the tests look at it with UI Automator
+([above](#look-with-ui-automator-while-a-screen-animates)).
 
 A share opens Luncher's home screen, in a task of its own, with the window over it, though Luncher
 isn't the device's home app during the tests. So `PictureShareTest` ends each test by pressing
@@ -195,9 +203,22 @@ as the home screen on API 22 and 23 is checked by hand
   tests: each one starts its activity above the dialog. Leave it unanswered (Back closes it). An
   emulator that has run the tests before shows it from its boot, since Luncher stays installed.
 - **The stock launcher crashing while `HomeKeyTest` has it disabled:** the device log can show it
-  as Android starts its process anyway (on the API 33 and 34 Android TV emulators, twice per run:
-  `Tried to schedule job for non-existent component … DailyCheckInService`). That's harmless: the
-  launcher is disabled, and nothing of it is on screen.
+  as Android starts its process anyway (on the API 30, 33 and 34 Android TV emulators, twice per
+  run: `Tried to schedule job for non-existent component … DailyCheckInService`, or `No such
+  service … DailyCheckInService`). That's harmless: the launcher is disabled, and nothing of it is
+  on screen.
+- **Other crashes in `adb logcat -b crash`, none of them Luncher's,** in every run: on
+  `tv_api24`, native crashes (SIGSEGV in a Binder thread) of `cmd`, the shell's command tool,
+  which the tests run to ask which app is home: it crashes as it exits, once it has answered; on
+  `tv_api28`, the TV app `com.android.tv` (`SQLiteException: no such column: failed_reason`, in
+  `AsyncDvrDbTask`); on `tv_api33`, `com.google.android.tv` (a `PendingIntent` made without
+  `FLAG_IMMUTABLE`).
+- **Every test on `tv_api22` failing after 600 s,** "The home screen didn't settle", with the
+  stock launcher focused and an activity of Luncher left `STOPPING` above its task: seen after the
+  stock launcher had been disabled and enabled again by hand, or started by hand
+  (`am start -n …leanbacklauncher/.MainActivity`). The run then takes hours: stop it, and cold-boot
+  the emulator (`stop-emulator.sh`, then `start-emulator.sh`), or force-stop the stock launcher
+  and press Home.
 - **Android TV 16's Settings crashing on `tv_api36` starved of CPU,** as it opens (a
   `NullPointerException` in `MainFragment.onSuggestionReady`, on a launch after the first, from
   its cached process), also without Luncher, opened from the shell. `SystemSettingsTest` then

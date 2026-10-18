@@ -101,10 +101,12 @@ through `outside/`, and its job never waits on that app for good
   Giving up throws `OutsideCallEnded`, an `IOException`, so an adapter that handles a failed read
   handles it too.
 - **Data is read only once `Os.poll` says some came,** waiting 250 ms at a time, and the job looks
-  in between whether to give up. Closing the stream from another thread would be simpler, but up
-  to API 35 it doesn't end a read that waits (measured on API 22, 24, 28 and 36).
-- **A query or an open can't be stopped once made:** the `CancellationSignal` reaches a query,
-  but Android drops it on the way to a read-only open. So `OutsideCalls` makes each on a
+  in between whether to give up. Closing the stream from another thread would be simpler, but it
+  doesn't end a read that waits on API 22, 24 and 28 (it does on API 36, the only other level
+  measured).
+- **A query or an open can't be stopped once made:** the `CancellationSignal` reaches a query, but
+  a read-only open goes through the provider's `openTypedAssetFile`, whose default drops it, so
+  only a provider that overrides that one sees it. So `OutsideCalls` makes each on a
   short-lived thread of its own (`luncher-outside-N`), which the job waits for until it answers,
   the job is stopped or the time is up, and then leaves to its call. That thread ends when the app
   answers, closing what comes so late, or when the app's process dies, which makes the call

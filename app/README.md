@@ -16,15 +16,17 @@ app/
 ├── lint.xml                          lint's exceptions for this module's files
 ├── src/test/                         JVM tests of the whole app: ThemesTest (../ui/README.md)
 ├── src/androidTest/                  instrumented tests on the emulator, of every module
-│   ├── AndroidManifest.xml           SamplePictures: the test package's provider of the sample pictures
+│   ├── AndroidManifest.xml           the test package's providers: SamplePictures (the sample pictures),
+│   │                                 StalledPictures (a picture that never comes)
 │   ├── assets/pictures/              sample pictures, 96 × 54 px, one per format, for PictureFormatsTest
 │   └── java/com/luncher/launcher/
 │       ├── <feature>/                Espresso: one screen, real key events
 │       ├── pictures/                 which picture formats this Android version decodes (PictureFormatsTest)
 │       ├── system/                   UI Automator, across apps: the Home key, the device's settings, a share
 │       │                             opening the home screen (API 24 on, SystemTierFilter)
-│       └── testing/                  shared by the tests: waits for the home screen and the focus, keys,
-│                                     RetryWhenCovered, SystemTierFilter, SamplePictures; and their own tests
+│       └── testing/                  shared by the tests: waits for the home screen and the focus, the look
+│                                     at a screen that animates, keys, RetryWhenCovered, SystemTierFilter,
+│                                     SamplePictures, StalledPictures; and their own tests
 ├── src/debug/res/
 │   ├── values/strings.xml            the debug build's name, "Luncher (debug)"
 │   └── drawable/                     its banner and icon: the release's with an amber DEBUG stripe

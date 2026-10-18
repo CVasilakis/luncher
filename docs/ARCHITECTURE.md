@@ -91,7 +91,9 @@ changed (a setting changed in the settings panel, over the home screen), and wor
 the main thread (decoding a picture). Neither may delay a key press.
 
 1. **All state lives on the main thread.** Activities, views and port listeners run there only;
-   nothing else reads or writes them, so nothing needs a lock.
+   nothing else reads or writes them, so they need no lock. What passes between threads does so
+   in two places only, each behind its own: the jobs' queue and its results (point 3), and
+   `outside/`'s waits on another app (point 6).
 2. **State that can change while it's shown comes from a port you can watch:** a read function, and
    `addListener`/`removeListener` that tell when to read again, on the main thread (`Clock` is
    one), so nothing polls. Its adapter tells its listeners when the state changes, also when

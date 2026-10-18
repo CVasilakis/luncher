@@ -288,6 +288,18 @@ Android 16 on Luncher can't read a file adb put there either,
 adb push holiday.jpg /sdcard/Android/media/com.luncher.launcher.debug/
 ```
 
+To try a share, install the instrumented tests' APK too (`./gradlew installDebug
+installDebugAndroidTest`): its providers serve the sample pictures, and a picture that never
+comes ([`INSTRUMENTED-TESTS.md`](../../docs/INSTRUMENTED-TESTS.md#pictures-from-another-app-and-the-tests-own-folders)).
+`-f 0x10000000` sends it to a task of its own, as an app does from a notification:
+
+```bash
+adb shell am start -a android.intent.action.SEND -t image/jpeg --grant-read-uri-permission -f 0x10000000 \
+  --eu android.intent.extra.STREAM content://com.luncher.launcher.debug.test.samples/progressive.jpg \
+  -n com.luncher.launcher.debug/com.luncher.launcher.settings.SharePictureActivity
+# a picture that never comes (Cancel; or "can't read it" after 15 s): …debug.test.stalled/silent/cloud.jpg
+```
+
 ### What keeps the picture library light
 
 - **Nothing runs while it's hidden.** The library is followed from `onStart` to `onStop`, and the
