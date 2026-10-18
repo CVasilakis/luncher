@@ -63,6 +63,7 @@ Everything but the activities and `SettingsGraph` is `internal`.
 | `AddFromFolderActivity`: `Theme.Luncher.Settings.Pictures` | Full-screen and opaque, on the home screen's background. |
 | `SharePictureActivity`: `exported="true"` | Other apps' shares arrive there. |
 | `PictureReceivedActivity`: `Theme.Luncher.Settings` | A floating window over the dimmed home screen, like the settings panel. |
+| `SharePictureActivity`: `taskAffinity=""` | A share sent to a task of its own (`NEW_TASK`, as an app sends one from a notification or a service) opens in a task of no app, gone as it finishes, and the home screen and the window in Luncher's task, both sent there by its affinity (the window too: else it would join the share's task, where the home screen's, brought back, could come over it on API 28). With Luncher's affinity, the task the share made would be rooted at that share; Android would then only bring it back for the next share alike (a `SEND` of the same type, sent the same way, which it matches without the picture), and that picture would never arrive. Measured on API 22 to 36, where it happened whenever that task was in front, and on API 24 also with Luncher as the home app. Android also advises an empty affinity on an exported activity, so another app can't take over its task. |
 | `SharePictureActivity`: `Theme.Luncher.Settings.Pictures.NoDisplay`, `noHistory`, `excludeFromRecents` | It shows nothing, and finishes in `onCreate`, before `onResume`, as a `windowNoDisplay` activity must; its backgrounds are still the home screen's dark ones, in case a device shows one ([`ui/README.md`](../../ui/README.md#the-theme)). |
 | `supportsRtl="true"` | As the app declares it ([why](../../app/README.md#manifest-why-each-part-is-there)), so the JVM tests mirror the screens in a right-to-left language as the app does. |
 
@@ -249,7 +250,10 @@ for its `LEANBACK_LAUNCHER` entry (`getLeanbackLaunchIntentForPackage`), so it's
 whether or not it's the device's home app, and this feature needs nothing of `:feature:home`'s;
 both open in the home screen's task, so Back from the window is the home screen. Not a `HOME`
 intent, which makes the task a home screen's: once closed, Android shows the device's home app,
-and up to Android 5.1, with no default, asks which one.
+and up to Android 5.1, with no default, asks which one. `SharePictureActivity` itself has no
+task affinity, and it sends the window, as the home screen, to Luncher's task by its affinity:
+a share sent to a task of its own opens in one that's gone as it finishes, so it never leaves a
+task the next share would be taken for ([Manifest](#manifest)).
 
 The window, floating like the settings panel, says "Adding the picture…" after a spinning wheel,
 on one line, and Cancel, focused, while the library adds it, then "Picture saved", the picture's name and an

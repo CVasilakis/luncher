@@ -11,7 +11,10 @@ import android.os.Bundle
  * screen of its own: it opens Luncher's home screen, and over it [PictureReceivedActivity] with
  * the picture's Uri and the read access the other app gave with it, which adds the picture and
  * says how that went; then it finishes, before it's ever shown. Both open in the home screen's
- * task, so Back from the window is the home screen.
+ * task, so Back from the window is the home screen. This activity has no task affinity
+ * (`taskAffinity=""`, the manifest says why), and the window is sent to Luncher's task by its
+ * affinity ([open]), so a share never leaves a task of its own behind that the next share would
+ * be taken for.
  *
  * The home screen is opened as the TV's app list opens Luncher, with the intent Android gives for
  * its `LEANBACK_LAUNCHER` entry (`getLeanbackLaunchIntentForPackage`): Luncher's, whether or not
@@ -48,9 +51,15 @@ class SharePictureActivity : Activity() {
         finish()   // before onResume, as its theme (windowNoDisplay) requires
     }
 
-    /** [window] over the [home] screen, in the home screen's task; alone, in a task of its own, without one. */
+    /**
+     * [window] over the [home] screen, in the home screen's task; alone, in a task of its own,
+     * without one. The window too is sent to a task of its own, which Android finds by Luncher's
+     * affinity, the home screen's: without, it would open in this activity's task, which has no
+     * affinity, and there the home screen's task, brought back, could come over it (API 28).
+     */
     private fun open(home: Intent?, window: Intent) {
-        if (home != null) startActivities(arrayOf(home, window)) else startActivity(window.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        window.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        if (home != null) startActivities(arrayOf(home, window)) else startActivity(window)
     }
 
     private fun sharedPicture(intent: Intent): Uri? =

@@ -155,10 +155,10 @@ access to) is sent as "Set as" (`ATTACH_DATA`): Android adds a read grant to a S
 itself, which the test's sender couldn't give. `StalledPictures`, another provider of the test
 package, in Java for the same reason, is an app whose picture never comes: it opens a stream it
 never sends on (`silent`), after which Luncher says it can't read it once its time limit has
-passed (15 s), or it never answers the open (`unopened`), which Cancel leaves; the library then
-adds the next picture, as nothing waits behind the stuck call. That one is added through the
-library, not shared: a second share sent with `NEW_TASK`, as the tests send them, matches the
-task the first one made, and Android only brings that task back. While the window adds a
+passed (15 s), or it never answers the open (`unopened`), which Cancel leaves; the next share is
+then added, as nothing waits behind the stuck call. The shares are sent to a task of their own
+(`NEW_TASK`), from the app's process, so two alike in a row also check that the second isn't
+taken for the first one's task ([`SharePictureActivity`'s affinity](../feature/settings/README.md#manifest)). While the window adds a
 picture, the tests look at it with UI Automator: up to API 24 its spinning wheel keeps the main
 thread busy, and Espresso, which waits for it to be idle before each look, would see nothing
 until the wheel stops.

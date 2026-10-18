@@ -52,12 +52,18 @@
         <!-- Where another app's Share (or "Set as") of a picture arrives: no screen of its own,
              it opens the home screen and, over it, the window that adds the picture, and finishes
              at once. Exported, so any app can send it anything; its intent filters are the app's
-             to declare, in its manifest, which the build merges with this one. -->
+             to declare, in its manifest, which the build merges with this one. No task affinity:
+             sent to a task of its own, it opens in a task that's gone as it finishes, the home
+             screen and the window in Luncher's own (both sent there, by its affinity). With
+             Luncher's, the task its share made would be rooted at that share, and Android would
+             only bring that task back for the next one alike (a SEND of the same type, sent to a
+             task of its own), never starting this activity. -->
         <activity
             android:name=".SharePictureActivity"
             android:excludeFromRecents="true"
             android:exported="true"
             android:noHistory="true"
+            android:taskAffinity=""
             android:theme="@style/Theme.Luncher.Settings.Pictures.NoDisplay" />
     </application>
 

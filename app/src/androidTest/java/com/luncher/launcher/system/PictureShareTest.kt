@@ -22,7 +22,6 @@ import androidx.test.uiautomator.By
 import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.Until
 import com.luncher.domain.appearance.FakeAppearanceSettings
-import com.luncher.domain.pictures.ImportResult
 import com.luncher.domain.pictures.PictureImages
 import com.luncher.domain.pictures.PictureImport
 import com.luncher.domain.pictures.Pictures
@@ -48,14 +47,11 @@ import org.hamcrest.Matchers.allOf
 import org.hamcrest.Matchers.containsString
 import org.junit.After
 import org.junit.Assert.assertNotEquals
-import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.io.File
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
 
 /**
  * A picture shared from another app, on a real device: Luncher's home screen opens with the
@@ -240,11 +236,9 @@ class PictureShareTest {
     }
 
     // An app that never answers the open, the one call Luncher can't stop: Cancel leaves the
-    // home screen at once, and the library adds the next picture, as nothing waits behind the
-    // stuck call. (Not through a second share: sent with NEW_TASK, as a test sends it, it would
-    // only bring back the task the first one made.)
+    // home screen at once, and the next share is added, as nothing waits behind the stuck call.
     @Test
-    fun cancel_leavesAShareThatNeverOpens_andTheLibraryAddsTheNextPicture() {
+    fun cancel_leavesAShareThatNeverOpens_andTheNextShareIsAdded() {
         share(
             Intent(Intent.ACTION_SEND).setType("image/jpeg")
                 .putExtra(Intent.EXTRA_STREAM, StalledPictures.unopened("cloud.jpg"))
@@ -256,16 +250,36 @@ class PictureShareTest {
         press(KeyEvent.KEYCODE_DPAD_CENTER)
         waitForFocus(HomeActivity::class.java)
 
-        val answered = CountDownLatch(1)
-        var result: ImportResult? = null
-        InstrumentationRegistry.getInstrumentation().runOnMainSync {
-            application.graph.pictureImport.add(SamplePictures.uri("progressive.jpg")) {
-                result = it
-                answered.countDown()
-            }
-        }
-        assertTrue("the next picture got no answer in $TIMEOUT_MS ms", answered.await(TIMEOUT_MS, TimeUnit.MILLISECONDS))
-        assertTrue("the next picture: $result", result is ImportResult.Added)
+        shareSample("progressive.jpg")
+        waitForFocus(PictureReceivedActivity::class.java)
+        waitUntil(withId(R.id.settings_received_title), withText(R.string.settings_received_saved))
+    }
+
+    // Two shares alike in a row (a SEND of the same type), each sent to a task of its own, as
+    // the tests send them: the second opens its window too, though the first one's home screen is
+    // still in front. Before SharePictureActivity had no task affinity, Android only brought back
+    // the task the first share made, and the second picture never arrived (its manifest).
+    @Test
+    fun twoSharesAlikeInARow_eachOpensTheWindow() {
+        shareSample("progressive.jpg")
+        waitForFocus(PictureReceivedActivity::class.java)
+        waitUntil(withId(R.id.settings_received_text), withText("progressive.jpg"))
+        press(KeyEvent.KEYCODE_BACK)
+        waitForFocus(HomeActivity::class.java)
+
+        shareSample("baseline.jpg")
+
+        waitForFocus(PictureReceivedActivity::class.java)
+        waitUntil(withId(R.id.settings_received_text), withText("baseline.jpg"))
+    }
+
+    /** Shares the sample [name], a JPEG, as a gallery does, with read access. */
+    private fun shareSample(name: String) {
+        share(
+            Intent(Intent.ACTION_SEND).setType("image/jpeg")
+                .putExtra(Intent.EXTRA_STREAM, SamplePictures.uri(name))
+                .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION),
+        )
     }
 
     @Test
