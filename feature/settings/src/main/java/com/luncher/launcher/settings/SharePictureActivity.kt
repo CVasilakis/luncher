@@ -18,8 +18,9 @@ import com.luncher.domain.pictures.PictureLimits
  * with them, which adds them and says how that went; then it finishes, before it's ever shown. A
  * share of more than [PictureLimits.MAX_SHARED] pictures passes none: the window says that's
  * more than Luncher takes at a time, so the user shares again the ones they want. Android itself
- * can't pass a much larger share (1000 on API 22 to 28), which never arrives. Both open in the home screen's
- * task, so Back from the window is the home screen. This activity has no task affinity
+ * can't pass a much larger share (1000 on API 22 to 28), which never arrives. Back from the
+ * window is the home screen: both open in the home screen's task, but on API 24 to 27 while
+ * Luncher is the home app, where the window has a task of its own, over it. This activity has no task affinity
  * (`taskAffinity=""`, the manifest says why), and the window is sent to Luncher's task by its
  * affinity ([openOver]), so a share never leaves a task of its own behind that the next share would
  * be taken for.
@@ -44,13 +45,19 @@ import com.luncher.domain.pictures.PictureLimits
  * one, for the library to judge: an exported provider's, which Luncher may read anyway, or one it
  * can't read, which ends as the message that it can't.
  *
- * The home screen is opened as the TV's app list opens Luncher, with the intent Android gives for
+ * While Luncher is the device's home app (a `HOME` intent resolves to it), the home screen is
+ * opened as Home opens it: with a `HOME` intent to Luncher's package, naming no component. On API
+ * 24 to 27 a home screen opened any other way, even by a `HOME` intent naming the component, is a
+ * second one, in a task of its own beside the home app's; Android 7 to 8.1 also keep every other
+ * activity out of the home screen's task, so the window opens in a task of its own there. Else
+ * the home screen is opened as the TV's app list opens Luncher, with the intent Android gives for
  * its `LEANBACK_LAUNCHER` entry (`getLeanbackLaunchIntentForPackage`): Luncher's, whether or not
- * it's the device's home app, and this feature needs nothing of :feature:home's. Not a `HOME`
- * intent, which would make its task a home screen's: closed, Android would show the device's home
- * app, and up to Android 5.1 ask which one when there's no default. Nor `MAIN` +
- * `LEANBACK_LAUNCHER` itself: an implicit start needs a filter with `DEFAULT`, which that one has
- * not. Should Android give no such intent, the window opens alone.
+ * it's the device's home app. Not a `HOME` intent then, which would make its task a home screen's:
+ * closed, Android would show the device's home app, and up to Android 5.1 ask which one when
+ * there's no default. Nor `MAIN` + `LEANBACK_LAUNCHER` itself: an implicit start needs a filter
+ * with `DEFAULT`, which that one has not. Either way this feature needs nothing of
+ * :feature:home's. Should Android give no such intent, the window opens alone. Which home app is
+ * the default needs every home app visible from API 30 on (the manifest's `<queries>`).
  *
  * Exported, so any app can send it anything: it reads nothing itself, only takes the Uri out of
  * the intent, and anything it can't take one from (extras that don't unparcel, no Uri at all)
@@ -90,8 +97,17 @@ class SharePictureActivity : Activity() {
         finish()   // before onResume, as its theme (windowNoDisplay) requires
     }
 
-    /** Luncher's home screen, opened as the TV's app list opens it, in a task of its own; null if Android gives no such intent. */
-    private fun homeScreen(): Intent? = packageManager.getLeanbackLaunchIntentForPackage(packageName)?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    /**
+     * Luncher's home screen, in a task of its own: as Home opens it while Luncher is the device's
+     * home app, a `HOME` intent to its package, naming no component; else as the TV's app list
+     * opens it. Null if Android gives no such intent.
+     */
+    private fun homeScreen(): Intent? {
+        val home = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
+        val default = packageManager.resolveActivity(home, PackageManager.MATCH_DEFAULT_ONLY)?.activityInfo?.packageName
+        val screen = if (default == packageName) home.setPackage(packageName) else packageManager.getLeanbackLaunchIntentForPackage(packageName)
+        return screen?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    }
 
     /** [window] with the read access to those of [pictures] Luncher holds a grant for, in its clip: the only access it may pass on. */
     private fun withAccess(window: Intent, pictures: List<Uri>): Intent {
@@ -104,8 +120,9 @@ class SharePictureActivity : Activity() {
     }
 
     /**
-     * [window] over the [home] screen, in the home screen's task; alone without one (no entry in
-     * the TV's app list, or a window shows already), in Luncher's task or one of its own. The
+     * [window] over the [home] screen, in the home screen's task (on API 24 to 27 while Luncher is
+     * the home app, a task of its own); alone without one (no entry in the TV's app list, or a
+     * window shows already), in Luncher's task or one of its own. The
      * window too is sent to a task of its own, which Android finds by Luncher's affinity, the home
      * screen's: without, it would open in this activity's task, which has no affinity, and there
      * the home screen's task, brought back, could come over it (API 28).

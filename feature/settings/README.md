@@ -18,7 +18,7 @@ feature/settings/
 ├── build.gradle.kts              luncher.android.library and Roborazzi; its dependencies
 └── src/
     ├── main/
-    │   ├── AndroidManifest.xml   the screens' activities, and how they behave (below)
+    │   ├── AndroidManifest.xml   the screens' activities, how they behave, the home apps it sees (below)
     │   ├── java/com/luncher/launcher/settings/
     │   │   ├── SettingsGraph.kt  the ports the settings screens need; Activity.graph
     │   │   ├── SettingsActivity.kt   the settings panel: lists the domain's settingsMenu, opens entries
@@ -62,6 +62,7 @@ Everything but the activities and `SettingsGraph` is `internal`.
 | `BackgroundActivity`: `Theme.Luncher.Settings.FullScreen` | Full-screen and opaque, as the appearance editor, which opens it. |
 | `AddFromFolderActivity`: `Theme.Luncher.Settings.Pictures` | Full-screen and opaque, on the home screen's background. |
 | `SharePictureActivity`: `exported="true"` | Other apps' shares arrive there. |
+| `<queries>` for `MAIN`+`HOME` | Package visibility (targetSdk 30+): `SharePictureActivity` tells whether Luncher is the device's home app by what a `HOME` intent resolves to ([below](#adding-a-picture)), which needs every home app visible. Without it, Android hides the stock launcher, and Luncher, the only home app left, seems the default: a share then opened a second home screen beside the stock launcher's (measured on API 30). |
 | `PictureReceivedActivity`: `Theme.Luncher.Settings` | A floating window over the dimmed home screen, like the settings panel. |
 | `PictureReceivedActivity`: `launchMode="singleTop"` | A share that arrives while it shows comes to it (`onNewIntent`), and its pictures join those being added ([below](#adding-a-picture)). A new window would replace it, as the home screen, `singleTask`, clears what's above it, and the pictures it was adding would stop. |
 | `SharePictureActivity`: `taskAffinity=""` | A share sent to a task of its own (`NEW_TASK`, as an app sends one from a notification or a service) opens in a task of no app, gone as it finishes, and the home screen and the window in Luncher's task, both sent there by its affinity (the window too: else it would join the share's task, where the home screen's, brought back, could come over it on API 28). With Luncher's affinity, the task the share made would be rooted at that share; Android would then only bring it back for the next share alike (a `SEND` of the same type, sent the same way, which it matches without the picture), and that picture would never arrive. Measured on API 22 to 36, where it happened whenever that task was in front, and on API 24 also with Luncher as the home app. Android also advises an empty affinity on an exported activity, so another app can't take over its task. |
@@ -247,13 +248,22 @@ picture or several, or "Set as" of one (`SEND`, `SEND_MULTIPLE` or `ATTACH_DATA`
 takes the pictures' Uris out of the intent (a Share's stream, one or a list, else every item of
 its clip, as an app may send them only there; each once), then opens, in one `startActivities`,
 Luncher's home screen and over it a window (`PictureReceivedActivity`) with the Uris and the read
-access the other app gave, and finishes at once. The home screen is opened as the TV's app list
-opens Luncher, with the intent Android gives for its `LEANBACK_LAUNCHER` entry
-(`getLeanbackLaunchIntentForPackage`), so it's Luncher's whether or not it's the device's home
-app, and this feature needs nothing of `:feature:home`'s; both open in the home screen's task, so
-Back from the window is the home screen. Not a `HOME` intent, which makes the task a home
-screen's: once closed, Android shows the device's home app, and up to Android 5.1, with no
-default, asks which one. `SharePictureActivity` itself has no task affinity, and it sends the
+access the other app gave, and finishes at once. Back from the window is the home screen.
+
+While Luncher is the device's home app (a `HOME` intent resolves to it), the home screen is opened
+as Home opens it, with a `HOME` intent to Luncher's package that names no component. On API 24 to
+27 a home screen opened any other way, even by a `HOME` intent naming its component, is a second
+one, in a task of its own beside the home app's, which stays until the process ends. There Android
+also keeps every other activity out of the home screen's task, so the window has a task of its
+own, over it. Otherwise the home screen is opened as the TV's app list opens Luncher, with the
+intent Android gives for its `LEANBACK_LAUNCHER` entry (`getLeanbackLaunchIntentForPackage`), so
+it's Luncher's whether or not it's the device's home app. Not a `HOME` intent then, which makes the
+task a home screen's: once closed, Android shows the device's home app, and up to Android 5.1, with
+no default, asks which one. Either way this feature needs nothing of `:feature:home`'s, and the
+window opens in the home screen's task, but on API 24 to 27 as the home app. Which home app is the
+default can be told from API 30 on only with every home app visible ([Manifest](#manifest)).
+
+`SharePictureActivity` itself has no task affinity, and it sends the
 window, as the home screen, to Luncher's task by its affinity: a share sent to a task of its own
 opens in one that's gone as it finishes, so it never leaves a task the next share would be taken
 for ([Manifest](#manifest)).
@@ -280,8 +290,7 @@ them went. Back closes the window, the pictures added in the library. While they
 and Back close it and stop the adding, those still to add not added. Closing it any way ends the
 session (`finish`), and so does Android closing it (`onDestroy`): while Luncher is the home app,
 Home clears the home screen's task, the window with it (measured on API 23 and 28 to 36; on API 24
-to 27 the share's home screen is a second one, in a task of its own, which Home leaves behind, the
-window going on). So no
+to 27 the window has a task of its own, which Home leaves behind, the window going on). So no
 picture is added for a window that's gone, nor read without the access that went with it: Android
 ends the access another app gave with the activity that received it. A configuration change
 doesn't end it: the window made anew finds the session where it was, nothing added twice. An app

@@ -53,7 +53,7 @@ The build merges the two.
 | `launchMode="singleTask"` | Pressing Home returns to the same instance instead of stacking new ones. |
 | `stateNotNeeded`, `clearTaskOnLaunch`, `excludeFromRecents` | Standard for home activities: always starts clean, never in Recents. |
 | `screenOrientation="landscape"` | TVs are landscape. |
-| `exported="true"` | Android starts it for Home and from the TV's app list, which is also how a shared picture opens it ([`settings/README.md`](../settings/README.md#adding-a-picture)). |
+| `exported="true"` | Android starts it for Home and from the TV's app list; a shared picture opens it one of those two ways ([`settings/README.md`](../settings/README.md#adding-a-picture)). |
 | `theme="@style/Theme.Luncher"` | Set on the activity rather than only on the app, so the JVM tests, which have no app manifest, show it as the app does. |
 | `supportsRtl="true"` | As the app declares it ([why](../../app/README.md#manifest-why-each-part-is-there)), so the JVM tests follow a right-to-left language as the app does: there the home screen still stays left to right. |
 

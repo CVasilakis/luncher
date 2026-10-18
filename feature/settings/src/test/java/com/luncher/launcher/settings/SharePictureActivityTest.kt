@@ -113,6 +113,36 @@ class SharePictureActivityTest {
         assertTrue(started.flags and Intent.FLAG_ACTIVITY_NEW_TASK != 0)
     }
 
+    /** [component] as a home app, the only one: what Android gives for Home, as the device's default. */
+    private fun homeApp(component: ComponentName) {
+        val packages = shadowOf(context.packageManager)
+        packages.addActivityIfNotPresent(component)
+        packages.addIntentFilterForActivity(component, IntentFilter(Intent.ACTION_MAIN).apply { addCategory(Intent.CATEGORY_HOME); addCategory(Intent.CATEGORY_DEFAULT) })
+    }
+
+    // On API 24 to 27 a home screen opened any other way is a second one, beside the home app's.
+    @Test
+    fun `while Luncher is the device's home app, opens the home screen as Home does, naming no component`() {
+        homeApp(home)
+
+        val started = started(Intent(Intent.ACTION_SEND).setType("image/jpeg").putExtra(Intent.EXTRA_STREAM, picture))
+
+        assertEquals("the home screen and the window", 2, started.size)
+        val screen = started.single { it.component == null }
+        assertEquals(Intent.ACTION_MAIN, screen.action)
+        assertEquals(setOf(Intent.CATEGORY_HOME), screen.categories)
+        assertEquals(context.packageName, screen.`package`)
+        assertTrue(screen.flags and Intent.FLAG_ACTIVITY_NEW_TASK != 0)
+        assertPassesThePicture(started.single { it !== screen })
+    }
+
+    @Test
+    fun `while another app is the device's home app, opens the home screen as the TV's app list does`() {
+        homeApp(ComponentName("com.example.tv", "com.example.tv.Home"))
+
+        assertPassesThePicture(send(Intent(Intent.ACTION_SEND).setType("image/jpeg").putExtra(Intent.EXTRA_STREAM, picture)))
+    }
+
     private val more = listOf("beach.jpg", "forest.jpg").map { Uri.parse("content://com.example.files/$it") }
 
     @Test

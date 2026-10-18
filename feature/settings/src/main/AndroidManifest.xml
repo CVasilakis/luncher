@@ -1,6 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <!-- Package visibility (API 30+): SharePictureActivity must see every home app to tell
+         whether Luncher is the default one; else Android hides the stock launcher from it, and
+         Luncher alone seems the default. -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.HOME" />
+        </intent>
+    </queries>
+
     <!-- As the app declares it, so the JVM tests, which have no app manifest, follow a
          right-to-left language as the app does. -->
     <application android:supportsRtl="true">
