@@ -268,8 +268,10 @@ class PictureShareTest {
     }
 
     // A share that arrives while the window adds another app's picture, which never opens: it
-    // joins the window rather than replacing it, which used to cancel the first picture. Once the
-    // first has given up (the library's time limit), the window says how both went.
+    // joins the window's session rather than replacing it, which used to cancel the first picture
+    // (the same window; on API 29, where Android has just closed Luncher's task, a new one that
+    // takes the session over). Once the first has given up (the library's time limit), the window
+    // says how both went.
     @Test
     fun aShareWhileAnotherIsAdded_joinsTheSameWindow() {
         share(

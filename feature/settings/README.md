@@ -279,13 +279,26 @@ gets it in `onNewIntent`; its pictures are added after the others, and the end s
 them went. Back closes the window, the pictures added in the library. While they're added, Cancel
 and Back close it and stop the adding, those still to add not added. Closing it any way ends the
 session (`finish`), and so does Android closing it (`onDestroy`): while Luncher is the home app,
-Home clears the home screen's task, the window with it (measured on API 28 to 36; on API 24 the
-share's home screen is a task of its own, which Home leaves behind, the window going on). So no
+Home clears the home screen's task, the window with it (measured on API 23 and 28 to 36; on API 24
+to 27 the share's home screen is a second one, in a task of its own, which Home leaves behind, the
+window going on). So no
 picture is added for a window that's gone, nor read without the access that went with it: Android
 ends the access another app gave with the activity that received it. A configuration change
 doesn't end it: the window made anew finds the session where it was, nothing added twice. An app
 that stops sending a picture gets the message that Luncher can't read it, after the library's
 time limit ([`platform/README.md`](../../platform/README.md#another-apps-answers)).
+
+Only the window that took the session last ends it (its hold, `ReceivedPictures.holder`). On
+API 29, while Luncher isn't the home app, Android closes Luncher's task, the home screen and the
+window, as soon as another app's task opens (the share's own, or the sending app's): an activity
+excluded from Recents, as the home screen is, keeps its task there only while it's the latest. The
+window is destroyed, and its session ended, only later, so a share arriving meanwhile still finds
+the session open. `SharePictureActivity` therefore sends the window alone only when one of
+Luncher's tasks has it on top (`ActivityManager.getAppTasks`); otherwise it opens the home screen
+and a new window, as for a first share, which takes the session over, and holds the session itself
+meanwhile, so the old window, no longer holding it, ends nothing. Either way it passes on the
+access to the pictures still to add as well: a new window needs it, as the old window's goes with
+it.
 
 The read access passed to the window is only the access Luncher was given (a grant, which goes
 in the intent's clip): any other Uri goes without one, for the library to judge, as an exported
@@ -297,9 +310,9 @@ to 9 shares files, gets the message that says to use a drop folder instead, with
 
 | Part | Job |
 |---|---|
-| `SharePictureActivity` | takes the pictures out of the share, refuses more than the limit, passes the Uris and the access Luncher holds to the window; the window alone while one shows |
+| `SharePictureActivity` | takes the pictures out of the share, refuses more than the limit, passes the Uris and the access Luncher holds to the window; the window alone while one shows, else a new one that takes an open session over |
 | `PictureReceivedActivity` | shows the session: the count while the pictures are added, then one picture's result and uses, or the counts; ends the session when it closes |
-| `ReceivedPictures` (`:domain`) | the session, one per process: the pictures added one at a time through `PictureImport`, each once, a share joining it, its end, and how it went (`Outcome`) |
+| `ReceivedPictures` (`:domain`) | the session, one per process: the pictures added one at a time through `PictureImport`, each once, a share joining it, the window that holds it and may end it, and how it went (`Outcome`) |
 | `PictureLimits.MAX_SHARED` (`:domain`) | the most pictures one share brings |
 | `PictureImport` (`:domain`) / `FilesPictures` (`:platform`) | adding one picture to the library, cancellable, and how it went (`ImportResult`) |
 | `pictureUseMenu` (`:domain`) | the uses a picture received alone offers |

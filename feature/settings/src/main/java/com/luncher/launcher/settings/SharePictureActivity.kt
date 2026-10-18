@@ -1,6 +1,7 @@
 package com.luncher.launcher.settings
 
 import android.app.Activity
+import android.app.ActivityManager
 import android.content.ClipData
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -20,17 +21,26 @@ import com.luncher.domain.pictures.PictureLimits
  * can't pass a much larger share (1000 on API 22 to 28), which never arrives. Both open in the home screen's
  * task, so Back from the window is the home screen. This activity has no task affinity
  * (`taskAffinity=""`, the manifest says why), and the window is sent to Luncher's task by its
- * affinity ([open]), so a share never leaves a task of its own behind that the next share would
+ * affinity ([openOver]), so a share never leaves a task of its own behind that the next share would
  * be taken for.
  *
  * While a window shows pictures being added (a session of
- * [ReceivedPictures][com.luncher.domain.pictures.ReceivedPictures]), it sends the window only:
- * Android brings Luncher's task back, and the window, `singleTop`, gets the share, whose pictures
- * join the others. Opening the home screen would close that window instead (it's `singleTask`),
- * and the pictures it was adding with it.
+ * [ReceivedPictures][com.luncher.domain.pictures.ReceivedPictures]), on top of one of Luncher's
+ * tasks ([windowShows]), it sends the window only: Android brings Luncher's task back, and the
+ * window, `singleTop`, gets the share, whose pictures join the others. Opening the home screen
+ * would close that window instead (it's `singleTask`), and the pictures it was adding with it.
+ * With a session open but no window showing, it opens the home screen and a new window, which
+ * takes the session over ([PictureReceivedActivity.EXTRA_TAKE_OVER]); this activity holds the
+ * session meanwhile, so the old window, destroyed only later, can't end it. That's API 29, while
+ * Luncher isn't the home app: Android closes Luncher's task as soon as another app's opens, as an
+ * activity excluded from Recents (the home screen) keeps its task there only while it's the
+ * latest, and the window's session stays open until it's destroyed.
  *
  * The read access passed on is the access Luncher was given: the clip carries only the Uris it
- * holds a grant for, so passing them on can't fail. Any other Uri goes with the pictures without
+ * holds a grant for, so passing them on can't fail; while a session is open, also those of the
+ * pictures it still has to add, as the window that gets the share may be a new one that takes the
+ * session over (on API 29, where Android closes Luncher's task, and the old window with its
+ * access, when another app's task opens). Any other Uri goes with the pictures without
  * one, for the library to judge: an exported provider's, which Luncher may read anyway, or one it
  * can't read, which ends as the message that it can't.
  *
@@ -52,27 +62,39 @@ class SharePictureActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val home = if (graph.receivedPictures.session != 0) null else packageManager.getLeanbackLaunchIntentForPackage(packageName)?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        val nothing = Intent(this, PictureReceivedActivity::class.java).putExtra(PictureReceivedActivity.EXTRA_NOTHING_READABLE, true)
+        val received = graph.receivedPictures
+        // The window alone, to the window that shows: Android brings its task back, and it gets the
+        // share. Else the home screen and a new window; one that's gone still holding the session
+        // (on API 29 Android closes Luncher's task when another app's opens, the session left open
+        // until the window is destroyed, later), the new one takes it over, this one holding it
+        // meanwhile, so the old one can't end it.
+        val joining = received.session != 0 && windowShows()
+        val takingOver = received.session != 0 && !joining
+        if (takingOver) received.hold()
+        val home = if (joining) null else homeScreen()
         val pictures = sharedPictures(intent)
-        if (pictures.isEmpty()) {
-            open(home, nothing)
-        } else if (!PictureLimits.allowsShare(pictures.size)) {
-            open(home, Intent(this, PictureReceivedActivity::class.java).putExtra(PictureReceivedActivity.EXTRA_TOO_MANY, true))
-        } else {
-            try {
-                open(home, passOn(pictures))
-            } catch (e: SecurityException) {
-                // Android refused to pass on a grant after all: nothing to read.
-                open(home, nothing)
-            }
+        val window = Intent(this, PictureReceivedActivity::class.java).putExtra(PictureReceivedActivity.EXTRA_TAKE_OVER, takingOver)
+        val passed = when {
+            pictures.isEmpty() -> emptyList<Uri>().also { window.putExtra(PictureReceivedActivity.EXTRA_NOTHING_READABLE, true) }
+            !PictureLimits.allowsShare(pictures.size) -> emptyList<Uri>().also { window.putExtra(PictureReceivedActivity.EXTRA_TOO_MANY, true) }
+            else -> pictures.also { window.putParcelableArrayListExtra(PictureReceivedActivity.EXTRA_PICTURES, ArrayList(it)) }
+        }
+        try {
+            // The pictures still to add too: the window that gets this may be a new one, which
+            // takes the session over (API 29), and the old one's access goes with it.
+            openOver(home, withAccess(window, (received.pending + passed).distinct()))
+        } catch (e: SecurityException) {
+            // Android refused to pass on a grant after all: nothing to read.
+            openOver(home, Intent(this, PictureReceivedActivity::class.java).putExtra(PictureReceivedActivity.EXTRA_NOTHING_READABLE, true))
         }
         finish()   // before onResume, as its theme (windowNoDisplay) requires
     }
 
-    /** The window's intent with [pictures], and the read access to those Luncher holds a grant for. */
-    private fun passOn(pictures: List<Uri>): Intent {
-        val window = Intent(this, PictureReceivedActivity::class.java).putParcelableArrayListExtra(PictureReceivedActivity.EXTRA_PICTURES, ArrayList(pictures))
+    /** Luncher's home screen, opened as the TV's app list opens it, in a task of its own; null if Android gives no such intent. */
+    private fun homeScreen(): Intent? = packageManager.getLeanbackLaunchIntentForPackage(packageName)?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+
+    /** [window] with the read access to those of [pictures] Luncher holds a grant for, in its clip: the only access it may pass on. */
+    private fun withAccess(window: Intent, pictures: List<Uri>): Intent {
         val granted = pictures.filter { checkUriPermission(it, Process.myPid(), Process.myUid(), Intent.FLAG_GRANT_READ_URI_PERMISSION) == PackageManager.PERMISSION_GRANTED }
         if (granted.isEmpty()) return window
         val clip = ClipData.newRawUri("", granted[0])
@@ -88,9 +110,25 @@ class SharePictureActivity : Activity() {
      * screen's: without, it would open in this activity's task, which has no affinity, and there
      * the home screen's task, brought back, could come over it (API 28).
      */
-    private fun open(home: Intent?, window: Intent) {
+    private fun openOver(home: Intent?, window: Intent) {
         window.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         if (home != null) startActivities(arrayOf(home, window)) else startActivity(window)
+    }
+
+    /**
+     * Whether one of Luncher's tasks has the window on top. Up to API 22 a task can't tell its top
+     * activity, nor does Android close Luncher's task as on API 29: the open session says.
+     */
+    private fun windowShows(): Boolean {
+        if (Build.VERSION.SDK_INT < 23) return true
+        val tasks = getSystemService(ActivityManager::class.java)?.appTasks.orEmpty()
+        return tasks.any { task ->
+            try {
+                task.taskInfo.topActivity?.className == PictureReceivedActivity::class.java.name
+            } catch (e: IllegalArgumentException) {
+                false   // the task went meanwhile
+            }
+        }
     }
 
     /**

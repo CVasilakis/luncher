@@ -10,8 +10,12 @@ import com.luncher.domain.jobs.Cancellable
  *
  * The pictures received while a window shows them are one session: a share that arrives
  * meanwhile joins it, its pictures added after the others, and the end says how all of them
- * went. The window that shows it [end]s it, when the user is done with it or leaves it, and only
- * its own: one that ends late can't stop a session that started after it.
+ * went. The window that took the session last holds it ([receive], [refuse], [hold] return its
+ * hold) and [end]s it, when the user is done with it or leaves it; a window that doesn't hold it
+ * any more can't: neither one that ends late, after a new session started, nor an older window
+ * Android destroys late, after a new one took this session over (on API 29, Android closes
+ * Luncher's task when another app's opens, and a share then comes to a new window, before the
+ * old one is destroyed).
  *
  * A share of more than [PictureLimits.MAX_SHARED] pictures adds none ([refuse]), so the user can
  * share again the ones they want.
@@ -47,8 +51,16 @@ class ReceivedPictures<Source>(private val import: PictureImport<Source>) {
         private set
     private var sessions = 0
 
+    /** The hold of the window that took the session last, the one that may [end] it; 0 with no session. */
+    var holder: Int = 0
+        private set
+    private var holds = 0
+
     /** How many pictures the session has. */
     val total: Int get() = entries.size
+
+    /** The pictures of the session without an answer yet, in order: the one being added first. */
+    val pending: List<Source> get() = entries.filter { it.result == null }.map { it.source }
 
     /** How many of them have their answer. */
     val answered: Int get() = entries.count { it.result != null }
@@ -64,38 +76,46 @@ class ReceivedPictures<Source>(private val import: PictureImport<Source>) {
 
     /**
      * Adds [sources] to the session, opening one if none is: each after those before it, one at
-     * a time, and none the session has already. Returns the session, for [end].
+     * a time, and none the session has already. Returns the caller's hold on the session, for
+     * [end].
      */
     fun receive(sources: List<Source>): Int {
-        val open = open()
+        val hold = open()
         for (source in sources) {
             if (entries.none { it.source == source }) entries += Entry(source)
         }
         next()
         changed()
-        return open
+        return hold
     }
 
-    /** A share of more pictures than [PictureLimits.MAX_SHARED]: none is added, and the session says so. Returns the session, for [end]. */
+    /** A share of more pictures than [PictureLimits.MAX_SHARED]: none is added, and the session says so. Returns the caller's hold, for [end]. */
     fun refuse(): Int {
-        val open = open()
+        val hold = open()
         refused = true
         changed()
-        return open
+        return hold
+    }
+
+    /** Takes the open session over, as a window that shows it without receiving anything does; 0 with none. */
+    fun hold(): Int {
+        if (session == 0) return 0
+        holder = ++holds
+        return holder
     }
 
     /**
-     * Ends [session], if it's still the one open: the picture being added and those after it are
-     * cancelled, never added; those added stay in the library. Nothing happens to another
-     * session.
+     * Ends the session, if [hold] still holds it: the picture being added and those after it are
+     * cancelled, never added; those added stay in the library. Nothing happens otherwise.
      */
-    fun end(session: Int) {
-        if (session == 0 || session != this.session) return
+    fun end(hold: Int) {
+        if (hold == 0 || hold != holder || session == 0) return
         adding?.cancel()
         adding = null
         entries.clear()
         refused = false
-        this.session = 0
+        session = 0
+        holder = 0
         changed()
     }
 
@@ -108,9 +128,11 @@ class ReceivedPictures<Source>(private val import: PictureImport<Source>) {
         listeners -= listener
     }
 
+    /** Opens a session if none is, and gives the caller the hold on it. */
     private fun open(): Int {
         if (session == 0) session = ++sessions
-        return session
+        holder = ++holds
+        return holder
     }
 
     /**

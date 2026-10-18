@@ -1,5 +1,6 @@
 package com.luncher.launcher.settings
 
+import android.app.ActivityManager
 import android.content.ClipData
 import android.content.ComponentName
 import android.content.Intent
@@ -17,6 +18,7 @@ import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
+import org.robolectric.shadows.ShadowAppTask
 import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
@@ -55,6 +57,13 @@ class SharePictureActivityTest {
     }
 
     private val home get() = ComponentName(context.packageName, HOME)
+
+    /** A window that shows, on top of one of Luncher's tasks. */
+    private fun windowShows() {
+        val task = ShadowAppTask.newInstance()
+        shadowOf(task).setTaskInfo(ActivityManager.RecentTaskInfo().apply { topActivity = ComponentName(context, PictureReceivedActivity::class.java) })
+        shadowOf(context.getSystemService(ActivityManager::class.java)).setAppTasks(listOf(task))
+    }
 
     private fun assertPassesThePicture(started: Intent) {
         assertEquals(PictureReceivedActivity::class.java.name, started.component?.className)
@@ -183,11 +192,44 @@ class SharePictureActivityTest {
         val graph = TestPicturesGraph().also { (context as SettingsTestApplication).graph = it }
         graph.library.answerLater = true
         graph.receivedPictures.receive(listOf(Uri.parse("content://com.example.files/first.jpg")))
+        windowShows()
 
         val started = started(Intent(Intent.ACTION_SEND).setType("image/jpeg").putExtra(Intent.EXTRA_STREAM, picture)).single()
 
         assertPassesThePicture(started)
         assertTrue(started.flags and Intent.FLAG_ACTIVITY_NEW_TASK != 0)
+    }
+
+    @Test
+    fun `while a window adds pictures, passes on the access to those still to add too, for a new window taking over`() {
+        val first = Uri.parse("content://com.example.files/first.jpg")
+        val graph = TestPicturesGraph().also { (context as SettingsTestApplication).graph = it }
+        graph.library.answerLater = true
+        graph.receivedPictures.receive(listOf(first))
+        windowShows()
+
+        val started = started(Intent(Intent.ACTION_SEND).setType("image/jpeg").putExtra(Intent.EXTRA_STREAM, picture)).single()
+
+        assertEquals(listOf(picture), pictures(started))
+        assertEquals(listOf(first, picture), (0 until started.clipData!!.itemCount).map { started.clipData!!.getItemAt(it).uri })
+        assertTrue(started.flags and Intent.FLAG_GRANT_READ_URI_PERMISSION != 0)
+    }
+
+    // On API 29 Android closes Luncher's task, the window with it, when another app's opens; the
+    // window is destroyed, and its session ended, only later.
+    @Test
+    fun `with a session open but no window showing, opens the home screen and a window that takes the session over`() {
+        val first = Uri.parse("content://com.example.files/first.jpg")
+        val graph = TestPicturesGraph().also { (context as SettingsTestApplication).graph = it }
+        graph.library.answerLater = true
+        val gone = graph.receivedPictures.receive(listOf(first))
+
+        val window = send(Intent(Intent.ACTION_SEND).setType("image/jpeg").putExtra(Intent.EXTRA_STREAM, picture))
+
+        assertTrue(window.getBooleanExtra(PictureReceivedActivity.EXTRA_TAKE_OVER, false))
+        assertEquals(listOf(first, picture), (0 until window.clipData!!.itemCount).map { window.clipData!!.getItemAt(it).uri })
+        graph.receivedPictures.end(gone)
+        assertEquals(1, graph.receivedPictures.total)
     }
 
     private companion object {

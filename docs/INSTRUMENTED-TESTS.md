@@ -183,8 +183,8 @@ returns to the home app on API 24, over Luncher's window. A share Luncher may re
 
 With `StalledPictures`, Luncher says it can't read a `silent` picture once its time limit has
 passed (15 s); Cancel leaves an `unopened` one, and the next share is then added, as nothing waits
-behind the stuck call; a share sent while one is stuck joins its window, which then says how both
-went. While the window adds a picture, its wheel spins, so the tests look at it with UI Automator
+behind the stuck call; a share sent while one is stuck joins its session (in its window, or on API
+29 in a new window that takes the session over), and the window then says how both went. While the window adds a picture, its wheel spins, so the tests look at it with UI Automator
 ([above](#look-with-ui-automator-while-a-screen-animates)).
 
 A share opens Luncher's home screen, in a task of its own, with the window over it, though Luncher

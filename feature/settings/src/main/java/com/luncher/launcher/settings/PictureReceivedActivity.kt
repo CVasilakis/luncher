@@ -28,15 +28,18 @@ import com.luncher.domain.pictures.pictureUseMenu
  * sending a picture ends as Unreadable, after the library's time limit.
  *
  * A share that arrives while the window shows comes to it ([onNewIntent]: it's `singleTop`, and
- * [SharePictureActivity] sends only it while a session is open), and its pictures join the
- * session, after the others.
+ * [SharePictureActivity] sends only it while it shows on top of one of Luncher's tasks), and its
+ * pictures join the session, after the others.
  *
  * Closing the window ends the session ([finish]: OK, Cancel, Back, or an entry), the pictures
  * still to add cancelled, those added staying in the library; so does Android closing it
  * ([onDestroy]: Home, while Luncher is the home app, as the home screen clears its task), so no
  * picture is added for a window that's gone, nor read once its access, given to the window, has
  * gone with it. A configuration change doesn't: the window made anew finds the session where it
- * was.
+ * was. Only the window that took the session last ends it ([hold]): on API 29, Android closes
+ * Luncher's task when another app's opens, and a share arriving then opens a new window over the
+ * home screen, which takes the session over ([EXTRA_TAKE_OVER]), while the old one is destroyed
+ * only later.
  */
 class PictureReceivedActivity : Activity() {
 
@@ -47,10 +50,14 @@ class PictureReceivedActivity : Activity() {
 
     private val received get() = graph.receivedPictures
 
-    /** The session this window shows, or 0 when it shows none: closed, or nothing to read. */
-    private var session = 0
+    /**
+     * This window's hold on the session it shows ([ReceivedPictures.receive][com.luncher.domain.pictures.ReceivedPictures.receive]),
+     * or 0 when it shows none: closed, or nothing to read. Only the window that took the session
+     * last holds it, so an older window Android destroys late can't end it.
+     */
+    private var hold = 0
 
-    /** Whether the share had no picture Luncher could read, which the window says, with no session. */
+    /** Whether the share had no picture Luncher could read, which the window says, with no hold. */
     private var unreadable = false
 
     /** Whether the entries show Cancel, while the pictures are added: only the title changes then. */
@@ -65,11 +72,11 @@ class PictureReceivedActivity : Activity() {
         text = findViewById(R.id.settings_received_text)
         spinner = findViewById(R.id.settings_received_spinner)
         entries = findViewById(R.id.settings_received_entries)
-        val kept = savedInstanceState?.getInt(STATE_SESSION) ?: 0
-        // Made anew after a configuration change, the session is where it was; after the process
-        // was gone, it's gone too, and the share is taken again.
-        session = if (kept != 0 && kept == received.session) kept else take(intent)
-        unreadable = session == 0
+        val kept = savedInstanceState?.getInt(STATE_HOLD) ?: 0
+        // Made anew after a configuration change, the window still holds the session, where it
+        // was; after the process was gone, it's gone too, and the share is taken again.
+        hold = if (kept != 0 && kept == received.holder) kept else take(intent)
+        unreadable = hold == 0
         received.addListener(changed)
         show()
     }
@@ -78,8 +85,8 @@ class PictureReceivedActivity : Activity() {
         super.onNewIntent(intent)
         setIntent(intent)
         val joined = take(intent)
-        if (session == 0 && joined != 0) {
-            session = joined
+        if (joined != 0) {
+            hold = joined
             unreadable = false
         }
         show()
@@ -87,7 +94,7 @@ class PictureReceivedActivity : Activity() {
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
-        outState.putInt(STATE_SESSION, session)
+        outState.putInt(STATE_HOLD, hold)
     }
 
     override fun finish() {
@@ -101,18 +108,20 @@ class PictureReceivedActivity : Activity() {
         if (!isChangingConfigurations) close()
     }
 
-    /** Ends the session this window shows, if it's still the one open. */
+    /** Ends the session this window shows, if it still holds it. */
     private fun close() {
-        received.end(session)
-        session = 0
+        received.end(hold)
+        hold = 0
     }
 
-    /** The pictures [intent] brings, into the session; 0 if it brings none Luncher could read. */
+    /** The pictures [intent] brings, into the session; the window's hold on it, or 0 if it brings none Luncher could read. */
     private fun take(intent: Intent): Int {
-        if (intent.getBooleanExtra(EXTRA_NOTHING_READABLE, false)) return 0
+        // In place of a window that's gone: the session is this one's now, whatever the share brings.
+        val over = if (intent.getBooleanExtra(EXTRA_TAKE_OVER, false)) received.hold() else 0
+        if (intent.getBooleanExtra(EXTRA_NOTHING_READABLE, false)) return over
         if (intent.getBooleanExtra(EXTRA_TOO_MANY, false)) return received.refuse()
         val pictures = pictures(intent)
-        return if (pictures.isEmpty()) 0 else received.receive(pictures)
+        return if (pictures.isEmpty()) over else received.receive(pictures)
     }
 
     private fun pictures(intent: Intent): List<Uri> =
@@ -126,7 +135,7 @@ class PictureReceivedActivity : Activity() {
     /** The session as it stands, or why there's none. */
     private fun show() {
         if (unreadable) return showOne(ImportResult.Unreadable)
-        if (session == 0 || session != received.session) return
+        if (hold == 0 || hold != received.holder) return
         when (val outcome = received.outcome) {
             null -> showAdding()
             is Outcome.One -> showOne(outcome.result)
@@ -222,6 +231,9 @@ class PictureReceivedActivity : Activity() {
         /** Set by [SharePictureActivity] when what another app sent had no picture it could pass on. */
         const val EXTRA_NOTHING_READABLE = "com.luncher.launcher.settings.NOTHING_READABLE"
 
-        private const val STATE_SESSION = "session"
+        /** Set by [SharePictureActivity] when it opened this window in place of one that's gone, for which it took the session over: the window takes it. */
+        const val EXTRA_TAKE_OVER = "com.luncher.launcher.settings.TAKE_OVER"
+
+        private const val STATE_HOLD = "hold"
     }
 }

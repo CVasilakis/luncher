@@ -305,4 +305,34 @@ class PictureReceivedActivityTest {
         assertEquals("1 picture saved", window.get().title())
         assertEquals("Luncher adds up to 100 pictures at a time. Share fewer and try again.", window.get().text())
     }
+
+    // On API 29 Android closes Luncher's task when another app's opens; a share arriving then
+    // comes to a new window, before the old one is destroyed.
+    @Test
+    fun `a new window that took the session over goes on when the old one is destroyed after it`() {
+        library.results[shared] = ImportResult.Added(holiday)
+        library.results[beach] = ImportResult.AlreadyThere(holiday)
+        library.answerLater = true
+        val old = window(share(shared))
+        val new = window(share(beach))
+
+        old.pause().stop().destroy()
+
+        assertEquals(emptyList<Uri>(), library.cancelled)
+        library.finishAdding()
+        library.finishAdding()
+        assertEquals("2 pictures saved", new.get().title())
+    }
+
+    @Test
+    fun `opened in place of a window that's gone, it takes the session over, which the old one can't end`() {
+        library.answerLater = true
+        val old = window(share(shared))
+
+        val new = window(share(beach).putExtra(PictureReceivedActivity.EXTRA_TAKE_OVER, true))
+        old.pause().stop().destroy()
+
+        assertEquals(emptyList<Uri>(), library.cancelled)
+        assertEquals("Adding picture 1 of 2…", new.get().title())
+    }
 }

@@ -76,10 +76,11 @@ class ReceivedPicturesTest {
 
     @Test
     fun `a share that comes while it adds joins the session, its pictures after the others`() {
-        val first = received.receive(listOf("beach", "text"))
-        val second = received.receive(listOf("forest"))
+        received.receive(listOf("beach", "text"))
+        val session = received.session
+        received.receive(listOf("forest"))
 
-        assertEquals(first, second)
+        assertEquals(session, received.session)
         assertEquals(3, received.total)
         repeat(3) { library.finishAdding() }
         assertEquals(listOf("beach", "text", "forest"), library.added)
@@ -153,6 +154,42 @@ class ReceivedPicturesTest {
     }
 
     @Test
+    fun `a window that took the session over holds it, and the window before can't end it`() {
+        val older = received.receive(listOf("beach"))
+        val newer = received.receive(listOf("forest"))
+
+        received.end(older)
+
+        assertEquals(newer, received.holder)
+        library.finishAdding()
+        library.finishAdding()
+        assertEquals(Outcome.Several(saved = 2, notAdded = 0, tooMany = false), received.outcome)
+        received.end(newer)
+        assertEquals(0, received.session)
+    }
+
+    @Test
+    fun `a window made anew takes the session over with hold, and only it ends it then`() {
+        val before = received.receive(listOf("beach", "forest"))
+
+        val after = received.hold()
+        received.end(before)
+
+        assertEquals(2, received.total)
+        received.end(after)
+        assertEquals(listOf("beach"), library.cancelled)
+        assertEquals(0, received.hold())
+    }
+
+    @Test
+    fun `tells the pictures still to add, the one being added first`() {
+        received.receive(listOf("beach", "forest", "text"))
+        library.finishAdding()
+
+        assertEquals(listOf("forest", "text"), received.pending)
+    }
+
+    @Test
     fun `a share of too many pictures adds none, and says so`() {
         received.refuse()
 
@@ -180,7 +217,7 @@ class ReceivedPicturesTest {
         library.finishAdding()
         assertEquals(3, told)
 
-        received.end(received.session)
+        received.end(received.holder)
         assertEquals(4, told)
     }
 
