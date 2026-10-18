@@ -15,6 +15,7 @@ import com.luncher.domain.pictures.FolderPictures
 import com.luncher.domain.pictures.PictureImages
 import com.luncher.domain.pictures.PictureImport
 import com.luncher.domain.pictures.Pictures
+import com.luncher.domain.pictures.ReceivedPictures
 import com.luncher.domain.wallpaper.Wallpaper
 import com.luncher.launcher.appearance.PreferencesAppearanceSettings
 import com.luncher.launcher.apps.BannerImages
@@ -71,6 +72,9 @@ open class AppGraph(context: Context) : HomeGraph, SettingsGraph {
     override val pictures: Pictures by lazy { library }
 
     override val pictureImport: PictureImport<Uri> by lazy { library }
+
+    /** The shared pictures being added, through [pictureImport]: one for the process, which every window after a share shows. */
+    override val receivedPictures: ReceivedPictures<Uri> by lazy { ReceivedPictures(pictureImport) }
 
     override val folderPictures: FolderPictures<Uri, Bitmap> by lazy { MediaFolderPictures(appContext, jobs) }
 

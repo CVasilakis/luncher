@@ -87,4 +87,30 @@
     <string name="settings_pictures_folder_empty">لا توجد صور في المجلد بعد.</string>
     <string name="settings_received_adding">جارٍ إضافة الصورة…</string>
     <string name="settings_received_saved">تم حفظ الصورة</string>
+    <string name="settings_received_adding_count">جارٍ إضافة الصورة <xliff:g id="number" example="3">%1$d</xliff:g> من <xliff:g id="total" example="10">%2$d</xliff:g>…</string>
+    <plurals name="settings_received_saved_count">
+        <item quantity="zero">تم حفظ <xliff:g id="count" example="0">%d</xliff:g> صورة</item>
+        <item quantity="one">تم حفظ صورة واحدة</item>
+        <item quantity="two">تم حفظ صورتين</item>
+        <item quantity="few">تم حفظ <xliff:g id="count" example="3">%d</xliff:g> صور</item>
+        <item quantity="many">تم حفظ <xliff:g id="count" example="11">%d</xliff:g> صورة</item>
+        <item quantity="other">تم حفظ <xliff:g id="count" example="100">%d</xliff:g> صورة</item>
+    </plurals>
+    <plurals name="settings_received_not_added_count">
+        <item quantity="zero">لم تُضَف <xliff:g id="count" example="0">%d</xliff:g> صورة.</item>
+        <item quantity="one">لم تُضَف صورة واحدة.</item>
+        <item quantity="two">لم تُضَف صورتان.</item>
+        <item quantity="few">لم تُضَف <xliff:g id="count" example="3">%d</xliff:g> صور.</item>
+        <item quantity="many">لم تُضَف <xliff:g id="count" example="11">%d</xliff:g> صورة.</item>
+        <item quantity="other">لم تُضَف <xliff:g id="count" example="100">%d</xliff:g> صورة.</item>
+    </plurals>
+    <string name="settings_received_none_added">لم تُضَف الصور</string>
+    <plurals name="settings_received_too_many">
+        <item quantity="zero">يضيف Luncher حتى <xliff:g id="most" example="0">%d</xliff:g> صورة في المرة الواحدة. شارك عددًا أقل وحاول مرة أخرى.</item>
+        <item quantity="one">يضيف Luncher صورة واحدة في المرة الواحدة. شارك عددًا أقل وحاول مرة أخرى.</item>
+        <item quantity="two">يضيف Luncher حتى صورتين في المرة الواحدة. شارك عددًا أقل وحاول مرة أخرى.</item>
+        <item quantity="few">يضيف Luncher حتى <xliff:g id="most" example="3">%d</xliff:g> صور في المرة الواحدة. شارك عددًا أقل وحاول مرة أخرى.</item>
+        <item quantity="many">يضيف Luncher حتى <xliff:g id="most" example="11">%d</xliff:g> صورة في المرة الواحدة. شارك عددًا أقل وحاول مرة أخرى.</item>
+        <item quantity="other">يضيف Luncher حتى <xliff:g id="most" example="100">%d</xliff:g> صورة في المرة الواحدة. شارك عددًا أقل وحاول مرة أخرى.</item>
+    </plurals>
 </resources>

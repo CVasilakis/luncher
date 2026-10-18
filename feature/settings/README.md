@@ -2,7 +2,7 @@
 
 The settings panel, `:feature:settings`, and the screens it opens: Hide apps, the appearance
 editor, and from it the background editor, where the wallpaper is chosen from Luncher's picture
-library, with Add from folder; and the way in for a picture another app shares. What a feature
+library, with Add from folder; and the way in for the pictures another app shares. What a feature
 module holds and may use: [`../README.md`](../README.md); the rules it follows:
 [`../../docs/ARCHITECTURE.md`](../../docs/ARCHITECTURE.md).
 
@@ -33,7 +33,7 @@ feature/settings/
     │   │   ├── BackgroundStartColumn.kt  its preview, options and Save, the preview as large as the room left
     │   │   ├── AddFromFolderActivity.kt  the drop folders' pictures, a preview of the selected one; OK returns it
     │   │   ├── SharePictureActivity.kt   where another app's share arrives: opens the home screen and the window, no screen
-    │   │   ├── PictureReceivedActivity.kt the window over the home screen after a share: adds the picture, offers its uses
+    │   │   ├── PictureReceivedActivity.kt the window over the home screen after a share: shows the pictures being added, then their uses or how many were saved
     │   │   ├── PicturesDialog.kt the dialogs over the picture screens: a question, a message
     │   │   ├── PreviewColumn.kt  Add from folder's preview and note, the preview smaller on a short screen
     │   │   └── PictureTexts.kt   what the picture screens call things: sizes, names, why a picture wasn't added
@@ -63,6 +63,7 @@ Everything but the activities and `SettingsGraph` is `internal`.
 | `AddFromFolderActivity`: `Theme.Luncher.Settings.Pictures` | Full-screen and opaque, on the home screen's background. |
 | `SharePictureActivity`: `exported="true"` | Other apps' shares arrive there. |
 | `PictureReceivedActivity`: `Theme.Luncher.Settings` | A floating window over the dimmed home screen, like the settings panel. |
+| `PictureReceivedActivity`: `launchMode="singleTop"` | A share that arrives while it shows comes to it (`onNewIntent`), and its pictures join those being added ([below](#adding-a-picture)). A new window would replace it, as the home screen, `singleTask`, clears what's above it, and the pictures it was adding would stop. |
 | `SharePictureActivity`: `taskAffinity=""` | A share sent to a task of its own (`NEW_TASK`, as an app sends one from a notification or a service) opens in a task of no app, gone as it finishes, and the home screen and the window in Luncher's task, both sent there by its affinity (the window too: else it would join the share's task, where the home screen's, brought back, could come over it on API 28). With Luncher's affinity, the task the share made would be rooted at that share; Android would then only bring it back for the next share alike (a `SEND` of the same type, sent the same way, which it matches without the picture), and that picture would never arrive. Measured on API 22 to 36, where it happened whenever that task was in front, and on API 24 also with Luncher as the home app. Android also advises an empty affinity on an exported activity, so another app can't take over its task. |
 | `SharePictureActivity`: `Theme.Luncher.Settings.Pictures.NoDisplay`, `noHistory`, `excludeFromRecents` | It shows nothing, and finishes in `onCreate`, before `onResume`, as a `windowNoDisplay` activity must; its backgrounds are still the home screen's dark ones, in case a device shows one ([`ui/README.md`](../../ui/README.md#the-theme)). |
 | `supportsRtl="true"` | As the app declares it ([why](../../app/README.md#manifest-why-each-part-is-there)), so the JVM tests mirror the screens in a right-to-left language as the app does. |
@@ -241,35 +242,67 @@ read or drawn once, and drops the requests in `onStop`. A draft survives a confi
 
 ### Adding a picture
 
-**From another app** (`SharePictureActivity`): a file manager's or a gallery's Share, or "Set as",
-of a picture (`SEND` or `ATTACH_DATA`, `image/*`). It takes the picture's Uri out of the intent,
-then opens, in one `startActivities`, Luncher's home screen and over it a window
-(`PictureReceivedActivity`) with the Uri and the read access the other app gave, and finishes at
-once. The home screen is opened as the TV's app list opens Luncher, with the intent Android gives
-for its `LEANBACK_LAUNCHER` entry (`getLeanbackLaunchIntentForPackage`), so it's Luncher's
-whether or not it's the device's home app, and this feature needs nothing of `:feature:home`'s;
-both open in the home screen's task, so Back from the window is the home screen. Not a `HOME`
-intent, which makes the task a home screen's: once closed, Android shows the device's home app,
-and up to Android 5.1, with no default, asks which one. `SharePictureActivity` itself has no
-task affinity, and it sends the window, as the home screen, to Luncher's task by its affinity:
-a share sent to a task of its own opens in one that's gone as it finishes, so it never leaves a
-task the next share would be taken for ([Manifest](#manifest)).
+**From another app** (`SharePictureActivity`): a file manager's or a gallery's Share of one
+picture or several, or "Set as" of one (`SEND`, `SEND_MULTIPLE` or `ATTACH_DATA`, `image/*`). It
+takes the pictures' Uris out of the intent (a Share's stream, one or a list, else every item of
+its clip, as an app may send them only there; each once), then opens, in one `startActivities`,
+Luncher's home screen and over it a window (`PictureReceivedActivity`) with the Uris and the read
+access the other app gave, and finishes at once. The home screen is opened as the TV's app list
+opens Luncher, with the intent Android gives for its `LEANBACK_LAUNCHER` entry
+(`getLeanbackLaunchIntentForPackage`), so it's Luncher's whether or not it's the device's home
+app, and this feature needs nothing of `:feature:home`'s; both open in the home screen's task, so
+Back from the window is the home screen. Not a `HOME` intent, which makes the task a home
+screen's: once closed, Android shows the device's home app, and up to Android 5.1, with no
+default, asks which one. `SharePictureActivity` itself has no task affinity, and it sends the
+window, as the home screen, to Luncher's task by its affinity: a share sent to a task of its own
+opens in one that's gone as it finishes, so it never leaves a task the next share would be taken
+for ([Manifest](#manifest)).
 
-The window, floating like the settings panel, says "Adding the picture…" after a spinning wheel,
-on one line, and Cancel, focused, while the library adds it, then "Picture saved", the picture's name and an
-entry for each use a picture can be put to (`pictureUseMenu` in `:domain`, today Background, which
-opens the background editor with the picture chosen, not saved, and closes the window); or why it
-wasn't added, and OK. Back closes it, the picture in the library. While it's being added, Cancel
-and Back close the window and stop the adding, the picture not added; closing the window any
-way stops it (`onDestroy`), so no answer comes to a window that's gone. An app that stops sending
-the picture gets the message that Luncher can't read it, after the library's time limit
-([`platform/README.md`](../../platform/README.md#another-apps-answers)). A picture the library has already (the
-same content) is saved as well. An intent with no picture it can pass on (none in it, or one the
-other app gave no access to, which Android won't let Luncher pass on) becomes the window's
-message that Luncher can't read it, never a crash. What the Uri
-points to is the library's to judge ([`platform/README.md`](../../platform/README.md#pictures)): a
-`file://` one, as Android up to 9 shares files, gets the message that says to use a drop folder
-instead, with its path.
+A share of more than 100 pictures (`PictureLimits.MAX_SHARED`) passes none: the window says
+Luncher adds up to 100 at a time, so the user shares again the ones they want. The total is known
+before anything is read. Android itself can't pass a much larger share: one of 1000 never arrives
+on API 22 to 28, as the intent is too large to start the activity
+(`TransactionTooLargeException`), and nothing tells Luncher.
+
+The window, floating like the settings panel, shows the pictures being added, one at a time: the
+process's `ReceivedPictures`, a session that the window owns. While they're added, it says "Adding
+the picture…", or "Adding picture 2 of 5…", after a spinning wheel, on one line, and Cancel,
+focused. Then, for one picture, "Picture saved", its name and an entry for each use a picture can
+be put to (`pictureUseMenu`, today Background, which opens the background editor with the picture
+chosen, not saved, and closes the window), or why it wasn't added, and OK; for several, how many
+were saved ("3 pictures saved"), how many weren't, whether a share had too many, and OK. A picture
+the library has already (the same content) counts as saved.
+
+A share that arrives while the window shows joins it: `SharePictureActivity` then sends the window
+alone, without the home screen, which would close it (`singleTask`), and the window, `singleTop`,
+gets it in `onNewIntent`; its pictures are added after the others, and the end says how all of
+them went. Back closes the window, the pictures added in the library. While they're added, Cancel
+and Back close it and stop the adding, those still to add not added. Closing it any way ends the
+session (`finish`), and so does Android closing it (`onDestroy`): while Luncher is the home app,
+Home clears the home screen's task, the window with it (measured on API 28 to 36; on API 24 the
+share's home screen is a task of its own, which Home leaves behind, the window going on). So no
+picture is added for a window that's gone, nor read without the access that went with it: Android
+ends the access another app gave with the activity that received it. A configuration change
+doesn't end it: the window made anew finds the session where it was, nothing added twice. An app
+that stops sending a picture gets the message that Luncher can't read it, after the library's
+time limit ([`platform/README.md`](../../platform/README.md#another-apps-answers)).
+
+The read access passed to the window is only the access Luncher was given (a grant, which goes
+in the intent's clip): any other Uri goes without one, for the library to judge, as an exported
+provider's may be read anyway, so passing it on never fails. An intent with no picture in it
+becomes the window's message that Luncher can't read it, never a crash; so does one the other app
+gave no access to, once the library has tried it. What the Uri points to is the library's to
+judge ([`platform/README.md`](../../platform/README.md#pictures)): a `file://` one, as Android up
+to 9 shares files, gets the message that says to use a drop folder instead, with its path.
+
+| Part | Job |
+|---|---|
+| `SharePictureActivity` | takes the pictures out of the share, refuses more than the limit, passes the Uris and the access Luncher holds to the window; the window alone while one shows |
+| `PictureReceivedActivity` | shows the session: the count while the pictures are added, then one picture's result and uses, or the counts; ends the session when it closes |
+| `ReceivedPictures` (`:domain`) | the session, one per process: the pictures added one at a time through `PictureImport`, each once, a share joining it, its end, and how it went (`Outcome`) |
+| `PictureLimits.MAX_SHARED` (`:domain`) | the most pictures one share brings |
+| `PictureImport` (`:domain`) / `FilesPictures` (`:platform`) | adding one picture to the library, cancellable, and how it went (`ImportResult`) |
+| `pictureUseMenu` (`:domain`) | the uses a picture received alone offers |
 
 **From a drop folder** (`AddFromFolderActivity`): the pictures a file manager or a computer put in
 `Android/media/<applicationId>`, on the TV or a USB drive, listed the TV's first, then the drives',
@@ -300,6 +333,16 @@ adb shell am start -a android.intent.action.SEND -t image/jpeg --grant-read-uri-
 # a picture that never comes (Cancel; or "can't read it" after 15 s): …debug.test.stalled/silent/cloud.jpg
 ```
 
+`am start` can't send a list of Uris, so several pictures are shared through the test APK's
+`ShareSender`, which sends them as a gallery does, with the access to each; `…test.granted/` serves
+the same samples, readable only through that access:
+
+```bash
+adb shell am start -n com.luncher.launcher.debug.test/com.luncher.launcher.testing.ShareSender \
+  --esa com.luncher.launcher.testing.PICTURES content://com.luncher.launcher.debug.test.granted/progressive.jpg,content://com.luncher.launcher.debug.test.granted/baseline.jpg \
+  --ecn com.luncher.launcher.testing.TARGET com.luncher.launcher.debug/com.luncher.launcher.settings.SharePictureActivity
+```
+
 ### What keeps the picture library light
 
 - **Nothing runs while it's hidden.** The library is followed from `onStart` to `onStop`, and the
@@ -308,3 +351,5 @@ adb shell am start -a android.intent.action.SEND -t image/jpeg --grant-read-uri-
   once drawn ([`platform/README.md`](../../platform/README.md#pictures)): a 12 MP photo is never
   held whole.
 - **A thumbnail is drawn once per screen size**, then read from its file.
+- **A share's pictures are added one at a time**, each read as a stream into its file: the session
+  keeps only their Uris and answers, at most 100, and stops when its window closes.

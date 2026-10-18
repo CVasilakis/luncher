@@ -40,13 +40,18 @@
         </activity>
 
         <!-- Luncher among the apps a picture can be shared with ("Share", "Set as"), the way into
-             its picture library. Not VIEW ("Open with"): Luncher would be offered whenever any
-             picture is opened. -->
+             its picture library; SEND_MULTIPLE for several at once. Not VIEW ("Open with"):
+             Luncher would be offered whenever any picture is opened. -->
         <activity
             android:name="com.luncher.launcher.settings.SharePictureActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="image/*" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEND_MULTIPLE" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="image/*" />
             </intent-filter>

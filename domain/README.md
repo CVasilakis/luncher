@@ -44,7 +44,8 @@ domain/src/
 │   │   ├── Pictures.kt          port: the library's pictures, deleting them, and when they change
 │   │   ├── PictureImport.kt     port: adding a picture from a source, slow, cancellable, and how that went (ImportResult)
 │   │   ├── PictureLibrary.kt    rule: the library as the background editor lists it, the newest first, and what each one is used for
-│   │   ├── PictureLimits.kt     rule: the largest picture the library takes (bytes, megapixels)
+│   │   ├── PictureLimits.kt     rule: the largest picture the library takes (bytes, megapixels), and the most pictures one share brings
+│   │   ├── ReceivedPictures.kt  helper: the pictures other apps shared, added one at a time in sessions a window owns; how far it got, then how it went (Outcome)
 │   │   ├── PictureFormat.kt     model and rule: the formats a TV may not show (HEIF, AVIF), recognized by a file's header
 │   │   ├── Framing.kt           model and rule: how a picture fills a space of another shape (Fit, PicturePosition), and which part of it shows
 │   │   ├── PictureStyle.kt      model and rule: a picture's framing, dim and blur (Blur: off, then three levels of equal steps), as it's drawn
@@ -101,9 +102,10 @@ Packages are by topic (`appearance/`, `apps/`, `arrange/`, `clock/`, `jobs/`, `l
 - A helper the screens share that isn't a rule lives with its topic too: `LatestRequest`, in
   `jobs/`, the "latest request wins" of
   [`ARCHITECTURE.md`](../docs/ARCHITECTURE.md#background-work-and-changes-while-shown), built on the
-  `Jobs` port and tested with `ManualJobs`; and `Wallpaper`, in `wallpaper/`, state that outlives a
+  `Jobs` port and tested with `ManualJobs`; `Wallpaper`, in `wallpaper/`, state that outlives a
   screen, one per process, built on `StoredWallpaper`, `PictureImages`, `AppearanceSettings` and
-  `Jobs`, and tested with their fakes.
+  `Jobs`, and tested with their fakes; and `ReceivedPictures`, in `pictures/`, the shared pictures
+  being added, built on `PictureImport` and tested with `FakePictures`.
 - Ports are interfaces named after what they provide (`InstalledApps`), not how
   (`PackageManagerApps`); adapters in `:platform` implement them. A port whose result is a UI type
   this module can't name is generic in it (`AppImages<Image>`), and so is one that takes an

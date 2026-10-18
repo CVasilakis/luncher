@@ -36,11 +36,14 @@
             android:launchMode="singleTop"
             android:theme="@style/Theme.Luncher.Settings.FullScreen" />
 
-        <!-- The window over the home screen after another app shared a picture, floating like the
-             settings panel. -->
+        <!-- The window over the home screen after another app shared pictures, floating like the
+             settings panel. singleTop: a share that arrives while it shows comes to it
+             (onNewIntent), its pictures joining those being added, rather than to a new window,
+             which would replace it and stop them. -->
         <activity
             android:name=".PictureReceivedActivity"
             android:exported="false"
+            android:launchMode="singleTop"
             android:theme="@style/Theme.Luncher.Settings" />
 
         <!-- The pictures in the drop folders, opened from the background editor. -->
@@ -49,9 +52,9 @@
             android:exported="false"
             android:theme="@style/Theme.Luncher.Settings.Pictures" />
 
-        <!-- Where another app's Share (or "Set as") of a picture arrives: no screen of its own,
-             it opens the home screen and, over it, the window that adds the picture, and finishes
-             at once. Exported, so any app can send it anything; its intent filters are the app's
+        <!-- Where another app's Share of pictures (or "Set as" of one) arrives: no screen of its
+             own, it opens the home screen and, over it, the window that adds the pictures (only
+             the window while one shows already), and finishes at once. Exported, so any app can send it anything; its intent filters are the app's
              to declare, in its manifest, which the build merges with this one. No task affinity:
              sent to a task of its own, it opens in a task that's gone as it finishes, the home
              screen and the window in Luncher's own (both sent there, by its affinity). With

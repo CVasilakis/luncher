@@ -1,5 +1,6 @@
 package com.luncher.launcher.system
 
+import android.content.ComponentName
 import android.content.Intent
 import android.graphics.Bitmap
 import android.net.Uri
@@ -34,7 +35,9 @@ import com.luncher.launcher.settings.PictureReceivedActivity
 import com.luncher.launcher.settings.R
 import com.luncher.launcher.settings.SharePictureActivity
 import com.luncher.launcher.testing.RetryWhenCovered
+import com.luncher.launcher.testing.GrantedPictures
 import com.luncher.launcher.testing.SamplePictures
+import com.luncher.launcher.testing.ShareSender
 import com.luncher.launcher.testing.StalledPictures
 import com.luncher.launcher.testing.resolvedHome
 import com.luncher.launcher.testing.waitForFocus
@@ -54,7 +57,7 @@ import java.io.File
 
 /**
  * A picture shared from another app, on a real device: Luncher's home screen opens with the
- * window over it, which adds the picture; Back leaves the home screen, Background the editor.
+ * window over it, which adds the pictures; Back leaves the home screen, Background the editor.
  *
  * The share opens Luncher's home screen in a task of its own, which the runner closes after the
  * test: closed in front, Android would bring forward the task next in line, which can be another
@@ -241,6 +244,51 @@ class PictureShareTest {
         shareSample("progressive.jpg")
         waitForFocus(PictureReceivedActivity::class.java)
         waitUntil(withId(R.id.settings_received_title), withText(R.string.settings_received_saved))
+    }
+
+    // A gallery's share of three pictures, which only the access it gives opens: Luncher passes
+    // that access on to its window, which adds them all, and says so.
+    @Test
+    fun aShareOfSeveralPictures_fromAnotherApp_addsThemAll() {
+        val pictures = arrayListOf(GrantedPictures.uri("progressive.jpg"), GrantedPictures.uri("baseline.jpg"), GrantedPictures.uri("exif6.jpg"))
+        val testPackage = InstrumentationRegistry.getInstrumentation().context.packageName
+        application.startActivity(
+            Intent().setClassName(testPackage, ShareSender::class.java.name)
+                .putParcelableArrayListExtra(ShareSender.EXTRA_PICTURES, pictures)
+                .putExtra(ShareSender.EXTRA_TARGET, ComponentName(application, SharePictureActivity::class.java))
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+        )
+
+        waitForFocus(PictureReceivedActivity::class.java)
+        waitUntil(withId(R.id.settings_received_title), withText(application.resources.getQuantityString(R.plurals.settings_received_saved_count, 3, 3)))
+        waitUntil(withText(R.string.settings_pictures_ok), hasFocus())
+        press(KeyEvent.KEYCODE_DPAD_CENTER)
+
+        waitForFocus(HomeActivity::class.java)
+    }
+
+    // A share that arrives while the window adds another app's picture, which never opens: it
+    // joins the window rather than replacing it, which used to cancel the first picture. Once the
+    // first has given up (the library's time limit), the window says how both went.
+    @Test
+    fun aShareWhileAnotherIsAdded_joinsTheSameWindow() {
+        share(
+            Intent(Intent.ACTION_SEND).setType("image/jpeg")
+                .putExtra(Intent.EXTRA_STREAM, StalledPictures.unopened("cloud.jpg"))
+                .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION),
+        )
+        waitForFocus(PictureReceivedActivity::class.java)
+        waitUntilSeen(application.getString(R.string.settings_pictures_cancel), focused = true)
+
+        shareSample("progressive.jpg")
+
+        waitUntilSeen(application.getString(R.string.settings_received_adding_count, 1, 2))
+        waitUntilSeen(application.resources.getQuantityString(R.plurals.settings_received_saved_count, 1, 1), timeoutMs = STALLED_TIMEOUT_MS)
+        waitUntil(withId(R.id.settings_received_text), withText(application.resources.getQuantityString(R.plurals.settings_received_not_added_count, 1, 1)))
+        waitUntil(withText(R.string.settings_pictures_ok), hasFocus())
+        press(KeyEvent.KEYCODE_DPAD_CENTER)
+
+        waitForFocus(HomeActivity::class.java)
     }
 
     // Two shares alike in a row (a SEND of the same type), each sent to a task of its own, as

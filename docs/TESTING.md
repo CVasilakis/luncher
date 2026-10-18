@@ -68,8 +68,8 @@ outside a broken Back looks the same as a working one.
   `:ui`'s test fixtures (the TV screens, layout checks), which every module's tests can use; for
   the instrumented tests, `app/src/androidTest/…/testing/` (the waits for the home screen and the
   focus, the look at a screen that animates, keys, `RetryWhenCovered`, `SystemTierFilter`, the
-  test package's providers `SamplePictures` and `StalledPictures`). A feature's test package
-  holds only that feature's tests.
+  test package's providers `SamplePictures`, `StalledPictures` and `GrantedPictures`, and its
+  `ShareSender`). A feature's test package holds only that feature's tests.
 - **Name tests after behavior.** JVM tests use backtick sentences
   (`` `reads the apps again when the home screen comes back` ``). `androidTest` uses
   `action_expectedResult` (`backKey_doesNotCloseTheHomeScreen`), because DEX files before API 30

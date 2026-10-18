@@ -24,6 +24,7 @@ import com.luncher.domain.pictures.Fit
 import com.luncher.domain.pictures.Picture
 import com.luncher.domain.pictures.PicturePosition
 import com.luncher.domain.pictures.PictureStyle
+import com.luncher.domain.pictures.ReceivedPictures
 import com.luncher.domain.wallpaper.FakeStoredWallpaper
 import com.luncher.domain.wallpaper.Wallpaper
 
@@ -40,6 +41,9 @@ open class TestSettingsGraph(
     override val appearanceSettings = FakeAppearanceSettings()
     override val pictures get() = library
     override val pictureImport get() = library
+
+    /** Made on first use, on what the test's [pictureImport] is. */
+    override val receivedPictures by lazy { ReceivedPictures(pictureImport) }
     override val folderPictures = FakeFolderPictures<Uri, Bitmap>(draw = { picture, width, height -> sample(picture.name, width, height) })
     override val pictureImages = FakePictureImages(::sampleWallpaper)
 

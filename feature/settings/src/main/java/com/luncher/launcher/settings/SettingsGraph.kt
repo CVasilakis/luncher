@@ -11,6 +11,7 @@ import com.luncher.domain.pictures.FolderPictures
 import com.luncher.domain.pictures.PictureImages
 import com.luncher.domain.pictures.PictureImport
 import com.luncher.domain.pictures.Pictures
+import com.luncher.domain.pictures.ReceivedPictures
 import com.luncher.domain.wallpaper.Wallpaper
 
 /**
@@ -29,6 +30,9 @@ interface SettingsGraph {
 
     /** Adding a picture to the library, from a share or a drop folder. */
     val pictureImport: PictureImport<Uri>
+
+    /** The pictures other apps shared, being added: one per process, so a window recreated finds them where they were. */
+    val receivedPictures: ReceivedPictures<Uri>
 
     /** The drop folders' pictures, for Add from folder. */
     val folderPictures: FolderPictures<Uri, Bitmap>

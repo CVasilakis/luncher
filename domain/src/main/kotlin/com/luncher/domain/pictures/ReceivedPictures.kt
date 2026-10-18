@@ -1,0 +1,140 @@
+package com.luncher.domain.pictures
+
+import com.luncher.domain.jobs.Cancellable
+
+/**
+ * The pictures other apps shared, added to the library one at a time, which the window after a
+ * share shows: how far it got while they're added, then how it went. One per process (AppGraph
+ * makes it), so a window recreated by a configuration change finds them where they were, and
+ * watched like a port (docs/ARCHITECTURE.md#background-work-and-changes-while-shown).
+ *
+ * The pictures received while a window shows them are one session: a share that arrives
+ * meanwhile joins it, its pictures added after the others, and the end says how all of them
+ * went. The window that shows it [end]s it, when the user is done with it or leaves it, and only
+ * its own: one that ends late can't stop a session that started after it.
+ *
+ * A share of more than [PictureLimits.MAX_SHARED] pictures adds none ([refuse]), so the user can
+ * share again the ones they want.
+ *
+ * Used on the main thread only, where [import] answers.
+ */
+class ReceivedPictures<Source>(private val import: PictureImport<Source>) {
+
+    /** How a session went, once every picture of it has its answer. */
+    sealed interface Outcome {
+
+        /** One picture, and no share refused: the window says what became of it, as before there were sessions. */
+        data class One(val result: ImportResult) : Outcome
+
+        /**
+         * Several pictures, or a share refused: how many are in the library now ([saved], those
+         * it had already too), how many [notAdded], and whether a share had [tooMany].
+         */
+        data class Several(val saved: Int, val notAdded: Int, val tooMany: Boolean) : Outcome
+    }
+
+    private class Entry<Source>(val source: Source) {
+        var result: ImportResult? = null
+    }
+
+    private val entries = mutableListOf<Entry<Source>>()
+    private var refused = false
+    private var adding: Cancellable? = null
+    private val listeners = mutableListOf<() -> Unit>()
+
+    /** The session open, or 0 for none; each new one is numbered after the last. */
+    var session: Int = 0
+        private set
+    private var sessions = 0
+
+    /** How many pictures the session has. */
+    val total: Int get() = entries.size
+
+    /** How many of them have their answer. */
+    val answered: Int get() = entries.count { it.result != null }
+
+    /** How the session went, once every picture has its answer; null while one is being added, or with no session. */
+    val outcome: Outcome?
+        get() {
+            if (session == 0 || answered < total) return null
+            if (total == 1 && !refused) return Outcome.One(entries[0].result!!)
+            val saved = entries.count { it.result is ImportResult.Added || it.result is ImportResult.AlreadyThere }
+            return Outcome.Several(saved, total - saved, refused)
+        }
+
+    /**
+     * Adds [sources] to the session, opening one if none is: each after those before it, one at
+     * a time, and none the session has already. Returns the session, for [end].
+     */
+    fun receive(sources: List<Source>): Int {
+        val open = open()
+        for (source in sources) {
+            if (entries.none { it.source == source }) entries += Entry(source)
+        }
+        next()
+        changed()
+        return open
+    }
+
+    /** A share of more pictures than [PictureLimits.MAX_SHARED]: none is added, and the session says so. Returns the session, for [end]. */
+    fun refuse(): Int {
+        val open = open()
+        refused = true
+        changed()
+        return open
+    }
+
+    /**
+     * Ends [session], if it's still the one open: the picture being added and those after it are
+     * cancelled, never added; those added stay in the library. Nothing happens to another
+     * session.
+     */
+    fun end(session: Int) {
+        if (session == 0 || session != this.session) return
+        adding?.cancel()
+        adding = null
+        entries.clear()
+        refused = false
+        this.session = 0
+        changed()
+    }
+
+    /** Calls [listener] on the main thread whenever the session changes: a picture's answer, more received, its end. */
+    fun addListener(listener: () -> Unit) {
+        listeners += listener
+    }
+
+    fun removeListener(listener: () -> Unit) {
+        listeners -= listener
+    }
+
+    private fun open(): Int {
+        if (session == 0) session = ++sessions
+        return session
+    }
+
+    /**
+     * Starts adding the first picture without an answer, unless one is being added. An import that
+     * answers at once (a fake's) goes on to the next in the loop, rather than nesting a call per
+     * picture.
+     */
+    private fun next() {
+        while (adding == null) {
+            val entry = entries.firstOrNull { it.result == null } ?: return
+            val started = session
+            var waiting = false
+            val handle = import.add(entry.source) { result ->
+                if (started != session) return@add
+                entry.result = result
+                if (!waiting) return@add
+                adding = null
+                next()
+                changed()
+            }
+            waiting = entry.result == null
+            if (waiting) adding = handle
+        }
+    }
+
+    private fun changed() = listeners.toList().forEach { it() }
+}

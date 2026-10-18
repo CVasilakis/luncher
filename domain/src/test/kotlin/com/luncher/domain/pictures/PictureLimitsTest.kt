@@ -18,4 +18,10 @@ class PictureLimitsTest {
         assertFalse(PictureLimits.allowsSize(8001, 8000))
         assertFalse(PictureLimits.allowsSize(100_000, 100_000))
     }
+
+    @Test
+    fun `takes shares of up to 100 pictures`() {
+        assertTrue(PictureLimits.allowsShare(100))
+        assertFalse(PictureLimits.allowsShare(101))
+    }
 }

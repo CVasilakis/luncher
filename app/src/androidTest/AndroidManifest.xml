@@ -9,6 +9,19 @@
             android:name="com.luncher.launcher.testing.SamplePictures"
             android:authorities="${applicationId}.samples"
             android:exported="true" />
+        <!-- Another app's pictures that only a grant opens, as a gallery's (GrantedPictures): not
+             exported, so a share must give, and Luncher pass on, the access to read them. -->
+        <provider
+            android:name="com.luncher.launcher.testing.GrantedPictures"
+            android:authorities="${applicationId}.granted"
+            android:exported="false"
+            android:grantUriPermissions="true" />
+        <!-- Another app's screen sending a share (ShareSender), as a gallery does. Exported: the
+             tests start it from the app's process. -->
+        <activity
+            android:name="com.luncher.launcher.testing.ShareSender"
+            android:exported="true"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
         <!-- Another app whose picture never comes (StalledPictures): it opens a stream it never
              sends on, or never answers the open. Exported, as SamplePictures. -->
         <provider

@@ -110,9 +110,31 @@
 
     <!-- The window over the home screen after another app shared a picture with Luncher: its
          title while the picture is added, then once it's in Luncher's pictures; below it, the
-         picture's name, and entries to use it (Background, settings_appearance_background). -->
+         picture's name, and entries to use it (Background, settings_appearance_background).
+         Several pictures shared: the strings that follow. -->
     <string name="settings_received_adding">Adding the picture…</string>
     <string name="settings_received_saved">Picture saved</string>
+    <!-- Its title while several pictures are added: which one of how many. -->
+    <string name="settings_received_adding_count">Adding picture <xliff:g id="number" example="3">%1$d</xliff:g> of <xliff:g id="total" example="10">%2$d</xliff:g>…</string>
+    <!-- Then, for several pictures, its title: how many are in Luncher's pictures (those it had
+         already count too). -->
+    <plurals name="settings_received_saved_count">
+        <item quantity="one"><xliff:g id="count" example="1">%d</xliff:g> picture saved</item>
+        <item quantity="other"><xliff:g id="count" example="9">%d</xliff:g> pictures saved</item>
+    </plurals>
+    <!-- Below that title, when some weren't added. -->
+    <plurals name="settings_received_not_added_count">
+        <item quantity="one"><xliff:g id="count" example="1">%d</xliff:g> picture wasn\'t added.</item>
+        <item quantity="other"><xliff:g id="count" example="2">%d</xliff:g> pictures weren\'t added.</item>
+    </plurals>
+    <!-- The title instead when none of them was added. -->
+    <string name="settings_received_none_added">The pictures weren\'t added</string>
+    <!-- Below it, when a share had more pictures than Luncher adds at a time: none of them was
+         added; %d is that most, 100. -->
+    <plurals name="settings_received_too_many">
+        <item quantity="one">Luncher adds up to <xliff:g id="most" example="1">%d</xliff:g> picture at a time. Share fewer and try again.</item>
+        <item quantity="other">Luncher adds up to <xliff:g id="most" example="100">%d</xliff:g> pictures at a time. Share fewer and try again.</item>
+    </plurals>
 
     <!-- The picture screens: the background editor's pictures, Add from folder, and why a picture
          wasn't added. -->
@@ -144,8 +166,8 @@
     <string name="settings_pictures_delete_question">Delete <xliff:g id="name" example="beach.png">%1$s</xliff:g>?</string>
     <!-- Below that question: what deleting it does and doesn't do. -->
     <string name="settings_pictures_delete_text">Luncher deletes its own copy; the file you added it from stays.</string>
-    <!-- The answer that changes nothing; also, in the window after another app shared a
-         picture, the entry that stops adding it. -->
+    <!-- The answer that changes nothing; also, in the window after another app shared
+         pictures, the entry that stops adding them. -->
     <string name="settings_pictures_cancel">Cancel</string>
     <!-- The answer to a message. -->
     <string name="settings_pictures_ok">OK</string>

@@ -151,24 +151,40 @@ cold, and the test ends on the settled home screen.
 
 The picture library's tests add pictures as another app shares them (`PictureShareTest` in
 `system/`, `PictureFormatsTest` in `pictures/`), or from a drop folder (`BackgroundActivityTest` in
-`settings/`). The shares go through `SamplePictures` (`testing/`), a content provider of the test
-package serving the sample files of `app/src/androidTest/assets/pictures/`. It runs in the test
-package's own process, which has no Kotlin standard library (the test APK leaves out what the app
-under test has), so it's written in Java. It's exported: the shares are sent from the app's own
-process, which the instrumentation runs in, and couldn't grant access to another package's
-provider. The tests add into folders of their own (`FilesPictures` and `MediaFolderPictures` take
-them as parameters): a library of their own, and a folder of their own inside the drop folder,
-never the device's library or the files in its drop folder; they delete them after. A share that
-Luncher may read but not pass on (a picture of the device's media store, which Luncher has no
-access to) is sent as "Set as" (`ATTACH_DATA`): Android adds a read grant to a Share's stream
-itself, which the test's sender couldn't give. `StalledPictures`, another provider of the test
-package, in Java for the same reason, is an app whose picture never comes: it opens a stream it
-never sends on (`silent`), after which Luncher says it can't read it once its time limit has
-passed (15 s), or it never answers the open (`unopened`), which Cancel leaves; the next share is
-then added, as nothing waits behind the stuck call. The shares are sent to a task of their own
-(`NEW_TASK`), from the app's process, so two alike in a row also check that the second isn't
-taken for the first one's task ([`SharePictureActivity`'s affinity](../feature/settings/README.md#manifest)).
-While the window adds a picture, its wheel spins, so the tests look at it with UI Automator
+`settings/`). The tests add into folders of their own (`FilesPictures` and `MediaFolderPictures`
+take them as parameters): a library of their own, and a folder of their own inside the drop
+folder, never the device's library or the files in its drop folder; they delete them after.
+
+Another app is played by the test package itself, in `testing/`:
+
+| Part | What it is |
+|---|---|
+| `SamplePictures` | a content provider serving the sample files of `app/src/androidTest/assets/pictures/`, exported |
+| `GrantedPictures` | the same samples, from a provider that isn't exported, as a gallery's: only the read access a share gives opens them |
+| `StalledPictures` | an app whose picture never comes: it opens a stream it never sends on (`silent`), or never answers the open (`unopened`); exported |
+| `ShareSender` | another app's screen sending a `SEND_MULTIPLE` of the pictures it's given, as a gallery does; exported |
+
+They run in the test package's own process, which has no Kotlin standard library (the test APK
+leaves out what the app under test has), so they're written in Java.
+
+Most shares are sent from the app's own process, which the instrumentation runs in, to a task of
+their own (`NEW_TASK`): that process couldn't grant access to another package's provider, which
+is why `SamplePictures` and `StalledPictures` are exported. Sent that way, two alike in a row also
+check that the second isn't taken for the first one's task
+([`SharePictureActivity`'s affinity](../feature/settings/README.md#manifest)). A share with the
+access to pictures only a grant opens comes from `ShareSender`, from the test package's process,
+where Android adds the read access to each picture of the stream as it sends it; Luncher must pass
+that access on to its window. `ShareSender` makes the share itself, as Android adds the access
+only to a share whose extras it can still read as it sends it, not one passed in packed as an
+extra; and it stays until it's covered, as a gallery does, because a task emptied while in front
+returns to the home app on API 24, over Luncher's window. A share Luncher may read but not pass on
+(a picture of the device's media store, which Luncher has no access to) is sent as "Set as"
+(`ATTACH_DATA`), to which Android adds no grant of its own.
+
+With `StalledPictures`, Luncher says it can't read a `silent` picture once its time limit has
+passed (15 s); Cancel leaves an `unopened` one, and the next share is then added, as nothing waits
+behind the stuck call; a share sent while one is stuck joins its window, which then says how both
+went. While the window adds a picture, its wheel spins, so the tests look at it with UI Automator
 ([above](#look-with-ui-automator-while-a-screen-animates)).
 
 A share opens Luncher's home screen, in a task of its own, with the window over it, though Luncher

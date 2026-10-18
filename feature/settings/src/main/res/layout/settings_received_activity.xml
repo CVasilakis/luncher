@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The window over the home screen after another app shared a picture: like the settings panel,
-     a title, after a spinning wheel while the picture is added; the picture's name or why it
-     wasn't added; and the entries. -->
+<!-- The window over the home screen after another app shared pictures: like the settings panel,
+     a title, after a spinning wheel while they're added; then, for one picture, its name or why
+     it wasn't added, for several, how many weren't; and the entries. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/settings_received_panel"
     android:layout_width="@dimen/settings_panel_width"
@@ -33,8 +33,9 @@
             android:textSize="@dimen/settings_title_text" />
     </LinearLayout>
 
-    <!-- The picture's name, the user's, which may end in "…"; or why it wasn't added, whole.
-         Gone while the picture is added. -->
+    <!-- The picture's name, the user's, which may end in "…"; or why it wasn't added, whole; for
+         several, how many weren't added, and whether a share had too many. Gone while they're
+         added. -->
     <TextView
         android:id="@+id/settings_received_text"
         android:layout_width="match_parent"
@@ -45,8 +46,8 @@
         android:textColor="@color/text_secondary"
         android:textSize="@dimen/settings_pictures_small_text" />
 
-    <!-- PictureReceivedActivity adds the entries: Cancel while the picture is added; then a use
-         for each of pictureUseMenu, or OK. -->
+    <!-- PictureReceivedActivity adds the entries: Cancel while the pictures are added; then, for
+         one saved, a use for each of pictureUseMenu; else OK. -->
     <LinearLayout
         android:id="@+id/settings_received_entries"
         android:layout_width="match_parent"

@@ -58,9 +58,11 @@ class SharePictureActivityTest {
 
     private fun assertPassesThePicture(started: Intent) {
         assertEquals(PictureReceivedActivity::class.java.name, started.component?.className)
-        assertEquals(picture, started.data)
-        assertTrue("the read access passed on", started.flags and Intent.FLAG_GRANT_READ_URI_PERMISSION != 0)
+        assertEquals(listOf(picture), pictures(started))
     }
+
+    @Suppress("DEPRECATION")
+    private fun pictures(started: Intent): List<Uri>? = started.getParcelableArrayListExtra(PictureReceivedActivity.EXTRA_PICTURES)
 
     @Test
     fun `opens the home screen, and over it the window with the picture and the access to read it`() {
@@ -86,7 +88,7 @@ class SharePictureActivityTest {
             val started = send(intent)
 
             assertEquals(PictureReceivedActivity::class.java.name, started.component?.className)
-            assertNull(started.data)
+            assertNull(pictures(started))
             assertTrue(started.getBooleanExtra(PictureReceivedActivity.EXTRA_NOTHING_READABLE, false))
             assertFalse(started.flags and Intent.FLAG_GRANT_READ_URI_PERMISSION != 0)
         }
@@ -95,6 +97,92 @@ class SharePictureActivityTest {
     @Test
     fun `without an entry in the TV's app list, opens the window alone`() {
         shadowOf(context.packageManager).removeActivity(home)
+
+        val started = started(Intent(Intent.ACTION_SEND).setType("image/jpeg").putExtra(Intent.EXTRA_STREAM, picture)).single()
+
+        assertPassesThePicture(started)
+        assertTrue(started.flags and Intent.FLAG_ACTIVITY_NEW_TASK != 0)
+    }
+
+    private val more = listOf("beach.jpg", "forest.jpg").map { Uri.parse("content://com.example.files/$it") }
+
+    @Test
+    fun `passes every picture of a share of several, in order, with the access to each`() {
+        val intent = Intent(Intent.ACTION_SEND_MULTIPLE).setType("image/*").putParcelableArrayListExtra(Intent.EXTRA_STREAM, arrayListOf(picture, *more.toTypedArray()))
+
+        val started = send(intent)
+
+        assertEquals(listOf(picture) + more, pictures(started))
+        assertEquals(3, started.clipData?.itemCount)
+        assertTrue(started.flags and Intent.FLAG_GRANT_READ_URI_PERMISSION != 0)
+    }
+
+    @Test
+    fun `takes a share of several from its clip when the stream extra isn't there`() {
+        val intent = Intent(Intent.ACTION_SEND_MULTIPLE).setType("image/*")
+        intent.clipData = ClipData.newRawUri("", picture).apply { more.forEach { addItem(ClipData.Item(it)) } }
+
+        assertEquals(listOf(picture) + more, pictures(send(intent)))
+    }
+
+    @Test
+    fun `takes every picture of a Share's clip, as an app may send several that way`() {
+        val intent = Intent(Intent.ACTION_SEND).setType("image/*")
+        intent.clipData = ClipData.newRawUri("", picture).apply { more.forEach { addItem(ClipData.Item(it)) } }
+
+        assertEquals(listOf(picture) + more, pictures(send(intent)))
+    }
+
+    @Test
+    fun `passes a picture shared twice once`() {
+        val intent = Intent(Intent.ACTION_SEND_MULTIPLE).setType("image/*").putParcelableArrayListExtra(Intent.EXTRA_STREAM, arrayListOf(picture, more[0], picture))
+
+        assertEquals(listOf(picture, more[0]), pictures(send(intent)))
+    }
+
+    @Test
+    fun `passes a share of a hundred pictures`() {
+        val hundred = (1..100).map { Uri.parse("content://com.example.files/$it.jpg") }
+
+        assertEquals(hundred, pictures(send(Intent(Intent.ACTION_SEND_MULTIPLE).setType("image/*").putParcelableArrayListExtra(Intent.EXTRA_STREAM, ArrayList(hundred)))))
+    }
+
+    @Test
+    fun `passes none of a share of more than a hundred pictures, and has the window say so`() {
+        val more = (1..101).map { Uri.parse("content://com.example.files/$it.jpg") }
+
+        val started = send(Intent(Intent.ACTION_SEND_MULTIPLE).setType("image/*").putParcelableArrayListExtra(Intent.EXTRA_STREAM, ArrayList(more)))
+
+        assertTrue(started.getBooleanExtra(PictureReceivedActivity.EXTRA_TOO_MANY, false))
+        assertNull(pictures(started))
+        assertNull(started.clipData)
+    }
+
+    @Test
+    fun `with a single Uri where a share of several has a list, takes the clip`() {
+        val intent = Intent(Intent.ACTION_SEND_MULTIPLE).setType("image/*").putExtra(Intent.EXTRA_STREAM, picture)
+        intent.clipData = ClipData.newRawUri("", picture)
+
+        assertEquals(listOf(picture), pictures(send(intent)))
+    }
+
+    // Robolectric's activity manager says every Uri is granted, so a picture Luncher was given no
+    // access to is checked on a device (PictureShareTest).
+    @Test
+    fun `passes on the read access to a picture Luncher was given access to, in the clip`() {
+        context.grantUriPermission(context.packageName, picture, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+
+        val started = send(Intent(Intent.ACTION_SEND).setType("image/jpeg").putExtra(Intent.EXTRA_STREAM, picture))
+
+        assertEquals(picture, started.clipData?.getItemAt(0)?.uri)
+        assertTrue(started.flags and Intent.FLAG_GRANT_READ_URI_PERMISSION != 0)
+    }
+
+    @Test
+    fun `while a window adds pictures, sends the window only, so the share joins them rather than closing it`() {
+        val graph = TestPicturesGraph().also { (context as SettingsTestApplication).graph = it }
+        graph.library.answerLater = true
+        graph.receivedPictures.receive(listOf(Uri.parse("content://com.example.files/first.jpg")))
 
         val started = started(Intent(Intent.ACTION_SEND).setType("image/jpeg").putExtra(Intent.EXTRA_STREAM, picture)).single()
 

@@ -164,7 +164,7 @@ class BackgroundLayoutTest(private val screen: TvScreen) {
     /** The window after a share of [shared], which adds as [result]. */
     private fun received(shared: Uri, result: ImportResult): Activity {
         application.graph = TestPicturesGraph(FakePictures(results = mutableMapOf(shared to result)))
-        val activity = Robolectric.buildActivity(PictureReceivedActivity::class.java, android.content.Intent().setData(shared)).setup().get()
+        val activity = Robolectric.buildActivity(PictureReceivedActivity::class.java, android.content.Intent().putParcelableArrayListExtra(PictureReceivedActivity.EXTRA_PICTURES, arrayListOf(shared))).setup().get()
         idle()
         return activity
     }
@@ -173,18 +173,55 @@ class BackgroundLayoutTest(private val screen: TvScreen) {
     fun `the window after a share fits, the picture saved or not`() {
         val shared = Uri.parse("content://com.example/x")
         for (result in listOf(ImportResult.Added(library.first()), ImportResult.Unreadable, ImportResult.TooLarge)) {
-            val activity = received(shared, result)
-            val panel = activity.findViewById<View>(R.id.settings_received_panel)
-            val metrics = activity.resources.displayMetrics
-            val margin = activity.resources.getDimensionPixelSize(R.dimen.settings_panel_margin)
-            assertTrue(
-                "window ${panel.width} x ${panel.height} on $screen, ${metrics.widthPixels} x ${metrics.heightPixels} less $margin around",
-                panel.width <= metrics.widthPixels - 2 * margin && panel.height <= metrics.heightPixels - 2 * margin,
-            )
-            assertWhole(screen, activity.findViewById(R.id.settings_received_title))
-            if (result !is ImportResult.Added) assertWhole(screen, activity.findViewById(R.id.settings_received_text))
-            for (entry in activity.children(R.id.settings_received_entries)) assertWhole(screen, entry as TextView)
+            assertWindowFits(received(shared, result), text = result !is ImportResult.Added)
         }
+    }
+
+    /**
+     * The window after a share of four pictures, the last not a picture: while the second is
+     * added, with [adding]; else once all have their answer.
+     */
+    private fun receivedFour(adding: Boolean): Activity {
+        val shared = (1..4).map { Uri.parse("content://com.example/$it") }
+        val results = mutableMapOf<Uri, ImportResult>(
+            shared[0] to ImportResult.Added(library[0]),
+            shared[1] to ImportResult.AlreadyThere(library[0]),
+            shared[2] to ImportResult.Added(library[1]),
+        )
+        val fake = FakePictures(results = results).apply { answerLater = adding }
+        application.graph = TestPicturesGraph(fake)
+        val activity = Robolectric.buildActivity(PictureReceivedActivity::class.java, android.content.Intent().putParcelableArrayListExtra(PictureReceivedActivity.EXTRA_PICTURES, ArrayList(shared))).setup().get()
+        if (adding) fake.finishAdding()
+        idle()
+        return activity
+    }
+
+    @Test
+    fun `the window after a share of several pictures fits, while they're added and after`() {
+        assertWindowFits(receivedFour(adding = true), text = false)
+        assertWindowFits(receivedFour(adding = false), text = true)
+    }
+
+    @Test
+    fun `the window after a share of too many pictures fits`() {
+        application.graph = TestPicturesGraph()
+        val activity = Robolectric.buildActivity(PictureReceivedActivity::class.java, android.content.Intent().putExtra(PictureReceivedActivity.EXTRA_TOO_MANY, true)).setup().get()
+        idle()
+        assertWindowFits(activity, text = true)
+    }
+
+    /** The window a margin from the screen's edges, its title, its [text] if it shows one, and its entries whole. */
+    private fun assertWindowFits(activity: Activity, text: Boolean) {
+        val panel = activity.findViewById<View>(R.id.settings_received_panel)
+        val metrics = activity.resources.displayMetrics
+        val margin = activity.resources.getDimensionPixelSize(R.dimen.settings_panel_margin)
+        assertTrue(
+            "window ${panel.width} x ${panel.height} on $screen, ${metrics.widthPixels} x ${metrics.heightPixels} less $margin around",
+            panel.width <= metrics.widthPixels - 2 * margin && panel.height <= metrics.heightPixels - 2 * margin,
+        )
+        assertWhole(screen, activity.findViewById(R.id.settings_received_title))
+        if (text) assertWhole(screen, activity.findViewById(R.id.settings_received_text))
+        for (entry in activity.children(R.id.settings_received_entries)) assertWhole(screen, entry as TextView)
     }
 
     /** The dialog showing: a margin from the screen's edges, its texts whole. */

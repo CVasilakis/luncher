@@ -33,10 +33,10 @@ class PictureReceivedActivityTest {
     private val holiday = picture("holiday.jpg", added = 9)
     private val library = FakePictures<Uri>().also { application.graph = TestPicturesGraph(it) }
 
-    private fun receive(intent: Intent = Intent().setData(shared)): PictureReceivedActivity = window(intent).get()
+    private fun receive(intent: Intent = Intent().putParcelableArrayListExtra(PictureReceivedActivity.EXTRA_PICTURES, arrayListOf(shared))): PictureReceivedActivity = window(intent).get()
 
     /** The window, shown, to close as the test says. */
-    private fun window(intent: Intent = Intent().setData(shared)): ActivityController<PictureReceivedActivity> {
+    private fun window(intent: Intent = Intent().putParcelableArrayListExtra(PictureReceivedActivity.EXTRA_PICTURES, arrayListOf(shared))): ActivityController<PictureReceivedActivity> {
         val window = Robolectric.buildActivity(PictureReceivedActivity::class.java, intent).setup()
         shadowOf(Looper.getMainLooper()).idle()
         return window
@@ -172,5 +172,137 @@ class PictureReceivedActivityTest {
         activity.onBackPressed()
 
         assertTrue(activity.isFinishing)
+    }
+
+    private val beach = Uri.parse("content://com.example.files/beach.jpg")
+    private val forest = Uri.parse("content://com.example.files/forest.jpg")
+
+    /** A share of [pictures], as SharePictureActivity sends it. */
+    private fun share(vararg pictures: Uri) = Intent().putParcelableArrayListExtra(PictureReceivedActivity.EXTRA_PICTURES, arrayListOf(*pictures))
+
+    @Test
+    fun `adding several pictures says which one of how many, with Cancel, focused`() {
+        library.answerLater = true
+
+        val activity = receive(share(shared, beach, forest))
+
+        assertEquals("Adding picture 1 of 3…", activity.title())
+        assertTrue(activity.spinning())
+        assertEquals(listOf("Cancel"), activity.entries().map { it.text.toString() })
+        library.finishAdding()
+        assertEquals("Adding picture 2 of 3…", activity.title())
+        assertTrue(activity.entries().single().isFocused)
+    }
+
+    @Test
+    fun `once several are added, says how many were saved and how many weren't, and only OK`() {
+        library.results[shared] = ImportResult.Added(holiday)
+        library.results[beach] = ImportResult.AlreadyThere(holiday)
+
+        val activity = receive(share(shared, beach, forest))
+
+        assertEquals("2 pictures saved", activity.title())
+        assertEquals("1 picture wasn't added.", activity.text())
+        assertEquals(listOf("OK"), activity.entries().map { it.text.toString() })
+        assertTrue(activity.entries().single().isFocused)
+    }
+
+    @Test
+    fun `when none of several was added, says so in the title alone`() {
+        val activity = receive(share(shared, beach))
+
+        assertEquals("The pictures weren't added", activity.title())
+        assertEquals(View.GONE, activity.findViewById<View>(R.id.settings_received_text).visibility)
+    }
+
+    @Test
+    fun `OK after several closes the window, the pictures in the library`() {
+        library.results[shared] = ImportResult.Added(holiday)
+        val window = window(share(shared, beach))
+
+        window.get().entries().single().performClick()
+
+        assertTrue(window.get().isFinishing)
+        assertEquals(listOf(holiday), library.pictures)
+        assertEquals(0, application.graph.receivedPictures.session)
+    }
+
+    @Test
+    fun `a share that arrives while it adds joins the pictures being added`() {
+        library.answerLater = true
+        val window = window(share(shared, beach))
+
+        window.newIntent(share(forest))
+
+        assertEquals("Adding picture 1 of 3…", window.get().title())
+        repeat(3) { library.finishAdding() }
+        assertEquals(listOf(shared, beach, forest), library.added)
+    }
+
+    @Test
+    fun `Cancel while several are added keeps those saved and adds no more`() {
+        library.results[shared] = ImportResult.Added(holiday)
+        library.answerLater = true
+        val window = window(share(shared, beach, forest))
+        library.finishAdding()
+
+        window.get().entries().single().performClick()
+
+        assertTrue(window.get().isFinishing)
+        assertEquals(listOf(beach), library.cancelled)
+        assertEquals(listOf(shared, beach), library.added)
+        assertEquals(listOf(holiday), library.pictures)
+    }
+
+    @Test
+    fun `made anew by a configuration change, the window goes on where it was, adding nothing twice`() {
+        library.results[shared] = ImportResult.Added(holiday)
+        library.answerLater = true
+        val window = window(share(shared, beach))
+        library.finishAdding()
+
+        window.recreate()
+        shadowOf(Looper.getMainLooper()).idle()
+
+        assertEquals("Adding picture 2 of 2…", window.get().title())
+        assertEquals(listOf(shared, beach), library.added)
+        assertEquals(emptyList<Uri>(), library.cancelled)
+    }
+
+    @Test
+    fun `closed by Android, as Home does while Luncher is the home app, it stops the pictures still to add`() {
+        library.answerLater = true
+        val window = window(share(shared, beach))
+
+        window.pause().stop().destroy()
+
+        assertEquals(listOf(shared), library.cancelled)
+        assertEquals(0, application.graph.receivedPictures.session)
+    }
+
+    private val tooMany = Intent().putExtra(PictureReceivedActivity.EXTRA_TOO_MANY, true)
+
+    @Test
+    fun `a share of too many pictures says Luncher adds up to a hundred at a time, adding none`() {
+        val activity = receive(tooMany)
+
+        assertEquals("The pictures weren't added", activity.title())
+        assertEquals("Luncher adds up to 100 pictures at a time. Share fewer and try again.", activity.text())
+        assertEquals(listOf("OK"), activity.entries().map { it.text.toString() })
+        assertEquals(emptyList<Uri>(), library.added)
+    }
+
+    @Test
+    fun `a share of too many pictures while others are added says so at the end`() {
+        library.results[shared] = ImportResult.Added(holiday)
+        library.answerLater = true
+        val window = window(share(shared))
+
+        window.newIntent(tooMany)
+        assertEquals("Adding the picture…", window.get().title())
+        library.finishAdding()
+
+        assertEquals("1 picture saved", window.get().title())
+        assertEquals("Luncher adds up to 100 pictures at a time. Share fewer and try again.", window.get().text())
     }
 }

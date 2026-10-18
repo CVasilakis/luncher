@@ -111,7 +111,7 @@ class BackgroundScreenshotTest {
     private fun received(shared: Uri, result: ImportResult?) {
         val graph = TestPicturesGraph(FakePictures(*library)).also { application.graph = it }
         if (result != null) graph.library.results[shared] = result else graph.library.answerLater = true
-        Robolectric.buildActivity(PictureReceivedActivity::class.java, Intent().setData(shared)).setup()
+        Robolectric.buildActivity(PictureReceivedActivity::class.java, Intent().putParcelableArrayListExtra(PictureReceivedActivity.EXTRA_PICTURES, arrayListOf(shared))).setup()
         idle()
     }
 
@@ -128,6 +128,33 @@ class BackgroundScreenshotTest {
     fun pictureReceivedAdding() {
         received(Uri.parse("content://com.example.files/holiday.jpg"), null)
         captureScreenRoboImage("src/test/screenshots/settings/settings_received_adding.png")
+    }
+
+    /** The window after a share of four photos, the last not a picture, the second being added with [adding]. */
+    private fun receivedFour(adding: Boolean) {
+        val shared = (1..4).map { Uri.parse("content://com.example.files/IMG_000$it.jpg") }
+        val graph = TestPicturesGraph(FakePictures(*library)).also { application.graph = it }
+        graph.library.results[shared[0]] = ImportResult.Added(picture("IMG_0001.jpg", added = 9))
+        graph.library.results[shared[1]] = ImportResult.AlreadyThere(library[0])
+        graph.library.results[shared[2]] = ImportResult.Added(picture("IMG_0003.jpg", added = 10))
+        graph.library.answerLater = adding
+        Robolectric.buildActivity(PictureReceivedActivity::class.java, Intent().putParcelableArrayListExtra(PictureReceivedActivity.EXTRA_PICTURES, ArrayList(shared))).setup()
+        if (adding) graph.library.finishAdding()
+        idle()
+    }
+
+    // Four photos shared at once, the second being added.
+    @Test
+    fun picturesReceivedAdding() {
+        receivedFour(adding = true)
+        captureScreenRoboImage("src/test/screenshots/settings/settings_received_several_adding.png")
+    }
+
+    // Four photos shared at once, one of them not a picture: how many were saved, and how many not.
+    @Test
+    fun picturesReceived() {
+        receivedFour(adding = false)
+        captureScreenRoboImage("src/test/screenshots/settings/settings_received_several.png")
     }
 
     // A shared iPhone photo on a TV that can't show HEIC.
