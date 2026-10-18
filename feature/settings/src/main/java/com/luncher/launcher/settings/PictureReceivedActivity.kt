@@ -35,11 +35,15 @@ import com.luncher.domain.pictures.pictureUseMenu
  * still to add cancelled, those added staying in the library; so does Android closing it
  * ([onDestroy]: Home, while Luncher is the home app, as the home screen clears its task), so no
  * picture is added for a window that's gone, nor read once its access, given to the window, has
- * gone with it. A configuration change doesn't: the window made anew finds the session where it
- * was. Only the window that took the session last ends it ([hold]): on API 29, Android closes
- * Luncher's task when another app's opens, and a share arriving then opens a new window over the
- * home screen, which takes the session over ([EXTRA_TAKE_OVER]), while the old one is destroyed
- * only later.
+ * gone with it. So does Home where Android leaves the window alive behind the home screen (on API
+ * 24 to 27 while Luncher is the home app, where the window has a task of its own, and whenever
+ * another app is the home app): the window closes once it's out of sight after the user chose
+ * to leave it ([onUserLeaveHint], [onStop]). Out of sight for another reason, as when the TV
+ * sleeps, it goes on. A configuration change doesn't end it: the window made anew finds the
+ * session where it was. Only the window that took the session last ends it ([hold]): on API 29,
+ * Android closes Luncher's task when another app's opens, and a share arriving then opens a new
+ * window over the home screen, which takes the session over ([EXTRA_TAKE_OVER]), while the old
+ * one is destroyed only later.
  */
 class PictureReceivedActivity : Activity() {
 
@@ -59,6 +63,9 @@ class PictureReceivedActivity : Activity() {
 
     /** Whether the share had no picture Luncher could read, which the window says, with no hold. */
     private var unreadable = false
+
+    /** Whether the user chose to leave the window ([onUserLeaveHint]) since it was last in front: out of sight then, it closes. */
+    private var leaving = false
 
     /** Whether the entries show Cancel, while the pictures are added: only the title changes then. */
     private var cancelShown = false
@@ -95,6 +102,24 @@ class PictureReceivedActivity : Activity() {
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
         outState.putInt(STATE_HOLD, hold)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        leaving = false
+    }
+
+    // Home, or another screen the user opened. Android says so too as a share arrives over the
+    // window, which stays in sight (the share screen shows nothing) and gets it: only once out of
+    // sight, in onStop, has the user left it.
+    override fun onUserLeaveHint() {
+        super.onUserLeaveHint()
+        leaving = true
+    }
+
+    override fun onStop() {
+        super.onStop()
+        if (leaving && !isFinishing && !isChangingConfigurations) finish()
     }
 
     override fun finish() {

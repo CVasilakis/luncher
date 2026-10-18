@@ -48,6 +48,7 @@ import org.hamcrest.Matcher
 import org.hamcrest.Matchers.allOf
 import org.hamcrest.Matchers.containsString
 import org.junit.After
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Before
 import org.junit.Rule
@@ -291,6 +292,32 @@ class PictureShareTest {
         press(KeyEvent.KEYCODE_DPAD_CENTER)
 
         waitForFocus(HomeActivity::class.java)
+    }
+
+    // Home while the window adds another app's picture, which never opens, and a sample after it:
+    // the window, left for the stock launcher (the home app while the tests run), stops the
+    // adding as Cancel does, so the sample is never added, not even once the first picture has
+    // given up (the library's time limit). Android leaves the window alive there, in the
+    // background, unlike while Luncher is the home app, where Home closes it.
+    @Test
+    fun home_whileAdding_stopsThePicturesStillToAdd() {
+        share(
+            Intent(Intent.ACTION_SEND).setType("image/jpeg")
+                .putExtra(Intent.EXTRA_STREAM, StalledPictures.unopened("cloud.jpg"))
+                .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION),
+        )
+        waitForFocus(PictureReceivedActivity::class.java)
+        waitUntilSeen(application.getString(R.string.settings_pictures_cancel), focused = true)
+        shareSample("progressive.jpg")
+        waitUntilSeen(application.getString(R.string.settings_received_adding_count, 1, 2))
+
+        UiDevice.getInstance(InstrumentationRegistry.getInstrumentation()).pressHome()
+        waitForHomeScreen()
+        SystemClock.sleep(STALLED_TIMEOUT_MS)
+
+        var added = emptyList<String>()
+        InstrumentationRegistry.getInstrumentation().runOnMainSync { added = application.graph.pictures.read().map { it.name } }
+        assertEquals(emptyList<String>(), added)
     }
 
     // Two shares alike in a row (a SEND of the same type), each sent to a task of its own, as

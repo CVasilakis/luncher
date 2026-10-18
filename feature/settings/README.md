@@ -259,14 +259,13 @@ own, over it. Otherwise the home screen is opened as the TV's app list opens Lun
 intent Android gives for its `LEANBACK_LAUNCHER` entry (`getLeanbackLaunchIntentForPackage`), so
 it's Luncher's whether or not it's the device's home app. Not a `HOME` intent then, which makes the
 task a home screen's: once closed, Android shows the device's home app, and up to Android 5.1, with
-no default, asks which one. Either way this feature needs nothing of `:feature:home`'s, and the
-window opens in the home screen's task, but on API 24 to 27 as the home app. Which home app is the
-default can be told from API 30 on only with every home app visible ([Manifest](#manifest)).
+no default, asks which one. Either way this feature needs nothing of `:feature:home`'s. Which
+home app is the default can be told from API 30 on only with every home app visible
+([Manifest](#manifest)).
 
-`SharePictureActivity` itself has no task affinity, and it sends the
-window, as the home screen, to Luncher's task by its affinity: a share sent to a task of its own
-opens in one that's gone as it finishes, so it never leaves a task the next share would be taken
-for ([Manifest](#manifest)).
+`SharePictureActivity` itself has no task affinity, and it sends the window, as the home screen,
+to Luncher's task by its affinity: a share sent to a task of its own opens in one that's gone as
+it finishes, so it never leaves a task the next share would be taken for ([Manifest](#manifest)).
 
 A share of more than 100 pictures (`PictureLimits.MAX_SHARED`) passes none: the window says
 Luncher adds up to 100 at a time, so the user shares again the ones they want. The total is known
@@ -286,16 +285,20 @@ the library has already (the same content) counts as saved.
 A share that arrives while the window shows joins it: `SharePictureActivity` then sends the window
 alone, without the home screen, which would close it (`singleTask`), and the window, `singleTop`,
 gets it in `onNewIntent`; its pictures are added after the others, and the end says how all of
-them went. Back closes the window, the pictures added in the library. While they're added, Cancel
-and Back close it and stop the adding, those still to add not added. Closing it any way ends the
-session (`finish`), and so does Android closing it (`onDestroy`): while Luncher is the home app,
-Home clears the home screen's task, the window with it (measured on API 23 and 28 to 36; on API 24
-to 27 the window has a task of its own, which Home leaves behind, the window going on). So no
-picture is added for a window that's gone, nor read without the access that went with it: Android
-ends the access another app gave with the activity that received it. A configuration change
-doesn't end it: the window made anew finds the session where it was, nothing added twice. An app
-that stops sending a picture gets the message that Luncher can't read it, after the library's
-time limit ([`platform/README.md`](../../platform/README.md#another-apps-answers)).
+them went. Back closes the window, the pictures added in the library. While they're added, Cancel,
+Back and Home close it and stop the adding, those still to add not added. Closing it any way ends
+the session (`finish`), and so does Android closing it (`onDestroy`): while Luncher is the home
+app, Home clears the home screen's task, the window with it (measured on API 23 and 28 to 36).
+Where Android leaves the window alive behind the home screen instead, on API 24 to 27 as the home
+app (the window has a task of its own) and whenever another app is the home app, the window
+closes itself once it's out of sight after the user chose to leave it (`onUserLeaveHint`, then
+`onStop`). Not on the hint alone: Android gives it too as a share arrives over the window, which
+stays in sight, as the share screen shows nothing, and gets that share. Out of sight for another
+reason, as when the TV sleeps, the window goes on. So no picture is added for a window the user
+left, nor read without the access that went with it: Android ends the access another app gave
+with the activity that received it. A configuration change doesn't end the session: the window
+made anew finds it where it was, nothing added twice. An app that stops sending a picture gets
+the message that Luncher can't read it, after the library's time limit ([`platform/README.md`](../../platform/README.md#another-apps-answers)).
 
 Only the window that took the session last ends it (its hold, `ReceivedPictures.holder`). On
 API 29, while Luncher isn't the home app, Android closes Luncher's task, the home screen and the

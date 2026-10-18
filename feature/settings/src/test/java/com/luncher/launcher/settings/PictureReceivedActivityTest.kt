@@ -280,6 +280,48 @@ class PictureReceivedActivityTest {
         assertEquals(0, application.graph.receivedPictures.session)
     }
 
+    @Test
+    fun `Home while it adds closes the window, keeping the pictures saved and adding no more`() {
+        library.results[shared] = ImportResult.Added(holiday)
+        library.answerLater = true
+        val window = window(share(shared, beach, forest))
+        library.finishAdding()
+
+        window.userLeaving().pause().stop()
+
+        assertTrue(window.get().isFinishing)
+        assertEquals(listOf(beach), library.cancelled)
+        assertEquals(listOf(holiday), library.pictures)
+        assertEquals(0, application.graph.receivedPictures.session)
+    }
+
+    // Android tells the window the user leaves it as the share screen starts over it, though it shows nothing.
+    @Test
+    fun `a share that arrives over the window joins it, though Android says the user leaves it`() {
+        library.answerLater = true
+        val window = window(share(shared))
+
+        window.userLeaving().pause().newIntent(share(beach)).resume()
+
+        assertFalse(window.get().isFinishing)
+        assertEquals("Adding picture 1 of 2…", window.get().title())
+        assertEquals(emptyList<Uri>(), library.cancelled)
+    }
+
+    @Test
+    fun `out of sight without the user leaving it, as when the TV sleeps, it goes on adding`() {
+        library.answerLater = true
+        val window = window(share(shared, beach))
+        window.userLeaving().pause().resume()
+
+        window.pause().stop()
+
+        assertFalse(window.get().isFinishing)
+        assertEquals(emptyList<Uri>(), library.cancelled)
+        library.finishAdding()
+        assertEquals(listOf(shared, beach), library.added)
+    }
+
     private val tooMany = Intent().putExtra(PictureReceivedActivity.EXTRA_TOO_MANY, true)
 
     @Test
