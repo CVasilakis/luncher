@@ -328,20 +328,20 @@ class BackgroundActivityTest {
     }
 
     @Test
-    fun `Add from folder opens the drop folders, and the picture it returns is added, chosen and focused`() {
+    fun `Add from folder opens the drop folders, and the picture it added is chosen and focused`() {
         val added = picture("holiday.jpg", added = 9)
-        val source = Uri.parse("file:///storage/emulated/0/Android/media/x/holiday.jpg")
         graph(sunset)
-        graph.library.results[source] = ImportResult.Added(added)
-        graph.library.answerLater = true
         val activity = start().get()
 
         activity.ok("Add from folder")
         assertEquals(AddFromFolderActivity::class.java.name, shadowOf(activity).nextStartedActivity.component?.className)
+        graph.library.pictures += added   // what Add from folder added
         @Suppress("DEPRECATION")
-        shadowOf(activity).receiveResult(Intent(activity, AddFromFolderActivity::class.java), Activity.RESULT_OK, Intent().setData(source))
-        assertEquals("Adding a picture…", activity.hint())
-        graph.library.finishAdding()
+        shadowOf(activity).receiveResult(
+            Intent(activity, AddFromFolderActivity::class.java),
+            Activity.RESULT_OK,
+            Intent().putExtra(AddFromFolderActivity.EXTRA_ADDED, added.id.value),
+        )
         idle()
 
         assertEquals(listOf("No picture", "holiday.jpg ✓", "sunset.jpg", "Add from folder"), activity.list())

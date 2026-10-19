@@ -3,7 +3,6 @@ package com.luncher.launcher.settings
 import android.app.Activity
 import android.content.Intent
 import android.graphics.drawable.ColorDrawable
-import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -20,7 +19,6 @@ import com.luncher.domain.jobs.LatestRequest
 import com.luncher.domain.pictures.Blur
 import com.luncher.domain.pictures.Fit
 import com.luncher.domain.pictures.Framing
-import com.luncher.domain.pictures.ImportResult
 import com.luncher.domain.pictures.Picture
 import com.luncher.domain.pictures.PictureId
 import com.luncher.domain.pictures.PictureLibrary
@@ -47,8 +45,8 @@ import com.luncher.launcher.ui.R as UiR
  * drawing it takes a moment (docs/ARCHITECTURE.md#appearance).
  *
  * A long press of OK on a picture asks to delete it, Cancel focused; deleting the wallpaper's says
- * the home screen goes back to its plain background, which it does at once. Add from folder adds
- * the picture [AddFromFolderActivity] returns and chooses it, or says why not ([whyNotAdded]).
+ * the home screen goes back to its plain background, which it does at once. Add from folder opens
+ * [AddFromFolderActivity], which adds a picture, and the editor chooses and focuses the one it returns.
  * Opened with a picture ([EXTRA_PICTURE], from the window after a share), it starts with that one
  * chosen, not saved.
  *
@@ -59,7 +57,6 @@ class BackgroundActivity : Activity() {
 
     private val settings by lazy { graph.appearanceSettings }
     private val pictures by lazy { graph.pictures }
-    private val pictureImport by lazy { graph.pictureImport }
     private val images by lazy { graph.pictureImages }
     private val wallpaper by lazy { graph.wallpaper }
     private val main = Handler(Looper.getMainLooper())
@@ -72,7 +69,6 @@ class BackgroundActivity : Activity() {
 
     private lateinit var preview: AppearancePreviewView
     private lateinit var list: LinearLayout
-    private lateinit var hint: TextView
     private lateinit var noneRow: View
     private lateinit var addRow: View
     private lateinit var howTo: TextView
@@ -87,9 +83,6 @@ class BackgroundActivity : Activity() {
     private var thumbnailWidth = 0
     private var thumbnailHeight = 0
 
-    /** How many pictures are being added. */
-    private var adding = 0
-
     /** The row to focus when the library shows next: a picture just added. */
     private var toFocus: PictureId? = null
     private var started = false
@@ -103,7 +96,6 @@ class BackgroundActivity : Activity() {
         setContentView(R.layout.settings_background_activity)
         preview = findViewById(R.id.settings_background_preview)
         list = findViewById(R.id.settings_background_list)
-        hint = findViewById(R.id.settings_background_hint)
         // Its width, or on a narrow screen half of it, so the preview keeps the other half.
         findViewById<View>(R.id.settings_background_end).layoutParams.width = minOf(
             resources.getDimensionPixelSize(R.dimen.settings_appearance_options_width),
@@ -192,8 +184,8 @@ class BackgroundActivity : Activity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         @Suppress("DEPRECATION")
         super.onActivityResult(requestCode, resultCode, data)
-        val chosen = data?.data
-        if (requestCode == ADD_FROM_FOLDER && resultCode == RESULT_OK && chosen != null) add(chosen)
+        val added = data?.getStringExtra(AddFromFolderActivity.EXTRA_ADDED)
+        if (requestCode == ADD_FROM_FOLDER && resultCode == RESULT_OK && added != null) chooseAdded(PictureId(added))
     }
 
     /** The stored appearance with the draft as its background: what the preview and the options show. */
@@ -228,7 +220,7 @@ class BackgroundActivity : Activity() {
         rows.keys.retainAll(ids)
         drawing.keys.filter { it !in ids }.forEach { drawing.remove(it)?.stop() }
         // A draft's picture deleted meanwhile (in another screen) is no picture.
-        draft.picture?.let { if (it !in ids && adding == 0) draft = draft.copy(picture = null) }
+        draft.picture?.let { if (it !in ids) draft = draft.copy(picture = null) }
         for (picture in library.pictures) {
             rows.getOrPut(picture.id) { pictureRow(picture) }
             if (picture.id !in drawing && thumbnailOf(picture.id).drawable == null) draw(picture)
@@ -238,7 +230,6 @@ class BackgroundActivity : Activity() {
         for (picture in library.pictures) list.addView(rows.getValue(picture.id))
         list.addView(addRow)
         if (library.pictures.isEmpty()) list.addView(howTo)
-        showHint()
         show()
 
         // A picture just added gets the focus; otherwise it stays, unless what had it is gone:
@@ -288,10 +279,6 @@ class BackgroundActivity : Activity() {
         }
     }
 
-    private fun showHint() {
-        hint.text = getString(if (adding > 0) R.string.settings_pictures_adding else R.string.settings_background_hint)
-    }
-
     /**
      * Stores the draft, or closes at once if it's what's stored. A picture is drawn first, while
      * a window says so (half a second at least), and the editor closes once it's stored; no picture
@@ -316,25 +303,10 @@ class BackgroundActivity : Activity() {
         startActivityForResult(Intent(this, AddFromFolderActivity::class.java), ADD_FROM_FOLDER)
     }
 
-    private fun add(source: Uri) {
-        adding++
-        showHint()
-        pictureImport.add(source) { result ->
-            adding--
-            if (!isDestroyed) added(result)
-        }
-    }
-
-    /** A picture added, or there already, is chosen and focused; else the editor says why not. */
-    private fun added(result: ImportResult) {
-        showHint()
-        val picture = when (result) {
-            is ImportResult.Added -> result.picture
-            is ImportResult.AlreadyThere -> result.picture
-            else -> return message(result)
-        }
-        toFocus = picture.id
-        setDraft(draft.copy(picture = picture.id))
+    /** The picture Add from folder added (or found there already): chosen and focused. */
+    private fun chooseAdded(picture: PictureId) {
+        toFocus = picture
+        setDraft(draft.copy(picture = picture))
         if (started) showLibrary()
     }
 
@@ -361,12 +333,6 @@ class BackgroundActivity : Activity() {
         if (draft.picture == picture.id) draft = draft.copy(picture = null)
         pictures.delete(setOf(picture.id))
         show()
-    }
-
-    /** Says why [result]'s picture wasn't added. */
-    private fun message(result: ImportResult) {
-        val why = whyNotAdded(result) ?: return
-        show(PicturesDialog(this, getString(R.string.settings_pictures_not_added), why, listOf(getString(R.string.settings_pictures_ok) to {})))
     }
 
     private fun show(dialog: PicturesDialog) {

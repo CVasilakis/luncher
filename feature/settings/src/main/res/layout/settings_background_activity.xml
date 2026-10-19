@@ -80,6 +80,7 @@
             android:id="@+id/settings_background_hint"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:text="@string/settings_background_hint"
             android:paddingLeft="@dimen/settings_entry_padding"
             android:paddingRight="@dimen/settings_entry_padding"
             android:textColor="@color/text_secondary"

@@ -14,6 +14,7 @@ import android.widget.BaseAdapter
 import android.widget.ImageView
 import android.widget.ListView
 import android.widget.TextView
+import com.luncher.domain.jobs.Cancellable
 import com.luncher.domain.jobs.JobPriority
 import com.luncher.domain.jobs.LatestRequest
 import com.luncher.domain.pictures.FolderPicture
@@ -21,20 +22,29 @@ import com.luncher.domain.pictures.Framing
 import com.luncher.domain.pictures.ImportResult
 import com.luncher.domain.pictures.inListOrder
 import com.luncher.domain.pictures.whyRefused
+import com.luncher.launcher.ui.WorkingDialog
 import java.util.Locale
 
 /**
  * The pictures in Luncher's drop folders, on the TV and on USB drives ([FolderPictures][graph]):
  * a list, in the order of [inListOrder], with a preview of the selected one beside it. OK on one
- * returns it to [BackgroundActivity], which adds it. One that its listing and the library already
- * tell can't be added ([whyRefused]: a format this TV can't show, too large, a name the library
- * has) is marked in the list, has no preview, and OK on it says why at once. The folders are
- * read again each time it shows, so a drive plugged in meanwhile counts.
+ * adds it to the library while a window says so, with Cancel, then returns it to
+ * [BackgroundActivity] ([EXTRA_ADDED]), which chooses it; or says why it wasn't added, and stays,
+ * so the user can choose another. One that its listing and the library already tell can't be
+ * added ([whyRefused]: a format this TV can't show, too large, a name the library has) is marked
+ * in the list, has no preview, and OK on it says why at once, with no window. The folders are
+ * read again each time it shows, so a drive plugged in meanwhile counts. Closed while it adds
+ * (Home, or a configuration change), the adding stops.
  */
 class AddFromFolderActivity : Activity() {
 
     private val folders by lazy { graph.folderPictures }
     private val library by lazy { graph.pictures }
+    private val pictureImport by lazy { graph.pictureImport }
+
+    /** The picture being added, while the window says so. */
+    private var adding: Cancellable? = null
+    private var working: WorkingDialog? = null
     private val main = Handler(Looper.getMainLooper())
     private val previewing by lazy { LatestRequest(graph.jobs, JobPriority.PICTURE_SCREENS) { main.post(it) } }
     private lateinit var list: ListView
@@ -86,6 +96,8 @@ class AddFromFolderActivity : Activity() {
     override fun onDestroy() {
         super.onDestroy()
         dialog?.dismiss()
+        adding?.cancel()
+        working?.dismiss()
     }
 
     private fun show(found: List<FolderPicture<Uri>>, looking: Boolean) {
@@ -119,14 +131,38 @@ class AddFromFolderActivity : Activity() {
         previewing.load({ stopped -> folders.preview(shown, width, height, Framing(), stopped) }) { preview.setImageBitmap(it) }
     }
 
-    /** Returns [picture] to be added, or says at once why it can't be. */
+    /**
+     * Says at once why [picture] can't be added, when the listing tells; else adds it while the
+     * window says so, its preview's decode stopped first, so that the adding has the jobs' thread
+     * at once.
+     */
     private fun choose(picture: FolderPicture<Uri>) {
-        val why = refused[picture.source]
-        if (why == null) {
-            setResult(RESULT_OK, Intent().setData(picture.source))
-            finish()
-            return
+        refused[picture.source]?.let { return notAdded(it) }
+        if (adding != null) return
+        previewing.stop()
+        val working = working ?: WorkingDialog(this).also { working = it }
+        working.show(getString(R.string.settings_pictures_adding), getString(R.string.settings_pictures_cancel)) {
+            adding?.cancel()
+            adding = null
         }
+        adding = pictureImport.add(picture.source) { result ->
+            adding = null
+            working.close { if (!isDestroyed) added(result) }
+        }
+    }
+
+    /** Returns a picture added, or there already, to the background editor; else says why not, and stays. */
+    private fun added(result: ImportResult) {
+        val picture = when (result) {
+            is ImportResult.Added -> result.picture
+            is ImportResult.AlreadyThere -> result.picture
+            else -> return notAdded(result)
+        }
+        setResult(RESULT_OK, Intent().putExtra(EXTRA_ADDED, picture.id.value))
+        finish()
+    }
+
+    private fun notAdded(why: ImportResult) {
         dialog?.dismiss()
         dialog = PicturesDialog(
             this,
@@ -134,6 +170,11 @@ class AddFromFolderActivity : Activity() {
             whyNotAdded(why).orEmpty(),
             listOf(getString(R.string.settings_pictures_ok) to {}),
         ).apply { show() }
+    }
+
+    internal companion object {
+        /** The id of the picture added, in the result. */
+        const val EXTRA_ADDED = "com.luncher.launcher.settings.ADDED"
     }
 
     /** The rows of [pictures], reusing the views of rows scrolled away. */

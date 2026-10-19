@@ -11,4 +11,8 @@
     <dimen name="working_gap">24dp</dimen>
     <dimen name="working_text">20sp</dimen>
     <dimen name="working_text_width">400dp</dimen>
+    <!-- Its Cancel: as tall as a settings panel's entry, below the message. -->
+    <dimen name="working_entry_height">56dp</dimen>
+    <dimen name="working_entry_padding">16dp</dimen>
+    <dimen name="working_entry_gap">24dp</dimen>
 </resources>

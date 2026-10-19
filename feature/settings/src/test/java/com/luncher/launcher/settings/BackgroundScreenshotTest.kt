@@ -179,9 +179,9 @@ class BackgroundScreenshotTest {
         editor(*library).window.decorView.captureRoboImage("src/test/screenshots/settings/settings_background_arabic.png")
     }
 
-    /** Add from folder with [pictures] in the folders, the first selected and previewed. */
-    private fun folderScreen(vararg pictures: com.luncher.domain.pictures.FolderPicture<Uri>): Activity {
-        val graph = object : TestPicturesGraph() {
+    /** Add from folder with [pictures] in the folders, the first selected and previewed; the library [library]. */
+    private fun folderScreen(vararg pictures: com.luncher.domain.pictures.FolderPicture<Uri>, library: FakePictures<Uri> = FakePictures()): Activity {
+        val graph = object : TestPicturesGraph(library) {
             override val folderPictures = FakeFolderPictures(*pictures, draw = { picture, width, height -> sample(picture.name, width, height) })
         }
         application.graph = graph
@@ -206,5 +206,26 @@ class BackgroundScreenshotTest {
     @Test
     fun addFromFolderEmpty() {
         folderScreen().window.decorView.captureRoboImage("src/test/screenshots/pictures/pictures_add_from_folder_empty.png")
+    }
+
+    // What the list tells can't be added, marked: too large, the same file, another of the name.
+    @Test
+    fun addFromFolderRefused() {
+        folderScreen(
+            folderPicture("holiday.jpg", removable = true),
+            folderPicture("logo-netflix.png", removable = true),
+            folderPicture("panorama.jpg", bytes = 184_000_000, width = 21621, height = 7004),
+            folderPicture("wallpaper-4k.jpg"),
+            library = FakePictures(picture("holiday.jpg", bytes = 2_400_000), picture("logo-netflix.png", bytes = 80_000)),
+        ).window.decorView.captureRoboImage("src/test/screenshots/pictures/pictures_add_from_folder_refused.png")
+    }
+
+    // OK on a picture: the window while it's added, Cancel focused.
+    @Test
+    fun addFromFolderAdding() {
+        val activity = folderScreen(folderPicture("wallpaper-4k.jpg"), library = FakePictures<Uri>().apply { answerLater = true })
+        activity.findViewById<android.widget.ListView>(R.id.settings_pictures_folder_list).performItemClick(null, 0, 0)
+        idle()
+        captureScreenRoboImage("src/test/screenshots/pictures/pictures_add_from_folder_adding.png")
     }
 }

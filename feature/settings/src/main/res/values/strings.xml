@@ -138,7 +138,8 @@
 
     <!-- The picture screens: the background editor's pictures, Add from folder, and why a picture
          wasn't added. -->
-    <!-- Below the title, while a picture is being copied into the library. -->
+    <!-- In a window over Add from folder, with a spinning wheel, while the picture chosen is copied
+         into the library. -->
     <string name="settings_pictures_adding">Adding a picture…</string>
     <!-- While the library is empty, the steps to add a picture: the heading. -->
     <string name="settings_pictures_how">To add a picture:</string>

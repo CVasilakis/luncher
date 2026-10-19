@@ -22,11 +22,12 @@ ui/
     │   │   ├── ScreenSize.kt     screenSize(): the screen's size in px, what the wallpaper is drawn at and
     │   │   │                     the previews' shape
     │   │   └── WorkingDialog.kt  a floating panel with a spinning wheel and a message, taking every key,
-    │   │                         shown half a second at least: for work the user waits for (the wallpaper drawn)
+    │   │                         shown half a second at least: for work the user waits for (the wallpaper drawn,
+    │   │                         a picture added); Cancel too, and Back, for work that can be stopped
     │   └── res/
     │       ├── drawable/         entry_background, a focusable entry's frame while focused; panel_background,
     │       │                     a floating panel's window (the settings panels, the picture dialogs, WorkingDialog)
-    │       ├── layout/           working_dialog: WorkingDialog's wheel and message
+    │       ├── layout/           working_dialog: WorkingDialog's wheel and message, and its Cancel
     │       └── values/
     │           ├── colors.xml    background, accent, primary and secondary text, a panel and its focused entry
     │           ├── dimens.xml    a panel's corners, an entry's frame, WorkingDialog's sizes

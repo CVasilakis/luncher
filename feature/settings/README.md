@@ -31,7 +31,7 @@ feature/settings/
     │   │   ├── OptionLabels.kt   what the options, their values and groups are called
     │   │   ├── BackgroundActivity.kt the background editor: the pictures, the draft, Save; deletes and adds pictures
     │   │   ├── BackgroundStartColumn.kt  its preview, options and Save, the preview as large as the room left
-    │   │   ├── AddFromFolderActivity.kt  the drop folders' pictures, a preview of the selected one; OK returns it
+    │   │   ├── AddFromFolderActivity.kt  the drop folders' pictures, a preview of the selected one; OK adds it, then returns it
     │   │   ├── SharePictureActivity.kt   where another app's share arrives: opens the home screen and the window, no screen
     │   │   ├── PictureReceivedActivity.kt the window over the home screen after a share: shows the pictures being added, then their uses or how many were saved
     │   │   ├── PicturesDialog.kt the dialogs over the picture screens: a question, a message
@@ -195,8 +195,7 @@ from the appearance editor's Background entry, full-screen like it, or from the 
 share, with that picture chosen ([below](#adding-a-picture)). At the end, Luncher's picture
 library as a list: No picture, the pictures, the newest first, each with its thumbnail and name,
 then Add from folder ([below](#adding-a-picture)); a hint above them says a long press of OK
-deletes a picture, as arrange mode's says what its keys do, and "Adding a picture…" while Add
-from folder's picture is added. While the library is empty, how to add
+deletes a picture, as arrange mode's says what its keys do. While the library is empty, how to add
 a picture follows: a share from another app, or the drop folder
 ([`platform/README.md`](../../platform/README.md#the-drop-folders)), with its path. At the start, a
 preview of the home screen with the chosen background, the background's options (Fit, Position,
@@ -232,7 +231,7 @@ then the picture. A draft's picture deleted is no picture in the draft.
 | `PictureImages` (`:domain`) / `CachedPictureImages` (`:platform`) | the thumbnails, drawn at the row's size in pixels, and the preview's wallpaper |
 | `pictureUses`, `withoutPictures` (`:domain`) | what each picture is used for, which deleting it says, and the background without it |
 | `Wallpaper` (`:domain`) | Save (`save`: drawn, kept, then stored) and deleting the wallpaper's picture (`forget`) |
-| `BackgroundActivity` | the list, the draft, Save and its window, the questions; adds the picture Add from folder returns, and chooses it, or says why it wasn't added (`ImportResult`, an exhaustive `when` in `whyNotAdded`); starts with a picture just received chosen (`EXTRA_PICTURE`) |
+| `BackgroundActivity` | the list, the draft, Save and its window, the questions; chooses and focuses the picture Add from folder added (`EXTRA_ADDED`); starts with a picture just received chosen (`EXTRA_PICTURE`) |
 
 All thumbnails are read at once when the screen shows, from what `CachedPictureImages` kept, on the
 main thread, so the list shows them with its first frame; one not kept (a picture just added, a
@@ -337,7 +336,13 @@ to 9 shares files, gets the message that says to use a drop folder instead, with
 each by name (`inListOrder`), with a preview of the selected one beside them, of the TV's shape
 as the wallpaper fills it, drawn in the background; moving on stops the one being drawn at once
 ([`ARCHITECTURE.md`](../../docs/ARCHITECTURE.md#background-work-and-changes-while-shown), point 4).
-OK returns the picture to the background editor, which adds it and chooses it. What the listing
+OK adds the picture to the library while a window (`WorkingDialog`) says "Adding a picture…"
+over the list, the preview's decode stopped first so the adding needn't wait for it, and Cancel,
+focused, or Back stops the adding and closes the window at once. Added, or found in the library
+already by its content, the picture goes back to the background editor, which chooses and
+focuses it: the user waits in one place, and nothing moves under them. Refused, the screen says
+why (`ImportResult`, an exhaustive `when` in `whyNotAdded`) and stays, for another choice.
+Closing it while it adds (Home) stops the adding. What the listing
 and the library already tell can't be added (`whyRefused`, in `:domain`) is marked in the list,
 after its size, and OK on it says why at once, reading nothing: a file in a format this TV can't
 show ([which](../../platform/README.md#pictures)), one too large (`PictureLimits`), which has no

@@ -5,13 +5,17 @@ import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
+import android.view.KeyEvent
+import android.view.View
 import android.widget.TextView
 
 /**
  * A floating panel over the dimmed screen, with a spinning wheel and a message, for work the user
- * waits for (the wallpaper drawn): it takes every key, Back too, so nothing else happens
- * meanwhile. [show] shows it at once; [close] closes it no sooner than [SHORTEST] ms after it
- * showed, so it never just flashes. Main thread only.
+ * waits for (the wallpaper drawn, a picture added): it takes every key, so nothing else happens
+ * meanwhile. Work that can be stopped shows Cancel too, focused, which Back does as well; other
+ * work ignores Back. [show] shows it at once; [close] closes it no sooner than [SHORTEST] ms after
+ * it showed, so it never just flashes; Cancel closes it at once, the user's own choice. Main thread
+ * only.
  */
 class WorkingDialog(context: Context) {
 
@@ -20,6 +24,8 @@ class WorkingDialog(context: Context) {
         setCancelable(false)
     }
     private val message: TextView = dialog.findViewById(R.id.working_message)
+    private val cancel: TextView = dialog.findViewById(R.id.working_cancel)
+    private var onCancel: (() -> Unit)? = null
     private val main = Handler(Looper.getMainLooper())
     private var afterClosing: () -> Unit = {}
     private val closing = Runnable {
@@ -33,11 +39,28 @@ class WorkingDialog(context: Context) {
     /** The message it shows. */
     val text: CharSequence get() = message.text
 
-    /** Shows it with [text], or changes its message if it shows; a close on its way is called off, and what it would have run. */
-    fun show(text: CharSequence) {
+    init {
+        cancel.setOnClickListener { cancel() }
+        dialog.setOnKeyListener { _, keyCode, event ->
+            if (keyCode != KeyEvent.KEYCODE_BACK) return@setOnKeyListener false
+            if (event.action == KeyEvent.ACTION_UP && !event.isCanceled) cancel()
+            true
+        }
+    }
+
+    /**
+     * Shows it with [text], or changes its message if it shows; a close on its way is called off,
+     * and what it would have run. With [cancelLabel], it shows that entry too, focused, and Cancel
+     * or Back closes it at once, then runs [onCancel]; without, Back does nothing.
+     */
+    fun show(text: CharSequence, cancelLabel: CharSequence? = null, onCancel: (() -> Unit)? = null) {
         main.removeCallbacks(closing)
         afterClosing = {}
         message.text = text
+        this.onCancel = if (cancelLabel != null) onCancel ?: {} else null
+        cancel.text = cancelLabel
+        cancel.visibility = if (cancelLabel != null) View.VISIBLE else View.GONE
+        if (cancelLabel != null) cancel.requestFocus()
         if (!dialog.isShowing) {
             dialog.show()
             shownAt = SystemClock.uptimeMillis()
@@ -53,6 +76,14 @@ class WorkingDialog(context: Context) {
         main.removeCallbacks(closing)
         afterClosing = then
         main.postAtTime(closing, shownAt + SHORTEST)
+    }
+
+    /** Cancel, or Back, with Cancel shown: closes it at once, then runs what [show] was given. */
+    private fun cancel() {
+        val action = onCancel ?: return
+        onCancel = null
+        dismiss()
+        action()
     }
 
     /** Closes it at once, as the screen under it goes; what [close] would have run afterwards doesn't run. */

@@ -2,6 +2,11 @@ package com.luncher.launcher.settings
 
 import android.app.Activity
 import android.os.Looper
+import android.view.KeyEvent
+import java.time.Duration
+import com.luncher.domain.pictures.ImportResult
+import com.luncher.launcher.ui.WorkingDialog
+import com.luncher.launcher.ui.R as UiR
 import android.view.View
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -119,16 +124,113 @@ class AddFromFolderActivityTest {
         assertNotNull(activity.findViewById<ImageView>(R.id.settings_pictures_folder_preview).drawable)
     }
 
+    /** The window over the screen while a picture is added, if it shows. */
+    private fun working(): android.app.Dialog? = ShadowDialog.getLatestDialog()?.takeIf { it.isShowing && it.findViewById<View>(UiR.id.working_message) != null }
+
     @Test
-    fun `OK on a picture returns it to the background editor, which adds it`() {
-        graph(wallpaper, holiday)
+    fun `OK on a picture adds it while a window says so, then returns it to the background editor`() {
+        val library = FakePictures<android.net.Uri>().apply {
+            answerLater = true
+            results[holiday.source] = ImportResult.Added(FakePictures.picture("holiday.jpg"))
+        }
+        graph(wallpaper, holiday, library = library)
         val activity = start()
 
         activity.list().performItemClick(null, 1, 1)
+        shadowOf(Looper.getMainLooper()).idle()
+
+        assertEquals(listOf(holiday.source), library.added)
+        val window = checkNotNull(working())
+        assertEquals("Adding a picture…", window.findViewById<TextView>(UiR.id.working_message).text.toString())
+        assertEquals("Cancel", window.findViewById<TextView>(UiR.id.working_cancel).text.toString())
+        assertFalse(activity.isFinishing)
+
+        library.finishAdding()
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(WorkingDialog.SHORTEST))
 
         assertTrue(activity.isFinishing)
         assertEquals(Activity.RESULT_OK, shadowOf(activity).resultCode)
-        assertEquals(holiday.source, shadowOf(activity).resultIntent.data)
+        assertEquals("id-holiday.jpg", shadowOf(activity).resultIntent.getStringExtra(AddFromFolderActivity.EXTRA_ADDED))
+    }
+
+    @Test
+    fun `a picture the library had already, by its content, is returned as added`() {
+        val known = FakePictures.picture("old name.jpg")
+        graph(holiday, library = FakePictures<android.net.Uri>(known).apply { results[holiday.source] = ImportResult.AlreadyThere(known) })
+        val activity = start()
+
+        activity.list().performItemClick(null, 0, 0)
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(WorkingDialog.SHORTEST))
+
+        assertEquals(known.id.value, shadowOf(activity).resultIntent.getStringExtra(AddFromFolderActivity.EXTRA_ADDED))
+    }
+
+    @Test
+    fun `a picture adding refuses is said in the folder screen, which stays for another choice`() {
+        graph(holiday, library = FakePictures<android.net.Uri>().apply { results[holiday.source] = ImportResult.NotAPicture })
+        val activity = start()
+
+        activity.list().performItemClick(null, 0, 0)
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(WorkingDialog.SHORTEST))
+
+        assertFalse(activity.isFinishing)
+        assertEquals("It isn't a picture, or it's damaged.", ShadowDialog.getLatestDialog().findViewById<TextView>(R.id.settings_pictures_dialog_text).text.toString())
+    }
+
+    @Test
+    fun `Cancel, or Back, while a picture is added stops it, closes the window at once, and stays`() {
+        for (key in listOf("Cancel", "Back")) {
+            val library = FakePictures<android.net.Uri>().apply {
+                answerLater = true
+                results[holiday.source] = ImportResult.Added(FakePictures.picture("holiday.jpg"))
+            }
+            graph(holiday, library = library)
+            val activity = start()
+            activity.list().performItemClick(null, 0, 0)
+            shadowOf(Looper.getMainLooper()).idle()
+            val window = checkNotNull(working())
+
+            if (key == "Cancel") {
+                window.findViewById<TextView>(UiR.id.working_cancel).performClick()
+            } else {
+                window.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_BACK))
+                window.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_BACK))
+            }
+            shadowOf(Looper.getMainLooper()).idle()
+
+            assertEquals(key, listOf(holiday.source), library.cancelled)
+            assertFalse(key, window.isShowing)
+            assertFalse(key, activity.isFinishing)
+            assertEquals(key, emptyList<Any>(), library.pictures)
+        }
+    }
+
+    @Test
+    fun `closed while a picture is added, the adding stops`() {
+        val library = FakePictures<android.net.Uri>().apply {
+            answerLater = true
+            results[holiday.source] = ImportResult.Added(FakePictures.picture("holiday.jpg"))
+        }
+        graph(holiday, library = library)
+        val controller = Robolectric.buildActivity(AddFromFolderActivity::class.java).setup()
+        shadowOf(Looper.getMainLooper()).idle()
+        controller.get().list().performItemClick(null, 0, 0)
+
+        controller.pause().stop().destroy()
+
+        assertEquals(listOf(holiday.source), library.cancelled)
+    }
+
+    @Test
+    fun `OK stops the preview being drawn, so the adding doesn't wait for it`() {
+        val graph = graph(holiday, library = FakePictures<android.net.Uri>().apply { answerLater = true })
+        val activity = start()
+        graph.jobs.runAll()
+        val preview = graph.folderPictures.previewStops.single()
+
+        activity.list().performItemClick(null, 0, 0)
+
+        assertTrue(preview())
     }
 
     @Test
