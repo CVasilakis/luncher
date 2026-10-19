@@ -137,7 +137,7 @@ Appearance (`AppearanceActivity`) is the editor of the home screen's
 [appearance](../../docs/ARCHITECTURE.md#appearance): full-screen, with its large title right above a
 preview of the home screen at the left, the two centered in the height, and the options at the
 right, starting level with the title. The options are in groups
-(Tiles, Status bar, Background), each an entry of its own, closed at first: OK on one shows its options
+(Tiles, Time and date, Background), each an entry of its own, closed at first: OK on one shows its options
 below it and closes the group that was open, so the list stays short; OK again closes it. Each
 option shows its value between arrows; Left and Right step it through its values, around from the
 last to the first, and each change is stored at once, the preview following. An option that
@@ -213,14 +213,15 @@ nothing is stored. Back, or Home, leaves the background as it was. **Save** stor
 through the process's `Wallpaper` ([`feature/home/README.md`](../home/README.md#the-wallpaper)):
 - unchanged, the editor just closes;
 - without a picture, it's stored at once, the kept wallpaper deleted, and the editor closes;
-- with one, a window (`WorkingDialog`, from `:ui`) says "Processing image…" at once, taking every
+- with one, a window (`WorkingDialog`, from `:ui`) says "Processing background…" at once, taking every
   key, Back too, while the picture is drawn at the screen's size and kept; only then is the
   background stored, and the window closes, after half a second at least, and the editor with
   it. If the user goes home meanwhile, the drawing goes on, and the home screen says so instead.
 
 A **long press of OK** on a picture asks to delete it, Cancel focused, so a repeated OK deletes
-nothing, saying what deleting it does: Luncher's copy goes, the file it came from stays, and the
-wallpaper's picture leaves the home screen with its plain background. That happens at once
+nothing, saying what deleting it does, in one text for any picture and another for the
+background's: the picture goes from Luncher's pictures only, and the background's picture
+leaves the home screen with no picture. That happens at once
 (`Wallpaper.forget`): the background stored without a picture, then the kept wallpaper deleted,
 then the picture. A draft's picture deleted is no picture in the draft.
 
@@ -291,12 +292,12 @@ wheel once a picture is copied (`ReceivedPictures.copying`, which `PictureImport
 copying starts): the real work, which then shows half a second at least (`ShortestShowing`, from
 `:ui`), so it never flashes, and stays until the end, not on and off between pictures. A picture
 refused for what its app says of its name or size, before anything is copied, shows no wheel: why
-is said at once. Then, for one picture, "Picture saved", its name and an entry for each use a picture can
+is said at once. Then, for one picture, "Picture added", its name and an entry for each use a picture can
 be put to (`pictureUseMenu`, today Background, which opens the background editor with the picture
 chosen, not saved, and closes the window); or, with OK, "Picture not added" and why
 (`whyNotAdded`). A picture the library has already, by its content or as the same file (the same
 name and size), isn't an error: "Already in Luncher's pictures", its name, and OK
-(`ImportResult.wasInLibrary`). For several, how many were added now ("3 pictures saved", or
+(`ImportResult.wasInLibrary`). For several, how many were added now ("3 pictures added", or
 "Pictures not added"), then a line for each reason some weren't, with how many, in a fixed order,
 a reason none has left out (`notAddedLines`): those the library had, not pictures or damaged, in a
 format this TV can't show, over 50 MB, over 64 megapixels (`ImportResult.TooLarge` says which),

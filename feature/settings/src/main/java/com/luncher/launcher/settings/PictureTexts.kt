@@ -91,7 +91,7 @@ internal fun Context.notAddedLines(outcome: Outcome.Several): List<String> {
 /** The most pixels a picture can have, in millions, as the texts say it. */
 private val MEGAPIXELS = (PictureLimits.MAX_PIXELS / 1_000_000).toInt()
 
-/** What deleting a picture with [use] does to it, said before deleting. */
-internal fun Context.afterDeleting(use: PictureUse): String = when (use) {
-    PictureUse.Wallpaper -> getString(R.string.settings_pictures_delete_wallpaper)
-}
+/** What deleting a picture with [uses] does, said before deleting: one text for each case, whole sentences. */
+internal fun Context.deleteText(uses: List<PictureUse>): String = getString(
+    if (PictureUse.Wallpaper in uses) R.string.settings_pictures_delete_text_background else R.string.settings_pictures_delete_text,
+)

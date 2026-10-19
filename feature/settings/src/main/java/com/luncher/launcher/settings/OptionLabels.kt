@@ -52,7 +52,7 @@ internal fun Context.optionValue(option: AppearanceOption<*>, appearance: Appear
     AppearanceOption.TimeSide -> getString(order(AppearanceOption.TimeSide.get(appearance)))
     AppearanceOption.BackgroundFit -> getString(fit(AppearanceOption.BackgroundFit.get(appearance)))
     AppearanceOption.BackgroundPosition -> getString(position(AppearanceOption.BackgroundPosition.get(appearance)))
-    AppearanceOption.BackgroundDim -> getString(R.string.settings_appearance_percent, AppearanceOption.BackgroundDim.get(appearance))
+    AppearanceOption.BackgroundDim -> getString(dim(AppearanceOption.BackgroundDim.get(appearance)))
     AppearanceOption.BackgroundBlur -> getString(blur(AppearanceOption.BackgroundBlur.get(appearance)))
 }
 
@@ -74,6 +74,15 @@ private fun blur(blur: Blur): Int = when (blur) {
     Blur.LIGHT -> R.string.settings_appearance_light
     Blur.MEDIUM -> R.string.settings_appearance_medium
     Blur.STRONG -> R.string.settings_appearance_strong
+}
+
+/** The dim's percentages, [AppearanceOption.BackgroundDim]'s values, said as Blur's are. */
+private fun dim(percent: Int): Int = when (percent) {
+    0 -> R.string.settings_appearance_off
+    20 -> R.string.settings_appearance_dim_light
+    40 -> R.string.settings_appearance_dim_medium
+    60 -> R.string.settings_appearance_dim_strong
+    else -> error("No label for a dim of $percent %")
 }
 
 private fun vertical(alignment: VerticalAlignment): Int = when (alignment) {

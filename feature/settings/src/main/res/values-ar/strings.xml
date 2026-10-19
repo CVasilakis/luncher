@@ -7,7 +7,7 @@
     <string name="settings_no_apps">لا توجد تطبيقات تلفزيون مثبّتة</string>
     <string name="settings_appearance">المظهر</string>
     <string name="settings_appearance_tiles">المربعات</string>
-    <string name="settings_appearance_top_bar">شريط الحالة</string>
+    <string name="settings_appearance_top_bar">الوقت والتاريخ</string>
     <string name="settings_appearance_vertical_alignment">المحاذاة العمودية</string>
     <string name="settings_appearance_top">أعلى</string>
     <string name="settings_appearance_bottom">أسفل</string>
@@ -35,7 +35,9 @@
     <string name="settings_appearance_stretch">تمديد</string>
     <string name="settings_appearance_position">الموضع</string>
     <string name="settings_appearance_dim">التعتيم</string>
-    <string name="settings_appearance_percent"><xliff:g id="percent" example="20">%1$d</xliff:g>٪</string>
+    <string name="settings_appearance_dim_light">خفيف</string>
+    <string name="settings_appearance_dim_medium">متوسط</string>
+    <string name="settings_appearance_dim_strong">قوي</string>
     <string name="settings_appearance_blur">التمويه</string>
     <string name="settings_appearance_light">خفيف</string>
     <string name="settings_appearance_medium">متوسط</string>
@@ -44,11 +46,11 @@
     <string name="settings_appearance_off">إيقاف</string>
     <string name="settings_appearance_reset">استعادة الإعدادات الافتراضية</string>
     <string name="settings_system">إعدادات النظام</string>
-    <string name="settings_system_unavailable">لا يتوفّر تطبيق إعدادات على هذا الجهاز</string>
+    <string name="settings_system_unavailable">لا يوجد تطبيق إعدادات على هذا الجهاز</string>
 
     <string name="settings_background_hint">اضغط مطولًا على OK فوق صورة لحذفها</string>
     <string name="settings_background_save">حفظ</string>
-    <string name="settings_background_applying">جارٍ معالجة الصورة…</string>
+    <string name="settings_background_applying">جارٍ معالجة الخلفية…</string>
     <string name="settings_background_preparing">جارٍ تجهيز الصورة…</string>
     <string name="settings_background_preparing_count">جارٍ تجهيز الصورة <xliff:g id="number" example="3">%1$d</xliff:g> من <xliff:g id="total" example="10">%2$d</xliff:g>…</string>
 
@@ -58,12 +60,12 @@
     <string name="settings_pictures_how_folder">• أو انسخ الصور إلى هذا المجلد، على التلفزيون أو على وحدة USB، ثم اختر «إضافة من مجلد»:</string>
     <string name="settings_pictures_add_from_folder">إضافة من مجلد</string>
     <string name="settings_pictures_details">⁦<xliff:g id="width" example="1920">%1$d</xliff:g> × <xliff:g id="height" example="1080">%2$d</xliff:g>⁩ · <xliff:g id="size" example="3.1 MB">%3$s</xliff:g></string>
-    <string name="settings_pictures_delete_wallpaper">إنها الخلفية: تعود الشاشة الرئيسية إلى خلفيتها العادية.</string>
     <string name="settings_pictures_no_picture">بلا صورة</string>
     <string name="settings_pictures_unnamed">صورة</string>
     <string name="settings_pictures_delete">حذف</string>
     <string name="settings_pictures_delete_question">حذف <xliff:g id="name" example="beach.png">%1$s</xliff:g>؟</string>
-    <string name="settings_pictures_delete_text">يحذف Luncher نسخته فقط؛ يبقى الملف الذي أضفتها منه.</string>
+    <string name="settings_pictures_delete_text">تُحذف الصورة من صور Luncher فقط.</string>
+    <string name="settings_pictures_delete_text_background">مستخدمة كخلفية: لن تعرض الشاشة الرئيسية أي صورة. تُحذف الصورة من صور Luncher فقط.</string>
     <string name="settings_pictures_cancel">إلغاء</string>
     <string name="settings_pictures_ok">حسنًا</string>
     <string name="settings_pictures_not_added">لم تُضَف الصورة</string>
@@ -98,19 +100,19 @@
         <item quantity="other">كبيرة جدًا (أكثر من <xliff:g id="megapixels" example="100">%d</xliff:g> ميغابكسل)</item>
     </plurals>
     <string name="settings_pictures_folder_name_taken">الاسم مستخدم بالفعل في صور Luncher</string>
-    <string name="settings_pictures_folder_note">زر OK ينسخها إلى صور Luncher؛ ويمكن إزالة الملف أو الوحدة بعد ذلك.</string>
+    <string name="settings_pictures_folder_note">زر OK يضيف نسخة إلى صور Luncher. بعد ذلك، لن تكون هناك حاجة إلى الملف ولا إلى وحدة USB.</string>
     <string name="settings_pictures_folder_looking">جارٍ البحث عن صور…</string>
-    <string name="settings_pictures_folder_empty">لا توجد صور في المجلد بعد.</string>
+    <string name="settings_pictures_folder_empty">لا توجد صور في المجلد بعد</string>
     <string name="settings_received_adding">جارٍ إضافة الصورة…</string>
-    <string name="settings_received_saved">تم حفظ الصورة</string>
+    <string name="settings_received_saved">تمت إضافة الصورة</string>
     <string name="settings_received_adding_count">جارٍ إضافة الصورة <xliff:g id="number" example="3">%1$d</xliff:g> من <xliff:g id="total" example="10">%2$d</xliff:g>…</string>
     <plurals name="settings_received_saved_count">
-        <item quantity="zero">تم حفظ <xliff:g id="count" example="0">%d</xliff:g> صورة</item>
-        <item quantity="one">تم حفظ صورة واحدة</item>
-        <item quantity="two">تم حفظ صورتين</item>
-        <item quantity="few">تم حفظ <xliff:g id="count" example="3">%d</xliff:g> صور</item>
-        <item quantity="many">تم حفظ <xliff:g id="count" example="11">%d</xliff:g> صورة</item>
-        <item quantity="other">تم حفظ <xliff:g id="count" example="100">%d</xliff:g> صورة</item>
+        <item quantity="zero">تمت إضافة <xliff:g id="count" example="0">%d</xliff:g> صورة</item>
+        <item quantity="one">تمت إضافة صورة واحدة</item>
+        <item quantity="two">تمت إضافة صورتين</item>
+        <item quantity="few">تمت إضافة <xliff:g id="count" example="3">%d</xliff:g> صور</item>
+        <item quantity="many">تمت إضافة <xliff:g id="count" example="11">%d</xliff:g> صورة</item>
+        <item quantity="other">تمت إضافة <xliff:g id="count" example="100">%d</xliff:g> صورة</item>
     </plurals>
     <string name="settings_received_none_added">لم تُضَف الصور</string>
     <plurals name="settings_received_already_count">

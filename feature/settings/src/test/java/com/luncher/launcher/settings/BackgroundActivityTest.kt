@@ -176,6 +176,16 @@ class BackgroundActivityTest {
     }
 
     @Test
+    fun `Dim's values are said in words, as Blur's`() {
+        graph(beach, background = Background(beach.id))
+        val activity = start().get()
+
+        val values = (1..4).map { activity.step("Dim"); activity.value("Dim") }
+
+        assertEquals(listOf("Light", "Medium", "Strong", "Off"), values)
+    }
+
+    @Test
     fun `OK on a picture and the options change the draft and the preview, and store nothing`() {
         graph(beach, sunset, background = Background(beach.id))
         val activity = start().get()
@@ -185,7 +195,7 @@ class BackgroundActivityTest {
         activity.step("Blur")
 
         assertEquals(listOf("No picture", "sunset.jpg ✓", "beach.png", "Add from folder"), activity.list())
-        assertEquals("20 %", activity.value("Dim"))
+        assertEquals("Light", activity.value("Dim"))
         assertEquals("Light", activity.value("Blur"))
         assertEquals(Background(sunset.id, dim = 20, blur = com.luncher.domain.pictures.Blur.LIGHT), activity.findViewById<AppearancePreviewView>(R.id.settings_background_preview).appearance.background)
         assertEquals("nothing stored", Background(beach.id), stored)
@@ -252,7 +262,7 @@ class BackgroundActivityTest {
         activity.ok("sunset.jpg")
 
         activity.save()
-        assertEquals("Processing image…", dialog()!!.first)
+        assertEquals("Processing background…", dialog()!!.first)
         assertEquals(Wallpaper.State.Drawing(com.luncher.domain.wallpaper.DrawingCause.SAVING), graph.wallpaper.state)
         assertEquals("not stored before it's drawn", Background(beach.id), stored)
         assertFalse(activity.isFinishing)
@@ -289,8 +299,9 @@ class BackgroundActivityTest {
 
         activity.row("beach.png").performLongClick()
         idle()
-        val (title, _, entries) = dialog()!!
+        val (title, text, entries) = dialog()!!
         assertEquals("Delete beach.png?", title)
+        assertEquals("The picture is deleted from Luncher's pictures only.", text)
         assertEquals(listOf("Cancel", "Delete"), entries.map { it.text.toString() })
         answer("Delete")
 
@@ -306,7 +317,10 @@ class BackgroundActivityTest {
 
         activity.row("beach.png").performLongClick()
         idle()
-        assertTrue(dialog()!!.second.contains("It's the wallpaper"))
+        assertEquals(
+            "Used as the background: the home screen will have no picture. The picture is deleted from Luncher's pictures only.",
+            dialog()!!.second,
+        )
         answer("Delete")
 
         assertEquals(Background(dim = 40), stored)
@@ -356,7 +370,7 @@ class BackgroundActivityTest {
         val activity = start(Intent().putExtra(BackgroundActivity.EXTRA_PICTURE, sunset.id.value)).get()
 
         assertEquals(listOf("No picture", "sunset.jpg ✓", "beach.png", "Add from folder"), activity.list())
-        assertEquals("the stored options kept", "20 %", activity.value("Dim"))
+        assertEquals("the stored options kept", "Light", activity.value("Dim"))
         assertEquals(Background(beach.id, dim = 20), stored)
     }
 
@@ -400,7 +414,7 @@ class BackgroundActivityTest {
         idle()
 
         assertEquals(listOf("No picture", "sunset.jpg ✓", "beach.png", "Add from folder"), controller.get().list())
-        assertEquals("20 %", controller.get().value("Dim"))
+        assertEquals("Light", controller.get().value("Dim"))
         assertEquals(Background(beach.id), stored)
     }
 

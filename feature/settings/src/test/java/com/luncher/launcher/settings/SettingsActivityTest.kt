@@ -118,7 +118,7 @@ class SettingsActivityTest {
         activity.press(KeyEvent.KEYCODE_DPAD_CENTER)
 
         assertNull(shadowOf(activity).nextStartedActivity)
-        assertEquals("This device has no settings app", ShadowToast.getTextOfLatestToast())
+        assertEquals("No settings app on this device", ShadowToast.getTextOfLatestToast())
     }
 
     // Unlike the home screen (HomeActivityTest), which stays left to right. Persian: a

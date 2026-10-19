@@ -27,10 +27,10 @@ import com.luncher.launcher.ui.ShortestShowing
  * of 5…", and Cancel, focused; after a spinning wheel once a picture is being copied, the real
  * work, which then shows half a second at least ([ShortestShowing]), so it never flashes. A
  * picture refused for what its app says of its name or size shows no wheel: why is said at once.
- * Then, for one picture, "Picture saved",
+ * Then, for one picture, "Picture added",
  * its name, and an entry for each use of [pictureUseMenu] (Background opens the background editor
  * with it chosen, not saved); or, with OK, that Luncher's pictures had it already, and its name,
- * or why it wasn't added. For several, how many were saved, then how many weren't for each
+ * or why it wasn't added. For several, how many were added, then how many weren't for each
  * reason ([notAddedLines]), and OK. A share of more pictures than Luncher takes at a time adds
  * none, and the window says so, at once or at the end of the others. Every [ImportResult] is
  * handled ([whyNotAdded]); an app that stops sending a picture ends as Unreadable, after the

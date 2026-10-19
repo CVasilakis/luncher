@@ -103,7 +103,7 @@ class AppearanceActivityTest {
 
     @Test
     fun `lists the groups, their options hidden, then the reset entry`() {
-        assertEquals(listOf("Tiles", "Status bar", "Background: None", "Reset to defaults"), start().lines())
+        assertEquals(listOf("Tiles", "Time and date", "Background: None", "Reset to defaults"), start().lines())
     }
 
     @Test
@@ -119,20 +119,20 @@ class AppearanceActivityTest {
         assertEquals(
             listOf(
                 "Tiles open", "Vertical alignment: Bottom", "Horizontal alignment: Center", "Full bottom row: On",
-                "Corner radius: 12 dp", "Status bar", "Background: None", "Reset to defaults",
+                "Corner radius: 12 dp", "Time and date", "Background: None", "Reset to defaults",
             ),
             activity.lines(),
         )
         assertTrue(activity.group("Tiles").isFocused)
 
-        activity.toggle("Status bar")
+        activity.toggle("Time and date")
         assertEquals(
-            listOf("Tiles", "Status bar open", "Time: Shown", "Date: Shown", "Side: Left", "Order: Time first", "Background: None", "Reset to defaults"),
+            listOf("Tiles", "Time and date open", "Time: Shown", "Date: Shown", "Side: Left", "Order: Time first", "Background: None", "Reset to defaults"),
             activity.lines(),
         )
 
-        activity.toggle("Status bar")
-        assertEquals(listOf("Tiles", "Status bar", "Background: None", "Reset to defaults"), activity.lines())
+        activity.toggle("Time and date")
+        assertEquals(listOf("Tiles", "Time and date", "Background: None", "Reset to defaults"), activity.lines())
     }
 
     @Test
@@ -271,7 +271,7 @@ class AppearanceActivityTest {
     @Test
     fun `hides the date, and dims the order, which needs both`() {
         val activity = start()
-        activity.focus("Status bar", "Date")
+        activity.focus("Time and date", "Date")
 
         activity.press(KeyEvent.KEYCODE_DPAD_RIGHT)
 
@@ -287,7 +287,7 @@ class AppearanceActivityTest {
     fun `with the time and the date hidden, the side and the order are dimmed and the focus passes them by`() {
         settings.appearance = Appearance(topBar = TopBarAppearance(showTime = false, showDate = false))
         val activity = start()
-        activity.focus("Status bar", "Date")
+        activity.focus("Time and date", "Date")
 
         assertEquals("Hidden", activity.value("Time"))
         assertEquals("Hidden", activity.value("Date"))

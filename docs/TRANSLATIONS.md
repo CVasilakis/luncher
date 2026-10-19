@@ -1,7 +1,7 @@
 # Translations
 
-Luncher's texts are in English, Greek and Arabic. This covers where they are, how a string is
-written so that it translates well, and what a new string or language needs.
+Luncher's texts are in English, Greek and Arabic. This covers where they are, how they're worded,
+how a string is written so that it translates well, and what a new string or language needs.
 
 - **Greek** is kept by the project's maintainer.
 - **Arabic** is there so a right-to-left translation is tested on every change, and for users who
@@ -31,6 +31,37 @@ A right-to-left language mirrors the settings panels, the picture library's scre
 window over the home screen while its wallpaper is drawn, but not the home screen, nor the
 editors' preview of it, nor a picture
 ([`app/README.md`](../app/README.md#manifest-why-each-part-is-there)).
+
+## Wording
+
+Luncher's texts are short, plain and neutral: they say what happened and what to do, never chat.
+The English follows these rules; a translation keeps them as its language allows.
+
+- **A title is a short status, not a sentence:** "Picture not added", "Pictures not added", "No
+  TV apps installed".
+- **The thing is the subject, not Luncher, "it" or "you":** "The file can't be read", "The
+  picture is deleted from Luncher's pictures only", not "Luncher can't read it". What to do is said as a command:
+  "Share fewer, then try again".
+- **The reason first, the detail after a colon:** "Too large: over 50 MB.", "Too many pictures:
+  up to 100 can be added at a time."
+- **Only the limit that was crossed, with its number:** "Too large: over 64 megapixels.", not
+  every limit a picture has.
+- **A problem ends with what to do, as "do this, then try again":** "Free up space, then try
+  again.", "Save it as JPEG or PNG, then add it again."
+- **What isn't a failure isn't worded as one:** a picture the library has already is "Already in
+  Luncher's pictures", with OK, not an error.
+- **Each reason on its own:** pictures refused are counted by reason, a line each ("2 already in
+  Luncher's pictures"), never lumped as "4 pictures weren't added".
+- **One name for one thing, everywhere:** "Already in Luncher's pictures" in the message, the
+  count lines and Add from folder; "Adding the picture…" for a share and for Add from folder;
+  "background", never "wallpaper", for the picture behind the tiles; "added", the opposite of
+  "not added", rather than "saved". Options alike read alike: Dim's levels are Blur's words (Off,
+  Light, Medium, Strong).
+- **What really happens:** "Processing background…", not "Applying effects…", as no effect may
+  have been chosen.
+- **No semicolons:** two sentences, or a colon when the second part explains the first.
+- **Periods end a message's sentences only:** titles, entries, values, count lines and a text in
+  place of a list have none ("No pictures in the folder yet").
 
 ## Writing a string
 

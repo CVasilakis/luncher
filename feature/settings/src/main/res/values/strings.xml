@@ -14,9 +14,9 @@
     <string name="settings_appearance">Appearance</string>
     <!-- In the appearance editor: the title of the options for the home screen's app tiles. -->
     <string name="settings_appearance_tiles">Tiles</string>
-    <!-- In the appearance editor: the title of the options for the bar at the top of the home
-         screen, which has the time, the date and the settings gear. -->
-    <string name="settings_appearance_top_bar">Status bar</string>
+    <!-- In the appearance editor: the title of the options for the time and the date, in the bar
+         at the top of the home screen, which has the settings gear too. -->
+    <string name="settings_appearance_top_bar">Time and date</string>
     <!-- An option: where the rows of app tiles go in the height of the home screen, below the top
          bar. Its values are Top, Center and Bottom. -->
     <string name="settings_appearance_vertical_alignment">Vertical alignment</string>
@@ -39,14 +39,14 @@
     <!-- Its last value: the tiles' ends fully round, half circles, their top and bottom straight,
          like a pill or a capsule. -->
     <string name="settings_appearance_pill">Pill</string>
-    <!-- An option: whether the status bar shows the time of day. -->
+    <!-- An option: whether the top bar shows the time of day. -->
     <string name="settings_appearance_time">Time</string>
-    <!-- An option: whether the status bar shows the date. -->
+    <!-- An option: whether the top bar shows the date. -->
     <string name="settings_appearance_date">Date</string>
     <!-- Values of the two options above. -->
     <string name="settings_appearance_shown">Shown</string>
     <string name="settings_appearance_hidden">Hidden</string>
-    <!-- An option: which side of the status bar the time and the date are on; the settings gear goes
+    <!-- An option: which side of the top bar the time and the date are on; the settings gear goes
          on the other. Its values are Left and Right. -->
     <string name="settings_appearance_clock_side">Side</string>
     <!-- Values of the option above and of the horizontal alignment: the screen's left and right,
@@ -76,10 +76,14 @@
     <!-- An option, while the picture fills the screen: which part of it shows. Its values are
          Center, Top, Bottom, Left and Right. -->
     <string name="settings_appearance_position">Position</string>
-    <!-- An option: how much darker the picture is drawn, so the tiles stand out. -->
+    <!-- An option: how much darker the picture is drawn, so the tiles stand out. Its values are
+         Off (settings_appearance_off) and the three below, 20, 40 and 60 percent darker: the words
+         of Blur's values, strings of their own for languages where they agree with the option's
+         name. -->
     <string name="settings_appearance_dim">Dim</string>
-    <!-- Its values: a percentage, 0 for not darkened. -->
-    <string name="settings_appearance_percent"><xliff:g id="percent" example="20">%1$d</xliff:g> %%</string>
+    <string name="settings_appearance_dim_light">Light</string>
+    <string name="settings_appearance_dim_medium">Medium</string>
+    <string name="settings_appearance_dim_strong">Strong</string>
     <!-- An option: how blurred the picture is drawn. Its values are Off, Light, Medium and Strong. -->
     <string name="settings_appearance_blur">Blur</string>
     <string name="settings_appearance_light">Light</string>
@@ -96,7 +100,7 @@
     <!-- The entry that opens the device's own settings. -->
     <string name="settings_system">System settings</string>
     <!-- A message, when the device has no settings app to open. -->
-    <string name="settings_system_unavailable">This device has no settings app</string>
+    <string name="settings_system_unavailable">No settings app on this device</string>
 
     <!-- The background editor (its title is settings_appearance_background): at the top of its
          pictures, how to delete one; OK is the remote's button. -->
@@ -104,7 +108,7 @@
     <!-- Its last entry: stores the picture and options chosen, which the editor only shows until then. -->
     <string name="settings_background_save">Save</string>
     <!-- In a window over the editor while the wallpaper is drawn after Save, which takes a moment. -->
-    <string name="settings_background_applying">Processing image…</string>
+    <string name="settings_background_applying">Processing background…</string>
     <!-- In a window over the background editor as it opens, while its pictures are prepared to be
          shown quickly (made once, again only after the TV changes its resolution or an update):
          for one picture, then for several, which one of how many. -->
@@ -119,13 +123,13 @@
          When Luncher's pictures had it already, settings_pictures_already, its name and OK.
          Several pictures shared: the strings that follow. -->
     <string name="settings_received_adding">Adding the picture…</string>
-    <string name="settings_received_saved">Picture saved</string>
+    <string name="settings_received_saved">Picture added</string>
     <!-- Its title while several pictures are added: which one of how many. -->
     <string name="settings_received_adding_count">Adding picture <xliff:g id="number" example="3">%1$d</xliff:g> of <xliff:g id="total" example="10">%2$d</xliff:g>…</string>
     <!-- Then, for several pictures, its title: how many were added to Luncher's pictures now. -->
     <plurals name="settings_received_saved_count">
-        <item quantity="one"><xliff:g id="count" example="1">%d</xliff:g> picture saved</item>
-        <item quantity="other"><xliff:g id="count" example="9">%d</xliff:g> pictures saved</item>
+        <item quantity="one"><xliff:g id="count" example="1">%d</xliff:g> picture added</item>
+        <item quantity="other"><xliff:g id="count" example="9">%d</xliff:g> pictures added</item>
     </plurals>
     <!-- The title instead when none of them was added. -->
     <string name="settings_received_none_added">Pictures not added</string>
@@ -197,8 +201,6 @@
     <string name="settings_pictures_add_from_folder">Add from folder</string>
     <!-- A picture's width and height in pixels, and its file's size. -->
     <string name="settings_pictures_details"><xliff:g id="width" example="1920">%1$d</xliff:g> × <xliff:g id="height" example="1080">%2$d</xliff:g> · <xliff:g id="size" example="3.1 MB">%3$s</xliff:g></string>
-    <!-- Before deleting the wallpaper's picture, what that does. -->
-    <string name="settings_pictures_delete_wallpaper">It\'s the wallpaper: the home screen goes back to its plain background.</string>
     <!-- Choosing the wallpaper, the first tile: no picture, the plain background. -->
     <string name="settings_pictures_no_picture">No picture</string>
     <!-- The name of a picture whose app gave it none. -->
@@ -207,8 +209,10 @@
     <string name="settings_pictures_delete">Delete</string>
     <!-- The question before deleting one picture, named. -->
     <string name="settings_pictures_delete_question">Delete <xliff:g id="name" example="beach.png">%1$s</xliff:g>?</string>
-    <!-- Below that question: what deleting it does and doesn't do. -->
-    <string name="settings_pictures_delete_text">Luncher deletes its own copy; the file you added it from stays.</string>
+    <!-- Below that question: what deleting it does and doesn't do; then the same for the
+         background's picture, which the home screen loses. -->
+    <string name="settings_pictures_delete_text">The picture is deleted from Luncher\'s pictures only.</string>
+    <string name="settings_pictures_delete_text_background">Used as the background: the home screen will have no picture. The picture is deleted from Luncher\'s pictures only.</string>
     <!-- The answer that changes nothing; also, in the window after another app shared
          pictures, the entry that stops adding them. -->
     <string name="settings_pictures_cancel">Cancel</string>
@@ -259,10 +263,10 @@
     </plurals>
     <string name="settings_pictures_folder_name_taken">Name already used in Luncher\'s pictures</string>
     <!-- Beside that list, below the preview of the selected picture. -->
-    <string name="settings_pictures_folder_note">OK copies it into Luncher\'s pictures; the file or the drive can be removed afterwards.</string>
+    <string name="settings_pictures_folder_note">OK adds a copy to Luncher\'s pictures. After that, the file and the USB drive are no longer needed.</string>
     <!-- In place of that list, while Luncher looks for pictures, or when there are none. -->
     <string name="settings_pictures_folder_looking">Looking for pictures…</string>
-    <string name="settings_pictures_folder_empty">There are no pictures in the folder yet.</string>
+    <string name="settings_pictures_folder_empty">No pictures in the folder yet</string>
     <!-- The names of picture formats some TVs can't show, the same in every language. -->
     <string name="settings_pictures_format_heif" translatable="false">HEIF (HEIC)</string>
     <string name="settings_pictures_format_avif" translatable="false">AVIF</string>

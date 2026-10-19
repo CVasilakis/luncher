@@ -26,5 +26,5 @@
     <string name="home_wallpaper_outdated">Updating the background…</string>
     <!-- The same, while a new wallpaper saved in the background editor is drawn, which the user
          left before it was done: as that editor says it (settings_background_applying). -->
-    <string name="home_wallpaper_saving">Processing image…</string>
+    <string name="home_wallpaper_saving">Processing background…</string>
 </resources>

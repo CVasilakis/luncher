@@ -378,7 +378,7 @@ class BackgroundActivity : Activity() {
             PicturesDialog(
                 this,
                 getString(R.string.settings_pictures_delete_question, nameOf(picture)),
-                (listOf(getString(R.string.settings_pictures_delete_text)) + library.usesOf(picture.id).map(::afterDeleting)).joinToString("\n"),
+                deleteText(library.usesOf(picture.id)),
                 // Cancel first, so a repeated OK doesn't delete.
                 listOf(getString(R.string.settings_pictures_cancel) to {}, getString(R.string.settings_pictures_delete) to { delete(picture) }),
             ),

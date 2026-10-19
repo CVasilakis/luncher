@@ -185,7 +185,7 @@ stuck: "Fitting the background to this screen…" for a screen of another size (
 version, or is lost. The window shows for half a second at least, so it never just flashes. A
 drawing goes on when the home screen stops, and shows when it's back. A wallpaper saved in the
 background editor is drawn the same way; if the user goes home before it's done, the window says
-"Processing image…", as the editor's did.
+"Processing background…", as the editor's did.
 
 A picture that's gone (deleted in the background editor, which sets the wallpaper to none, or its
 file lost) is no wallpaper, and without one, none is kept: asked for none, `Wallpaper` deletes the

@@ -7,7 +7,7 @@
     <string name="settings_no_apps">Δεν υπάρχουν εγκατεστημένες εφαρμογές TV</string>
     <string name="settings_appearance">Εμφάνιση</string>
     <string name="settings_appearance_tiles">Πλακίδια</string>
-    <string name="settings_appearance_top_bar">Γραμμή κατάστασης</string>
+    <string name="settings_appearance_top_bar">Ώρα και ημερομηνία</string>
     <string name="settings_appearance_vertical_alignment">Κατακόρυφη στοίχιση</string>
     <string name="settings_appearance_top">Πάνω</string>
     <string name="settings_appearance_bottom">Κάτω</string>
@@ -35,7 +35,9 @@
     <string name="settings_appearance_stretch">Τέντωμα</string>
     <string name="settings_appearance_position">Θέση</string>
     <string name="settings_appearance_dim">Σκίαση</string>
-    <string name="settings_appearance_percent"><xliff:g id="percent" example="20">%1$d</xliff:g> %%</string>
+    <string name="settings_appearance_dim_light">Ελαφριά</string>
+    <string name="settings_appearance_dim_medium">Μέτρια</string>
+    <string name="settings_appearance_dim_strong">Έντονη</string>
     <string name="settings_appearance_blur">Θόλωμα</string>
     <string name="settings_appearance_light">Ελαφρύ</string>
     <string name="settings_appearance_medium">Μέτριο</string>
@@ -44,11 +46,11 @@
     <string name="settings_appearance_off">Όχι</string>
     <string name="settings_appearance_reset">Επαναφορά προεπιλογών</string>
     <string name="settings_system">Ρυθμίσεις συστήματος</string>
-    <string name="settings_system_unavailable">Αυτή η συσκευή δεν έχει εφαρμογή ρυθμίσεων</string>
+    <string name="settings_system_unavailable">Καμία εφαρμογή ρυθμίσεων σε αυτή τη συσκευή</string>
 
     <string name="settings_background_hint">Κρατήστε πατημένο το OK σε μια εικόνα για να τη διαγράψετε</string>
     <string name="settings_background_save">Αποθήκευση</string>
-    <string name="settings_background_applying">Επεξεργασία εικόνας…</string>
+    <string name="settings_background_applying">Επεξεργασία φόντου…</string>
     <string name="settings_background_preparing">Προετοιμασία της εικόνας…</string>
     <string name="settings_background_preparing_count">Προετοιμασία εικόνας <xliff:g id="number" example="3">%1$d</xliff:g> από <xliff:g id="total" example="10">%2$d</xliff:g>…</string>
 
@@ -58,12 +60,12 @@
     <string name="settings_pictures_how_folder">• Ή αντιγράψτε εικόνες σε αυτόν τον φάκελο, στην τηλεόραση ή σε ένα USB, και μετά επιλέξτε Προσθήκη από φάκελο:</string>
     <string name="settings_pictures_add_from_folder">Προσθήκη από φάκελο</string>
     <string name="settings_pictures_details"><xliff:g id="width" example="1920">%1$d</xliff:g> × <xliff:g id="height" example="1080">%2$d</xliff:g> · <xliff:g id="size" example="3,1 MB">%3$s</xliff:g></string>
-    <string name="settings_pictures_delete_wallpaper">Είναι η ταπετσαρία: η αρχική οθόνη επιστρέφει στο απλό της φόντο.</string>
     <string name="settings_pictures_no_picture">Χωρίς εικόνα</string>
     <string name="settings_pictures_unnamed">Εικόνα</string>
     <string name="settings_pictures_delete">Διαγραφή</string>
     <string name="settings_pictures_delete_question">Διαγραφή του <xliff:g id="name" example="beach.png">%1$s</xliff:g>;</string>
-    <string name="settings_pictures_delete_text">Το Luncher διαγράφει το δικό του αντίγραφο· το αρχείο από το οποίο το προσθέσατε μένει.</string>
+    <string name="settings_pictures_delete_text">Η εικόνα διαγράφεται μόνο από τις εικόνες του Luncher.</string>
+    <string name="settings_pictures_delete_text_background">Χρησιμοποιείται ως φόντο: η αρχική οθόνη θα μείνει χωρίς εικόνα. Η εικόνα διαγράφεται μόνο από τις εικόνες του Luncher.</string>
     <string name="settings_pictures_cancel">Ακύρωση</string>
     <string name="settings_pictures_ok">OK</string>
     <string name="settings_pictures_not_added">Η εικόνα δεν προστέθηκε</string>
@@ -90,15 +92,15 @@
         <item quantity="other">Πολύ μεγάλη (πάνω από <xliff:g id="megapixels" example="64">%d</xliff:g> megapixel)</item>
     </plurals>
     <string name="settings_pictures_folder_name_taken">Το όνομα υπάρχει ήδη στις εικόνες του Luncher</string>
-    <string name="settings_pictures_folder_note">Το OK την αντιγράφει στις εικόνες του Luncher· μετά μπορείτε να αφαιρέσετε το αρχείο ή το USB.</string>
+    <string name="settings_pictures_folder_note">Το OK προσθέτει ένα αντίγραφο στις εικόνες του Luncher. Μετά από αυτό, το αρχείο και το USB δεν χρειάζονται πια.</string>
     <string name="settings_pictures_folder_looking">Αναζήτηση εικόνων…</string>
-    <string name="settings_pictures_folder_empty">Δεν υπάρχουν ακόμη εικόνες στον φάκελο.</string>
+    <string name="settings_pictures_folder_empty">Δεν υπάρχουν ακόμη εικόνες στον φάκελο</string>
     <string name="settings_received_adding">Προσθήκη της εικόνας…</string>
-    <string name="settings_received_saved">Η εικόνα αποθηκεύτηκε</string>
+    <string name="settings_received_saved">Η εικόνα προστέθηκε</string>
     <string name="settings_received_adding_count">Προσθήκη εικόνας <xliff:g id="number" example="3">%1$d</xliff:g> από <xliff:g id="total" example="10">%2$d</xliff:g>…</string>
     <plurals name="settings_received_saved_count">
-        <item quantity="one"><xliff:g id="count" example="1">%d</xliff:g> εικόνα αποθηκεύτηκε</item>
-        <item quantity="other"><xliff:g id="count" example="9">%d</xliff:g> εικόνες αποθηκεύτηκαν</item>
+        <item quantity="one"><xliff:g id="count" example="1">%d</xliff:g> εικόνα προστέθηκε</item>
+        <item quantity="other"><xliff:g id="count" example="9">%d</xliff:g> εικόνες προστέθηκαν</item>
     </plurals>
     <string name="settings_received_none_added">Οι εικόνες δεν προστέθηκαν</string>
     <plurals name="settings_received_already_count">

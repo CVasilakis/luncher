@@ -71,7 +71,7 @@ class PictureReceivedActivityTest {
         library.finishAdding()
         assertEquals("the wheel shows half a second at least", "Adding the picture…", activity.title())
         waitOutTheWheel()
-        assertEquals("Picture saved", activity.title())
+        assertEquals("Picture added", activity.title())
         assertTrue(!activity.spinning())
         assertEquals(listOf("Background"), activity.entries().map { it.text.toString() })
     }
@@ -139,7 +139,7 @@ class PictureReceivedActivityTest {
 
         val activity = receive()
 
-        assertEquals("Picture saved", activity.title())
+        assertEquals("Picture added", activity.title())
         assertEquals("holiday.jpg", activity.text())
         assertEquals(listOf("Background"), activity.entries().map { it.text.toString() })
         assertTrue(activity.entries().first().isFocused)
@@ -239,7 +239,7 @@ class PictureReceivedActivityTest {
 
         val activity = receive(share(shared, beach, forest))
 
-        assertEquals("1 picture saved", activity.title())
+        assertEquals("1 picture added", activity.title())
         assertEquals("1 already in Luncher's pictures\n1 not a picture, or damaged", activity.text())
         assertEquals(listOf("OK"), activity.entries().map { it.text.toString() })
         assertTrue(activity.entries().single().isFocused)
@@ -260,7 +260,7 @@ class PictureReceivedActivityTest {
 
         val activity = receive(share(shared, beach))
 
-        assertEquals("2 pictures saved", activity.title())
+        assertEquals("2 pictures added", activity.title())
         assertEquals(View.GONE, activity.findViewById<View>(R.id.settings_received_text).visibility)
     }
 
@@ -282,7 +282,7 @@ class PictureReceivedActivityTest {
 
         val activity = receive(share(*pictures.toTypedArray()))
 
-        assertEquals("1 picture saved", activity.title())
+        assertEquals("1 picture added", activity.title())
         assertEquals(
             listOf(
                 "2 already in Luncher's pictures",
@@ -336,7 +336,7 @@ class PictureReceivedActivityTest {
         assertEquals(listOf(beach), library.cancelled)
         assertEquals(listOf(shared, beach), library.added)
         assertEquals(listOf(holiday), library.pictures)
-        assertEquals("1 picture saved", window.get().title())
+        assertEquals("1 picture added", window.get().title())
         assertEquals("2 not added: cancelled", window.get().text())
         assertEquals(listOf("OK"), window.get().entries().map { it.text.toString() })
         window.get().entries().single().performClick()
@@ -356,7 +356,7 @@ class PictureReceivedActivityTest {
 
         assertFalse(window.get().isFinishing)
         assertEquals(listOf(beach), library.cancelled)
-        assertEquals("1 picture saved", window.get().title())
+        assertEquals("1 picture added", window.get().title())
         @Suppress("DEPRECATION")
         window.get().onBackPressed()
         assertTrue(window.get().isFinishing)
@@ -467,7 +467,7 @@ class PictureReceivedActivityTest {
         library.finishAdding()
 
         waitOutTheWheel()
-        assertEquals("1 picture saved", window.get().title())
+        assertEquals("1 picture added", window.get().title())
         assertEquals("Too many pictures: up to 100 can be added at a time. Share fewer, then try again.", window.get().text())
     }
 
@@ -487,7 +487,7 @@ class PictureReceivedActivityTest {
         library.finishAdding()
         library.finishAdding()
         waitOutTheWheel()
-        assertEquals("2 pictures saved", new.get().title())
+        assertEquals("2 pictures added", new.get().title())
     }
 
     @Test

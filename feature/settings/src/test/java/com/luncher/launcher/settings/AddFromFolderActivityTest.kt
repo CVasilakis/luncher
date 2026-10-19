@@ -100,7 +100,7 @@ class AddFromFolderActivityTest {
 
         val state = activity.findViewById<TextView>(R.id.settings_pictures_folder_state)
         assertEquals(View.VISIBLE, state.visibility)
-        assertEquals("There are no pictures in the folder yet.", state.text.toString())
+        assertEquals("No pictures in the folder yet", state.text.toString())
     }
 
     @Test
