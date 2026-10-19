@@ -94,7 +94,7 @@ internal class AppearancePreviewView(context: Context, attrs: AttributeSet?) : V
             wallpaper = kept
             return invalidate()
         }
-        loading.load({ images.render(picture, width, height, background.style) }) { image ->
+        loading.load({ stopped -> images.render(picture, width, height, background.style, stopped) }) { image ->
             wallpaper = image
             invalidate()
         }

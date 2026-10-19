@@ -139,6 +139,11 @@ adapters on files and a cache; the wallpaper drawn from it is kept by a fourth:
 - **Adding a picture is a job,** of `JobPriority.PICTURE_LIBRARY`, as is everything that changes
   the library's files (moving a new picture's file into place, deleting, writing the index), so
   they run in the order they came, and a picture's file is in place before the library names it.
+  A picture named as one of the library isn't added (`nameClash`, in `:domain`): the same name
+  and size is the same file, another size another picture, and two of one name would be told
+  apart by nothing on the screens. It's refused as soon as the source says its name and size,
+  before anything is copied; a source that doesn't say its size, once it's copied; and again
+  before it's named, for one of that name added meanwhile.
   Adding streams the source into a new file, stopping past the size limit, hashing it on the way;
   decodes its size and then all of it, small (`inSampleSize`), since a size alone can decode where
   the picture can't (AVIF on API 31); and then, on the main thread, either finds it in the index
@@ -153,10 +158,16 @@ adapters on files and a cache; the wallpaper drawn from it is kept by a fourth:
   asked and read through `outside/` ([above](#another-apps-answers)), as the app may never answer:
   one that stops sending gives `Unreadable` after 15 s without an answer.
 - **An import can be cancelled wherever it is** (`add`'s handle): its job taken out of the queue
-  if it hasn't started, its reading stopped, its copy deleted if it's made, and on the main
+  if it hasn't started, its reading or its decode stopped, its copy deleted if it's made, and on the main
   thread, the steps that follow see it and stop. A file already moved into place but not yet named
   stays for the next start's cleanup: deleting it could delete the same picture, added again
   meanwhile.
+- **A decode stops when it isn't wanted any more.** A picture is decoded through a stream whose
+  reads fail once the caller says it's stopped (a screen's request dropped, an import cancelled):
+  the decoder then ends at its next read, within milliseconds on API 22 to 36, and what it decoded
+  so far is dropped. Nothing else stops one: `BitmapFactory.Options.requestCancelDecode` does
+  nothing from API 24 on. So the job thread, one for all of Luncher, is free at once for what the
+  user asked for next.
 - **A picture is drawn into ARGB_8888, at the size it's shown, upright.** `PictureFiles.draw`
   decodes it at no more than the size needed (`inSampleSize`), into sRGB from API 26 on (an iPhone's
   photo is in Display P3), turns it as its orientation tag says, which BitmapFactory doesn't, and

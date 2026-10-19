@@ -35,10 +35,20 @@ fun sample(name: String, width: Int, height: Int): Bitmap {
     return bitmap
 }
 
-/** A picture in a drop folder, named [name], on a USB drive if [removable]; [unsupported] in a format this TV can't show. */
-fun folderPicture(name: String, removable: Boolean = false, unsupported: com.luncher.domain.pictures.PictureFormat? = null) =
+/**
+ * A picture in a drop folder, named [name], on a USB drive if [removable]; [unsupported] in a
+ * format this TV can't show; of [bytes], [width] x [height] px.
+ */
+fun folderPicture(
+    name: String,
+    removable: Boolean = false,
+    unsupported: com.luncher.domain.pictures.PictureFormat? = null,
+    bytes: Long = 2_400_000,
+    width: Int = 4000,
+    height: Int = 3000,
+) =
     FolderPicture(
-        name, removable, 2_400_000,
-        if (unsupported == null) 4000 else 0, if (unsupported == null) 3000 else 0,
+        name, removable, bytes,
+        if (unsupported == null) width else 0, if (unsupported == null) height else 0,
         unsupported, Uri.parse("file:///storage/emulated/0/Android/media/com.luncher.launcher/$name"),
     )

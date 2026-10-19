@@ -186,6 +186,11 @@
          only apps with storage permission can read; %1$s is the folder's path. -->
     <string name="settings_pictures_unreadable">Luncher can\'t read it. Copy it into the folder <xliff:g id="folder" example="Android/media/com.luncher.launcher">%1$s</xliff:g> on this TV or a USB drive, then choose Add from folder.</string>
     <string name="settings_pictures_no_space">There isn\'t enough free storage on this TV for it.</string>
+    <!-- The library has a picture of this name and size: most likely this very file. %1$s is its name. -->
+    <string name="settings_pictures_same_file"><xliff:g id="name" example="holiday.jpg">%1$s</xliff:g> is in Luncher\'s pictures already.</string>
+    <!-- The library has another picture of this name (another size); Luncher has no way to rename
+         one, so the user deletes that one in Luncher, or renames the file elsewhere. -->
+    <string name="settings_pictures_name_taken">Luncher\'s pictures have another picture named <xliff:g id="name" example="holiday.jpg">%1$s</xliff:g>. Delete that one in Luncher first, or give this file another name, then add it.</string>
     <!-- Below the title of Add from folder: where its pictures are; %1$s is the folder's path. -->
     <string name="settings_pictures_folder_where">Pictures in the folder <xliff:g id="folder" example="Android/media/com.luncher.launcher">%1$s</xliff:g>, on this TV or a USB drive</string>
     <!-- Where a picture of that list is: the TV's own storage, or a USB drive (or a memory card). -->
@@ -195,6 +200,13 @@
     <string name="settings_pictures_folder_row"><xliff:g id="where" example="USB drive">%1$s</xliff:g> · <xliff:g id="name" example="holiday.jpg">%2$s</xliff:g></string>
     <!-- Below a picture of that list in a format this TV can't show; %1$s is the format's name. -->
     <string name="settings_pictures_folder_unsupported">This TV can\'t show <xliff:g id="format" example="HEIF (HEIC)">%1$s</xliff:g> pictures</string>
+    <!-- Below a picture of that list that can't be added, as the list already tells: its size and
+         file size (%1$s, as settings_pictures_details writes them), then why (%2$s, one of the
+         three below). -->
+    <string name="settings_pictures_folder_refused"><xliff:g id="details" example="4000 × 3000 · 3.1 MB">%1$s</xliff:g> · <xliff:g id="why" example="Too large to add">%2$s</xliff:g></string>
+    <string name="settings_pictures_folder_too_large">Too large to add</string>
+    <string name="settings_pictures_folder_same_file">In Luncher\'s pictures already</string>
+    <string name="settings_pictures_folder_name_taken">Another of Luncher\'s pictures has this name</string>
     <!-- Beside that list, below the preview of the selected picture. -->
     <string name="settings_pictures_folder_note">OK copies it into Luncher\'s pictures; the file or the drive can be removed afterwards.</string>
     <!-- In place of that list, while Luncher looks for pictures, or when there are none. -->

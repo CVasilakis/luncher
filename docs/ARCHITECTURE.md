@@ -111,14 +111,19 @@ the main thread (decoding a picture). Neither may delay a key press.
    it reads, replaced in one step. Jobs run one at a time on a single background thread, at
    Android's background priority, through the `Jobs` port, which `AppGraph` creates on first use:
    the highest priority first, in the order they came among equals, every priority listed in
-   `JobPriority`. A running job isn't interrupted, so a job is small: one image, not all of them
-   (one that waits on another app gives up by itself, point 6).
+   `JobPriority`. A running job isn't interrupted, so a job is small: one image, not all of them.
+   Two exceptions end a job early: one that waits on another app gives up by itself (point 6),
+   and a decode whose request was dropped stops at its next read (point 4), so the jobs behind
+   it, the one the user just asked for among them, don't wait for a picture nobody will see.
    A job posts its result to the main thread with a `Handler`. One at a time also bounds memory:
    only one large image is decoded at once.
 4. **The latest request wins.** Each thing a screen loads (a picture's thumbnail, a preview) is
    requested through a small helper, `LatestRequest` in `:domain`'s `jobs/`, that drops any
    earlier request: one not started yet is cancelled, and the result
-   of one that finishes late is ignored. The screen stops it in `onStop`, which drops everything.
+   of one that finishes late is ignored; one that's running is told (the `stopped` its work is
+   given), and a decode stops at its next read: `:platform`'s `PictureFiles` reads a picture
+   through a stream that fails from then on, which ends the decoder within milliseconds on every
+   API level. The screen stops it in `onStop`, which drops everything.
    What a screen ends up showing depends only on the last request, never on which job finished
    first.
 5. **Tests decide when jobs run.** The background thread is a port, `Jobs`; tests give

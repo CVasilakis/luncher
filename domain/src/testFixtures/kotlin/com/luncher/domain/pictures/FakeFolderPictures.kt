@@ -11,10 +11,14 @@ class FakeFolderPictures<Source, Image>(
     /** Every picture [preview] drew, in order. */
     val previewed = mutableListOf<FolderPicture<Source>>()
 
+    /** What each [preview] was told about being stopped, as it began: the test reads them later. */
+    val previewStops = mutableListOf<() -> Boolean>()
+
     override fun list(done: (List<FolderPicture<Source>>) -> Unit) = done(pictures.toList())
 
-    override fun preview(picture: FolderPicture<Source>, width: Int, height: Int, framing: Framing): Image? {
+    override fun preview(picture: FolderPicture<Source>, width: Int, height: Int, framing: Framing, stopped: () -> Boolean): Image? {
         previewed += picture
+        previewStops += stopped
         return draw(picture, width, height)
     }
 }

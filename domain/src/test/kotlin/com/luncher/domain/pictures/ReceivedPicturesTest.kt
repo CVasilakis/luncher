@@ -18,6 +18,8 @@ class ReceivedPicturesTest {
         results["forest"] = ImportResult.Added(forest)
         results["known"] = ImportResult.AlreadyThere(beach)
         results["text"] = ImportResult.NotAPicture
+        results["same name"] = ImportResult.SameFile(beach)
+        results["name taken"] = ImportResult.NameTaken(forest)
         answerLater = true
     }
     private val received = ReceivedPictures(library)
@@ -72,6 +74,14 @@ class ReceivedPicturesTest {
         repeat(4) { library.finishAdding() }
 
         assertEquals(Outcome.Several(saved = 2, notAdded = 2, tooMany = false), received.outcome)
+    }
+
+    @Test
+    fun `counts a picture refused for its name as not added, though the library has one alike`() {
+        received.receive(listOf("beach", "same name", "name taken"))
+        repeat(3) { library.finishAdding() }
+
+        assertEquals(Outcome.Several(saved = 1, notAdded = 2, tooMany = false), received.outcome)
     }
 
     @Test

@@ -70,4 +70,20 @@ class LatestRequestTest {
         assertEquals(emptyList<String>(), shown)
         assertEquals(0, jobs.pending)
     }
+
+    @Test
+    fun `tells a running job when its request is dropped, by a newer one or stop`() {
+        val told = mutableListOf<() -> Boolean>()
+        request.load({ stopped -> told += stopped; "first" }) { shown += it }
+        jobs.runAll()
+        assertEquals(false, told[0]())
+
+        request.load({ stopped -> told += stopped; "second" }) { shown += it }
+        assertEquals(true, told[0]())
+        jobs.runAll()
+        assertEquals(false, told[1]())
+
+        request.stop()
+        assertEquals(true, told[1]())
+    }
 }

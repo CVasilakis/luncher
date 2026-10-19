@@ -282,7 +282,7 @@ class BackgroundActivity : Activity() {
         if (picture.id in drawing) return
         val request = LatestRequest(graph.jobs, JobPriority.PICTURE_SCREENS) { main.post(it) }
         drawing[picture.id] = request
-        request.load({ images.render(picture.id, thumbnailWidth, thumbnailHeight, THUMBNAIL) }) { image ->
+        request.load({ stopped -> images.render(picture.id, thumbnailWidth, thumbnailHeight, THUMBNAIL, stopped) }) { image ->
             drawing.remove(picture.id)
             if (image != null && picture.id in rows) thumbnailOf(picture.id).setImageBitmap(image)
         }

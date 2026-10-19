@@ -280,7 +280,10 @@ focused. Then, for one picture, "Picture saved", its name and an entry for each 
 be put to (`pictureUseMenu`, today Background, which opens the background editor with the picture
 chosen, not saved, and closes the window), or why it wasn't added, and OK; for several, how many
 were saved ("3 pictures saved"), how many weren't, whether a share had too many, and OK. A picture
-the library has already (the same content) counts as saved.
+the library has already (the same content, under another name) counts as saved. One named as a
+picture of the library isn't added, and the window says whether the library has that file already
+(the same name and size) or another of its name, which the user deletes there, or renames the file
+([`platform/README.md`](../../platform/README.md#pictures)); Luncher renames nothing.
 
 A share that arrives while the window shows joins it: `SharePictureActivity` then sends the window
 alone, without the home screen, which would close it (`singleTask`), and the window, `singleTop`,
@@ -332,9 +335,14 @@ to 9 shares files, gets the message that says to use a drop folder instead, with
 **From a drop folder** (`AddFromFolderActivity`): the pictures a file manager or a computer put in
 `Android/media/<applicationId>`, on the TV or a USB drive, listed the TV's first, then the drives',
 each by name (`inListOrder`), with a preview of the selected one beside them, of the TV's shape
-as the wallpaper fills it, drawn in the background. OK returns the picture to the background editor, which adds it and chooses it. A file in a format
-this TV can't show ([which](../../platform/README.md#pictures)) is listed, marked, and OK on it says so;
-anything else that isn't a picture isn't listed. The folders are read again each time the screen
+as the wallpaper fills it, drawn in the background; moving on stops the one being drawn at once
+([`ARCHITECTURE.md`](../../docs/ARCHITECTURE.md#background-work-and-changes-while-shown), point 4).
+OK returns the picture to the background editor, which adds it and chooses it. What the listing
+and the library already tell can't be added (`whyRefused`, in `:domain`) is marked in the list,
+after its size, and OK on it says why at once, reading nothing: a file in a format this TV can't
+show ([which](../../platform/README.md#pictures)), one too large (`PictureLimits`), which has no
+preview either, and one named as a picture of the library, the same file (the same name and size)
+or another. Anything else that isn't a picture isn't listed. The folders are read again each time the screen
 shows, so a USB drive plugged in meanwhile counts. On a screen too short for the preview and its
 note, the preview gets smaller (`PreviewColumn`).
 

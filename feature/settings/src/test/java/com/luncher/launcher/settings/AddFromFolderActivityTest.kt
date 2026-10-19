@@ -8,6 +8,7 @@ import android.widget.LinearLayout
 import android.widget.ListView
 import android.widget.TextView
 import com.luncher.domain.pictures.FakeFolderPictures
+import com.luncher.domain.pictures.FakePictures
 import com.luncher.domain.pictures.PictureFormat
 import androidx.test.platform.app.InstrumentationRegistry
 import com.luncher.launcher.testing.TV_1080P
@@ -37,8 +38,8 @@ class AddFromFolderActivityTest {
     private val wallpaper = folderPicture("wallpaper-4k.jpg")
     private val phone = folderPicture("IMG_0001.HEIC", unsupported = PictureFormat.HEIF)
 
-    private fun graph(vararg pictures: com.luncher.domain.pictures.FolderPicture<android.net.Uri>): TestPicturesGraph {
-        val graph = object : TestPicturesGraph() {
+    private fun graph(vararg pictures: com.luncher.domain.pictures.FolderPicture<android.net.Uri>, library: FakePictures<android.net.Uri> = FakePictures()): TestPicturesGraph {
+        val graph = object : TestPicturesGraph(library) {
             override val folderPictures = FakeFolderPictures(*pictures, draw = { picture, width, height -> sample(picture.name, width, height) })
         }
         application.graph = graph
@@ -167,5 +168,81 @@ class AddFromFolderActivityTest {
         controller.pause().stop()
 
         assertEquals(0, graph.jobs.pending)
+    }
+
+    // The library has "holiday.jpg" (2.4 MB, as the folder's) and "logo.png" (another size).
+    private val known = FakePictures<android.net.Uri>(
+        FakePictures.picture("holiday.jpg", bytes = 2_400_000),
+        FakePictures.picture("logo.png", bytes = 99_000),
+    )
+    private val huge = folderPicture("panorama.jpg", bytes = 184_000_000, width = 21621, height = 7004)
+
+    @Test
+    fun `marks the pictures it can tell can't be added, too large or named like one of the library`() {
+        graph(holiday, logo, huge, wallpaper, library = known)
+
+        val activity = start()
+
+        assertEquals(
+            listOf(
+                "This TV · panorama.jpg | 21621 × 7004 · 184 MB · Too large to add",
+                "This TV · wallpaper-4k.jpg | 4000 × 3000 · 2.4 MB",
+                "USB drive · holiday.jpg | 4000 × 3000 · 2.4 MB · In Luncher's pictures already",
+                "USB drive · logo.png | 4000 × 3000 · 2.4 MB · Another of Luncher's pictures has this name",
+            ),
+            activity.rows(),
+        )
+    }
+
+    @Test
+    fun `OK on a picture it can tell can't be added says why at once, reading nothing, and stays`() {
+        val graph = graph(holiday, logo, huge, library = known)
+        val activity = start()
+        val messages = listOf(
+            0 to "It's too large: a picture can have up to 50 MB and 64 megapixels.",
+            1 to "holiday.jpg is in Luncher's pictures already.",
+            2 to "Luncher's pictures have another picture named logo.png. Delete that one in Luncher first, or give this file another name, then add it.",
+        )
+
+        for ((position, message) in messages) {
+            activity.list().performItemClick(null, position, position.toLong())
+            shadowOf(Looper.getMainLooper()).idle()
+
+            assertFalse(activity.isFinishing)
+            assertEquals(message, ShadowDialog.getLatestDialog().findViewById<TextView>(R.id.settings_pictures_dialog_text).text.toString())
+        }
+        assertEquals(emptyList<Any>(), known.added)
+        graph.jobs.runAll()
+        assertEquals(emptyList<Any>(), graph.folderPictures.previewed)   // the selected one, the panorama, has none
+    }
+
+    @Test
+    fun `draws no preview of a picture too large to add`() {
+        val graph = graph(huge)
+        val activity = start()
+        graph.jobs.runAll()
+
+        assertEquals(emptyList<Any>(), graph.folderPictures.previewed)
+        assertNull(activity.findViewById<ImageView>(R.id.settings_pictures_folder_preview).drawable)
+    }
+
+    @Test
+    fun `tells a preview being drawn to stop when another picture is selected, or the screen hides`() {
+        val graph = graph(wallpaper, holiday)
+        val controller = Robolectric.buildActivity(AddFromFolderActivity::class.java).setup()
+        shadowOf(Looper.getMainLooper()).idle()
+        graph.jobs.runAll()   // the first picture's preview, what it's told kept for later
+        val first = graph.folderPictures.previewStops.single()
+        assertFalse(first())
+
+        controller.get().list().setSelection(1)
+        shadowOf(Looper.getMainLooper()).idle()
+        assertTrue(first())
+
+        graph.jobs.runAll()
+        val second = graph.folderPictures.previewStops.last()
+        assertFalse(second())
+        controller.pause().stop()
+        assertTrue(second())
     }
 }

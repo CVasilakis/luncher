@@ -26,6 +26,18 @@ sealed interface ImportResult {
     /** The library had it already (the same content), as [picture]: nothing was added. */
     data class AlreadyThere(val picture: Picture) : ImportResult
 
+    /**
+     * The library has a picture of the same name and file size, as [picture]: most likely the same
+     * file, added before. Nothing was added.
+     */
+    data class SameFile(val picture: Picture) : ImportResult
+
+    /**
+     * The library has another picture of the same name, as [picture]: nothing was added, so that
+     * neither is taken for the other. The user deletes that one, or renames the file.
+     */
+    data class NameTaken(val picture: Picture) : ImportResult
+
     /** Not a picture, or a damaged one. */
     data object NotAPicture : ImportResult
 

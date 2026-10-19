@@ -7,6 +7,7 @@ import com.luncher.domain.pictures.FolderPicture
 import com.luncher.domain.pictures.Framing
 import com.luncher.domain.pictures.PictureFormat
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -78,10 +79,23 @@ class MediaFolderPicturesTest {
     fun `previews a picture framed at the size asked`() {
         File(dropFolder, "wide.png").writeBytes(TestPictureFiles.png(TestPictureFiles.halves(64, 36, Color.RED, Color.BLUE)))
 
-        val preview = folders.preview(listed().single(), 32, 18, Framing())!!
+        val preview = folders.preview(listed().single(), 32, 18, Framing()) { false }!!
 
         assertEquals(32, preview.width)
         assertTrue(TestPictureFiles.isRed(preview.getPixel(2, 9)))
         assertTrue(TestPictureFiles.isBlue(preview.getPixel(29, 9)))
+    }
+
+    @Test
+    fun `stops drawing a preview once told, at its next read, giving nothing`() {
+        File(dropFolder, "large.jpg").writeBytes(TestPictureFiles.jpeg(TestPictureFiles.halves(1600, 900, Color.RED, Color.BLUE), orientation = 1))
+        val picture = listed().single()
+        var asked = 0
+
+        // Told to stop once the decode has asked twice: it reads no further.
+        val preview = folders.preview(picture, 32, 18, Framing()) { ++asked > 2 }
+
+        assertNull(preview)
+        assertNull(folders.preview(picture, 32, 18, Framing()) { true })
     }
 }

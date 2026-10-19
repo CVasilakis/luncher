@@ -52,8 +52,8 @@ class CachedPictureImages(
         }
     }
 
-    override fun render(picture: PictureId, width: Int, height: Int, style: PictureStyle): Bitmap? {
-        val image = images.render(picture, width, height, style) ?: return null
+    override fun render(picture: PictureId, width: Int, height: Int, style: PictureStyle, stopped: () -> Boolean): Bitmap? {
+        val image = images.render(picture, width, height, style, stopped) ?: return null
         val drawing = Drawing(picture, width, height, style)
         // Only for writing: the reading buffers stay the main thread's.
         PixelFiles(MAGIC, FORMAT).write(fileOf(picture, width, height), image) { output ->

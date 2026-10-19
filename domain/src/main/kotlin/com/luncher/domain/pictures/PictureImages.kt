@@ -15,7 +15,8 @@ interface PictureImages<Image> {
 
     /**
      * [picture] drawn at [width] x [height] px in [style], and kept for [cached]: slow, a job.
-     * Null if it isn't in the library, or its file can't be read (deleted meanwhile, say).
+     * Null if it isn't in the library, or its file can't be read (deleted meanwhile, say), or
+     * once [stopped] says so (a screen's request dropped): it stops reading then, and keeps nothing.
      */
-    fun render(picture: PictureId, width: Int, height: Int, style: PictureStyle): Image?
+    fun render(picture: PictureId, width: Int, height: Int, style: PictureStyle, stopped: () -> Boolean = { false }): Image?
 }

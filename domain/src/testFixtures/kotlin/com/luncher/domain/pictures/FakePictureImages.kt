@@ -17,7 +17,7 @@ class FakePictureImages<Image>(private val draw: (PictureId, Int, Int, PictureSt
 
     override fun cached(picture: PictureId, width: Int, height: Int, style: PictureStyle): Image? = cache[picture to style]
 
-    override fun render(picture: PictureId, width: Int, height: Int, style: PictureStyle): Image? {
+    override fun render(picture: PictureId, width: Int, height: Int, style: PictureStyle, stopped: () -> Boolean): Image? {
         if (picture in missing) return null
         rendered += picture to style
         return draw(picture, width, height, style).also { cache[picture to style] = it }

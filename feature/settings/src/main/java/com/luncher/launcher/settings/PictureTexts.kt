@@ -31,6 +31,8 @@ internal fun Context.formatName(format: PictureFormat): String = when (format) {
 /** Why a picture wasn't added, for a message; null when it was, or was there already. */
 internal fun Context.whyNotAdded(result: ImportResult): String? = when (result) {
     is ImportResult.Added, is ImportResult.AlreadyThere -> null
+    is ImportResult.SameFile -> getString(R.string.settings_pictures_same_file, nameOf(result.picture))
+    is ImportResult.NameTaken -> getString(R.string.settings_pictures_name_taken, nameOf(result.picture))
     ImportResult.NotAPicture -> getString(R.string.settings_pictures_not_a_picture)
     is ImportResult.UnsupportedFormat -> getString(R.string.settings_pictures_unsupported, formatName(result.format))
     ImportResult.TooLarge -> (PictureLimits.MAX_PIXELS / 1_000_000).toInt().let { megapixels ->
@@ -38,6 +40,18 @@ internal fun Context.whyNotAdded(result: ImportResult): String? = when (result) 
     }
     ImportResult.Unreadable -> getString(R.string.settings_pictures_unreadable, dropFolder())
     ImportResult.NoSpace -> getString(R.string.settings_pictures_no_space)
+}
+
+/**
+ * What Add from folder's row says of a picture that can't be added, as its listing tells
+ * ([whyRefused][com.luncher.domain.pictures.whyRefused]); null for one that can, as far as it tells.
+ */
+internal fun Context.refusal(result: ImportResult?): String? = when (result) {
+    is ImportResult.UnsupportedFormat -> getString(R.string.settings_pictures_folder_unsupported, formatName(result.format))
+    ImportResult.TooLarge -> getString(R.string.settings_pictures_folder_too_large)
+    is ImportResult.SameFile -> getString(R.string.settings_pictures_folder_same_file)
+    is ImportResult.NameTaken -> getString(R.string.settings_pictures_folder_name_taken)
+    null, is ImportResult.Added, is ImportResult.AlreadyThere, ImportResult.NotAPicture, ImportResult.Unreadable, ImportResult.NoSpace -> null
 }
 
 /** What deleting a picture with [use] does to it, said before deleting. */

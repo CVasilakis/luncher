@@ -26,14 +26,14 @@ class FilePictureImages(context: Context, private val folder: File = File(contex
 
     override fun cached(picture: PictureId, width: Int, height: Int, style: PictureStyle): Bitmap? = null
 
-    override fun render(picture: PictureId, width: Int, height: Int, style: PictureStyle): Bitmap? {
+    override fun render(picture: PictureId, width: Int, height: Int, style: PictureStyle, stopped: () -> Boolean): Bitmap? {
         val file = File(folder, picture.value)
         if (style.blur == Blur.OFF) {
-            val image = PictureFiles.draw(file, width, height, style.framing, background) ?: return null
+            val image = PictureFiles.draw(file, width, height, style.framing, background, stopped) ?: return null
             PictureFiles.dim(image, style.dim)
             return image
         }
-        val half = PictureFiles.draw(file, (width + 1) / 2, (height + 1) / 2, style.framing, background) ?: return null
+        val half = PictureFiles.draw(file, (width + 1) / 2, (height + 1) / 2, style.framing, background, stopped) ?: return null
         PictureFiles.blur(half, style.blur)
         PictureFiles.dim(half, style.dim)
         return PictureFiles.enlarge(half, width, height)

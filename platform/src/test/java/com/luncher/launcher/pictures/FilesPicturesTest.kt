@@ -159,6 +159,46 @@ class FilesPicturesTest {
     }
 
     @Test
+    fun `refuses a file named as one of the library, saying whether it's the same file, before copying it`() {
+        val first = (add(dropped("a.png", red)) as ImportResult.Added).picture
+
+        assertEquals(ImportResult.SameFile(first), add(dropped("a.png", red)))
+        val other = TestPictureFiles.png(TestPictureFiles.halves(80, 40, Color.GREEN, Color.GREEN))
+        assertEquals(ImportResult.NameTaken(first), add(dropped("a.png", other)))
+
+        assertEquals(listOf(first), library.read())
+        assertEquals(listOf(first.id.value, "index.json"), folder.list()!!.sorted())
+    }
+
+    @Test
+    fun `refuses a shared picture named as one of the library once copied, when its app doesn't say its size`() {
+        val first = (add(dropped("a.png", red)) as ImportResult.Added).picture
+
+        assertEquals(ImportResult.SameFile(first), add(shared("a.png", red)))
+        assertEquals(ImportResult.NameTaken(first), add(shared("a.png", TestPictureFiles.png(TestPictureFiles.halves(80, 40, Color.GREEN, Color.GREEN)))))
+        assertEquals(listOf(first.id.value, "index.json"), folder.list()!!.sorted())
+    }
+
+    @Test
+    fun `names differing only in case are different pictures`() {
+        add(dropped("a.png", red))
+
+        assertTrue(add(shared("A.PNG", blue)) is ImportResult.Added)
+    }
+
+    @Test
+    fun `of two pictures of one name added at once, the second is refused`() {
+        val results = mutableListOf<ImportResult>()
+        library.add(shared("a.png", red)) { results += it }
+        library.add(dropped("a.png", TestPictureFiles.png(TestPictureFiles.halves(80, 40, Color.GREEN, Color.GREEN)))) { results += it }
+        settle()
+
+        val added = (results[0] as ImportResult.Added).picture
+        assertEquals(listOf(ImportResult.Added(added), ImportResult.NameTaken(added)), results)
+        assertEquals(listOf(added), library.read())
+    }
+
+    @Test
     fun `the same picture added twice at once is stored once`() {
         val results = mutableListOf<ImportResult>()
         library.add(shared("a.png", red)) { results += it }

@@ -20,17 +20,21 @@ import com.luncher.domain.pictures.FolderPicture
 import com.luncher.domain.pictures.Framing
 import com.luncher.domain.pictures.ImportResult
 import com.luncher.domain.pictures.inListOrder
+import com.luncher.domain.pictures.whyRefused
 import java.util.Locale
 
 /**
  * The pictures in Luncher's drop folders, on the TV and on USB drives ([FolderPictures][graph]):
  * a list, in the order of [inListOrder], with a preview of the selected one beside it. OK on one
- * returns it to [BackgroundActivity], which adds it; OK on one in a format this TV can't show says so
- * instead. The folders are read again each time it shows, so a drive plugged in meanwhile counts.
+ * returns it to [BackgroundActivity], which adds it. One that its listing and the library already
+ * tell can't be added ([whyRefused]: a format this TV can't show, too large, a name the library
+ * has) is marked in the list, has no preview, and OK on it says why at once. The folders are
+ * read again each time it shows, so a drive plugged in meanwhile counts.
  */
 class AddFromFolderActivity : Activity() {
 
     private val folders by lazy { graph.folderPictures }
+    private val library by lazy { graph.pictures }
     private val main = Handler(Looper.getMainLooper())
     private val previewing by lazy { LatestRequest(graph.jobs, JobPriority.PICTURE_SCREENS) { main.post(it) } }
     private lateinit var list: ListView
@@ -38,6 +42,9 @@ class AddFromFolderActivity : Activity() {
     private lateinit var side: PreviewColumn
     private lateinit var preview: ImageView
     private var pictures: List<FolderPicture<Uri>> = emptyList()
+
+    /** Why each of [pictures] can't be added, by its source, as far as the listing and the library tell. */
+    private var refused: Map<Uri, ImportResult> = emptyMap()
     private val rows = Rows()
 
     /** Counts the listings: one that answers after [onStop] or a newer one is dropped. */
@@ -84,6 +91,8 @@ class AddFromFolderActivity : Activity() {
     private fun show(found: List<FolderPicture<Uri>>, looking: Boolean) {
         val selected = (list.selectedItem as? FolderPicture<*>)?.source
         pictures = found
+        val known = library.read()
+        refused = found.mapNotNull { picture -> whyRefused(picture, known)?.let { picture.source to it } }.toMap()
         rows.notifyDataSetChanged()
         state.visibility = if (found.isEmpty()) View.VISIBLE else View.GONE
         state.setText(if (looking) R.string.settings_pictures_folder_looking else R.string.settings_pictures_folder_empty)
@@ -94,21 +103,26 @@ class AddFromFolderActivity : Activity() {
         list.selectedItem?.let { showPreview(it as FolderPicture<*>) }
     }
 
-    /** Draws a preview of [picture] in the background, the latest selected one only. */
+    /**
+     * Draws a preview of [picture] in the background, the latest selected one only: the decode of
+     * one no longer selected stops. None of a picture this TV can't show, or too large to add.
+     */
     private fun showPreview(picture: FolderPicture<*>?) {
         preview.setImageDrawable(null)
         val shown = pictures.firstOrNull { it.source == picture?.source }
         val (width, height) = side.previewSize
-        if (shown == null || shown.unsupported != null || width <= 0 || height <= 0) {
+        val why = shown?.let { refused[it.source] }
+        if (shown == null || why is ImportResult.UnsupportedFormat || why == ImportResult.TooLarge || width <= 0 || height <= 0) {
             previewing.stop()
             return
         }
-        previewing.load({ folders.preview(shown, width, height, Framing()) }) { preview.setImageBitmap(it) }
+        previewing.load({ stopped -> folders.preview(shown, width, height, Framing(), stopped) }) { preview.setImageBitmap(it) }
     }
 
+    /** Returns [picture] to be added, or says at once why it can't be. */
     private fun choose(picture: FolderPicture<Uri>) {
-        val format = picture.unsupported
-        if (format == null) {
+        val why = refused[picture.source]
+        if (why == null) {
             setResult(RESULT_OK, Intent().setData(picture.source))
             finish()
             return
@@ -117,7 +131,7 @@ class AddFromFolderActivity : Activity() {
         dialog = PicturesDialog(
             this,
             getString(R.string.settings_pictures_not_added),
-            whyNotAdded(ImportResult.UnsupportedFormat(format)),
+            whyNotAdded(why).orEmpty(),
             listOf(getString(R.string.settings_pictures_ok) to {}),
         ).apply { show() }
     }
@@ -136,9 +150,12 @@ class AddFromFolderActivity : Activity() {
             val picture = pictures[position]
             val where = getString(if (picture.removable) R.string.settings_pictures_folder_usb else R.string.settings_pictures_folder_this_tv)
             view.findViewById<TextView>(R.id.settings_pictures_folder_name).text = getString(R.string.settings_pictures_folder_row, where, picture.name)
-            view.findViewById<TextView>(R.id.settings_pictures_folder_details).text = when (val format = picture.unsupported) {
-                null -> details(picture.width, picture.height, picture.bytes)
-                else -> getString(R.string.settings_pictures_folder_unsupported, formatName(format))
+            val why = refusal(refused[picture.source])
+            view.findViewById<TextView>(R.id.settings_pictures_folder_details).text = when {
+                // Its size unknown: only why.
+                picture.unsupported != null -> why
+                why != null -> getString(R.string.settings_pictures_folder_refused, details(picture.width, picture.height, picture.bytes), why)
+                else -> details(picture.width, picture.height, picture.bytes)
             }
             return view
         }

@@ -42,9 +42,9 @@ class MediaFolderPictures(
         }
     }
 
-    override fun preview(picture: FolderPicture<Uri>, width: Int, height: Int, framing: Framing): Bitmap? {
+    override fun preview(picture: FolderPicture<Uri>, width: Int, height: Int, framing: Framing, stopped: () -> Boolean): Bitmap? {
         val path = picture.source.path ?: return null
-        return PictureFiles.draw(File(path), width, height, framing, background)
+        return PictureFiles.draw(File(path), width, height, framing, background, stopped)
     }
 
     private fun picturesIn(folder: File): List<FolderPicture<Uri>> {

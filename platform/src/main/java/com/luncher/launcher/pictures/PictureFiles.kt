@@ -19,7 +19,9 @@ import com.luncher.domain.pictures.frame
 import com.luncher.domain.pictures.pictureFormatOf
 import java.io.File
 import java.io.FileInputStream
+import java.io.FilterInputStream
 import java.io.IOException
+import java.io.InputStream
 import java.nio.IntBuffer
 import kotlin.math.floor
 import kotlin.math.roundToInt
@@ -47,16 +49,58 @@ internal object PictureFiles {
     /**
      * Whether [file] decodes whole, not only its size: AVIF on API 31 reads its size, then fails.
      * Decoded small ([inSampleSize][BitmapFactory.Options.inSampleSize] for at most [CHECK_SIZE]
-     * px a side), so a large picture costs little memory.
+     * px a side), so a large picture costs little memory. False too once [stopped] says so.
      */
-    fun decodes(file: File, shape: Shape): Boolean {
+    fun decodes(file: File, shape: Shape, stopped: () -> Boolean = { false }): Boolean {
         val options = BitmapFactory.Options().apply {
             inSampleSize = sampleSize(maxOf(shape.width, shape.height).toFloat() / CHECK_SIZE)
             inPreferredConfig = Bitmap.Config.ARGB_8888
         }
-        val bitmap = BitmapFactory.decodeFile(file.path, options) ?: return false
+        val bitmap = decode(file, options, stopped) ?: return false
         bitmap.recycle()
         return true
+    }
+
+    /**
+     * [file] decoded with [options], or null, also once [stopped] says so: it's read through a
+     * stream whose reads fail from then on, which ends the decoder at its next read, within
+     * milliseconds on every API level, where a decode can't be interrupted otherwise
+     * (`requestCancelDecode` does nothing from API 24 on). What it decoded so far is dropped.
+     */
+    private fun decode(file: File, options: BitmapFactory.Options, stopped: () -> Boolean): Bitmap? {
+        val bitmap = try {
+            StoppableInput(FileInputStream(file), stopped).use { BitmapFactory.decodeStream(it, null, options) }
+        } catch (e: IOException) {
+            null
+        }
+        if (bitmap != null && stopped()) {
+            bitmap.recycle()
+            return null
+        }
+        return bitmap
+    }
+
+    /** [input], whose every read fails once [stopped] says so. */
+    private class StoppableInput(input: InputStream, private val stopped: () -> Boolean) : FilterInputStream(input) {
+
+        override fun read(): Int {
+            check()
+            return super.read()
+        }
+
+        override fun read(b: ByteArray, off: Int, len: Int): Int {
+            check()
+            return super.read(b, off, len)
+        }
+
+        override fun skip(n: Long): Long {
+            check()
+            return super.skip(n)
+        }
+
+        private fun check() {
+            if (stopped()) throw IOException("stopped")
+        }
     }
 
     /** The format [file] is in, when it's one Luncher names because a TV may not show it ([pictureFormatOf]). */
@@ -69,8 +113,9 @@ internal object PictureFiles {
      * into sRGB from API 26 on (a phone's photo may be in a wider color space), upright as its
      * orientation tag says, and freed once drawn. A decoder may give another config (16-bit PNGs
      * decode to RGBA_F16 from API 26 on, GIFs to none up to 26): drawing it here makes it ARGB_8888.
+     * Null too once [stopped] says so: the decode stops then ([decode]).
      */
-    fun draw(file: File, width: Int, height: Int, framing: Framing, background: Int): Bitmap? {
+    fun draw(file: File, width: Int, height: Int, framing: Framing, background: Int, stopped: () -> Boolean = { false }): Bitmap? {
         val shape = shape(file) ?: return null
         val area = frame(shape.width, shape.height, width, height, framing)
         val options = BitmapFactory.Options().apply {
@@ -78,7 +123,7 @@ internal object PictureFiles {
             inPreferredConfig = Bitmap.Config.ARGB_8888
             if (Build.VERSION.SDK_INT >= 26) inPreferredColorSpace = ColorSpace.get(ColorSpace.Named.SRGB)
         }
-        val decoded = BitmapFactory.decodeFile(file.path, options) ?: return null
+        val decoded = decode(file, options, stopped) ?: return null
         // The decoded pixels upright, then the framed area of them onto the bitmap.
         val matrix = upright(shape.orientation, decoded.width, decoded.height)
         val scale = (if (turned(shape.orientation)) decoded.height else decoded.width).toFloat() / shape.width

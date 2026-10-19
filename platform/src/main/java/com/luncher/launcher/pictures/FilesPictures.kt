@@ -17,6 +17,8 @@ import com.luncher.domain.pictures.PictureId
 import com.luncher.domain.pictures.PictureImport
 import com.luncher.domain.pictures.PictureLimits
 import com.luncher.domain.pictures.Pictures
+import com.luncher.domain.pictures.nameClash
+import com.luncher.domain.pictures.pictureName
 import com.luncher.launcher.outside.OutsideCallEnded
 import com.luncher.launcher.outside.OutsideCalls
 import com.luncher.launcher.outside.OutsideReader
@@ -47,9 +49,13 @@ import org.json.JSONObject
  * [OutsideReader.LIMIT_MS] without an answer ([ImportResult.Unreadable]), or once the import is
  * cancelled.
  *
+ * A picture whose name the library has ([nameClash]) isn't added: refused as soon as its name
+ * and size are known, before it's copied when the source says its size, and again before it's
+ * named, in case one of its name was added meanwhile.
+ *
  * A cancelled import ([add]'s handle) is dropped wherever it is: its job taken out of the queue if
  * it hasn't started, its reading stopped if it's reading, its copy deleted if it's made; on the
- * main thread, the steps that follow see it and stop. A file already moved into place but not yet
+ * main thread, the steps that follow see it and stop; its decode, too, at its next read. A file already moved into place but not yet
  * named stays, for the cleanup of the next start: deleting it could delete the same picture,
  * added again meanwhile.
  */
@@ -96,8 +102,9 @@ class FilesPictures(
     override fun add(source: Uri, done: (ImportResult) -> Unit): Cancellable {
         index()   // its cleaning first, before this picture's files exist
         val import = Import(done)
+        val library = index().values.toList()
         val queued = jobs.run(JobPriority.PICTURE_LIBRARY) {
-            val copied = copy(source, import.stop)
+            val copied = copy(source, import.stop, library)
             main.post { added(copied, import) }
         }
         return Cancellable {
@@ -167,6 +174,11 @@ class FilesPictures(
             jobs.run(JobPriority.PICTURE_LIBRARY) { copied.file.delete() }
             return import.answer(ImportResult.AlreadyThere(known))
         }
+        // A picture of its name added meanwhile (another of the same share, say).
+        nameClash(copied.name, copied.bytes, index().values)?.let { clash ->
+            jobs.run(JobPriority.PICTURE_LIBRARY) { copied.file.delete() }
+            return import.answer(clash)
+        }
         // Into place before the library names it, so whatever then draws it finds its file.
         jobs.run(JobPriority.PICTURE_LIBRARY) {
             val target = File(folder, copied.id.value)
@@ -187,6 +199,7 @@ class FilesPictures(
         if (!placed) return import.answer(ImportResult.Unreadable)
         val index = index()
         index[copied.id]?.let { return import.answer(ImportResult.AlreadyThere(it)) }   // the same picture, added meanwhile
+        nameClash(copied.name, copied.bytes, index.values)?.let { return import.answer(it) }   // one of its name, added meanwhile
         val picture = Picture(copied.id, copied.name, copied.width, copied.height, copied.bytes, now())
         index[picture.id] = picture
         val entries = index.values.toList()
@@ -196,14 +209,18 @@ class FilesPictures(
     }
 
     /**
-     * A job: [source]'s content copied into a new file of [folder], its hash computed on the way,
-     * stopping past [PictureLimits.MAX_BYTES] or once [stop] is set; then checked to be a picture
-     * this TV decodes whole, within [PictureLimits.MAX_PIXELS].
+     * A job: refused at once if its name or size, as [source] says them, already tell
+     * ([nameClash] with the [library] as it was when it was asked; a source that doesn't say its
+     * size, once it's copied); else [source]'s content copied into a new file of [folder], its
+     * hash computed on the way, stopping past [PictureLimits.MAX_BYTES] or once [stop] is set;
+     * then checked to be a picture this TV decodes whole, within [PictureLimits.MAX_PIXELS].
      */
-    private fun copy(source: Uri, stop: Stop): Copied {
+    private fun copy(source: Uri, stop: Stop, library: List<Picture>): Copied {
         val reader = OutsideReader(resolver, outsideCalls, stop)
         val described = describe(source, reader) ?: return Copied.Failed(ImportResult.Unreadable)
         if (described.bytes != null && !PictureLimits.allowsBytes(described.bytes)) return Copied.Failed(ImportResult.TooLarge)
+        // Its size unknown (a provider may not say), the same name is judged once it's copied.
+        if (described.bytes != null) nameClash(described.name, described.bytes, library)?.let { return Copied.Failed(it) }
         folder.mkdirs()
         val file = try {
             File.createTempFile("add", TEMPORARY, folder)
@@ -238,11 +255,17 @@ class FilesPictures(
             file.delete()
             return Copied.Failed(failed)
         }
+        if (described.bytes == null) {
+            nameClash(described.name, bytes, library)?.let {
+                file.delete()
+                return Copied.Failed(it)
+            }
+        }
         val shape = PictureFiles.shape(file)
         val unfit = when {
             shape == null -> unsupportedOrNot(file)
             !PictureLimits.allowsSize(shape.width, shape.height) -> ImportResult.TooLarge
-            !PictureFiles.decodes(file, shape) -> unsupportedOrNot(file)
+            !PictureFiles.decodes(file, shape) { stop.isStopped } -> if (stop.isStopped) ImportResult.Unreadable else unsupportedOrNot(file)
             else -> null
         }
         if (unfit != null || shape == null) {
@@ -264,7 +287,7 @@ class FilesPictures(
         if (source.scheme == ContentResolver.SCHEME_FILE) {
             val file = File(source.path ?: return null)
             if (!inDropFolder(file)) return null
-            return Described(clean(file.name), file.length())
+            return Described(pictureName(file.name), file.length())
         }
         if (source.scheme != ContentResolver.SCHEME_CONTENT) return null
         val said = try {
@@ -282,20 +305,13 @@ class FilesPictures(
         } catch (e: RuntimeException) {
             null   // A provider that answers no query (SecurityException, a bad column): the stream may still open.
         }
-        return Described(clean(said?.first ?: source.lastPathSegment.orEmpty()), said?.second)
+        return Described(pictureName(said?.first ?: source.lastPathSegment.orEmpty()), said?.second)
     }
 
     private fun inDropFolder(file: File): Boolean {
         val path = file.canonicalPath
         return dropFolders().any { path.startsWith(it.canonicalPath + File.separator) }
     }
-
-    /**
-     * A name another app gave, as a label only (never a path): without control characters, and
-     * not longer than a name can sensibly be. Empty when it had none.
-     */
-    private fun clean(name: String): String =
-        name.filterNot { it.isISOControl() }.trim().take(MAX_NAME)
 
     private fun noSpace(e: IOException): Boolean = (e.cause as? ErrnoException)?.errno == OsConstants.ENOSPC
 
@@ -376,7 +392,6 @@ class FilesPictures(
 
         /** Hex digits of the content's SHA-256 a picture's id keeps: 128 bits. */
         const val ID_LENGTH = 32
-        const val MAX_NAME = 120
         const val BUFFER = 64 * 1024
     }
 }

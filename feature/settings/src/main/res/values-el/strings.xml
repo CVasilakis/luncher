@@ -73,11 +73,17 @@
     </plurals>
     <string name="settings_pictures_unreadable">Το Luncher δεν μπορεί να τη διαβάσει. Αντιγράψτε την στον φάκελο <xliff:g id="folder" example="Android/media/com.luncher.launcher">%1$s</xliff:g> στην τηλεόραση ή σε ένα USB και μετά επιλέξτε Προσθήκη από φάκελο.</string>
     <string name="settings_pictures_no_space">Δεν υπάρχει αρκετός ελεύθερος χώρος στην τηλεόραση για αυτήν.</string>
+    <string name="settings_pictures_same_file">Η <xliff:g id="name" example="holiday.jpg">%1$s</xliff:g> υπάρχει ήδη στις εικόνες του Luncher.</string>
+    <string name="settings_pictures_name_taken">Στις εικόνες του Luncher υπάρχει άλλη εικόνα με όνομα <xliff:g id="name" example="holiday.jpg">%1$s</xliff:g>. Διαγράψτε πρώτα εκείνη στο Luncher ή δώστε άλλο όνομα σε αυτό το αρχείο, και μετά προσθέστε το.</string>
     <string name="settings_pictures_folder_where">Εικόνες στον φάκελο <xliff:g id="folder" example="Android/media/com.luncher.launcher">%1$s</xliff:g>, στην τηλεόραση ή σε ένα USB</string>
     <string name="settings_pictures_folder_this_tv">Τηλεόραση</string>
     <string name="settings_pictures_folder_usb">USB</string>
     <string name="settings_pictures_folder_row"><xliff:g id="where" example="USB">%1$s</xliff:g> · <xliff:g id="name" example="holiday.jpg">%2$s</xliff:g></string>
     <string name="settings_pictures_folder_unsupported">Αυτή η τηλεόραση δεν μπορεί να δείξει εικόνες <xliff:g id="format" example="HEIF (HEIC)">%1$s</xliff:g></string>
+    <string name="settings_pictures_folder_refused"><xliff:g id="details" example="4000 × 3000 · 3,1 MB">%1$s</xliff:g> · <xliff:g id="why" example="Πολύ μεγάλη για προσθήκη">%2$s</xliff:g></string>
+    <string name="settings_pictures_folder_too_large">Πολύ μεγάλη για προσθήκη</string>
+    <string name="settings_pictures_folder_same_file">Υπάρχει ήδη στις εικόνες του Luncher</string>
+    <string name="settings_pictures_folder_name_taken">Άλλη εικόνα του Luncher έχει αυτό το όνομα</string>
     <string name="settings_pictures_folder_note">Το OK την αντιγράφει στις εικόνες του Luncher· μετά μπορείτε να αφαιρέσετε το αρχείο ή το USB.</string>
     <string name="settings_pictures_folder_looking">Αναζήτηση εικόνων…</string>
     <string name="settings_pictures_folder_empty">Δεν υπάρχουν ακόμη εικόνες στον φάκελο.</string>

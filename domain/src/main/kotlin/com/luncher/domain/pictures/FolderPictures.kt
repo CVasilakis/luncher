@@ -14,8 +14,12 @@ interface FolderPictures<Source, Image> {
     /** Calls [done] with the pictures in the folders, the ones this TV can't show included. */
     fun list(done: (List<FolderPicture<Source>>) -> Unit)
 
-    /** [picture] drawn at [width] x [height] px with [framing], to preview it: slow, a job. Null if it can't be read. */
-    fun preview(picture: FolderPicture<Source>, width: Int, height: Int, framing: Framing): Image?
+    /**
+     * [picture] drawn at [width] x [height] px with [framing], to preview it: slow, a job. Null if
+     * it can't be read, or once [stopped] says so (the preview isn't wanted any more): it stops
+     * reading then.
+     */
+    fun preview(picture: FolderPicture<Source>, width: Int, height: Int, framing: Framing, stopped: () -> Boolean): Image?
 }
 
 /** A picture in a drop folder. */
