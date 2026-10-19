@@ -110,6 +110,9 @@ internal object PictureFiles {
             if (Build.VERSION.SDK_INT >= 26) inPreferredColorSpace = ColorSpace.get(ColorSpace.Named.SRGB)
         }
         val decoded = decode(file, options, stopped) ?: return null
+        // A cut-off JPEG decoded at a sample size leaves its missing rows transparent in a bitmap
+        // said to be opaque, which drawing would copy through the background as they are.
+        decoded.setHasAlpha(true)
         // The decoded pixels upright, then the framed area of them onto the bitmap.
         val matrix = upright(shape.orientation, decoded.width, decoded.height)
         val scale = (if (turned(shape.orientation)) decoded.height else decoded.width).toFloat() / shape.width
