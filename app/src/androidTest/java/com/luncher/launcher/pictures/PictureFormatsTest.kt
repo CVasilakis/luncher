@@ -34,6 +34,7 @@ class PictureFormatsTest {
     private val context = ApplicationProvider.getApplicationContext<android.content.Context>()
     private val folder = File(context.filesDir, "picture-formats-test")
     private val images = File(context.cacheDir, "picture-formats-test")
+    private val copies = File(context.filesDir, "picture-formats-test-copies")
     private val jobs = BackgroundThreadJobs()
     private val outsideCalls = OutsideCalls()
     private lateinit var library: FilesPictures
@@ -42,13 +43,15 @@ class PictureFormatsTest {
     fun newLibrary() {
         folder.deleteRecursively()
         images.deleteRecursively()
-        InstrumentationRegistry.getInstrumentation().runOnMainSync { library = FilesPictures(context, jobs, outsideCalls, folder, images) }
+        copies.deleteRecursively()
+        InstrumentationRegistry.getInstrumentation().runOnMainSync { library = FilesPictures(context, jobs, outsideCalls, folder, images, copies = copies) }
     }
 
     @After
     fun deleteIt() {
         folder.deleteRecursively()
         images.deleteRecursively()
+        copies.deleteRecursively()
     }
 
     /** Adds the sample [name] as another app shares it, and waits for the answer. */

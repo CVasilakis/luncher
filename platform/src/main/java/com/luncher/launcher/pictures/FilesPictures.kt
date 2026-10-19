@@ -23,6 +23,9 @@ import com.luncher.launcher.outside.OutsideCallEnded
 import com.luncher.launcher.outside.OutsideCalls
 import com.luncher.launcher.outside.OutsideReader
 import com.luncher.launcher.outside.Stop
+import com.luncher.launcher.ui.ScreenSize
+import com.luncher.launcher.ui.color
+import com.luncher.launcher.ui.screenSize
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
@@ -30,13 +33,15 @@ import java.security.MessageDigest
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
+import com.luncher.launcher.ui.R as UiR
 
 /**
  * [Pictures] and [PictureImport] on files: each picture's original file, unchanged, in [folder],
  * named after a hash of its content (the same picture added twice is stored once), and an index
  * of them ([INDEX]: name, size, dimensions as shown, when added) written whole, to a new file that
- * then replaces the old one at once. The images drawn of a picture are kept in [images]/<id>/
- * (`CachedPictureImages`), and deleted with it.
+ * then replaces the old one at once. Its working copy, from which the screens draw it, is made
+ * as it's added, kept in [copies]/<id> ([WorkingCopies]), and deleted with it, as is its
+ * thumbnail, kept in [images]/<id> ([CachedPictureImages]).
  *
  * The index is read once per process, on the main thread, then kept there. Everything slow is a
  * job of [JobPriority.PICTURE_LIBRARY], one priority so they keep their order: adding a picture
@@ -64,16 +69,29 @@ class FilesPictures(
     private val jobs: Jobs,
     private val outsideCalls: OutsideCalls,
     private val folder: File = File(context.filesDir, FOLDER),
-    private val images: File = File(context.cacheDir, FOLDER),
+    private val images: File = File(context.cacheDir, CachedPictureImages.FOLDER),
     private val now: () -> Long = System::currentTimeMillis,
     private val dropFolders: () -> List<File> = { dropFolders(context.applicationContext) },
+    copies: File = File(context.filesDir, WorkingCopies.FOLDER),
+    screen: () -> ScreenSize = { context.applicationContext.screenSize() },
 ) : Pictures, PictureImport<Uri> {
 
-    /** What adding found, in a job: the result, or the picture copied to [file], not in the library yet. */
+    /**
+     * What adding found, in a job: the result, or the picture copied to [file], not in the library
+     * yet, and its working copy made in [copy], unless it couldn't be written.
+     */
     private sealed interface Copied {
         class Failed(val result: ImportResult) : Copied
-        class Copy(val file: File, val id: PictureId, val name: String, val bytes: Long, val width: Int, val height: Int) : Copied
+        class Copy(val file: File, val copy: File?, val id: PictureId, val name: String, val bytes: Long, val width: Int, val height: Int) : Copied {
+            /** Deletes what was made, for a picture that isn't added. */
+            fun delete() {
+                file.delete()
+                copy?.delete()
+            }
+        }
     }
+
+    private val workingCopies = WorkingCopies(copies, context.color(UiR.color.background), screen)
 
     private val resolver = context.contentResolver
     private val main = Handler(Looper.getMainLooper())
@@ -92,6 +110,7 @@ class FilesPictures(
         jobs.run(JobPriority.PICTURE_LIBRARY) {
             for (id in ids) {
                 File(folder, id.value).delete()
+                workingCopies.fileOf(id.value).delete()
                 File(images, id.value).deleteRecursively()
             }
             writeIndex(entries)
@@ -167,19 +186,19 @@ class FilesPictures(
         if (copied is Copied.Failed) return import.answer(copied.result)
         copied as Copied.Copy
         if (import.cancelled) {
-            jobs.run(JobPriority.PICTURE_LIBRARY) { copied.file.delete() }
+            jobs.run(JobPriority.PICTURE_LIBRARY) { copied.delete() }
             return
         }
         index()[copied.id]?.let { known ->
-            jobs.run(JobPriority.PICTURE_LIBRARY) { copied.file.delete() }
+            jobs.run(JobPriority.PICTURE_LIBRARY) { copied.delete() }
             return import.answer(ImportResult.AlreadyThere(known))
         }
         // A picture of its name added meanwhile (another of the same share, say).
         nameClash(copied.name, copied.bytes, index().values)?.let { clash ->
-            jobs.run(JobPriority.PICTURE_LIBRARY) { copied.file.delete() }
+            jobs.run(JobPriority.PICTURE_LIBRARY) { copied.delete() }
             return import.answer(clash)
         }
-        // Into place before the library names it, so whatever then draws it finds its file.
+        // Into place before the library names it, so whatever then draws it finds its files.
         jobs.run(JobPriority.PICTURE_LIBRARY) {
             val target = File(folder, copied.id.value)
             // There already: a file a killed process left, or the same picture added meanwhile.
@@ -189,6 +208,8 @@ class FilesPictures(
             } else {
                 copied.file.renameTo(target)
             }
+            // Its working copy replaces any there (made for another screen, say); without one, the editor makes it.
+            if (!placed || copied.copy?.renameTo(workingCopies.fileOf(copied.id.value)) == false) copied.copy?.delete()
             if (!placed) copied.file.delete()
             main.post { placed(copied, placed, import) }
         }
@@ -213,7 +234,9 @@ class FilesPictures(
      * ([nameClash] with the [library] as it was when it was asked; a source that doesn't say its
      * size, once it's copied); else [source]'s content copied into a new file of [folder], its
      * hash computed on the way, stopping past [PictureLimits.MAX_BYTES] or once [stop] is set;
-     * then checked to be a picture this TV decodes whole, within [PictureLimits.MAX_PIXELS].
+     * then checked to be within [PictureLimits.MAX_PIXELS], and decoded whole, once, into its
+     * working copy ([WorkingCopies]): a size alone can decode where the picture can't (AVIF on
+     * API 31), and the screens then show it without decoding it again.
      */
     private fun copy(source: Uri, stop: Stop, library: List<Picture>): Copied {
         val reader = OutsideReader(resolver, outsideCalls, stop)
@@ -262,18 +285,22 @@ class FilesPictures(
             }
         }
         val shape = PictureFiles.shape(file)
+        val copy = File(workingCopies.folder, file.name + WORKING_COPY)
         val unfit = when {
             shape == null -> unsupportedOrNot(file)
             !PictureLimits.allowsSize(shape.width, shape.height) -> ImportResult.TooLarge
-            !PictureFiles.decodes(file, shape) { stop.isStopped } -> if (stop.isStopped) ImportResult.Unreadable else unsupportedOrNot(file)
-            else -> null
+            else -> when (workingCopies.make(file, shape, copy) { stop.isStopped }) {
+                WorkingCopies.Made.MADE, WorkingCopies.Made.NOT_WRITTEN -> null
+                WorkingCopies.Made.NOT_DECODED -> if (stop.isStopped) ImportResult.Unreadable else unsupportedOrNot(file)
+            }
         }
         if (unfit != null || shape == null) {
             file.delete()
+            copy.delete()
             return Copied.Failed(unfit ?: ImportResult.NotAPicture)
         }
         val id = PictureId(digest.digest().joinToString("") { "%02x".format(it) }.take(ID_LENGTH))
-        return Copied.Copy(file, id, described.name, bytes, shape.width, shape.height)
+        return Copied.Copy(file, copy.takeIf { it.isFile }, id, described.name, bytes, shape.width, shape.height)
     }
 
     /** A file BitmapFactory can't decode: in a format this TV can't show, which is said, or not a picture at all. */
@@ -315,10 +342,16 @@ class FilesPictures(
 
     private fun noSpace(e: IOException): Boolean = (e.cause as? ErrnoException)?.errno == OsConstants.ENOSPC
 
-    /** A job: deletes the files and drawn images no entry of the index names ([kept]), and unfinished copies. */
+    /**
+     * A job: deletes the files, working copies and drawn images no entry of the index names
+     * ([kept]), and unfinished copies of either kind.
+     */
     private fun deleteUnlisted(kept: Set<String>) {
         for (file in folder.listFiles().orEmpty()) {
             if (file.name != INDEX && file.name !in kept) file.delete()
+        }
+        for (copy in workingCopies.folder.listFiles().orEmpty()) {
+            if (copy.name !in kept) copy.delete()
         }
         for (pictureImages in images.listFiles().orEmpty()) {
             if (pictureImages.name !in kept) pictureImages.deleteRecursively()
@@ -389,6 +422,9 @@ class FilesPictures(
         const val INDEX = "index.json"
         const val FORMAT = 1
         const val TEMPORARY = ".new"
+
+        /** The ending of a picture's working copy while it's being added, before its id names it. */
+        const val WORKING_COPY = ".copy"
 
         /** Hex digits of the content's SHA-256 a picture's id keeps: 128 bits. */
         const val ID_LENGTH = 32

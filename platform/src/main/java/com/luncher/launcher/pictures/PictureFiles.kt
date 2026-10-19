@@ -15,6 +15,7 @@ import com.luncher.domain.pictures.Blur
 import com.luncher.domain.pictures.Framing
 import com.luncher.domain.pictures.PICTURE_HEADER_BYTES
 import com.luncher.domain.pictures.PictureFormat
+import com.luncher.domain.pictures.PictureStyle
 import com.luncher.domain.pictures.frame
 import com.luncher.domain.pictures.pictureFormatOf
 import java.io.File
@@ -44,21 +45,6 @@ internal object PictureFiles {
         if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return null
         val orientation = orientation(file)
         return if (turned(orientation)) Shape(bounds.outHeight, bounds.outWidth, orientation) else Shape(bounds.outWidth, bounds.outHeight, orientation)
-    }
-
-    /**
-     * Whether [file] decodes whole, not only its size: AVIF on API 31 reads its size, then fails.
-     * Decoded small ([inSampleSize][BitmapFactory.Options.inSampleSize] for at most [CHECK_SIZE]
-     * px a side), so a large picture costs little memory. False too once [stopped] says so.
-     */
-    fun decodes(file: File, shape: Shape, stopped: () -> Boolean = { false }): Boolean {
-        val options = BitmapFactory.Options().apply {
-            inSampleSize = sampleSize(maxOf(shape.width, shape.height).toFloat() / CHECK_SIZE)
-            inPreferredConfig = Bitmap.Config.ARGB_8888
-        }
-        val bitmap = decode(file, options, stopped) ?: return false
-        bitmap.recycle()
-        return true
     }
 
     /**
@@ -142,6 +128,38 @@ internal object PictureFiles {
         canvas.drawBitmap(decoded, matrix, Paint(Paint.FILTER_BITMAP_FLAG or Paint.DITHER_FLAG))
         decoded.recycle()
         return bitmap
+    }
+
+    /**
+     * The part of [source] (already upright) that [framing] puts into [width] x [height] px, drawn
+     * into a new ARGB_8888 bitmap of that size over [background], filtered: a working copy's
+     * framing, as [draw] frames a file.
+     */
+    fun draw(source: Bitmap, width: Int, height: Int, framing: Framing, background: Int): Bitmap {
+        val area = frame(source.width, source.height, width, height, framing)
+        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+        canvas.drawColor(background)
+        val matrix = Matrix().apply {
+            setRectToRect(RectF(area.left, area.top, area.right, area.bottom), RectF(0f, 0f, width.toFloat(), height.toFloat()), Matrix.ScaleToFit.FILL)
+        }
+        canvas.drawBitmap(source, matrix, Paint(Paint.FILTER_BITMAP_FLAG or Paint.DITHER_FLAG))
+        return bitmap
+    }
+
+    /**
+     * A picture drawn at [width] x [height] px in [style], from what [framed] draws of it, framed,
+     * at a size it's given; null if that's null. Not blurred, it's drawn at the size and dimmed. A
+     * blurred one is drawn at half the size, which the blur's softness hides: it decodes smaller,
+     * and blurring and dimming it costs a quarter; then it's drawn up to the size, filtered and
+     * dithered, the dim's fill already in it, so the dither covers that too.
+     */
+    fun styled(width: Int, height: Int, style: PictureStyle, framed: (width: Int, height: Int) -> Bitmap?): Bitmap? {
+        if (style.blur == Blur.OFF) return framed(width, height)?.also { dim(it, style.dim) }
+        val half = framed((width + 1) / 2, (height + 1) / 2) ?: return null
+        blur(half, style.blur)
+        dim(half, style.dim)
+        return enlarge(half, width, height)
     }
 
     /**
@@ -345,9 +363,6 @@ internal object PictureFiles {
     private const val RED_BLUE = 0xFF00FF
 
     private const val OPAQUE = 0xFF shl 24
-
-    /** The longest side [decodes] decodes at, at most. */
-    private const val CHECK_SIZE = 512
 
     /** How much of a file's start the orientation tag is looked for in: a JPEG's EXIF segment is at most 64 KB. */
     private const val EXIF_BYTES = 70 * 1024

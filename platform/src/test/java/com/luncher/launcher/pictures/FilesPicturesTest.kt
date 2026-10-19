@@ -9,6 +9,8 @@ import com.luncher.domain.pictures.Picture
 import com.luncher.domain.pictures.PictureFormat
 import com.luncher.domain.pictures.PictureId
 import com.luncher.domain.pictures.PictureLimits
+import com.luncher.domain.pictures.PictureStyle
+import com.luncher.launcher.ui.ScreenSize
 import com.luncher.launcher.outside.AnotherApp
 import com.luncher.launcher.outside.OutsideCalls
 import com.luncher.launcher.outside.OutsideReader
@@ -33,7 +35,11 @@ class FilesPicturesTest {
     private val context = RuntimeEnvironment.getApplication()
     private val jobs = ManualJobs()
     private val folder = File(context.filesDir, "pictures")
-    private val images = File(context.cacheDir, "pictures")
+    private val images = File(context.cacheDir, "thumbnails")
+    private val copies = File(context.filesDir, "picture-copies")
+
+    /** The screen the working copies are made for: half of it is 960 x 540 px. */
+    private val screen = ScreenSize(1920, 1080)
     private var time = 1_000L
 
     /** The drop folder on the TV's storage (Robolectric has no storage volumes to ask). */
@@ -47,7 +53,12 @@ class FilesPicturesTest {
 
     private val outsideCalls = OutsideCalls(now = { waited }, waitForData = { _, ms -> waitForData(ms) })
     private val anotherApp = AnotherApp.install()
-    private var library = FilesPictures(context, jobs, outsideCalls, now = { time }, dropFolders = { listOf(dropFolder) })
+    private var library = newLibrary()
+
+    private fun newLibrary() = FilesPictures(context, jobs, outsideCalls, now = { time }, dropFolders = { listOf(dropFolder) }, copies = copies, screen = { screen })
+
+    /** The screens' images on the library's working copies, as AppGraph makes them. */
+    private val prepared = WorkingCopyImages(context, folder, copies) { screen }
 
     private val sunset = Picture(PictureId("0123456789abcdef0123456789abcdef"), "sunset.jpg", 1920, 1080, 3_100_000, 1_700_000_000_000)
     private val beach = Picture(PictureId("fedcba9876543210fedcba9876543210"), "beach.png", 1080, 1920, 250_000, 1_700_000_001_000)
@@ -60,7 +71,7 @@ class FilesPicturesTest {
 
     /** As the next start: a new process, with what the files hold. */
     private fun restart() {
-        library = FilesPictures(context, jobs, outsideCalls, now = { time }, dropFolders = { listOf(dropFolder) })
+        library = newLibrary()
     }
 
     /** Everything queued done: the jobs, and the main thread's answers, until nothing's left. */
@@ -273,13 +284,41 @@ class FilesPicturesTest {
         add(shared("huge.png", TestPictureFiles.pngHeader(9000, 9000)))
 
         assertEquals(emptyList<String>(), folder.list().orEmpty().toList())
+        assertEquals(emptyList<String>(), copies.list().orEmpty().toList())
+    }
+
+    @Test
+    fun `makes a picture's working copy as it adds it, covering half the screen, so the screens needn't decode it`() {
+        val big = TestPictureFiles.png(TestPictureFiles.halves(3200, 1200, Color.RED, Color.BLUE))
+
+        val picture = (add(dropped("wide.png", big)) as ImportResult.Added).picture
+
+        assertTrue(prepared.isPrepared(picture.id))
+        assertEquals(listOf(picture.id.value), copies.list()!!.toList())
+        val preview = prepared.render(picture.id, 96, 54, PictureStyle()) { false }!!
+        assertTrue(TestPictureFiles.isRed(preview.getPixel(10, 27)))
+        assertTrue(TestPictureFiles.isBlue(preview.getPixel(86, 27)))
+    }
+
+    @Test
+    fun `a picture refused, or cancelled, leaves no working copy`() {
+        val first = (add(dropped("a.png", red)) as ImportResult.Added).picture
+        add(dropped("copy of a.png", red))                       // the same content
+        add(shared("a.png", TestPictureFiles.png(TestPictureFiles.halves(80, 40, Color.GREEN, Color.GREEN))))   // its name
+        var answered = false
+        library.add(dropped("c.png", blue)) { answered = true }.cancel()
+        settle()
+
+        assertFalse(answered)
+        assertEquals(listOf(first.id.value), copies.list()!!.toList())
     }
 
     @Test
     fun `deletes pictures, their files and their drawn images, telling the listeners`() {
         val a = (add(shared("a.png", red)) as ImportResult.Added).picture
         val b = (add(shared("b.png", blue)) as ImportResult.Added).picture
-        File(images, "${a.id.value}/384x216").apply { parentFile!!.mkdirs(); writeText("drawn") }
+        File(images, a.id.value).apply { parentFile!!.mkdirs(); writeText("drawn") }
+        assertTrue(prepared.isPrepared(a.id))
         var heard = 0
         library.addListener { heard++ }
 
@@ -290,7 +329,9 @@ class FilesPicturesTest {
         assertEquals(1, heard)
         assertFalse(File(folder, a.id.value).exists())
         assertFalse(File(images, a.id.value).exists())
+        assertFalse(File(copies, a.id.value).exists())
         assertTrue(File(folder, b.id.value).exists())
+        assertTrue(prepared.isPrepared(b.id))
         restart()
         assertEquals(listOf(b), library.read())
     }
@@ -313,8 +354,10 @@ class FilesPicturesTest {
         val kept = (add(shared("a.png", red)) as ImportResult.Added).picture
         File(folder, "deadbeef").writeText("left by a killed process")
         File(folder, "add123.new").writeText("an unfinished copy")
-        File(images, "deadbeef/384x216").apply { parentFile!!.mkdirs(); writeText("drawn") }
-        File(images, "${kept.id.value}/384x216").apply { parentFile!!.mkdirs(); writeText("drawn") }
+        File(images, "deadbeef").apply { parentFile!!.mkdirs(); writeText("drawn") }
+        File(images, kept.id.value).apply { parentFile!!.mkdirs(); writeText("drawn") }
+        File(copies, "deadbeef").writeText("a working copy")
+        File(copies, "add123.new.copy").writeText("an unfinished working copy")
         restart()
 
         library.read()
@@ -322,6 +365,7 @@ class FilesPicturesTest {
 
         assertEquals(listOf(kept.id.value, "index.json"), folder.list()!!.sorted())
         assertEquals(listOf(kept.id.value), images.list()!!.toList())
+        assertEquals(listOf(kept.id.value), copies.list()!!.toList())
     }
 
     @Test

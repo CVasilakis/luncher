@@ -49,6 +49,8 @@
     <string name="settings_background_hint">Κρατήστε πατημένο το OK σε μια εικόνα για να τη διαγράψετε</string>
     <string name="settings_background_save">Αποθήκευση</string>
     <string name="settings_background_applying">Εφαρμογή εφέ…</string>
+    <string name="settings_background_preparing">Προετοιμασία της εικόνας…</string>
+    <string name="settings_background_preparing_count">Προετοιμασία εικόνας <xliff:g id="number" example="3">%1$d</xliff:g> από <xliff:g id="total" example="10">%2$d</xliff:g>…</string>
 
     <string name="settings_pictures_adding">Προσθήκη εικόνας…</string>
     <string name="settings_pictures_how">Για να προσθέσετε μια εικόνα:</string>

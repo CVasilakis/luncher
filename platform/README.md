@@ -34,8 +34,10 @@ platform/
     │   │   ├── pictures/
     │   │   │   ├── FilesPictures.kt                 Pictures and PictureImport<Uri> on files: the library's pictures and their index
     │   │   │   ├── MediaFolderPictures.kt           FolderPictures<Uri, Bitmap> in the drop folders, Android/media/<applicationId>
-    │   │   │   ├── FilePictureImages.kt             PictureImages<Bitmap>: draws a picture of the library at a size, framed, dimmed, blurred
-    │   │   │   ├── CachedPictureImages.kt           PictureImages<Bitmap> in front of FilePictureImages: what it drew kept in files
+    │   │   │   ├── FilePictureImages.kt             PictureImages<Bitmap>: draws a picture of the library from its original at a size, framed, dimmed, blurred (the wallpaper)
+    │   │   │   ├── WorkingCopies.kt                 the working copies: each picture decoded once, covering half the screen, kept as a JPEG
+    │   │   │   ├── WorkingCopyImages.kt             PictureImages<Bitmap> and PreparedPictures on the working copies: what the screens show
+    │   │   │   ├── CachedPictureImages.kt           PictureImages<Bitmap> in front of WorkingCopyImages: each picture's thumbnail kept in a file
     │   │   │   ├── PictureFiles.kt                  reading a picture file: its size, upright, its format; drawing it framed in ARGB_8888
     │   │   │   └── JpegOrientation.kt               a JPEG's orientation tag, read without ExifInterface
     │   │   ├── jobs/
@@ -84,8 +86,8 @@ is in a package of its own (`images/`: the caches' file format; `outside/`: aski
   install of the app or of Luncher, label) is drawn and written again, so unlike a stored setting
   it needs no test of its format and no migration, and Android may delete it. Writing waits until
   the main thread is idle, so it doesn't slow the start that draws, and is then a job per image.
-  `CachedPictureImages` keeps the pictures' images the same way, in the same file format
-  (`PixelFiles`), but draws them in jobs, so it writes each in the job that drew it.
+  `CachedPictureImages` keeps the pictures' thumbnails the same way, one file per picture, in the
+  same file format (`PixelFiles`), but draws them in jobs, so it writes each in the job that drew it.
 - **Public,** since `AppGraph` in `:app` creates them; no other module depends on this one.
 
 ## Another app's answers
@@ -125,15 +127,16 @@ through `outside/`, and its job never waits on that app for good
 
 ## Pictures
 
-The picture library ([`feature/settings/README.md`](../feature/settings/README.md#background)) is three
-adapters on files and a cache; the wallpaper drawn from it is kept by a fourth:
+The picture library ([`feature/settings/README.md`](../feature/settings/README.md#background)) is
+adapters on files and a cache; the wallpaper drawn from it is kept by another:
 
 | Adapter | Port | What it keeps, and how |
 |---|---|---|
 | `FilesPictures` | `Pictures`, `PictureImport<Uri>` | each picture's original file, unchanged, in `filesDir/pictures/`, named after a hash of its content, so the same picture added twice is stored once; and `index.json`, the pictures' names, sizes as shown and when they were added, written whole to a new file that then replaces the old one. Its format is kept across updates, so `FilesPicturesTest` writes it out. |
 | `MediaFolderPictures` | `FolderPictures<Uri, Bitmap>` | nothing: it lists the drop folders (below) |
-| `FilePictureImages` | `PictureImages<Bitmap>` | nothing: it draws a picture of the library at a size, framed by the domain's `frame`, blurred and dimmed as its `PictureStyle` says. `DRAWING` is the drawing's version, up by one with each change to it, so what the others kept the old way is drawn again. |
-| `CachedPictureImages` | `PictureImages<Bitmap>` | what `FilePictureImages` drew, in `cacheDir/pictures/<picture>/`, one file per size, its style and `FilePictureImages.DRAWING` in the header: the background editor's thumbnails at their row's size in pixels, the editors' previews at their own |
+| `FilePictureImages` | `PictureImages<Bitmap>` | nothing: it draws a picture of the library from its original at a size, framed by the domain's `frame`, blurred and dimmed as its `PictureStyle` says: the wallpaper, which is stored for good. `DRAWING` is the drawing's version, up by one with each change to it, so what the others kept the old way is drawn again. |
+| `WorkingCopyImages` | `PictureImages<Bitmap>`, `PreparedPictures` | each picture's working copy (`WorkingCopies`), in `filesDir/picture-copies/<picture>`: the whole picture, upright, decoded once and scaled to cover half the screen (what the editors' previews show at most), as a JPEG of quality 92, a few hundred KB, after a header with `FilePictureImages.DRAWING` and the size it covers. The screens' thumbnails and previews are drawn from it, framed, blurred and dimmed in milliseconds at each step of an option, where the original takes a decode of the photo each time (below). One file per picture, replaced when the screen or the drawing changes; in `filesDir`, which Android doesn't delete, so it's made once. Without one that can be written (a full disk), a picture is drawn from its original. |
+| `CachedPictureImages` | `PictureImages<Bitmap>` | each picture's thumbnail, as `WorkingCopyImages` drew it at the background editor's row size in pixels, in `cacheDir/thumbnails/<picture>`, its size, style and `FilePictureImages.DRAWING` in the header, so it's read at once with the screen's first frame. One file per picture: another size or style replaces it, so another TV leaves no file behind. |
 | `FileStoredWallpaper` | `StoredWallpaper<Bitmap>` | the wallpaper, drawn at the screen's size, in `filesDir/wallpaper`, where Android doesn't delete it as it may a cache; in the `PixelFiles` format, what it was drawn from and `FilePictureImages.DRAWING` in the header, so one drawn by another version reads as none and is drawn again. One file only: a new one is written beside it, then replaces it in one step. |
 
 - **Adding a picture is a job,** of `JobPriority.PICTURE_LIBRARY`, as is everything that changes
@@ -145,11 +148,12 @@ adapters on files and a cache; the wallpaper drawn from it is kept by a fourth:
   before anything is copied; a source that doesn't say its size, once it's copied; and again
   before it's named, for one of that name added meanwhile.
   Adding streams the source into a new file, stopping past the size limit, hashing it on the way;
-  decodes its size and then all of it, small (`inSampleSize`), since a size alone can decode where
-  the picture can't (AVIF on API 31); and then, on the main thread, either finds it in the index
-  already or has it moved into place and named. Once per process, a job deletes the files and
-  drawn images the index doesn't name, which a killed process can leave; an index that can't be
-  read keeps every file.
+  decodes its size, then all of it, once, into its working copy, since a size alone can decode
+  where the picture can't (AVIF on API 31), so a picture added is ready for the screens at once;
+  and then, on the main thread, either finds it in the index already or has it and its working
+  copy moved into place and named. Deleting a picture deletes its file, its working copy and its
+  thumbnail. Once per process, a job deletes the files, working copies and thumbnails the index
+  doesn't name, which a killed process can leave; an index that can't be read keeps every file.
 - **What another app gives is read, never trusted.** A source is opened through `ContentResolver`
   as a stream, its name kept as a label only, never as a path. A `file://` Uri is refused
   (`Unreadable`): only an app with storage permission could read it, as older Android versions

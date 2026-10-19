@@ -23,7 +23,7 @@ import java.io.File
 class CachedPictureImagesTest {
 
     private val context = RuntimeEnvironment.getApplication()
-    private val folder = File(context.cacheDir, "pictures")
+    private val folder = File(context.cacheDir, "thumbnails")
 
     /** Draws each image in a color of its own, half transparent, one pixel nearly transparent. */
     private val drawn = FakePictureImages { _, width, height, _ ->
@@ -59,10 +59,20 @@ class CachedPictureImagesTest {
     }
 
     @Test
-    fun `keeps it in the picture's own folder, which deleting the picture deletes`() {
+    fun `keeps one file per picture, named by it, which deleting the picture deletes`() {
         cache.render(sunset, 384, 216, PictureStyle())
 
-        assertTrue(File(folder, "sunset/384x216").isFile)
+        assertTrue(File(folder, "sunset").isFile)
+    }
+
+    @Test
+    fun `another size replaces what was kept, leaving no file of the old one`() {
+        cache.render(sunset, 384, 216, PictureStyle())
+        cache.render(sunset, 192, 108, PictureStyle())
+
+        assertEquals(listOf("sunset"), folder.list()!!.toList())
+        assertNull(cache.cached(sunset, 384, 216, PictureStyle()))
+        assertEquals(192, cache.cached(sunset, 192, 108, PictureStyle())!!.width)
     }
 
     @Test
@@ -79,7 +89,7 @@ class CachedPictureImagesTest {
     @Test
     fun `finds nothing in a file it can't read`() {
         cache.render(sunset, 384, 216, PictureStyle())
-        val file = File(folder, "sunset/384x216")
+        val file = File(folder, "sunset")
         file.writeBytes(file.readBytes().copyOf(40))   // cut short
 
         assertNull(cache.cached(sunset, 384, 216, PictureStyle()))

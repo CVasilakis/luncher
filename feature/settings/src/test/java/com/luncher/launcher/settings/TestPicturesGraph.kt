@@ -18,6 +18,7 @@ import com.luncher.domain.pictures.FolderPicture
  */
 open class TestPicturesGraph(library: FakePictures<Uri> = FakePictures()) : TestSettingsGraph(library) {
     override val pictureImages = FakePictureImages { picture, width, height, _ -> sample(picture.value, width, height) }
+    override val thumbnails = FakePictureImages { picture, width, height, _ -> sample(picture.value, width, height) }
 }
 
 /** A picture to show in place of [name]'s: a gradient in colors of its own, so each looks different. */

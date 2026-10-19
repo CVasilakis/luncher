@@ -22,13 +22,14 @@ import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.UiDevice
 import com.luncher.domain.appearance.FakeAppearanceSettings
 import com.luncher.domain.pictures.PictureImages
+import com.luncher.domain.pictures.PreparedPictures
 import com.luncher.domain.pictures.PictureImport
 import com.luncher.domain.pictures.Pictures
 import com.luncher.launcher.AppGraph
 import com.luncher.launcher.LuncherApplication
 import com.luncher.launcher.home.HomeActivity
 import com.luncher.launcher.pictures.CachedPictureImages
-import com.luncher.launcher.pictures.FilePictureImages
+import com.luncher.launcher.pictures.WorkingCopyImages
 import com.luncher.launcher.pictures.FilesPictures
 import com.luncher.launcher.settings.BackgroundActivity
 import com.luncher.launcher.settings.PictureReceivedActivity
@@ -77,6 +78,7 @@ class PictureShareTest {
     /** The test's own library, deleted after it: the device keeps what it had. */
     private val folder = File(application.filesDir, "pictures-test")
     private val images = File(application.cacheDir, "pictures-test")
+    private val copies = File(application.filesDir, "picture-copies-test")
 
     /**
      * Closing Luncher's home screen at the end of a test can hang while Luncher is the device's
@@ -101,10 +103,13 @@ class PictureShareTest {
     @Before
     fun useTheTestsFolders() {
         application.graph = object : AppGraph(application) {
-            private val library by lazy { FilesPictures(application, jobs, outsideCalls, folder, images) }
+            private val library by lazy { FilesPictures(application, jobs, outsideCalls, folder, images, copies = copies) }
+            private val workingCopies by lazy { WorkingCopyImages(application, folder, copies) }
             override val pictures: Pictures get() = library
             override val pictureImport: PictureImport<Uri> get() = library
-            override val pictureImages: PictureImages<Bitmap> by lazy { CachedPictureImages(application, FilePictureImages(application, folder), images) }
+            override val pictureImages: PictureImages<Bitmap> get() = workingCopies
+            override val thumbnails: PictureImages<Bitmap> by lazy { CachedPictureImages(application, workingCopies, images) }
+            override val preparedPictures: PreparedPictures get() = workingCopies
             override val appearanceSettings = FakeAppearanceSettings()
         }
     }
@@ -127,6 +132,7 @@ class PictureShareTest {
         application.graph = AppGraph(application)
         folder.deleteRecursively()
         images.deleteRecursively()
+        copies.deleteRecursively()
     }
 
     private fun share(intent: Intent) {

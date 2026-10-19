@@ -19,6 +19,7 @@ import com.luncher.domain.appearance.SAMPLE_WALLPAPER
 import com.luncher.domain.jobs.ManualJobs
 import com.luncher.domain.pictures.FakeFolderPictures
 import com.luncher.domain.pictures.FakePictureImages
+import com.luncher.domain.pictures.FakePreparedPictures
 import com.luncher.domain.pictures.FakePictures
 import com.luncher.domain.pictures.Fit
 import com.luncher.domain.pictures.Picture
@@ -46,6 +47,8 @@ open class TestSettingsGraph(
     override val receivedPictures by lazy { ReceivedPictures(pictureImport) }
     override val folderPictures = FakeFolderPictures<Uri, Bitmap>(draw = { picture, width, height -> sample(picture.name, width, height) })
     override val pictureImages = FakePictureImages(::sampleWallpaper)
+    override val thumbnails = FakePictureImages(::sampleWallpaper)
+    override val preparedPictures = FakePreparedPictures()
 
     /** The preview's wallpaper is drawn when a test runs these, and a result is shown when it runs the main looper. */
     override val jobs = ManualJobs()

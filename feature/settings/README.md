@@ -165,7 +165,7 @@ they scroll when they're taller than the screen.
 | `AppearanceSettings` (`:domain`) / `PreferencesAppearanceSettings` (`:platform`) | port and adapter: the stored `Appearance`, read once per process; each write is stored at once, in the background, and told to the listeners (the home screen, while it's shown) |
 | `TileLayouts`, `topBarLayout` (`:domain`) | where the preview's tiles and top bar items go, by the home screen's own rules |
 | `AppearanceActivity` | the groups' entries, opening one at a time; a group edited apart as one entry; the options' rows (`OptionRow`, `OptionLabels.kt`'s exhaustive `when`s, so a new option doesn't compile until it has its labels) and the reset entry |
-| `Pictures`, `PictureImages` (`:domain`) | the wallpaper's name, and its picture drawn at the preview's size |
+| `Pictures`, `PictureImages` (`:domain`) | the wallpaper's name, and its picture drawn at the preview's size, from its working copy |
 | `AppearancePreviewView` | draws the preview: an illustration, not the real home screen (below) |
 
 **The preview** draws outlines of tiles on the home screen's background (the wallpaper's picture,
@@ -183,9 +183,9 @@ its labels go in `optionLabel` and `optionValue` (`OptionLabels.kt`), in every t
 
 What keeps it light: the preview draws from shapes it keeps, made anew only when the part of the
 appearance they come from changes (compared with `==`), so a new corner radius lays out nothing,
-and drawing allocates nothing. The wallpaper's picture is drawn in the background, the latest
-request winning, read at once if it was drawn at the preview's size before, and dropped when the
-editor stops. Only the options' rows are views; the preview is one view. Nothing of the home
+and drawing allocates nothing. The wallpaper's picture is drawn in the background from its
+working copy ([below](#background)), in milliseconds, the latest request winning, and dropped
+when the editor stops. Only the options' rows are views; the preview is one view. Nothing of the home
 screen runs meanwhile.
 
 ### Background
@@ -228,15 +228,27 @@ then the picture. A draft's picture deleted is no picture in the draft.
 |---|---|
 | `Picture`, `PictureLibrary` (`:domain`) | a picture of the library; the library in the list's order, the newest first, and what each one is used for |
 | `Pictures`, `PictureImport` (`:domain`) / `FilesPictures` (`:platform`) | the library, which the screen follows while it shows, and adding to it |
-| `PictureImages` (`:domain`) / `CachedPictureImages` (`:platform`) | the thumbnails, drawn at the row's size in pixels, and the preview's wallpaper |
+| `PreparedPictures`, `PictureImages` (`:domain`) / `WorkingCopyImages` (`:platform`) | each picture's working copy, made once; the preview's wallpaper drawn from it at each step |
+| `PictureImages` (`:domain`) / `CachedPictureImages` (`:platform`) | the thumbnails, drawn from the working copies at the row's size in pixels, and kept |
 | `pictureUses`, `withoutPictures` (`:domain`) | what each picture is used for, which deleting it says, and the background without it |
 | `Wallpaper` (`:domain`) | Save (`save`: drawn, kept, then stored) and deleting the wallpaper's picture (`forget`) |
 | `BackgroundActivity` | the list, the draft, Save and its window, the questions; chooses and focuses the picture Add from folder added (`EXTRA_ADDED`); starts with a picture just received chosen (`EXTRA_PICTURE`) |
 
+**Prepared once, then at once.** Each picture of the library has a working copy
+([`platform/README.md`](../../platform/README.md#pictures)): the whole picture decoded once, as
+it's added, covering half the screen, from which its thumbnail and the preview at every step of an
+option are drawn in milliseconds, where the photo itself takes a decode each time (seconds, on a
+weak TV, for a large one). A picture not prepared for the screen as it is now (the TV switched
+resolution, an update draws pictures otherwise, its copy was lost) is prepared as the editor opens,
+before the user can do anything: a window (`WorkingDialog`) says "Preparing the picture…", or
+"Preparing picture 2 of 5…", a job each, half a second at least, and Cancel, or Back, closes the
+editor, nothing chosen yet. Hidden meanwhile, the editor stops, and prepares what's left when it
+comes back. Save draws the wallpaper from the original, as it's stored for good.
+
 All thumbnails are read at once when the screen shows, from what `CachedPictureImages` kept, on the
 main thread, so the list shows them with its first frame; one not kept (a picture just added, a
-screen of another size) is drawn in the background, a `LatestRequest` each, and shows when it's
-done. The screen keeps each picture's row while the picture is in the library, so its thumbnail is
+screen of another size) is drawn in the background from its working copy, a `LatestRequest` each,
+and shows when it's done. The screen keeps each picture's row while the picture is in the library, so its thumbnail is
 read or drawn once, and drops the requests in `onStop`. A draft survives a configuration change
 (a TV switching resolution), kept in the instance state.
 
@@ -388,6 +400,10 @@ adb shell am start -n com.luncher.launcher.debug.test/com.luncher.launcher.testi
 - **Pictures are decoded at the size shown**, one at a time on the background thread, and freed
   once drawn ([`platform/README.md`](../../platform/README.md#pictures)): a 12 MP photo is never
   held whole.
-- **A thumbnail is drawn once per screen size**, then read from its file.
+- **A picture is decoded once for the screens**, into its working copy, as it's added; thumbnails
+  and previews are drawn from that, and only Save decodes the original again.
+- **A thumbnail is drawn once per screen size**, then read from its file, one per picture.
+- **A decode nobody waits for stops**, the preview of a picture no longer selected, or of a
+  screen that closed, at its next read, so the next job doesn't wait for it.
 - **A share's pictures are added one at a time**, each read as a stream into its file: the session
   keeps only their Uris and answers, at most 100, and stops when its window closes.

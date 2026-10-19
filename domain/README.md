@@ -51,7 +51,8 @@ domain/src/
 │   │   ├── Framing.kt           model and rule: how a picture fills a space of another shape (Fit, PicturePosition), and which part of it shows
 │   │   ├── PictureStyle.kt      model and rule: a picture's framing, dim and blur (Blur: off, then three levels of equal steps), as it's drawn
 │   │   ├── PictureUse.kt        model and rule: what a picture is used for (the wallpaper), the uses a received picture offers (pictureUseMenu), and an appearance without deleted pictures
-│   │   ├── PictureImages.kt     port: a picture drawn at a size in a style, in the UI's image type; kept or drawn anew
+│   │   ├── PictureImages.kt     port: a picture drawn at a size in a style, in the UI's image type; kept or drawn anew, a screen's drawing stopped when it's dropped
+│   │   ├── PreparedPictures.kt  port: each picture prepared once for the screens (its working copy), and whether it is for the screen as it is now
 │   │   └── FolderPictures.kt    port, model and rule: the pictures in the drop folders, their preview, and the order they're listed in
 │   ├── wallpaper/
 │   │   ├── WallpaperDrawing.kt  model and rule: what a wallpaper is drawn from (a picture, its style, the screen's size), and why the one kept won't do (DrawingCause)
@@ -81,9 +82,10 @@ domain/src/
     ├── appearance/FakeAppearanceSettings.kt  fake of the AppearanceSettings port: the appearance in memory
     ├── appearance/AppearanceChanges.kt       each option at each value but its default: what the catalog-wide tests draw (SAMPLE_WALLPAPER for the background's)
     ├── clock/FakeClock.kt          fake of the Clock port: a fixed time the test moves
-    ├── jobs/ManualJobs.kt          fake of the Jobs port: the queued jobs run when the test says, in the real order
+    ├── jobs/ManualJobs.kt          fake of the Jobs port: the queued jobs run when the test says, all or the next one, in the real order
     ├── pictures/FakePictures.kt    fake of the Pictures and PictureImport ports: the library in memory, each source's answer set by the test
     ├── pictures/FakePictureImages.kt  fake of the PictureImages port: draws what the test says, keeps what it drew
+    ├── pictures/FakePreparedPictures.kt fake of the PreparedPictures port: every picture prepared but those the test says
     ├── wallpaper/FakeStoredWallpaper.kt fake of the StoredWallpaper port: the wallpaper kept in memory
     └── pictures/FakeFolderPictures.kt fake of the FolderPictures port: the drop folders' pictures in memory
 ```

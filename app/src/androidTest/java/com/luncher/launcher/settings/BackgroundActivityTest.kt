@@ -23,6 +23,8 @@ import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.luncher.domain.appearance.FakeAppearanceSettings
 import com.luncher.domain.pictures.FakePictureImages
+import com.luncher.domain.pictures.FakePreparedPictures
+import com.luncher.domain.pictures.PreparedPictures
 import com.luncher.domain.pictures.FakePictures
 import com.luncher.domain.pictures.FakePictures.Companion.picture
 import com.luncher.domain.pictures.FolderPictures
@@ -32,7 +34,7 @@ import com.luncher.domain.pictures.Pictures
 import com.luncher.launcher.AppGraph
 import com.luncher.launcher.LuncherApplication
 import com.luncher.launcher.pictures.CachedPictureImages
-import com.luncher.launcher.pictures.FilePictureImages
+import com.luncher.launcher.pictures.WorkingCopyImages
 import com.luncher.launcher.pictures.FilesPictures
 import com.luncher.launcher.pictures.MediaFolderPictures
 import com.luncher.launcher.testing.RetryWhenCovered
@@ -63,6 +65,7 @@ class BackgroundActivityTest {
     /** The test's own library and drop folder, deleted after it: the device keeps what it had. */
     private val folder = File(application.filesDir, "pictures-test")
     private val images = File(application.cacheDir, "pictures-test")
+    private val copies = File(application.filesDir, "picture-copies-test")
 
     @Suppress("DEPRECATION")
     private val dropFolder = File(application.externalMediaDirs.first(), "pictures-test")
@@ -83,6 +86,7 @@ class BackgroundActivityTest {
         application.graph = AppGraph(application)
         folder.deleteRecursively()
         images.deleteRecursively()
+        copies.deleteRecursively()
         dropFolder.deleteRecursively()
     }
 
@@ -96,6 +100,9 @@ class BackgroundActivityTest {
             override val pictureImages: PictureImages<Bitmap> = FakePictureImages { _, width, height, _ ->
                 Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888).apply { eraseColor(0xFF336699.toInt()) }
             }
+            override val thumbnails: PictureImages<Bitmap> get() = pictureImages
+            // In memory, every picture prepared: no window over the editor as it opens.
+            override val preparedPictures: PreparedPictures = FakePreparedPictures()
             override val appearanceSettings = this@BackgroundActivityTest.appearance
         }
         return ActivityScenario.launch(BackgroundActivity::class.java)
@@ -104,11 +111,14 @@ class BackgroundActivityTest {
     /** The real library and drop folder, but the test's own folders. */
     private fun useTheTestsFolders() {
         val graph = object : AppGraph(application) {
-            private val library by lazy { FilesPictures(application, jobs, outsideCalls, folder, images) }
+            private val library by lazy { FilesPictures(application, jobs, outsideCalls, folder, images, copies = copies) }
+            private val workingCopies by lazy { WorkingCopyImages(application, folder, copies) }
             override val pictures: Pictures get() = library
             override val pictureImport: PictureImport<Uri> get() = library
             override val folderPictures: FolderPictures<Uri, Bitmap> by lazy { MediaFolderPictures(application, jobs) { listOf(dropFolder) } }
-            override val pictureImages: PictureImages<Bitmap> by lazy { CachedPictureImages(application, FilePictureImages(application, folder), images) }
+            override val pictureImages: PictureImages<Bitmap> get() = workingCopies
+            override val thumbnails: PictureImages<Bitmap> by lazy { CachedPictureImages(application, workingCopies, images) }
+            override val preparedPictures: PreparedPictures get() = workingCopies
             override val appearanceSettings = FakeAppearanceSettings()
         }
         application.graph = graph

@@ -14,6 +14,7 @@ import android.widget.TextView
 import com.luncher.domain.appearance.Appearance
 import com.luncher.domain.appearance.Background
 import com.luncher.domain.appearance.appearanceOptions
+import com.luncher.domain.jobs.Cancellable
 import com.luncher.domain.jobs.JobPriority
 import com.luncher.domain.jobs.LatestRequest
 import com.luncher.domain.pictures.Blur
@@ -50,14 +51,19 @@ import com.luncher.launcher.ui.R as UiR
  * Opened with a picture ([EXTRA_PICTURE], from the window after a share), it starts with that one
  * chosen, not saved.
  *
- * All thumbnails are read at once when it shows, from what the [PictureImages][graph] kept;
- * those not kept are drawn in the background and show as each is done.
+ * All thumbnails are read at once when it shows, from what the thumbnails' [PictureImages][graph]
+ * kept; those not kept are drawn in the background and show as each is done. Pictures that aren't
+ * prepared for the screen as it is now ([PreparedPictures][graph]) are prepared first, at its
+ * start, while a window says so ([prepareMissing]), so that afterwards nothing the user does
+ * waits for a picture to be decoded.
  */
 class BackgroundActivity : Activity() {
 
     private val settings by lazy { graph.appearanceSettings }
     private val pictures by lazy { graph.pictures }
     private val images by lazy { graph.pictureImages }
+    private val thumbnails by lazy { graph.thumbnails }
+    private val prepared by lazy { graph.preparedPictures }
     private val wallpaper by lazy { graph.wallpaper }
     private val main = Handler(Looper.getMainLooper())
 
@@ -82,6 +88,18 @@ class BackgroundActivity : Activity() {
     private val drawing = HashMap<PictureId, LatestRequest>()
     private var thumbnailWidth = 0
     private var thumbnailHeight = 0
+
+    /** The pictures being prepared, a job each, while the window says so; all dropped in [onStop]. */
+    private val preparing = LinkedHashMap<PictureId, Preparing>()
+    private var preparingTotal = 0
+
+    /** One picture's preparing: its job, and whether it was told to stop, which its job reads. */
+    private class Preparing {
+        lateinit var job: Cancellable
+
+        @Volatile
+        var stopped = false
+    }
 
     /** The row to focus when the library shows next: a picture just added. */
     private var toFocus: PictureId? = null
@@ -163,6 +181,10 @@ class BackgroundActivity : Activity() {
         for (request in drawing.values) request.stop()
         drawing.clear()
         preview.stopWallpaper()
+        if (preparing.isNotEmpty()) {
+            stopPreparing()
+            working?.dismiss()
+        }
     }
 
     override fun onDestroy() {
@@ -219,11 +241,12 @@ class BackgroundActivity : Activity() {
         val ids = library.pictures.mapTo(HashSet()) { it.id }
         rows.keys.retainAll(ids)
         drawing.keys.filter { it !in ids }.forEach { drawing.remove(it)?.stop() }
+        val waiting = prepareMissing()
         // A draft's picture deleted meanwhile (in another screen) is no picture.
         draft.picture?.let { if (it !in ids) draft = draft.copy(picture = null) }
         for (picture in library.pictures) {
             rows.getOrPut(picture.id) { pictureRow(picture) }
-            if (picture.id !in drawing && thumbnailOf(picture.id).drawable == null) draw(picture)
+            if (!waiting && picture.id !in drawing && thumbnailOf(picture.id).drawable == null) draw(picture)
         }
         list.removeAllViews()
         list.addView(noneRow)
@@ -258,7 +281,7 @@ class BackgroundActivity : Activity() {
         val row = row(nameOf(picture)) { setDraft(draft.copy(picture = picture.id)) }
         val thumbnail = row.findViewById<ImageView>(R.id.settings_background_thumbnail)
         thumbnail.clipToOutline = true
-        images.cached(picture.id, thumbnailWidth, thumbnailHeight, THUMBNAIL)?.let(thumbnail::setImageBitmap)
+        thumbnails.cached(picture.id, thumbnailWidth, thumbnailHeight, THUMBNAIL)?.let(thumbnail::setImageBitmap)
         row.setOnLongClickListener {
             confirmDelete(picture)
             true
@@ -268,12 +291,68 @@ class BackgroundActivity : Activity() {
 
     private fun thumbnailOf(id: PictureId) = rows.getValue(id).findViewById<ImageView>(R.id.settings_background_thumbnail)
 
+    /**
+     * Prepares the library's pictures that aren't, for the screen as it is now (another size, an
+     * update, a picture added before), one job each, while a window says so; true while it does.
+     * Once all are, the library shows again, and its thumbnails and the preview are drawn from them
+     * in milliseconds. Cancel, or Back, closes the editor: nothing was chosen yet. A picture that
+     * can't be prepared counts as done: it's drawn from its original then.
+     */
+    private fun prepareMissing(): Boolean {
+        if (preparing.isNotEmpty()) return true
+        val missing = library.pictures.filter { !prepared.isPrepared(it.id) }
+        if (missing.isEmpty()) return false
+        preparingTotal = missing.size
+        for (picture in missing) {
+            val preparing = Preparing()
+            this.preparing[picture.id] = preparing
+            preparing.job = graph.jobs.run(JobPriority.PICTURE_SCREENS) {
+                prepared.prepare(picture.id) { preparing.stopped }
+                main.post { prepared(picture.id, preparing) }
+            }
+        }
+        showPreparing()
+        return true
+    }
+
+    private fun prepared(picture: PictureId, done: Preparing) {
+        if (preparing[picture] !== done) return
+        preparing.remove(picture)
+        if (preparing.isNotEmpty()) return showPreparing()
+        working?.close { if (started) showLibrary() }
+    }
+
+    /** The window, saying which picture of how many is prepared; Cancel, or Back, closes the editor. */
+    private fun showPreparing() {
+        val working = working ?: WorkingDialog(this).also { working = it }
+        working.show(preparingText(), getString(R.string.settings_pictures_cancel)) {
+            stopPreparing()
+            finish()
+        }
+    }
+
+    private fun stopPreparing() {
+        for (each in preparing.values) {
+            each.stopped = true
+            each.job.cancel()
+        }
+        preparing.clear()
+    }
+
+    /** "Preparing picture 2 of 5…", or for one, "Preparing the picture…". */
+    private fun preparingText(): String =
+        if (preparingTotal == 1) {
+            getString(R.string.settings_background_preparing)
+        } else {
+            getString(R.string.settings_background_preparing_count, preparingTotal - preparing.size + 1, preparingTotal)
+        }
+
     /** Draws [picture]'s thumbnail in the background, shown when done. */
     private fun draw(picture: Picture) {
         if (picture.id in drawing) return
         val request = LatestRequest(graph.jobs, JobPriority.PICTURE_SCREENS) { main.post(it) }
         drawing[picture.id] = request
-        request.load({ stopped -> images.render(picture.id, thumbnailWidth, thumbnailHeight, THUMBNAIL, stopped) }) { image ->
+        request.load({ stopped -> thumbnails.render(picture.id, thumbnailWidth, thumbnailHeight, THUMBNAIL, stopped) }) { image ->
             drawing.remove(picture.id)
             if (image != null && picture.id in rows) thumbnailOf(picture.id).setImageBitmap(image)
         }

@@ -9,6 +9,7 @@ import com.luncher.domain.apps.InstalledApps
 import com.luncher.domain.jobs.Jobs
 import com.luncher.domain.pictures.FolderPictures
 import com.luncher.domain.pictures.PictureImages
+import com.luncher.domain.pictures.PreparedPictures
 import com.luncher.domain.pictures.PictureImport
 import com.luncher.domain.pictures.Pictures
 import com.luncher.domain.pictures.ReceivedPictures
@@ -37,8 +38,14 @@ interface SettingsGraph {
     /** The drop folders' pictures, for Add from folder. */
     val folderPictures: FolderPictures<Uri, Bitmap>
 
-    /** The pictures as the screens show them: thumbnails, previews, the appearance editor's wallpaper. */
+    /** The pictures as the editors' previews show them, drawn at each step from what's prepared. */
     val pictureImages: PictureImages<Bitmap>
+
+    /** The background editor's thumbnails, kept to show at once. */
+    val thumbnails: PictureImages<Bitmap>
+
+    /** Each picture prepared once, so the two above draw it in milliseconds; prepared anew at the editor's start when it isn't. */
+    val preparedPictures: PreparedPictures
 
     /** The background thread, for what the screens load (thumbnails, previews). */
     val jobs: Jobs

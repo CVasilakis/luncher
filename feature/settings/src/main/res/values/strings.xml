@@ -105,6 +105,11 @@
     <string name="settings_background_save">Save</string>
     <!-- In a window over the editor while the wallpaper is drawn after Save, which takes a moment. -->
     <string name="settings_background_applying">Applying effects…</string>
+    <!-- In a window over the background editor as it opens, while its pictures are prepared to be
+         shown quickly (made once, again only after the TV changes its resolution or an update):
+         for one picture, then for several, which one of how many. -->
+    <string name="settings_background_preparing">Preparing the picture…</string>
+    <string name="settings_background_preparing_count">Preparing picture <xliff:g id="number" example="3">%1$d</xliff:g> of <xliff:g id="total" example="10">%2$d</xliff:g>…</string>
     <!-- Beside the picture chosen. -->
     <string name="settings_background_chosen" translatable="false">✓</string>
 

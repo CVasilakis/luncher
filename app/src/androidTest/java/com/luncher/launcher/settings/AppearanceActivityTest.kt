@@ -29,6 +29,8 @@ import com.luncher.domain.pictures.FakePictureImages
 import com.luncher.domain.pictures.FakePictures
 import com.luncher.domain.pictures.FakePictures.Companion.picture
 import com.luncher.domain.pictures.PictureImages
+import com.luncher.domain.pictures.PreparedPictures
+import com.luncher.domain.pictures.FakePreparedPictures
 import com.luncher.domain.pictures.PictureImport
 import com.luncher.domain.pictures.Pictures
 import com.luncher.domain.wallpaper.FakeStoredWallpaper
@@ -157,6 +159,9 @@ class AppearanceActivityTest {
             override val pictures: Pictures = library
             override val pictureImport: PictureImport<Uri> = library
             override val pictureImages: PictureImages<Bitmap> = plainImages
+            override val thumbnails: PictureImages<Bitmap> = plainImages
+            // In memory, every picture prepared: no window over the background editor as it opens.
+            override val preparedPictures: PreparedPictures = FakePreparedPictures()
             // Not the device's kept wallpaper: one in memory, drawn as a plain color.
             override val wallpaper = Wallpaper(FakeStoredWallpaper(), plainImages, settings, jobs) { Handler(Looper.getMainLooper()).post(it) }
         }

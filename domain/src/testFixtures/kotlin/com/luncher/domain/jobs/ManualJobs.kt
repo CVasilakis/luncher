@@ -19,10 +19,17 @@ class ManualJobs : Jobs {
 
     /** Runs the queued jobs, and those they queue, the highest priority first, then the oldest. */
     fun runAll() {
-        while (queue.isNotEmpty()) {
-            val next = queue.maxWith(compareBy<Queued> { it.priority }.thenByDescending { it.order })
-            queue.remove(next)
-            next.job()
+        @Suppress("ControlFlowWithEmptyBody")
+        while (runNext()) {
         }
+    }
+
+    /** Runs the one job the real thread would run next, if one is queued; whether one was. */
+    fun runNext(): Boolean {
+        if (queue.isEmpty()) return false
+        val next = queue.maxWith(compareBy<Queued> { it.priority }.thenByDescending { it.order })
+        queue.remove(next)
+        next.job()
+        return true
     }
 }

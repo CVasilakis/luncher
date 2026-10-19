@@ -49,6 +49,8 @@
     <string name="settings_background_hint">اضغط مطولًا على OK فوق صورة لحذفها</string>
     <string name="settings_background_save">حفظ</string>
     <string name="settings_background_applying">جارٍ تطبيق التأثيرات…</string>
+    <string name="settings_background_preparing">جارٍ تجهيز الصورة…</string>
+    <string name="settings_background_preparing_count">جارٍ تجهيز الصورة <xliff:g id="number" example="3">%1$d</xliff:g> من <xliff:g id="total" example="10">%2$d</xliff:g>…</string>
 
     <string name="settings_pictures_adding">جارٍ إضافة صورة…</string>
     <string name="settings_pictures_how">لإضافة صورة:</string>

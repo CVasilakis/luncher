@@ -15,6 +15,7 @@ import com.luncher.domain.pictures.FolderPictures
 import com.luncher.domain.pictures.PictureImages
 import com.luncher.domain.pictures.PictureImport
 import com.luncher.domain.pictures.Pictures
+import com.luncher.domain.pictures.PreparedPictures
 import com.luncher.domain.pictures.ReceivedPictures
 import com.luncher.domain.wallpaper.Wallpaper
 import com.luncher.launcher.appearance.PreferencesAppearanceSettings
@@ -30,6 +31,7 @@ import com.luncher.launcher.pictures.CachedPictureImages
 import com.luncher.launcher.pictures.FilePictureImages
 import com.luncher.launcher.pictures.FilesPictures
 import com.luncher.launcher.pictures.MediaFolderPictures
+import com.luncher.launcher.pictures.WorkingCopyImages
 import com.luncher.launcher.settings.SettingsGraph
 import com.luncher.launcher.wallpaper.FileStoredWallpaper
 
@@ -78,11 +80,18 @@ open class AppGraph(context: Context) : HomeGraph, SettingsGraph {
 
     override val folderPictures: FolderPictures<Uri, Bitmap> by lazy { MediaFolderPictures(appContext, jobs) }
 
-    override val pictureImages: PictureImages<Bitmap> by lazy { CachedPictureImages(appContext, FilePictureImages(appContext)) }
+    /** The working copies, on the library's files: what the screens draw pictures from. */
+    private val workingCopies by lazy { WorkingCopyImages(appContext) }
+
+    override val pictureImages: PictureImages<Bitmap> by lazy { workingCopies }
+
+    override val thumbnails: PictureImages<Bitmap> by lazy { CachedPictureImages(appContext, workingCopies) }
+
+    override val preparedPictures: PreparedPictures by lazy { workingCopies }
 
     /**
-     * The wallpaper, kept in its own file at the screen's size and drawn by the uncached drawing:
-     * the image cache keeps none of it.
+     * The wallpaper, kept in its own file at the screen's size and drawn from the original picture,
+     * not its working copy, as it's stored for good: the thumbnails' cache keeps none of it.
      */
     override val wallpaper: Wallpaper<Bitmap> by lazy {
         Wallpaper(FileStoredWallpaper(appContext), FilePictureImages(appContext), appearanceSettings, jobs) { Handler(Looper.getMainLooper()).post(it) }

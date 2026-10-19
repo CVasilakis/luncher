@@ -363,7 +363,7 @@ class BackgroundActivityTest {
     @Test
     fun `shows the kept thumbnails at once, and draws the others in the background`() {
         graph(beach, sunset)
-        graph.pictureImages.cache[beach.id to PictureStyle()] = sample("kept", 192, 108)
+        graph.thumbnails.cache[beach.id to PictureStyle()] = sample("kept", 192, 108)
 
         val activity = start().get()
         assertTrue((activity.row("beach.png").findViewById<ImageView>(R.id.settings_background_thumbnail)).drawable != null)
@@ -372,7 +372,7 @@ class BackgroundActivityTest {
         drawInTheBackground()
 
         assertTrue(activity.row("sunset.jpg").findViewById<ImageView>(R.id.settings_background_thumbnail).drawable != null)
-        assertTrue(graph.pictureImages.rendered.any { it.first == sunset.id })
+        assertTrue(graph.thumbnails.rendered.any { it.first == sunset.id })
     }
 
     @Test
@@ -412,5 +412,95 @@ class BackgroundActivityTest {
         graph.library.delete(setOf(beach.id))
 
         assertEquals(listOf("No picture ✓", "sunset.jpg", "Add from folder"), activity.list())
+    }
+
+    @Test
+    fun `prepares the pictures that aren't at its start, while a window says which of how many, then draws their thumbnails`() {
+        graph(beach, sunset, old)
+        graph.preparedPictures.missing += setOf(beach.id, old.id)
+        val activity = start().get()
+
+        assertEquals("Preparing picture 1 of 2…", dialog()!!.first)
+        assertEquals(emptyList<Any>(), graph.thumbnails.rendered.filter { it.first == beach.id || it.first == old.id })
+
+        graph.jobs.runAll()
+        idle()
+        assertEquals(setOf(beach.id, old.id), graph.preparedPictures.prepared.toSet())
+        assertTrue("the window shows half a second at least", dialog() != null)
+
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(WorkingDialog.SHORTEST))
+        assertNull(dialog())
+        drawInTheBackground()
+        for (picture in listOf(beach, sunset, old)) {
+            assertTrue(picture.name, activity.row(picture.name).findViewById<ImageView>(R.id.settings_background_thumbnail).drawable != null)
+        }
+    }
+
+    @Test
+    fun `says which picture of how many it prepares as each is done`() {
+        graph(beach, sunset)
+        graph.preparedPictures.missing += setOf(beach.id, sunset.id)
+        start()
+
+        graph.jobs.runNext()
+        idle()
+
+        assertEquals("Preparing picture 2 of 2…", dialog()!!.first)
+    }
+
+    @Test
+    fun `says it prepares the picture, when there's one`() {
+        graph(beach, sunset)
+        graph.preparedPictures.missing += beach.id
+
+        start()
+
+        assertEquals("Preparing the picture…", dialog()!!.first)
+    }
+
+    @Test
+    fun `shows no window when every picture is prepared`() {
+        graph(beach, sunset)
+
+        start()
+
+        assertNull(dialog())
+    }
+
+    @Test
+    fun `Cancel while it prepares closes the editor, nothing chosen, and stops the rest`() {
+        graph(beach, sunset, background = Background(beach.id))
+        graph.preparedPictures.missing += setOf(beach.id, sunset.id)
+        val activity = start().get()
+
+        val window = ShadowDialog.getLatestDialog()
+        assertEquals("Cancel", window.findViewById<TextView>(UiR.id.working_cancel).text.toString())
+        window.findViewById<TextView>(UiR.id.working_cancel).performClick()
+        idle()
+
+        assertTrue(activity.isFinishing)
+        assertFalse(window.isShowing)
+        graph.jobs.runAll()
+        assertEquals(emptyList<Any>(), graph.preparedPictures.prepared)
+        assertEquals(Background(beach.id), stored)
+    }
+
+    @Test
+    fun `hidden while it prepares, it stops, and prepares what's left when it comes back`() {
+        graph(beach, sunset)
+        graph.preparedPictures.missing += setOf(beach.id, sunset.id)
+        val controller = start()
+
+        controller.pause().stop()
+        assertNull(dialog())
+        graph.jobs.runAll()
+        assertEquals(emptyList<Any>(), graph.preparedPictures.prepared)
+
+        controller.restart().start().resume()
+        idle()
+        assertEquals("Preparing picture 1 of 2…", dialog()!!.first)
+        graph.jobs.runAll()
+        idle()
+        assertEquals(setOf(beach.id, sunset.id), graph.preparedPictures.prepared.toSet())
     }
 }
