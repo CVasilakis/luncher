@@ -293,7 +293,7 @@ class PictureShareTest {
 
         waitUntilSeen(application.getString(R.string.settings_received_adding_count, 1, 2))
         waitUntilSeen(application.resources.getQuantityString(R.plurals.settings_received_saved_count, 1, 1), timeoutMs = STALLED_TIMEOUT_MS)
-        waitUntil(withId(R.id.settings_received_text), withText(application.resources.getQuantityString(R.plurals.settings_received_not_added_count, 1, 1)))
+        waitUntil(withId(R.id.settings_received_text), withText(application.resources.getQuantityString(R.plurals.settings_received_unreadable_count, 1, 1)))
         waitUntil(withText(R.string.settings_pictures_ok), hasFocus())
         press(KeyEvent.KEYCODE_DPAD_CENTER)
 

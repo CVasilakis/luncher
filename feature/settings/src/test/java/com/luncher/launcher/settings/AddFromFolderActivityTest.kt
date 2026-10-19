@@ -82,7 +82,7 @@ class AddFromFolderActivityTest {
 
         assertEquals(
             listOf(
-                "This TV · IMG_0001.HEIC | This TV can't show HEIF (HEIC) pictures",
+                "This TV · IMG_0001.HEIC | HEIF (HEIC) not supported on this TV",
                 "This TV · wallpaper-4k.jpg | 4000 × 3000 · 2.4 MB",
                 "USB drive · holiday.jpg | 4000 × 3000 · 2.4 MB",
                 "USB drive · logo.png | 4000 × 3000 · 2.4 MB",
@@ -141,7 +141,7 @@ class AddFromFolderActivityTest {
 
         assertEquals(listOf(holiday.source), library.added)
         val window = checkNotNull(working())
-        assertEquals("Adding a picture…", window.findViewById<TextView>(UiR.id.working_message).text.toString())
+        assertEquals("Adding the picture…", window.findViewById<TextView>(UiR.id.working_message).text.toString())
         assertEquals("Cancel", window.findViewById<TextView>(UiR.id.working_cancel).text.toString())
         assertFalse(activity.isFinishing)
 
@@ -174,7 +174,8 @@ class AddFromFolderActivityTest {
         shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(WorkingDialog.SHORTEST))
 
         assertFalse(activity.isFinishing)
-        assertEquals("It isn't a picture, or it's damaged.", ShadowDialog.getLatestDialog().findViewById<TextView>(R.id.settings_pictures_dialog_text).text.toString())
+        assertEquals("Picture not added", ShadowDialog.getLatestDialog().findViewById<TextView>(R.id.settings_pictures_dialog_title).text.toString())
+        assertEquals("The file isn't a picture, or it's damaged.", ShadowDialog.getLatestDialog().findViewById<TextView>(R.id.settings_pictures_dialog_text).text.toString())
     }
 
     @Test
@@ -245,20 +246,46 @@ class AddFromFolderActivityTest {
         val dialog = ShadowDialog.getLatestDialog()
         assertTrue(dialog.isShowing)
         assertEquals(
-            "This TV can't show HEIF (HEIC) pictures. Save it as a JPEG or PNG, and add that instead.",
+            "This TV can't show this HEIF (HEIC) picture. Save it as JPEG or PNG, then add it again.",
             dialog.findViewById<TextView>(R.id.settings_pictures_dialog_text).text.toString(),
         )
         assertEquals(1, dialog.findViewById<LinearLayout>(R.id.settings_pictures_dialog_entries).childCount)
     }
 
     @Test
-    fun `draws no preview of a picture this TV can't show`() {
+    fun `draws no preview of a picture this TV can't show, a warning mark in its place`() {
         val graph = graph(phone)
         val activity = start()
         graph.jobs.runAll()
 
         assertEquals(emptyList<Any>(), graph.folderPictures.previewed)
         assertNull(activity.findViewById<ImageView>(R.id.settings_pictures_folder_preview).drawable)
+        assertEquals(View.VISIBLE, activity.findViewById<View>(R.id.settings_pictures_folder_no_preview).visibility)
+        assertEquals(View.GONE, activity.findViewById<View>(R.id.settings_pictures_folder_loading).visibility)
+    }
+
+    @Test
+    fun `a picture whose preview can't be drawn, a damaged one, shows the warning mark once it's tried`() {
+        val damaged = folderPicture("damaged.jpg")
+        val graph = object : TestPicturesGraph(FakePictures()) {
+            override val folderPictures = FakeFolderPictures(damaged, this@AddFromFolderActivityTest.wallpaper, draw = { picture, width, height -> if (picture == damaged) null else sample(picture.name, width, height) })
+        }
+        application.graph = graph
+        val activity = start()
+        val mark = activity.findViewById<View>(R.id.settings_pictures_folder_no_preview)
+        assertEquals("not before it's tried: the wheel shows", View.GONE, mark.visibility)
+
+        graph.jobs.runAll()
+        shadowOf(Looper.getMainLooper()).idle()
+
+        assertEquals(View.VISIBLE, mark.visibility)
+        assertEquals(View.GONE, activity.findViewById<View>(R.id.settings_pictures_folder_loading).visibility)
+        activity.list().setSelection(1)
+        shadowOf(Looper.getMainLooper()).idle()
+        graph.jobs.runAll()
+        shadowOf(Looper.getMainLooper()).idle()
+        assertEquals("a picture that can be drawn hides it", View.GONE, mark.visibility)
+        assertNotNull(activity.findViewById<ImageView>(R.id.settings_pictures_folder_preview).drawable)
     }
 
     @Test
@@ -287,13 +314,40 @@ class AddFromFolderActivityTest {
 
         assertEquals(
             listOf(
-                "This TV · panorama.jpg | 21621 × 7004 · 184 MB · Too large to add",
+                "This TV · panorama.jpg | 21621 × 7004 · 184 MB · Too large (over 50 MB)",
                 "This TV · wallpaper-4k.jpg | 4000 × 3000 · 2.4 MB",
-                "USB drive · holiday.jpg | 4000 × 3000 · 2.4 MB · In Luncher's pictures already",
-                "USB drive · logo.png | 4000 × 3000 · 2.4 MB · Another of Luncher's pictures has this name",
+                "USB drive · holiday.jpg | 4000 × 3000 · 2.4 MB · Already in Luncher's pictures",
+                "USB drive · logo.png | 4000 × 3000 · 2.4 MB · Name already used in Luncher's pictures",
             ),
             activity.rows(),
         )
+    }
+
+    @Test
+    fun `a picture over the pixels alone is said to be, its file small`() {
+        graph(folderPicture("wide.jpg", bytes = 458_000, width = 9000, height = 8000))
+
+        assertEquals(listOf("This TV · wide.jpg | 9000 × 8000 · 458 kB · Too large (over 64 megapixels)"), start().rows())
+    }
+
+    @Test
+    fun `why a picture can't be added is in the accent color, its size not`() {
+        graph(huge, phone, wallpaper)
+        val activity = start()
+        val accent = activity.getColor(UiR.color.accent)
+        val list = activity.list()
+
+        fun colored(position: Int): List<String> {
+            val text = list.adapter.getView(position, null, list).findViewById<TextView>(R.id.settings_pictures_folder_details).text
+            val spanned = text as? android.text.Spanned ?: return emptyList()
+            return spanned.getSpans(0, text.length, android.text.style.ForegroundColorSpan::class.java)
+                .filter { it.foregroundColor == accent }
+                .map { text.subSequence(spanned.getSpanStart(it), spanned.getSpanEnd(it)).toString() }
+        }
+
+        assertEquals(listOf("HEIF (HEIC) not supported on this TV"), colored(0))
+        assertEquals(listOf("Too large (over 50 MB)"), colored(1))
+        assertEquals(emptyList<String>(), colored(2))
     }
 
     @Test
@@ -301,9 +355,9 @@ class AddFromFolderActivityTest {
         val graph = graph(holiday, logo, huge, library = known)
         val activity = start()
         val messages = listOf(
-            0 to "It's too large: a picture can have up to 50 MB and 64 megapixels.",
-            1 to "holiday.jpg is in Luncher's pictures already.",
-            2 to "Luncher's pictures have another picture named logo.png. Delete that one in Luncher first, or give this file another name, then add it.",
+            0 to ("Picture not added" to "Too large: over 50 MB."),
+            1 to ("Already in Luncher's pictures" to "holiday.jpg"),
+            2 to ("Picture not added" to "Another picture named logo.png is already in Luncher's pictures. Delete it in Luncher, or rename this file, then add it again."),
         )
 
         for ((position, message) in messages) {
@@ -311,7 +365,8 @@ class AddFromFolderActivityTest {
             shadowOf(Looper.getMainLooper()).idle()
 
             assertFalse(activity.isFinishing)
-            assertEquals(message, ShadowDialog.getLatestDialog().findViewById<TextView>(R.id.settings_pictures_dialog_text).text.toString())
+            val dialog = ShadowDialog.getLatestDialog()
+            assertEquals(message, dialog.findViewById<TextView>(R.id.settings_pictures_dialog_title).text.toString() to dialog.findViewById<TextView>(R.id.settings_pictures_dialog_text).text.toString())
         }
         assertEquals(emptyList<Any>(), known.added)
         graph.jobs.runAll()
@@ -319,13 +374,14 @@ class AddFromFolderActivityTest {
     }
 
     @Test
-    fun `draws no preview of a picture too large to add`() {
+    fun `draws no preview of a picture too large to add, a warning mark in its place`() {
         val graph = graph(huge)
         val activity = start()
         graph.jobs.runAll()
 
         assertEquals(emptyList<Any>(), graph.folderPictures.previewed)
         assertNull(activity.findViewById<ImageView>(R.id.settings_pictures_folder_preview).drawable)
+        assertEquals(View.VISIBLE, activity.findViewById<View>(R.id.settings_pictures_folder_no_preview).visibility)
     }
 
     @Test

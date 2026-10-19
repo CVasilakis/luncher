@@ -69,7 +69,8 @@
             android:orientation="vertical">
 
             <!-- Drawn at exactly its size, as the picture fills the TV's screen; PreviewColumn sets
-                 it. A spinning wheel in its middle while it's drawn. -->
+                 it. A spinning wheel in its middle while it's drawn; a warning mark there when
+                 there's none to draw (a picture this TV can't show, too large, or damaged). -->
             <FrameLayout
                 android:layout_width="0dp"
                 android:layout_height="0dp">
@@ -89,6 +90,15 @@
                     android:layout_gravity="center"
                     android:indeterminate="true"
                     android:indeterminateTint="@color/accent"
+                    android:visibility="gone" />
+
+                <ImageView
+                    android:id="@+id/settings_pictures_folder_no_preview"
+                    android:layout_width="@dimen/settings_pictures_warning"
+                    android:layout_height="@dimen/settings_pictures_warning"
+                    android:layout_gravity="center"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/settings_pictures_warning"
                     android:visibility="gone" />
             </FrameLayout>
 

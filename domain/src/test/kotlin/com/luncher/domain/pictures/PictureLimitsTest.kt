@@ -1,6 +1,8 @@
 package com.luncher.domain.pictures
 
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -23,5 +25,13 @@ class PictureLimitsTest {
     fun `takes shares of up to 100 pictures`() {
         assertTrue(PictureLimits.allowsShare(100))
         assertFalse(PictureLimits.allowsShare(101))
+    }
+
+    @Test
+    fun `tells which limit a picture is over, its file's first`() {
+        assertNull(PictureLimits.exceeded(50_000_000, 8000, 8000))
+        assertEquals(SizeLimit.BYTES, PictureLimits.exceeded(50_000_001, 8000, 8000))
+        assertEquals(SizeLimit.PIXELS, PictureLimits.exceeded(50_000_000, 8001, 8000))
+        assertEquals(SizeLimit.BYTES, PictureLimits.exceeded(50_000_001, 8001, 8000))
     }
 }

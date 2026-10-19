@@ -20,6 +20,9 @@ import com.luncher.domain.jobs.Cancellable
  * A share of more than [PictureLimits.MAX_SHARED] pictures adds none ([refuse]), so the user can
  * share again the ones they want.
  *
+ * Adding can be [stop]ped while the session goes on: the pictures still to add are cancelled, and
+ * the end says how many, after how the others went.
+ *
  * Used on the main thread only, where [import] answers.
  */
 class ReceivedPictures<Source>(private val import: PictureImport<Source>) {
@@ -31,14 +34,24 @@ class ReceivedPictures<Source>(private val import: PictureImport<Source>) {
         data class One(val result: ImportResult) : Outcome
 
         /**
-         * Several pictures, or a share refused: how many are in the library now ([saved], those
-         * it had already too), how many [notAdded], and whether a share had [tooMany].
+         * Several pictures, a share refused, or adding stopped: each answer, in the order the
+         * pictures came ([results]), how many were [cancelled] by [stop], and whether a share had
+         * [tooMany].
          */
-        data class Several(val saved: Int, val notAdded: Int, val tooMany: Boolean) : Outcome
+        data class Several(val results: List<ImportResult>, val cancelled: Int = 0, val tooMany: Boolean = false) : Outcome {
+
+            /** How many were added to the library now. */
+            val added: Int get() = results.count { it is ImportResult.Added }
+        }
     }
 
     private class Entry<Source>(val source: Source) {
         var result: ImportResult? = null
+
+        /** Cancelled by [stop] before its answer: never added. */
+        var cancelled = false
+
+        val answered get() = result != null || cancelled
     }
 
     private val entries = mutableListOf<Entry<Source>>()
@@ -60,7 +73,7 @@ class ReceivedPictures<Source>(private val import: PictureImport<Source>) {
     val total: Int get() = entries.size
 
     /** The pictures of the session without an answer yet, in order: the one being added first. */
-    val pending: List<Source> get() = entries.filter { it.result == null }.map { it.source }
+    val pending: List<Source> get() = entries.filter { !it.answered }.map { it.source }
 
     /**
      * Whether the picture being added is being copied: past what its name and size decide, real
@@ -69,16 +82,19 @@ class ReceivedPictures<Source>(private val import: PictureImport<Source>) {
     var copying: Boolean = false
         private set
 
-    /** How many of them have their answer. */
-    val answered: Int get() = entries.count { it.result != null }
+    /** How many of them have their answer, those [stop] cancelled too. */
+    val answered: Int get() = entries.count { it.answered }
+
+    /** How many of them were added to the library so far. */
+    val added: Int get() = entries.count { it.result is ImportResult.Added }
 
     /** How the session went, once every picture has its answer; null while one is being added, or with no session. */
     val outcome: Outcome?
         get() {
             if (session == 0 || answered < total) return null
-            if (total == 1 && !refused) return Outcome.One(entries[0].result!!)
-            val saved = entries.count { it.result is ImportResult.Added || it.result is ImportResult.AlreadyThere }
-            return Outcome.Several(saved, total - saved, refused)
+            val cancelled = entries.count { it.cancelled }
+            if (total == 1 && !refused && cancelled == 0) return Outcome.One(entries[0].result!!)
+            return Outcome.Several(entries.mapNotNull { it.result }, cancelled, refused)
         }
 
     /**
@@ -102,6 +118,20 @@ class ReceivedPictures<Source>(private val import: PictureImport<Source>) {
         refused = true
         changed()
         return hold
+    }
+
+    /**
+     * Stops adding, the session still open, so it can say how it went: the picture being added
+     * and those after it are cancelled, never added; those added stay in the library. A share
+     * that comes later is added as usual.
+     */
+    fun stop() {
+        if (session == 0) return
+        adding?.cancel()
+        adding = null
+        copying = false
+        entries.filter { !it.answered }.forEach { it.cancelled = true }
+        changed()
     }
 
     /** Takes the open session over, as a window that shows it without receiving anything does; 0 with none. */
@@ -150,11 +180,11 @@ class ReceivedPictures<Source>(private val import: PictureImport<Source>) {
      */
     private fun next() {
         while (adding == null) {
-            val entry = entries.firstOrNull { it.result == null } ?: return
+            val entry = entries.firstOrNull { !it.answered } ?: return
             val started = session
             var waiting = false
             val handle = import.add(entry.source, copying = {
-                if (started == session && entry.result == null && !copying) {
+                if (started == session && !entry.answered && !copying) {
                     copying = true
                     changed()
                 }
@@ -167,7 +197,7 @@ class ReceivedPictures<Source>(private val import: PictureImport<Source>) {
                 next()
                 changed()
             }
-            waiting = entry.result == null
+            waiting = !entry.answered
             if (waiting) adding = handle
         }
     }

@@ -31,6 +31,6 @@ fun nameClash(name: String, bytes: Long?, library: Collection<Picture>): ImportR
  */
 fun whyRefused(picture: FolderPicture<*>, library: Collection<Picture>): ImportResult? = when {
     picture.unsupported != null -> ImportResult.UnsupportedFormat(picture.unsupported)
-    !PictureLimits.allowsBytes(picture.bytes) || !PictureLimits.allowsSize(picture.width, picture.height) -> ImportResult.TooLarge
-    else -> nameClash(pictureName(picture.name), picture.bytes, library)
+    else -> PictureLimits.exceeded(picture.bytes, picture.width, picture.height)?.let { ImportResult.TooLarge(it) }
+        ?: nameClash(pictureName(picture.name), picture.bytes, library)
 }

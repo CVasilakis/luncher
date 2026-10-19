@@ -17,6 +17,7 @@ import com.luncher.domain.pictures.FakePictures
 import com.luncher.domain.pictures.FakePictures.Companion.picture
 import com.luncher.domain.pictures.ImportResult
 import com.luncher.domain.pictures.PictureFormat
+import com.luncher.domain.pictures.SizeLimit
 import com.luncher.launcher.testing.TV_SCREENS
 import com.luncher.launcher.testing.TV_SCREENS_IN_EVERY_LANGUAGE
 import com.luncher.launcher.testing.TvScreen
@@ -172,7 +173,7 @@ class BackgroundLayoutTest(private val screen: TvScreen) {
     @Test
     fun `the window after a share fits, the picture saved or not`() {
         val shared = Uri.parse("content://com.example/x")
-        for (result in listOf(ImportResult.Added(library.first()), ImportResult.Unreadable, ImportResult.TooLarge)) {
+        for (result in listOf(ImportResult.Added(library.first()), ImportResult.Unreadable, ImportResult.TooLarge(SizeLimit.BYTES))) {
             assertWindowFits(received(shared, result), text = result !is ImportResult.Added)
         }
     }

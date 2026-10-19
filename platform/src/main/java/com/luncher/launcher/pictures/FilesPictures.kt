@@ -17,6 +17,7 @@ import com.luncher.domain.pictures.PictureId
 import com.luncher.domain.pictures.PictureImport
 import com.luncher.domain.pictures.PictureLimits
 import com.luncher.domain.pictures.Pictures
+import com.luncher.domain.pictures.SizeLimit
 import com.luncher.domain.pictures.nameClash
 import com.luncher.domain.pictures.pictureName
 import com.luncher.launcher.outside.OutsideCallEnded
@@ -246,7 +247,7 @@ class FilesPictures(
     private fun copy(source: Uri, stop: Stop, library: List<Picture>, copying: () -> Unit): Copied {
         val reader = OutsideReader(resolver, outsideCalls, stop)
         val described = describe(source, reader) ?: return Copied.Failed(ImportResult.Unreadable)
-        if (described.bytes != null && !PictureLimits.allowsBytes(described.bytes)) return Copied.Failed(ImportResult.TooLarge)
+        if (described.bytes != null && !PictureLimits.allowsBytes(described.bytes)) return Copied.Failed(ImportResult.TooLarge(SizeLimit.BYTES))
         // Its size unknown (a provider may not say), the same name is judged once it's copied.
         if (described.bytes != null) nameClash(described.name, described.bytes, library)?.let { return Copied.Failed(it) }
         copying()
@@ -266,7 +267,7 @@ class FilesPictures(
                         val n = input.read(buffer)
                         if (n < 0) break
                         bytes += n
-                        if (!PictureLimits.allowsBytes(bytes)) return@use ImportResult.TooLarge
+                        if (!PictureLimits.allowsBytes(bytes)) return@use ImportResult.TooLarge(SizeLimit.BYTES)
                         digest.update(buffer, 0, n)
                         output.write(buffer, 0, n)
                     }
@@ -294,7 +295,7 @@ class FilesPictures(
         val copy = File(workingCopies.folder, file.name + WORKING_COPY)
         val unfit = when {
             shape == null -> unsupportedOrNot(file)
-            !PictureLimits.allowsSize(shape.width, shape.height) -> ImportResult.TooLarge
+            !PictureLimits.allowsSize(shape.width, shape.height) -> ImportResult.TooLarge(SizeLimit.PIXELS)
             else -> when (workingCopies.make(file, shape, copy) { stop.isStopped }) {
                 WorkingCopies.Made.MADE, WorkingCopies.Made.NOT_WRITTEN -> null
                 WorkingCopies.Made.NOT_DECODED -> if (stop.isStopped) ImportResult.Unreadable else unsupportedOrNot(file)

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- In place of a preview that can't be drawn: an exclamation mark in a ring, in the accent color,
+     as the reason below the picture in the list. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+    <path
+        android:pathData="M24,5 A19,19 0 1,1 24,43 A19,19 0 1,1 24,5 Z"
+        android:strokeWidth="3.5"
+        android:strokeColor="@color/accent" />
+    <path
+        android:fillColor="@color/accent"
+        android:pathData="M22,13 L26,13 L25.4,29 L22.6,29 Z" />
+    <path
+        android:fillColor="@color/accent"
+        android:pathData="M24,32 A2.4,2.4 0 1,1 24,36.8 A2.4,2.4 0 1,1 24,32 Z" />
+</vector>

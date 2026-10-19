@@ -47,8 +47,8 @@ sealed interface ImportResult {
     /** A picture in a [format] this TV can't show. */
     data class UnsupportedFormat(val format: PictureFormat) : ImportResult
 
-    /** Larger than [PictureLimits] allow. */
-    data object TooLarge : ImportResult
+    /** Larger than [PictureLimits] allow: over the [limit] said, its file's size when it's over both. */
+    data class TooLarge(val limit: SizeLimit) : ImportResult
 
     /**
      * Luncher couldn't read it: the app that shared it gave no access, the file went away, it
@@ -60,3 +60,10 @@ sealed interface ImportResult {
     /** No room left on the TV for its copy. */
     data object NoSpace : ImportResult
 }
+
+/**
+ * Whether the library had the picture already, so nothing was added: the same content
+ * ([ImportResult.AlreadyThere]), or most likely the same file, by its name and size
+ * ([ImportResult.SameFile]). The user is told it's there, not that it failed.
+ */
+val ImportResult.wasInLibrary: Boolean get() = this is ImportResult.AlreadyThere || this is ImportResult.SameFile

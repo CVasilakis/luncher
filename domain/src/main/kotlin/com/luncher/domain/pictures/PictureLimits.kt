@@ -28,4 +28,14 @@ object PictureLimits {
 
     /** Whether a share of [count] pictures is small enough. */
     fun allowsShare(count: Int): Boolean = count <= MAX_SHARED
+
+    /** Which limit a file of [bytes], of [width] x [height] px, is over: its file's first; null within both. */
+    fun exceeded(bytes: Long, width: Int, height: Int): SizeLimit? = when {
+        !allowsBytes(bytes) -> SizeLimit.BYTES
+        !allowsSize(width, height) -> SizeLimit.PIXELS
+        else -> null
+    }
 }
+
+/** A limit of [PictureLimits] a picture can be over: its file's size ([PictureLimits.MAX_BYTES]), or its pixels ([PictureLimits.MAX_PIXELS]). */
+enum class SizeLimit { BYTES, PIXELS }

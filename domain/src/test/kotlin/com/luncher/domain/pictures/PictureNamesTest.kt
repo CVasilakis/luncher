@@ -44,8 +44,9 @@ class PictureNamesTest {
     @Test
     fun `a drop folder's picture is refused when its listing tells, by format, limits or name`() {
         assertEquals(ImportResult.UnsupportedFormat(PictureFormat.HEIF), whyRefused(inFolder("phone.heic", width = 0, height = 0, unsupported = PictureFormat.HEIF), library))
-        assertEquals(ImportResult.TooLarge, whyRefused(inFolder("big.jpg", bytes = PictureLimits.MAX_BYTES + 1), library))
-        assertEquals(ImportResult.TooLarge, whyRefused(inFolder("panorama.jpg", width = 21621, height = 7004), library))
+        assertEquals(ImportResult.TooLarge(SizeLimit.BYTES), whyRefused(inFolder("big.jpg", bytes = PictureLimits.MAX_BYTES + 1), library))
+        assertEquals(ImportResult.TooLarge(SizeLimit.PIXELS), whyRefused(inFolder("panorama.jpg", width = 21621, height = 7004), library))
+        assertEquals(ImportResult.TooLarge(SizeLimit.BYTES), whyRefused(inFolder("huge.jpg", bytes = PictureLimits.MAX_BYTES + 1, width = 21621, height = 7004), library))
         assertEquals(ImportResult.SameFile(holiday), whyRefused(inFolder("holiday.jpg"), library))
         assertEquals(ImportResult.NameTaken(holiday), whyRefused(inFolder("holiday.jpg", bytes = 3_000_000), library))
         assertNull(whyRefused(inFolder("beach.jpg"), library))

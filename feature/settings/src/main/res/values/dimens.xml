@@ -62,6 +62,8 @@
     <dimen name="settings_pictures_preview_width">288dp</dimen>
     <!-- The preview's column and the gap before it: the list's margin at its end. -->
     <dimen name="settings_pictures_side_width">320dp</dimen>
+    <!-- The warning mark in place of a preview that can't be drawn. -->
+    <dimen name="settings_pictures_warning">48dp</dimen>
     <!-- A dialog: its width at most, its padding. -->
     <dimen name="settings_pictures_dialog_width">480dp</dimen>
     <dimen name="settings_pictures_dialog_padding">24dp</dimen>

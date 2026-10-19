@@ -33,12 +33,12 @@ feature/settings/
     │   │   ├── BackgroundStartColumn.kt  its preview, options and Save, the preview as large as the room left
     │   │   ├── AddFromFolderActivity.kt  the drop folders' pictures, a preview of the selected one; OK adds it, then returns it
     │   │   ├── SharePictureActivity.kt   where another app's share arrives: opens the home screen and the window, no screen
-    │   │   ├── PictureReceivedActivity.kt the window over the home screen after a share: shows the pictures being added, then their uses or how many were saved
+    │   │   ├── PictureReceivedActivity.kt the window over the home screen after a share: shows the pictures being added, then their uses, or how many were saved and why the others weren't
     │   │   ├── PicturesDialog.kt the dialogs over the picture screens: a question, a message
     │   │   ├── PreviewColumn.kt  Add from folder's preview and note, the preview smaller on a short screen
     │   │   └── PictureTexts.kt   what the picture screens call things: sizes, names, why a picture wasn't added
     │   └── res/                  the themes (Theme.Luncher.Settings, .Panel, .FullScreen, .Pictures, .Pictures.Dialog,
-    │                             .Pictures.NoDisplay), layouts, the thumbnails' frames, settings_* dimensions,
+    │                             .Pictures.NoDisplay), layouts, the thumbnails' frames, the warning mark, settings_* dimensions,
     │                             colors and strings (the window and the focused entry are :ui's), their
     │                             translations in values-el/ and values-ar/ (docs/TRANSLATIONS.md)
     └── test/
@@ -213,7 +213,7 @@ nothing is stored. Back, or Home, leaves the background as it was. **Save** stor
 through the process's `Wallpaper` ([`feature/home/README.md`](../home/README.md#the-wallpaper)):
 - unchanged, the editor just closes;
 - without a picture, it's stored at once, the kept wallpaper deleted, and the editor closes;
-- with one, a window (`WorkingDialog`, from `:ui`) says "Applying effects…" at once, taking every
+- with one, a window (`WorkingDialog`, from `:ui`) says "Processing image…" at once, taking every
   key, Back too, while the picture is drawn at the screen's size and kept; only then is the
   background stored, and the window closes, after half a second at least, and the editor with
   it. If the user goes home meanwhile, the drawing goes on, and the home screen says so instead.
@@ -293,18 +293,25 @@ copying starts): the real work, which then shows half a second at least (`Shorte
 refused for what its app says of its name or size, before anything is copied, shows no wheel: why
 is said at once. Then, for one picture, "Picture saved", its name and an entry for each use a picture can
 be put to (`pictureUseMenu`, today Background, which opens the background editor with the picture
-chosen, not saved, and closes the window), or why it wasn't added, and OK; for several, how many
-were saved ("3 pictures saved"), how many weren't, whether a share had too many, and OK. A picture
-the library has already (the same content, under another name) counts as saved. One named as a
-picture of the library isn't added, and the window says whether the library has that file already
-(the same name and size) or another of its name, which the user deletes there, or renames the file
+chosen, not saved, and closes the window); or, with OK, "Picture not added" and why
+(`whyNotAdded`). A picture the library has already, by its content or as the same file (the same
+name and size), isn't an error: "Already in Luncher's pictures", its name, and OK
+(`ImportResult.wasInLibrary`). For several, how many were added now ("3 pictures saved", or
+"Pictures not added"), then a line for each reason some weren't, with how many, in a fixed order,
+a reason none has left out (`notAddedLines`): those the library had, not pictures or damaged, in a
+format this TV can't show, over 50 MB, over 64 megapixels (`ImportResult.TooLarge` says which),
+named as another picture of the library, unreadable, no room; then those Cancel stopped, and a
+share of too many; and OK. One named as another picture of the library isn't added: the user
+deletes that one there, or renames the file
 ([`platform/README.md`](../../platform/README.md#pictures)); Luncher renames nothing.
 
 A share that arrives while the window shows joins it: `SharePictureActivity` then sends the window
 alone, without the home screen, which would close it (`singleTask`), and the window, `singleTop`,
 gets it in `onNewIntent`; its pictures are added after the others, and the end says how all of
-them went. Back closes the window, the pictures added in the library. While they're added, Cancel,
-Back and Home close it and stop the adding, those still to add not added. Closing it any way ends
+them went. Back closes the window, the pictures added in the library. While they're added, Cancel
+and Back stop the adding, those still to add not added (`ReceivedPictures.stop`): once a picture
+was saved, the window then says how it went, those cancelled counted, so the user knows what was
+kept; before that, it closes. Home closes it, and stops the adding too. Closing it any way ends
 the session (`finish`), and so does Android closing it (`onDestroy`): while Luncher is the home
 app, Home clears the home screen's task, the window with it (measured on API 23 and 28 to 36).
 Where Android leaves the window alive behind the home screen instead, on API 24 to 27 as the home
@@ -342,7 +349,7 @@ to 9 shares files, gets the message that says to use a drop folder instead, with
 |---|---|
 | `SharePictureActivity` | takes the pictures out of the share, refuses more than the limit, passes the Uris and the access Luncher holds to the window; the window alone while one shows, else a new one that takes an open session over |
 | `PictureReceivedActivity` | shows the session: the count while the pictures are added, then one picture's result and uses, or the counts; ends the session when it closes |
-| `ReceivedPictures` (`:domain`) | the session, one per process: the pictures added one at a time through `PictureImport`, each once, a share joining it, the window that holds it and may end it, whether one is being copied (`copying`), and how it went (`Outcome`) |
+| `ReceivedPictures` (`:domain`) | the session, one per process: the pictures added one at a time through `PictureImport`, each once, a share joining it, the window that holds it and may end it, whether one is being copied (`copying`), adding stopped with the session still open (`stop`), and how it went (`Outcome`: each picture's answer, and how many were cancelled) |
 | `PictureLimits.MAX_SHARED` (`:domain`) | the most pictures one share brings |
 | `PictureImport` (`:domain`) / `FilesPictures` (`:platform`) | adding one picture to the library, cancellable, when its copying starts, and how it went (`ImportResult`) |
 | `pictureUseMenu` (`:domain`) | the uses a picture received alone offers |
@@ -360,7 +367,7 @@ Each preview is kept while the screen shows (`FolderPictures.cachedPreview`, a f
 `cacheDir`), so a picture selected again, or drawn ahead, shows at once; they're deleted when the
 screen closes, and when it opens anew. The screen doesn't wait for them all at its start: a
 folder, or a USB drive, can hold many pictures, most of which the user never looks at.
-OK adds the picture to the library while a window (`WorkingDialog`) says "Adding a picture…"
+OK adds the picture to the library while a window (`WorkingDialog`) says "Adding the picture…"
 over the list, the preview's decode stopped first so the adding needn't wait for it, and Cancel,
 focused, or Back stops the adding and closes the window at once. Added, or found in the library
 already by its content, the picture goes back to the background editor, which chooses and
@@ -368,10 +375,12 @@ focuses it: the user waits in one place, and nothing moves under them. Refused, 
 why (`ImportResult`, an exhaustive `when` in `whyNotAdded`) and stays, for another choice.
 Closing it while it adds (Home) stops the adding. What the listing
 and the library already tell can't be added (`whyRefused`, in `:domain`) is marked in the list,
-after its size, and OK on it says why at once, reading nothing: a file in a format this TV can't
-show ([which](../../platform/README.md#pictures)), one too large (`PictureLimits`), which has no
-preview either, and one named as a picture of the library, the same file (the same name and size)
-or another. Anything else that isn't a picture isn't listed. The folders are read again each time the screen
+after its size, why in the accent color so it stands out, and OK on it says why at once, reading
+nothing: a file in a format this TV can't show ([which](../../platform/README.md#pictures)), one
+over 50 MB or over 64 megapixels (`PictureLimits`), which have no preview either, and one named as
+a picture of the library, the same file (the same name and size: "Already in Luncher's pictures")
+or another. In place of a preview that isn't drawn, or that can't be (a damaged picture, once its
+decode fails), a warning mark shows, so nobody waits for one. Anything else that isn't a picture isn't listed. The folders are read again each time the screen
 shows, so a USB drive plugged in meanwhile counts. On a screen too short for the preview and its
 note, the preview gets smaller (`PreviewColumn`).
 

@@ -7,6 +7,9 @@ import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.text.SpannableString
+import android.text.Spanned
+import android.text.style.ForegroundColorSpan
 import android.view.View
 import android.view.ViewGroup
 import android.widget.AdapterView
@@ -23,6 +26,8 @@ import com.luncher.domain.pictures.ImportResult
 import com.luncher.domain.pictures.inListOrder
 import com.luncher.domain.pictures.whyRefused
 import com.luncher.launcher.ui.WorkingDialog
+import com.luncher.launcher.ui.color
+import com.luncher.launcher.ui.R as UiR
 import java.util.Locale
 
 /**
@@ -32,7 +37,9 @@ import java.util.Locale
  * [BackgroundActivity] ([EXTRA_ADDED]), which chooses it; or says why it wasn't added, and stays,
  * so the user can choose another. One that its listing and the library already tell can't be
  * added ([whyRefused]: a format this TV can't show, too large, a name the library has) is marked
- * in the list, has no preview, and OK on it says why at once, with no window. The folders are
+ * in the list, why in the accent color, and OK on it says why at once, with no window. One this
+ * TV can't show, or too large, has no preview: a warning mark shows in its place, as for a
+ * picture whose preview can't be drawn (a damaged one), so nobody waits for one. The folders are
  * read again each time it shows, so a drive plugged in meanwhile counts. Closed while it adds
  * (Home, or a configuration change), the adding stops.
  *
@@ -65,6 +72,7 @@ class AddFromFolderActivity : Activity() {
     private lateinit var side: PreviewColumn
     private lateinit var preview: ImageView
     private lateinit var loading: View
+    private lateinit var noPreview: View
     private var pictures: List<FolderPicture<Uri>> = emptyList()
 
     /** Why each of [pictures] can't be added, by its source, as far as the listing and the library tell. */
@@ -83,6 +91,7 @@ class AddFromFolderActivity : Activity() {
         side = findViewById(R.id.settings_pictures_folder_side)
         preview = findViewById(R.id.settings_pictures_folder_preview)
         loading = findViewById(R.id.settings_pictures_folder_loading)
+        noPreview = findViewById(R.id.settings_pictures_folder_no_preview)
         // A screen opened anew starts with none kept (one killed while it showed left them); made
         // anew by a configuration change, it finds them.
         if (savedInstanceState == null) folders.forgetPreviews()
@@ -140,11 +149,13 @@ class AddFromFolderActivity : Activity() {
     /**
      * Shows [picture]'s preview: at once if it's kept, else drawn in the background, the latest
      * selected one only, the wheel showing meanwhile; then the others' are drawn ahead. None of a
-     * picture this TV can't show, or too large to add.
+     * picture this TV can't show, or too large to add, nor of one that can't be drawn: the
+     * warning mark instead.
      */
     private fun showPreview(picture: FolderPicture<*>?) {
         preview.setImageDrawable(null)
         loading.visibility = View.GONE
+        noPreview.visibility = View.GONE
         // The thread for what the user waits for: what's drawn ahead stops, and goes on after.
         prefetching.stop()
         val shown = pictures.firstOrNull { it.source == picture?.source }
@@ -154,8 +165,13 @@ class AddFromFolderActivity : Activity() {
             keptSize = size
         }
         val (width, height) = size
-        if (shown == null || !previewable(shown) || width <= 0 || height <= 0) {
+        if (shown == null || width <= 0 || height <= 0) {
             previewing.stop()
+            return
+        }
+        if (!previewable(shown)) {
+            previewing.stop()
+            noPreview.visibility = View.VISIBLE
             return
         }
         folders.cachedPreview(shown, width, height, Framing())?.let { image ->
@@ -167,6 +183,7 @@ class AddFromFolderActivity : Activity() {
         previewing.load({ stopped -> folders.preview(shown, width, height, Framing(), stopped) }) { image ->
             loading.visibility = View.GONE
             preview.setImageBitmap(image)
+            if (image == null) noPreview.visibility = View.VISIBLE
             kept += shown.source
             drawAhead()
         }
@@ -175,7 +192,7 @@ class AddFromFolderActivity : Activity() {
     /** Whether a preview of [picture] is drawn: not of one this TV can't show, or too large to add. */
     private fun previewable(picture: FolderPicture<*>): Boolean {
         val why = refused[picture.source]
-        return why !is ImportResult.UnsupportedFormat && why != ImportResult.TooLarge
+        return why !is ImportResult.UnsupportedFormat && why !is ImportResult.TooLarge
     }
 
     /**
@@ -233,7 +250,7 @@ class AddFromFolderActivity : Activity() {
         dialog?.dismiss()
         dialog = PicturesDialog(
             this,
-            getString(R.string.settings_pictures_not_added),
+            notAddedTitle(why),
             whyNotAdded(why).orEmpty(),
             listOf(getString(R.string.settings_pictures_ok) to {}),
         ).apply { show() }
@@ -261,11 +278,19 @@ class AddFromFolderActivity : Activity() {
             val why = refusal(refused[picture.source])
             view.findViewById<TextView>(R.id.settings_pictures_folder_details).text = when {
                 // Its size unknown: only why.
-                picture.unsupported != null -> why
-                why != null -> getString(R.string.settings_pictures_folder_refused, details(picture.width, picture.height, picture.bytes), why)
+                picture.unsupported != null -> why?.let { accented(it, it) }
+                why != null -> accented(getString(R.string.settings_pictures_folder_refused, details(picture.width, picture.height, picture.bytes), why), why)
                 else -> details(picture.width, picture.height, picture.bytes)
             }
             return view
+        }
+
+        /** [text] with its [part] (why the picture can't be added: its end) in the accent color, so it stands out. */
+        private fun accented(text: String, part: String): CharSequence {
+            val start = text.lastIndexOf(part).takeIf { it >= 0 } ?: return text
+            return SpannableString(text).apply {
+                setSpan(ForegroundColorSpan(color(UiR.color.accent)), start, start + part.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+            }
         }
     }
 }

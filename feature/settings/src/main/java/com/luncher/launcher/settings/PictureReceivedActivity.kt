@@ -1,5 +1,6 @@
 package com.luncher.launcher.settings
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
 import android.net.Uri
@@ -10,9 +11,9 @@ import android.os.Looper
 import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.window.OnBackInvokedDispatcher
 import com.luncher.domain.pictures.ImportResult
 import com.luncher.domain.pictures.Picture
-import com.luncher.domain.pictures.PictureLimits
 import com.luncher.domain.pictures.PictureUse
 import com.luncher.domain.pictures.ReceivedPictures.Outcome
 import com.luncher.domain.pictures.pictureUseMenu
@@ -28,10 +29,16 @@ import com.luncher.launcher.ui.ShortestShowing
  * picture refused for what its app says of its name or size shows no wheel: why is said at once.
  * Then, for one picture, "Picture saved",
  * its name, and an entry for each use of [pictureUseMenu] (Background opens the background editor
- * with it chosen, not saved), or why it wasn't added, and OK; for several, how many were saved
- * and how many weren't, and OK. A share of more pictures than Luncher takes at a time adds none,
- * and the window says so, at once or at the end of the others. Every [ImportResult] is handled ([whyNotAdded]); an app that stops
- * sending a picture ends as Unreadable, after the library's time limit.
+ * with it chosen, not saved); or, with OK, that Luncher's pictures had it already, and its name,
+ * or why it wasn't added. For several, how many were saved, then how many weren't for each
+ * reason ([notAddedLines]), and OK. A share of more pictures than Luncher takes at a time adds
+ * none, and the window says so, at once or at the end of the others. Every [ImportResult] is
+ * handled ([whyNotAdded]); an app that stops sending a picture ends as Unreadable, after the
+ * library's time limit.
+ *
+ * Cancel, or Back, while they're added, stops the adding: once a picture was saved, the window
+ * then says how it went, with how many were cancelled ([ReceivedPictures.stop][com.luncher.domain.pictures.ReceivedPictures.stop]),
+ * so the user knows what was kept; before that, it closes.
  *
  * A share that arrives while the window shows comes to it ([onNewIntent]: it's `singleTop`, and
  * [SharePictureActivity] sends only it while it shows on top of one of Luncher's tasks), and its
@@ -96,7 +103,28 @@ class PictureReceivedActivity : Activity() {
         hold = if (kept != 0 && kept == received.holder) kept else take(intent)
         unreadable = hold == 0
         received.addListener(changed)
+        // Android 16 (API 36) on, for apps targeting it, sends Back here, not to onBackPressed.
+        if (Build.VERSION.SDK_INT >= 36) {
+            onBackInvokedDispatcher.registerOnBackInvokedCallback(OnBackInvokedDispatcher.PRIORITY_DEFAULT) { back() }
+        }
         show()
+    }
+
+    // Back on Android 15 (API 35) and older; onCreate handles Android 16, which lint doesn't see.
+    // Deprecated, but its replacements need AndroidX (OnBackPressedCallback) or API 33
+    // (OnBackInvokedCallback). Doesn't call super: back() closes the window when it should.
+    @SuppressLint("GestureBackNavigation")
+    @Deprecated("Deprecated in Java")
+    override fun onBackPressed() = back()
+
+    /** Back: as Cancel while the pictures are added; else it closes the window. */
+    private fun back() {
+        if (cancelShown) cancel() else finish()
+    }
+
+    /** Stops adding: says how it went once a picture was saved, so the user knows what was kept; else closes the window. */
+    private fun cancel() {
+        if (hold != 0 && hold == received.holder && received.added > 0) received.stop() else finish()
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -200,22 +228,19 @@ class PictureReceivedActivity : Activity() {
         if (!wheel.isShowing) spinner.visibility = View.GONE
         text.visibility = View.GONE
         entries.removeAllViews()
-        entry(getString(R.string.settings_pictures_cancel)) { finish() }
+        entry(getString(R.string.settings_pictures_cancel)) { cancel() }
         focusFirst()
     }
 
     private fun showOne(result: ImportResult) {
         showDone()
-        val picture = when (result) {
-            is ImportResult.Added -> result.picture
-            is ImportResult.AlreadyThere -> result.picture
-            else -> {
-                title.setText(R.string.settings_pictures_not_added)
-                text.text = whyNotAdded(result)
-                entry(getString(R.string.settings_pictures_ok)) { finish() }
-                return focusFirst()
-            }
+        if (result !is ImportResult.Added) {
+            title.text = notAddedTitle(result)
+            text.text = whyNotAdded(result)
+            entry(getString(R.string.settings_pictures_ok)) { finish() }
+            return focusFirst()
         }
+        val picture = result.picture
         title.setText(R.string.settings_received_saved)
         text.text = nameOf(picture)
         for (use in pictureUseMenu) entry(getString(label(use))) { use(picture, use) }
@@ -224,15 +249,12 @@ class PictureReceivedActivity : Activity() {
 
     private fun showSeveral(outcome: Outcome.Several) {
         showDone()
-        title.text = if (outcome.saved > 0) {
-            resources.getQuantityString(R.plurals.settings_received_saved_count, outcome.saved, outcome.saved)
+        title.text = if (outcome.added > 0) {
+            resources.getQuantityString(R.plurals.settings_received_saved_count, outcome.added, outcome.added)
         } else {
             getString(R.string.settings_received_none_added)
         }
-        val lines = listOfNotNull(
-            if (outcome.saved > 0 && outcome.notAdded > 0) resources.getQuantityString(R.plurals.settings_received_not_added_count, outcome.notAdded, outcome.notAdded) else null,
-            if (outcome.tooMany) resources.getQuantityString(R.plurals.settings_received_too_many, PictureLimits.MAX_SHARED, PictureLimits.MAX_SHARED) else null,
-        )
+        val lines = notAddedLines(outcome)
         text.text = lines.joinToString("\n")
         text.visibility = if (lines.isEmpty()) View.GONE else View.VISIBLE
         entry(getString(R.string.settings_pictures_ok)) { finish() }

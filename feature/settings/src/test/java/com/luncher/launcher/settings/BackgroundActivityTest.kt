@@ -252,7 +252,7 @@ class BackgroundActivityTest {
         activity.ok("sunset.jpg")
 
         activity.save()
-        assertEquals("Applying effects…", dialog()!!.first)
+        assertEquals("Processing image…", dialog()!!.first)
         assertEquals(Wallpaper.State.Drawing(com.luncher.domain.wallpaper.DrawingCause.SAVING), graph.wallpaper.state)
         assertEquals("not stored before it's drawn", Background(beach.id), stored)
         assertFalse(activity.isFinishing)

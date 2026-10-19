@@ -10,6 +10,7 @@ import com.luncher.domain.pictures.PictureFormat
 import com.luncher.domain.pictures.PictureId
 import com.luncher.domain.pictures.PictureLimits
 import com.luncher.domain.pictures.PictureStyle
+import com.luncher.domain.pictures.SizeLimit
 import com.luncher.launcher.ui.ScreenSize
 import com.luncher.launcher.outside.AnotherApp
 import com.luncher.launcher.outside.OutsideCalls
@@ -254,14 +255,14 @@ class FilesPicturesTest {
             true
         }
 
-        assertEquals(ImportResult.TooLarge, add(anotherApp.sends("huge.png", huge)))
+        assertEquals(ImportResult.TooLarge(SizeLimit.BYTES), add(anotherApp.sends("huge.png", huge)))
         assertTrue("$reads reads", reads <= PictureLimits.MAX_BYTES / (64 * 1024) + 2)
         assertEquals(emptyList<String>(), copiesLeft())
     }
 
     @Test
     fun `refuses a picture of more than 64 megapixels`() {
-        assertEquals(ImportResult.TooLarge, add(shared("huge.png", TestPictureFiles.pngHeader(8001, 8000))))
+        assertEquals(ImportResult.TooLarge(SizeLimit.PIXELS), add(shared("huge.png", TestPictureFiles.pngHeader(8001, 8000))))
     }
 
     @Test

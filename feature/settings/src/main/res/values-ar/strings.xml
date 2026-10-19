@@ -48,11 +48,11 @@
 
     <string name="settings_background_hint">اضغط مطولًا على OK فوق صورة لحذفها</string>
     <string name="settings_background_save">حفظ</string>
-    <string name="settings_background_applying">جارٍ تطبيق التأثيرات…</string>
+    <string name="settings_background_applying">جارٍ معالجة الصورة…</string>
     <string name="settings_background_preparing">جارٍ تجهيز الصورة…</string>
     <string name="settings_background_preparing_count">جارٍ تجهيز الصورة <xliff:g id="number" example="3">%1$d</xliff:g> من <xliff:g id="total" example="10">%2$d</xliff:g>…</string>
 
-    <string name="settings_pictures_adding">جارٍ إضافة صورة…</string>
+    <string name="settings_pictures_adding">جارٍ إضافة الصورة…</string>
     <string name="settings_pictures_how">لإضافة صورة:</string>
     <string name="settings_pictures_how_share">• في مدير ملفات أو معرض، اختر «مشاركة» على صورة، ثم Luncher.</string>
     <string name="settings_pictures_how_folder">• أو انسخ الصور إلى هذا المجلد، على التلفزيون أو على وحدة USB، ثم اختر «إضافة من مجلد»:</string>
@@ -66,30 +66,38 @@
     <string name="settings_pictures_delete_text">يحذف Luncher نسخته فقط؛ يبقى الملف الذي أضفتها منه.</string>
     <string name="settings_pictures_cancel">إلغاء</string>
     <string name="settings_pictures_ok">حسنًا</string>
-    <string name="settings_pictures_not_added">لم تُضَف هذه الصورة</string>
-    <string name="settings_pictures_not_a_picture">ليست صورة، أو أنها تالفة.</string>
-    <string name="settings_pictures_unsupported">لا يستطيع هذا التلفزيون عرض صور <xliff:g id="format" example="HEIF (HEIC)">%1$s</xliff:g>. احفظها بصيغة JPEG أو PNG وأضف تلك بدلًا منها.</string>
-    <plurals name="settings_pictures_too_large">
-        <item quantity="zero">إنها كبيرة جدًا: يمكن أن يصل حجم الصورة إلى <xliff:g id="size" example="50 MB">%1$s</xliff:g> و<xliff:g id="megapixels" example="0">%2$d</xliff:g> ميغابكسل.</item>
-        <item quantity="one">إنها كبيرة جدًا: يمكن أن يصل حجم الصورة إلى <xliff:g id="size" example="50 MB">%1$s</xliff:g> و<xliff:g id="megapixels" example="1">%2$d</xliff:g> ميغابكسل.</item>
-        <item quantity="two">إنها كبيرة جدًا: يمكن أن يصل حجم الصورة إلى <xliff:g id="size" example="50 MB">%1$s</xliff:g> و<xliff:g id="megapixels" example="2">%2$d</xliff:g> ميغابكسل.</item>
-        <item quantity="few">إنها كبيرة جدًا: يمكن أن يصل حجم الصورة إلى <xliff:g id="size" example="50 MB">%1$s</xliff:g> و<xliff:g id="megapixels" example="3">%2$d</xliff:g> ميغابكسل.</item>
-        <item quantity="many">إنها كبيرة جدًا: يمكن أن يصل حجم الصورة إلى <xliff:g id="size" example="50 MB">%1$s</xliff:g> و<xliff:g id="megapixels" example="64">%2$d</xliff:g> ميغابكسل.</item>
-        <item quantity="other">إنها كبيرة جدًا: يمكن أن يصل حجم الصورة إلى <xliff:g id="size" example="50 MB">%1$s</xliff:g> و<xliff:g id="megapixels" example="100">%2$d</xliff:g> ميغابكسل.</item>
+    <string name="settings_pictures_not_added">لم تُضَف الصورة</string>
+    <string name="settings_pictures_already">موجودة بالفعل في صور Luncher</string>
+    <string name="settings_pictures_not_a_picture">الملف ليس صورة، أو أنه تالف.</string>
+    <string name="settings_pictures_unsupported">لا يستطيع هذا التلفزيون عرض صورة <xliff:g id="format" example="HEIF (HEIC)">%1$s</xliff:g> هذه. احفظها بصيغة JPEG أو PNG، ثم أضفها مرة أخرى.</string>
+    <string name="settings_pictures_too_large_bytes">كبيرة جدًا: أكثر من <xliff:g id="size" example="50 MB">%1$s</xliff:g>.</string>
+    <plurals name="settings_pictures_too_large_pixels">
+        <item quantity="zero">كبيرة جدًا: أكثر من <xliff:g id="megapixels" example="0">%d</xliff:g> ميغابكسل.</item>
+        <item quantity="one">كبيرة جدًا: أكثر من <xliff:g id="megapixels" example="1">%d</xliff:g> ميغابكسل.</item>
+        <item quantity="two">كبيرة جدًا: أكثر من <xliff:g id="megapixels" example="2">%d</xliff:g> ميغابكسل.</item>
+        <item quantity="few">كبيرة جدًا: أكثر من <xliff:g id="megapixels" example="3">%d</xliff:g> ميغابكسل.</item>
+        <item quantity="many">كبيرة جدًا: أكثر من <xliff:g id="megapixels" example="11">%d</xliff:g> ميغابكسل.</item>
+        <item quantity="other">كبيرة جدًا: أكثر من <xliff:g id="megapixels" example="100">%d</xliff:g> ميغابكسل.</item>
     </plurals>
-    <string name="settings_pictures_unreadable">لا يستطيع Luncher قراءتها. انسخها إلى المجلد ⁦<xliff:g id="folder" example="Android/media/com.luncher.launcher">%1$s</xliff:g>⁩ على هذا التلفزيون أو على وحدة USB، ثم اختر «إضافة من مجلد».</string>
-    <string name="settings_pictures_no_space">لا توجد مساحة تخزين كافية على هذا التلفزيون لها.</string>
-    <string name="settings_pictures_same_file">الصورة <xliff:g id="name" example="holiday.jpg">%1$s</xliff:g> موجودة بالفعل في صور Luncher.</string>
-    <string name="settings_pictures_name_taken">في صور Luncher صورة أخرى باسم <xliff:g id="name" example="holiday.jpg">%1$s</xliff:g>. احذفها في Luncher أولًا، أو أعطِ هذا الملف اسمًا آخر، ثم أضفه.</string>
+    <string name="settings_pictures_unreadable">تتعذّر قراءة الملف. انسخه إلى المجلد ⁦<xliff:g id="folder" example="Android/media/com.luncher.launcher">%1$s</xliff:g>⁩ على هذا التلفزيون أو على وحدة USB، ثم اختر «إضافة من مجلد».</string>
+    <string name="settings_pictures_no_space">لا توجد مساحة تخزين كافية على هذا التلفزيون. أفرغ بعض المساحة، ثم حاول مرة أخرى.</string>
+    <string name="settings_pictures_name_taken">توجد بالفعل صورة أخرى باسم <xliff:g id="name" example="holiday.jpg">%1$s</xliff:g> في صور Luncher. احذفها في Luncher، أو أعِد تسمية هذا الملف، ثم أضفه مرة أخرى.</string>
     <string name="settings_pictures_folder_where">الصور في المجلد ⁦<xliff:g id="folder" example="Android/media/com.luncher.launcher">%1$s</xliff:g>⁩، على هذا التلفزيون أو على وحدة USB</string>
     <string name="settings_pictures_folder_this_tv">هذا التلفزيون</string>
     <string name="settings_pictures_folder_usb">وحدة USB</string>
     <string name="settings_pictures_folder_row"><xliff:g id="where" example="وحدة USB">%1$s</xliff:g> · <xliff:g id="name" example="holiday.jpg">%2$s</xliff:g></string>
-    <string name="settings_pictures_folder_unsupported">لا يستطيع هذا التلفزيون عرض صور <xliff:g id="format" example="HEIF (HEIC)">%1$s</xliff:g></string>
-    <string name="settings_pictures_folder_refused"><xliff:g id="details" example="4000 × 3000 · 3.1 MB">%1$s</xliff:g> · <xliff:g id="why" example="أكبر من أن تُضاف">%2$s</xliff:g></string>
-    <string name="settings_pictures_folder_too_large">أكبر من أن تُضاف</string>
-    <string name="settings_pictures_folder_same_file">موجودة بالفعل في صور Luncher</string>
-    <string name="settings_pictures_folder_name_taken">صورة أخرى في Luncher تحمل هذا الاسم</string>
+    <string name="settings_pictures_folder_unsupported">صيغة <xliff:g id="format" example="HEIF (HEIC)">%1$s</xliff:g> غير مدعومة على هذا التلفزيون</string>
+    <string name="settings_pictures_folder_refused"><xliff:g id="details" example="4000 × 3000 · 3.1 MB">%1$s</xliff:g> · <xliff:g id="why" example="كبيرة جدًا (أكثر من 50 MB)">%2$s</xliff:g></string>
+    <string name="settings_pictures_folder_too_large_bytes">كبيرة جدًا (أكثر من <xliff:g id="size" example="50 MB">%1$s</xliff:g>)</string>
+    <plurals name="settings_pictures_folder_too_large_pixels">
+        <item quantity="zero">كبيرة جدًا (أكثر من <xliff:g id="megapixels" example="0">%d</xliff:g> ميغابكسل)</item>
+        <item quantity="one">كبيرة جدًا (أكثر من <xliff:g id="megapixels" example="1">%d</xliff:g> ميغابكسل)</item>
+        <item quantity="two">كبيرة جدًا (أكثر من <xliff:g id="megapixels" example="2">%d</xliff:g> ميغابكسل)</item>
+        <item quantity="few">كبيرة جدًا (أكثر من <xliff:g id="megapixels" example="3">%d</xliff:g> ميغابكسل)</item>
+        <item quantity="many">كبيرة جدًا (أكثر من <xliff:g id="megapixels" example="11">%d</xliff:g> ميغابكسل)</item>
+        <item quantity="other">كبيرة جدًا (أكثر من <xliff:g id="megapixels" example="100">%d</xliff:g> ميغابكسل)</item>
+    </plurals>
+    <string name="settings_pictures_folder_name_taken">الاسم مستخدم بالفعل في صور Luncher</string>
     <string name="settings_pictures_folder_note">زر OK ينسخها إلى صور Luncher؛ ويمكن إزالة الملف أو الوحدة بعد ذلك.</string>
     <string name="settings_pictures_folder_looking">جارٍ البحث عن صور…</string>
     <string name="settings_pictures_folder_empty">لا توجد صور في المجلد بعد.</string>
@@ -104,21 +112,85 @@
         <item quantity="many">تم حفظ <xliff:g id="count" example="11">%d</xliff:g> صورة</item>
         <item quantity="other">تم حفظ <xliff:g id="count" example="100">%d</xliff:g> صورة</item>
     </plurals>
-    <plurals name="settings_received_not_added_count">
-        <item quantity="zero">لم تُضَف <xliff:g id="count" example="0">%d</xliff:g> صورة.</item>
-        <item quantity="one">لم تُضَف صورة واحدة.</item>
-        <item quantity="two">لم تُضَف صورتان.</item>
-        <item quantity="few">لم تُضَف <xliff:g id="count" example="3">%d</xliff:g> صور.</item>
-        <item quantity="many">لم تُضَف <xliff:g id="count" example="11">%d</xliff:g> صورة.</item>
-        <item quantity="other">لم تُضَف <xliff:g id="count" example="100">%d</xliff:g> صورة.</item>
-    </plurals>
     <string name="settings_received_none_added">لم تُضَف الصور</string>
+    <plurals name="settings_received_already_count">
+        <item quantity="zero"><xliff:g id="count" example="0">%d</xliff:g> صورة موجودة بالفعل في صور Luncher</item>
+        <item quantity="one">صورة واحدة موجودة بالفعل في صور Luncher</item>
+        <item quantity="two">صورتان موجودتان بالفعل في صور Luncher</item>
+        <item quantity="few"><xliff:g id="count" example="3">%d</xliff:g> صور موجودة بالفعل في صور Luncher</item>
+        <item quantity="many"><xliff:g id="count" example="11">%d</xliff:g> صورة موجودة بالفعل في صور Luncher</item>
+        <item quantity="other"><xliff:g id="count" example="100">%d</xliff:g> صورة موجودة بالفعل في صور Luncher</item>
+    </plurals>
+    <plurals name="settings_received_not_a_picture_count">
+        <item quantity="zero"><xliff:g id="count" example="0">%d</xliff:g> صورة غير صالحة أو تالفة</item>
+        <item quantity="one">صورة واحدة غير صالحة أو تالفة</item>
+        <item quantity="two">صورتان غير صالحتين أو تالفتان</item>
+        <item quantity="few"><xliff:g id="count" example="3">%d</xliff:g> صور غير صالحة أو تالفة</item>
+        <item quantity="many"><xliff:g id="count" example="11">%d</xliff:g> صورة غير صالحة أو تالفة</item>
+        <item quantity="other"><xliff:g id="count" example="100">%d</xliff:g> صورة غير صالحة أو تالفة</item>
+    </plurals>
+    <plurals name="settings_received_unsupported_count">
+        <item quantity="zero"><xliff:g id="count" example="0">%d</xliff:g> صورة بصيغة لا يستطيع هذا التلفزيون عرضها</item>
+        <item quantity="one">صورة واحدة بصيغة لا يستطيع هذا التلفزيون عرضها</item>
+        <item quantity="two">صورتان بصيغة لا يستطيع هذا التلفزيون عرضها</item>
+        <item quantity="few"><xliff:g id="count" example="3">%d</xliff:g> صور بصيغة لا يستطيع هذا التلفزيون عرضها</item>
+        <item quantity="many"><xliff:g id="count" example="11">%d</xliff:g> صورة بصيغة لا يستطيع هذا التلفزيون عرضها</item>
+        <item quantity="other"><xliff:g id="count" example="100">%d</xliff:g> صورة بصيغة لا يستطيع هذا التلفزيون عرضها</item>
+    </plurals>
+    <plurals name="settings_received_too_large_bytes_count">
+        <item quantity="zero"><xliff:g id="count" example="0">%1$d</xliff:g> صورة أكبر من <xliff:g id="size" example="50 MB">%2$s</xliff:g></item>
+        <item quantity="one">صورة واحدة أكبر من <xliff:g id="size" example="50 MB">%2$s</xliff:g></item>
+        <item quantity="two">صورتان أكبر من <xliff:g id="size" example="50 MB">%2$s</xliff:g></item>
+        <item quantity="few"><xliff:g id="count" example="3">%1$d</xliff:g> صور أكبر من <xliff:g id="size" example="50 MB">%2$s</xliff:g></item>
+        <item quantity="many"><xliff:g id="count" example="11">%1$d</xliff:g> صورة أكبر من <xliff:g id="size" example="50 MB">%2$s</xliff:g></item>
+        <item quantity="other"><xliff:g id="count" example="100">%1$d</xliff:g> صورة أكبر من <xliff:g id="size" example="50 MB">%2$s</xliff:g></item>
+    </plurals>
+    <plurals name="settings_received_too_large_pixels_count">
+        <item quantity="zero"><xliff:g id="count" example="0">%1$d</xliff:g> صورة أكبر من <xliff:g id="megapixels" example="64">%2$d</xliff:g> ميغابكسل</item>
+        <item quantity="one">صورة واحدة أكبر من <xliff:g id="megapixels" example="64">%2$d</xliff:g> ميغابكسل</item>
+        <item quantity="two">صورتان أكبر من <xliff:g id="megapixels" example="64">%2$d</xliff:g> ميغابكسل</item>
+        <item quantity="few"><xliff:g id="count" example="3">%1$d</xliff:g> صور أكبر من <xliff:g id="megapixels" example="64">%2$d</xliff:g> ميغابكسل</item>
+        <item quantity="many"><xliff:g id="count" example="11">%1$d</xliff:g> صورة أكبر من <xliff:g id="megapixels" example="64">%2$d</xliff:g> ميغابكسل</item>
+        <item quantity="other"><xliff:g id="count" example="100">%1$d</xliff:g> صورة أكبر من <xliff:g id="megapixels" example="64">%2$d</xliff:g> ميغابكسل</item>
+    </plurals>
+    <plurals name="settings_received_name_taken_count">
+        <item quantity="zero"><xliff:g id="count" example="0">%d</xliff:g> صورة باسم مستخدم بالفعل في صور Luncher</item>
+        <item quantity="one">صورة واحدة باسم مستخدم بالفعل في صور Luncher</item>
+        <item quantity="two">صورتان باسم مستخدم بالفعل في صور Luncher</item>
+        <item quantity="few"><xliff:g id="count" example="3">%d</xliff:g> صور باسم مستخدم بالفعل في صور Luncher</item>
+        <item quantity="many"><xliff:g id="count" example="11">%d</xliff:g> صورة باسم مستخدم بالفعل في صور Luncher</item>
+        <item quantity="other"><xliff:g id="count" example="100">%d</xliff:g> صورة باسم مستخدم بالفعل في صور Luncher</item>
+    </plurals>
+    <plurals name="settings_received_unreadable_count">
+        <item quantity="zero"><xliff:g id="count" example="0">%d</xliff:g> صورة تعذّرت قراءتها</item>
+        <item quantity="one">صورة واحدة تعذّرت قراءتها</item>
+        <item quantity="two">صورتان تعذّرت قراءتهما</item>
+        <item quantity="few"><xliff:g id="count" example="3">%d</xliff:g> صور تعذّرت قراءتها</item>
+        <item quantity="many"><xliff:g id="count" example="11">%d</xliff:g> صورة تعذّرت قراءتها</item>
+        <item quantity="other"><xliff:g id="count" example="100">%d</xliff:g> صورة تعذّرت قراءتها</item>
+    </plurals>
+    <plurals name="settings_received_no_space_count">
+        <item quantity="zero"><xliff:g id="count" example="0">%d</xliff:g> صورة لم تُضَف: لا توجد مساحة تخزين كافية</item>
+        <item quantity="one">صورة واحدة لم تُضَف: لا توجد مساحة تخزين كافية</item>
+        <item quantity="two">صورتان لم تُضافا: لا توجد مساحة تخزين كافية</item>
+        <item quantity="few"><xliff:g id="count" example="3">%d</xliff:g> صور لم تُضَف: لا توجد مساحة تخزين كافية</item>
+        <item quantity="many"><xliff:g id="count" example="11">%d</xliff:g> صورة لم تُضَف: لا توجد مساحة تخزين كافية</item>
+        <item quantity="other"><xliff:g id="count" example="100">%d</xliff:g> صورة لم تُضَف: لا توجد مساحة تخزين كافية</item>
+    </plurals>
+    <plurals name="settings_received_cancelled_count">
+        <item quantity="zero"><xliff:g id="count" example="0">%d</xliff:g> صورة لم تُضَف: أُلغيت</item>
+        <item quantity="one">صورة واحدة لم تُضَف: أُلغيت</item>
+        <item quantity="two">صورتان لم تُضافا: أُلغيتا</item>
+        <item quantity="few"><xliff:g id="count" example="3">%d</xliff:g> صور لم تُضَف: أُلغيت</item>
+        <item quantity="many"><xliff:g id="count" example="11">%d</xliff:g> صورة لم تُضَف: أُلغيت</item>
+        <item quantity="other"><xliff:g id="count" example="100">%d</xliff:g> صورة لم تُضَف: أُلغيت</item>
+    </plurals>
     <plurals name="settings_received_too_many">
-        <item quantity="zero">يضيف Luncher حتى <xliff:g id="most" example="0">%d</xliff:g> صورة في المرة الواحدة. شارك عددًا أقل وحاول مرة أخرى.</item>
-        <item quantity="one">يضيف Luncher صورة واحدة في المرة الواحدة. شارك عددًا أقل وحاول مرة أخرى.</item>
-        <item quantity="two">يضيف Luncher حتى صورتين في المرة الواحدة. شارك عددًا أقل وحاول مرة أخرى.</item>
-        <item quantity="few">يضيف Luncher حتى <xliff:g id="most" example="3">%d</xliff:g> صور في المرة الواحدة. شارك عددًا أقل وحاول مرة أخرى.</item>
-        <item quantity="many">يضيف Luncher حتى <xliff:g id="most" example="11">%d</xliff:g> صورة في المرة الواحدة. شارك عددًا أقل وحاول مرة أخرى.</item>
-        <item quantity="other">يضيف Luncher حتى <xliff:g id="most" example="100">%d</xliff:g> صورة في المرة الواحدة. شارك عددًا أقل وحاول مرة أخرى.</item>
+        <item quantity="zero">صور كثيرة جدًا: يمكن إضافة حتى <xliff:g id="most" example="0">%d</xliff:g> صورة في المرة الواحدة. شارك عددًا أقل، ثم حاول مرة أخرى.</item>
+        <item quantity="one">صور كثيرة جدًا: يمكن إضافة صورة واحدة فقط في المرة الواحدة. شارك عددًا أقل، ثم حاول مرة أخرى.</item>
+        <item quantity="two">صور كثيرة جدًا: يمكن إضافة حتى صورتين في المرة الواحدة. شارك عددًا أقل، ثم حاول مرة أخرى.</item>
+        <item quantity="few">صور كثيرة جدًا: يمكن إضافة حتى <xliff:g id="most" example="3">%d</xliff:g> صور في المرة الواحدة. شارك عددًا أقل، ثم حاول مرة أخرى.</item>
+        <item quantity="many">صور كثيرة جدًا: يمكن إضافة حتى <xliff:g id="most" example="11">%d</xliff:g> صورة في المرة الواحدة. شارك عددًا أقل، ثم حاول مرة أخرى.</item>
+        <item quantity="other">صور كثيرة جدًا: يمكن إضافة حتى <xliff:g id="most" example="100">%d</xliff:g> صورة في المرة الواحدة. شارك عددًا أقل، ثم حاول مرة أخرى.</item>
     </plurals>
 </resources>

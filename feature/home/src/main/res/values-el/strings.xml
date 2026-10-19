@@ -11,5 +11,5 @@
     <string name="home_hidden_empty">Μετακινήστε εφαρμογές εδώ για να τις κρύψετε</string>
     <string name="home_wallpaper_screen_changed">Προσαρμογή του φόντου σε αυτή την οθόνη…</string>
     <string name="home_wallpaper_outdated">Ενημέρωση του φόντου…</string>
-    <string name="home_wallpaper_saving">Εφαρμογή εφέ…</string>
+    <string name="home_wallpaper_saving">Επεξεργασία εικόνας…</string>
 </resources>

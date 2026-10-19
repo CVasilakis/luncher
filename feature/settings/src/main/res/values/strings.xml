@@ -104,7 +104,7 @@
     <!-- Its last entry: stores the picture and options chosen, which the editor only shows until then. -->
     <string name="settings_background_save">Save</string>
     <!-- In a window over the editor while the wallpaper is drawn after Save, which takes a moment. -->
-    <string name="settings_background_applying">Applying effects…</string>
+    <string name="settings_background_applying">Processing image…</string>
     <!-- In a window over the background editor as it opens, while its pictures are prepared to be
          shown quickly (made once, again only after the TV changes its resolution or an update):
          for one picture, then for several, which one of how many. -->
@@ -116,36 +116,73 @@
     <!-- The window over the home screen after another app shared a picture with Luncher: its
          title while the picture is added, then once it's in Luncher's pictures; below it, the
          picture's name, and entries to use it (Background, settings_appearance_background).
+         When Luncher's pictures had it already, settings_pictures_already, its name and OK.
          Several pictures shared: the strings that follow. -->
     <string name="settings_received_adding">Adding the picture…</string>
     <string name="settings_received_saved">Picture saved</string>
     <!-- Its title while several pictures are added: which one of how many. -->
     <string name="settings_received_adding_count">Adding picture <xliff:g id="number" example="3">%1$d</xliff:g> of <xliff:g id="total" example="10">%2$d</xliff:g>…</string>
-    <!-- Then, for several pictures, its title: how many are in Luncher's pictures (those it had
-         already count too). -->
+    <!-- Then, for several pictures, its title: how many were added to Luncher's pictures now. -->
     <plurals name="settings_received_saved_count">
         <item quantity="one"><xliff:g id="count" example="1">%d</xliff:g> picture saved</item>
         <item quantity="other"><xliff:g id="count" example="9">%d</xliff:g> pictures saved</item>
     </plurals>
-    <!-- Below that title, when some weren't added. -->
-    <plurals name="settings_received_not_added_count">
-        <item quantity="one"><xliff:g id="count" example="1">%d</xliff:g> picture wasn\'t added.</item>
-        <item quantity="other"><xliff:g id="count" example="2">%d</xliff:g> pictures weren\'t added.</item>
-    </plurals>
     <!-- The title instead when none of them was added. -->
-    <string name="settings_received_none_added">The pictures weren\'t added</string>
-    <!-- Below it, when a share had more pictures than Luncher adds at a time: none of them was
-         added; %d is that most, 100. -->
+    <string name="settings_received_none_added">Pictures not added</string>
+    <!-- Below the title, a line for each reason some pictures weren't added, with how many, in
+         this order; a reason none has isn't shown. Each line counts pictures, e.g. "2 already in
+         Luncher's pictures", "1 not a picture, or damaged". -->
+    <plurals name="settings_received_already_count">
+        <item quantity="one"><xliff:g id="count" example="1">%d</xliff:g> already in Luncher\'s pictures</item>
+        <item quantity="other"><xliff:g id="count" example="2">%d</xliff:g> already in Luncher\'s pictures</item>
+    </plurals>
+    <plurals name="settings_received_not_a_picture_count">
+        <item quantity="one"><xliff:g id="count" example="1">%d</xliff:g> not a picture, or damaged</item>
+        <item quantity="other"><xliff:g id="count" example="2">%d</xliff:g> not pictures, or damaged</item>
+    </plurals>
+    <plurals name="settings_received_unsupported_count">
+        <item quantity="one"><xliff:g id="count" example="1">%d</xliff:g> in a format this TV can\'t show</item>
+        <item quantity="other"><xliff:g id="count" example="2">%d</xliff:g> in a format this TV can\'t show</item>
+    </plurals>
+    <!-- %2$s is the largest file a picture can be, e.g. 50 MB. -->
+    <plurals name="settings_received_too_large_bytes_count">
+        <item quantity="one"><xliff:g id="count" example="1">%1$d</xliff:g> larger than <xliff:g id="size" example="50 MB">%2$s</xliff:g></item>
+        <item quantity="other"><xliff:g id="count" example="2">%1$d</xliff:g> larger than <xliff:g id="size" example="50 MB">%2$s</xliff:g></item>
+    </plurals>
+    <!-- %2$d is the most pixels a picture can have, in millions, 64; the form follows the count. -->
+    <plurals name="settings_received_too_large_pixels_count">
+        <item quantity="one"><xliff:g id="count" example="1">%1$d</xliff:g> larger than <xliff:g id="megapixels" example="64">%2$d</xliff:g> megapixels</item>
+        <item quantity="other"><xliff:g id="count" example="2">%1$d</xliff:g> larger than <xliff:g id="megapixels" example="64">%2$d</xliff:g> megapixels</item>
+    </plurals>
+    <plurals name="settings_received_name_taken_count">
+        <item quantity="one"><xliff:g id="count" example="1">%d</xliff:g> with a name already used in Luncher\'s pictures</item>
+        <item quantity="other"><xliff:g id="count" example="2">%d</xliff:g> with a name already used in Luncher\'s pictures</item>
+    </plurals>
+    <plurals name="settings_received_unreadable_count">
+        <item quantity="one"><xliff:g id="count" example="1">%d</xliff:g> couldn\'t be read</item>
+        <item quantity="other"><xliff:g id="count" example="2">%d</xliff:g> couldn\'t be read</item>
+    </plurals>
+    <plurals name="settings_received_no_space_count">
+        <item quantity="one"><xliff:g id="count" example="1">%d</xliff:g> not added: not enough free storage</item>
+        <item quantity="other"><xliff:g id="count" example="2">%d</xliff:g> not added: not enough free storage</item>
+    </plurals>
+    <!-- Those still to add when Cancel stopped the adding. -->
+    <plurals name="settings_received_cancelled_count">
+        <item quantity="one"><xliff:g id="count" example="1">%d</xliff:g> not added: cancelled</item>
+        <item quantity="other"><xliff:g id="count" example="2">%d</xliff:g> not added: cancelled</item>
+    </plurals>
+    <!-- The last line, when a share had more pictures than Luncher adds at a time: none of them
+         was added; %d is that most, 100. -->
     <plurals name="settings_received_too_many">
-        <item quantity="one">Luncher adds up to <xliff:g id="most" example="1">%d</xliff:g> picture at a time. Share fewer and try again.</item>
-        <item quantity="other">Luncher adds up to <xliff:g id="most" example="100">%d</xliff:g> pictures at a time. Share fewer and try again.</item>
+        <item quantity="one">Too many pictures: up to <xliff:g id="most" example="1">%d</xliff:g> can be added at a time. Share fewer, then try again.</item>
+        <item quantity="other">Too many pictures: up to <xliff:g id="most" example="100">%d</xliff:g> can be added at a time. Share fewer, then try again.</item>
     </plurals>
 
     <!-- The picture screens: the background editor's pictures, Add from folder, and why a picture
          wasn't added. -->
     <!-- In a window over Add from folder, with a spinning wheel, while the picture chosen is copied
          into the library. -->
-    <string name="settings_pictures_adding">Adding a picture…</string>
+    <string name="settings_pictures_adding">Adding the picture…</string>
     <!-- While the library is empty, the steps to add a picture: the heading. -->
     <string name="settings_pictures_how">To add a picture:</string>
     <!-- The first way: sharing from another app. "Share" and "Luncher" are what those apps show. -->
@@ -178,25 +215,27 @@
     <!-- The answer to a message. -->
     <string name="settings_pictures_ok">OK</string>
     <!-- The title of a message when a picture couldn't be added; a text below says why. -->
-    <string name="settings_pictures_not_added">This picture wasn\'t added</string>
-    <string name="settings_pictures_not_a_picture">It isn\'t a picture, or it\'s damaged.</string>
+    <string name="settings_pictures_not_added">Picture not added</string>
+    <!-- The title instead when Luncher's pictures had it already (the same picture, or a file of
+         the same name and size); its name below. -->
+    <string name="settings_pictures_already">Already in Luncher\'s pictures</string>
+    <string name="settings_pictures_not_a_picture">The file isn\'t a picture, or it\'s damaged.</string>
     <!-- %1$s is a picture format's name, e.g. HEIF (HEIC), the iPhone's. -->
-    <string name="settings_pictures_unsupported">This TV can\'t show <xliff:g id="format" example="HEIF (HEIC)">%1$s</xliff:g> pictures. Save it as a JPEG or PNG, and add that instead.</string>
-    <!-- The largest file, and the most pixels (in millions), a picture can have; the forms follow
-         the pixels'. -->
-    <plurals name="settings_pictures_too_large">
-        <item quantity="one">It\'s too large: a picture can have up to <xliff:g id="size" example="50 MB">%1$s</xliff:g> and <xliff:g id="megapixels" example="1">%2$d</xliff:g> megapixel.</item>
-        <item quantity="other">It\'s too large: a picture can have up to <xliff:g id="size" example="50 MB">%1$s</xliff:g> and <xliff:g id="megapixels" example="64">%2$d</xliff:g> megapixels.</item>
+    <string name="settings_pictures_unsupported">This TV can\'t show this <xliff:g id="format" example="HEIF (HEIC)">%1$s</xliff:g> picture. Save it as JPEG or PNG, then add it again.</string>
+    <!-- A picture larger than Luncher takes: its file over the most a picture can be (%1$s, e.g.
+         50 MB), or more pixels than it can have (%d, in millions, 64; the form follows it). -->
+    <string name="settings_pictures_too_large_bytes">Too large: over <xliff:g id="size" example="50 MB">%1$s</xliff:g>.</string>
+    <plurals name="settings_pictures_too_large_pixels">
+        <item quantity="one">Too large: over <xliff:g id="megapixels" example="1">%d</xliff:g> megapixel.</item>
+        <item quantity="other">Too large: over <xliff:g id="megapixels" example="64">%d</xliff:g> megapixels.</item>
     </plurals>
     <!-- When Luncher can't read the picture, e.g. an older Android's way of sharing a file, which
          only apps with storage permission can read; %1$s is the folder's path. -->
-    <string name="settings_pictures_unreadable">Luncher can\'t read it. Copy it into the folder <xliff:g id="folder" example="Android/media/com.luncher.launcher">%1$s</xliff:g> on this TV or a USB drive, then choose Add from folder.</string>
-    <string name="settings_pictures_no_space">There isn\'t enough free storage on this TV for it.</string>
-    <!-- The library has a picture of this name and size: most likely this very file. %1$s is its name. -->
-    <string name="settings_pictures_same_file"><xliff:g id="name" example="holiday.jpg">%1$s</xliff:g> is in Luncher\'s pictures already.</string>
+    <string name="settings_pictures_unreadable">The file can\'t be read. Copy it into the folder <xliff:g id="folder" example="Android/media/com.luncher.launcher">%1$s</xliff:g> on this TV or a USB drive, then choose Add from folder.</string>
+    <string name="settings_pictures_no_space">Not enough free storage on this TV. Free up space, then try again.</string>
     <!-- The library has another picture of this name (another size); Luncher has no way to rename
          one, so the user deletes that one in Luncher, or renames the file elsewhere. -->
-    <string name="settings_pictures_name_taken">Luncher\'s pictures have another picture named <xliff:g id="name" example="holiday.jpg">%1$s</xliff:g>. Delete that one in Luncher first, or give this file another name, then add it.</string>
+    <string name="settings_pictures_name_taken">Another picture named <xliff:g id="name" example="holiday.jpg">%1$s</xliff:g> is already in Luncher\'s pictures. Delete it in Luncher, or rename this file, then add it again.</string>
     <!-- Below the title of Add from folder: where its pictures are; %1$s is the folder's path. -->
     <string name="settings_pictures_folder_where">Pictures in the folder <xliff:g id="folder" example="Android/media/com.luncher.launcher">%1$s</xliff:g>, on this TV or a USB drive</string>
     <!-- Where a picture of that list is: the TV's own storage, or a USB drive (or a memory card). -->
@@ -204,15 +243,21 @@
     <string name="settings_pictures_folder_usb">USB drive</string>
     <!-- A picture of that list: where it is, then its file's name. -->
     <string name="settings_pictures_folder_row"><xliff:g id="where" example="USB drive">%1$s</xliff:g> · <xliff:g id="name" example="holiday.jpg">%2$s</xliff:g></string>
-    <!-- Below a picture of that list in a format this TV can't show; %1$s is the format's name. -->
-    <string name="settings_pictures_folder_unsupported">This TV can\'t show <xliff:g id="format" example="HEIF (HEIC)">%1$s</xliff:g> pictures</string>
+    <!-- Below a picture of that list in a format this TV can't show, in the accent color; %1$s is
+         the format's name. -->
+    <string name="settings_pictures_folder_unsupported"><xliff:g id="format" example="HEIF (HEIC)">%1$s</xliff:g> not supported on this TV</string>
     <!-- Below a picture of that list that can't be added, as the list already tells: its size and
-         file size (%1$s, as settings_pictures_details writes them), then why (%2$s, one of the
-         three below). -->
-    <string name="settings_pictures_folder_refused"><xliff:g id="details" example="4000 × 3000 · 3.1 MB">%1$s</xliff:g> · <xliff:g id="why" example="Too large to add">%2$s</xliff:g></string>
-    <string name="settings_pictures_folder_too_large">Too large to add</string>
-    <string name="settings_pictures_folder_same_file">In Luncher\'s pictures already</string>
-    <string name="settings_pictures_folder_name_taken">Another of Luncher\'s pictures has this name</string>
+         file size (%1$s, as settings_pictures_details writes them), then why (%2$s, in the accent
+         color: one of the three below, or settings_pictures_already). -->
+    <string name="settings_pictures_folder_refused"><xliff:g id="details" example="4000 × 3000 · 3.1 MB">%1$s</xliff:g> · <xliff:g id="why" example="Too large (over 50 MB)">%2$s</xliff:g></string>
+    <!-- Its file is larger than the most a picture can be: %1$s, e.g. 50 MB. -->
+    <string name="settings_pictures_folder_too_large_bytes">Too large (over <xliff:g id="size" example="50 MB">%1$s</xliff:g>)</string>
+    <!-- It has more pixels than a picture can have: %d, in millions, 64. -->
+    <plurals name="settings_pictures_folder_too_large_pixels">
+        <item quantity="one">Too large (over <xliff:g id="megapixels" example="1">%d</xliff:g> megapixel)</item>
+        <item quantity="other">Too large (over <xliff:g id="megapixels" example="64">%d</xliff:g> megapixels)</item>
+    </plurals>
+    <string name="settings_pictures_folder_name_taken">Name already used in Luncher\'s pictures</string>
     <!-- Beside that list, below the preview of the selected picture. -->
     <string name="settings_pictures_folder_note">OK copies it into Luncher\'s pictures; the file or the drive can be removed afterwards.</string>
     <!-- In place of that list, while Luncher looks for pictures, or when there are none. -->

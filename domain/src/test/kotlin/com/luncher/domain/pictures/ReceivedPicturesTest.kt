@@ -56,7 +56,7 @@ class ReceivedPicturesTest {
         assertNull(received.outcome)
 
         library.finishAdding()
-        assertEquals(Outcome.Several(saved = 2, notAdded = 0, tooMany = false), received.outcome)
+        assertEquals(Outcome.Several(listOf(ImportResult.Added(beach), ImportResult.Added(forest))), received.outcome)
     }
 
     @Test
@@ -69,19 +69,22 @@ class ReceivedPicturesTest {
     }
 
     @Test
-    fun `counts a picture the library had already as saved, and the others as not added`() {
+    fun `says each picture's answer, in the order they came`() {
         received.receive(listOf("beach", "known", "text", "unknown"))
         repeat(4) { library.finishAdding() }
 
-        assertEquals(Outcome.Several(saved = 2, notAdded = 2, tooMany = false), received.outcome)
+        val outcome = received.outcome as Outcome.Several
+        assertEquals(listOf(ImportResult.Added(beach), ImportResult.AlreadyThere(beach), ImportResult.NotAPicture, ImportResult.NotAPicture), outcome.results)
+        assertEquals(1, outcome.added)
     }
 
     @Test
-    fun `counts a picture refused for its name as not added, though the library has one alike`() {
-        received.receive(listOf("beach", "same name", "name taken"))
-        repeat(3) { library.finishAdding() }
+    fun `counts only the pictures added now as added, not those the library had`() {
+        received.receive(listOf("beach", "known", "same name", "name taken"))
+        repeat(4) { library.finishAdding() }
 
-        assertEquals(Outcome.Several(saved = 1, notAdded = 2, tooMany = false), received.outcome)
+        assertEquals(1, (received.outcome as Outcome.Several).added)
+        assertEquals(1, received.added)
     }
 
     @Test
@@ -94,7 +97,7 @@ class ReceivedPicturesTest {
         assertEquals(3, received.total)
         repeat(3) { library.finishAdding() }
         assertEquals(listOf("beach", "text", "forest"), library.added)
-        assertEquals(Outcome.Several(saved = 2, notAdded = 1, tooMany = false), received.outcome)
+        assertEquals(Outcome.Several(listOf(ImportResult.Added(beach), ImportResult.NotAPicture, ImportResult.Added(forest))), received.outcome)
     }
 
     @Test
@@ -106,7 +109,7 @@ class ReceivedPicturesTest {
 
         assertNull(received.outcome)
         library.finishAdding()
-        assertEquals(Outcome.Several(saved = 2, notAdded = 0, tooMany = false), received.outcome)
+        assertEquals(Outcome.Several(listOf(ImportResult.Added(beach), ImportResult.Added(forest))), received.outcome)
     }
 
     @Test
@@ -173,7 +176,7 @@ class ReceivedPicturesTest {
         assertEquals(newer, received.holder)
         library.finishAdding()
         library.finishAdding()
-        assertEquals(Outcome.Several(saved = 2, notAdded = 0, tooMany = false), received.outcome)
+        assertEquals(Outcome.Several(listOf(ImportResult.Added(beach), ImportResult.Added(forest))), received.outcome)
         received.end(newer)
         assertEquals(0, received.session)
     }
@@ -204,7 +207,7 @@ class ReceivedPicturesTest {
         received.refuse()
 
         assertEquals(emptyList<String>(), library.added)
-        assertEquals(Outcome.Several(saved = 0, notAdded = 0, tooMany = true), received.outcome)
+        assertEquals(Outcome.Several(emptyList(), tooMany = true), received.outcome)
     }
 
     @Test
@@ -215,7 +218,7 @@ class ReceivedPicturesTest {
 
         assertNull(received.outcome)
         library.finishAdding()
-        assertEquals(Outcome.Several(saved = 1, notAdded = 0, tooMany = true), received.outcome)
+        assertEquals(Outcome.Several(listOf(ImportResult.Added(beach)), tooMany = true), received.outcome)
     }
 
     @Test
@@ -261,6 +264,53 @@ class ReceivedPicturesTest {
         received.receive(sources)
 
         assertEquals(sources, library.added)
-        assertEquals(Outcome.Several(saved = 0, notAdded = 100, tooMany = false), received.outcome)
+        assertEquals(Outcome.Several(List(100) { ImportResult.NotAPicture }), received.outcome)
+    }
+
+    @Test
+    fun `stopping cancels the picture being added and those after it, keeps those added, and says how it went`() {
+        val hold = received.receive(listOf("beach", "text", "forest", "known"))
+        library.finishAdding()
+        library.finishAdding()
+
+        received.stop()
+
+        assertEquals(listOf("forest"), library.cancelled)
+        assertEquals(listOf(beach), library.pictures)
+        assertEquals(hold, received.holder)
+        assertEquals(emptyList<String>(), received.pending)
+        assertEquals(false, received.copying)
+        assertEquals(Outcome.Several(listOf(ImportResult.Added(beach), ImportResult.NotAPicture), cancelled = 2), received.outcome)
+    }
+
+    @Test
+    fun `stopping one picture says it was cancelled, not how it went alone`() {
+        received.receive(listOf("beach"))
+
+        received.stop()
+
+        assertEquals(Outcome.Several(emptyList(), cancelled = 1), received.outcome)
+    }
+
+    @Test
+    fun `a share that comes after stopping is added, and the end counts both`() {
+        received.receive(listOf("beach", "text"))
+        library.finishAdding()
+        received.stop()
+
+        received.receive(listOf("forest"))
+
+        assertNull(received.outcome)
+        library.finishAdding()
+        assertEquals(listOf("beach", "text", "forest"), library.added)
+        assertEquals(Outcome.Several(listOf(ImportResult.Added(beach), ImportResult.Added(forest)), cancelled = 1), received.outcome)
+    }
+
+    @Test
+    fun `stopping with no session does nothing`() {
+        received.stop()
+
+        assertEquals(0, received.session)
+        assertEquals(0, told)
     }
 }

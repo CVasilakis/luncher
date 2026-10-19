@@ -12,6 +12,7 @@ import com.luncher.domain.pictures.FakePictures
 import com.luncher.domain.pictures.FakePictures.Companion.picture
 import com.luncher.domain.pictures.ImportResult
 import com.luncher.domain.pictures.PictureFormat
+import com.luncher.domain.pictures.SizeLimit
 import com.luncher.launcher.testing.TV_1080P
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -86,8 +87,9 @@ class PictureReceivedActivityTest {
         library.finishAdding()
         shadowOf(Looper.getMainLooper()).idle()
 
-        assertEquals("This picture wasn't added", activity.title())
-        assertEquals("holiday.jpg is in Luncher's pictures already.", activity.text())
+        assertEquals("Already in Luncher's pictures", activity.title())
+        assertEquals("holiday.jpg", activity.text())
+        assertEquals(listOf("OK"), activity.entries().map { it.text.toString() })
     }
 
     @Test
@@ -145,10 +147,14 @@ class PictureReceivedActivityTest {
     }
 
     @Test
-    fun `a picture the library has already is saved as well`() {
+    fun `a picture the library has already says it's there, with its name and OK`() {
         library.results[shared] = ImportResult.AlreadyThere(holiday)
 
-        assertEquals("Picture saved", receive().title())
+        val activity = receive()
+
+        assertEquals("Already in Luncher's pictures", activity.title())
+        assertEquals("holiday.jpg", activity.text())
+        assertEquals(listOf("OK"), activity.entries().map { it.text.toString() })
     }
 
     @Test
@@ -170,18 +176,28 @@ class PictureReceivedActivityTest {
 
         val activity = receive()
 
-        assertEquals("This picture wasn't added", activity.title())
-        assertTrue(activity.text().contains("HEIF (HEIC)"))
+        assertEquals("Picture not added", activity.title())
+        assertEquals("This TV can't show this HEIF (HEIC) picture. Save it as JPEG or PNG, then add it again.", activity.text())
         assertEquals(listOf("OK"), activity.entries().map { it.text.toString() })
         activity.entries().single().performClick()
         assertTrue(activity.isFinishing)
     }
 
     @Test
+    fun `one too large says which limit it's over`() {
+        library.results[shared] = ImportResult.TooLarge(SizeLimit.BYTES)
+        assertEquals("Too large: over 50 MB.", receive().text())
+
+        library.results[shared] = ImportResult.TooLarge(SizeLimit.PIXELS)
+        application.graph = TestPicturesGraph(library)
+        assertEquals("Too large: over 64 megapixels.", receive().text())
+    }
+
+    @Test
     fun `with nothing it could read, says so, adding nothing`() {
         val activity = receive(Intent().putExtra(PictureReceivedActivity.EXTRA_NOTHING_READABLE, true))
 
-        assertTrue(activity.text().startsWith("Luncher can't read it."))
+        assertTrue(activity.text().startsWith("The file can't be read."))
         assertEquals(emptyList<Uri>(), library.added)
     }
 
@@ -223,18 +239,63 @@ class PictureReceivedActivityTest {
 
         val activity = receive(share(shared, beach, forest))
 
-        assertEquals("2 pictures saved", activity.title())
-        assertEquals("1 picture wasn't added.", activity.text())
+        assertEquals("1 picture saved", activity.title())
+        assertEquals("1 already in Luncher's pictures\n1 not a picture, or damaged", activity.text())
         assertEquals(listOf("OK"), activity.entries().map { it.text.toString() })
         assertTrue(activity.entries().single().isFocused)
     }
 
     @Test
-    fun `when none of several was added, says so in the title alone`() {
+    fun `when none of several was added, says so, and why`() {
         val activity = receive(share(shared, beach))
 
-        assertEquals("The pictures weren't added", activity.title())
+        assertEquals("Pictures not added", activity.title())
+        assertEquals("2 not pictures, or damaged", activity.text())
+    }
+
+    @Test
+    fun `when all of several were added, says how many, with no more lines`() {
+        library.results[shared] = ImportResult.Added(holiday)
+        library.results[beach] = ImportResult.Added(picture("beach.jpg"))
+
+        val activity = receive(share(shared, beach))
+
+        assertEquals("2 pictures saved", activity.title())
         assertEquals(View.GONE, activity.findViewById<View>(R.id.settings_received_text).visibility)
+    }
+
+    @Test
+    fun `says how many weren't added for each reason, in its order, those the library had first`() {
+        val pictures = (1..10).map { Uri.parse("content://com.example.files/$it.jpg") }
+        listOf(
+            ImportResult.NoSpace,
+            ImportResult.Unreadable,
+            ImportResult.NameTaken(holiday),
+            ImportResult.TooLarge(SizeLimit.PIXELS),
+            ImportResult.TooLarge(SizeLimit.BYTES),
+            ImportResult.UnsupportedFormat(PictureFormat.AVIF),
+            ImportResult.NotAPicture,
+            ImportResult.SameFile(holiday),
+            ImportResult.AlreadyThere(holiday),
+            ImportResult.Added(holiday),
+        ).forEachIndexed { i, result -> library.results[pictures[i]] = result }
+
+        val activity = receive(share(*pictures.toTypedArray()))
+
+        assertEquals("1 picture saved", activity.title())
+        assertEquals(
+            listOf(
+                "2 already in Luncher's pictures",
+                "1 not a picture, or damaged",
+                "1 in a format this TV can't show",
+                "1 larger than 50 MB",
+                "1 larger than 64 megapixels",
+                "1 with a name already used in Luncher's pictures",
+                "1 couldn't be read",
+                "1 not added: not enough free storage",
+            ),
+            activity.text().lines(),
+        )
     }
 
     @Test
@@ -262,8 +323,47 @@ class PictureReceivedActivityTest {
     }
 
     @Test
-    fun `Cancel while several are added keeps those saved and adds no more`() {
+    fun `Cancel once one of several is saved stops adding, keeps it, and says how it went`() {
         library.results[shared] = ImportResult.Added(holiday)
+        library.answerLater = true
+        val window = window(share(shared, beach, forest))
+        library.finishAdding()
+
+        window.get().entries().single().performClick()
+        waitOutTheWheel()
+
+        assertFalse(window.get().isFinishing)
+        assertEquals(listOf(beach), library.cancelled)
+        assertEquals(listOf(shared, beach), library.added)
+        assertEquals(listOf(holiday), library.pictures)
+        assertEquals("1 picture saved", window.get().title())
+        assertEquals("2 not added: cancelled", window.get().text())
+        assertEquals(listOf("OK"), window.get().entries().map { it.text.toString() })
+        window.get().entries().single().performClick()
+        assertTrue(window.get().isFinishing)
+    }
+
+    @Test
+    fun `Back once one of several is saved stops adding as Cancel does, and Back again closes the window`() {
+        library.results[shared] = ImportResult.Added(holiday)
+        library.answerLater = true
+        val window = window(share(shared, beach, forest))
+        library.finishAdding()
+
+        @Suppress("DEPRECATION")
+        window.get().onBackPressed()
+        waitOutTheWheel()
+
+        assertFalse(window.get().isFinishing)
+        assertEquals(listOf(beach), library.cancelled)
+        assertEquals("1 picture saved", window.get().title())
+        @Suppress("DEPRECATION")
+        window.get().onBackPressed()
+        assertTrue(window.get().isFinishing)
+    }
+
+    @Test
+    fun `Cancel before any of several is saved closes the window, adding no more`() {
         library.answerLater = true
         val window = window(share(shared, beach, forest))
         library.finishAdding()
@@ -271,9 +371,9 @@ class PictureReceivedActivityTest {
         window.get().entries().single().performClick()
 
         assertTrue(window.get().isFinishing)
+        window.pause().stop().destroy()
         assertEquals(listOf(beach), library.cancelled)
-        assertEquals(listOf(shared, beach), library.added)
-        assertEquals(listOf(holiday), library.pictures)
+        assertEquals(emptyList<Any>(), library.pictures)
     }
 
     @Test
@@ -350,8 +450,8 @@ class PictureReceivedActivityTest {
     fun `a share of too many pictures says Luncher adds up to a hundred at a time, adding none`() {
         val activity = receive(tooMany)
 
-        assertEquals("The pictures weren't added", activity.title())
-        assertEquals("Luncher adds up to 100 pictures at a time. Share fewer and try again.", activity.text())
+        assertEquals("Pictures not added", activity.title())
+        assertEquals("Too many pictures: up to 100 can be added at a time. Share fewer, then try again.", activity.text())
         assertEquals(listOf("OK"), activity.entries().map { it.text.toString() })
         assertEquals(emptyList<Uri>(), library.added)
     }
@@ -368,7 +468,7 @@ class PictureReceivedActivityTest {
 
         waitOutTheWheel()
         assertEquals("1 picture saved", window.get().title())
-        assertEquals("Luncher adds up to 100 pictures at a time. Share fewer and try again.", window.get().text())
+        assertEquals("Too many pictures: up to 100 can be added at a time. Share fewer, then try again.", window.get().text())
     }
 
     // On API 29 Android closes Luncher's task when another app's opens; a share arriving then
@@ -376,7 +476,7 @@ class PictureReceivedActivityTest {
     @Test
     fun `a new window that took the session over goes on when the old one is destroyed after it`() {
         library.results[shared] = ImportResult.Added(holiday)
-        library.results[beach] = ImportResult.AlreadyThere(holiday)
+        library.results[beach] = ImportResult.Added(picture("beach.jpg"))
         library.answerLater = true
         val old = window(share(shared))
         val new = window(share(beach))
