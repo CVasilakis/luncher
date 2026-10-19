@@ -3,6 +3,8 @@ package com.luncher.launcher.settings
 import android.content.Intent
 import android.net.Uri
 import android.os.Looper
+import java.time.Duration
+import com.luncher.launcher.ui.ShortestShowing
 import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -42,6 +44,9 @@ class PictureReceivedActivityTest {
         return window
     }
 
+    /** The wheel's half second passed: what the window says once the pictures are done shows then. */
+    private fun waitOutTheWheel() = shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(ShortestShowing.SHORTEST))
+
     private fun PictureReceivedActivity.title() = findViewById<TextView>(R.id.settings_received_title).text.toString()
 
     private fun PictureReceivedActivity.text() = findViewById<TextView>(R.id.settings_received_text).text.toString()
@@ -63,9 +68,26 @@ class PictureReceivedActivityTest {
         assertEquals(listOf("Cancel"), activity.entries().map { it.text.toString() })
         assertTrue(activity.entries().single().isFocused)
         library.finishAdding()
+        assertEquals("the wheel shows half a second at least", "Adding the picture…", activity.title())
+        waitOutTheWheel()
         assertEquals("Picture saved", activity.title())
         assertTrue(!activity.spinning())
         assertEquals(listOf("Background"), activity.entries().map { it.text.toString() })
+    }
+
+    @Test
+    fun `a picture refused for its name before any copying shows no wheel, and why at once`() {
+        library.results[shared] = ImportResult.SameFile(holiday)
+        library.refusedAtOnce += shared
+        library.answerLater = true
+        val activity = receive()
+
+        assertFalse(activity.spinning())
+        library.finishAdding()
+        shadowOf(Looper.getMainLooper()).idle()
+
+        assertEquals("This picture wasn't added", activity.title())
+        assertEquals("holiday.jpg is in Luncher's pictures already.", activity.text())
     }
 
     @Test
@@ -344,6 +366,7 @@ class PictureReceivedActivityTest {
         assertEquals("Adding the picture…", window.get().title())
         library.finishAdding()
 
+        waitOutTheWheel()
         assertEquals("1 picture saved", window.get().title())
         assertEquals("Luncher adds up to 100 pictures at a time. Share fewer and try again.", window.get().text())
     }
@@ -363,6 +386,7 @@ class PictureReceivedActivityTest {
         assertEquals(emptyList<Uri>(), library.cancelled)
         library.finishAdding()
         library.finishAdding()
+        waitOutTheWheel()
         assertEquals("2 pictures saved", new.get().title())
     }
 

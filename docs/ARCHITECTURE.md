@@ -88,11 +88,13 @@ the theme, colors, and the look of a panel and its focused entry.
 
 Two needs, with one pattern each: a screen that must update while it's shown, because something
 changed (a setting changed in the settings panel, over the home screen), and work too slow for
-the main thread (decoding a picture). Neither may delay a key press.
+the main thread (decoding a picture). Neither may delay a key press. Points 7 to 9 say how heavy
+work is kept from coming back, and how a wait shows.
 
 1. **All state lives on the main thread.** Activities, views and port listeners run there only;
    nothing else reads or writes them, so they need no lock. What passes between threads does so
-   in two places only, each behind its own: the jobs' queue and its results (point 3), and
+   in two places only, each behind its own: the jobs' queue and its results, with
+   `LatestRequest`'s word to a job that its request was dropped (points 3 and 4), and
    `outside/`'s waits on another app (point 6).
 2. **State that can change while it's shown comes from a port you can watch:** a read function, and
    `addListener`/`removeListener` that tell when to read again, on the main thread (`Clock` is
@@ -142,6 +144,28 @@ the main thread (decoding a picture). Neither may delay a key press.
    job. Android's own services (PackageManager, LauncherApps) aren't another app: Android answers
    them. Tests give `outside/` a clock and a wait for data of their own, so the time another app
    takes passes when the test says.
+7. **Heavy work is done once, and kept with what it depends on.** Work that costs more than a
+   frame (decoding a picture) is done once per input. Its result is kept by the adapter that made
+   it, with everything that shaped it in its header (the screen's size in px, the drawing's
+   version); when any of that differs, it's made again in place. It's made as early as its input
+   exists (a picture's working copy during its import, `PreparedPictures`). A screen that finds
+   one missing makes all of them at its start, behind a working window, before the user can act,
+   so nothing lags afterwards (the background editor's "Preparing picture 2 of 5…"). Options and
+   styles are applied to the kept result, never to the original again; only what's stored for
+   good (the wallpaper, on Save) is drawn from the original.
+8. **Nothing is left behind.** One kept file per thing, never one per size or variant, replaced
+   in one step. It's deleted with what it was made from, and each store is swept once per
+   process of what nothing names any more (`FilesPictures`' cleanup of the pictures' files,
+   working copies and thumbnails); what's kept only while a screen shows is deleted as it closes,
+   and as it opens anew (Add from folder's previews).
+9. **A wait shows, a decision doesn't.** What can be decided from data at hand (limits, formats,
+   names in the library) is decided on the main thread and answered at once, without a working
+   window (`whyRefused`). Real work the user waits for shows a working window at once, which stays
+   at least half a second (`:ui`'s `ShortestShowing`, which `WorkingDialog` and the share window's
+   wheel use), so it never flashes; while it shows, keys go to it only, and Back or Cancel stops
+   the work where it can be stopped. A screen that can't tell real work from a decision before it
+   starts shows the wait only once the adapter says the real work began (`PictureImport.add`'s
+   `copying`).
 
 Every kind of job has its priority in `JobPriority`, which lists them all; what each one does is
 in the README of the module that runs it ([`platform/`](../platform/README.md), the features). What

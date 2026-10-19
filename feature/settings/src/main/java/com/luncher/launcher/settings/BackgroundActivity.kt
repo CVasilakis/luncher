@@ -14,7 +14,6 @@ import android.widget.TextView
 import com.luncher.domain.appearance.Appearance
 import com.luncher.domain.appearance.Background
 import com.luncher.domain.appearance.appearanceOptions
-import com.luncher.domain.jobs.Cancellable
 import com.luncher.domain.jobs.JobPriority
 import com.luncher.domain.jobs.LatestRequest
 import com.luncher.domain.pictures.Blur
@@ -89,17 +88,9 @@ class BackgroundActivity : Activity() {
     private var thumbnailWidth = 0
     private var thumbnailHeight = 0
 
-    /** The pictures being prepared, a job each, while the window says so; all dropped in [onStop]. */
-    private val preparing = LinkedHashMap<PictureId, Preparing>()
+    /** The pictures being prepared, a request each, while the window says so; all dropped in [onStop]. */
+    private val preparing = LinkedHashMap<PictureId, LatestRequest>()
     private var preparingTotal = 0
-
-    /** One picture's preparing: its job, and whether it was told to stop, which its job reads. */
-    private class Preparing {
-        lateinit var job: Cancellable
-
-        @Volatile
-        var stopped = false
-    }
 
     /** The row to focus when the library shows next: a picture just added. */
     private var toFocus: PictureId? = null
@@ -304,20 +295,16 @@ class BackgroundActivity : Activity() {
         if (missing.isEmpty()) return false
         preparingTotal = missing.size
         for (picture in missing) {
-            val preparing = Preparing()
-            this.preparing[picture.id] = preparing
-            preparing.job = graph.jobs.run(JobPriority.PICTURE_SCREENS) {
-                prepared.prepare(picture.id) { preparing.stopped }
-                main.post { prepared(picture.id, preparing) }
-            }
+            val request = LatestRequest(graph.jobs, JobPriority.PICTURE_SCREENS) { main.post(it) }
+            preparing[picture.id] = request
+            request.load({ stopped -> prepared.prepare(picture.id, stopped) }) { prepared(picture.id) }
         }
         showPreparing()
         return true
     }
 
-    private fun prepared(picture: PictureId, done: Preparing) {
-        if (preparing[picture] !== done) return
-        preparing.remove(picture)
+    private fun prepared(picture: PictureId) {
+        preparing.remove(picture) ?: return
         if (preparing.isNotEmpty()) return showPreparing()
         working?.close { if (started) showLibrary() }
     }
@@ -332,10 +319,7 @@ class BackgroundActivity : Activity() {
     }
 
     private fun stopPreparing() {
-        for (each in preparing.values) {
-            each.stopped = true
-            each.job.cancel()
-        }
+        for (request in preparing.values) request.stop()
         preparing.clear()
     }
 

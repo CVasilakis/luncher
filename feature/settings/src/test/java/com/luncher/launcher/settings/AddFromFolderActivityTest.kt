@@ -347,4 +347,113 @@ class AddFromFolderActivityTest {
         controller.pause().stop()
         assertTrue(second())
     }
+
+    private fun idle() = shadowOf(Looper.getMainLooper()).idle()
+
+    /** The job thread runs the next job, and its result shows. */
+    private fun TestPicturesGraph.next() {
+        jobs.runNext()
+        idle()
+    }
+
+    private val first = folderPicture("1.jpg")
+    private val second = folderPicture("2.jpg")
+    private val third = folderPicture("3.jpg")
+    private val fourth = folderPicture("4.jpg")
+
+    @Test
+    fun `once the selected preview is drawn, draws the others ahead, nearest first, one at a time`() {
+        val graph = graph(first, second, third, fourth)
+        val activity = start()
+        activity.list().setSelection(1)
+        idle()
+        graph.folderPictures.previewed.clear()
+
+        repeat(4) { graph.next() }
+
+        assertEquals(listOf("2.jpg", "3.jpg", "1.jpg", "4.jpg"), graph.folderPictures.previewed.map { it.name })
+        assertEquals(0, graph.jobs.pending)
+    }
+
+    @Test
+    fun `a picture drawn ahead shows at once when it's selected, with no job`() {
+        val graph = graph(first, second)
+        val activity = start()
+        repeat(2) { graph.next() }   // the first one's, then the second's ahead
+        val drawn = graph.folderPictures.previewed.size
+
+        activity.list().setSelection(1)
+        idle()
+
+        assertNotNull(activity.findViewById<ImageView>(R.id.settings_pictures_folder_preview).drawable)
+        assertEquals(drawn, graph.folderPictures.previewed.size)
+        assertEquals(View.GONE, activity.findViewById<View>(R.id.settings_pictures_folder_loading).visibility)
+    }
+
+    @Test
+    fun `shows a spinning wheel in the preview's place while it's drawn`() {
+        val graph = graph(first)
+        val activity = start()
+        val wheel = activity.findViewById<View>(R.id.settings_pictures_folder_loading)
+        assertEquals(View.VISIBLE, wheel.visibility)
+
+        graph.next()
+
+        assertEquals(View.GONE, wheel.visibility)
+        assertNotNull(activity.findViewById<ImageView>(R.id.settings_pictures_folder_preview).drawable)
+    }
+
+    @Test
+    fun `selecting another picture stops the one being drawn ahead, for the one the user waits for`() {
+        val graph = graph(first, second, third)
+        val activity = start()
+        graph.next()               // the first one's
+        graph.jobs.runNext()       // the second's, drawn ahead: its result not shown yet
+        val ahead = graph.folderPictures.previewStops.last()
+        assertFalse(ahead())
+
+        activity.list().setSelection(2)
+        idle()
+
+        assertTrue(ahead())
+    }
+
+    @Test
+    fun `draws nothing ahead of a picture this TV can't show, or too large`() {
+        val graph = graph(first, phone, huge)
+        start()
+
+        repeat(5) { graph.next() }
+
+        assertEquals(listOf("1.jpg"), graph.folderPictures.previewed.map { it.name })
+    }
+
+    @Test
+    fun `forgets the previews kept when it opens, and when it closes, not when it's made anew`() {
+        val graph = graph(first)
+        val controller = Robolectric.buildActivity(AddFromFolderActivity::class.java).setup()
+        idle()
+        assertEquals(1, graph.folderPictures.forgotten)
+
+        RuntimeEnvironment.setQualifiers("+tvdpi")
+        controller.configurationChange()
+        assertEquals(1, graph.folderPictures.forgotten)
+
+        controller.get().finish()
+        controller.pause().stop().destroy()
+        assertEquals(2, graph.folderPictures.forgotten)
+    }
+
+    @Test
+    fun `draws nothing ahead while it's hidden`() {
+        val graph = graph(first, second)
+        val controller = Robolectric.buildActivity(AddFromFolderActivity::class.java).setup()
+        idle()
+        controller.pause().stop()
+
+        graph.jobs.runAll()
+        idle()
+
+        assertEquals(emptyList<Any>(), graph.folderPictures.previewed.filter { it.name == "2.jpg" })
+    }
 }

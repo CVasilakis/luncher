@@ -151,9 +151,10 @@ cold, and the test ends on the settled home screen.
 
 The picture library's tests add pictures as another app shares them (`PictureShareTest` in
 `system/`, `PictureFormatsTest` in `pictures/`), or from a drop folder (`BackgroundActivityTest` in
-`settings/`). The tests add into folders of their own (`FilesPictures` and `MediaFolderPictures`
-take them as parameters): a library of their own, and a folder of their own inside the drop
-folder, never the device's library or the files in its drop folder; they delete them after.
+`settings/`). The tests add into folders of their own (`FilesPictures`, `WorkingCopyImages`,
+`CachedPictureImages` and `MediaFolderPictures` take them as parameters): a library of their own,
+with its working copies and thumbnails, and a folder of their own inside the drop folder, never
+the device's library or the files in its drop folder; they delete them after.
 
 Another app is played by the test package itself, in `testing/`:
 
@@ -186,7 +187,7 @@ passed (15 s); Cancel leaves an `unopened` one, and the next share is then added
 behind the stuck call; a share sent while one is stuck joins its session (in its window, or on API
 29 in a new window that takes the session over), and the window then says how both went; Home
 while one is stuck stops the adding, so a share that joined it isn't added, not even once the
-stuck one has given up. While the window adds a picture, its wheel spins, so the tests look at it with UI Automator
+stuck one has given up. While the window copies a picture, its wheel spins, so the tests look at it with UI Automator
 ([above](#look-with-ui-automator-while-a-screen-animates)).
 
 A share opens Luncher's home screen, in a task of its own, with the window over it, though Luncher

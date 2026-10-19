@@ -118,12 +118,12 @@ class FilesPictures(
         changed()
     }
 
-    override fun add(source: Uri, done: (ImportResult) -> Unit): Cancellable {
+    override fun add(source: Uri, copying: () -> Unit, done: (ImportResult) -> Unit): Cancellable {
         index()   // its cleaning first, before this picture's files exist
-        val import = Import(done)
+        val import = Import(copying, done)
         val library = index().values.toList()
         val queued = jobs.run(JobPriority.PICTURE_LIBRARY) {
-            val copied = copy(source, import.stop, library)
+            val copied = copy(source, import.stop, library) { main.post(import::copying) }
             main.post { added(copied, import) }
         }
         return Cancellable {
@@ -133,10 +133,11 @@ class FilesPictures(
     }
 
     /**
-     * One picture being added, on the main thread: [stop] tells its job to give up reading, and
-     * [answer] answers unless it was cancelled, once.
+     * One picture being added, on the main thread: [stop] tells its job to give up reading,
+     * [copying] says the copying started, and [answer] answers, each unless it was cancelled,
+     * [answer] once.
      */
-    private class Import(private val done: (ImportResult) -> Unit) {
+    private class Import(private val started: () -> Unit, private val done: (ImportResult) -> Unit) {
         val stop = Stop()
         var cancelled = false
             private set
@@ -146,6 +147,10 @@ class FilesPictures(
             if (answered) return
             cancelled = true
             stop.stop()
+        }
+
+        fun copying() {
+            if (!cancelled && !answered) started()
         }
 
         fun answer(result: ImportResult) {
@@ -238,12 +243,13 @@ class FilesPictures(
      * working copy ([WorkingCopies]): a size alone can decode where the picture can't (AVIF on
      * API 31), and the screens then show it without decoding it again.
      */
-    private fun copy(source: Uri, stop: Stop, library: List<Picture>): Copied {
+    private fun copy(source: Uri, stop: Stop, library: List<Picture>, copying: () -> Unit): Copied {
         val reader = OutsideReader(resolver, outsideCalls, stop)
         val described = describe(source, reader) ?: return Copied.Failed(ImportResult.Unreadable)
         if (described.bytes != null && !PictureLimits.allowsBytes(described.bytes)) return Copied.Failed(ImportResult.TooLarge)
         // Its size unknown (a provider may not say), the same name is judged once it's copied.
         if (described.bytes != null) nameClash(described.name, described.bytes, library)?.let { return Copied.Failed(it) }
+        copying()
         folder.mkdirs()
         val file = try {
             File.createTempFile("add", TEMPORARY, folder)

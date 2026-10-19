@@ -42,7 +42,7 @@ domain/src/
 │   ├── pictures/
 │   │   ├── Picture.kt           model: a picture of the library (PictureId, from its content), its name, size as shown, bytes, when added
 │   │   ├── Pictures.kt          port: the library's pictures, deleting them, and when they change
-│   │   ├── PictureImport.kt     port: adding a picture from a source, slow, cancellable, and how that went (ImportResult)
+│   │   ├── PictureImport.kt     port: adding a picture from a source, slow, cancellable, when its copying starts, and how that went (ImportResult)
 │   │   ├── PictureLibrary.kt    rule: the library as the background editor lists it, the newest first, and what each one is used for
 │   │   ├── PictureLimits.kt     rule: the largest picture the library takes (bytes, megapixels), and the most pictures one share brings
 │   │   ├── PictureNames.kt      rules: the name a picture keeps (pictureName), a name the library has already (nameClash: the same file, or another), and what a drop folder's listing already tells can't be added (whyRefused)

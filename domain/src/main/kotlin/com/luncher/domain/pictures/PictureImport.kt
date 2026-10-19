@@ -12,9 +12,12 @@ interface PictureImport<Source> {
     /**
      * Copies the picture [source] has into the library, then calls [done] with how that went. The
      * handle cancels it, at any point before [done] runs: then [done] never runs and the picture
-     * isn't added, as if [add] hadn't been called. Afterwards it does nothing.
+     * isn't added, as if [add] hadn't been called. Afterwards it does nothing. [copying] runs first
+     * once the copying itself starts, when what the source says of its name and size didn't
+     * already decide: the real work, which a screen shows as a wait; a picture refused at once
+     * never calls it, so the screen says why without showing one.
      */
-    fun add(source: Source, done: (ImportResult) -> Unit): Cancellable
+    fun add(source: Source, copying: () -> Unit = {}, done: (ImportResult) -> Unit): Cancellable
 }
 
 /** How adding a picture went. Every screen that adds one handles each in an exhaustive `when`. */

@@ -35,6 +35,13 @@ import java.util.Locale
  * in the list, has no preview, and OK on it says why at once, with no window. The folders are
  * read again each time it shows, so a drive plugged in meanwhile counts. Closed while it adds
  * (Home, or a configuration change), the adding stops.
+ *
+ * The selected picture's preview is drawn in the background, a spinning wheel in its place
+ * meanwhile, and the one of a picture no longer selected stops at once. Once it's drawn, the
+ * others' are drawn ahead, one at a time, the nearest to the selected one first, at a priority
+ * below anything the user waits for ([JobPriority.PICTURE_PREFETCH]), and stopped as the
+ * selection moves on; each is kept while the screen shows, so a picture selected again, or drawn
+ * ahead, shows at once. The previews kept are deleted when it closes.
  */
 class AddFromFolderActivity : Activity() {
 
@@ -47,10 +54,17 @@ class AddFromFolderActivity : Activity() {
     private var working: WorkingDialog? = null
     private val main = Handler(Looper.getMainLooper())
     private val previewing by lazy { LatestRequest(graph.jobs, JobPriority.PICTURE_SCREENS) { main.post(it) } }
+    private val prefetching by lazy { LatestRequest(graph.jobs, JobPriority.PICTURE_PREFETCH) { main.post(it) } }
+
+    /** The pictures whose preview, at [keptSize], is kept or can't be drawn: none is drawn ahead again. */
+    private val kept = HashSet<Uri>()
+    private var keptSize = 0 to 0
+    private var started = false
     private lateinit var list: ListView
     private lateinit var state: TextView
     private lateinit var side: PreviewColumn
     private lateinit var preview: ImageView
+    private lateinit var loading: View
     private var pictures: List<FolderPicture<Uri>> = emptyList()
 
     /** Why each of [pictures] can't be added, by its source, as far as the listing and the library tell. */
@@ -68,6 +82,10 @@ class AddFromFolderActivity : Activity() {
         state = findViewById(R.id.settings_pictures_folder_state)
         side = findViewById(R.id.settings_pictures_folder_side)
         preview = findViewById(R.id.settings_pictures_folder_preview)
+        loading = findViewById(R.id.settings_pictures_folder_loading)
+        // A screen opened anew starts with none kept (one killed while it showed left them); made
+        // anew by a configuration change, it finds them.
+        if (savedInstanceState == null) folders.forgetPreviews()
         findViewById<TextView>(R.id.settings_pictures_folder_where).text = getString(R.string.settings_pictures_folder_where, dropFolder())
         list.adapter = rows
         list.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
@@ -81,6 +99,7 @@ class AddFromFolderActivity : Activity() {
 
     override fun onStart() {
         super.onStart()
+        started = true
         val request = ++listing
         folders.list { found ->
             if (request == listing) show(inListOrder(found, Locale.getDefault()), looking = false)
@@ -89,8 +108,10 @@ class AddFromFolderActivity : Activity() {
 
     override fun onStop() {
         super.onStop()
+        started = false
         listing++
         previewing.stop()
+        prefetching.stop()
     }
 
     override fun onDestroy() {
@@ -98,6 +119,7 @@ class AddFromFolderActivity : Activity() {
         dialog?.dismiss()
         adding?.cancel()
         working?.dismiss()
+        if (isFinishing) folders.forgetPreviews()
     }
 
     private fun show(found: List<FolderPicture<Uri>>, looking: Boolean) {
@@ -116,19 +138,63 @@ class AddFromFolderActivity : Activity() {
     }
 
     /**
-     * Draws a preview of [picture] in the background, the latest selected one only: the decode of
-     * one no longer selected stops. None of a picture this TV can't show, or too large to add.
+     * Shows [picture]'s preview: at once if it's kept, else drawn in the background, the latest
+     * selected one only, the wheel showing meanwhile; then the others' are drawn ahead. None of a
+     * picture this TV can't show, or too large to add.
      */
     private fun showPreview(picture: FolderPicture<*>?) {
         preview.setImageDrawable(null)
+        loading.visibility = View.GONE
+        // The thread for what the user waits for: what's drawn ahead stops, and goes on after.
+        prefetching.stop()
         val shown = pictures.firstOrNull { it.source == picture?.source }
-        val (width, height) = side.previewSize
-        val why = shown?.let { refused[it.source] }
-        if (shown == null || why is ImportResult.UnsupportedFormat || why == ImportResult.TooLarge || width <= 0 || height <= 0) {
+        val size = side.previewSize
+        if (size != keptSize) {
+            kept.clear()
+            keptSize = size
+        }
+        val (width, height) = size
+        if (shown == null || !previewable(shown) || width <= 0 || height <= 0) {
             previewing.stop()
             return
         }
-        previewing.load({ stopped -> folders.preview(shown, width, height, Framing(), stopped) }) { preview.setImageBitmap(it) }
+        folders.cachedPreview(shown, width, height, Framing())?.let { image ->
+            previewing.stop()
+            preview.setImageBitmap(image)
+            return drawAhead()
+        }
+        loading.visibility = View.VISIBLE
+        previewing.load({ stopped -> folders.preview(shown, width, height, Framing(), stopped) }) { image ->
+            loading.visibility = View.GONE
+            preview.setImageBitmap(image)
+            kept += shown.source
+            drawAhead()
+        }
+    }
+
+    /** Whether a preview of [picture] is drawn: not of one this TV can't show, or too large to add. */
+    private fun previewable(picture: FolderPicture<*>): Boolean {
+        val why = refused[picture.source]
+        return why !is ImportResult.UnsupportedFormat && why != ImportResult.TooLarge
+    }
+
+    /**
+     * Draws ahead, in the background, the preview of the picture nearest to the selected one
+     * that has none kept, after it, then before it; then the next, one at a time.
+     */
+    private fun drawAhead() {
+        if (!started) return
+        val (width, height) = keptSize
+        val selected = list.selectedItemPosition.takeIf { it >= 0 } ?: return
+        val next = pictures.indices
+            .sortedBy { kotlin.math.abs(it - selected) * 2 + (if (it < selected) 1 else 0) }
+            .map { pictures[it] }
+            .firstOrNull { it.source !in kept && previewable(it) && it.source != pictures[selected].source }
+            ?: return
+        prefetching.load({ stopped -> folders.preview(next, width, height, Framing(), stopped) }) {
+            kept += next.source
+            drawAhead()
+        }
     }
 
     /**
@@ -140,6 +206,7 @@ class AddFromFolderActivity : Activity() {
         refused[picture.source]?.let { return notAdded(it) }
         if (adding != null) return
         previewing.stop()
+        prefetching.stop()
         val working = working ?: WorkingDialog(this).also { working = it }
         working.show(getString(R.string.settings_pictures_adding), getString(R.string.settings_pictures_cancel)) {
             adding?.cancel()

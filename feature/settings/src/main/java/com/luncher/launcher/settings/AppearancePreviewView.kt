@@ -37,8 +37,9 @@ import kotlin.math.roundToInt
  * density (its pixels per sample dp), so every dp value scales with it, and it can't disagree with
  * the home screen. Left to right in every language, like the home screen. What it draws from is
  * made anew only when the part of the appearance it comes from changes, compared with `==`, and
- * drawing allocates nothing. The wallpaper is drawn in the background ([showWallpapers]), the
- * latest request winning, and kept while the background and the size stay the same.
+ * drawing allocates nothing. The wallpaper is drawn in the background ([showWallpapers]), from
+ * the picture's working copy in milliseconds, the latest request winning, and kept while the
+ * background and the size stay the same.
  */
 internal class AppearancePreviewView(context: Context, attrs: AttributeSet?) : View(context, attrs) {
 
@@ -75,7 +76,7 @@ internal class AppearancePreviewView(context: Context, attrs: AttributeSet?) : V
 
     fun resumeWallpaper() = loadWallpaper()
 
-    /** The background's picture: the one kept if it's drawn at this size already, else drawn in the background. */
+    /** The background's picture: the one [images] kept, if they keep it at this size, else drawn in the background. */
     private fun loadWallpaper() {
         val images = images ?: return
         val loading = loading ?: return

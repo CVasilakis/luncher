@@ -62,6 +62,13 @@ class ReceivedPictures<Source>(private val import: PictureImport<Source>) {
     /** The pictures of the session without an answer yet, in order: the one being added first. */
     val pending: List<Source> get() = entries.filter { it.result == null }.map { it.source }
 
+    /**
+     * Whether the picture being added is being copied: past what its name and size decide, real
+     * work, which the window shows as a wait. False while it's checked, and for one refused at once.
+     */
+    var copying: Boolean = false
+        private set
+
     /** How many of them have their answer. */
     val answered: Int get() = entries.count { it.result != null }
 
@@ -112,6 +119,7 @@ class ReceivedPictures<Source>(private val import: PictureImport<Source>) {
         if (hold == 0 || hold != holder || session == 0) return
         adding?.cancel()
         adding = null
+        copying = false
         entries.clear()
         refused = false
         session = 0
@@ -145,9 +153,15 @@ class ReceivedPictures<Source>(private val import: PictureImport<Source>) {
             val entry = entries.firstOrNull { it.result == null } ?: return
             val started = session
             var waiting = false
-            val handle = import.add(entry.source) { result ->
+            val handle = import.add(entry.source, copying = {
+                if (started == session && entry.result == null && !copying) {
+                    copying = true
+                    changed()
+                }
+            }) { result ->
                 if (started != session) return@add
                 entry.result = result
+                copying = false
                 if (!waiting) return@add
                 adding = null
                 next()

@@ -29,7 +29,7 @@ feature/settings/
     │   │   ├── AppearanceEditorLayout.kt the editor's columns: the options level with the title
     │   │   ├── OptionRow.kt      an option's row, Left and Right stepping it: both editors'
     │   │   ├── OptionLabels.kt   what the options, their values and groups are called
-    │   │   ├── BackgroundActivity.kt the background editor: the pictures, the draft, Save; deletes and adds pictures
+    │   │   ├── BackgroundActivity.kt the background editor: the pictures, the draft, Save; deletes pictures, prepares them
     │   │   ├── BackgroundStartColumn.kt  its preview, options and Save, the preview as large as the room left
     │   │   ├── AddFromFolderActivity.kt  the drop folders' pictures, a preview of the selected one; OK adds it, then returns it
     │   │   ├── SharePictureActivity.kt   where another app's share arrives: opens the home screen and the window, no screen
@@ -286,8 +286,12 @@ on API 22 to 28, as the intent is too large to start the activity
 
 The window, floating like the settings panel, shows the pictures being added, one at a time: the
 process's `ReceivedPictures`, a session that the window owns. While they're added, it says "Adding
-the picture…", or "Adding picture 2 of 5…", after a spinning wheel, on one line, and Cancel,
-focused. Then, for one picture, "Picture saved", its name and an entry for each use a picture can
+the picture…", or "Adding picture 2 of 5…", on one line, and Cancel, focused; after a spinning
+wheel once a picture is copied (`ReceivedPictures.copying`, which `PictureImport` reports as the
+copying starts): the real work, which then shows half a second at least (`ShortestShowing`, from
+`:ui`), so it never flashes, and stays until the end, not on and off between pictures. A picture
+refused for what its app says of its name or size, before anything is copied, shows no wheel: why
+is said at once. Then, for one picture, "Picture saved", its name and an entry for each use a picture can
 be put to (`pictureUseMenu`, today Background, which opens the background editor with the picture
 chosen, not saved, and closes the window), or why it wasn't added, and OK; for several, how many
 were saved ("3 pictures saved"), how many weren't, whether a share had too many, and OK. A picture
@@ -338,16 +342,24 @@ to 9 shares files, gets the message that says to use a drop folder instead, with
 |---|---|
 | `SharePictureActivity` | takes the pictures out of the share, refuses more than the limit, passes the Uris and the access Luncher holds to the window; the window alone while one shows, else a new one that takes an open session over |
 | `PictureReceivedActivity` | shows the session: the count while the pictures are added, then one picture's result and uses, or the counts; ends the session when it closes |
-| `ReceivedPictures` (`:domain`) | the session, one per process: the pictures added one at a time through `PictureImport`, each once, a share joining it, the window that holds it and may end it, and how it went (`Outcome`) |
+| `ReceivedPictures` (`:domain`) | the session, one per process: the pictures added one at a time through `PictureImport`, each once, a share joining it, the window that holds it and may end it, whether one is being copied (`copying`), and how it went (`Outcome`) |
 | `PictureLimits.MAX_SHARED` (`:domain`) | the most pictures one share brings |
-| `PictureImport` (`:domain`) / `FilesPictures` (`:platform`) | adding one picture to the library, cancellable, and how it went (`ImportResult`) |
+| `PictureImport` (`:domain`) / `FilesPictures` (`:platform`) | adding one picture to the library, cancellable, when its copying starts, and how it went (`ImportResult`) |
 | `pictureUseMenu` (`:domain`) | the uses a picture received alone offers |
 
 **From a drop folder** (`AddFromFolderActivity`): the pictures a file manager or a computer put in
 `Android/media/<applicationId>`, on the TV or a USB drive, listed the TV's first, then the drives',
 each by name (`inListOrder`), with a preview of the selected one beside them, of the TV's shape
-as the wallpaper fills it, drawn in the background; moving on stops the one being drawn at once
+as the wallpaper fills it, drawn in the background, a spinning wheel in its place meanwhile;
+moving on stops the one being drawn at once
 ([`ARCHITECTURE.md`](../../docs/ARCHITECTURE.md#background-work-and-changes-while-shown), point 4).
+Once it's drawn, the others' are drawn ahead, one at a time, the nearest first (after it, then
+before it), at a priority below anything the user waits for (`JobPriority.PICTURE_PREFETCH`), and
+stopped as soon as the selection moves, so the picture selected never waits for one drawn ahead.
+Each preview is kept while the screen shows (`FolderPictures.cachedPreview`, a file each in
+`cacheDir`), so a picture selected again, or drawn ahead, shows at once; they're deleted when the
+screen closes, and when it opens anew. The screen doesn't wait for them all at its start: a
+folder, or a USB drive, can hold many pictures, most of which the user never looks at.
 OK adds the picture to the library while a window (`WorkingDialog`) says "Adding a picture…"
 over the list, the preview's decode stopped first so the adding needn't wait for it, and Cancel,
 focused, or Back stops the adding and closes the window at once. Added, or found in the library
@@ -405,5 +417,8 @@ adb shell am start -n com.luncher.launcher.debug.test/com.luncher.launcher.testi
 - **A thumbnail is drawn once per screen size**, then read from its file, one per picture.
 - **A decode nobody waits for stops**, the preview of a picture no longer selected, or of a
   screen that closed, at its next read, so the next job doesn't wait for it.
+- **Add from folder draws ahead only while it's idle**, below everything else, and stops at once
+  for the picture the user selects; its previews are files of the screen's life, deleted as it
+  closes.
 - **A share's pictures are added one at a time**, each read as a stream into its file: the session
   keeps only their Uris and answers, at most 100, and stops when its window closes.

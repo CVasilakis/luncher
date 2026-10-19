@@ -4,7 +4,6 @@ import android.app.Dialog
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
-import android.os.SystemClock
 import android.view.KeyEvent
 import android.view.View
 import android.widget.TextView
@@ -14,8 +13,8 @@ import android.widget.TextView
  * waits for (the wallpaper drawn, a picture added): it takes every key, so nothing else happens
  * meanwhile. Work that can be stopped shows Cancel too, focused, which Back does as well; other
  * work ignores Back. [show] shows it at once; [close] closes it no sooner than [SHORTEST] ms after
- * it showed, so it never just flashes; Cancel closes it at once, the user's own choice. Main thread
- * only.
+ * it showed ([ShortestShowing]), so it never just flashes; Cancel closes it at once, the user's own
+ * choice. Main thread only.
  */
 class WorkingDialog(context: Context) {
 
@@ -32,7 +31,7 @@ class WorkingDialog(context: Context) {
         dialog.dismiss()
         afterClosing().also { afterClosing = {} }
     }
-    private var shownAt = 0L
+    private val showing = ShortestShowing()
 
     val isShowing: Boolean get() = dialog.isShowing
 
@@ -63,7 +62,8 @@ class WorkingDialog(context: Context) {
         if (cancelLabel != null) cancel.requestFocus()
         if (!dialog.isShowing) {
             dialog.show()
-            shownAt = SystemClock.uptimeMillis()
+            showing.stop()
+            showing.start()
         }
     }
 
@@ -75,7 +75,7 @@ class WorkingDialog(context: Context) {
         if (!dialog.isShowing) return then()
         main.removeCallbacks(closing)
         afterClosing = then
-        main.postAtTime(closing, shownAt + SHORTEST)
+        main.postAtTime(closing, showing.endsAt)
     }
 
     /** Cancel, or Back, with Cancel shown: closes it at once, then runs what [show] was given. */
@@ -95,6 +95,6 @@ class WorkingDialog(context: Context) {
 
     companion object {
         /** How long it shows at least, in ms. */
-        const val SHORTEST = 500L
+        const val SHORTEST = ShortestShowing.SHORTEST
     }
 }

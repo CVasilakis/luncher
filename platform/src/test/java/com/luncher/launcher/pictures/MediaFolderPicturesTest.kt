@@ -27,7 +27,7 @@ class MediaFolderPicturesTest {
     /** The drop folder on the TV's storage (Robolectric has no storage volumes to ask). */
     private val dropFolder = File(context.getExternalFilesDir(null)!!.parentFile!!.parentFile, "../media/${context.packageName}")
         .canonicalFile.apply { mkdirs() }
-    private val folders = MediaFolderPictures(context, jobs) { listOf(dropFolder) }
+    private val folders = MediaFolderPictures(context, jobs, folders = { listOf(dropFolder) })
 
     private fun listed(): List<FolderPicture<android.net.Uri>> {
         var listed: List<FolderPicture<android.net.Uri>>? = null
@@ -97,5 +97,34 @@ class MediaFolderPicturesTest {
 
         assertNull(preview)
         assertNull(folders.preview(picture, 32, 18, Framing()) { true })
+    }
+
+    @Test
+    fun `keeps a preview it drew, for that picture, size and framing only, until it forgets them`() {
+        File(dropFolder, "wide.png").writeBytes(TestPictureFiles.png(TestPictureFiles.halves(64, 36, Color.RED, Color.BLUE)))
+        val picture = listed().single()
+        assertNull(folders.cachedPreview(picture, 32, 18, Framing()))
+
+        folders.preview(picture, 32, 18, Framing()) { false }
+
+        val kept = folders.cachedPreview(picture, 32, 18, Framing())!!
+        assertTrue(TestPictureFiles.isRed(kept.getPixel(2, 9)))
+        assertNull(folders.cachedPreview(picture, 30, 18, Framing()))
+        assertNull(folders.cachedPreview(picture, 32, 18, Framing(com.luncher.domain.pictures.Fit.STRETCH)))
+        assertNull(folders.cachedPreview(picture.copy(bytes = picture.bytes + 1), 32, 18, Framing()))
+
+        folders.forgetPreviews()
+        jobs.runAll()
+        assertNull(folders.cachedPreview(picture, 32, 18, Framing()))
+    }
+
+    @Test
+    fun `keeps nothing of a preview it was told to stop`() {
+        File(dropFolder, "wide.png").writeBytes(TestPictureFiles.png(TestPictureFiles.halves(64, 36, Color.RED, Color.BLUE)))
+        val picture = listed().single()
+
+        folders.preview(picture, 32, 18, Framing()) { true }
+
+        assertNull(folders.cachedPreview(picture, 32, 18, Framing()))
     }
 }

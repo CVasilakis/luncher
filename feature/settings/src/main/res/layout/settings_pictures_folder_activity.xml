@@ -69,14 +69,28 @@
             android:orientation="vertical">
 
             <!-- Drawn at exactly its size, as the picture fills the TV's screen; PreviewColumn sets
-                 it. -->
-            <ImageView
-                android:id="@+id/settings_pictures_folder_preview"
+                 it. A spinning wheel in its middle while it's drawn. -->
+            <FrameLayout
                 android:layout_width="0dp"
-                android:layout_height="0dp"
-                android:background="@drawable/settings_pictures_thumbnail_background"
-                android:importantForAccessibility="no"
-                android:scaleType="fitXY" />
+                android:layout_height="0dp">
+
+                <ImageView
+                    android:id="@+id/settings_pictures_folder_preview"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/settings_pictures_thumbnail_background"
+                    android:importantForAccessibility="no"
+                    android:scaleType="fitXY" />
+
+                <ProgressBar
+                    android:id="@+id/settings_pictures_folder_loading"
+                    android:layout_width="@dimen/settings_received_spinner"
+                    android:layout_height="@dimen/settings_received_spinner"
+                    android:layout_gravity="center"
+                    android:indeterminate="true"
+                    android:indeterminateTint="@color/accent"
+                    android:visibility="gone" />
+            </FrameLayout>
 
             <TextView
                 android:id="@+id/settings_pictures_folder_note"

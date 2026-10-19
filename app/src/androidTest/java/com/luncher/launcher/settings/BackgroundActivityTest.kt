@@ -115,7 +115,7 @@ class BackgroundActivityTest {
             private val workingCopies by lazy { WorkingCopyImages(application, folder, copies) }
             override val pictures: Pictures get() = library
             override val pictureImport: PictureImport<Uri> get() = library
-            override val folderPictures: FolderPictures<Uri, Bitmap> by lazy { MediaFolderPictures(application, jobs) { listOf(dropFolder) } }
+            override val folderPictures: FolderPictures<Uri, Bitmap> by lazy { MediaFolderPictures(application, jobs, folders = { listOf(dropFolder) }) }
             override val pictureImages: PictureImages<Bitmap> get() = workingCopies
             override val thumbnails: PictureImages<Bitmap> by lazy { CachedPictureImages(application, workingCopies, images) }
             override val preparedPictures: PreparedPictures get() = workingCopies

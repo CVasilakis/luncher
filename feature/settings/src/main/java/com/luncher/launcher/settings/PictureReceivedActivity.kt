@@ -5,6 +5,8 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -14,13 +16,17 @@ import com.luncher.domain.pictures.PictureLimits
 import com.luncher.domain.pictures.PictureUse
 import com.luncher.domain.pictures.ReceivedPictures.Outcome
 import com.luncher.domain.pictures.pictureUseMenu
+import com.luncher.launcher.ui.ShortestShowing
 
 /**
  * The window over the home screen after another app shared pictures ([SharePictureActivity]
  * opens the home screen, then this): a floating panel like the settings panel, which shows the
  * process's [ReceivedPictures][com.luncher.domain.pictures.ReceivedPictures] session, the
  * pictures added one at a time. While they're added, "Adding the picture…", or "Adding picture 2
- * of 5…", after a spinning wheel, and Cancel, focused. Then, for one picture, "Picture saved",
+ * of 5…", and Cancel, focused; after a spinning wheel once a picture is being copied, the real
+ * work, which then shows half a second at least ([ShortestShowing]), so it never flashes. A
+ * picture refused for what its app says of its name or size shows no wheel: why is said at once.
+ * Then, for one picture, "Picture saved",
  * its name, and an entry for each use of [pictureUseMenu] (Background opens the background editor
  * with it chosen, not saved), or why it wasn't added, and OK; for several, how many were saved
  * and how many weren't, and OK. A share of more pictures than Luncher takes at a time adds none,
@@ -69,6 +75,11 @@ class PictureReceivedActivity : Activity() {
 
     /** Whether the entries show Cancel, while the pictures are added: only the title changes then. */
     private var cancelShown = false
+
+    /** The spinning wheel's wait: the end shows only once it has shown long enough. */
+    private val wheel = ShortestShowing()
+    private val main = Handler(Looper.getMainLooper())
+    private val showLater = Runnable { show() }
 
     private val changed: () -> Unit = { show() }
 
@@ -129,6 +140,7 @@ class PictureReceivedActivity : Activity() {
 
     override fun onDestroy() {
         super.onDestroy()
+        main.removeCallbacks(showLater)
         received.removeListener(changed)
         if (!isChangingConfigurations) close()
     }
@@ -159,10 +171,17 @@ class PictureReceivedActivity : Activity() {
 
     /** The session as it stands, or why there's none. */
     private fun show() {
+        main.removeCallbacks(showLater)
         if (unreadable) return showOne(ImportResult.Unreadable)
         if (hold == 0 || hold != received.holder) return
-        when (val outcome = received.outcome) {
-            null -> showAdding()
+        val outcome = received.outcome ?: return showAdding()
+        // The wheel, once it showed, stays half a second at least.
+        val left = wheel.left
+        if (left > 0) {
+            main.postDelayed(showLater, left)
+            return
+        }
+        when (outcome) {
             is Outcome.One -> showOne(outcome.result)
             is Outcome.Several -> showSeveral(outcome)
         }
@@ -171,9 +190,14 @@ class PictureReceivedActivity : Activity() {
     private fun showAdding() {
         val total = received.total
         title.text = if (total == 1) getString(R.string.settings_received_adding) else getString(R.string.settings_received_adding_count, received.answered + 1, total)
+        // From the first picture copied on, until the end: not on and off from one picture to the next.
+        if (received.copying && !wheel.isShowing) {
+            spinner.visibility = View.VISIBLE
+            wheel.start()
+        }
         if (cancelShown) return
         cancelShown = true
-        spinner.visibility = View.VISIBLE
+        if (!wheel.isShowing) spinner.visibility = View.GONE
         text.visibility = View.GONE
         entries.removeAllViews()
         entry(getString(R.string.settings_pictures_cancel)) { finish() }
@@ -218,6 +242,7 @@ class PictureReceivedActivity : Activity() {
     /** The wheel stops and the entries go: what's done is said. */
     private fun showDone() {
         cancelShown = false
+        wheel.stop()
         spinner.visibility = View.GONE
         text.visibility = View.VISIBLE
         entries.removeAllViews()

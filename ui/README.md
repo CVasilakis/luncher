@@ -21,6 +21,8 @@ ui/
     │   │   ├── Colors.kt         color(id): a color resource on every API level
     │   │   ├── ScreenSize.kt     screenSize(): the screen's size in px, what the wallpaper is drawn at and
     │   │   │                     the previews' shape
+    │   │   ├── ShortestShowing.kt  how long a wait has shown, so it shows half a second at least: WorkingDialog's,
+    │   │   │                     and the share window's wheel
     │   │   └── WorkingDialog.kt  a floating panel with a spinning wheel and a message, taking every key,
     │   │                         shown half a second at least: for work the user waits for (the wallpaper drawn,
     │   │                         a picture added); Cancel too, and Back, for work that can be stopped

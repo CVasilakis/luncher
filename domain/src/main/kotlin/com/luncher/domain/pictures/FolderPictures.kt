@@ -7,7 +7,8 @@ import java.util.Locale
  * Port: the pictures in Luncher's drop folders, on the TV and on each USB drive, where a file
  * manager or a computer puts them for "Add from folder". Reading them is slow (a drive), so each
  * answers later, on the main thread. [Source] is what [PictureImport] adds a picture from, [Image]
- * the UI's image type.
+ * the UI's image type. The previews drawn are kept while the screen shows ([cachedPreview]), so
+ * one drawn ahead, or seen before, shows at once; the screen [forgetPreviews] when it closes.
  */
 interface FolderPictures<Source, Image> {
 
@@ -20,6 +21,12 @@ interface FolderPictures<Source, Image> {
      * reading then.
      */
     fun preview(picture: FolderPicture<Source>, width: Int, height: Int, framing: Framing, stopped: () -> Boolean): Image?
+
+    /** [picture]'s preview as [preview] drew it, at that size and framing, if it's kept: quick, for the main thread. */
+    fun cachedPreview(picture: FolderPicture<Source>, width: Int, height: Int, framing: Framing): Image?
+
+    /** Deletes the previews kept, in the background: the screen closed, or opens anew. */
+    fun forgetPreviews()
 }
 
 /** A picture in a drop folder. */

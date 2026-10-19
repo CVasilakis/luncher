@@ -128,14 +128,15 @@ through `outside/`, and its job never waits on that app for good
 ## Pictures
 
 The picture library ([`feature/settings/README.md`](../feature/settings/README.md#background)) is
-adapters on files and a cache; the wallpaper drawn from it is kept by another:
+these adapters on files, and a cache of its thumbnails; the wallpaper drawn from it is kept by the
+last one:
 
 | Adapter | Port | What it keeps, and how |
 |---|---|---|
 | `FilesPictures` | `Pictures`, `PictureImport<Uri>` | each picture's original file, unchanged, in `filesDir/pictures/`, named after a hash of its content, so the same picture added twice is stored once; and `index.json`, the pictures' names, sizes as shown and when they were added, written whole to a new file that then replaces the old one. Its format is kept across updates, so `FilesPicturesTest` writes it out. |
-| `MediaFolderPictures` | `FolderPictures<Uri, Bitmap>` | nothing: it lists the drop folders (below) |
+| `MediaFolderPictures` | `FolderPictures<Uri, Bitmap>` | it lists the drop folders (below); and keeps the previews it draws while Add from folder shows, one file per picture in `cacheDir/folder-previews/` (`PixelFiles`, the picture, its size and the preview's size and framing in the header), deleted as the screen closes and as it opens anew |
 | `FilePictureImages` | `PictureImages<Bitmap>` | nothing: it draws a picture of the library from its original at a size, framed by the domain's `frame`, blurred and dimmed as its `PictureStyle` says: the wallpaper, which is stored for good. `DRAWING` is the drawing's version, up by one with each change to it, so what the others kept the old way is drawn again. |
-| `WorkingCopyImages` | `PictureImages<Bitmap>`, `PreparedPictures` | each picture's working copy (`WorkingCopies`), in `filesDir/picture-copies/<picture>`: the whole picture, upright, decoded once and scaled to cover half the screen (what the editors' previews show at most), as a JPEG of quality 92, a few hundred KB, after a header with `FilePictureImages.DRAWING` and the size it covers. The screens' thumbnails and previews are drawn from it, framed, blurred and dimmed in milliseconds at each step of an option, where the original takes a decode of the photo each time (below). One file per picture, replaced when the screen or the drawing changes; in `filesDir`, which Android doesn't delete, so it's made once. Without one that can be written (a full disk), a picture is drawn from its original. |
+| `WorkingCopyImages` | `PictureImages<Bitmap>`, `PreparedPictures` | each picture's working copy (`WorkingCopies`), in `filesDir/picture-copies/<picture>`: the whole picture, upright, decoded once and scaled to cover half the screen (what the editors' previews show at most), as a JPEG of quality 92, a few hundred KB, after a header with `FilePictureImages.DRAWING` and the size it covers. The screens' thumbnails and previews are drawn from it, framed, blurred and dimmed in milliseconds at each step of an option, where the original takes a decode of the photo each time. One file per picture, replaced when the screen or the drawing changes; in `filesDir`, which Android doesn't delete, so it's made once. Without one that can be written (a full disk), a picture is drawn from its original. |
 | `CachedPictureImages` | `PictureImages<Bitmap>` | each picture's thumbnail, as `WorkingCopyImages` drew it at the background editor's row size in pixels, in `cacheDir/thumbnails/<picture>`, its size, style and `FilePictureImages.DRAWING` in the header, so it's read at once with the screen's first frame. One file per picture: another size or style replaces it, so another TV leaves no file behind. |
 | `FileStoredWallpaper` | `StoredWallpaper<Bitmap>` | the wallpaper, drawn at the screen's size, in `filesDir/wallpaper`, where Android doesn't delete it as it may a cache; in the `PixelFiles` format, what it was drawn from and `FilePictureImages.DRAWING` in the header, so one drawn by another version reads as none and is drawn again. One file only: a new one is written beside it, then replaces it in one step. |
 
@@ -146,7 +147,9 @@ adapters on files and a cache; the wallpaper drawn from it is kept by another:
   and size is the same file, another size another picture, and two of one name would be told
   apart by nothing on the screens. It's refused as soon as the source says its name and size,
   before anything is copied; a source that doesn't say its size, once it's copied; and again
-  before it's named, for one of that name added meanwhile.
+  before it's named, for one of that name added meanwhile. Past those checks, `add` reports that
+  the copying starts (`copying`): the real work, which the share window shows as a wait, where a
+  picture refused at once shows none.
   Adding streams the source into a new file, stopping past the size limit, hashing it on the way;
   decodes its size, then all of it, once, into its working copy, since a size alone can decode
   where the picture can't (AVIF on API 31), so a picture added is ready for the screens at once;

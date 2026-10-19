@@ -221,14 +221,36 @@ class ReceivedPicturesTest {
     @Test
     fun `tells the listeners of each change`() {
         received.receive(listOf("beach", "forest"))
-        assertEquals(1, told)
+        assertEquals("beach copied, both received", 2, told)
 
         library.finishAdding()
+        assertEquals("beach's answer, forest copied", 4, told)
         library.finishAdding()
-        assertEquals(3, told)
+        assertEquals(5, told)
 
         received.end(received.holder)
-        assertEquals(4, told)
+        assertEquals(6, told)
+    }
+
+    @Test
+    fun `says a picture is copied once its import says so, until its answer`() {
+        received.receive(listOf("beach"))
+        assertEquals(true, received.copying)
+
+        library.finishAdding()
+
+        assertEquals(false, received.copying)
+    }
+
+    @Test
+    fun `a picture refused for its name or size, before any copying, is never said to be copied`() {
+        library.refusedAtOnce += "same name"
+
+        received.receive(listOf("same name"))
+
+        assertEquals(false, received.copying)
+        library.finishAdding()
+        assertEquals(Outcome.One(ImportResult.SameFile(beach)), received.outcome)
     }
 
     @Test
