@@ -45,6 +45,13 @@ class FakePictures<Source>(
         changed()
     }
 
+    override fun rename(id: PictureId, name: String) {
+        val at = pictures.indexOfFirst { it.id == id }
+        if (at < 0 || pictures[at].name == name) return
+        pictures[at] = pictures[at].copy(name = name)
+        changed()
+    }
+
     override fun add(source: Source, copying: () -> Unit, done: (ImportResult) -> Unit): Cancellable {
         added += source
         if (source !in refusedAtOnce) copying()

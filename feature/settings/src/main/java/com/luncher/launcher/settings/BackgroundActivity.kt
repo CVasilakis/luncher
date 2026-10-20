@@ -1,6 +1,7 @@
 package com.luncher.launcher.settings
 
 import android.app.Activity
+import android.app.Dialog
 import android.content.Intent
 import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
@@ -24,9 +25,11 @@ import com.luncher.domain.pictures.Picture
 import com.luncher.domain.pictures.PictureId
 import com.luncher.domain.pictures.PictureLibrary
 import com.luncher.domain.pictures.PicturePosition
+import com.luncher.domain.pictures.Renaming
 import com.luncher.domain.pictures.PictureStyle
 import com.luncher.domain.pictures.pictureCut
 import com.luncher.domain.pictures.pictureUses
+import com.luncher.domain.pictures.renaming
 import com.luncher.launcher.ui.WorkingDialog
 import com.luncher.launcher.ui.color
 import com.luncher.launcher.ui.screenSize
@@ -51,8 +54,10 @@ import com.luncher.launcher.ui.R as UiR
  * then closes the editor. The background is the one part of the appearance edited this way:
  * drawing it takes a moment (docs/ARCHITECTURE.md#appearance).
  *
- * A long press of OK on a picture asks to delete it, Cancel focused; deleting the wallpaper's says
- * the home screen goes back to its plain background, which it does at once. Add from folder opens
+ * A long press of OK on a picture offers to rename or delete it. Renaming asks for the new name,
+ * which another picture mustn't have ([renaming]); deleting asks first, Cancel focused, and
+ * deleting the wallpaper's says the home screen goes back to its plain background, which it does
+ * at once. Add from folder opens
  * [AddFromFolderActivity], which adds a picture, and the editor chooses and focuses the one it returns.
  * Opened with a picture ([EXTRA_PICTURE], from the window after a share), it starts with that one
  * chosen, not saved.
@@ -105,7 +110,7 @@ class BackgroundActivity : Activity() {
     /** The row to focus when the library shows next: a picture just added. */
     private var toFocus: PictureId? = null
     private var started = false
-    private var dialog: PicturesDialog? = null
+    private var dialog: Dialog? = null
     private var working: WorkingDialog? = null
 
     private val showLibrary: () -> Unit = { showLibrary() }
@@ -270,7 +275,8 @@ class BackgroundActivity : Activity() {
         // has its shape known now.
         holdDraft(draft.copy(picture = draft.picture?.takeIf { it in ids }))
         for (picture in library.pictures) {
-            rows.getOrPut(picture.id) { pictureRow(picture) }
+            // Its name as it is now: renamed, a picture keeps its row.
+            rows.getOrPut(picture.id) { pictureRow(picture) }.findViewById<TextView>(R.id.settings_background_name).text = nameOf(picture)
             if (!waiting && picture.id !in drawing && thumbnailOf(picture.id).drawable == null) draw(picture)
         }
         list.removeAllViews()
@@ -301,14 +307,14 @@ class BackgroundActivity : Activity() {
         return row
     }
 
-    /** A new row for [picture]: its thumbnail if it's kept, and its name; a long press of OK asks to delete it. */
+    /** A new row for [picture]: its thumbnail if it's kept, and its name; a long press of OK offers to rename or delete it. */
     private fun pictureRow(picture: Picture): View {
         val row = row(nameOf(picture)) { setDraft(draft.copy(picture = picture.id)) }
         val thumbnail = row.findViewById<ImageView>(R.id.settings_background_thumbnail)
         thumbnail.clipToOutline = true
         thumbnails.cached(picture.id, thumbnailWidth, thumbnailHeight, THUMBNAIL)?.let(thumbnail::setImageBitmap)
         row.setOnLongClickListener {
-            confirmDelete(picture)
+            library.pictures.firstOrNull { it.id == picture.id }?.let(::offerActions)
             true
         }
         return row
@@ -409,6 +415,34 @@ class BackgroundActivity : Activity() {
         if (started) showLibrary()
     }
 
+    /** What can be done to [picture]: rename it or delete it, under its name and size. */
+    private fun offerActions(picture: Picture) {
+        show(
+            PicturesDialog(
+                this,
+                nameOf(picture),
+                details(picture.width, picture.height, picture.bytes),
+                listOf(getString(R.string.settings_pictures_rename) to { askName(picture) }, getString(R.string.settings_pictures_delete) to { confirmDelete(picture) }),
+            ),
+        )
+    }
+
+    /** Asks for [picture]'s new name, and keeps the dialog, saying why, while it can't be that. */
+    private fun askName(picture: Picture) {
+        show(
+            RenameDialog(this, picture.name) { typed ->
+                when (val renamed = renaming(picture, typed, library.pictures)) {
+                    is Renaming.To -> {
+                        pictures.rename(picture.id, renamed.name)
+                        null
+                    }
+                    Renaming.NoName -> getString(R.string.settings_pictures_rename_no_name)
+                    Renaming.NameTaken -> getString(R.string.settings_pictures_folder_name_taken)
+                }
+            },
+        )
+    }
+
     private fun confirmDelete(picture: Picture) {
         show(
             PicturesDialog(
@@ -434,7 +468,7 @@ class BackgroundActivity : Activity() {
         show()
     }
 
-    private fun show(dialog: PicturesDialog) {
+    private fun show(dialog: Dialog) {
         this.dialog?.dismiss()
         this.dialog = dialog
         dialog.show()

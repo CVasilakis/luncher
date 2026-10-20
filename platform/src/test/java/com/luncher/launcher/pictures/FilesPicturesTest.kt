@@ -56,7 +56,10 @@ class FilesPicturesTest {
     private val anotherApp = AnotherApp.install()
     private var library = newLibrary()
 
-    private fun newLibrary() = FilesPictures(context, jobs, outsideCalls, now = { time }, dropFolders = { listOf(dropFolder) }, copies = copies, screen = { screen })
+    /** How often a working copy's size was asked for: once for each picture decoded into one. */
+    private var decodes = 0
+
+    private fun newLibrary() = FilesPictures(context, jobs, outsideCalls, now = { time }, dropFolders = { listOf(dropFolder) }, copies = copies, screen = { decodes++; screen })
 
     /** The screens' images on the library's working copies, as AppGraph makes them. */
     private val prepared = WorkingCopyImages(context, folder, copies) { screen }
@@ -335,6 +338,55 @@ class FilesPicturesTest {
         assertTrue(prepared.isPrepared(b.id))
         restart()
         assertEquals(listOf(b), library.read())
+    }
+
+    @Test
+    fun `renames a picture in the index only, keeping its files, working copy and thumbnail for good`() {
+        val a = (add(dropped("a.png", red)) as ImportResult.Added).picture
+        File(images, a.id.value).apply { parentFile!!.mkdirs(); writeText("drawn") }
+        val files = listOf(File(folder, a.id.value), File(copies, a.id.value), File(images, a.id.value))
+        val written = files.map { it.lastModified() to it.length() }
+        var heard = 0
+        library.addListener { heard++ }
+
+        library.rename(a.id, "Red wall")
+        assertEquals("at once", listOf(a.copy(name = "Red wall")), library.read())
+        settle()
+        restart()
+        library.read()
+        settle()   // the start's cleanup
+
+        assertEquals(1, heard)
+        assertEquals(listOf(a.copy(name = "Red wall")), library.read())
+        assertEquals(written, files.map { it.lastModified() to it.length() })
+        assertTrue(prepared.isPrepared(a.id))
+    }
+
+    @Test
+    fun `renaming to the same name, or what isn't there, changes nothing`() {
+        val a = (add(dropped("a.png", red)) as ImportResult.Added).picture
+        var heard = 0
+        library.addListener { heard++ }
+
+        library.rename(a.id, "a.png")
+        library.rename(PictureId("nothing"), "b.png")
+
+        assertEquals(0, heard)
+        assertEquals(0, jobs.pending)
+    }
+
+    @Test
+    fun `a renamed picture's file added again is found by its content, without being decoded again`() {
+        val a = (add(dropped("a.png", red)) as ImportResult.Added).picture
+        library.rename(a.id, "Red wall")
+        settle()
+        val decoded = decodes
+
+        val again = add(dropped("a.png", red))
+
+        assertEquals(ImportResult.AlreadyThere(a.copy(name = "Red wall")), again)
+        assertEquals(decoded, decodes)
+        assertEquals(listOf(a.id.value, "index.json"), folder.list()!!.sorted())
     }
 
     @Test

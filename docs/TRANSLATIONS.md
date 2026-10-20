@@ -53,7 +53,8 @@ The English follows these rules; a translation keeps them as its language allows
 - **Each reason on its own:** pictures refused are counted by reason, a line each ("2 already in
   Luncher's pictures"), never lumped as "4 pictures weren't added".
 - **One name for one thing, everywhere:** "Already in Luncher's pictures" in the message, the
-  count lines and Add from folder; "Adding the picture…" for a share and for Add from folder;
+  count lines and Add from folder; "Name already used in Luncher's pictures" in Add from folder and
+  below the rename field; "Adding the picture…" for a share and for Add from folder;
   "background", never "wallpaper", for the picture behind the tiles; "added", the opposite of
   "not added", rather than "saved". Options alike read alike: Dim's levels are Blur's words (Off,
   Light, Medium, Strong).

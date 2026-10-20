@@ -6,6 +6,8 @@ import android.net.Uri
 import android.os.Looper
 import android.view.KeyEvent
 import android.view.View
+import android.view.inputmethod.EditorInfo
+import android.widget.EditText
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.PopupWindow
@@ -178,6 +180,22 @@ class BackgroundActivityTest {
         idle()
     }
 
+    /** A long press of OK on [name]'s row, then [action] in what it offers. */
+    private fun Activity.longPress(name: String, action: String) {
+        row(name).performLongClick()
+        idle()
+        answer(action)
+    }
+
+    /** The rename dialog's field. */
+    private fun field() = ShadowDialog.getLatestDialog().findViewById<EditText>(R.id.settings_pictures_dialog_field)
+
+    /** [name] typed in the rename dialog, then Rename. */
+    private fun rename(name: String) {
+        field().setText(name)
+        answer("Rename")
+    }
+
     @Test
     fun `lists No picture, the pictures newest first, then Add from folder, the stored one chosen`() {
         graph(old, beach, sunset, background = Background(beach.id))
@@ -185,7 +203,7 @@ class BackgroundActivityTest {
         val activity = start().get()
 
         assertEquals(listOf("No picture", "sunset.jpg", "beach.png ✓", "old.jpg", "Add from folder"), activity.list())
-        assertEquals("Hold OK on a picture to delete it", activity.hint())
+        assertEquals("Hold OK on a picture to rename or delete it", activity.hint())
         assertEquals("the chosen one focused", "beach.png", activity.focused())
     }
 
@@ -520,12 +538,95 @@ class BackgroundActivityTest {
     }
 
     @Test
-    fun `a long press of OK on a picture asks to delete it, Cancel first, and Delete deletes it`() {
+    fun `a long press of OK on a picture offers to rename or delete it, under its name`() {
         graph(beach, sunset)
         val activity = start().get()
 
         activity.row("beach.png").performLongClick()
         idle()
+
+        val (title, text, entries) = dialog()!!
+        assertEquals("beach.png", title)
+        assertEquals("1920 × 1080 · 1.0 MB", text)
+        assertEquals(listOf("Rename", "Delete"), entries.map { it.text.toString() })
+        assertTrue(entries[0].isFocused)
+    }
+
+    @Test
+    fun `Rename asks for the new name, the cursor after the old one, and the row takes it, keeping its place and thumbnail`() {
+        graph(beach, sunset)
+        graph.thumbnails.cache[beach.id to PictureStyle()] = sample("kept", 192, 108)
+        val activity = start().get()
+        activity.row("beach.png").requestFocus()
+        val thumbnail = activity.row("beach.png").findViewById<ImageView>(R.id.settings_background_thumbnail).drawable
+
+        activity.longPress("beach.png", "Rename")
+        assertEquals("Rename picture", dialog()!!.first)
+        assertEquals("beach.png", field().text.toString())
+        assertEquals(9 to 9, field().selectionStart to field().selectionEnd)
+        rename("  Sea  ")
+
+        assertNull(dialog())
+        assertEquals(listOf(beach.copy(name = "Sea"), sunset), graph.library.pictures)
+        assertEquals(listOf("No picture ✓", "sunset.jpg", "Sea", "Add from folder"), activity.list())
+        assertEquals("Sea", activity.focused())
+        assertSame(thumbnail, activity.row("Sea").findViewById<ImageView>(R.id.settings_background_thumbnail).drawable)
+        drawInTheBackground()
+        assertTrue("nothing drawn again", graph.thumbnails.rendered.none { it.first == beach.id })
+    }
+
+    @Test
+    fun `the keyboard's Done renames too`() {
+        graph(beach)
+        val activity = start().get()
+
+        activity.longPress("beach.png", "Rename")
+        field().setText("Sea")
+        field().onEditorAction(EditorInfo.IME_ACTION_DONE)
+        idle()
+
+        assertNull(dialog())
+        assertEquals(listOf("No picture ✓", "Sea", "Add from folder"), activity.list())
+    }
+
+    @Test
+    fun `a name another picture has, or none, is refused, saying why, and the dialog stays`() {
+        graph(beach, sunset)
+        val activity = start().get()
+
+        activity.longPress("beach.png", "Rename")
+        rename("sunset.jpg")
+        assertEquals("Name already used in Luncher's pictures", dialog()!!.second)
+        rename(" ")
+        assertEquals("Type a name", dialog()!!.second)
+
+        assertEquals(listOf(beach, sunset), graph.library.pictures)
+        answer("Cancel")
+        assertNull(dialog())
+        assertEquals(listOf("No picture ✓", "sunset.jpg", "beach.png", "Add from folder"), activity.list())
+    }
+
+    @Test
+    fun `the wallpaper's picture renamed stays the background, chosen in the draft`() {
+        graph(beach, background = Background(beach.id, dim = 40))
+        val activity = start().get()
+
+        activity.longPress("beach.png", "Rename")
+        rename("Sea")
+
+        assertEquals(Background(beach.id, dim = 40), stored)
+        assertEquals(listOf("No picture", "Sea ✓", "Add from folder"), activity.list())
+        activity.row("Sea").performLongClick()
+        idle()
+        assertEquals("the new name, not the one the row was made with", "Sea", dialog()!!.first)
+    }
+
+    @Test
+    fun `Delete asks to delete it, Cancel first, and Delete deletes it`() {
+        graph(beach, sunset)
+        val activity = start().get()
+
+        activity.longPress("beach.png", "Delete")
         val (title, text, entries) = dialog()!!
         assertEquals("Delete beach.png?", title)
         assertEquals("The picture is deleted from Luncher's pictures only.", text)
@@ -542,8 +643,7 @@ class BackgroundActivityTest {
         graph.storedWallpaper.kept = WallpaperDrawing(beach.id, PictureStyle(dim = 40), 1920, 1080) to sample("kept", 4, 4)
         val activity = start().get()
 
-        activity.row("beach.png").performLongClick()
-        idle()
+        activity.longPress("beach.png", "Delete")
         assertEquals(
             "Used as the background: the home screen will have no picture. The picture is deleted from Luncher's pictures only.",
             dialog()!!.second,
@@ -561,8 +661,7 @@ class BackgroundActivityTest {
         graph(beach)
         val activity = start().get()
 
-        activity.row("beach.png").performLongClick()
-        idle()
+        activity.longPress("beach.png", "Delete")
         answer("Cancel")
 
         assertEquals(listOf(beach), graph.library.pictures)
@@ -587,7 +686,7 @@ class BackgroundActivityTest {
 
         assertEquals(listOf("No picture", "holiday.jpg ✓", "sunset.jpg", "Add from folder"), activity.list())
         assertEquals("holiday.jpg", activity.focused())
-        assertEquals("Hold OK on a picture to delete it", activity.hint())
+        assertEquals("Hold OK on a picture to rename or delete it", activity.hint())
     }
 
     @Test

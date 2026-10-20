@@ -48,7 +48,7 @@
     <string name="settings_system">Ρυθμίσεις συστήματος</string>
     <string name="settings_system_unavailable">Καμία εφαρμογή ρυθμίσεων σε αυτή τη συσκευή</string>
 
-    <string name="settings_background_hint">Κρατήστε πατημένο το OK σε μια εικόνα για να τη διαγράψετε</string>
+    <string name="settings_background_hint">Κρατήστε πατημένο το OK σε μια εικόνα για να τη μετονομάσετε ή να τη διαγράψετε</string>
     <string name="settings_background_save">Αποθήκευση</string>
     <string name="settings_background_applying">Επεξεργασία φόντου…</string>
     <string name="settings_background_preparing">Προετοιμασία της εικόνας…</string>
@@ -66,6 +66,9 @@
     <string name="settings_pictures_delete_question">Διαγραφή του <xliff:g id="name" example="beach.png">%1$s</xliff:g>;</string>
     <string name="settings_pictures_delete_text">Η εικόνα διαγράφεται μόνο από τις εικόνες του Luncher.</string>
     <string name="settings_pictures_delete_text_background">Χρησιμοποιείται ως φόντο: η αρχική οθόνη θα μείνει χωρίς εικόνα. Η εικόνα διαγράφεται μόνο από τις εικόνες του Luncher.</string>
+    <string name="settings_pictures_rename">Μετονομασία</string>
+    <string name="settings_pictures_rename_title">Μετονομασία εικόνας</string>
+    <string name="settings_pictures_rename_no_name">Πληκτρολογήστε ένα όνομα</string>
     <string name="settings_pictures_cancel">Ακύρωση</string>
     <string name="settings_pictures_ok">OK</string>
     <string name="settings_pictures_not_added">Η εικόνα δεν προστέθηκε</string>
@@ -79,7 +82,7 @@
     </plurals>
     <string name="settings_pictures_unreadable">Το αρχείο δεν μπορεί να διαβαστεί. Αντιγράψτε το στον φάκελο <xliff:g id="folder" example="Android/media/com.luncher.launcher">%1$s</xliff:g> στην τηλεόραση ή σε ένα USB και μετά επιλέξτε Προσθήκη από φάκελο.</string>
     <string name="settings_pictures_no_space">Δεν υπάρχει αρκετός ελεύθερος χώρος στην τηλεόραση. Ελευθερώστε χώρο και μετά δοκιμάστε ξανά.</string>
-    <string name="settings_pictures_name_taken">Υπάρχει ήδη άλλη εικόνα με όνομα <xliff:g id="name" example="holiday.jpg">%1$s</xliff:g> στις εικόνες του Luncher. Διαγράψτε την στο Luncher ή μετονομάστε αυτό το αρχείο και μετά προσθέστε το ξανά.</string>
+    <string name="settings_pictures_name_taken">Υπάρχει ήδη άλλη εικόνα με όνομα <xliff:g id="name" example="holiday.jpg">%1$s</xliff:g> στις εικόνες του Luncher. Μετονομάστε ή διαγράψτε την στο Luncher, ή μετονομάστε αυτό το αρχείο, και μετά προσθέστε το ξανά.</string>
     <string name="settings_pictures_folder_where">Εικόνες στον φάκελο <xliff:g id="folder" example="Android/media/com.luncher.launcher">%1$s</xliff:g>, στην τηλεόραση ή σε ένα USB</string>
     <string name="settings_pictures_folder_this_tv">Τηλεόραση</string>
     <string name="settings_pictures_folder_usb">USB</string>

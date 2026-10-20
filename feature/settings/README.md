@@ -30,12 +30,12 @@ feature/settings/
     │   │   ├── OptionRow.kt      an option's row: both editors'; Left and Right step it, or OK opens its list
     │   │   ├── OptionList.kt     an option's values in a list over its row: the background editor's
     │   │   ├── OptionLabels.kt   what the options, their values and groups are called
-    │   │   ├── BackgroundActivity.kt the background editor: the pictures, the draft, Save; deletes pictures, prepares them
+    │   │   ├── BackgroundActivity.kt the background editor: the pictures, the draft, Save; renames and deletes pictures, prepares them
     │   │   ├── BackgroundStartColumn.kt  its preview, options and Save, the preview as large as the room left
     │   │   ├── AddFromFolderActivity.kt  the drop folders' pictures, a preview of the selected one; OK adds it, then returns it
     │   │   ├── SharePictureActivity.kt   where another app's share arrives: opens the home screen and the window, no screen
     │   │   ├── PictureReceivedActivity.kt the window over the home screen after a share: shows the pictures being added, then their uses, or how many were saved and why the others weren't
-    │   │   ├── PicturesDialog.kt the dialogs over the picture screens: a question, a message
+    │   │   ├── PicturesDialog.kt the dialogs over the picture screens: a picture's actions, a question, a message; renaming one
     │   │   ├── PreviewColumn.kt  Add from folder's preview and note, the preview smaller on a short screen
     │   │   └── PictureTexts.kt   what the picture screens call things: sizes, names, why a picture wasn't added
     │   └── res/                  the themes (Theme.Luncher.Settings, .Panel, .FullScreen, .Pictures, .Pictures.Dialog,
@@ -148,8 +148,8 @@ decides it (the background's picture's shape, in the background editor:
 [below](#background)), is dimmed, and the focus passes it by.
 The Background group is edited apart (`editedApart`): it's one entry, the picture's name, or
 None, beside it, and OK on it opens the background editor ([below](#background)), where the
-picture and its options are saved together; back in the editor (`onResume`), the appearance is
-read again. The last entry, Reset
+picture and its options are saved together; back in the editor (`onResume`), the appearance and
+its picture's name (renamed there, say) are read again. The last entry, Reset
 to defaults, puts every option back, and the wallpaper to none. Back returns to the settings
 panel; the home screen shows the result when it comes back.
 
@@ -197,7 +197,7 @@ from the appearance editor's Background entry, full-screen like it, or from the 
 share, with that picture chosen ([below](#adding-a-picture)). At the end, Luncher's picture
 library as a list: No picture, the pictures, the newest first, each with its thumbnail and name,
 then Add from folder ([below](#adding-a-picture)); a hint above them says a long press of OK
-deletes a picture, as arrange mode's says what its keys do. While the library is empty, how to add
+renames or deletes a picture, as arrange mode's says what its keys do. While the library is empty, how to add
 a picture follows: a share from another app, or the drop folder
 ([`platform/README.md`](../../platform/README.md#the-drop-folders)), with its path. At the start, a
 preview of the home screen with the chosen background, the background's options (Fit, Position,
@@ -237,23 +237,36 @@ through the process's `Wallpaper` ([`feature/home/README.md`](../home/README.md#
   background stored, and the window closes, after half a second at least, and the editor with
   it. If the user goes home meanwhile, the drawing goes on, and the home screen says so instead.
 
-A **long press of OK** on a picture asks to delete it, Cancel focused, so a repeated OK deletes
-nothing, saying what deleting it does, in one text for any picture and another for the
-background's: the picture goes from Luncher's pictures only, and the background's picture
-leaves the home screen with no picture. That happens at once
-(`Wallpaper.forget`): the background stored without a picture, then the kept wallpaper deleted,
-then the picture. A draft's picture deleted is no picture in the draft.
+A **long press of OK** on a picture offers Rename and Delete, under its name and size.
+
+**Rename** asks for the new name in a field holding the old one, the TV's keyboard up, the cursor
+at the end (where the keyboard puts it anyway). Rename below it, or the keyboard's Done, keeps the
+name as a picture's is kept (`pictureName`: no control characters, trimmed, cut in the middle past
+255 units); a name another picture has, or nothing typed, is refused below the field in the accent
+color, the dialog staying open (`renaming`), as two pictures of one name would be told apart by
+nothing. A name is the library's index only: the picture's file, working copy and thumbnail, the
+stored wallpaper and the background setting go by its id, from its content, so nothing is copied,
+decoded or drawn again, and the row keeps its place (the list goes by when a picture was added)
+and its thumbnail. The appearance editor shows the new name beside Background when it comes back.
+
+**Delete** asks first, Cancel focused, so a repeated OK deletes nothing, saying what deleting it
+does, in one text for any picture and another for the background's: the picture goes from
+Luncher's pictures only, and the background's picture leaves the home screen with no picture.
+That happens at once (`Wallpaper.forget`): the background stored without a picture, then the kept
+wallpaper deleted, then the picture. A draft's picture deleted is no picture in the draft.
 
 | Part | Job |
 |---|---|
 | `Picture`, `PictureLibrary` (`:domain`) | a picture of the library; the library in the list's order, the newest first, and what each one is used for |
-| `Pictures`, `PictureImport` (`:domain`) / `FilesPictures` (`:platform`) | the library, which the screen follows while it shows, and adding to it |
+| `Pictures`, `PictureImport` (`:domain`) / `FilesPictures` (`:platform`) | the library, which the screen follows while it shows, renaming and deleting, and adding to it |
+| `renaming` (`:domain`) | the name a picture renamed keeps, or why it can't: none typed, or another picture's |
 | `PreparedPictures`, `PictureImages` (`:domain`) / `WorkingCopyImages` (`:platform`) | each picture's working copy, made once; the preview's wallpaper drawn from it at each value tried |
 | `PictureImages` (`:domain`) / `CachedPictureImages` (`:platform`) | the thumbnails, drawn from the working copies at the row's size in pixels, and kept |
 | `pictureUses`, `withoutPictures` (`:domain`) | what each picture is used for, which deleting it says, and the background without it |
 | `Wallpaper` (`:domain`) | Save (`save`: drawn, kept, then stored) and deleting the wallpaper's picture (`forget`) |
 | `pictureCut`, `OptionContext`, `Background.offeredIn` (`:domain`) | what filling the screen cuts from the draft's picture, the options' values that offers, and the draft without a position it doesn't |
 | `OptionRow`, `OptionList` | the options' rows, OK opening a list of the values the draft's picture offers, which the preview follows as the focus moves; Back in it puts the value from before back |
+| `PicturesDialog`, `RenameDialog` | the dialogs over the list: a picture's Rename and Delete, the question before deleting; the field for a new name, and why it's refused |
 | `BackgroundActivity` | the list, the draft, Save and its window, the questions; chooses and focuses the picture Add from folder added (`EXTRA_ADDED`); starts with a picture just received chosen (`EXTRA_PICTURE`) |
 
 **Prepared once, then at once.** Each picture of the library has a working copy
@@ -324,8 +337,8 @@ a reason none has left out (`notAddedLines`): those the library had, not picture
 format this TV can't show, over 50 MB, over 64 megapixels (`ImportResult.TooLarge` says which),
 named as another picture of the library, unreadable, no room; then those Cancel stopped, and a
 share of too many; and OK. One named as another picture of the library isn't added: the user
-deletes that one there, or renames the file
-([`platform/README.md`](../../platform/README.md#pictures)); Luncher renames nothing.
+renames or deletes that one in the background editor, or renames the file
+([`platform/README.md`](../../platform/README.md#pictures)).
 
 A share that arrives while the window shows joins it: `SharePictureActivity` then sends the window
 alone, without the home screen, which would close it (`singleTask`), and the window, `singleTop`,
@@ -401,7 +414,8 @@ after its size, why in the accent color so it stands out, and OK on it says why 
 nothing: a file in a format this TV can't show ([which](../../platform/README.md#pictures)), one
 over 50 MB or over 64 megapixels (`PictureLimits`), which have no preview either, and one named as
 a picture of the library, the same file (the same name and size: "Already in Luncher's pictures")
-or another. In place of a preview that isn't drawn, or that can't be (a damaged picture, once its
+or another. The listing goes by names: a file whose picture was renamed in the library isn't
+marked, and OK finds it there by its content, without decoding it. In place of a preview that isn't drawn, or that can't be (a damaged picture, once its
 decode fails), a warning mark shows, so nobody waits for one. Anything else that isn't a picture isn't listed. The folders are read again each time the screen
 shows, so a USB drive plugged in meanwhile counts. On a screen too short for the preview and its
 note, the preview gets smaller (`PreviewColumn`).
@@ -444,7 +458,8 @@ adb shell am start -n com.luncher.launcher.debug.test/com.luncher.launcher.testi
   once drawn ([`platform/README.md`](../../platform/README.md#pictures)): a 12 MP photo is never
   held whole.
 - **A picture is decoded once for the screens**, into its working copy, as it's added; thumbnails
-  and previews are drawn from that, and only Save decodes the original again.
+  and previews are drawn from that, and only Save decodes the original again. A file the library
+  has already, under any name, isn't decoded at all, and renaming a picture decodes nothing.
 - **A thumbnail is drawn once per screen size**, then read from its file, one per picture.
 - **A decode nobody waits for stops**, the preview of a picture no longer selected, or of a
   screen that closed, at its next read, so the next job doesn't wait for it.

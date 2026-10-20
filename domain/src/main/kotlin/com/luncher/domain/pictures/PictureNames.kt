@@ -39,13 +39,41 @@ private const val ELLIPSIS = "…"
  * Why a picture named [name] ([pictureName]'s), of [bytes] (null when unknown), can't join
  * [library]: a picture there has exactly that name, and the same size ([ImportResult.SameFile],
  * the same file most likely) or another ([ImportResult.NameTaken]). Two pictures of one name
- * would be told apart by nothing on the screens, so the user deletes one, or renames the file.
+ * would be told apart by nothing on the screens, so the user renames or deletes one, or renames the file.
  * Null when no picture has that name, or [name] is empty, as many shared pictures' are.
  */
 fun nameClash(name: String, bytes: Long?, library: Collection<Picture>): ImportResult? {
     if (name.isEmpty()) return null
     val named = library.firstOrNull { it.name == name } ?: return null
     return if (bytes == named.bytes) ImportResult.SameFile(named) else ImportResult.NameTaken(named)
+}
+
+/** What renaming a picture comes to ([renaming]). */
+sealed interface Renaming {
+
+    /** It's named [name], [pictureName]'s of what the user typed: the name it has, if that's unchanged. */
+    data class To(val name: String) : Renaming
+
+    /** Nothing but spaces or control characters typed: a picture the user names keeps a name. */
+    data object NoName : Renaming
+
+    /** Another picture of [library][renaming] has that name; two would be told apart by nothing. */
+    data object NameTaken : Renaming
+}
+
+/**
+ * What renaming [picture] to [given], as the user typed it, comes to in [library]: the name, as
+ * [pictureName] keeps it, unless it's empty or another picture's ([nameClash]'s rule, so the
+ * library never has two of one name). Only the name changes: a picture's files and the images
+ * drawn of it go by its id.
+ */
+fun renaming(picture: Picture, given: String, library: Collection<Picture>): Renaming {
+    val name = pictureName(given)
+    return when {
+        name.isEmpty() -> Renaming.NoName
+        library.any { it.id != picture.id && it.name == name } -> Renaming.NameTaken
+        else -> Renaming.To(name)
+    }
 }
 
 /**

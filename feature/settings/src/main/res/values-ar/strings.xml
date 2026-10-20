@@ -48,7 +48,7 @@
     <string name="settings_system">إعدادات النظام</string>
     <string name="settings_system_unavailable">لا يوجد تطبيق إعدادات على هذا الجهاز</string>
 
-    <string name="settings_background_hint">اضغط مطولًا على OK فوق صورة لحذفها</string>
+    <string name="settings_background_hint">اضغط مطولًا على OK فوق صورة لإعادة تسميتها أو حذفها</string>
     <string name="settings_background_save">حفظ</string>
     <string name="settings_background_applying">جارٍ معالجة الخلفية…</string>
     <string name="settings_background_preparing">جارٍ تجهيز الصورة…</string>
@@ -66,6 +66,9 @@
     <string name="settings_pictures_delete_question">حذف <xliff:g id="name" example="beach.png">%1$s</xliff:g>؟</string>
     <string name="settings_pictures_delete_text">تُحذف الصورة من صور Luncher فقط.</string>
     <string name="settings_pictures_delete_text_background">مستخدمة كخلفية: لن تعرض الشاشة الرئيسية أي صورة. تُحذف الصورة من صور Luncher فقط.</string>
+    <string name="settings_pictures_rename">إعادة تسمية</string>
+    <string name="settings_pictures_rename_title">إعادة تسمية الصورة</string>
+    <string name="settings_pictures_rename_no_name">اكتب اسمًا</string>
     <string name="settings_pictures_cancel">إلغاء</string>
     <string name="settings_pictures_ok">حسنًا</string>
     <string name="settings_pictures_not_added">لم تُضَف الصورة</string>
@@ -83,7 +86,7 @@
     </plurals>
     <string name="settings_pictures_unreadable">تتعذّر قراءة الملف. انسخه إلى المجلد ⁦<xliff:g id="folder" example="Android/media/com.luncher.launcher">%1$s</xliff:g>⁩ على هذا التلفزيون أو على وحدة USB، ثم اختر «إضافة من مجلد».</string>
     <string name="settings_pictures_no_space">لا توجد مساحة تخزين كافية على هذا التلفزيون. أفرغ بعض المساحة، ثم حاول مرة أخرى.</string>
-    <string name="settings_pictures_name_taken">توجد بالفعل صورة أخرى باسم <xliff:g id="name" example="holiday.jpg">%1$s</xliff:g> في صور Luncher. احذفها في Luncher، أو أعِد تسمية هذا الملف، ثم أضفه مرة أخرى.</string>
+    <string name="settings_pictures_name_taken">توجد بالفعل صورة أخرى باسم <xliff:g id="name" example="holiday.jpg">%1$s</xliff:g> في صور Luncher. أعِد تسميتها أو احذفها في Luncher، أو أعِد تسمية هذا الملف، ثم أضفه مرة أخرى.</string>
     <string name="settings_pictures_folder_where">الصور في المجلد ⁦<xliff:g id="folder" example="Android/media/com.luncher.launcher">%1$s</xliff:g>⁩، على هذا التلفزيون أو على وحدة USB</string>
     <string name="settings_pictures_folder_this_tv">هذا التلفزيون</string>
     <string name="settings_pictures_folder_usb">وحدة USB</string>

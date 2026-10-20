@@ -81,14 +81,16 @@ class AppearanceActivity : Activity() {
         groups.first().header.requestFocus()
     }
 
-    // Back from the background editor, which may have saved a new background. In onResume: it
-    // can close before this screen was ever stopped.
+    // Back from the background editor, which may have saved a new background, or renamed its
+    // picture. In onResume: it can close before this screen was ever stopped.
     override fun onResume() {
         super.onResume()
         val stored = settings.read()
         if (stored != appearance) {
             appearance = stored
             show()
+        } else {
+            showPictureName()
         }
     }
 
@@ -126,6 +128,12 @@ class AppearanceActivity : Activity() {
 
     private fun show() {
         for (row in rows) row.show()
+        showPictureName()
+        preview.appearance = appearance
+    }
+
+    /** The background's picture's name, as the library has it now, beside the Background entry. */
+    private fun showPictureName() {
         val picture = appearance.background.picture
         val name = picture?.let { id -> pictures.read().firstOrNull { it.id == id } }?.name
         for (row in apartValues) {
@@ -135,7 +143,6 @@ class AppearanceActivity : Activity() {
                 else -> name
             }
         }
-        preview.appearance = appearance
     }
 
     /** A group's entry, which shows or hides its options' [rows] below it. Hidden at first. */

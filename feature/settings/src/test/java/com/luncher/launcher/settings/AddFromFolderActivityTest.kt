@@ -357,7 +357,7 @@ class AddFromFolderActivityTest {
         val messages = listOf(
             0 to ("Picture not added" to "Too large: over 50 MB."),
             1 to ("Already in Luncher's pictures" to "holiday.jpg"),
-            2 to ("Picture not added" to "Another picture named logo.png is already in Luncher's pictures. Delete it in Luncher, or rename this file, then add it again."),
+            2 to ("Picture not added" to "Another picture named logo.png is already in Luncher's pictures. Rename or delete it in Luncher, or rename this file, then add it again."),
         )
 
         for ((position, message) in messages) {

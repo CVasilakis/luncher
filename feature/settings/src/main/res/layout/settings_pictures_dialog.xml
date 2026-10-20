@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- A dialog over Pictures: a title, a text, and its entries (a picture's actions, a
-     confirmation's choices, a message's OK). PicturesDialog adds the entries. -->
+     confirmation's choices, a message's OK). PicturesDialog adds the entries. RenameDialog shows
+     the field, and the text below it says why a name can't be. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/settings_pictures_dialog_panel"
     android:layout_width="@dimen/settings_pictures_dialog_width"
     android:layout_height="wrap_content"
@@ -16,6 +18,22 @@
         android:textColor="@color/text_primary"
         android:textSize="@dimen/settings_pictures_status_text"
         android:textStyle="bold" />
+
+    <!-- Labelled by the title, which RenameDialog sets, as lint can't see. No hint: in a script
+         of taller lines, it makes the field taller than the smallest screens leave room for. -->
+    <EditText
+        android:id="@+id/settings_pictures_dialog_field"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/settings_pictures_tile_text_gap"
+        android:imeOptions="actionDone|flagNoExtractUi"
+        android:importantForAutofill="no"
+        android:inputType="text|textNoSuggestions"
+        android:singleLine="true"
+        android:textColor="@color/text_primary"
+        android:textSize="@dimen/settings_pictures_text"
+        android:visibility="gone"
+        tools:ignore="LabelFor" />
 
     <TextView
         android:id="@+id/settings_pictures_dialog_text"

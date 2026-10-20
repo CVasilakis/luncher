@@ -10,7 +10,10 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.NoMatchingRootException
 import androidx.test.espresso.NoMatchingViewException
+import androidx.test.espresso.action.ViewActions.closeSoftKeyboard
+import androidx.test.espresso.action.ViewActions.pressImeActionButton
 import androidx.test.espresso.action.ViewActions.pressKey
+import androidx.test.espresso.action.ViewActions.replaceText
 import androidx.test.espresso.assertion.ViewAssertions.doesNotExist
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.matcher.RootMatchers.isDialog
@@ -191,6 +194,10 @@ class BackgroundActivityTest {
             waitForFocus(BackgroundActivity::class.java)
             longPressOk()
 
+            waitUntil(withText(R.string.settings_pictures_rename), hasFocus(), inDialog = true)
+            pressInDialog(KeyEvent.KEYCODE_DPAD_DOWN)
+            waitUntil(withText(R.string.settings_pictures_delete), hasFocus(), inDialog = true)
+            pressInDialog(KeyEvent.KEYCODE_DPAD_CENTER)
             waitUntil(withText(R.string.settings_pictures_cancel), hasFocus(), inDialog = true)
             pressInDialog(KeyEvent.KEYCODE_DPAD_DOWN)
             waitUntil(withText(R.string.settings_pictures_delete), hasFocus(), inDialog = true)
@@ -199,6 +206,34 @@ class BackgroundActivityTest {
             waitUntil(row("old.jpg"), hasFocus())
             onView(row("beach.png")).check(doesNotExist())
             assertEquals(listOf("old.jpg", "sunset.jpg"), fake.pictures.map { it.name }.sorted())
+        }
+    }
+
+    @Test
+    fun aLongPressOfOkOnAPictureRenamesIt_refusingAnotherPicturesName() {
+        launchWith(picture("beach.png", added = 1), picture("sunset.jpg", added = 2)).use {
+            waitUntil(row(R.string.settings_pictures_no_picture), hasFocus())
+            press(KeyEvent.KEYCODE_DPAD_DOWN)
+            waitUntil(row("sunset.jpg"), hasFocus())
+            waitForFocus(BackgroundActivity::class.java)
+            longPressOk()
+
+            waitUntil(withText(R.string.settings_pictures_rename), hasFocus(), inDialog = true)
+            pressInDialog(KeyEvent.KEYCODE_DPAD_CENTER)
+            waitUntil(withId(R.id.settings_pictures_dialog_field), hasFocus(), inDialog = true)
+            // Typed without the keyboard, which then goes, so the arrows reach the dialog. The
+            // cursor put at the end, as after typing: on API 22 and 24 setting the text leaves it
+            // before the end, and Down there only moves it to the end.
+            onView(withId(R.id.settings_pictures_dialog_field)).inRoot(isDialog()).perform(replaceText("beach.png"), closeSoftKeyboard())
+            pressInDialog(KeyEvent.KEYCODE_MOVE_END)
+            pressInDialog(KeyEvent.KEYCODE_DPAD_DOWN)
+            waitUntil(withText(R.string.settings_pictures_rename), hasFocus(), inDialog = true)
+            pressInDialog(KeyEvent.KEYCODE_DPAD_CENTER)
+            waitUntil(withId(R.id.settings_pictures_dialog_text), withText(R.string.settings_pictures_folder_name_taken), inDialog = true)
+
+            onView(withId(R.id.settings_pictures_dialog_field)).inRoot(isDialog()).perform(replaceText("Sunset"), pressImeActionButton())
+            waitUntil(row("Sunset"), hasFocus())
+            assertEquals(listOf("Sunset", "beach.png"), fake.pictures.map { it.name }.sorted())
         }
     }
 

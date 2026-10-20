@@ -94,4 +94,22 @@ class PictureNamesTest {
     fun `a drop folder's name is compared as the library would keep it`() {
         assertEquals(ImportResult.SameFile(holiday), whyRefused(inFolder(" holiday.jpg "), library))
     }
+
+    @Test
+    fun `a picture is renamed to what the user typed, as a picture's name is kept`() {
+        assertEquals(Renaming.To("Beach"), renaming(holiday, "  Be\u0000ach\n", library))
+        assertEquals(Renaming.To(pictureName("x".repeat(300))), renaming(holiday, "x".repeat(300), library))
+    }
+
+    @Test
+    fun `its own name, even unchanged, or another case of another's, is free`() {
+        assertEquals(Renaming.To("holiday.jpg"), renaming(holiday, "holiday.jpg", library))
+        assertEquals(Renaming.To("Holiday.jpg"), renaming(unnamed, "Holiday.jpg", library))
+    }
+
+    @Test
+    fun `another picture's name is taken, and no name isn't one`() {
+        assertEquals(Renaming.NameTaken, renaming(unnamed, " holiday.jpg", library))
+        assertEquals(Renaming.NoName, renaming(holiday, " \t", library))
+    }
 }

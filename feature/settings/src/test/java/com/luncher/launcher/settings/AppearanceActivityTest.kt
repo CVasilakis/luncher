@@ -39,9 +39,10 @@ class AppearanceActivityTest {
 
     private val settings = FakeAppearanceSettings()
 
+    private val application = RuntimeEnvironment.getApplication() as SettingsTestApplication
+
     @Before
     fun useFakes() {
-        val application = RuntimeEnvironment.getApplication() as SettingsTestApplication
         application.graph = object : TestSettingsGraph() {
             override val appearanceSettings = this@AppearanceActivityTest.settings
         }
@@ -154,6 +155,17 @@ class AppearanceActivityTest {
         settings.appearance = Appearance(background = Background(picture = SAMPLE_WALLPAPER))   // saved there
         controller.pause().resume()   // back before it was stopped, as a quick save can be
         assertEquals("Background: sunset.jpg", activity.lines()[2])
+    }
+
+    @Test
+    fun `shows the background's picture renamed in the background editor`() {
+        settings.appearance = Appearance(background = Background(picture = SAMPLE_WALLPAPER))
+        val controller = Robolectric.buildActivity(AppearanceActivity::class.java).setup()
+
+        (application.graph as TestSettingsGraph).library.rename(SAMPLE_WALLPAPER, "Evening")   // there
+        controller.pause().resume()
+
+        assertEquals("Background: Evening", controller.get().lines()[2])
     }
 
     @Test

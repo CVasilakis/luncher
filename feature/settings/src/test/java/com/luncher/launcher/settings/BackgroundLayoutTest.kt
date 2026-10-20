@@ -7,6 +7,7 @@ import android.os.Looper
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
+import android.widget.EditText
 import android.widget.ListView
 import android.widget.TextView
 import com.luncher.domain.appearance.Appearance
@@ -187,9 +188,24 @@ class BackgroundLayoutTest(private val screen: TvScreen) {
     }
 
     @Test
-    fun `the delete question fits`() {
+    fun `what a long press offers fits, and the delete question, and the rename dialog saying why a name can't be`() {
         val activity = start(*library)
-        activity.children(R.id.settings_background_list)[1].performLongClick()
+        val row = activity.children(R.id.settings_background_list)[1]
+        fun offered(): ViewGroup {
+            row.performLongClick()
+            idle()
+            return ShadowDialog.getLatestDialog().findViewById(R.id.settings_pictures_dialog_entries)
+        }
+        offered()
+        assertDialogFits(activity)
+        offered().getChildAt(1).performClick()   // Delete
+        idle()
+        assertDialogFits(activity)
+        offered().getChildAt(0).performClick()   // Rename
+        idle()
+        val rename = ShadowDialog.getLatestDialog()
+        rename.findViewById<EditText>(R.id.settings_pictures_dialog_field).setText(library.first().name)
+        rename.findViewById<ViewGroup>(R.id.settings_pictures_dialog_entries).getChildAt(0).performClick()
         idle()
         assertDialogFits(activity)
     }
@@ -270,7 +286,7 @@ class BackgroundLayoutTest(private val screen: TvScreen) {
             panel.measuredWidth <= metrics.widthPixels - 2 * margin && panel.measuredHeight <= metrics.heightPixels - 2 * margin,
         )
         panel.layout(0, 0, panel.measuredWidth, panel.measuredHeight)
-        assertWhole(screen, dialog.findViewById(R.id.settings_pictures_dialog_text))
+        dialog.findViewById<TextView>(R.id.settings_pictures_dialog_text).takeIf { it.visibility == View.VISIBLE }?.let { assertWhole(screen, it) }
         val entries = dialog.findViewById<ViewGroup>(R.id.settings_pictures_dialog_entries)
         for (i in 0 until entries.childCount) assertWhole(screen, entries.getChildAt(i) as TextView)
         dialog.dismiss()

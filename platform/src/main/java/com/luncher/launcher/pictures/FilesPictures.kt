@@ -40,7 +40,8 @@ import com.luncher.launcher.ui.R as UiR
  * [Pictures] and [PictureImport] on files: each picture's original file, unchanged, in [folder],
  * named after a hash of its content (the same picture added twice is stored once), and an index
  * of them ([INDEX]: name, size, dimensions as shown, when added) written whole, to a new file that
- * then replaces the old one at once. Its working copy, from which the screens draw it, is made
+ * then replaces the old one at once. A name is the index's only, so renaming a picture writes
+ * the index and nothing else. Its working copy, from which the screens draw it, is made
  * as it's added, kept in [copies]/<id> ([WorkingCopies]), and deleted with it, as is its
  * thumbnail, kept in [images]/<id> ([CachedPictureImages]).
  *
@@ -116,6 +117,17 @@ class FilesPictures(
             }
             writeIndex(entries)
         }
+        changed()
+    }
+
+    override fun rename(id: PictureId, name: String) {
+        val index = index()
+        val picture = index[id] ?: return
+        if (picture.name == name) return
+        index[id] = picture.copy(name = name)
+        val entries = index.values.toList()
+        // The index only: its file, working copy and thumbnail are named by its id.
+        jobs.run(JobPriority.PICTURE_LIBRARY) { writeIndex(entries) }
         changed()
     }
 
@@ -240,6 +252,7 @@ class FilesPictures(
      * ([nameClash] with the [library] as it was when it was asked; a source that doesn't say its
      * size, once it's copied); else [source]'s content copied into a new file of [folder], its
      * hash computed on the way, stopping past [PictureLimits.MAX_BYTES] or once [stop] is set;
+     * refused if the [library] has that content already, under any name, before it's decoded;
      * then checked to be within [PictureLimits.MAX_PIXELS], and decoded whole, once, into its
      * working copy ([WorkingCopies]): a size alone can decode where the picture can't (AVIF on
      * API 31), and the screens then show it without decoding it again.
@@ -291,6 +304,12 @@ class FilesPictures(
                 return Copied.Failed(it)
             }
         }
+        val id = PictureId(digest.digest().joinToString("") { "%02x".format(it) }.take(ID_LENGTH))
+        // The same content in the library already (named otherwise, or renamed since): not decoded again.
+        library.firstOrNull { it.id == id }?.let {
+            file.delete()
+            return Copied.Failed(ImportResult.AlreadyThere(it))
+        }
         val shape = PictureFiles.shape(file)
         val copy = File(workingCopies.folder, file.name + WORKING_COPY)
         val unfit = when {
@@ -306,7 +325,6 @@ class FilesPictures(
             copy.delete()
             return Copied.Failed(unfit ?: ImportResult.NotAPicture)
         }
-        val id = PictureId(digest.digest().joinToString("") { "%02x".format(it) }.take(ID_LENGTH))
         return Copied.Copy(file, copy.takeIf { it.isFile }, id, described.name, bytes, shape.width, shape.height)
     }
 

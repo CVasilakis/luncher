@@ -41,11 +41,11 @@ domain/src/
 │   │   └── LatestRequest.kt     helper: one thing a screen loads in the background, only the latest request counting
 │   ├── pictures/
 │   │   ├── Picture.kt           model: a picture of the library (PictureId, from its content), its name, size as shown, bytes, when added
-│   │   ├── Pictures.kt          port: the library's pictures, deleting them, and when they change
+│   │   ├── Pictures.kt          port: the library's pictures, renaming and deleting them, and when they change
 │   │   ├── PictureImport.kt     port: adding a picture from a source, slow, cancellable, when its copying starts, and how that went (ImportResult)
 │   │   ├── PictureLibrary.kt    rule: the library as the background editor lists it, the newest first, and what each one is used for
 │   │   ├── PictureLimits.kt     rule: the largest picture the library takes (bytes, megapixels), and the most pictures one share brings
-│   │   ├── PictureNames.kt      rules: the name a picture keeps (pictureName), a name the library has already (nameClash: the same file, or another), and what a drop folder's listing already tells can't be added (whyRefused)
+│   │   ├── PictureNames.kt      rules: the name a picture keeps (pictureName), a name the library has already (nameClash: the same file, or another), the name a picture renamed keeps or why it can't (renaming), and what a drop folder's listing already tells can't be added (whyRefused)
 │   │   ├── ReceivedPictures.kt  helper: the pictures other apps shared, added one at a time in sessions the window that took them last holds; how far it got, then how it went (Outcome), stopped on Cancel
 │   │   ├── PictureFormat.kt     model and rule: the formats a TV may not show (HEIF, AVIF), recognized by a file's header
 │   │   ├── Framing.kt           model and rules: how a picture fills a space of another shape (Fit, PicturePosition), which part of it shows, and what filling cuts from it (PictureCut: nothing under 1%, its sides, or its top and bottom)

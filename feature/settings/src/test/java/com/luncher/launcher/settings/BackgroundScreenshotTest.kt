@@ -6,6 +6,7 @@ import android.net.Uri
 import android.os.Looper
 import android.view.View
 import android.view.ViewGroup
+import android.widget.EditText
 import android.widget.TextView
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.takahirom.roborazzi.ExperimentalRoborazziApi
@@ -29,6 +30,7 @@ import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
+import org.robolectric.shadows.ShadowDialog
 
 /**
  * The background editor, the window after a share and Add from folder, in US English, with sample pictures drawn as
@@ -114,12 +116,38 @@ class BackgroundScreenshotTest {
         captureScreenRoboImage("src/test/screenshots/settings/settings_background_option_list.png")
     }
 
-    // A long press of OK on the wallpaper's picture: the question, saying it's the wallpaper.
+    /** A long press of OK on [name]'s row, then the entry [index] of what it offers. */
+    private fun BackgroundActivity.longPress(name: String, index: Int) {
+        row(name).performLongClick()
+        idle()
+        ShadowDialog.getLatestDialog().findViewById<ViewGroup>(R.id.settings_pictures_dialog_entries).getChildAt(index).performClick()
+        idle()
+    }
+
+    // A long press of OK on a picture: Rename and Delete, under its name.
     @Test
-    fun deleteQuestion() {
+    fun pictureActions() {
         editor(*library).row("sunset.jpg").performLongClick()
         idle()
+        captureScreenRoboImage("src/test/screenshots/settings/settings_background_actions.png")
+    }
+
+    // Delete on the wallpaper's picture: the question, saying it's the wallpaper.
+    @Test
+    fun deleteQuestion() {
+        editor(*library).longPress("sunset.jpg", 1)
         captureScreenRoboImage("src/test/screenshots/settings/settings_background_delete.png")
+    }
+
+    // Rename, and another picture's name typed: the field, and why the name can't be.
+    @Test
+    fun renameDialog() {
+        editor(*library).longPress("sunset.jpg", 0)
+        val dialog = ShadowDialog.getLatestDialog()
+        dialog.findViewById<EditText>(R.id.settings_pictures_dialog_field).setText("beach.png")
+        dialog.findViewById<ViewGroup>(R.id.settings_pictures_dialog_entries).getChildAt(0).performClick()
+        idle()
+        captureScreenRoboImage("src/test/screenshots/settings/settings_background_rename.png")
     }
 
     /** The window over the home screen after a share of [shared], which adds as [result]. */
