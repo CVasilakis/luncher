@@ -25,14 +25,14 @@ import com.luncher.launcher.ui.R as UiR
 import kotlin.math.roundToInt
 
 /**
- * An illustration of the home screen with an [appearance]: outlines of tiles on its background
- * (the wallpaper's picture, drawn at the sample screen's size, or the plain color), plain blocks
- * for the time, the date and the settings gear; no names, images or text. Not the
- * real home screen: a made-up one, [SCREEN_WIDTH] dp wide and of the TV's shape ([screenSize],
- * as the wallpaper is drawn: 540 dp tall on a 16:9 TV), with [TILES] tiles, chosen so every
- * option's values look different: a full row and a short one, so left and right differ, and the
- * first tile focused, so the focus frame shows. The width stays, so a row holds as many tiles on
- * every shape.
+ * An illustration of the home screen with an [appearance]: outlined tiles with a light fill, in
+ * place of the banners, on its background (the wallpaper's picture, drawn at the sample screen's
+ * size, or the plain color), plain blocks for the time, the date and the settings gear; no names,
+ * images or text. Not the real home screen: a made-up one, [SCREEN_WIDTH] dp wide and of the
+ * TV's shape ([screenSize], as the wallpaper is drawn: 540 dp tall on a 16:9 TV), with [TILES]
+ * tiles, chosen so every option's values look different: a full row and a short one, so left and
+ * right differ, and the first tile focused, so the focus frame shows. The width stays, so a row
+ * holds as many tiles on every shape.
  *
  * It's laid out by the same rules as the home screen, [TileLayouts] and [topBarLayout], at its own
  * density (its pixels per sample dp), so every dp value scales with it, and it can't disagree with
@@ -122,6 +122,7 @@ internal class AppearancePreviewView(context: Context, attrs: AttributeSet?) : V
 
     private val screenPaint = Paint().apply { color = context.color(UiR.color.background) }
     private val wallpaperPaint = Paint(Paint.FILTER_BITMAP_FLAG)
+    private val tileFillPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = context.color(R.color.settings_preview_tile) }
     private val tilePaint = stroke(context.color(UiR.color.text_secondary))
     private val focusPaint = stroke(context.color(UiR.color.accent))
     private val primaryPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = context.color(UiR.color.text_primary) }
@@ -169,12 +170,14 @@ internal class AppearancePreviewView(context: Context, attrs: AttributeSet?) : V
         for (i in tiles.indices) {
             if (i == FOCUSED) continue
             canvas.drawRoundRect(tiles[i], tileRadius, tileRadius, tileOutlinePaint)
+            canvas.drawRoundRect(tiles[i], tileRadius, tileRadius, tileFillPaint)
             canvas.drawRoundRect(tiles[i], tileRadius, tileRadius, tilePaint)
         }
         // Zoomed, as the home screen's focused tile.
         val focused = tiles[FOCUSED]
         canvas.save()
         canvas.scale(FOCUSED_ZOOM, FOCUSED_ZOOM, focused.centerX(), focused.centerY())
+        canvas.drawRoundRect(focused, tileRadius, tileRadius, tileFillPaint)
         canvas.drawRoundRect(focused, tileRadius, tileRadius, focusPaint)
         canvas.restore()
     }
