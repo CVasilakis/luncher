@@ -25,6 +25,7 @@ import com.luncher.launcher.testing.assertApart
 import com.luncher.launcher.testing.assertInside
 import com.luncher.launcher.testing.assertWhole
 import com.luncher.launcher.testing.bounds
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -59,6 +60,10 @@ class BackgroundLayoutTest(private val screen: TvScreen) {
     private val application get() = RuntimeEnvironment.getApplication() as SettingsTestApplication
 
     private val library = (1..6).map { picture("picture $it.jpg", added = it.toLong(), width = 4000 + it, height = 3000, bytes = 12_345_678) }.toTypedArray()
+
+    // Wider and taller than every screen of TV_SCREENS: between them, they offer every position.
+    private val panorama = picture("panorama.jpg", added = 7, width = 6000, height = 1000)
+    private val portrait = picture("portrait.jpg", added = 8, width = 1000, height = 4000)
 
     @Before
     fun useScreen() {
@@ -100,9 +105,15 @@ class BackgroundLayoutTest(private val screen: TvScreen) {
 
     private fun Activity.children(id: Int): List<View> = findViewById<ViewGroup>(id).let { group -> (0 until group.childCount).map(group::getChildAt) }
 
+    // Every position: left and right with a wide picture, top and bottom with a tall one.
     @Test
     fun `the background editor fits, with every value of every option`() {
-        val activity = start(*library)
+        assertEditorFits(start(panorama, *library))
+        assertEditorFits(start(portrait, *library))
+    }
+
+    /** The editor inside the margins, its texts whole, each of its options at each value it offers. */
+    private fun assertEditorFits(activity: BackgroundActivity) {
         val preview = activity.findViewById<View>(R.id.settings_background_preview)
         val end = activity.findViewById<View>(R.id.settings_background_end)
         val metrics = activity.resources.displayMetrics
@@ -126,22 +137,26 @@ class BackgroundLayoutTest(private val screen: TvScreen) {
         // Luncher's own names whole: No picture, first, and Add from folder, last.
         val rows = activity.children(R.id.settings_background_list)
         for (row in listOf(rows.first(), rows.last())) assertWhole(screen, row.findViewById(R.id.settings_background_name))
-        // Each option through its values, in order; the next value is toward the arrow on its
+        // Each option through the values it offers, in order, around to its first again, so the
+        // fit is back to filling for the position; the next value is toward the arrow on its
         // side: Left when mirrored.
         val options = activity.children(R.id.settings_background_options)
         val next = if (options.first().layoutDirection == View.LAYOUT_DIRECTION_RTL) KeyEvent.KEYCODE_DPAD_LEFT else KeyEvent.KEYCODE_DPAD_RIGHT
         val catalog = appearanceOptions().groups.single { it.editedApart }.options
         for ((row, option) in options.zip(catalog)) {
             activity.assertShown("an option", row)
-            if (!row.requestFocus()) continue   // the position, with the picture stretched
-            repeat(option.values.size) { step ->
+            assertTrue("$option can't take the focus on $screen", row.requestFocus())
+            val value = row.findViewById<TextView>(R.id.settings_option_value)
+            val first = value.text.toString()
+            var steps = 0
+            do {
                 assertWhole(screen, row.findViewById(R.id.settings_option_label))
-                assertWhole(screen, row.findViewById(R.id.settings_option_value))
-                if (step < option.values.lastIndex) {
-                    activity.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, next))
-                    idle()
-                }
-            }
+                assertWhole(screen, value)
+                activity.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, next))
+                idle()
+                steps++
+            } while (value.text.toString() != first && steps < option.values.size)
+            assertEquals("$option back at its first value on $screen", first, value.text.toString())
         }
     }
 

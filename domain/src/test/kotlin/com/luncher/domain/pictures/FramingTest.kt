@@ -1,6 +1,7 @@
 package com.luncher.domain.pictures
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class FramingTest {
@@ -68,5 +69,69 @@ class FramingTest {
     fun `an empty picture or space is shown whole rather than divided by zero`() {
         assertEquals(area(0, 0, 0, 0), frame(0, 0, 1920, 1080, Framing()))
         assertEquals(area(0, 0, 4000, 3000), frame(4000, 3000, 0, 0, Framing()))
+    }
+
+    @Test
+    fun `filling cuts a wide picture at the sides, a tall one at the top and bottom, one of the space's shape nowhere`() {
+        assertEquals(PictureCut.SIDES, pictureCut(6000, 1000, 1920, 1080))
+        assertEquals(PictureCut.TOP_AND_BOTTOM, pictureCut(4000, 3000, 1920, 1080))
+        assertEquals(PictureCut.TOP_AND_BOTTOM, pictureCut(3024, 4032, 1920, 1080))
+        assertEquals(PictureCut.NONE, pictureCut(3840, 2160, 1920, 1080))
+        assertEquals(PictureCut.NONE, pictureCut(1920, 1080, 1920, 1080))
+        assertEquals("on a 4:3 screen", PictureCut.SIDES, pictureCut(1920, 1080, 1024, 768))
+        assertEquals("on a 4:3 screen", PictureCut.NONE, pictureCut(4000, 3000, 1024, 768))
+    }
+
+    // A 16:9 picture on a 1366 x 768 TV, whose shape is nearly 16:9: filling cuts 0.375 px.
+    @Test
+    fun `a cut of less than 1 percent of the screen counts as none`() {
+        assertEquals(PictureCut.NONE, pictureCut(1920, 1080, 1366, 768))
+        // On 1920 x 1080, 1% of the width is 19.2 px, of the height 10.8 px, the picture scaled to the screen.
+        assertEquals(PictureCut.NONE, pictureCut(1939, 1080, 1920, 1080))
+        assertEquals(PictureCut.SIDES, pictureCut(1940, 1080, 1920, 1080))
+        assertEquals(PictureCut.NONE, pictureCut(1920, 1090, 1920, 1080))
+        assertEquals(PictureCut.TOP_AND_BOTTOM, pictureCut(1920, 1091, 1920, 1080))
+        // Measured on the screen, not the picture: the same shapes at another scale cut alike.
+        assertEquals(PictureCut.NONE, pictureCut(3878, 2160, 1920, 1080))
+        assertEquals(PictureCut.SIDES, pictureCut(970, 540, 1920, 1080))
+    }
+
+    @Test
+    fun `a cut of exactly 1 percent counts`() {
+        assertEquals(PictureCut.SIDES, pictureCut(101, 100, 100, 100))
+        assertEquals(PictureCut.TOP_AND_BOTTOM, pictureCut(100, 101, 100, 100))
+    }
+
+    @Test
+    fun `nothing is cut from an empty picture, or for an empty space`() {
+        assertEquals(PictureCut.NONE, pictureCut(0, 0, 1920, 1080))
+        assertEquals(PictureCut.NONE, pictureCut(4000, 0, 1920, 1080))
+        assertEquals(PictureCut.NONE, pictureCut(4000, 3000, 0, 0))
+        assertEquals(PictureCut.NONE, pictureCut(-1, 3000, 1920, 1080))
+    }
+
+    // The positions it offers have to move what frame() shows, and only those.
+    @Test
+    fun `the cut agrees with what filling shows`() {
+        val screens = listOf(1920 to 1080, 1366 to 768, 1024 to 768, 2560 to 1080, 1280 to 800)
+        val pictures = listOf(6000 to 1000, 4000 to 3000, 3024 to 4032, 1920 to 1080, 1939 to 1080, 1940 to 1080, 1001 to 777, 1 to 1, 8000 to 8000)
+        for ((width, height) in screens) {
+            for ((pictureWidth, pictureHeight) in pictures) {
+                val cut = pictureCut(pictureWidth, pictureHeight, width, height)
+                val left = frame(pictureWidth, pictureHeight, width, height, fill(PicturePosition.LEFT))
+                val right = frame(pictureWidth, pictureHeight, width, height, fill(PicturePosition.RIGHT))
+                val top = frame(pictureWidth, pictureHeight, width, height, fill(PicturePosition.TOP))
+                val bottom = frame(pictureWidth, pictureHeight, width, height, fill(PicturePosition.BOTTOM))
+                val what = "$pictureWidth x $pictureHeight on $width x $height: $cut"
+                // The part of the shown side that's cut, as on the screen.
+                val sides = (right.left - left.left) / (left.right - left.left)
+                val topAndBottom = (bottom.top - top.top) / (top.bottom - top.top)
+                when (cut) {
+                    PictureCut.SIDES -> assertTrue(what, sides >= 0.01f && topAndBottom == 0f)
+                    PictureCut.TOP_AND_BOTTOM -> assertTrue(what, topAndBottom >= 0.01f && sides == 0f)
+                    PictureCut.NONE -> assertTrue(what, sides < 0.01f && topAndBottom < 0.01f)
+                }
+            }
+        }
     }
 }

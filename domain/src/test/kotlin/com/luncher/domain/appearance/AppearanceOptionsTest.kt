@@ -48,13 +48,17 @@ class AppearanceOptionsTest {
         catalog.groups.forEach { assertTrue(it.options.isNotEmpty()) }
     }
 
+    // Every value of every option, each where it's offered: left and right with a wide picture,
+    // top and bottom with a tall one.
     @Test
     fun `the changes the catalog-wide tests draw apply, and differ from their base`() {
         val changes = appearanceChanges()
 
         assertEquals(catalog.all.sumOf { it.values.size - 1 }, changes.size)
         for (change in changes) {
-            assertTrue("$change", change.option.appliesTo(change.base))
+            assertTrue("$change", change.option.appliesTo(change.base, change.context))
+            assertTrue("$change", change.value in change.option.values(change.context))
+            assertTrue("$change", change.context in SAMPLE_CONTEXTS)
             assertTrue("$change", change.changed != change.base)
         }
         // Each applies to the defaults, the background's to the defaults with a picture.

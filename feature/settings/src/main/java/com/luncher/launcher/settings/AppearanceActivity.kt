@@ -8,6 +8,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import com.luncher.domain.appearance.Appearance
 import com.luncher.domain.appearance.AppearanceGroup
+import com.luncher.domain.appearance.OptionContext
 import com.luncher.domain.appearance.appearanceOptions
 
 /**
@@ -63,7 +64,8 @@ class AppearanceActivity : Activity() {
             val rows = group.options.map { option ->
                 val view = layoutInflater.inflate(R.layout.settings_appearance_option, options, false)
                 options.addView(view)
-                OptionRow(option, view, { appearance }, ::change)
+                // Nothing here depends on a context: the background's options are edited apart.
+                OptionRow(option, view, { appearance }, { OptionContext.UNKNOWN }, ::change)
             }
             this.rows += rows
             groups += Group(header, topicTitle(group.topic), rows.map { it.view })

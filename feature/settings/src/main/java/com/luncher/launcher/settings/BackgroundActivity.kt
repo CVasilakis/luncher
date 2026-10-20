@@ -13,6 +13,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import com.luncher.domain.appearance.Appearance
 import com.luncher.domain.appearance.Background
+import com.luncher.domain.appearance.OptionContext
 import com.luncher.domain.appearance.appearanceOptions
 import com.luncher.domain.jobs.JobPriority
 import com.luncher.domain.jobs.LatestRequest
@@ -24,6 +25,7 @@ import com.luncher.domain.pictures.PictureId
 import com.luncher.domain.pictures.PictureLibrary
 import com.luncher.domain.pictures.PicturePosition
 import com.luncher.domain.pictures.PictureStyle
+import com.luncher.domain.pictures.pictureCut
 import com.luncher.domain.pictures.pictureUses
 import com.luncher.launcher.ui.WorkingDialog
 import com.luncher.launcher.ui.color
@@ -38,8 +40,11 @@ import com.luncher.launcher.ui.R as UiR
  * the other settings screens; the preview's content isn't.
  *
  * What the user changes is a draft: OK on a picture chooses it, and Left and Right step the
- * options, as in the appearance editor, but nothing is stored until Save, so Back, or Home, leaves
- * the background as it was. Save draws the wallpaper while a window says so, through the process's
+ * options, as in the appearance editor, through the values that move the chosen picture on this
+ * screen (an [OptionContext]): the position only along the side filling cuts, and neither it nor
+ * the fit for a picture of the screen's shape. The draft never holds a position its picture doesn't
+ * offer: it's the middle then. Nothing is stored until Save, so Back, or Home, leaves the
+ * background as it was. Save draws the wallpaper while a window says so, through the process's
  * [Wallpaper][com.luncher.domain.wallpaper.Wallpaper], which stores the background once it's drawn,
  * then closes the editor. The background is the one part of the appearance edited this way:
  * drawing it takes a moment (docs/ARCHITECTURE.md#appearance).
@@ -69,8 +74,11 @@ class BackgroundActivity : Activity() {
     /** The appearance as stored, which the preview shows with the [draft]. */
     private lateinit var stored: Appearance
 
-    /** The background as the user has chosen it so far, stored only on Save. */
+    /** The background as the user has chosen it so far, stored only on Save; set through [holdDraft]. */
     private lateinit var draft: Background
+
+    /** Which of the options' values change anything for the [draft]'s picture on this screen. */
+    private var context = OptionContext.UNKNOWN
 
     private lateinit var preview: AppearancePreviewView
     private lateinit var list: LinearLayout
@@ -114,9 +122,12 @@ class BackgroundActivity : Activity() {
         thumbnailHeight = resources.getDimensionPixelSize(R.dimen.settings_background_thumbnail_height)
 
         stored = settings.read()
-        draft = savedInstanceState?.let(::draftIn)
-            ?: intent.getStringExtra(EXTRA_PICTURE)?.let { stored.background.copy(picture = PictureId(it)) }
-            ?: stored.background
+        // Its picture's shape is known once the library is read, as it starts (showLibrary).
+        holdDraft(
+            savedInstanceState?.let(::draftIn)
+                ?: intent.getStringExtra(EXTRA_PICTURE)?.let { stored.background.copy(picture = PictureId(it)) }
+                ?: stored.background,
+        )
 
         val optionsView = findViewById<LinearLayout>(R.id.settings_background_options)
         val indent = resources.getDimensionPixelSize(R.dimen.settings_entry_padding)
@@ -125,7 +136,7 @@ class BackgroundActivity : Activity() {
             // Not set in from a group, as in the appearance editor: the screen is the group's.
             view.setPaddingRelative(indent, view.paddingTop, view.paddingEnd, view.paddingBottom)
             optionsView.addView(view)
-            options += OptionRow(option, view, ::appearance) { changed -> setDraft(changed.background) }
+            options += OptionRow(option, view, ::appearance, { context }) { changed -> setDraft(changed.background) }
         }
         findViewById<View>(R.id.settings_background_save).setOnClickListener { save() }
 
@@ -205,9 +216,28 @@ class BackgroundActivity : Activity() {
     private fun appearance(): Appearance = stored.copy(background = draft)
 
     private fun setDraft(background: Background) {
-        if (background == draft) return
-        draft = background
-        show()
+        val before = draft
+        holdDraft(background)
+        if (draft != before) show()
+    }
+
+    /**
+     * Makes [background] the draft, with only the values its picture offers on this screen
+     * ([Background.offeredIn]): a position that wouldn't move it is the middle.
+     */
+    private fun holdDraft(background: Background) {
+        context = contextOf(background.picture)
+        draft = background.offeredIn(context)
+    }
+
+    /**
+     * What filling this screen cuts from [picture], drawn at [screenSize] as the wallpaper and the
+     * preview are; unknown without a picture, or before the library is read.
+     */
+    private fun contextOf(picture: PictureId?): OptionContext {
+        val shown = library.pictures.firstOrNull { it.id == picture } ?: return OptionContext.UNKNOWN
+        val screen = screenSize()
+        return OptionContext(backgroundCut = pictureCut(shown.width, shown.height, screen.width, screen.height))
     }
 
     /** The draft as the options, the preview and the check beside its picture show it. */
@@ -233,8 +263,9 @@ class BackgroundActivity : Activity() {
         rows.keys.retainAll(ids)
         drawing.keys.filter { it !in ids }.forEach { drawing.remove(it)?.stop() }
         val waiting = prepareMissing()
-        // A draft's picture deleted meanwhile (in another screen) is no picture.
-        draft.picture?.let { if (it !in ids) draft = draft.copy(picture = null) }
+        // A draft's picture deleted meanwhile (in another screen) is no picture; one still there
+        // has its shape known now.
+        holdDraft(draft.copy(picture = draft.picture?.takeIf { it in ids }))
         for (picture in library.pictures) {
             rows.getOrPut(picture.id) { pictureRow(picture) }
             if (!waiting && picture.id !in drawing && thumbnailOf(picture.id).drawable == null) draw(picture)
@@ -343,12 +374,14 @@ class BackgroundActivity : Activity() {
     }
 
     /**
-     * Stores the draft, or closes at once if it's what's stored. A picture is drawn first, while
-     * a window says so (half a second at least), and the editor closes once it's stored; no picture
-     * is stored at once.
+     * Stores the draft, or closes at once if it's what's stored, as the editor showed it: a stored
+     * position its picture doesn't offer showed as the middle, and draws the same. A picture is
+     * drawn first, while a window says so (half a second at least), and the editor closes once it's
+     * stored; no picture is stored at once.
      */
     private fun save() {
-        if (draft == settings.read().background) return finish()
+        // In the draft's context: a stored background of another picture differs from it anyway.
+        if (draft == settings.read().background.offeredIn(context)) return finish()
         val screen = screenSize()
         if (draft.picture == null) {
             wallpaper.save(draft, screen.width, screen.height) {}
@@ -393,7 +426,7 @@ class BackgroundActivity : Activity() {
     private fun delete(picture: Picture) {
         wallpaper.forget(setOf(picture.id))
         stored = settings.read()
-        if (draft.picture == picture.id) draft = draft.copy(picture = null)
+        if (draft.picture == picture.id) holdDraft(draft.copy(picture = null))
         pictures.delete(setOf(picture.id))
         show()
     }

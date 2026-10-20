@@ -31,9 +31,9 @@ domain/src/
 │   │   ├── TileStyle.kt         model: how each tile is drawn (its corners)
 │   │   ├── Corners.kt           model and rule: a corner radius or round ends, in pixels for a tile's height
 │   │   ├── TopBarAppearance.kt  model: whether the time and the date show, the clock's side of the top bar, the time's side of the date
-│   │   ├── Background.kt        model: the wallpaper, a picture of the library or none, and how it's drawn
+│   │   ├── Background.kt        model and rule: the wallpaper, a picture of the library or none, and how it's drawn; only values its context offers
 │   │   ├── Side.kt              model: left or right, the screen's, in every language
-│   │   ├── AppearanceOption.kt  models and rules: each option the user can change, its values, stepping through them, around
+│   │   ├── AppearanceOption.kt  models and rules: each option the user can change, its values, those a context offers (OptionContext), stepping through them, around
 │   │   ├── AppearanceOptions.kt models and rule: which options the editor lists, in groups; a group edited apart (the background's)
 │   │   └── AppearanceSettings.kt port: the stored appearance, and when it changes
 │   ├── jobs/
@@ -48,7 +48,7 @@ domain/src/
 │   │   ├── PictureNames.kt      rules: the name a picture keeps (pictureName), a name the library has already (nameClash: the same file, or another), and what a drop folder's listing already tells can't be added (whyRefused)
 │   │   ├── ReceivedPictures.kt  helper: the pictures other apps shared, added one at a time in sessions the window that took them last holds; how far it got, then how it went (Outcome), stopped on Cancel
 │   │   ├── PictureFormat.kt     model and rule: the formats a TV may not show (HEIF, AVIF), recognized by a file's header
-│   │   ├── Framing.kt           model and rule: how a picture fills a space of another shape (Fit, PicturePosition), and which part of it shows
+│   │   ├── Framing.kt           model and rules: how a picture fills a space of another shape (Fit, PicturePosition), which part of it shows, and what filling cuts from it (PictureCut: nothing under 1%, its sides, or its top and bottom)
 │   │   ├── PictureStyle.kt      model and rule: a picture's framing, dim and blur (Blur: off, then three levels of equal steps), as it's drawn
 │   │   ├── PictureUse.kt        model and rule: what a picture is used for (the wallpaper), the uses a received picture offers (pictureUseMenu), and an appearance without deleted pictures
 │   │   ├── PictureImages.kt     port: a picture drawn at a size in a style, in the UI's image type; kept or drawn anew, a screen's drawing stopped when it's dropped
@@ -80,7 +80,7 @@ domain/src/
     ├── apps/FakeInstalledApps.kt   fake of the InstalledApps port
     ├── apps/FakeAppArrangements.kt fake of the AppArrangements port: the arrangement in memory
     ├── appearance/FakeAppearanceSettings.kt  fake of the AppearanceSettings port: the appearance in memory
-    ├── appearance/AppearanceChanges.kt       each option at each value but its default: what the catalog-wide tests draw (SAMPLE_WALLPAPER for the background's)
+    ├── appearance/AppearanceChanges.kt       each option at each value but its default, in a context that offers it: what the catalog-wide tests draw (SAMPLE_WALLPAPER for the background's, wide or tall)
     ├── clock/FakeClock.kt          fake of the Clock port: a fixed time the test moves
     ├── jobs/ManualJobs.kt          fake of the Jobs port: the queued jobs run when the test says, all or the next one, in the real order
     ├── pictures/FakePictures.kt    fake of the Pictures and PictureImport ports: the library in memory, each source's answer set by the test

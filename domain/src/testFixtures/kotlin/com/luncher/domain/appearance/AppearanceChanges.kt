@@ -1,5 +1,6 @@
 package com.luncher.domain.appearance
 
+import com.luncher.domain.pictures.PictureCut
 import com.luncher.domain.pictures.PictureId
 
 /**
@@ -9,9 +10,18 @@ import com.luncher.domain.pictures.PictureId
 val SAMPLE_WALLPAPER = PictureId("sample-wallpaper")
 
 /**
+ * The contexts [appearanceChanges] are made in, the first where a change applies: the sample
+ * picture wider than the screen, then taller. No one picture offers every position (left and right
+ * move only a wide one, top and bottom only a tall one); the drawing tests' fakes draw the sample
+ * from its style, whatever its shape.
+ */
+val SAMPLE_CONTEXTS = listOf(OptionContext(backgroundCut = PictureCut.SIDES), OptionContext(backgroundCut = PictureCut.TOP_AND_BOTTOM))
+
+/**
  * One option of the catalog set to one of its values other than its default, in an appearance
- * where the option applies ([AppearanceOption.appliesTo]): what the catalog-wide tests draw, to
- * check that each option's every value shows, on the home screen and in the preview.
+ * and a context where the option applies ([AppearanceOption.appliesTo]) and offers that value
+ * ([AppearanceOption.values]): what the catalog-wide tests draw, to check that each option's every
+ * value shows, on the home screen and in the preview.
  */
 class AppearanceChange(
     val option: AppearanceOption<*>,
@@ -20,6 +30,8 @@ class AppearanceChange(
     val base: Appearance,
     /** [base] with [option] at [value]. */
     val changed: Appearance,
+    /** Where [option] offers [value]: one of [SAMPLE_CONTEXTS]. */
+    val context: OptionContext,
 ) {
     override fun toString() = "$option $value"
 }
@@ -27,21 +39,25 @@ class AppearanceChange(
 /** Every option of [appearanceOptions] at each value other than its default. */
 fun appearanceChanges(): List<AppearanceChange> = appearanceOptions().all.flatMap { changes(it) }
 
-private fun <T> changes(option: AppearanceOption<T>): List<AppearanceChange> {
-    val base = baseFor(option)
-    return option.values.filter { it != option.default }.map { AppearanceChange(option, it, base, option.set(base, it)) }
-}
+private fun <T> changes(option: AppearanceOption<T>): List<AppearanceChange> =
+    option.values.filter { it != option.default }.map { value ->
+        val (base, context) = baseFor(option, value)
+        AppearanceChange(option, value, base, option.set(base, value), context)
+    }
 
 /**
  * The defaults, or else the defaults with one other option at the first value that makes [option]
- * apply; then the same with [SAMPLE_WALLPAPER] as the background, which isn't an option.
+ * apply; then the same with [SAMPLE_WALLPAPER] as the background, which isn't an option. In the
+ * first of [SAMPLE_CONTEXTS] that offers [value].
  */
-private fun baseFor(option: AppearanceOption<*>): Appearance {
+private fun <T> baseFor(option: AppearanceOption<T>, value: T): Pair<Appearance, OptionContext> {
     val defaults = Appearance()
     val withPicture = Appearance(background = Background(picture = SAMPLE_WALLPAPER))
-    return sequenceOf(defaults, withPicture)
+    val context = SAMPLE_CONTEXTS.first { value in option.values(it) }
+    val base = sequenceOf(defaults, withPicture)
         .flatMap { start -> sequenceOf(start) + appearanceOptions().all.asSequence().flatMap { other -> valuesOf(other, start) } }
-        .first { option.appliesTo(it) }
+        .first { option.appliesTo(it, context) }
+    return base to context
 }
 
 private fun <T> valuesOf(option: AppearanceOption<T>, appearance: Appearance): Sequence<Appearance> =

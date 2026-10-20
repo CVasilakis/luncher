@@ -24,4 +24,15 @@ data class Background(
 ) {
     /** How the picture is drawn into the screen. */
     val style: PictureStyle get() = PictureStyle(Framing(fit, position), dim, blur)
+
+    /**
+     * This background with only values that change anything in [context]: a position that doesn't
+     * move the picture, as the top of a picture cut at the sides, is the middle, which draws the
+     * same, so the next step starts there. A fit is kept: its other value draws otherwise as soon
+     * as a picture of another shape is chosen.
+     */
+    fun offeredIn(context: OptionContext): Background {
+        val positions = AppearanceOption.BackgroundPosition.values(context)
+        return if (position in positions) this else copy(position = AppearanceOption.BackgroundPosition.default)
+    }
 }

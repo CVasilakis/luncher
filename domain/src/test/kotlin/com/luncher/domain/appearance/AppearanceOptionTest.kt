@@ -6,6 +6,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import com.luncher.domain.pictures.Blur
 import com.luncher.domain.pictures.Fit
+import com.luncher.domain.pictures.PictureCut
 import com.luncher.domain.pictures.PictureId
 import com.luncher.domain.pictures.PicturePosition
 
@@ -210,6 +211,95 @@ class AppearanceOptionTest {
         val stretched = Appearance(background = picture.copy(fit = Fit.STRETCH))
         assertFalse(AppearanceOption.BackgroundPosition.appliesTo(stretched))
         assertTrue(AppearanceOption.BackgroundDim.appliesTo(stretched))
+    }
+
+    private val wide = OptionContext(backgroundCut = PictureCut.SIDES)
+    private val tall = OptionContext(backgroundCut = PictureCut.TOP_AND_BOTTOM)
+    private val sameShape = OptionContext(backgroundCut = PictureCut.NONE)
+
+    @Test
+    fun `the position offers the middle and the ends of the side the picture is cut at`() {
+        val position = AppearanceOption.BackgroundPosition
+
+        assertEquals(listOf(PicturePosition.CENTER, PicturePosition.LEFT, PicturePosition.RIGHT), position.values(wide))
+        assertEquals(listOf(PicturePosition.CENTER, PicturePosition.TOP, PicturePosition.BOTTOM), position.values(tall))
+        assertEquals(listOf(PicturePosition.CENTER), position.values(sameShape))
+        assertEquals("unknown: all of them", PicturePosition.entries, position.values(OptionContext.UNKNOWN))
+    }
+
+    // What's stored doesn't depend on the picture: a position stays readable whatever is chosen later.
+    @Test
+    fun `the position keeps every value for storage, whatever the context`() {
+        val position = AppearanceOption.BackgroundPosition
+
+        assertEquals(PicturePosition.entries, position.values)
+        for (value in PicturePosition.entries) assertEquals(value, position.valueOrDefault(value))
+    }
+
+    @Test
+    fun `fit and position don't apply to a picture of the screen's shape, dim and blur do`() {
+        val appearance = Appearance(background = Background(picture = PictureId("sunset")))
+
+        for (context in listOf(wide, tall, OptionContext.UNKNOWN)) {
+            assertTrue("$context", AppearanceOption.BackgroundFit.appliesTo(appearance, context))
+            assertTrue("$context", AppearanceOption.BackgroundPosition.appliesTo(appearance, context))
+        }
+        assertFalse(AppearanceOption.BackgroundFit.appliesTo(appearance, sameShape))
+        assertFalse(AppearanceOption.BackgroundPosition.appliesTo(appearance, sameShape))
+        assertTrue(AppearanceOption.BackgroundDim.appliesTo(appearance, sameShape))
+        assertTrue(AppearanceOption.BackgroundBlur.appliesTo(appearance, sameShape))
+        val stretched = Appearance(background = Background(picture = PictureId("sunset"), fit = Fit.STRETCH))
+        assertFalse("stretched", AppearanceOption.BackgroundPosition.appliesTo(stretched, wide))
+        assertFalse("no picture", AppearanceOption.BackgroundFit.appliesTo(Appearance(), wide))
+    }
+
+    @Test
+    fun `every option offers its default in every context, and only the position narrows its values`() {
+        val contexts = listOf(OptionContext.UNKNOWN, wide, tall, sameShape)
+        for (option in options) {
+            for (context in contexts) {
+                assertTrue("$option in $context", option.default in option.values(context))
+                assertTrue("$option in $context", option.values.containsAll(option.values(context)))
+                if (option != AppearanceOption.BackgroundPosition) assertEquals("$option in $context", option.values, option.values(context))
+            }
+        }
+    }
+
+    @Test
+    fun `the context decides nothing for the options it doesn't concern`() {
+        val appearances = listOf(
+            Appearance(),
+            Appearance(TileGeometry(verticalAlignment = VerticalAlignment.TOP), topBar = TopBarAppearance(showTime = false, showDate = false)),
+        )
+        val background = setOf(AppearanceOption.BackgroundFit, AppearanceOption.BackgroundPosition)
+        for (option in options - background) {
+            for (appearance in appearances) {
+                for (context in listOf(wide, tall, sameShape)) assertEquals("$option", option.appliesTo(appearance), option.appliesTo(appearance, context))
+            }
+        }
+    }
+
+    @Test
+    fun `the position steps around the values offered, either way`() {
+        val position = AppearanceOption.BackgroundPosition
+        val start = Appearance(background = Background(picture = PictureId("sunset")))
+        fun walk(context: OptionContext, forward: Boolean) =
+            generateSequence(start) { position.step(it, forward, context) }.take(4).map(position::get).toList()
+
+        assertEquals(listOf(PicturePosition.CENTER, PicturePosition.LEFT, PicturePosition.RIGHT, PicturePosition.CENTER), walk(wide, forward = true))
+        assertEquals(listOf(PicturePosition.CENTER, PicturePosition.RIGHT, PicturePosition.LEFT, PicturePosition.CENTER), walk(wide, forward = false))
+        assertEquals(listOf(PicturePosition.CENTER, PicturePosition.TOP, PicturePosition.BOTTOM, PicturePosition.CENTER), walk(tall, forward = true))
+        assertEquals(listOf(PicturePosition.CENTER, PicturePosition.BOTTOM, PicturePosition.TOP, PicturePosition.CENTER), walk(tall, forward = false))
+    }
+
+    @Test
+    fun `the position steps from a value not offered to the middle`() {
+        val position = AppearanceOption.BackgroundPosition
+        val top = Appearance(background = Background(picture = PictureId("sunset"), position = PicturePosition.TOP))
+
+        assertEquals(PicturePosition.CENTER, position.get(position.step(top, forward = true, wide)))
+        assertEquals(PicturePosition.CENTER, position.get(position.step(top, forward = false, wide)))
+        assertEquals("unknown: all of them", PicturePosition.BOTTOM, position.get(position.step(top, forward = true)))
     }
 
     @Test

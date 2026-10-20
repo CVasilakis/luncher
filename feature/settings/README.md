@@ -142,8 +142,9 @@ below it and closes the group that was open, so the list stays short; OK again c
 option shows its value between arrows; Left and Right step it through its values, around from the
 last to the first, and each change is stored at once, the preview following. An option that
 changes nothing with the others as they are (a full bottom row with the rows at the top; the
-side with the time and the date hidden; their order with either hidden) is dimmed, and the focus
-passes it by.
+side with the time and the date hidden; their order with either hidden), or with what else
+decides it (the background's picture's shape, in the background editor:
+[below](#background)), is dimmed, and the focus passes it by.
 The Background group is edited apart (`editedApart`): it's one entry, the picture's name, or
 None, beside it, and OK on it opens the background editor ([below](#background)), where the
 picture and its options are saved together; back in the editor (`onResume`), the appearance is
@@ -161,7 +162,7 @@ they scroll when they're taller than the screen.
 
 | Part | Job |
 |---|---|
-| `appearanceOptions`, `AppearanceOption` (`:domain`) | which options there are, in which groups; each one's values, in order, the part of `Appearance` it reads and changes, whether it applies, and what a step does |
+| `appearanceOptions`, `AppearanceOption` (`:domain`) | which options there are, in which groups; each one's values, in order, the part of `Appearance` it reads and changes, whether it applies, and what a step does, with the values an `OptionContext` offers (all of them here) |
 | `AppearanceSettings` (`:domain`) / `PreferencesAppearanceSettings` (`:platform`) | port and adapter: the stored `Appearance`, read once per process; each write is stored at once, in the background, and told to the listeners (the home screen, while it's shown) |
 | `TileLayouts`, `topBarLayout` (`:domain`) | where the preview's tiles and top bar items go, by the home screen's own rules |
 | `AppearanceActivity` | the groups' entries, opening one at a time; a group edited apart as one entry; the options' rows (`OptionRow`, `OptionLabels.kt`'s exhaustive `when`s, so a new option doesn't compile until it has its labels) and the reset entry |
@@ -208,10 +209,19 @@ settings screens; the preview's content and the pictures don't.
 What the user changes is a draft, the one exception to the appearance editor's rule of storing each
 change at once ([`ARCHITECTURE.md`](../../docs/ARCHITECTURE.md#appearance)): OK on a picture
 chooses it (its name in the accent color, a check beside it), Left and Right step the options,
-dimmed without a picture (the position also with the picture stretched), and the preview follows;
-nothing is stored. Back, or Home, leaves the background as it was. **Save** stores the draft,
+and the preview follows; nothing is stored. The options offer only what moves the chosen picture
+on this screen, by how filling the screen cuts it (`pictureCut`, from the picture's size and
+`screenSize`, the wallpaper's): the position steps through Center, Left and Right for a picture
+wider than the screen, Center, Top and Bottom for a taller one. All four are dimmed without a
+picture; the position also with the picture stretched; the fit and the position also with a
+picture of the screen's shape, or so near it that filling would cut less than 1% (a 16:9
+picture on a 1366 × 768 TV), where every choice looks the same. A stretch stored for such a
+picture is kept, dimmed. The draft never holds a position its picture doesn't offer: opening
+the editor (the stored background, a picture just received, a draft kept), choosing another
+picture, or deleting the draft's makes it Center, so the next picture starts there too. Back, or Home, leaves the background as it was. **Save** stores the draft,
 through the process's `Wallpaper` ([`feature/home/README.md`](../home/README.md#the-wallpaper)):
-- unchanged, the editor just closes;
+- unchanged, the editor just closes: a stored position the draft shows as Center counts as
+  unchanged, as it draws the same;
 - without a picture, it's stored at once, the kept wallpaper deleted, and the editor closes;
 - with one, a window (`WorkingDialog`, from `:ui`) says "Processing background…" at once, taking every
   key, Back too, while the picture is drawn at the screen's size and kept; only then is the
@@ -233,6 +243,7 @@ then the picture. A draft's picture deleted is no picture in the draft.
 | `PictureImages` (`:domain`) / `CachedPictureImages` (`:platform`) | the thumbnails, drawn from the working copies at the row's size in pixels, and kept |
 | `pictureUses`, `withoutPictures` (`:domain`) | what each picture is used for, which deleting it says, and the background without it |
 | `Wallpaper` (`:domain`) | Save (`save`: drawn, kept, then stored) and deleting the wallpaper's picture (`forget`) |
+| `pictureCut`, `OptionContext`, `Background.offeredIn` (`:domain`) | what filling the screen cuts from the draft's picture, the options' values that offers, and the draft without a position it doesn't |
 | `BackgroundActivity` | the list, the draft, Save and its window, the questions; chooses and focuses the picture Add from folder added (`EXTRA_ADDED`); starts with a picture just received chosen (`EXTRA_PICTURE`) |
 
 **Prepared once, then at once.** Each picture of the library has a working copy

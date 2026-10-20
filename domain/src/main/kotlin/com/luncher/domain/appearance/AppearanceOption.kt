@@ -2,6 +2,7 @@ package com.luncher.domain.appearance
 
 import com.luncher.domain.pictures.Blur
 import com.luncher.domain.pictures.Fit
+import com.luncher.domain.pictures.PictureCut
 import com.luncher.domain.pictures.PicturePosition
 import com.luncher.domain.appearance.HorizontalAlignment as Horizontal
 import com.luncher.domain.appearance.VerticalAlignment as Vertical
@@ -12,11 +13,15 @@ import com.luncher.domain.appearance.VerticalAlignment as Vertical
  * number is a list of steps too, so every option is changed the same way. Each option is a type of
  * its own, so every layer that handles options (storage, labels) does so in an exhaustive `when`,
  * and a new option doesn't compile until each one handles it (docs/ARCHITECTURE.md#appearance).
- * Which options the editor lists, in which groups: [appearanceOptions].
+ * Which options the editor lists, in which groups: [appearanceOptions]. Which of its values change
+ * anything may also depend on what isn't in the appearance: an [OptionContext].
  */
 sealed interface AppearanceOption<T> {
 
-    /** The values, in order; the option's [default] is one of them. */
+    /**
+     * Every value, in order; the option's [default] is one of them. What's stored is one of these,
+     * whatever the [OptionContext].
+     */
     val values: List<T>
 
     fun get(appearance: Appearance): T
@@ -24,10 +29,16 @@ sealed interface AppearanceOption<T> {
     fun set(appearance: Appearance, value: T): Appearance
 
     /**
-     * Whether the option changes anything with the rest of [appearance] as it is: one that
-     * doesn't is shown but can't be changed.
+     * Whether the option changes anything with the rest of [appearance] as it is, and [context]:
+     * one that doesn't is shown but can't be changed.
      */
-    fun appliesTo(appearance: Appearance): Boolean = true
+    fun appliesTo(appearance: Appearance, context: OptionContext = OptionContext.UNKNOWN): Boolean = true
+
+    /**
+     * The values the user steps through in [context], in order: those of [values] that change
+     * anything there, the [default] among them. All of them by default, and where it isn't known.
+     */
+    fun values(context: OptionContext): List<T> = values
 
     /** Where the rows of tiles go in the height. */
     data object VerticalAlignment : AppearanceOption<Vertical> {
@@ -51,7 +62,7 @@ sealed interface AppearanceOption<T> {
         override fun get(appearance: Appearance) = appearance.tileGeometry.fullBottomRow
         override fun set(appearance: Appearance, value: Boolean) =
             appearance.copy(tileGeometry = appearance.tileGeometry.copy(fullBottomRow = value))
-        override fun appliesTo(appearance: Appearance) = appearance.tileGeometry.verticalAlignment != Vertical.TOP
+        override fun appliesTo(appearance: Appearance, context: OptionContext) = appearance.tileGeometry.verticalAlignment != Vertical.TOP
     }
 
     /** How round the tiles' corners are: radii in dp, then round ends. */
@@ -84,7 +95,7 @@ sealed interface AppearanceOption<T> {
         override fun get(appearance: Appearance) = appearance.topBar.clockSide
         override fun set(appearance: Appearance, value: Side) =
             appearance.copy(topBar = appearance.topBar.copy(clockSide = value))
-        override fun appliesTo(appearance: Appearance) = appearance.topBar.showTime || appearance.topBar.showDate
+        override fun appliesTo(appearance: Appearance, context: OptionContext) = appearance.topBar.showTime || appearance.topBar.showDate
     }
 
     /** The side of the date the time is on, while both show. */
@@ -93,26 +104,42 @@ sealed interface AppearanceOption<T> {
         override fun get(appearance: Appearance) = appearance.topBar.timeSide
         override fun set(appearance: Appearance, value: Side) =
             appearance.copy(topBar = appearance.topBar.copy(timeSide = value))
-        override fun appliesTo(appearance: Appearance) = appearance.topBar.showTime && appearance.topBar.showDate
+        override fun appliesTo(appearance: Appearance, context: OptionContext) = appearance.topBar.showTime && appearance.topBar.showDate
     }
 
-    /** How the background's picture fills the screen, while there's one. */
+    /**
+     * How the background's picture fills the screen, while there's one of another shape: filling or
+     * stretched, one of the screen's shape looks the same.
+     */
     data object BackgroundFit : AppearanceOption<Fit> {
         override val values: List<Fit> = Fit.entries
         override fun get(appearance: Appearance) = appearance.background.fit
         override fun set(appearance: Appearance, value: Fit) =
             appearance.copy(background = appearance.background.copy(fit = value))
-        override fun appliesTo(appearance: Appearance) = appearance.background.picture != null
+        override fun appliesTo(appearance: Appearance, context: OptionContext) =
+            appearance.background.picture != null && context.backgroundCut != PictureCut.NONE
     }
 
-    /** Which part of the background's picture shows, while it fills the screen. */
+    /**
+     * Which part of the background's picture shows, while it fills the screen and is cut: the
+     * middle or an end of the side cut, left or right of a wide picture, top or bottom of a tall one.
+     */
     data object BackgroundPosition : AppearanceOption<PicturePosition> {
         override val values: List<PicturePosition> = PicturePosition.entries
+        private val acrossTheSides = listOf(PicturePosition.CENTER, PicturePosition.LEFT, PicturePosition.RIGHT)
+        private val acrossTheTop = listOf(PicturePosition.CENTER, PicturePosition.TOP, PicturePosition.BOTTOM)
+        private val middleOnly = listOf(PicturePosition.CENTER)
         override fun get(appearance: Appearance) = appearance.background.position
         override fun set(appearance: Appearance, value: PicturePosition) =
             appearance.copy(background = appearance.background.copy(position = value))
-        override fun appliesTo(appearance: Appearance) =
-            appearance.background.picture != null && appearance.background.fit == Fit.FILL
+        override fun appliesTo(appearance: Appearance, context: OptionContext) =
+            appearance.background.picture != null && appearance.background.fit == Fit.FILL && context.backgroundCut != PictureCut.NONE
+        override fun values(context: OptionContext) = when (context.backgroundCut) {
+            null -> values
+            PictureCut.SIDES -> acrossTheSides
+            PictureCut.TOP_AND_BOTTOM -> acrossTheTop
+            PictureCut.NONE -> middleOnly
+        }
     }
 
     /** How much darker the background's picture is drawn, in percent, while there's one. */
@@ -121,7 +148,7 @@ sealed interface AppearanceOption<T> {
         override fun get(appearance: Appearance) = appearance.background.dim
         override fun set(appearance: Appearance, value: Int) =
             appearance.copy(background = appearance.background.copy(dim = value))
-        override fun appliesTo(appearance: Appearance) = appearance.background.picture != null
+        override fun appliesTo(appearance: Appearance, context: OptionContext) = appearance.background.picture != null
     }
 
     /** How blurred the background's picture is drawn, while there's one. */
@@ -130,7 +157,24 @@ sealed interface AppearanceOption<T> {
         override fun get(appearance: Appearance) = appearance.background.blur
         override fun set(appearance: Appearance, value: Blur) =
             appearance.copy(background = appearance.background.copy(blur = value))
-        override fun appliesTo(appearance: Appearance) = appearance.background.picture != null
+        override fun appliesTo(appearance: Appearance, context: OptionContext) = appearance.background.picture != null
+    }
+}
+
+/**
+ * What decides, besides the [Appearance], which values of the options change anything: facts of the
+ * device and the user's things, which no option sets, such as the shape of the background's
+ * picture on this screen. Each fact is null while it isn't known, which offers every value, as for
+ * the options it doesn't concern; a fact added later is one more field, which leaves every place
+ * that doesn't know it as it is.
+ */
+data class OptionContext(
+    /** What filling the screen cuts from the background's picture ([pictureCut][com.luncher.domain.pictures.pictureCut]). */
+    val backgroundCut: PictureCut? = null,
+) {
+    companion object {
+        /** Nothing known: every value of every option offered. */
+        val UNKNOWN = OptionContext()
     }
 }
 
@@ -145,10 +189,12 @@ fun <T> AppearanceOption<T>.valueOrDefault(value: T?): T =
     if (value != null && value in values) value else default
 
 /**
- * [appearance] with this option at its next value ([forward]) or its previous one, around: after
- * the last value comes the first, and before the first the last.
+ * [appearance] with this option at its next value ([forward]) or its previous one among those
+ * [context] offers ([AppearanceOption.values]), around: after the last value comes the first, and
+ * before the first the last. From a value not among them, the step is to the option's default.
  */
-fun <T> AppearanceOption<T>.step(appearance: Appearance, forward: Boolean): Appearance {
+fun <T> AppearanceOption<T>.step(appearance: Appearance, forward: Boolean, context: OptionContext = OptionContext.UNKNOWN): Appearance {
+    val values = values(context)
     val index = values.indexOf(get(appearance))
     if (index < 0) return set(appearance, default)
     val next = (index + if (forward) 1 else -1).mod(values.size)

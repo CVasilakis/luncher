@@ -44,9 +44,12 @@ class BackgroundScreenshotTest {
 
     private val application = RuntimeEnvironment.getApplication() as SettingsTestApplication
 
-    /** Four pictures; a photo on its side among them, and a name too long for its row. */
+    /**
+     * Four pictures; a photo on its side among them, and a name too long for its row. The first, the
+     * wallpaper, a camera's 4:3 photo, so filling the screen cuts it and every option applies.
+     */
     private val library = arrayOf(
-        picture("sunset.jpg", added = 4, bytes = 3_200_000),
+        picture("sunset.jpg", added = 4, width = 4032, height = 3024, bytes = 3_200_000),
         picture("beach.png", added = 3, bytes = 3_100_000),
         picture("phone-photo.jpg", added = 2, width = 3024, height = 4032, bytes = 2_400_000),
         picture("a picture with a name far too long for its row.jpg", added = 1, bytes = 1_100_000),

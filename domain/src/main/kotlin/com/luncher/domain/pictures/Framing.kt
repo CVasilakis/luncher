@@ -50,3 +50,34 @@ fun frame(pictureWidth: Int, pictureHeight: Int, width: Int, height: Int, framin
     }
     return PictureArea(left, top, left + shownWidth, top + shownHeight)
 }
+
+/**
+ * What [Fit.FILL] cuts from a picture in a space of another shape ([frame]): nothing to speak of,
+ * its sides (a picture wider than the space) or its top and bottom (a taller one). Which positions
+ * move it follows: left and right only where it's cut at the sides, top and bottom only where it's
+ * cut at the top and bottom, none where it isn't cut.
+ */
+enum class PictureCut { NONE, SIDES, TOP_AND_BOTTOM }
+
+/**
+ * What filling a [width] x [height] space cuts from a [pictureWidth] x [pictureHeight] picture, the
+ * same way as [frame]. A cut of less than 1% of the space along the side cut, in the space's px once
+ * the picture is scaled to it (a 16:9 picture on a 1366 x 768 TV: under half a pixel), counts as
+ * none: no position would move the picture a visible step. Nothing is cut from a picture or space
+ * without a size, as [frame] draws it whole.
+ */
+fun pictureCut(pictureWidth: Int, pictureHeight: Int, width: Int, height: Int): PictureCut {
+    if (pictureWidth <= 0 || pictureHeight <= 0 || width <= 0 || height <= 0) return PictureCut.NONE
+    // As frame(): the space wider than the picture cuts its top and bottom.
+    val across = width.toLong() * pictureHeight
+    val down = height.toLong() * pictureWidth
+    val wider = across > down
+    // Scaled to the space, the picture's side that's cut is longer than the space's by (larger - smaller) / smaller of it.
+    val larger = if (wider) across else down
+    val smaller = if (wider) down else across
+    if ((larger - smaller) * UNSEEN_CUT < smaller) return PictureCut.NONE
+    return if (wider) PictureCut.TOP_AND_BOTTOM else PictureCut.SIDES
+}
+
+/** A cut shorter than the space's side over this ([pictureCut]) counts as none: 1%. */
+private const val UNSEEN_CUT = 100L

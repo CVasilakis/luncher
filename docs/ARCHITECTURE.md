@@ -196,7 +196,17 @@ a test.
    its own, with an ordered list of values and the part of `Appearance` it reads and changes. A
    number is a list of steps too, so every option is changed the same way. Every layer that
    handles options does so in an exhaustive `when`, so a new option doesn't compile until each
-   one handles it.
+   one handles it. Which values change anything can depend on facts that aren't settings, so
+   aren't in `Appearance`: an `OptionContext`, which a screen builds and passes with the
+   appearance (today what filling the screen cuts from the background's picture, `pictureCut`:
+   left and right move only a wide picture, top and bottom only a tall one, and neither the
+   position nor the fit one of the screen's shape). An option offers only the values that move
+   something there, and doesn't apply where none would; a fact nobody knows (null) offers every
+   value, as do the options a fact doesn't concern, so a fact added later changes no other
+   option, nor a screen that doesn't know it. The full list of values stays what's stored: a
+   stored value reads back whatever the context, and a screen keeps one the context doesn't
+   offer out of its draft (`Background.offeredIn`), so it never shows a value that does
+   nothing.
 4. **One port you can watch stores the whole `Appearance`**
    ([above](#background-work-and-changes-while-shown)). Its adapter in `:platform` keeps one value
    per option, under a key it assigns in an exhaustive `when`; a value it doesn't know (stored by

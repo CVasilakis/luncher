@@ -17,6 +17,7 @@ import com.luncher.domain.pictures.FakePictures.Companion.picture
 import com.luncher.domain.pictures.Fit
 import com.luncher.domain.pictures.ImportResult
 import com.luncher.domain.pictures.Picture
+import com.luncher.domain.pictures.PicturePosition
 import com.luncher.domain.pictures.PictureStyle
 import com.luncher.domain.wallpaper.Wallpaper
 import com.luncher.domain.wallpaper.WallpaperDrawing
@@ -25,6 +26,7 @@ import com.luncher.launcher.ui.WorkingDialog
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -49,6 +51,10 @@ class BackgroundActivityTest {
     private val beach = picture("beach.png", added = 2)
     private val sunset = picture("sunset.jpg", added = 3)
     private val old = picture("old.jpg", added = 1)
+
+    // Wider and taller than the 1080p screen: filled, cut at the sides, or at the top and bottom.
+    private val panorama = picture("panorama.jpg", added = 4, width = 6000, height = 1000)
+    private val portrait = picture("portrait.jpg", added = 5, width = 3024, height = 4032)
 
     private lateinit var graph: TestPicturesGraph
 
@@ -203,12 +209,137 @@ class BackgroundActivityTest {
 
     @Test
     fun `stretched, the position is dimmed`() {
-        graph(sunset, background = Background(sunset.id, fit = Fit.STRETCH))
+        graph(panorama, background = Background(panorama.id, fit = Fit.STRETCH))
 
         val activity = start().get()
 
         assertFalse(activity.option("Position").isFocusable)
         assertTrue(activity.option("Fit").isFocusable)
+    }
+
+    /** The values [label] shows, stepped [steps] times. */
+    private fun Activity.stepped(label: String, steps: Int) = (1..steps).map { step(label); value(label) }
+
+    @Test
+    fun `a picture wider than the screen offers the middle, left and right`() {
+        graph(panorama, background = Background(panorama.id))
+        val activity = start().get()
+
+        assertEquals(listOf("Left", "Right", "Center", "Left"), activity.stepped("Position", 4))
+        assertTrue(activity.option("Fit").isFocusable)
+    }
+
+    @Test
+    fun `a picture taller than the screen offers the middle, top and bottom`() {
+        graph(portrait, background = Background(portrait.id))
+        val activity = start().get()
+
+        assertEquals(listOf("Top", "Bottom", "Center", "Top"), activity.stepped("Position", 4))
+    }
+
+    // The library's default picture is 1920 x 1080, as the screen: filling or stretched, it looks the same.
+    @Test
+    fun `a picture of the screen's shape dims the fit and the position, and the focus passes them by`() {
+        graph(sunset, background = Background(sunset.id))
+        val activity = start().get()
+
+        for (label in listOf("Fit", "Position")) {
+            assertFalse(label, activity.option(label).isFocusable)
+            assertTrue(label, activity.option(label).alpha < 1f)
+        }
+        for (label in listOf("Dim", "Blur")) assertTrue(label, activity.option(label).isFocusable)
+        val dimmed = setOf(activity.option("Fit"), activity.option("Position"))
+        assertFalse("up from Dim", activity.option("Dim").focusSearch(View.FOCUS_UP) in dimmed)
+        assertFalse("from the pictures", activity.row("No picture").focusSearch(View.FOCUS_LEFT) in dimmed)
+        assertSame(activity.option("Blur"), activity.option("Dim").focusSearch(View.FOCUS_DOWN))
+    }
+
+    @Test
+    fun `a picture of the screen's shape keeps a stored stretch, dimmed`() {
+        graph(sunset, background = Background(sunset.id, fit = Fit.STRETCH))
+        val activity = start().get()
+
+        assertEquals("Stretch", activity.value("Fit"))
+        assertFalse(activity.option("Fit").isFocusable)
+    }
+
+    @Test
+    fun `a picture at the top, then a wide one chosen, shows and saves the middle`() {
+        graph(portrait, panorama, background = Background(portrait.id))
+        val activity = start().get()
+        activity.step("Position")
+        assertEquals("Top", activity.value("Position"))
+
+        activity.ok("panorama.jpg")
+        assertEquals("Center", activity.value("Position"))
+        activity.ok("portrait.jpg")
+        assertEquals("the middle kept, not the top again", "Center", activity.value("Position"))
+        activity.ok("panorama.jpg")
+        activity.save()
+        drawInTheBackground()
+
+        assertEquals(Background(panorama.id), stored)
+    }
+
+    @Test
+    fun `opened with a position its picture doesn't offer, shows the middle, and Save without changes closes without drawing`() {
+        graph(panorama, background = Background(panorama.id, position = PicturePosition.TOP, dim = 20))
+        val activity = start().get()
+
+        assertEquals("Center", activity.value("Position"))
+        activity.save()
+
+        assertTrue(activity.isFinishing)
+        assertNull(dialog())
+        graph.jobs.runAll()
+        assertEquals("no wallpaper drawn", 0, graph.storedWallpaper.stored.size)
+        assertEquals("nothing stored", Background(panorama.id, position = PicturePosition.TOP, dim = 20), stored)
+    }
+
+    @Test
+    fun `opened with a picture received, starts with a position it offers`() {
+        graph(portrait, panorama, background = Background(portrait.id, position = PicturePosition.BOTTOM))
+
+        val activity = start(Intent().putExtra(BackgroundActivity.EXTRA_PICTURE, panorama.id.value)).get()
+
+        assertEquals("Center", activity.value("Position"))
+        assertEquals(PicturePosition.CENTER, activity.findViewById<AppearancePreviewView>(R.id.settings_background_preview).appearance.background.position)
+    }
+
+    @Test
+    fun `a draft kept across a configuration change holds a position its picture offers`() {
+        graph(portrait, panorama, background = Background(portrait.id))
+        val controller = start()
+        controller.get().step("Position")
+        val state = android.os.Bundle()
+        controller.saveInstanceState(state)
+        assertEquals("Top", controller.get().value("Position"))
+
+        // Its picture now cut at the sides: another library, the same draft.
+        graph(panorama.copy(id = portrait.id, name = portrait.name))
+        val restored = Robolectric.buildActivity(BackgroundActivity::class.java).setup(state).get()
+        idle()
+
+        assertEquals("Center", restored.value("Position"))
+    }
+
+    @Test
+    fun `a picture added from the folder starts from a position it offers`() {
+        val added = picture("holiday.jpg", added = 9, width = 6000, height = 1000)
+        graph(portrait, background = Background(portrait.id, position = PicturePosition.BOTTOM))
+        val activity = start().get()
+
+        activity.ok("Add from folder")
+        graph.library.pictures += added
+        @Suppress("DEPRECATION")
+        shadowOf(activity).receiveResult(
+            Intent(activity, AddFromFolderActivity::class.java),
+            Activity.RESULT_OK,
+            Intent().putExtra(AddFromFolderActivity.EXTRA_ADDED, added.id.value),
+        )
+        idle()
+
+        assertEquals("Center", activity.value("Position"))
     }
 
     @Test
