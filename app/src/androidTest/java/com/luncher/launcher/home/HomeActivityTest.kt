@@ -42,11 +42,14 @@ import com.luncher.domain.wallpaper.FakeStoredWallpaper
 import com.luncher.domain.wallpaper.Wallpaper
 import com.luncher.launcher.AppGraph
 import com.luncher.launcher.LuncherApplication
+import com.luncher.launcher.settings.HideAppsActivity
+import com.luncher.launcher.settings.SettingsActivity
 import com.luncher.launcher.testing.RetryWhenCovered
 import com.luncher.launcher.testing.focus
 import com.luncher.launcher.testing.longPressOk
 import com.luncher.launcher.testing.resolvedHome
 import com.luncher.launcher.testing.waitForHomeScreen
+import com.luncher.launcher.testing.waitUntilDestroyed
 import junit.framework.AssertionFailedError
 import org.hamcrest.Matcher
 import org.hamcrest.Matchers.allOf
@@ -306,8 +309,10 @@ class HomeActivityTest {
             press(KeyEvent.KEYCODE_DPAD_CENTER)             // hides Movies
             waitUntil(allOf(withId(SettingsR.id.settings_app_hidden), hasSibling(withText("Movies"))), isDisplayed())
             pressBack()                                     // closes Hide apps
+            waitUntilDestroyed(HideAppsActivity::class.java)
             waitForTheSettingsPanel()                       // so the next Back goes there
             pressBack()                                     // closes the panel
+            waitUntilDestroyed(SettingsActivity::class.java)
 
             waitUntilTile("Games", hasFocus())
             onView(withContentDescription("Movies")).check(doesNotExist())
@@ -335,6 +340,7 @@ class HomeActivityTest {
             waitUntil(withText(SettingsR.string.settings_system), isDisplayed())
 
             pressBack()
+            waitUntilDestroyed(SettingsActivity::class.java)
 
             waitUntil(withId(R.id.home_settings), hasFocus())
             assertEquals(Lifecycle.State.RESUMED, scenario.state)

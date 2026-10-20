@@ -48,6 +48,7 @@ import com.luncher.launcher.testing.RetryWhenCovered
 import com.luncher.launcher.testing.longPressOk
 import com.luncher.launcher.testing.waitForFocus
 import com.luncher.launcher.testing.waitForHomeScreen
+import com.luncher.launcher.testing.waitUntilDestroyed
 import junit.framework.AssertionFailedError
 import org.hamcrest.Matcher
 import org.hamcrest.Matchers.allOf
@@ -285,6 +286,7 @@ class BackgroundActivityTest {
             waitUntil(withId(R.id.settings_pictures_folder_list), hasFocus())
             press(KeyEvent.KEYCODE_DPAD_CENTER)
 
+            waitUntilDestroyed(AddFromFolderActivity::class.java)   // it closes once the picture is added
             waitUntil(row("holiday.jpg"), hasFocus())
             waitUntil(allOf(withId(R.id.settings_background_chosen), isDisplayed()), isDisplayed())
         }
@@ -337,6 +339,7 @@ class BackgroundActivityTest {
             waitUntil(withText(added), isDisplayed(), inDialog = true)
             waitUntil(withText(R.string.settings_pictures_ok), hasFocus(), inDialog = true)
             pressInDialog(KeyEvent.KEYCODE_DPAD_CENTER)
+            waitUntilDestroyed(AddFromFolderActivity::class.java)
 
             // The newest at the top of the list, focused; the background still No picture.
             waitUntil(row("logo.jpg"), hasFocus())

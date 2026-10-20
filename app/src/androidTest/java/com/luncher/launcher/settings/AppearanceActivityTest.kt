@@ -40,6 +40,7 @@ import com.luncher.launcher.LuncherApplication
 import com.luncher.launcher.testing.RetryWhenCovered
 import com.luncher.launcher.testing.waitForFocus
 import com.luncher.launcher.testing.waitForHomeScreen
+import com.luncher.launcher.testing.waitUntilDestroyed
 import junit.framework.AssertionFailedError
 import org.hamcrest.Matcher
 import org.hamcrest.Matchers.allOf
@@ -143,6 +144,7 @@ class AppearanceActivityTest {
             assertEquals(VerticalAlignment.BOTTOM, settings.appearance.tileGeometry.verticalAlignment)
 
             pressBack()
+            waitUntilDestroyed(AppearanceActivity::class.java)
 
             // The panel, in front again, with the focus where it was.
             waitUntil(withText(R.string.settings_appearance), hasFocus())

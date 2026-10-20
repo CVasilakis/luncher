@@ -132,6 +132,15 @@ error; and Android can give the focus to a window before its first layout.
   at the screen under it only once it's closed. A check of the screen meanwhile waits for its
   window to get the focus back, and fails after 10 s (`BackgroundActivityTest`'s
   `waitUntil(…, inList = true)`).
+- An activity that closes back to the screen under it keeps its window, on top, until it's
+  destroyed, about half a second after that screen resumed. An Espresso look that begins
+  meanwhile can pick the closing window and wait for it to get the focus, which it never does,
+  and fails after 10 s (`RootViewWithoutFocusException`). So after the key that closes it, a test
+  calls `waitUntilDestroyed()` (`Closed.kt`) before it looks at the screen it returns to: Add from
+  folder in `BackgroundActivityTest` (about 1 run in 15 failed on API 33 without it), the
+  appearance editor in `AppearanceActivityTest`, Hide apps and the settings panel in
+  `HomeActivityTest`. UI Automator's looks don't pick a window, and a screen opened after the
+  closed one is on top of it, so neither needs the wait.
 
 ### Look with UI Automator while a screen animates
 
