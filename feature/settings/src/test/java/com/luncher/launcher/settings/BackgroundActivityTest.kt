@@ -764,6 +764,29 @@ class BackgroundActivityTest {
     }
 
     @Test
+    fun `the first of Add all's pictures in the list is focused when its result comes before the editor starts again`() {
+        val added = (1..5).map { picture("added-$it.jpg", added = 10L + it) }
+        graph(sunset, background = Background(sunset.id))
+        val controller = start()
+        val activity = controller.get()
+
+        activity.ok("Add from folder")
+        // Under Add from folder the editor is stopped; on a device the result comes before onStart.
+        controller.pause().stop()
+        graph.library.pictures += added   // what Add all added, in this order
+        @Suppress("DEPRECATION")
+        shadowOf(activity).receiveResult(
+            Intent(activity, AddFromFolderActivity::class.java),
+            Activity.RESULT_OK,
+            Intent().putExtra(AddFromFolderActivity.EXTRA_ADDED_ALL, added.map { it.id.value }.toTypedArray()),
+        )
+        controller.restart().start().resume()
+        idle()
+
+        assertEquals("added-5.jpg", activity.focused())
+    }
+
+    @Test
     fun `Add from folder opens the drop folders, and the picture it added is chosen and focused`() {
         val added = picture("holiday.jpg", added = 9)
         graph(sunset)

@@ -114,8 +114,12 @@ class BackgroundActivity : Activity() {
     private val preparing = LinkedHashMap<PictureId, LatestRequest>()
     private var preparingTotal = 0
 
-    /** The row to focus when the library shows next: a picture just added. */
-    private var toFocus: PictureId? = null
+    /**
+     * The pictures just added, the first of them in the list to focus when the library shows next:
+     * found then, not when they come. A result comes before [onStart] reads the library again, so
+     * the editor, stopped while they were added, still has the library from before them.
+     */
+    private var toFocus: Set<PictureId> = emptySet()
     private var started = false
     private var dialog: Dialog? = null
     private var working: WorkingDialog? = null
@@ -303,8 +307,8 @@ class BackgroundActivity : Activity() {
 
         // A picture just added gets the focus; otherwise it stays, unless what had it is gone:
         // then the picture that took its place, or the one before it; at first, the chosen one.
-        val added = toFocus?.let { rows[it] }
-        toFocus = null
+        val added = library.pictures.firstOrNull { it.id in toFocus }?.let { rows[it.id] }
+        toFocus = emptySet()
         when {
             added != null -> added.requestFocus()
             focused != null && focused.isShown -> focused.requestFocus()
@@ -425,14 +429,14 @@ class BackgroundActivity : Activity() {
 
     /** The picture Add from folder added (or found there already): chosen and focused. */
     private fun chooseAdded(picture: PictureId) {
-        toFocus = picture
+        toFocus = setOf(picture)
         setDraft(draft.copy(picture = picture))
         if (started) showLibrary()
     }
 
     /** The pictures Add all added: the first of them in the list focused, none chosen. */
     private fun focusAdded(added: Set<PictureId>) {
-        toFocus = library.pictures.firstOrNull { it.id in added }?.id ?: added.firstOrNull()
+        toFocus = added
         if (started) showLibrary()
     }
 
