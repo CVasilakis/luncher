@@ -2,13 +2,13 @@
   <img src="docs/images/readme-banner.png" alt="Luncher" width="100%">
 </p>
 
-<p align="center"><b>A lightweight and customizable home screen (launcher) for Android TV.</b></p>
+<p align="center"><b>An offline, lightweight and customizable Android TV launcher that starts instantly.</b></p>
 
 <p align="center">
+  <img src="https://img.shields.io/badge/APK-~194_KB-blue" alt="APK ~194 KB">
   <a href="https://f-droid.org/packages/com.luncher.launcher/"><img src="https://img.shields.io/f-droid/v/com.luncher.launcher?logo=fdroid" alt="F-Droid version"></a>
   <a href="https://github.com/CVasilakis/luncher/releases/latest"><img src="https://img.shields.io/github/v/release/CVasilakis/luncher?logo=github" alt="GitHub release"></a>
   <img src="https://img.shields.io/badge/Android_TV-5.1%2B-3DDC84?logo=android&logoColor=white" alt="Android TV 5.1+">
-  <img src="https://img.shields.io/badge/APK-~98_KB-blue" alt="APK ~98 KB">
 </p>
 
 It's made with performance in mind, to run smoothly even on old and weak Android TV devices, and still gives you plenty of customization options to shape it to your taste.
@@ -20,32 +20,35 @@ It's made with performance in mind, to run smoothly even on old and weak Android
 | ![The home screen](fastlane/metadata/android/en-US/images/tvScreenshots/1.png) | ![Moving an app](fastlane/metadata/android/en-US/images/tvScreenshots/2.png) |
 | Your apps, the time and the date | Hold OK on an app to move it |
 | ![The settings](fastlane/metadata/android/en-US/images/tvScreenshots/3.png) | ![The appearance settings](fastlane/metadata/android/en-US/images/tvScreenshots/4.png) |
-| Settings | Choose where your apps sit and how round their corners are |
+| Settings | Customize your home screen layout and tile shape |
+| ![The background settings](fastlane/metadata/android/en-US/images/tvScreenshots/5.png) | ![Adding a picture from a folder](fastlane/metadata/android/en-US/images/tvScreenshots/6.png) |
+| Pick a wallpaper, and dim or blur it | Add pictures to Luncher |
 
 ## Features
 
 - [x] A status bar with the time, the date and the settings, which you can arrange to your liking
 - [x] Your TV apps as a grid of banners, placed where you want on the screen
 - [x] Reorder your apps
-- [x] Hide the apps you don't use, and still reach them quickly from the hidden shelf
-- [x] Rounded tile corners, from square to pill-shaped
+- [x] Hide the apps you don't use (quickly accessible from the hidden shelf)
+- [x] Customize the tile shape, from square to pill-shaped
+- [x] Set your own pictures as wallpaper, with dim and blur options
 
 **On the way**
 
-- [ ] Your own wallpapers (and maybe a lightweight animated background option)
-- [ ] Your own banners for apps
-- [ ] More appearance settings: tile size and spacing, colors and much more
-- [ ] Folders to group your apps
+- [ ] Your own custom banners for app tiles
+- [ ] More appearance settings: tile size and spacing, accent colors and much more
 - [ ] Wi-Fi, VPN and notifications in the status bar, without ever asking for internet access
-- [ ] More exotic features (if possible), such as the CPU temperature
+- [ ] Folders to group your apps
+- [ ] A lightweight animated background option (if possible)
+- [ ] More exotic features, such as the CPU temperature (if possible)
 
 Have an idea? Suggest it in the [issues](https://github.com/CVasilakis/luncher/issues). If it fits Luncher's [design principles](#design-principles), it has a good chance of joining the list above.
 
 ## Design principles
 
-- **Instant startup** and minimal memory usage.
-- **No frameworks or dependencies**, just plain Kotlin.
-- **No permissions and no internet:** no ads, no tracking, no accounts.
+- **Instant startup** and **minimal memory usage**, with no background services.
+- **Offline by design:** no internet, no ads, no tracking, no accounts.
+- **No frameworks or dependencies:** just plain Kotlin.
 
 ## Install
 
@@ -65,8 +68,14 @@ Once installed, Luncher shows up in your TV's list of apps. You can open it from
 <details>
 <summary><b>Google TV</b></summary>
 
-Install Luncher first, then connect to the TV with adb: turn on USB or network debugging in its
-developer options. With the TV's own home screen in front, see which app it is:
+Connect to the TV with adb: turn on USB or network debugging in its developer options (over the
+network, connect with `adb connect <TV's IP address>`). Then install the APK you downloaded:
+
+```bash
+adb install luncher-vX.Y.Z.apk
+```
+
+With the TV's own home screen in front, see which app it is:
 
 ```bash
 adb shell dumpsys window | grep mCurrentFocus
@@ -101,7 +110,23 @@ is disabled, or Home has nowhere to go.
 <details>
 <summary><b>Fire TV (Fire OS)</b></summary>
 
+Connect to the Fire TV with adb: turn on ADB debugging in its developer options, then connect with
+`adb connect <Fire TV's IP address>`. Then install the APK you downloaded:
+
+```bash
+adb install luncher-vX.Y.Z.apk
+```
+
+On Fire OS, the simplest way to make Luncher your default home screen is Launcher Manager, an app
+made for exactly that:
+
 - [Launcher Manager (for Fire OS)](https://xdaforums.com/t/app-firetv-noroot-launcher-manager-change-launcher-without-root.4176349/) (XDA Forums)
+
+If Launcher Manager doesn't support your Fire OS version, there's currently an exploit that works on
+most Fire TV devices: it lets you unlock the bootloader, root your device and even downgrade it to
+an older Fire OS version. Look for the "UNLOCK" thread of your device in the forum below:
+
+- [Fire TV Original Android Development](https://xdaforums.com/f/fire-tv-original-android-development.3083/) (XDA Forums)
 
 </details>
 
@@ -125,12 +150,12 @@ found [here](https://gist.github.com/denilsonsa/80cbb3a14b3bf63de75e6bf81c89ee05
 At that point I had two options: fork one of the existing open source launchers and try to improve
 it, or build a new one from the ground up. Forking would have meant substantial changes, with no
 guarantee that the result would end up close to what I wanted. So I went for the second option,
-wondering how difficult it could be. With a good knowledge of software architecture principles and
-software engineering (and, of course, some help from AI agents), it turned out to be quite easy,
-and I learned a lot along the way. So here we are. Most of the development time goes into
-designing and improving the project's software architecture, to make sure each feature is
-implemented in a simple and lightweight way, and into automating the tests it needs. The project
-is currently a hobby that I plan to maintain for the long term. Enjoy!
+wondering how difficult it could be. With a good knowledge of software architecture principles, a
+background in software engineering and, of course, some help from AI agents, it turned out to be
+quite easy, and I learned a lot along the way. So here we are. Most of the development time goes
+into designing and improving the project's software architecture, to make sure each feature is
+implemented in a simple and lightweight manner, and into automating the tests it needs. The
+project is currently a hobby that I plan to maintain for the long term. Enjoy!
 
 ## For developers
 

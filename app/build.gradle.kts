@@ -14,8 +14,8 @@ android {
         // written out, as literals and before any other line naming them: F-Droid finds a
         // release's version by reading this file. The check after the android block keeps them
         // in step.
-        versionCode = 2_000
-        versionName = "0.2.0"
+        versionCode = 3_000
+        versionName = "0.3.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         // The system tier (UI Automator, the system/ package) runs only from API 24; below that

@@ -63,18 +63,25 @@ the `NOTICE`.
 
 ## Screenshots
 
-Taken on the `gtv_api36` emulator (Google TV, the newest system) in English, of a release build
+Taken on the `gtv_api34` emulator (Google TV) in English, of a release build
 (`assembleRelease`, signed with the debug key to install it), which carries Luncher's own name (a
 debug build is labeled "Luncher (debug)"), with the debug build uninstalled so that it doesn't
-appear among the apps. Luncher's appearance settings are at their defaults. The emulator's own apps
-are turned off (`pm disable-user`), and nine others installed so that they fill the default layout
-(five in the bottom row, four above): ERTFLIX, Jellyfin, Kodi, Launcher Manager, Material Files,
-NewPipe, Next Player, RadioDroid and Tailscale. Their banners belong to their owners.
+appear among the apps. Not on `gtv_api36`: from Android 16 on, Luncher can't read a picture adb
+copied into its drop folder, so Add from folder would show none. Luncher's appearance settings are
+at their defaults, but for the background: a calm gradient made for the screenshots, a PNG with an
+ordered dither, so it shows no bands and the screenshots stay small (random grain made them 2 MB
+each). The emulator's own apps are turned off (`pm disable-user`), and nine others installed
+so that they fill the default layout (five in the bottom row, four above), ordered so that light
+and dark banners alternate: ERTFLIX, Jellyfin, Kodi, Launcher Manager, Material Files, NewPipe,
+Next Player, RadioDroid and Tailscale. Their banners belong to their owners. The library's photos
+are the author's own.
 
 1. The home screen.
 2. Arrange mode, holding an app.
 3. The settings panel.
 4. Appearance, with Tiles open.
+5. Background, the gradient chosen, the photos listed below it.
+6. Add from folder.
 
 `screencap` saves PNGs with an alpha channel, which `convert` (ImageMagick) removes:
 

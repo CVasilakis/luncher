@@ -1,0 +1,3 @@
+- Your own pictures as wallpaper, with dim and blur options (without needing any storage permission)
+- Add pictures by sharing them from a file manager or gallery, several at once, or by copying them into Luncher's folder on the TV or a USB drive
+- Rename or delete Luncher's pictures easily

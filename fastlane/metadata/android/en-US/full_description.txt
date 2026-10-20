@@ -5,21 +5,21 @@ Features:
 - A status bar with the time, the date and the settings, which you can arrange to your liking
 - Your TV apps as a grid of banners, placed where you want on the screen
 - Reorder your apps
-- Hide the apps you don't use, and still reach them quickly from the hidden shelf
-- Rounded tile corners, from square to pill-shaped
+- Hide the apps you don't use (quickly accessible from the hidden shelf)
+- Customize the tile shape, from square to pill-shaped
+- Set your own pictures as wallpaper, with dim and blur options (shared from any app or, up to Android 14, copied from a USB drive)
 
 On the way:
 
-- Your own wallpapers (and maybe a lightweight animated background option)
-- Your own banners for apps
-- More appearance settings: tile size and spacing, colors and much more
-- Folders to group your apps
+- Your own custom banners for app tiles
+- More appearance settings: tile size and spacing, accent colors and much more
 - Wi-Fi, VPN and notifications in the status bar, without ever asking for internet access
+- Folders to group your apps
 
 Application goals:
 
-- Instant startup and minimal memory usage
+- Instant startup and minimal memory usage, with no background services
+- Offline by design: no internet, no ads, no tracking, no accounts
 - No frameworks or dependencies, just plain Kotlin
-- No permissions and no internet: no ads, no tracking, no accounts
 
 Once installed, Luncher shows up in your TV's list of apps. You can open it from there to try it out, but the Home button on the remote still takes you back to the TV's own launcher. Detailed instructions to make it your default home screen depend on the device model.
