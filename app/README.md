@@ -25,8 +25,9 @@ app/
 │       ├── pictures/                 which picture formats this Android version decodes (PictureFormatsTest)
 │       ├── system/                   UI Automator, across apps: the Home key, the device's settings, a share
 │       │                             opening the home screen (API 24 on, SystemTierFilter)
-│       └── testing/                  shared by the tests: waits for the home screen and the focus, the look
-│                                     at a screen that animates, keys, RetryWhenCovered, SystemTierFilter,
+│       └── testing/                  shared by the tests: waits for the home screen, the focus and a closed
+│                                     screen's end, looks again until a view matches, the look at a screen
+│                                     that animates, keys, FailureCapture, RetryWhenCovered, SystemTierFilter,
 │                                     SamplePictures, StalledPictures, GrantedPictures, ShareSender; and their
 │                                     own tests
 ├── src/debug/res/

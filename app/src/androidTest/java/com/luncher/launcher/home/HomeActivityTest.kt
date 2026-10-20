@@ -14,7 +14,6 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.Espresso.pressBack
 import androidx.test.espresso.Espresso.pressBackUnconditionally
-import androidx.test.espresso.NoMatchingViewException
 import androidx.test.espresso.action.ViewActions.pressKey
 import androidx.test.espresso.assertion.ViewAssertions.doesNotExist
 import androidx.test.espresso.assertion.ViewAssertions.matches
@@ -50,7 +49,7 @@ import com.luncher.launcher.testing.longPressOk
 import com.luncher.launcher.testing.resolvedHome
 import com.luncher.launcher.testing.waitForHomeScreen
 import com.luncher.launcher.testing.waitUntilDestroyed
-import junit.framework.AssertionFailedError
+import com.luncher.launcher.testing.waitUntilMatches
 import org.hamcrest.Matcher
 import org.hamcrest.Matchers.allOf
 import org.hamcrest.Matchers.not
@@ -127,22 +126,7 @@ class HomeActivityTest {
     private fun waitUntilTile(label: String, condition: Matcher<View>) = waitUntil(withContentDescription(label), condition)
 
     /** Checks [condition] on the view [view] matches, retrying while an animation settles or a window comes up. */
-    private fun waitUntil(view: Matcher<View>, condition: Matcher<View>) {
-        val deadline = SystemClock.uptimeMillis() + TIMEOUT_MS
-        while (true) {
-            try {
-                onView(view).check(matches(condition))
-                return
-            } catch (e: AssertionFailedError) {
-                if (SystemClock.uptimeMillis() > deadline) throw e
-                SystemClock.sleep(POLL_MS)
-            } catch (e: NoMatchingViewException) {
-                // Not there yet, e.g. a panel whose window isn't in front yet.
-                if (SystemClock.uptimeMillis() > deadline) throw e
-                SystemClock.sleep(POLL_MS)
-            }
-        }
-    }
+    private fun waitUntil(view: Matcher<View>, condition: Matcher<View>) = waitUntilMatches(view, condition, TIMEOUT_MS)
 
     /**
      * Waits until the settings panel is in front again with the input focus, on its Hide apps
@@ -445,6 +429,5 @@ class HomeActivityTest {
         )
 
         const val TIMEOUT_MS = 5_000L
-        const val POLL_MS = 50L
     }
 }

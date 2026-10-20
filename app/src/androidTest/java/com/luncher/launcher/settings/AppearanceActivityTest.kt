@@ -11,7 +11,6 @@ import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.Espresso.pressBack
-import androidx.test.espresso.NoMatchingViewException
 import androidx.test.espresso.action.ViewActions.pressKey
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.matcher.ViewMatchers.hasFocus
@@ -38,10 +37,11 @@ import com.luncher.domain.wallpaper.Wallpaper
 import com.luncher.launcher.AppGraph
 import com.luncher.launcher.LuncherApplication
 import com.luncher.launcher.testing.RetryWhenCovered
+import com.luncher.launcher.testing.matchesNow
 import com.luncher.launcher.testing.waitForFocus
 import com.luncher.launcher.testing.waitForHomeScreen
 import com.luncher.launcher.testing.waitUntilDestroyed
-import junit.framework.AssertionFailedError
+import com.luncher.launcher.testing.waitUntilMatches
 import org.hamcrest.Matcher
 import org.hamcrest.Matchers.allOf
 import org.junit.After
@@ -101,22 +101,7 @@ class AppearanceActivityTest {
      * Checks [condition] on the view [view] matches, retrying while a window comes up. Espresso
      * checks a view only once its window has the focus, so a key pressed after this goes there.
      */
-    private fun waitUntil(view: Matcher<View>, condition: Matcher<View>) {
-        val deadline = SystemClock.uptimeMillis() + TIMEOUT_MS
-        while (true) {
-            try {
-                onView(view).check(matches(condition))
-                return
-            } catch (e: AssertionFailedError) {
-                if (SystemClock.uptimeMillis() > deadline) throw e
-                SystemClock.sleep(POLL_MS)
-            } catch (e: NoMatchingViewException) {
-                // Not there yet, e.g. the editor whose window isn't in front yet.
-                if (SystemClock.uptimeMillis() > deadline) throw e
-                SystemClock.sleep(POLL_MS)
-            }
-        }
-    }
+    private fun waitUntil(view: Matcher<View>, condition: Matcher<View>) = waitUntilMatches(view, condition, TIMEOUT_MS)
 
     @Test
     fun okOnAGroup_showsItsOptions_dpadStepsThemAround_andBackReturnsToThePanel() {
@@ -193,6 +178,7 @@ class AppearanceActivityTest {
             assertEquals(picture("sunset.jpg").id, settings.appearance.background.picture)
             // The editor's window is closing: keys and checks go to the appearance editor once it has the focus.
             waitForFocus(AppearanceActivity::class.java)
+            waitUntilDestroyed(BackgroundActivity::class.java)
             waitUntil(allOf(withId(R.id.settings_apart_value), withText("sunset.jpg")), isDisplayed())
         }
     }
@@ -206,15 +192,7 @@ class AppearanceActivityTest {
     private fun apart(title: Int) = allOf(withChild(withText(title)), withChild(withId(R.id.settings_apart_value)))
 
     /** Whether the view [view] matches has the focus now. */
-    private fun hasFocus(view: Matcher<View>): Boolean =
-        try {
-            onView(view).check(matches(hasFocus()))
-            true
-        } catch (e: AssertionFailedError) {
-            false
-        } catch (e: NoMatchingViewException) {
-            false
-        }
+    private fun hasFocus(view: Matcher<View>): Boolean = matchesNow(view, hasFocus())
 
     private companion object {
         const val TIMEOUT_MS = 10_000L

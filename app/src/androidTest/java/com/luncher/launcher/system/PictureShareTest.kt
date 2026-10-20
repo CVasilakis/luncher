@@ -8,9 +8,6 @@ import android.os.SystemClock
 import android.view.KeyEvent
 import android.view.View
 import androidx.test.core.app.ApplicationProvider
-import androidx.test.espresso.Espresso.onView
-import androidx.test.espresso.NoMatchingRootException
-import androidx.test.espresso.NoMatchingViewException
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.matcher.ViewMatchers.hasFocus
 import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
@@ -43,8 +40,8 @@ import com.luncher.launcher.testing.StalledPictures
 import com.luncher.launcher.testing.resolvedHome
 import com.luncher.launcher.testing.waitForFocus
 import com.luncher.launcher.testing.waitForHomeScreen
+import com.luncher.launcher.testing.waitUntilMatches
 import com.luncher.launcher.testing.waitUntilSeen
-import junit.framework.AssertionFailedError
 import org.hamcrest.Matcher
 import org.hamcrest.Matchers.allOf
 import org.hamcrest.Matchers.containsString
@@ -148,22 +145,7 @@ class PictureShareTest {
     }
 
     /** Checks [condition] on the view [view] matches, retrying while a window comes up, for [timeoutMs] at most. */
-    private fun waitUntil(view: Matcher<View>, condition: Matcher<View>, timeoutMs: Long = TIMEOUT_MS) {
-        val deadline = SystemClock.uptimeMillis() + timeoutMs
-        while (true) {
-            try {
-                onView(view).check(matches(condition))
-                return
-            } catch (e: AssertionFailedError) {
-                if (SystemClock.uptimeMillis() > deadline) throw e
-            } catch (e: NoMatchingViewException) {
-                if (SystemClock.uptimeMillis() > deadline) throw e   // not there yet: a window coming up
-            } catch (e: NoMatchingRootException) {
-                if (SystemClock.uptimeMillis() > deadline) throw e
-            }
-            SystemClock.sleep(POLL_MS)
-        }
-    }
+    private fun waitUntil(view: Matcher<View>, condition: Matcher<View>, timeoutMs: Long = TIMEOUT_MS) = waitUntilMatches(view, condition, timeoutMs)
 
     @Test
     fun aShare_opensTheHomeScreenWithTheWindowOverIt_andBackLeavesTheHomeScreen() {
@@ -366,6 +348,5 @@ class PictureShareTest {
 
         /** For a share that never comes: the library's time limit (15 s), and the usual margin. */
         const val STALLED_TIMEOUT_MS = 25_000L
-        const val POLL_MS = 50L
     }
 }

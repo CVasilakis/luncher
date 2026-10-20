@@ -2,14 +2,11 @@ package com.luncher.launcher.settings
 
 import android.graphics.Bitmap
 import android.net.Uri
-import android.os.SystemClock
 import android.view.KeyEvent
 import android.view.View
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.espresso.Espresso.onView
-import androidx.test.espresso.NoMatchingRootException
-import androidx.test.espresso.NoMatchingViewException
 import androidx.test.espresso.action.ViewActions.closeSoftKeyboard
 import androidx.test.espresso.action.ViewActions.pressImeActionButton
 import androidx.test.espresso.action.ViewActions.pressKey
@@ -46,10 +43,11 @@ import com.luncher.launcher.pictures.FilesPictures
 import com.luncher.launcher.pictures.MediaFolderPictures
 import com.luncher.launcher.testing.RetryWhenCovered
 import com.luncher.launcher.testing.longPressOk
+import com.luncher.launcher.testing.matchesNow
 import com.luncher.launcher.testing.waitForFocus
 import com.luncher.launcher.testing.waitForHomeScreen
 import com.luncher.launcher.testing.waitUntilDestroyed
-import junit.framework.AssertionFailedError
+import com.luncher.launcher.testing.waitUntilMatches
 import org.hamcrest.Matcher
 import org.hamcrest.Matchers.allOf
 import org.hamcrest.Matchers.containsString
@@ -160,30 +158,11 @@ class BackgroundActivityTest {
 
     /**
      * Checks [condition] on the view [view] matches, in a dialog ([inDialog]) or an option's list
-     * ([inList]), retrying while a window comes up. Not on the editor while a window over it has
-     * the focus: Espresso waits for the focus to come back.
+     * ([inList]), retrying while a window comes up ([waitUntilMatches]). Not on the editor while a
+     * window over it has the focus: Espresso waits for the focus to come back.
      */
-    private fun waitUntil(view: Matcher<View>, condition: Matcher<View>, inDialog: Boolean = false, inList: Boolean = false) {
-        val deadline = SystemClock.uptimeMillis() + TIMEOUT_MS
-        while (true) {
-            try {
-                val interaction = onView(view)
-                when {
-                    inDialog -> interaction.inRoot(isDialog())
-                    inList -> interaction.inRoot(isPlatformPopup())
-                    else -> interaction
-                }.check(matches(condition))
-                return
-            } catch (e: AssertionFailedError) {
-                if (SystemClock.uptimeMillis() > deadline) throw e
-            } catch (e: NoMatchingViewException) {
-                if (SystemClock.uptimeMillis() > deadline) throw e   // not there yet: a window coming up
-            } catch (e: NoMatchingRootException) {
-                if (SystemClock.uptimeMillis() > deadline) throw e   // the dialog not up yet
-            }
-            SystemClock.sleep(POLL_MS)
-        }
-    }
+    private fun waitUntil(view: Matcher<View>, condition: Matcher<View>, inDialog: Boolean = false, inList: Boolean = false) =
+        waitUntilMatches(view, condition, TIMEOUT_MS, root = if (inDialog) isDialog() else if (inList) isPlatformPopup() else null)
 
     @Test
     fun arrowsMoveAlongTheList_aLongPressOfOkOnAPictureDeletesItAfterAsking() {
@@ -348,19 +327,10 @@ class BackgroundActivityTest {
         }
     }
 
-    private fun hasFocus(view: Matcher<View>): Boolean =
-        try {
-            onView(view).check(matches(hasFocus()))
-            true
-        } catch (e: AssertionFailedError) {
-            false
-        } catch (e: NoMatchingViewException) {
-            false
-        }
+    private fun hasFocus(view: Matcher<View>): Boolean = matchesNow(view, hasFocus())
 
     private companion object {
         const val TIMEOUT_MS = 10_000L
-        const val POLL_MS = 50L
     }
 }
 

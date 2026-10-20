@@ -38,10 +38,21 @@ jobs:
           path: ~/.m2/repository/org/robolectric
           key: robolectric-api33-api36-${{ hashFiles('gradle/libs.versions.toml') }}
 
+      # testDebugUnitTest and verifyRoborazziDebug run in every module that has them; lint runs from
+      # :app over every module.
+      # Once more after a minute when Gradle failed downloading a dependency or a plugin (a
+      # repository answering 5xx, a connection reset or timing out): Google's Maven repository
+      # answered 502 now and then, and API 34's job once failed so before any test ran. Any other
+      # failure fails at once. The second run redoes only what didn't finish: the rest is up to date.
       - name: Run the JVM tiers and lint, and build the release APK
-        # testDebugUnitTest and verifyRoborazziDebug run in every module that has them; lint runs
-        # from :app over every module.
-        run: ./gradlew :domain:test testDebugUnitTest verifyRoborazziDebug :app:lintDebug assembleRelease
+        run: |
+          gradle() { ./gradlew :domain:test testDebugUnitTest verifyRoborazziDebug :app:lintDebug assembleRelease 2>&1 | tee "$RUNNER_TEMP/gradle.log"; return "${PIPESTATUS[0]}"; }
+          gradle && exit 0
+          grep -qE 'Could not (resolve|GET|HEAD|download)|Received status code 5[0-9][0-9]|Connection reset|(Read|connect) timed out' \
+            "$RUNNER_TEMP/gradle.log" || exit 1
+          echo "::warning::Gradle failed to download something; running it once more in 60 s."
+          sleep 60
+          gradle
 
       - name: Upload the test reports and screenshot diffs
         if: failure()

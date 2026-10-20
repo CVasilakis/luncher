@@ -1,13 +1,11 @@
 package com.luncher.launcher.settings
 
-import android.os.SystemClock
 import android.view.KeyEvent
 import android.view.View
 import android.widget.ListView
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.espresso.Espresso.onView
-import androidx.test.espresso.NoMatchingViewException
 import androidx.test.espresso.action.ViewActions.pressKey
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.matcher.ViewMatchers.hasSibling
@@ -24,7 +22,7 @@ import com.luncher.launcher.AppGraph
 import com.luncher.launcher.LuncherApplication
 import com.luncher.launcher.testing.RetryWhenCovered
 import com.luncher.launcher.testing.waitForHomeScreen
-import junit.framework.AssertionFailedError
+import com.luncher.launcher.testing.waitUntilMatches
 import org.hamcrest.Matcher
 import org.hamcrest.Matchers.allOf
 import org.hamcrest.Matchers.not
@@ -76,22 +74,7 @@ class HideAppsActivityTest {
     private fun hiddenMark(label: String) = allOf(withId(R.id.settings_app_hidden), hasSibling(withText(label)))
 
     /** Checks [condition] on the view [view] matches, retrying while the list settles. */
-    private fun waitUntil(view: Matcher<View>, condition: Matcher<View>) {
-        val deadline = SystemClock.uptimeMillis() + TIMEOUT_MS
-        while (true) {
-            try {
-                onView(view).check(matches(condition))
-                return
-            } catch (e: AssertionFailedError) {
-                if (SystemClock.uptimeMillis() > deadline) throw e
-                SystemClock.sleep(POLL_MS)
-            } catch (e: NoMatchingViewException) {
-                // Not there yet, e.g. a panel whose window isn't in front yet.
-                if (SystemClock.uptimeMillis() > deadline) throw e
-                SystemClock.sleep(POLL_MS)
-            }
-        }
-    }
+    private fun waitUntil(view: Matcher<View>, condition: Matcher<View>) = waitUntilMatches(view, condition, TIMEOUT_MS)
 
     @Test
     fun ok_hidesTheSelectedApp_andOkAgainShowsIt() {
@@ -128,6 +111,5 @@ class HideAppsActivityTest {
 
     private companion object {
         const val TIMEOUT_MS = 5_000L
-        const val POLL_MS = 50L
     }
 }

@@ -12,10 +12,15 @@ boot the emulators: [`EMULATORS.md`](EMULATORS.md).
 ```bash
 ./gradlew connectedDebugAndroidTest                                # on every connected device
 ANDROID_SERIAL=emulator-5558 ./gradlew connectedDebugAndroidTest   # on one (serials: adb devices)
+./gradlew connectedDebugAndroidTest \
+  -Pandroid.testInstrumentationRunnerArguments.class=com.luncher.launcher.settings.BackgroundActivityTest
 ```
 
+One test class per run, or one method (`…BackgroundActivityTest#addAll_…`): with several classes
+separated by commas, only the first one runs.
+
 Results are per device, in `app/build/outputs/androidTest-results/connected/debug/TEST-<device>.xml`
-and `app/build/reports/androidTests/connected/debug/`. The build changes four things about AGP's
+and `app/build/reports/androidTests/connected/debug/`. The build changes five things about AGP's
 runs (the reasons are in comments in [`app/build.gradle.kts`](../app/build.gradle.kts) and
 `gradle.properties`):
 
@@ -24,7 +29,9 @@ runs (the reasons are in comments in [`app/build.gradle.kts`](../app/build.gradl
 - Luncher stays installed afterwards, so a device with the stock launcher disabled still has a
   home screen;
 - the runner fails a test method that hasn't returned after 15 minutes and goes on with the next
-  (`timeout_msec`), a backstop against a hang: every wait of the tests' own has a shorter limit.
+  (`timeout_msec`), a backstop against a hang: every wait of the tests' own has a shorter limit;
+- a test that fails saves the device's state and a screenshot as it fails (`listener`,
+  [below](#look-again-until-it-matches-and-keep-what-a-failure-showed)).
 
 ### The device
 
@@ -133,14 +140,42 @@ error; and Android can give the focus to a window before its first layout.
   window to get the focus back, and fails after 10 s (`BackgroundActivityTest`'s
   `waitUntil(…, inList = true)`).
 - An activity that closes back to the screen under it keeps its window, on top, until it's
-  destroyed, about half a second after that screen resumed. An Espresso look that begins
-  meanwhile can pick the closing window and wait for it to get the focus, which it never does,
-  and fails after 10 s (`RootViewWithoutFocusException`). So after the key that closes it, a test
-  calls `waitUntilDestroyed()` (`Closed.kt`) before it looks at the screen it returns to: Add from
-  folder in `BackgroundActivityTest` (about 1 run in 15 failed on API 33 without it), the
-  appearance editor in `AppearanceActivityTest`, Hide apps and the settings panel in
-  `HomeActivityTest`. UI Automator's looks don't pick a window, and a screen opened after the
-  closed one is on top of it, so neither needs the wait.
+  destroyed, a moment after that screen resumed. An Espresso look that begins meanwhile can pick
+  the closing window and wait for it to get the focus, which it never does, and fails after 10 s
+  (`RootViewWithoutFocusException`). So after the key that closes it, a test calls
+  `waitUntilDestroyed()` (`Closed.kt`) before it looks at the screen it returns to: Add from
+  folder in `BackgroundActivityTest`, the appearance editor and the background editor (closed by
+  Save) in `AppearanceActivityTest`, Hide apps and the settings panel in `HomeActivityTest`. UI
+  Automator's looks don't pick a window, and a screen opened after the closed one is on top of
+  it, so neither needs the wait.
+
+### Look again until it matches, and keep what a failure showed
+
+A screen changes asynchronously after a key, so a test doesn't check it once: it looks again
+every 50 ms until what it expects shows, up to a limit (`waitUntilMatches()`, `Looks.kt`, which
+each test class's `waitUntil` calls with its own limit and window).
+
+- The looks before the last fail quietly: Espresso's own handling of a failed look takes a
+  screenshot and the view hierarchy, which would slow each look again and fill the device's log.
+  Only the last look fails with it, and so does an error a new look can't change
+  (`RootViewWithoutFocusException`).
+- A look whose answer may be no (`hasFocus(view)` before a key) uses `matchesNow()`, which never
+  counts as a failure.
+- When a test fails, `FailureCapture` (`FailureCapture.kt`, whose KDoc lists what it saves)
+  saves the device's state while the failing screen is still open: once a test has failed, its
+  activity is closed, and the home app is in front. It writes `failure-<n>-<Class>.<test>.txt`
+  and a screenshot `….png` in the test storage's output folder, next to Espresso's
+  `view-op-error-<n>.png` and `view-hierarchy-<n>.txt`. It's the runner's `listener`
+  (`app/build.gradle.kts`), so every test class has it: it handles every Espresso failure, and the
+  waits without Espresso (`waitForFocus()`, `waitUntilSeen()`, `waitUntilDestroyed()`) call it
+  before they fail. The device's log says where each was saved (tag `FailureCapture`).
+- After a local run, AGP copies the files to
+  `app/build/outputs/connected_android_test_additional_output/debugAndroidTest/connected/<device>/`,
+  except on API 22 and 23, where its copy fails (below); they stay on the device too, in the
+  test storage's folder (`/sdcard/Android/media/com.luncher.launcher.debug/additional_test_output/`
+  on API 33, `/sdcard/Android/data/com.luncher.launcher.debug/files/test_data/` on API 22), for
+  `adb pull`. The next run deletes both: copy what a failed run saved before running the tests
+  again.
 
 ### Look with UI Automator while a screen animates
 
@@ -228,10 +263,11 @@ as the home screen on API 22 and 23 is checked by hand
 ## Messages and failures that aren't Luncher's
 
 - **API 22 and 23:** AGP's test engine prints `Failed to retrieve additional test outputs from
-  device` with a long `File name too long` stack trace after the tests. It's harmless: the tests
-  have run, and Luncher writes no additional test output. Turning that feature off
-  (`android.enableAdditionalTestOutput=false`) makes AGP 9's `connectedDebugAndroidTest` fail
-  instead.
+  device` with a long `File name too long` stack trace after the tests. The tests have run, but
+  what a failure saved isn't copied: it's on the device
+  ([above](#look-again-until-it-matches-and-keep-what-a-failure-showed)), and CI pulls it itself.
+  Turning that feature off (`android.enableAdditionalTestOutput=false`) makes AGP 9's
+  `connectedDebugAndroidTest` fail instead.
 - **API 22's "choose home app" dialog** shows up during the run and stays on screen afterwards:
   when a test closes its activity, Android goes Home, which asks there. It doesn't disturb the
   tests: each one starts its activity above the dialog. Leave it unanswered (Back closes it). An
@@ -288,8 +324,17 @@ To find out why a job failed:
 - **Which test was running:** the log of "Run the instrumented tests" shows each test as it
   starts, finishes or fails (the test runner's `TestRunner` lines), with the device's time. When
   a job hangs or is cancelled, AGP never writes the results, and these lines are the only record.
-- **What the device was doing:** a failed or cancelled job uploads its test reports as artifacts,
-  and the device's log, its windows (`dumpsys window`: `mCurrentFocus` is the focused window,
-  `mFocusedApp` the focused activity), a screenshot, and adb's server log.
+- **What the device showed as a test failed:** a failed or cancelled job uploads, in its artifact's
+  `failures/` folder, what `FailureCapture` and Espresso saved at each failure
+  ([above](#look-again-until-it-matches-and-keep-what-a-failure-showed)): look there first. It
+  pulls them from the device, as AGP's copy fails on API 22 and 23 and a cancelled run never
+  makes one.
+- **What the device was doing:** the artifact also has the test reports, the device's log, its
+  windows after the run (`dumpsys window`: `mCurrentFocus` is the focused window, `mFocusedApp`
+  the focused activity), a screenshot after the run, and adb's server log. By then the tests
+  have closed their screens, and the home app is in front.
+- **A download that failed:** the step that builds runs Gradle once more when it failed
+  downloading a dependency or a plugin (Google's Maven repository answers 502 now and then), with
+  a warning on the run's page; any other failure fails at once.
 
 The reasons for its individual steps are in comments in the workflow file.

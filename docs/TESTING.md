@@ -66,8 +66,9 @@ outside a broken Back looks the same as a working one.
 - **Test infrastructure in `testing/`.** What the tests of several features share is in a package
   `com.luncher.launcher.testing`, with the tests of that infrastructure itself: for the JVM tests,
   `:ui`'s test fixtures (the TV screens, layout checks), which every module's tests can use; for
-  the instrumented tests, `app/src/androidTest/…/testing/` (the waits for the home screen and the
-  focus, the look at a screen that animates, keys, `RetryWhenCovered`, `SystemTierFilter`, the
+  the instrumented tests, `app/src/androidTest/…/testing/` (the waits for the home screen, the
+  focus and a closed screen's end, the looks again until a view matches, the look at a screen
+  that animates, keys, `FailureCapture`, `RetryWhenCovered`, `SystemTierFilter`, the
   test package's providers `SamplePictures`, `StalledPictures` and `GrantedPictures`, and its
   `ShareSender`). A feature's test package holds only that feature's tests.
 - **Name tests after behavior.** JVM tests use backtick sentences

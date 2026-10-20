@@ -28,6 +28,9 @@ android {
         // is longer than all of a test method's own waits together, waitForHomeScreen()'s 10
         // minutes included, so a test that runs out of one of those still fails with its message.
         testInstrumentationRunnerArguments["timeout_msec"] = "900000"
+        // Saves the device's state the moment a test fails, while its screen is still open, for
+        // CI to upload: once a test has failed, its activity is closed. Reasons: FailureCapture.
+        testInstrumentationRunnerArguments["listener"] = "com.luncher.launcher.testing.FailureCapture"
     }
 
     buildTypes {

@@ -90,8 +90,19 @@ jobs:
       # Built before the emulator boots, so compiling doesn't compete with the emulator's own
       # post-boot work for the runner's 2 cores; connectedDebugAndroidTest then only installs
       # and runs them.
+      # Once more after a minute when Gradle failed downloading a dependency or a plugin (a
+      # repository answering 5xx, a connection reset or timing out): Google's Maven repository
+      # answered 502 now and then, and API 34's job once failed so before any test ran. Any other
+      # failure fails at once.
       - name: Build the app and the test APKs
-        run: ./gradlew assembleDebug assembleDebugAndroidTest
+        run: |
+          gradle() { ./gradlew assembleDebug assembleDebugAndroidTest 2>&1 | tee "$RUNNER_TEMP/gradle.log"; return "${PIPESTATUS[0]}"; }
+          gradle && exit 0
+          grep -qE 'Could not (resolve|GET|HEAD|download)|Received status code 5[0-9][0-9]|Connection reset|(Read|connect) timed out' \
+            "$RUNNER_TEMP/gradle.log" || exit 1
+          echo "::warning::Gradle failed to download something; running it once more in 60 s."
+          sleep 60
+          gradle
 
       # The emulator needs ~7.2 GB free to create the AVD's data partition, and after installing a
       # system image of 3 GB or more the runner has about that or less (API 26 and 27 were 65 MB
@@ -219,7 +230,24 @@ jobs:
           timeout 30 adb shell dumpsys window > app/build/windows.txt || true
           grep -E 'mCurrentFocus|mFocusedApp' app/build/windows.txt || true
           timeout 30 adb exec-out screencap -p > app/build/screen.png || true
-      - name: Upload the test reports, the device's log, windows and screen, and adb's server log
+      # What the tests saved the moment each one failed, while its screen was still open
+      # (FailureCapture in app/src/androidTest/…/testing/): the device's state and a screenshot,
+      # with Espresso's own screenshot and view hierarchy. Pulled from the device, not from AGP's
+      # copy (app/build/outputs/connected_android_test_additional_output/): AGP's pull fails on API
+      # 22 and 23, and a cancelled run never gets that far. The folder is the test storage's,
+      # Android/media/<package>/additional_test_output (seen on API 33) or
+      # Android/data/<package>/files/test_data (API 22); each lands in a folder of its name. The
+      # app stays installed after the run, and its files with it.
+      - name: Save what the tests saved as they failed
+        if: failure() || cancelled()
+        run: |
+          mkdir -p app/build/failures
+          for dir in /sdcard/Android/media/com.luncher.launcher.debug/additional_test_output \
+                     /sdcard/Android/data/com.luncher.launcher.debug/files/test_data; do
+            timeout 60 adb pull "$dir" app/build/failures/ 2> /dev/null || true
+          done
+          ls -R app/build/failures
+      - name: Upload the test reports, what the tests saved as they failed, the device's log, windows and screen, and adb's server log
         if: failure() || cancelled()
         uses: actions/upload-artifact@v7
         with:
@@ -227,6 +255,7 @@ jobs:
           path: |
             app/build/reports/androidTests/connected/
             app/build/outputs/androidTest-results/connected/
+            app/build/failures/
             app/build/logcat.txt
             app/build/windows.txt
             app/build/screen.png

@@ -58,7 +58,7 @@ internal fun focusIn(windows: String): Focus {
  * none focused at all, a key the app under test injects waits up to 60 s, then is dropped without
  * an error. Nor is the focus alone: a window can get it while it's still being added, before its
  * first layout. So first see the screen, then wait for this. Fails after [timeoutMs], saying what
- * has the focus.
+ * has the focus, with [FailureCapture]'s dump.
  */
 fun waitForFocus(activity: Class<out Activity>, timeoutMs: Long = FOCUS_TIMEOUT_MS) {
     val component = ComponentName(InstrumentationRegistry.getInstrumentation().targetContext, activity)
@@ -76,7 +76,7 @@ private fun waitForFocus(name: String, timeoutMs: Long, has: (Focus) -> Boolean)
         val focus = focus()
         if (has(focus)) return
         if (SystemClock.uptimeMillis() > deadline) {
-            throw AssertionError("$name didn't get the input focus in ${timeoutMs / 1000} s: $focus")
+            throw AssertionError("$name didn't get the input focus in ${timeoutMs / 1000} s: $focus").also(FailureCapture::dump)
         }
         SystemClock.sleep(FOCUS_POLL_MS)
     }
