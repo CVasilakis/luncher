@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- An option's list (OptionList): the home screen's darker color, so it stands out on the
+     editor's panel color, with a panel's corners. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="@color/background" />
+    <corners android:radius="@dimen/panel_corner" />
+</shape>

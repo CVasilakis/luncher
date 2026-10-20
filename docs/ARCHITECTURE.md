@@ -243,9 +243,9 @@ isn't an option, since its values are the library's pictures, not a list known i
 **The one exception to storing each change at once: the background.** Its group is edited apart
 (`editedApart`), in the background editor
 ([`feature/settings/README.md`](../feature/settings/README.md#background)), where the user
-chooses the picture and steps its options in a draft, which only Save stores: applying a
+chooses the picture and its options in a draft, which only Save stores: applying a
 background decodes a photo and draws the wallpaper at the screen's size, a wait the user sees on
-a TV, too slow for each step of an option. Save goes through `Wallpaper` in `:domain`'s `wallpaper/`, which draws and
+a TV, too slow for each value the user tries. Save goes through `Wallpaper` in `:domain`'s `wallpaper/`, which draws and
 keeps the picture first, then stores the background, so the setting never names a wallpaper that
 isn't drawn and the home screen always has one to show
 ([`feature/home/README.md`](../feature/home/README.md#the-wallpaper)).

@@ -14,6 +14,7 @@ import androidx.test.espresso.action.ViewActions.pressKey
 import androidx.test.espresso.assertion.ViewAssertions.doesNotExist
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.matcher.RootMatchers.isDialog
+import androidx.test.espresso.matcher.RootMatchers.isPlatformPopup
 import androidx.test.espresso.matcher.ViewMatchers.hasFocus
 import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
 import androidx.test.espresso.matcher.ViewMatchers.isRoot
@@ -21,6 +22,8 @@ import androidx.test.espresso.matcher.ViewMatchers.withChild
 import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.luncher.domain.appearance.Appearance
+import com.luncher.domain.appearance.Background
 import com.luncher.domain.appearance.FakeAppearanceSettings
 import com.luncher.domain.pictures.FakePictureImages
 import com.luncher.domain.pictures.FakePreparedPictures
@@ -90,10 +93,13 @@ class BackgroundActivityTest {
         dropFolder.deleteRecursively()
     }
 
-    /** The background editor with these [pictures], in memory. */
-    private fun launchWith(vararg pictures: com.luncher.domain.pictures.Picture): ActivityScenario<BackgroundActivity> {
+    /** The background editor with these [pictures], in memory, and [background] stored. */
+    private fun launchWith(
+        vararg pictures: com.luncher.domain.pictures.Picture,
+        background: Background = Background(),
+    ): ActivityScenario<BackgroundActivity> {
         fake = FakePictures(*pictures)
-        appearance = FakeAppearanceSettings()
+        appearance = FakeAppearanceSettings(Appearance(background = background))
         application.graph = object : AppGraph(application) {
             override val pictures: Pictures = this@BackgroundActivityTest.fake
             override val pictureImport: PictureImport<Uri> = this@BackgroundActivityTest.fake
@@ -132,18 +138,36 @@ class BackgroundActivityTest {
         onView(isRoot()).inRoot(isDialog()).perform(pressKey(keyCode))
     }
 
+    private fun pressInList(keyCode: Int) {
+        onView(isRoot()).inRoot(isPlatformPopup()).perform(pressKey(keyCode))
+    }
+
+    /** The background's option named [label], with [value]. */
+    private fun option(label: Int, value: Int) = allOf(
+        withChild(withText(label)),
+        withChild(allOf(withId(R.id.settings_option_value), withText(value))),
+    )
+
     /** The list's row named [name]. */
     private fun row(name: String) = withChild(allOf(withId(R.id.settings_background_name), withText(name)))
 
     private fun row(name: Int) = withChild(allOf(withId(R.id.settings_background_name), withText(name)))
 
-    /** Checks [condition] on the view [view] matches, retrying while a window comes up. */
-    private fun waitUntil(view: Matcher<View>, condition: Matcher<View>, inDialog: Boolean = false) {
+    /**
+     * Checks [condition] on the view [view] matches, in a dialog ([inDialog]) or an option's list
+     * ([inList]), retrying while a window comes up. Not on the editor while a window over it has
+     * the focus: Espresso waits for the focus to come back.
+     */
+    private fun waitUntil(view: Matcher<View>, condition: Matcher<View>, inDialog: Boolean = false, inList: Boolean = false) {
         val deadline = SystemClock.uptimeMillis() + TIMEOUT_MS
         while (true) {
             try {
                 val interaction = onView(view)
-                (if (inDialog) interaction.inRoot(isDialog()) else interaction).check(matches(condition))
+                when {
+                    inDialog -> interaction.inRoot(isDialog())
+                    inList -> interaction.inRoot(isPlatformPopup())
+                    else -> interaction
+                }.check(matches(condition))
                 return
             } catch (e: AssertionFailedError) {
                 if (SystemClock.uptimeMillis() > deadline) throw e
@@ -175,6 +199,37 @@ class BackgroundActivityTest {
             waitUntil(row("old.jpg"), hasFocus())
             onView(row("beach.png")).check(doesNotExist())
             assertEquals(listOf("old.jpg", "sunset.jpg"), fake.pictures.map { it.name }.sorted())
+        }
+    }
+
+    @Test
+    fun rightOnAnOptionGoesToThePictures_okListsItsValues_okKeepsOne_backTheOneBefore() {
+        val wide = picture("wide.jpg", added = 1, width = 6000, height = 1000)
+        launchWith(wide, background = Background(wide.id)).use {
+            waitUntil(row("wide.jpg"), hasFocus())
+            press(KeyEvent.KEYCODE_DPAD_LEFT)
+            waitUntil(option(R.string.settings_appearance_fit, R.string.settings_appearance_fill), hasFocus())
+            press(KeyEvent.KEYCODE_DPAD_RIGHT)
+            waitUntil(withId(R.id.settings_background_list), hasFocus())   // the row beside Fit
+            onView(option(R.string.settings_appearance_fit, R.string.settings_appearance_fill)).check(matches(isDisplayed()))
+
+            press(KeyEvent.KEYCODE_DPAD_LEFT)
+            press(KeyEvent.KEYCODE_DPAD_DOWN)
+            waitUntil(option(R.string.settings_appearance_position, R.string.settings_appearance_center), hasFocus())
+            press(KeyEvent.KEYCODE_DPAD_CENTER)
+            waitUntil(withText(R.string.settings_appearance_center), hasFocus(), inList = true)
+            pressInList(KeyEvent.KEYCODE_DPAD_DOWN)
+            waitUntil(withText(R.string.settings_appearance_left), hasFocus(), inList = true)
+            pressInList(KeyEvent.KEYCODE_DPAD_CENTER)
+            waitUntil(option(R.string.settings_appearance_position, R.string.settings_appearance_left), hasFocus())
+
+            press(KeyEvent.KEYCODE_DPAD_CENTER)
+            waitUntil(withText(R.string.settings_appearance_left), hasFocus(), inList = true)
+            pressInList(KeyEvent.KEYCODE_DPAD_DOWN)
+            waitUntil(withText(R.string.settings_appearance_right), hasFocus(), inList = true)
+            pressInList(KeyEvent.KEYCODE_BACK)
+            waitUntil(option(R.string.settings_appearance_position, R.string.settings_appearance_left), hasFocus())
+            assertEquals("nothing stored", Background(wide.id), appearance.appearance.background)
         }
     }
 

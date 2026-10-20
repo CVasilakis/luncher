@@ -8,6 +8,7 @@ import android.view.KeyEvent
 import android.view.View
 import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.PopupWindow
 import android.widget.TextView
 import androidx.test.platform.app.InstrumentationRegistry
 import com.luncher.domain.appearance.Appearance
@@ -114,10 +115,40 @@ class BackgroundActivityTest {
 
     private fun Activity.value(label: String) = option(label).findViewById<TextView>(R.id.settings_option_value).text.toString()
 
-    private fun Activity.step(label: String) {
+    /** OK on [label]'s row: the list of its values, which shows. */
+    private fun Activity.open(label: String): PopupWindow {
         assertTrue("$label can't take the focus", option(label).requestFocus())
-        dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DPAD_RIGHT))
-        dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_DPAD_RIGHT))
+        option(label).performClick()
+        idle()
+        val list = shadowOf(application).latestPopupWindow
+        assertTrue("$label's list shows", list.isShowing)
+        return list
+    }
+
+    private fun PopupWindow.entries(): List<TextView> {
+        val list = contentView as LinearLayout
+        return (0 until list.childCount).map { list.getChildAt(it) as TextView }
+    }
+
+    /** The entry of the list that has the focus. */
+    private fun PopupWindow.focused() = entries().single { it.isFocused }.text.toString()
+
+    /** The values [label]'s list offers, in order. */
+    private fun Activity.values(label: String): List<String> {
+        val list = open(label)
+        val values = list.entries().map { it.text.toString() }
+        list.dismiss()
+        idle()
+        return values
+    }
+
+    /** [label]'s next value, after its last the first, chosen in its list: focused, then OK. */
+    private fun Activity.step(label: String) {
+        val entries = open(label).entries()
+        val next = entries[(entries.indexOfFirst { it.isFocused } + 1) % entries.size]
+        next.requestFocus()
+        next.performClick()
+        idle()
     }
 
     private fun Activity.ok(name: String) {
@@ -186,9 +217,77 @@ class BackgroundActivityTest {
         graph(beach, background = Background(beach.id))
         val activity = start().get()
 
-        val values = (1..4).map { activity.step("Dim"); activity.value("Dim") }
+        assertEquals(listOf("Off", "Light", "Medium", "Strong"), activity.values("Dim"))
+        assertEquals(listOf("Off", "Light", "Medium", "Strong"), activity.values("Blur"))
+    }
 
-        assertEquals(listOf("Light", "Medium", "Strong", "Off"), values)
+    @Test
+    fun `Left and Right on an option move the focus, to the pictures, and change nothing`() {
+        graph(beach, background = Background(beach.id))
+        val activity = start().get()
+        val dim = activity.option("Dim")
+        dim.requestFocus()
+
+        for (key in listOf(KeyEvent.KEYCODE_DPAD_RIGHT, KeyEvent.KEYCODE_DPAD_LEFT)) {
+            assertFalse(activity.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, key)))
+            activity.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_UP, key))
+        }
+
+        assertEquals("Off", activity.value("Dim"))
+        assertTrue("a picture's row right of it", dim.focusSearch(View.FOCUS_RIGHT) in activity.listRows())
+        assertNull("no list", shadowOf(activity.application).latestPopupWindow?.takeIf { it.isShowing })
+    }
+
+    @Test
+    fun `OK on an option lists its values, the one it has focused and in the accent color`() {
+        graph(beach, background = Background(beach.id, dim = 40))
+        val activity = start().get()
+
+        val list = activity.open("Dim")
+
+        assertEquals("Medium", list.focused())
+        val accent = activity.getColor(UiR.color.accent)
+        assertEquals(listOf("Medium"), list.entries().filter { it.currentTextColor == accent }.map { it.text.toString() })
+    }
+
+    @Test
+    fun `the preview shows the value with the focus in the list, and OK keeps it`() {
+        graph(beach, background = Background(beach.id))
+        val activity = start().get()
+        val preview = activity.findViewById<AppearancePreviewView>(R.id.settings_background_preview)
+        val list = activity.open("Blur")
+
+        list.entries()[2].requestFocus()
+        idle()
+        assertEquals(com.luncher.domain.pictures.Blur.MEDIUM, preview.appearance.background.blur)
+        assertEquals("Medium", activity.value("Blur"))
+        list.entries()[2].performClick()
+        idle()
+
+        assertFalse(list.isShowing)
+        assertEquals(com.luncher.domain.pictures.Blur.MEDIUM, preview.appearance.background.blur)
+        assertTrue("the focus back on the option", activity.option("Blur").isFocused)
+        assertEquals("nothing stored", Background(beach.id), stored)
+    }
+
+    @Test
+    fun `Back closes the list, the value as before`() {
+        graph(beach, background = Background(beach.id, dim = 20))
+        val activity = start().get()
+        val list = activity.open("Dim")
+        list.entries()[3].requestFocus()
+        idle()
+        assertEquals("Strong", activity.value("Dim"))
+
+        val window = list.contentView.rootView
+        window.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_BACK))
+        window.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_BACK))
+        idle()
+
+        assertFalse(list.isShowing)
+        assertFalse("the editor stays", activity.isFinishing)
+        assertEquals("Light", activity.value("Dim"))
+        assertEquals(20, activity.findViewById<AppearancePreviewView>(R.id.settings_background_preview).appearance.background.dim)
     }
 
     @Test
@@ -217,15 +316,12 @@ class BackgroundActivityTest {
         assertTrue(activity.option("Fit").isFocusable)
     }
 
-    /** The values [label] shows, stepped [steps] times. */
-    private fun Activity.stepped(label: String, steps: Int) = (1..steps).map { step(label); value(label) }
-
     @Test
     fun `a picture wider than the screen offers the middle, left and right`() {
         graph(panorama, background = Background(panorama.id))
         val activity = start().get()
 
-        assertEquals(listOf("Left", "Right", "Center", "Left"), activity.stepped("Position", 4))
+        assertEquals(listOf("Center", "Left", "Right"), activity.values("Position"))
         assertTrue(activity.option("Fit").isFocusable)
     }
 
@@ -234,7 +330,7 @@ class BackgroundActivityTest {
         graph(portrait, background = Background(portrait.id))
         val activity = start().get()
 
-        assertEquals(listOf("Top", "Bottom", "Center", "Top"), activity.stepped("Position", 4))
+        assertEquals(listOf("Center", "Top", "Bottom"), activity.values("Position"))
     }
 
     // The library's default picture is 1920 x 1080, as the screen: filling or stretched, it looks the same.

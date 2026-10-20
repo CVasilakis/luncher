@@ -39,9 +39,11 @@ import com.luncher.launcher.ui.R as UiR
  * background, as large as the room allows (no title, for it), the background's options, and Save. Mirrored in a right-to-left language, like
  * the other settings screens; the preview's content isn't.
  *
- * What the user changes is a draft: OK on a picture chooses it, and Left and Right step the
- * options, as in the appearance editor, through the values that move the chosen picture on this
- * screen (an [OptionContext]): the position only along the side filling cuts, and neither it nor
+ * What the user changes is a draft: OK on a picture chooses it, and OK on an option opens its
+ * values in a list over it ([OptionList]), the preview showing the value with the focus, OK keeping
+ * it, Back the one before; Left and Right only move the focus, from the options to the pictures
+ * beside them. The values are those that move the chosen picture on this screen (an
+ * [OptionContext]): the position only along the side filling cuts, and neither it nor
  * the fit for a picture of the screen's shape. The draft never holds a position its picture doesn't
  * offer: it's the middle then. Nothing is stored until Save, so Back, or Home, leaves the
  * background as it was. Save draws the wallpaper while a window says so, through the process's
@@ -136,7 +138,7 @@ class BackgroundActivity : Activity() {
             // Not set in from a group, as in the appearance editor: the screen is the group's.
             view.setPaddingRelative(indent, view.paddingTop, view.paddingEnd, view.paddingBottom)
             optionsView.addView(view)
-            options += OptionRow(option, view, ::appearance, { context }) { changed -> setDraft(changed.background) }
+            options += OptionRow(option, view, ::appearance, { context }, { changed -> setDraft(changed.background) }, listed = true)
         }
         findViewById<View>(R.id.settings_background_save).setOnClickListener { save() }
 
@@ -191,6 +193,7 @@ class BackgroundActivity : Activity() {
 
     override fun onDestroy() {
         super.onDestroy()
+        for (option in options) option.closeList()
         dialog?.dismiss()
         working?.dismiss()
     }

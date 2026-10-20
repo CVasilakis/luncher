@@ -102,6 +102,18 @@ class BackgroundScreenshotTest {
         captureScreenRoboImage("src/test/screenshots/settings/settings_background_saving.png")
     }
 
+    // OK on Blur: its values in a list over its value, Light, the one it has, focused, and the
+    // preview showing it.
+    @Test
+    fun optionList() {
+        val activity = editor(*library)
+        val blur = activity.findViewById<ViewGroup>(R.id.settings_background_options).getChildAt(3)
+        blur.requestFocus()
+        blur.performClick()
+        idle()
+        captureScreenRoboImage("src/test/screenshots/settings/settings_background_option_list.png")
+    }
+
     // A long press of OK on the wallpaper's picture: the question, saying it's the wallpaper.
     @Test
     fun deleteQuestion() {

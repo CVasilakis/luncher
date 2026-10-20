@@ -4,9 +4,9 @@ import android.app.Activity
 import android.graphics.RectF
 import android.net.Uri
 import android.os.Looper
-import android.view.KeyEvent
 import android.view.View
 import android.view.ViewGroup
+import android.view.WindowManager
 import android.widget.ListView
 import android.widget.TextView
 import com.luncher.domain.appearance.Appearance
@@ -137,27 +137,44 @@ class BackgroundLayoutTest(private val screen: TvScreen) {
         // Luncher's own names whole: No picture, first, and Add from folder, last.
         val rows = activity.children(R.id.settings_background_list)
         for (row in listOf(rows.first(), rows.last())) assertWhole(screen, row.findViewById(R.id.settings_background_name))
-        // Each option through the values it offers, in order, around to its first again, so the
-        // fit is back to filling for the position; the next value is toward the arrow on its
-        // side: Left when mirrored.
+        // Each option's list whole on the screen, inside the margins across, and each value it
+        // offers chosen in turn, in order, the first last again, so the fit is back to filling for
+        // the position.
         val options = activity.children(R.id.settings_background_options)
-        val next = if (options.first().layoutDirection == View.LAYOUT_DIRECTION_RTL) KeyEvent.KEYCODE_DPAD_LEFT else KeyEvent.KEYCODE_DPAD_RIGHT
         val catalog = appearanceOptions().groups.single { it.editedApart }.options
         for ((row, option) in options.zip(catalog)) {
             activity.assertShown("an option", row)
-            assertTrue("$option can't take the focus on $screen", row.requestFocus())
             val value = row.findViewById<TextView>(R.id.settings_option_value)
             val first = value.text.toString()
-            var steps = 0
-            do {
+            val count = activity.openList(row, option).childCount
+            shadowOf(activity.application).latestPopupWindow.dismiss()   // as Back
+            for (index in (1 until count) + 0) {
+                val list = activity.openList(row, option)
+                val entry = list.getChildAt(index)
+                entry.requestFocus()
+                entry.performClick()
+                idle()
                 assertWhole(screen, row.findViewById(R.id.settings_option_label))
                 assertWhole(screen, value)
-                activity.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, next))
-                idle()
-                steps++
-            } while (value.text.toString() != first && steps < option.values.size)
+            }
             assertEquals("$option back at its first value on $screen", first, value.text.toString())
         }
+    }
+
+    /** OK on [option]'s [row]: its list, checked whole and inside the overscan margin. */
+    private fun Activity.openList(row: View, option: Any): ViewGroup {
+        assertTrue("$option can't take the focus on $screen", row.requestFocus())
+        row.performClick()
+        idle()
+        val list = shadowOf(application).latestPopupWindow.contentView as ViewGroup
+        val window = list.rootView.layoutParams as WindowManager.LayoutParams
+        val metrics = resources.displayMetrics
+        val area = RectF(window.x.toFloat(), window.y.toFloat(), (window.x + list.width).toFloat(), (window.y + list.height).toFloat())
+        assertTrue("$option's list at $area, outside the margins ${inside()} on $screen", area.left >= inside().left && area.right <= inside().right)
+        val margin = resources.getDimension(R.dimen.settings_appearance_margin_vertical)
+        assertTrue("$option's list at $area, outside the margin on $screen", area.top >= margin - 1 && area.bottom <= metrics.heightPixels - margin + 1)
+        for (index in 0 until list.childCount) assertWhole(screen, list.getChildAt(index) as TextView)
+        return list
     }
 
     @Test

@@ -38,7 +38,7 @@ interface SettingsGraph {
     /** The drop folders' pictures, for Add from folder. */
     val folderPictures: FolderPictures<Uri, Bitmap>
 
-    /** The pictures as the editors' previews show them, drawn at each step from what's prepared. */
+    /** The pictures as the editors' previews show them, drawn at each change from what's prepared. */
     val pictureImages: PictureImages<Bitmap>
 
     /** The background editor's thumbnails, kept to show at once. */

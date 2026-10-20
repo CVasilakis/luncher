@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A value of an option's list (OptionList): as tall as an entry, so the value focused lines up
+     with the option's row. -->
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="@dimen/settings_entry_height"
+    android:background="@drawable/entry_background"
+    android:focusable="true"
+    android:focusableInTouchMode="true"
+    android:gravity="center_vertical"
+    android:paddingLeft="@dimen/settings_entry_padding"
+    android:paddingRight="@dimen/settings_entry_padding"
+    android:singleLine="true"
+    android:textColor="@color/text_primary"
+    android:textSize="@dimen/settings_entry_text" />

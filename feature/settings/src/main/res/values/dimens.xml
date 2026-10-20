@@ -33,6 +33,14 @@
     <dimen name="settings_background_row_padding">8dp</dimen>
     <dimen name="settings_background_thumbnail_width">96dp</dimen>
     <dimen name="settings_background_thumbnail_height">54dp</dimen>
+    <!-- An option's values in a list over its row (OptionList): its padding above and below the
+         entries, its least width, its shadow; the mark beside the row's value that OK opens it,
+         and its gap to the value. -->
+    <dimen name="settings_option_list_padding">8dp</dimen>
+    <dimen name="settings_option_list_min_width">160dp</dimen>
+    <dimen name="settings_option_list_elevation">8dp</dimen>
+    <dimen name="settings_option_list_mark">24dp</dimen>
+    <dimen name="settings_option_list_mark_gap">4dp</dimen>
     <!-- The window after a share: its spinning wheel while the picture is added. -->
     <dimen name="settings_received_spinner">32dp</dimen>
 

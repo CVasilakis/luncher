@@ -12,7 +12,7 @@ data class AppearanceOptions(val groups: List<AppearanceGroup>) {
  * [editedApart] is one entry of the appearance editor that opens a screen of its own, where the
  * user chooses a picture with the options and saves them together: the pictures aren't a list of
  * values known here, and applying them is slow (the wallpaper is drawn), so they're stored only
- * when the user says so, not at each step as the other options are.
+ * when the user says so, not at each change as the other options are.
  */
 data class AppearanceGroup(
     val topic: AppearanceTopic,

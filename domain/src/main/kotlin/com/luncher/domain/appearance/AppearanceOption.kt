@@ -9,7 +9,7 @@ import com.luncher.domain.appearance.VerticalAlignment as Vertical
 
 /**
  * Something the user can change about how the home screen looks: the part of [Appearance] it
- * reads and changes, and the values it can take, in the order the user steps through them. A
+ * reads and changes, and the values it can take, in the order the editors offer them. A
  * number is a list of steps too, so every option is changed the same way. Each option is a type of
  * its own, so every layer that handles options (storage, labels) does so in an exhaustive `when`,
  * and a new option doesn't compile until each one handles it (docs/ARCHITECTURE.md#appearance).
@@ -35,8 +35,9 @@ sealed interface AppearanceOption<T> {
     fun appliesTo(appearance: Appearance, context: OptionContext = OptionContext.UNKNOWN): Boolean = true
 
     /**
-     * The values the user steps through in [context], in order: those of [values] that change
-     * anything there, the [default] among them. All of them by default, and where it isn't known.
+     * The values offered in [context], in order (stepped through, or listed): those of [values]
+     * that change anything there, the [default] among them. All of them by default, and where it
+     * isn't known.
      */
     fun values(context: OptionContext): List<T> = values
 

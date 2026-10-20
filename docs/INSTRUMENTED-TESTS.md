@@ -126,6 +126,12 @@ error; and Android can give the focus to a window before its first layout.
   activity a Back closed to pause. So after a key that changes the window in front, an in-app test
   waits until the new window shows what it expects, focused, before the next key
   (`HomeActivityTest`'s `waitForTheSettingsPanel()`).
+- A window that takes the focus over a screen (a dialog, the background editor's list of an
+  option's values, a `PopupWindow`) is the only one Espresso looks at while it shows: a test
+  checks it and sends it keys with `inRoot(isDialog())` or `inRoot(isPlatformPopup())`, and looks
+  at the screen under it only once it's closed. A check of the screen meanwhile waits for its
+  window to get the focus back, and fails after 10 s (`BackgroundActivityTest`'s
+  `waitUntil(…, inList = true)`).
 
 ### Look with UI Automator while a screen animates
 

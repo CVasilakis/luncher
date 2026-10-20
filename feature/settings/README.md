@@ -27,7 +27,8 @@ feature/settings/
     │   │   ├── AppearanceActivity.kt the appearance editor: the options, Left and Right step them
     │   │   ├── AppearancePreviewView.kt  the editor's preview: an illustration of the home screen
     │   │   ├── AppearanceEditorLayout.kt the editor's columns: the options level with the title
-    │   │   ├── OptionRow.kt      an option's row, Left and Right stepping it: both editors'
+    │   │   ├── OptionRow.kt      an option's row: both editors'; Left and Right step it, or OK opens its list
+    │   │   ├── OptionList.kt     an option's values in a list over its row: the background editor's
     │   │   ├── OptionLabels.kt   what the options, their values and groups are called
     │   │   ├── BackgroundActivity.kt the background editor: the pictures, the draft, Save; deletes pictures, prepares them
     │   │   ├── BackgroundStartColumn.kt  its preview, options and Save, the preview as large as the room left
@@ -200,7 +201,7 @@ deletes a picture, as arrange mode's says what its keys do. While the library is
 a picture follows: a share from another app, or the drop folder
 ([`platform/README.md`](../../platform/README.md#the-drop-folders)), with its path. At the start, a
 preview of the home screen with the chosen background, the background's options (Fit, Position,
-Dim, Blur, as the appearance editor's rows) and Save. There's no title: the preview gets that room.
+Dim, Blur, rows like the appearance editor's) and Save. There's no title: the preview gets that room.
 The preview is as large as the room the others leave (`BackgroundStartColumn`), at most as tall
 as its screen at the column's width, at least a quarter of that, so Save shows without scrolling on a 1080p screen;
 on the smallest screens the column scrolls. In a right-to-left language it mirrors like the other
@@ -208,11 +209,19 @@ settings screens; the preview's content and the pictures don't.
 
 What the user changes is a draft, the one exception to the appearance editor's rule of storing each
 change at once ([`ARCHITECTURE.md`](../../docs/ARCHITECTURE.md#appearance)): OK on a picture
-chooses it (its name in the accent color, a check beside it), Left and Right step the options,
-and the preview follows; nothing is stored. The options offer only what moves the chosen picture
-on this screen, by how filling the screen cuts it (`pictureCut`, from the picture's size and
-`screenSize`, the wallpaper's): the position steps through Center, Left and Right for a picture
-wider than the screen, Center, Top and Bottom for a taller one. All four are dimmed without a
+chooses it (its name in the accent color, a check beside it), and the preview follows; nothing is
+stored. An option's row shows its value with a mark pointing down, not between arrows: OK on it
+opens its values in a list (`OptionList`, a `PopupWindow`) over the row's value, the value it has
+focused and lined up with the row, in the accent color; the list's end at the row's end, moved
+up or down only to stay inside the overscan margin. The preview shows each value the focus comes
+to; OK keeps it, and Back closes the list (not the editor) with the value from before. Left and
+Right on the rows don't change
+anything: they move the focus, as on the other entries, so Right goes to the pictures beside the
+options (the row level with the option). The appearance editor keeps its arrows: nothing is beside
+its options. The options offer only what moves the chosen picture on this screen, by how filling
+the screen cuts it (`pictureCut`, from the picture's size and `screenSize`, the wallpaper's): the
+position's list holds Center, Left and Right for a picture wider than the screen, Center, Top and
+Bottom for a taller one. All four are dimmed without a
 picture; the position also with the picture stretched; the fit and the position also with a
 picture of the screen's shape, or so near it that filling would cut less than 1% (a 16:9
 picture on a 1366 × 768 TV), where every choice looks the same. A stretch stored for such a
@@ -239,18 +248,19 @@ then the picture. A draft's picture deleted is no picture in the draft.
 |---|---|
 | `Picture`, `PictureLibrary` (`:domain`) | a picture of the library; the library in the list's order, the newest first, and what each one is used for |
 | `Pictures`, `PictureImport` (`:domain`) / `FilesPictures` (`:platform`) | the library, which the screen follows while it shows, and adding to it |
-| `PreparedPictures`, `PictureImages` (`:domain`) / `WorkingCopyImages` (`:platform`) | each picture's working copy, made once; the preview's wallpaper drawn from it at each step |
+| `PreparedPictures`, `PictureImages` (`:domain`) / `WorkingCopyImages` (`:platform`) | each picture's working copy, made once; the preview's wallpaper drawn from it at each value tried |
 | `PictureImages` (`:domain`) / `CachedPictureImages` (`:platform`) | the thumbnails, drawn from the working copies at the row's size in pixels, and kept |
 | `pictureUses`, `withoutPictures` (`:domain`) | what each picture is used for, which deleting it says, and the background without it |
 | `Wallpaper` (`:domain`) | Save (`save`: drawn, kept, then stored) and deleting the wallpaper's picture (`forget`) |
 | `pictureCut`, `OptionContext`, `Background.offeredIn` (`:domain`) | what filling the screen cuts from the draft's picture, the options' values that offers, and the draft without a position it doesn't |
+| `OptionRow`, `OptionList` | the options' rows, OK opening a list of the values the draft's picture offers, which the preview follows as the focus moves; Back in it puts the value from before back |
 | `BackgroundActivity` | the list, the draft, Save and its window, the questions; chooses and focuses the picture Add from folder added (`EXTRA_ADDED`); starts with a picture just received chosen (`EXTRA_PICTURE`) |
 
 **Prepared once, then at once.** Each picture of the library has a working copy
 ([`platform/README.md`](../../platform/README.md#pictures)): the whole picture decoded once, as
-it's added, covering half the screen, from which its thumbnail and the preview at every step of an
-option are drawn in milliseconds, where the photo itself takes a decode each time (seconds, on a
-weak TV, for a large one). A picture not prepared for the screen as it is now (the TV switched
+it's added, covering half the screen, from which its thumbnail and the preview at every value of
+an option the user tries are drawn in milliseconds, where the photo itself takes a decode each
+time (seconds, on a weak TV, for a large one). A picture not prepared for the screen as it is now (the TV switched
 resolution, an update draws pictures otherwise, its copy was lost) is prepared as the editor opens,
 before the user can do anything: a window (`WorkingDialog`) says "Preparing the picture…", or
 "Preparing picture 2 of 5…", a job each, half a second at least, and Cancel, or Back, closes the

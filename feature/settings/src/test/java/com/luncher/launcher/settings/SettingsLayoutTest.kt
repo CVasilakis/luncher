@@ -71,7 +71,7 @@ class SettingsLayoutTest(private val screen: TvScreen) {
         application.graph = object : TestSettingsGraph() {
             override val installedApps = FakeInstalledApps(apps.map(::app))
             override val appArrangements = FakeAppArrangements(AppArrangement(order = null, hidden = listOf(app("zz last app").launchable)))
-            // A wallpaper, so that the background's options apply and can be stepped through.
+            // A wallpaper, so the Background entry names a picture, not None.
             override val appearanceSettings = FakeAppearanceSettings(Appearance(background = Background(picture = SAMPLE_WALLPAPER)))
         }
     }
