@@ -25,8 +25,9 @@ import com.luncher.domain.pictures.Picture
 import com.luncher.domain.pictures.PictureId
 import com.luncher.domain.pictures.PictureLibrary
 import com.luncher.domain.pictures.PicturePosition
-import com.luncher.domain.pictures.Renaming
 import com.luncher.domain.pictures.PictureStyle
+import com.luncher.domain.pictures.PictureUse
+import com.luncher.domain.pictures.Renaming
 import com.luncher.domain.pictures.pictureCut
 import com.luncher.domain.pictures.pictureUses
 import com.luncher.domain.pictures.renaming
@@ -39,8 +40,9 @@ import com.luncher.launcher.ui.R as UiR
  * The background editor, full-screen, opened from the appearance editor's Background entry. At the
  * end, the pictures to choose from: No picture, the library's pictures, the newest first, and Add
  * from folder, a hint above them; at the start, a preview of the home screen with the chosen
- * background, as large as the room allows (no title, for it), the background's options, and Save. Mirrored in a right-to-left language, like
- * the other settings screens; the preview's content isn't.
+ * background, as large as the room allows (no title, for it), the background's options, and Save
+ * with Delete all beside it. Mirrored in a right-to-left language, like the other settings
+ * screens; the preview's content isn't.
  *
  * What the user changes is a draft: OK on a picture chooses it, and OK on an option opens its
  * values in a list over it ([OptionList]), the preview showing the value with the focus, OK keeping
@@ -57,8 +59,11 @@ import com.luncher.launcher.ui.R as UiR
  * A long press of OK on a picture offers to rename or delete it. Renaming asks for the new name,
  * which another picture mustn't have ([renaming]); deleting asks first, Cancel focused, and
  * deleting the wallpaper's says the home screen goes back to its plain background, which it does
- * at once. Add from folder opens
- * [AddFromFolderActivity], which adds a picture, and the editor chooses and focuses the one it returns.
+ * at once. Delete all asks first too, Cancel focused, and deletes every picture, the wallpaper's
+ * too; it's dimmed, and passed by, while there's none. Add from folder opens
+ * [AddFromFolderActivity], which adds a picture, and the editor chooses and focuses the one it
+ * returns; or adds several (Add all), and the editor focuses the first of them in the list,
+ * choosing none.
  * Opened with a picture ([EXTRA_PICTURE], from the window after a share), it starts with that one
  * chosen, not saved.
  *
@@ -92,6 +97,8 @@ class BackgroundActivity : Activity() {
     private lateinit var noneRow: View
     private lateinit var addRow: View
     private lateinit var howTo: TextView
+    private lateinit var save: View
+    private lateinit var deleteAll: View
     private val options = mutableListOf<OptionRow>()
     private var library = PictureLibrary(emptyList())
 
@@ -145,7 +152,10 @@ class BackgroundActivity : Activity() {
             optionsView.addView(view)
             options += OptionRow(option, view, ::appearance, { context }, { changed -> setDraft(changed.background) }, listed = true)
         }
-        findViewById<View>(R.id.settings_background_save).setOnClickListener { save() }
+        save = findViewById(R.id.settings_background_save)
+        save.setOnClickListener { save() }
+        deleteAll = findViewById(R.id.settings_background_delete_all)
+        deleteAll.setOnClickListener { confirmDeleteAll() }
 
         noneRow = row(getString(R.string.settings_pictures_no_picture)) { setDraft(draft.copy(picture = null)) }
         noneRow.findViewById<ImageView>(R.id.settings_background_thumbnail).apply {
@@ -216,8 +226,9 @@ class BackgroundActivity : Activity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         @Suppress("DEPRECATION")
         super.onActivityResult(requestCode, resultCode, data)
-        val added = data?.getStringExtra(AddFromFolderActivity.EXTRA_ADDED)
-        if (requestCode == ADD_FROM_FOLDER && resultCode == RESULT_OK && added != null) chooseAdded(PictureId(added))
+        if (requestCode != ADD_FROM_FOLDER || resultCode != RESULT_OK || data == null) return
+        data.getStringExtra(AddFromFolderActivity.EXTRA_ADDED)?.let { chooseAdded(PictureId(it)) }
+        data.getStringArrayExtra(AddFromFolderActivity.EXTRA_ADDED_ALL)?.let { added -> focusAdded(added.mapTo(HashSet(), ::PictureId)) }
     }
 
     /** The stored appearance with the draft as its background: what the preview and the options show. */
@@ -254,6 +265,10 @@ class BackgroundActivity : Activity() {
         preview.appearance = appearance()
         markChosen(noneRow, draft.picture == null)
         for ((id, row) in rows) markChosen(row, draft.picture == id)
+        val any = library.pictures.isNotEmpty()
+        deleteAll.alpha = if (any) 1f else DIMMED
+        deleteAll.isFocusable = any
+        deleteAll.isFocusableInTouchMode = any
     }
 
     private fun markChosen(row: View, chosen: Boolean) {
@@ -415,6 +430,12 @@ class BackgroundActivity : Activity() {
         if (started) showLibrary()
     }
 
+    /** The pictures Add all added: the first of them in the list focused, none chosen. */
+    private fun focusAdded(added: Set<PictureId>) {
+        toFocus = library.pictures.firstOrNull { it.id in added }?.id ?: added.firstOrNull()
+        if (started) showLibrary()
+    }
+
     /** What can be done to [picture]: rename it or delete it, under its name and size. */
     private fun offerActions(picture: Picture) {
         show(
@@ -450,21 +471,44 @@ class BackgroundActivity : Activity() {
                 getString(R.string.settings_pictures_delete_question, nameOf(picture)),
                 deleteText(library.usesOf(picture.id)),
                 // Cancel first, so a repeated OK doesn't delete.
-                listOf(getString(R.string.settings_pictures_cancel) to {}, getString(R.string.settings_pictures_delete) to { delete(picture) }),
+                listOf(getString(R.string.settings_pictures_cancel) to {}, getString(R.string.settings_pictures_delete) to { delete(setOf(picture.id)) }),
+            ),
+        )
+    }
+
+    /** Asks before deleting every picture, Cancel focused, saying how many and whether the background loses its picture. */
+    private fun confirmDeleteAll() {
+        val count = library.pictures.size
+        if (count == 0) return
+        val wallpaperToo = library.pictures.any { PictureUse.Wallpaper in library.usesOf(it.id) }
+        val text = if (wallpaperToo) R.plurals.settings_background_delete_all_text_background else R.plurals.settings_background_delete_all_text
+        show(
+            PicturesDialog(
+                this,
+                getString(R.string.settings_background_delete_all_question),
+                resources.getQuantityString(text, count, count),
+                listOf(
+                    getString(R.string.settings_pictures_cancel) to {},
+                    getString(R.string.settings_pictures_delete) to {
+                        delete(library.pictures.mapTo(HashSet()) { it.id })
+                        // Delete all is dimmed now, with nothing left to delete.
+                        save.requestFocus()
+                    },
+                ),
             ),
         )
     }
 
     /**
-     * Deletes [picture]. If it's the wallpaper's, the background has no picture any more, stored
-     * at once, and the wallpaper kept is deleted before the picture; if it's the draft's, the
-     * draft has none either.
+     * Deletes the pictures [ids]. If the wallpaper's is one, the background has no picture any
+     * more, stored at once, and the wallpaper kept is deleted before the pictures; if the draft's
+     * is, the draft has none either.
      */
-    private fun delete(picture: Picture) {
-        wallpaper.forget(setOf(picture.id))
+    private fun delete(ids: Set<PictureId>) {
+        wallpaper.forget(ids)
         stored = settings.read()
-        if (draft.picture == picture.id) holdDraft(draft.copy(picture = null))
-        pictures.delete(setOf(picture.id))
+        if (draft.picture in ids) holdDraft(draft.copy(picture = null))
+        pictures.delete(ids)
         show()
     }
 
@@ -498,6 +542,7 @@ class BackgroundActivity : Activity() {
         private const val DRAFT_POSITION = "draft_position"
         private const val DRAFT_DIM = "draft_dim"
         private const val DRAFT_BLUR = "draft_blur"
+        private const val DIMMED = 0.4f
 
         /** How a thumbnail shows its picture: filling its frame, its middle. */
         private val THUMBNAIL = PictureStyle(Framing())

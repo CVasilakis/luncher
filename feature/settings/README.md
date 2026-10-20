@@ -31,12 +31,13 @@ feature/settings/
     │   │   ├── OptionList.kt     an option's values in a list over its row: the background editor's
     │   │   ├── OptionLabels.kt   what the options, their values and groups are called
     │   │   ├── BackgroundActivity.kt the background editor: the pictures, the draft, Save; renames and deletes pictures, prepares them
-    │   │   ├── BackgroundStartColumn.kt  its preview, options and Save, the preview as large as the room left
-    │   │   ├── AddFromFolderActivity.kt  the drop folders' pictures, a preview of the selected one; OK adds it, then returns it
+    │   │   ├── BackgroundStartColumn.kt  its preview, options, Save and Delete all, the preview as large as the room left
+    │   │   ├── EntriesRow.kt     entries side by side, or one below the other when one doesn't fit: Save and Delete all
+    │   │   ├── AddFromFolderActivity.kt  the drop folders' pictures, a preview of the selected one; OK adds it, then returns it; Add all
     │   │   ├── SharePictureActivity.kt   where another app's share arrives: opens the home screen and the window, no screen
     │   │   ├── PictureReceivedActivity.kt the window over the home screen after a share: shows the pictures being added, then their uses, or how many were saved and why the others weren't
     │   │   ├── PicturesDialog.kt the dialogs over the picture screens: a picture's actions, a question, a message; renaming one
-    │   │   ├── PreviewColumn.kt  Add from folder's preview and note, the preview smaller on a short screen
+    │   │   ├── PreviewColumn.kt  Add from folder's preview, Add all and note, the preview smaller on a short screen
     │   │   └── PictureTexts.kt   what the picture screens call things: sizes, names, why a picture wasn't added
     │   └── res/                  the themes (Theme.Luncher.Settings, .Panel, .FullScreen, .Pictures, .Pictures.Dialog,
     │                             .Pictures.NoDisplay), layouts, the thumbnails' frames, the warning mark, settings_* dimensions,
@@ -201,9 +202,11 @@ renames or deletes a picture, as arrange mode's says what its keys do. While the
 a picture follows: a share from another app, or the drop folder
 ([`platform/README.md`](../../platform/README.md#the-drop-folders)), with its path. At the start, a
 preview of the home screen with the chosen background, the background's options (Fit, Position,
-Dim, Blur, rows like the appearance editor's) and Save. There's no title: the preview gets that room.
+Dim, Blur, rows like the appearance editor's), and Save with Delete all beside it, in red, half
+the row each, or Delete all below Save when either doesn't fit its half (`EntriesRow`: a long
+translation on a narrow screen). There's no title: the preview gets that room.
 The preview is as large as the room the others leave (`BackgroundStartColumn`), at most as tall
-as its screen at the column's width, at least a quarter of that, so Save shows without scrolling on a 1080p screen;
+as its screen at the column's width, at least a quarter of that, so Save and Delete all show without scrolling on a 1080p screen;
 on the smallest screens the column scrolls. In a right-to-left language it mirrors like the other
 settings screens; the preview's content and the pictures don't.
 
@@ -255,6 +258,11 @@ Luncher's pictures only, and the background's picture leaves the home screen wit
 That happens at once (`Wallpaper.forget`): the background stored without a picture, then the kept
 wallpaper deleted, then the picture. A draft's picture deleted is no picture in the draft.
 
+**Delete all**, beside Save, deletes every picture of the library the same way, after the same
+kind of question, Cancel focused, which says how many, and, when one is the background's, that the
+home screen will have no picture. The editor stays, the focus on Save. While the library is empty
+it's dimmed, and the focus passes it by.
+
 | Part | Job |
 |---|---|
 | `Picture`, `PictureLibrary` (`:domain`) | a picture of the library; the library in the list's order, the newest first, and what each one is used for |
@@ -267,7 +275,7 @@ wallpaper deleted, then the picture. A draft's picture deleted is no picture in 
 | `pictureCut`, `OptionContext`, `Background.offeredIn` (`:domain`) | what filling the screen cuts from the draft's picture, the options' values that offers, and the draft without a position it doesn't |
 | `OptionRow`, `OptionList` | the options' rows, OK opening a list of the values the draft's picture offers, which the preview follows as the focus moves; Back in it puts the value from before back |
 | `PicturesDialog`, `RenameDialog` | the dialogs over the list: a picture's Rename and Delete, the question before deleting; the field for a new name, and why it's refused |
-| `BackgroundActivity` | the list, the draft, Save and its window, the questions; chooses and focuses the picture Add from folder added (`EXTRA_ADDED`); starts with a picture just received chosen (`EXTRA_PICTURE`) |
+| `BackgroundActivity` | the list, the draft, Save and its window, Delete all, the questions; chooses and focuses the picture Add from folder added (`EXTRA_ADDED`), or focuses the first in the list of those Add all added, choosing none (`EXTRA_ADDED_ALL`); starts with a picture just received chosen (`EXTRA_PICTURE`) |
 
 **Prepared once, then at once.** Each picture of the library has a working copy
 ([`platform/README.md`](../../platform/README.md#pictures)): the whole picture decoded once, as
@@ -384,7 +392,7 @@ to 9 shares files, gets the message that says to use a drop folder instead, with
 |---|---|
 | `SharePictureActivity` | takes the pictures out of the share, refuses more than the limit, passes the Uris and the access Luncher holds to the window; the window alone while one shows, else a new one that takes an open session over |
 | `PictureReceivedActivity` | shows the session: the count while the pictures are added, then one picture's result and uses, or the counts; ends the session when it closes |
-| `ReceivedPictures` (`:domain`) | the session, one per process: the pictures added one at a time through `PictureImport`, each once, a share joining it, the window that holds it and may end it, whether one is being copied (`copying`), adding stopped with the session still open (`stop`), and how it went (`Outcome`: each picture's answer, and how many were cancelled) |
+| `ReceivedPictures` (`:domain`) | the session, one per process (Add all, below, has one of its own): the pictures added one at a time through `PictureImport`, each once, a share joining it, the window that holds it and may end it, whether one is being copied (`copying`), adding stopped with the session still open (`stop`), and how it went (`Outcome`: each picture's answer, and how many were cancelled) |
 | `PictureLimits.MAX_SHARED` (`:domain`) | the most pictures one share brings |
 | `PictureImport` (`:domain`) / `FilesPictures` (`:platform`) | adding one picture to the library, cancellable, when its copying starts, and how it went (`ImportResult`) |
 | `pictureUseMenu` (`:domain`) | the uses a picture received alone offers |
@@ -417,8 +425,22 @@ a picture of the library, the same file (the same name and size: "Already in Lun
 or another. The listing goes by names: a file whose picture was renamed in the library isn't
 marked, and OK finds it there by its content, without decoding it. In place of a preview that isn't drawn, or that can't be (a damaged picture, once its
 decode fails), a warning mark shows, so nobody waits for one. Anything else that isn't a picture isn't listed. The folders are read again each time the screen
-shows, so a USB drive plugged in meanwhile counts. On a screen too short for the preview and its
-note, the preview gets smaller (`PreviewColumn`).
+shows, so a USB drive plugged in meanwhile counts. On a screen too short for the preview, Add all
+and the note, the preview gets smaller (`PreviewColumn`), down to a quarter of its height; on the
+smallest screens the column then scrolls, to its end while Add all has the focus, so the note
+shows too.
+
+**Add all**, below the preview, adds every picture of the list that isn't marked, in the list's
+order, one at a time: a session of `ReceivedPictures` of the screen's own, not the process's,
+held only while it adds, since the screen stops the adding when it closes anyway. A window
+(`WorkingDialog`) says "Adding picture 2 of 5…", with Cancel, focused, which Back does too. Then a
+message says how many were added ("3 pictures added", or "Pictures not added"), and a line for each
+reason some weren't, as after a share (`notAddedLines`), the marked ones counted too, with OK. OK,
+or Back, returns the pictures added to the background editor, which focuses the first of them in
+its list and chooses none: the user chooses one there. With none added, the screen stays. Cancel
+before any was added closes the window, and the screen stays; after, the message says how it went,
+those cancelled counted. Closing the screen while it adds (Home) stops the adding. While no picture
+of the list can be added, Add all is dimmed, and the focus passes it by.
 
 To try it on an emulator, put a picture in the debug build's drop folder, up to API 34 (from
 Android 16 on Luncher can't read a file adb put there either,
@@ -468,3 +490,5 @@ adb shell am start -n com.luncher.launcher.debug.test/com.luncher.launcher.testi
   closes.
 - **A share's pictures are added one at a time**, each read as a stream into its file: the session
   keeps only their Uris and answers, at most 100, and stops when its window closes.
+- **Add all adds one at a time too**, the previews stopped meanwhile so the adding has the jobs'
+  thread, and stops when its screen closes.

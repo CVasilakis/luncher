@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Add from folder: the title and where the pictures are, then the list of them, and beside it a
-     preview of the selected one with what OK does. -->
+     preview of the selected one, Add all and what OK does. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -60,56 +60,81 @@
                 android:textSize="@dimen/settings_pictures_text" />
         </FrameLayout>
 
-        <!-- The preview at most this size, smaller on a short screen, so the note fits below it. -->
+        <!-- The preview at most this size, smaller on a short screen, so Add all and the note fit
+             below it; on the smallest screens the column scrolls (PreviewColumn). -->
         <com.luncher.launcher.settings.PreviewColumn
             android:id="@+id/settings_pictures_folder_side"
             android:layout_width="@dimen/settings_pictures_preview_width"
             android:layout_height="match_parent"
             android:layout_gravity="end"
-            android:orientation="vertical">
+            android:scrollbars="none">
 
-            <!-- Drawn at exactly its size, as the picture fills the TV's screen; PreviewColumn sets
-                 it. A spinning wheel in its middle while it's drawn; a warning mark there when
-                 there's none to draw (a picture this TV can't show, too large, or damaged). -->
-            <FrameLayout
-                android:layout_width="0dp"
-                android:layout_height="0dp">
-
-                <ImageView
-                    android:id="@+id/settings_pictures_folder_preview"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:background="@drawable/settings_pictures_thumbnail_background"
-                    android:importantForAccessibility="no"
-                    android:scaleType="fitXY" />
-
-                <ProgressBar
-                    android:id="@+id/settings_pictures_folder_loading"
-                    android:layout_width="@dimen/settings_received_spinner"
-                    android:layout_height="@dimen/settings_received_spinner"
-                    android:layout_gravity="center"
-                    android:indeterminate="true"
-                    android:indeterminateTint="@color/accent"
-                    android:visibility="gone" />
-
-                <ImageView
-                    android:id="@+id/settings_pictures_folder_no_preview"
-                    android:layout_width="@dimen/settings_pictures_warning"
-                    android:layout_height="@dimen/settings_pictures_warning"
-                    android:layout_gravity="center"
-                    android:importantForAccessibility="no"
-                    android:src="@drawable/settings_pictures_warning"
-                    android:visibility="gone" />
-            </FrameLayout>
-
-            <TextView
-                android:id="@+id/settings_pictures_folder_note"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/settings_pictures_tile_text_gap"
-                android:text="@string/settings_pictures_folder_note"
-                android:textColor="@color/text_secondary"
-                android:textSize="@dimen/settings_pictures_small_text" />
+                android:orientation="vertical">
+
+                <!-- Drawn at exactly its size, as the picture fills the TV's screen; PreviewColumn sets
+                     it. A spinning wheel in its middle while it's drawn; a warning mark there when
+                     there's none to draw (a picture this TV can't show, too large, or damaged). -->
+                <FrameLayout
+                    android:layout_width="0dp"
+                    android:layout_height="0dp">
+
+                    <ImageView
+                        android:id="@+id/settings_pictures_folder_preview"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:background="@drawable/settings_pictures_thumbnail_background"
+                        android:importantForAccessibility="no"
+                        android:scaleType="fitXY" />
+
+                    <ProgressBar
+                        android:id="@+id/settings_pictures_folder_loading"
+                        android:layout_width="@dimen/settings_received_spinner"
+                        android:layout_height="@dimen/settings_received_spinner"
+                        android:layout_gravity="center"
+                        android:indeterminate="true"
+                        android:indeterminateTint="@color/accent"
+                        android:visibility="gone" />
+
+                    <ImageView
+                        android:id="@+id/settings_pictures_folder_no_preview"
+                        android:layout_width="@dimen/settings_pictures_warning"
+                        android:layout_height="@dimen/settings_pictures_warning"
+                        android:layout_gravity="center"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/settings_pictures_warning"
+                        android:visibility="gone" />
+                </FrameLayout>
+
+                <!-- Adds every picture of the list that can be added; dimmed, and passed by, when none can. -->
+                <TextView
+                    android:id="@+id/settings_pictures_folder_add_all"
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/settings_pictures_entry_height"
+                    android:layout_marginTop="@dimen/settings_pictures_tile_text_gap"
+                    android:background="@drawable/entry_background"
+                    android:ellipsize="end"
+                    android:focusable="true"
+                    android:focusableInTouchMode="true"
+                    android:gravity="center_vertical"
+                    android:paddingLeft="@dimen/settings_pictures_entry_padding"
+                    android:paddingRight="@dimen/settings_pictures_entry_padding"
+                    android:singleLine="true"
+                    android:text="@string/settings_pictures_folder_add_all"
+                    android:textColor="@color/accent"
+                    android:textSize="@dimen/settings_pictures_text" />
+
+                <TextView
+                    android:id="@+id/settings_pictures_folder_note"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/settings_pictures_tile_text_gap"
+                    android:text="@string/settings_pictures_folder_note"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="@dimen/settings_pictures_small_text" />
+            </LinearLayout>
         </com.luncher.launcher.settings.PreviewColumn>
     </FrameLayout>
 </LinearLayout>

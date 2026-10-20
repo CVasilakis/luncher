@@ -299,6 +299,175 @@ class AddFromFolderActivityTest {
         assertEquals(0, graph.jobs.pending)
     }
 
+    private fun Activity.addAll() = findViewById<TextView>(R.id.settings_pictures_folder_add_all)
+
+    /** The message showing: its title, text and entries. */
+    private fun message(): Triple<String, String, List<TextView>> {
+        val dialog = ShadowDialog.getLatestDialog().also { assertTrue(it.isShowing) }
+        val entries = dialog.findViewById<LinearLayout>(R.id.settings_pictures_dialog_entries)
+        return Triple(
+            dialog.findViewById<TextView>(R.id.settings_pictures_dialog_title).text.toString(),
+            dialog.findViewById<TextView>(R.id.settings_pictures_dialog_text).text.toString(),
+            (0 until entries.childCount).map { entries.getChildAt(it) as TextView },
+        )
+    }
+
+    @Test
+    fun `Add all adds the pictures not marked, one at a time, saying which of how many, then how it went`() {
+        val unchanged = folderPicture("unchanged.jpg", bytes = 2_400_000)
+        val library = FakePictures<android.net.Uri>(FakePictures.picture("unchanged.jpg", bytes = 2_400_000)).apply {
+            answerLater = true
+            results[holiday.source] = ImportResult.Added(FakePictures.picture("holiday.jpg"))
+            results[logo.source] = ImportResult.NotAPicture
+            results[wallpaper.source] = ImportResult.Added(FakePictures.picture("wallpaper-4k.jpg"))
+        }
+        graph(holiday, logo, wallpaper, unchanged, phone, library = library)
+        val activity = start()
+        assertEquals("Add all", activity.addAll().text.toString())
+
+        activity.addAll().performClick()
+        idle()
+
+        val window = checkNotNull(working())
+        val message = window.findViewById<TextView>(UiR.id.working_message)
+        assertEquals("Adding picture 1 of 3…", message.text.toString())
+        assertEquals("Cancel", window.findViewById<TextView>(UiR.id.working_cancel).text.toString())
+        library.finishAdding()
+        assertEquals("Adding picture 2 of 3…", message.text.toString())
+        library.finishAdding()
+        library.finishAdding()
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(WorkingDialog.SHORTEST))
+
+        assertEquals("the list's order, not the marked ones", listOf(wallpaper.source, holiday.source, logo.source), library.added)
+        val (title, text, entries) = message()
+        assertEquals("2 pictures added", title)
+        assertEquals("1 already in Luncher's pictures\n1 not a picture, or damaged\n1 in a format this TV can't show", text)
+        assertEquals(listOf("OK"), entries.map { it.text.toString() })
+        assertFalse(activity.isFinishing)
+
+        entries.single().performClick()
+
+        assertTrue(activity.isFinishing)
+        assertEquals(Activity.RESULT_OK, shadowOf(activity).resultCode)
+        assertEquals(
+            listOf("id-wallpaper-4k.jpg", "id-holiday.jpg"),
+            shadowOf(activity).resultIntent.getStringArrayExtra(AddFromFolderActivity.EXTRA_ADDED_ALL)!!.toList(),
+        )
+    }
+
+    @Test
+    fun `Back on Add all's message returns the pictures added too`() {
+        graph(holiday, library = FakePictures<android.net.Uri>().apply { results[holiday.source] = ImportResult.Added(FakePictures.picture("holiday.jpg")) })
+        val activity = start()
+        activity.addAll().performClick()
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(WorkingDialog.SHORTEST))
+        assertEquals("1 picture added", message().first)
+
+        ShadowDialog.getLatestDialog().apply {
+            dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_BACK))
+            dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_BACK))
+        }
+        idle()
+
+        assertTrue(activity.isFinishing)
+        assertEquals(listOf("id-holiday.jpg"), shadowOf(activity).resultIntent.getStringArrayExtra(AddFromFolderActivity.EXTRA_ADDED_ALL)!!.toList())
+    }
+
+    @Test
+    fun `Add all with none added says why, and stays`() {
+        graph(holiday, logo, library = FakePictures())
+        val activity = start()
+
+        activity.addAll().performClick()
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(WorkingDialog.SHORTEST))
+        val (title, text, entries) = message()
+        assertEquals("Pictures not added", title)
+        assertEquals("2 not pictures, or damaged", text)
+        entries.single().performClick()
+
+        assertFalse(activity.isFinishing)
+    }
+
+    @Test
+    fun `Cancel during Add all, before any was added, closes the window and stays`() {
+        val library = FakePictures<android.net.Uri>().apply {
+            answerLater = true
+            results[holiday.source] = ImportResult.Added(FakePictures.picture("holiday.jpg"))
+        }
+        graph(holiday, logo, library = library)
+        val activity = start()
+        activity.addAll().performClick()
+        idle()
+        val window = checkNotNull(working())
+
+        window.findViewById<TextView>(UiR.id.working_cancel).performClick()
+        idle()
+
+        assertFalse(window.isShowing)
+        assertEquals(listOf(holiday.source), library.cancelled)
+        assertNull(working())
+        assertFalse(activity.isFinishing)
+        assertEquals(emptyList<Any>(), library.pictures)
+    }
+
+    @Test
+    fun `Cancel during Add all, after one was added, says how it went, those cancelled counted`() {
+        val library = FakePictures<android.net.Uri>().apply {
+            answerLater = true
+            results[holiday.source] = ImportResult.Added(FakePictures.picture("holiday.jpg"))
+        }
+        graph(holiday, logo, wallpaper, library = library)
+        val activity = start()
+        activity.addAll().performClick()
+        idle()
+        library.finishAdding()   // wallpaper-4k.jpg: not a picture
+        library.finishAdding()   // holiday.jpg: added
+
+        checkNotNull(working()).findViewById<TextView>(UiR.id.working_cancel).performClick()
+        idle()
+
+        val (title, text) = message()
+        assertEquals("1 picture added", title)
+        assertEquals("1 not a picture, or damaged\n1 not added: cancelled", text)
+        assertEquals(listOf(logo.source), library.cancelled)
+    }
+
+    @Test
+    fun `closed during Add all, the adding stops`() {
+        val library = FakePictures<android.net.Uri>().apply { answerLater = true }
+        graph(holiday, logo, library = library)
+        val controller = Robolectric.buildActivity(AddFromFolderActivity::class.java).setup()
+        idle()
+        controller.get().addAll().performClick()
+
+        controller.pause().stop().destroy()
+
+        assertEquals(listOf(holiday.source), library.cancelled)
+        assertEquals("nothing after it", listOf(holiday.source), library.added)
+    }
+
+    @Test
+    fun `Add all is dimmed and passed by while no picture can be added`() {
+        graph(phone, folderPicture("holiday.jpg", bytes = 2_400_000), library = known)
+
+        val activity = start()
+
+        assertFalse(activity.addAll().isFocusable)
+        assertTrue(activity.addAll().alpha < 1f)
+    }
+
+    @Test
+    fun `Add all stops the preview being drawn, so the adding doesn't wait for it`() {
+        val graph = graph(holiday, library = FakePictures<android.net.Uri>().apply { answerLater = true })
+        val activity = start()
+        graph.jobs.runAll()
+        val preview = graph.folderPictures.previewStops.single()
+
+        activity.addAll().performClick()
+
+        assertTrue(preview())
+    }
+
     // The library has "holiday.jpg" (2.4 MB, as the folder's) and "logo.png" (another size).
     private val known = FakePictures<android.net.Uri>(
         FakePictures.picture("holiday.jpg", bytes = 2_400_000),

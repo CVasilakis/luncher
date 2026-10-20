@@ -319,6 +319,12 @@ class BackgroundLayoutTest(private val screen: TvScreen) {
             "preview ${preview.width} x ${preview.height} on $screen, ${metrics.widthPixels} x ${metrics.heightPixels}",
             abs(preview.width.toLong() * metrics.heightPixels - preview.height.toLong() * metrics.widthPixels) < metrics.widthPixels + metrics.heightPixels,
         )
+        // On the smallest screens the column scrolls: to its end, the note, as Add all takes the focus.
+        val addAll = activity.findViewById<TextView>(R.id.settings_pictures_folder_add_all)
+        addAll.requestFocus()
+        idle()
+        activity.assertShown("Add all", addAll)
+        assertTrue("Add all below the screen on $screen", bounds(addAll).bottom <= metrics.heightPixels - margin)
         assertTrue("note below the screen on $screen", bounds(activity.findViewById(R.id.settings_pictures_folder_note)).bottom <= metrics.heightPixels - margin)
         for (i in 0 until list.childCount) activity.assertShown("a picture's details", list.getChildAt(i).findViewById(R.id.settings_pictures_folder_details))
     }

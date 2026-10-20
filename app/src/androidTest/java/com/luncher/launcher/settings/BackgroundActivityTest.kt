@@ -19,6 +19,7 @@ import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.matcher.RootMatchers.isDialog
 import androidx.test.espresso.matcher.RootMatchers.isPlatformPopup
 import androidx.test.espresso.matcher.ViewMatchers.hasFocus
+import androidx.test.espresso.matcher.ViewMatchers.isDescendantOfA
 import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
 import androidx.test.espresso.matcher.ViewMatchers.isRoot
 import androidx.test.espresso.matcher.ViewMatchers.withChild
@@ -288,6 +289,71 @@ class BackgroundActivityTest {
             waitUntil(allOf(withId(R.id.settings_background_chosen), isDisplayed()), isDisplayed())
         }
     }
+
+    @Test
+    fun deleteAll_besideSave_deletesEveryPictureAfterAsking_cancelFirst() {
+        val sunset = picture("sunset.jpg", added = 2)
+        launchWith(picture("beach.png", added = 1), sunset, background = Background(sunset.id)).use {
+            waitUntil(row("sunset.jpg"), hasFocus())
+            // Left, to the options, and down them to Save; Right, beside it, Delete all.
+            press(KeyEvent.KEYCODE_DPAD_LEFT)
+            repeat(5) { if (!hasFocus(withId(R.id.settings_background_save))) press(KeyEvent.KEYCODE_DPAD_DOWN) }
+            waitUntil(withId(R.id.settings_background_save), hasFocus())
+            press(KeyEvent.KEYCODE_DPAD_RIGHT)
+            waitUntil(withId(R.id.settings_background_delete_all), hasFocus())
+            press(KeyEvent.KEYCODE_DPAD_CENTER)
+
+            waitUntil(withText(R.string.settings_pictures_cancel), hasFocus(), inDialog = true)
+            pressInDialog(KeyEvent.KEYCODE_DPAD_DOWN)
+            waitUntil(withText(R.string.settings_pictures_delete), hasFocus(), inDialog = true)
+            pressInDialog(KeyEvent.KEYCODE_DPAD_CENTER)
+
+            waitUntil(withId(R.id.settings_background_save), hasFocus())
+            assertEquals(emptyList<Any>(), fake.pictures)
+            assertEquals("the background without its picture, at once", null, appearance.appearance.background.picture)
+        }
+    }
+
+    @Test
+    fun addAll_addsEveryPictureOfTheDropFolder_thenFocusesTheNewest() {
+        useTheTestsFolders()
+        dropFolder.mkdirs()
+        InstrumentationAssets.copy("pictures/baseline.jpg", File(dropFolder, "holiday.jpg"))
+        InstrumentationAssets.copy("pictures/progressive.jpg", File(dropFolder, "logo.jpg"))
+
+        ActivityScenario.launch(BackgroundActivity::class.java).use {
+            waitUntil(row(R.string.settings_pictures_no_picture), hasFocus())
+            press(KeyEvent.KEYCODE_DPAD_DOWN)
+            waitUntil(row(R.string.settings_pictures_add_from_folder), hasFocus())
+            press(KeyEvent.KEYCODE_DPAD_CENTER)
+
+            waitUntil(withText(containsString("logo.jpg")), isDisplayed())
+            waitUntil(withId(R.id.settings_pictures_folder_list), hasFocus())
+            press(KeyEvent.KEYCODE_DPAD_RIGHT)
+            waitUntil(withId(R.id.settings_pictures_folder_add_all), hasFocus())
+            press(KeyEvent.KEYCODE_DPAD_CENTER)
+
+            val added = application.resources.getQuantityString(R.plurals.settings_received_saved_count, 2, 2)
+            waitUntil(withText(added), isDisplayed(), inDialog = true)
+            waitUntil(withText(R.string.settings_pictures_ok), hasFocus(), inDialog = true)
+            pressInDialog(KeyEvent.KEYCODE_DPAD_CENTER)
+
+            // The newest at the top of the list, focused; the background still No picture.
+            waitUntil(row("logo.jpg"), hasFocus())
+            onView(row("holiday.jpg")).check(matches(isDisplayed()))
+            onView(allOf(withId(R.id.settings_background_chosen), isDisplayed())).check(matches(isDescendantOfA(row(R.string.settings_pictures_no_picture))))
+        }
+    }
+
+    private fun hasFocus(view: Matcher<View>): Boolean =
+        try {
+            onView(view).check(matches(hasFocus()))
+            true
+        } catch (e: AssertionFailedError) {
+            false
+        } catch (e: NoMatchingViewException) {
+            false
+        }
 
     private companion object {
         const val TIMEOUT_MS = 10_000L

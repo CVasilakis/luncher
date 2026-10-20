@@ -23,6 +23,9 @@ import com.luncher.domain.jobs.Cancellable
  * Adding can be [stop]ped while the session goes on: the pictures still to add are cancelled, and
  * the end says how many, after how the others went.
  *
+ * Add from folder's Add all adds its pictures through a session too, of an instance of its own,
+ * which its screen holds only while it adds.
+ *
  * Used on the main thread only, where [import] answers.
  */
 class ReceivedPictures<Source>(private val import: PictureImport<Source>) {

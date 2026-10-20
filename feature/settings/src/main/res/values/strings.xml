@@ -107,6 +107,19 @@
     <string name="settings_background_hint">Hold OK on a picture to rename or delete it</string>
     <!-- Its last entry: stores the picture and options chosen, which the editor only shows until then. -->
     <string name="settings_background_save">Save</string>
+    <!-- Beside Save, in red: deletes every picture of the library, after a question. -->
+    <string name="settings_background_delete_all">Delete all</string>
+    <!-- That question; below it, what deleting them does and doesn't do, with how many; then the
+         same when one of them is the background's picture, which the home screen loses. -->
+    <string name="settings_background_delete_all_question">Delete all pictures?</string>
+    <plurals name="settings_background_delete_all_text">
+        <item quantity="one">The picture is deleted from Luncher\'s pictures only.</item>
+        <item quantity="other">The <xliff:g id="count" example="9">%d</xliff:g> pictures are deleted from Luncher\'s pictures only.</item>
+    </plurals>
+    <plurals name="settings_background_delete_all_text_background">
+        <item quantity="one">Used as the background: the home screen will have no picture. The picture is deleted from Luncher\'s pictures only.</item>
+        <item quantity="other">One is used as the background: the home screen will have no picture. The <xliff:g id="count" example="9">%d</xliff:g> pictures are deleted from Luncher\'s pictures only.</item>
+    </plurals>
     <!-- In a window over the editor while the wallpaper is drawn after Save, which takes a moment. -->
     <string name="settings_background_applying">Processing background…</string>
     <!-- In a window over the background editor as it opens, while its pictures are prepared to be
@@ -270,7 +283,10 @@
     <!-- A name another picture of the library has: in that list, a picture's file of that name;
          also below the field of settings_pictures_rename_title, the name typed. -->
     <string name="settings_pictures_folder_name_taken">Name already used in Luncher\'s pictures</string>
-    <!-- Beside that list, below the preview of the selected picture. -->
+    <!-- Beside that list, below the preview of the selected picture: adds every picture of the
+         list that can be added. -->
+    <string name="settings_pictures_folder_add_all">Add all</string>
+    <!-- Below that. -->
     <string name="settings_pictures_folder_note">OK adds a copy to Luncher\'s pictures. After that, the file and the USB drive are no longer needed.</string>
     <!-- In place of that list, while Luncher looks for pictures, or when there are none. -->
     <string name="settings_pictures_folder_looking">Looking for pictures…</string>

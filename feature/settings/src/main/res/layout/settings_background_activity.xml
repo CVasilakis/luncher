@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The background editor: at the start the preview, the background's options and Save, which
-     scroll on the smallest screens; no title, so the preview gets its room. At the end the
+<!-- The background editor: at the start the preview, the background's options, Save and Delete
+     all, which scroll on the smallest screens; no title, so the preview gets its room. At the end the
      pictures to choose from, a hint above them. Mirrored in a right-to-left language, like the
      other settings screens; the preview's content isn't. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
@@ -44,21 +44,49 @@
                 android:layout_marginTop="@dimen/settings_title_gap"
                 android:orientation="vertical" />
 
-            <TextView
-                android:id="@+id/settings_background_save"
+            <!-- Save at the start, Delete all at the end, half the row each; one below the other
+                 when either doesn't fit its half (EntriesRow). -->
+            <com.luncher.launcher.settings.EntriesRow
                 android:layout_width="match_parent"
-                android:layout_height="@dimen/settings_entry_height"
-                android:background="@drawable/entry_background"
-                android:ellipsize="end"
-                android:focusable="true"
-                android:focusableInTouchMode="true"
-                android:gravity="center_vertical"
-                android:paddingLeft="@dimen/settings_entry_padding"
-                android:paddingRight="@dimen/settings_entry_padding"
-                android:singleLine="true"
-                android:text="@string/settings_background_save"
-                android:textColor="@color/accent"
-                android:textSize="@dimen/settings_entry_text" />
+                android:layout_height="wrap_content"
+                android:baselineAligned="false"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/settings_background_save"
+                    android:layout_width="0dp"
+                    android:layout_height="@dimen/settings_entry_height"
+                    android:layout_weight="1"
+                    android:background="@drawable/entry_background"
+                    android:ellipsize="end"
+                    android:focusable="true"
+                    android:focusableInTouchMode="true"
+                    android:gravity="center_vertical"
+                    android:paddingLeft="@dimen/settings_entry_padding"
+                    android:paddingRight="@dimen/settings_entry_padding"
+                    android:singleLine="true"
+                    android:text="@string/settings_background_save"
+                    android:textColor="@color/accent"
+                    android:textSize="@dimen/settings_entry_text" />
+
+                <!-- In red: it deletes every picture. Dimmed, and passed by, while there's none. -->
+                <TextView
+                    android:id="@+id/settings_background_delete_all"
+                    android:layout_width="0dp"
+                    android:layout_height="@dimen/settings_entry_height"
+                    android:layout_weight="1"
+                    android:background="@drawable/entry_background"
+                    android:ellipsize="end"
+                    android:focusable="true"
+                    android:focusableInTouchMode="true"
+                    android:gravity="center_vertical"
+                    android:paddingLeft="@dimen/settings_entry_padding"
+                    android:paddingRight="@dimen/settings_entry_padding"
+                    android:singleLine="true"
+                    android:text="@string/settings_background_delete_all"
+                    android:textColor="@color/settings_delete"
+                    android:textSize="@dimen/settings_entry_text" />
+            </com.luncher.launcher.settings.EntriesRow>
         </LinearLayout>
     </com.luncher.launcher.settings.BackgroundStartColumn>
 

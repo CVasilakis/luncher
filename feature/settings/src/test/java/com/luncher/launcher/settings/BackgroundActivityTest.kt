@@ -667,6 +667,102 @@ class BackgroundActivityTest {
         assertEquals(listOf(beach), graph.library.pictures)
     }
 
+    private fun Activity.deleteAll() = findViewById<View>(R.id.settings_background_delete_all)
+
+    @Test
+    fun `Delete all, beside Save, asks with how many, Cancel first, and deletes every picture`() {
+        graph(beach, sunset, old)
+        val activity = start().get()
+        assertTrue(activity.deleteAll().isFocusable)
+
+        activity.deleteAll().performClick()
+        idle()
+        val (title, text, entries) = dialog()!!
+        assertEquals("Delete all pictures?", title)
+        assertEquals("The 3 pictures are deleted from Luncher's pictures only.", text)
+        assertEquals(listOf("Cancel", "Delete"), entries.map { it.text.toString() })
+        assertTrue("Cancel focused", entries[0].isFocused)
+        answer("Delete")
+
+        assertEquals(emptyList<Picture>(), graph.library.pictures)
+        assertEquals(listOf("No picture ✓", "Add from folder"), activity.list())
+        assertFalse("dimmed and passed by, with none left", activity.deleteAll().isFocusable)
+        assertTrue("the focus on Save", activity.findViewById<View>(R.id.settings_background_save).isFocused)
+    }
+
+    @Test
+    fun `Delete all with the wallpaper's picture says so, and leaves no wallpaper at once`() {
+        graph(beach, sunset, background = Background(beach.id, dim = 40))
+        graph.storedWallpaper.kept = WallpaperDrawing(beach.id, PictureStyle(dim = 40), 1920, 1080) to sample("kept", 4, 4)
+        val activity = start().get()
+
+        activity.deleteAll().performClick()
+        idle()
+        assertEquals(
+            "One is used as the background: the home screen will have no picture. The 2 pictures are deleted from Luncher's pictures only.",
+            dialog()!!.second,
+        )
+        answer("Delete")
+
+        assertEquals(Background(dim = 40), stored)
+        drawInTheBackground()
+        assertNull(graph.storedWallpaper.kept)
+    }
+
+    @Test
+    fun `Delete all of one picture says it as for one`() {
+        graph(beach)
+        val activity = start().get()
+
+        activity.deleteAll().performClick()
+        idle()
+
+        assertEquals("The picture is deleted from Luncher's pictures only.", dialog()!!.second)
+    }
+
+    @Test
+    fun `Cancel on Delete all deletes nothing`() {
+        graph(beach, sunset)
+        val activity = start().get()
+
+        activity.deleteAll().performClick()
+        idle()
+        answer("Cancel")
+
+        assertEquals(listOf(beach, sunset), graph.library.pictures)
+    }
+
+    @Test
+    fun `Delete all is dimmed and passed by while the library is empty`() {
+        graph()
+
+        val activity = start().get()
+
+        assertFalse(activity.deleteAll().isFocusable)
+        assertTrue(activity.deleteAll().alpha < 1f)
+    }
+
+    @Test
+    fun `the pictures Add all added are focused, the first of them in the list, none chosen`() {
+        val holiday = picture("holiday.jpg", added = 9)
+        val logo = picture("logo.png", added = 10)
+        graph(sunset, background = Background(sunset.id))
+        val activity = start().get()
+
+        activity.ok("Add from folder")
+        graph.library.pictures += listOf(holiday, logo)   // what Add all added, in this order
+        @Suppress("DEPRECATION")
+        shadowOf(activity).receiveResult(
+            Intent(activity, AddFromFolderActivity::class.java),
+            Activity.RESULT_OK,
+            Intent().putExtra(AddFromFolderActivity.EXTRA_ADDED_ALL, arrayOf(holiday.id.value, logo.id.value)),
+        )
+        idle()
+
+        assertEquals(listOf("No picture", "logo.png", "holiday.jpg", "sunset.jpg ✓", "Add from folder"), activity.list())
+        assertEquals("logo.png", activity.focused())
+    }
+
     @Test
     fun `Add from folder opens the drop folders, and the picture it added is chosen and focused`() {
         val added = picture("holiday.jpg", added = 9)

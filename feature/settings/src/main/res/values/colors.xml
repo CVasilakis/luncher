@@ -3,4 +3,6 @@
     <!-- A thumbnail not drawn yet, and the Add from folder tile's dashes. -->
     <color name="settings_pictures_card">#FF1C232B</color>
     <color name="settings_pictures_dash">#80FFFFFF</color>
+    <!-- Delete all's text: it deletes every picture. -->
+    <color name="settings_delete">#FFFF5252</color>
 </resources>

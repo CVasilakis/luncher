@@ -50,6 +50,16 @@
 
     <string name="settings_background_hint">Κρατήστε πατημένο το OK σε μια εικόνα για να τη μετονομάσετε ή να τη διαγράψετε</string>
     <string name="settings_background_save">Αποθήκευση</string>
+    <string name="settings_background_delete_all">Διαγραφή όλων</string>
+    <string name="settings_background_delete_all_question">Διαγραφή όλων των εικόνων;</string>
+    <plurals name="settings_background_delete_all_text">
+        <item quantity="one">Η εικόνα διαγράφεται μόνο από τις εικόνες του Luncher.</item>
+        <item quantity="other">Οι <xliff:g id="count" example="9">%d</xliff:g> εικόνες διαγράφονται μόνο από τις εικόνες του Luncher.</item>
+    </plurals>
+    <plurals name="settings_background_delete_all_text_background">
+        <item quantity="one">Χρησιμοποιείται ως φόντο: η αρχική οθόνη θα μείνει χωρίς εικόνα. Η εικόνα διαγράφεται μόνο από τις εικόνες του Luncher.</item>
+        <item quantity="other">Μία χρησιμοποιείται ως φόντο: η αρχική οθόνη θα μείνει χωρίς εικόνα. Οι <xliff:g id="count" example="9">%d</xliff:g> εικόνες διαγράφονται μόνο από τις εικόνες του Luncher.</item>
+    </plurals>
     <string name="settings_background_applying">Επεξεργασία φόντου…</string>
     <string name="settings_background_preparing">Προετοιμασία της εικόνας…</string>
     <string name="settings_background_preparing_count">Προετοιμασία εικόνας <xliff:g id="number" example="3">%1$d</xliff:g> από <xliff:g id="total" example="10">%2$d</xliff:g>…</string>
@@ -95,6 +105,7 @@
         <item quantity="other">Πολύ μεγάλη (πάνω από <xliff:g id="megapixels" example="64">%d</xliff:g> megapixel)</item>
     </plurals>
     <string name="settings_pictures_folder_name_taken">Το όνομα υπάρχει ήδη στις εικόνες του Luncher</string>
+    <string name="settings_pictures_folder_add_all">Προσθήκη όλων</string>
     <string name="settings_pictures_folder_note">Το OK προσθέτει ένα αντίγραφο στις εικόνες του Luncher. Μετά από αυτό, το αρχείο και το USB δεν χρειάζονται πια.</string>
     <string name="settings_pictures_folder_looking">Αναζήτηση εικόνων…</string>
     <string name="settings_pictures_folder_empty">Δεν υπάρχουν ακόμη εικόνες στον φάκελο</string>

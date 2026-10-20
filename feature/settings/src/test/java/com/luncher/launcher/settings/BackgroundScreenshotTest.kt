@@ -139,6 +139,14 @@ class BackgroundScreenshotTest {
         captureScreenRoboImage("src/test/screenshots/settings/settings_background_delete.png")
     }
 
+    // Delete all, beside Save, with the background's picture among them: the question, Cancel focused.
+    @Test
+    fun deleteAllQuestion() {
+        editor(*library).findViewById<android.view.View>(R.id.settings_background_delete_all).performClick()
+        idle()
+        captureScreenRoboImage("src/test/screenshots/settings/settings_background_delete_all.png")
+    }
+
     // Rename, and another picture's name typed: the field, and why the name can't be.
     @Test
     fun renameDialog() {
@@ -270,5 +278,20 @@ class BackgroundScreenshotTest {
         activity.findViewById<android.widget.ListView>(R.id.settings_pictures_folder_list).performItemClick(null, 0, 0)
         idle()
         captureScreenRoboImage("src/test/screenshots/pictures/pictures_add_from_folder_adding.png")
+    }
+
+    // Add all, some added, some not: how it went, before returning to the background editor.
+    @Test
+    fun addFromFolderAddedAll() {
+        val holiday = folderPicture("holiday.jpg", removable = true)
+        val logo = folderPicture("logo-netflix.png", removable = true)
+        val library = FakePictures<Uri>(picture("beach.png", bytes = 2_400_000)).apply {
+            results[holiday.source] = ImportResult.Added(picture("holiday.jpg", added = 9))
+            results[logo.source] = ImportResult.Added(picture("logo-netflix.png", added = 10))
+        }
+        val activity = folderScreen(holiday, logo, folderPicture("beach.png"), folderPicture("damaged.jpg"), library = library)
+        activity.findViewById<android.view.View>(R.id.settings_pictures_folder_add_all).performClick()
+        shadowOf(Looper.getMainLooper()).idleFor(java.time.Duration.ofMillis(com.luncher.launcher.ui.WorkingDialog.SHORTEST))
+        captureScreenRoboImage("src/test/screenshots/pictures/pictures_add_from_folder_added_all.png")
     }
 }

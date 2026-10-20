@@ -23,6 +23,8 @@ import com.luncher.domain.jobs.LatestRequest
 import com.luncher.domain.pictures.FolderPicture
 import com.luncher.domain.pictures.Framing
 import com.luncher.domain.pictures.ImportResult
+import com.luncher.domain.pictures.ReceivedPictures
+import com.luncher.domain.pictures.ReceivedPictures.Outcome
 import com.luncher.domain.pictures.inListOrder
 import com.luncher.domain.pictures.whyRefused
 import com.luncher.launcher.ui.WorkingDialog
@@ -43,6 +45,14 @@ import java.util.Locale
  * read again each time it shows, so a drive plugged in meanwhile counts. Closed while it adds
  * (Home, or a configuration change), the adding stops.
  *
+ * Add all, below the preview, adds every picture of the list that isn't marked, one at a time
+ * ([ReceivedPictures], a session of the screen's own), while the window says which of how many,
+ * with Cancel; then a message says how many were added, and a line for each reason some weren't,
+ * those marked counted too ([notAddedLines]). OK, or Back, returns them to [BackgroundActivity]
+ * ([EXTRA_ADDED_ALL]), which focuses the first of them; with none added, the screen stays.
+ * Cancel before any was added closes the window, and the screen stays. Dimmed, and passed by,
+ * while no picture can be added.
+ *
  * The selected picture's preview is drawn in the background, a spinning wheel in its place
  * meanwhile, and the one of a picture no longer selected stops at once. Once it's drawn, the
  * others' are drawn ahead, one at a time, the nearest to the selected one first, at a priority
@@ -58,6 +68,15 @@ class AddFromFolderActivity : Activity() {
 
     /** The picture being added, while the window says so. */
     private var adding: Cancellable? = null
+
+    /** Add all's pictures, added one at a time while the window says so; its hold on them while it does, else 0. */
+    private val addingAll by lazy { ReceivedPictures(pictureImport) }
+    private var addingAllHold = 0
+
+    /** Why the pictures Add all passed by weren't added, as the listing told: counted at the end. */
+    private var passedBy: List<ImportResult> = emptyList()
+    private val addingAllChanged: () -> Unit = { addingAllChanged() }
+    private lateinit var addAll: View
     private var working: WorkingDialog? = null
     private val main = Handler(Looper.getMainLooper())
     private val previewing by lazy { LatestRequest(graph.jobs, JobPriority.PICTURE_SCREENS) { main.post(it) } }
@@ -92,6 +111,8 @@ class AddFromFolderActivity : Activity() {
         preview = findViewById(R.id.settings_pictures_folder_preview)
         loading = findViewById(R.id.settings_pictures_folder_loading)
         noPreview = findViewById(R.id.settings_pictures_folder_no_preview)
+        addAll = findViewById(R.id.settings_pictures_folder_add_all)
+        addAll.setOnClickListener { addAll() }
         // A screen opened anew starts with none kept (one killed while it showed left them); made
         // anew by a configuration change, it finds them.
         if (savedInstanceState == null) folders.forgetPreviews()
@@ -127,6 +148,7 @@ class AddFromFolderActivity : Activity() {
         super.onDestroy()
         dialog?.dismiss()
         adding?.cancel()
+        endAddingAll()
         working?.dismiss()
         if (isFinishing) folders.forgetPreviews()
     }
@@ -137,6 +159,10 @@ class AddFromFolderActivity : Activity() {
         val known = library.read()
         refused = found.mapNotNull { picture -> whyRefused(picture, known)?.let { picture.source to it } }.toMap()
         rows.notifyDataSetChanged()
+        val canAddAll = found.any { it.source !in refused }
+        addAll.alpha = if (canAddAll) 1f else DIMMED
+        addAll.isFocusable = canAddAll
+        addAll.isFocusableInTouchMode = canAddAll
         state.visibility = if (found.isEmpty()) View.VISIBLE else View.GONE
         state.setText(if (looking) R.string.settings_pictures_folder_looking else R.string.settings_pictures_folder_empty)
         side.visibility = if (found.isEmpty()) View.INVISIBLE else View.VISIBLE
@@ -221,7 +247,7 @@ class AddFromFolderActivity : Activity() {
      */
     private fun choose(picture: FolderPicture<Uri>) {
         refused[picture.source]?.let { return notAdded(it) }
-        if (adding != null) return
+        if (adding != null || addingAllHold != 0) return
         previewing.stop()
         prefetching.stop()
         val working = working ?: WorkingDialog(this).also { working = it }
@@ -246,6 +272,88 @@ class AddFromFolderActivity : Activity() {
         finish()
     }
 
+    /**
+     * Adds every picture of the list that isn't marked, one at a time, while the window says
+     * which of how many; the previews' decodes stopped first, so the adding has the jobs' thread
+     * at once.
+     */
+    private fun addAll() {
+        val sources = pictures.filter { it.source !in refused }.map { it.source }
+        if (sources.isEmpty() || adding != null || addingAllHold != 0) return
+        previewing.stop()
+        prefetching.stop()
+        passedBy = pictures.mapNotNull { refused[it.source] }
+        addingAll.addListener(addingAllChanged)
+        addingAllHold = addingAll.receive(sources)
+        addingAllChanged()
+    }
+
+    /** The window while Add all adds, which of how many; at the end, how it went. */
+    private fun addingAllChanged() {
+        if (addingAllHold == 0) return
+        val working = working ?: WorkingDialog(this).also { working = it }
+        val outcome = addingAll.outcome
+        if (outcome == null) {
+            val total = addingAll.total
+            val text = if (total == 1) getString(R.string.settings_pictures_adding) else getString(R.string.settings_received_adding_count, addingAll.answered + 1, total)
+            working.show(text, getString(R.string.settings_pictures_cancel)) { addingAll.stop() }
+            return
+        }
+        val all = when (outcome) {
+            is Outcome.One -> Outcome.Several(passedBy + outcome.result)
+            is Outcome.Several -> outcome.copy(results = passedBy + outcome.results)
+        }
+        endAddingAll()
+        // Cancelled before any was added: nothing to say.
+        if (all.cancelled > 0 && all.added == 0) return refreshMarks()
+        working.close { if (!isDestroyed) addedAll(all) }
+    }
+
+    /** Ends Add all's session, if it has one: a picture being added isn't added. */
+    private fun endAddingAll() {
+        val hold = addingAllHold
+        if (hold == 0) return
+        addingAllHold = 0
+        addingAll.removeListener(addingAllChanged)
+        addingAll.end(hold)
+    }
+
+    /**
+     * Says how Add all went; OK, or Back, returns the pictures added to the background editor.
+     * With none added, the screen stays.
+     */
+    private fun addedAll(outcome: Outcome.Several) {
+        val title = if (outcome.added > 0) {
+            resources.getQuantityString(R.plurals.settings_received_saved_count, outcome.added, outcome.added)
+        } else {
+            getString(R.string.settings_received_none_added)
+        }
+        val added = outcome.results.filterIsInstance<ImportResult.Added>().map { it.picture.id.value }
+        val done = {
+            if (added.isEmpty()) {
+                refreshMarks()
+            } else {
+                setResult(RESULT_OK, Intent().putExtra(EXTRA_ADDED_ALL, added.toTypedArray()))
+                finish()
+            }
+        }
+        dialog?.dismiss()
+        dialog = PicturesDialog(
+            this,
+            title,
+            notAddedLines(outcome).joinToString("\n").ifEmpty { null },
+            listOf(getString(R.string.settings_pictures_ok) to done),
+        ).apply {
+            setOnCancelListener { done() }
+            show()
+        }
+    }
+
+    /** The marks as the library is now: the pictures just added are in it. */
+    private fun refreshMarks() {
+        if (pictures.isNotEmpty()) show(pictures, looking = false)
+    }
+
     private fun notAdded(why: ImportResult) {
         dialog?.dismiss()
         dialog = PicturesDialog(
@@ -259,6 +367,11 @@ class AddFromFolderActivity : Activity() {
     internal companion object {
         /** The id of the picture added, in the result. */
         const val EXTRA_ADDED = "com.luncher.launcher.settings.ADDED"
+
+        /** The ids of the pictures Add all added, in the order they were added, in the result. */
+        const val EXTRA_ADDED_ALL = "com.luncher.launcher.settings.ADDED_ALL"
+
+        private const val DIMMED = 0.4f
     }
 
     /** The rows of [pictures], reusing the views of rows scrolled away. */

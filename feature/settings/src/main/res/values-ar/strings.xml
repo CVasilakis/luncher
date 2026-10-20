@@ -50,6 +50,24 @@
 
     <string name="settings_background_hint">اضغط مطولًا على OK فوق صورة لإعادة تسميتها أو حذفها</string>
     <string name="settings_background_save">حفظ</string>
+    <string name="settings_background_delete_all">حذف الكل</string>
+    <string name="settings_background_delete_all_question">حذف كل الصور؟</string>
+    <plurals name="settings_background_delete_all_text">
+        <item quantity="zero">تُحذف <xliff:g id="count" example="0">%d</xliff:g> صورة من صور Luncher فقط.</item>
+        <item quantity="one">تُحذف الصورة من صور Luncher فقط.</item>
+        <item quantity="two">تُحذف الصورتان من صور Luncher فقط.</item>
+        <item quantity="few">تُحذف الصور الـ<xliff:g id="count" example="3">%d</xliff:g> من صور Luncher فقط.</item>
+        <item quantity="many">تُحذف الصور الـ<xliff:g id="count" example="11">%d</xliff:g> من صور Luncher فقط.</item>
+        <item quantity="other">تُحذف الصور الـ<xliff:g id="count" example="100">%d</xliff:g> من صور Luncher فقط.</item>
+    </plurals>
+    <plurals name="settings_background_delete_all_text_background">
+        <item quantity="zero">إحداها مستخدمة كخلفية: لن تعرض الشاشة الرئيسية أي صورة. تُحذف <xliff:g id="count" example="0">%d</xliff:g> صورة من صور Luncher فقط.</item>
+        <item quantity="one">مستخدمة كخلفية: لن تعرض الشاشة الرئيسية أي صورة. تُحذف الصورة من صور Luncher فقط.</item>
+        <item quantity="two">إحداهما مستخدمة كخلفية: لن تعرض الشاشة الرئيسية أي صورة. تُحذف الصورتان من صور Luncher فقط.</item>
+        <item quantity="few">إحداها مستخدمة كخلفية: لن تعرض الشاشة الرئيسية أي صورة. تُحذف الصور الـ<xliff:g id="count" example="3">%d</xliff:g> من صور Luncher فقط.</item>
+        <item quantity="many">إحداها مستخدمة كخلفية: لن تعرض الشاشة الرئيسية أي صورة. تُحذف الصور الـ<xliff:g id="count" example="11">%d</xliff:g> من صور Luncher فقط.</item>
+        <item quantity="other">إحداها مستخدمة كخلفية: لن تعرض الشاشة الرئيسية أي صورة. تُحذف الصور الـ<xliff:g id="count" example="100">%d</xliff:g> من صور Luncher فقط.</item>
+    </plurals>
     <string name="settings_background_applying">جارٍ معالجة الخلفية…</string>
     <string name="settings_background_preparing">جارٍ تجهيز الصورة…</string>
     <string name="settings_background_preparing_count">جارٍ تجهيز الصورة <xliff:g id="number" example="3">%1$d</xliff:g> من <xliff:g id="total" example="10">%2$d</xliff:g>…</string>
@@ -103,6 +121,7 @@
         <item quantity="other">كبيرة جدًا (أكثر من <xliff:g id="megapixels" example="100">%d</xliff:g> ميغابكسل)</item>
     </plurals>
     <string name="settings_pictures_folder_name_taken">الاسم مستخدم بالفعل في صور Luncher</string>
+    <string name="settings_pictures_folder_add_all">إضافة الكل</string>
     <string name="settings_pictures_folder_note">زر OK يضيف نسخة إلى صور Luncher. بعد ذلك، لن تكون هناك حاجة إلى الملف ولا إلى وحدة USB.</string>
     <string name="settings_pictures_folder_looking">جارٍ البحث عن صور…</string>
     <string name="settings_pictures_folder_empty">لا توجد صور في المجلد بعد</string>
