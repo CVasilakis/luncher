@@ -2,6 +2,8 @@ package com.luncher.launcher.settings
 
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Rect
 import android.view.View
 import com.luncher.domain.appearance.Appearance
 import com.luncher.domain.appearance.Background
@@ -128,6 +130,70 @@ class AppearancePreviewViewTest {
 
         assertEquals(WIDTH * 3 / 4, preview.measuredHeight)
         assertEquals(listOf(WIDTH to WIDTH * 3 / 4), drawn)
+    }
+
+    // What's on the wallpaper has the home screen's edge (WallpaperOutline): every light shape the
+    // preview draws on a black picture has dark pixels around it on a white one. The focus frame,
+    // orange, isn't light, and has none, as on the home screen.
+    @Test
+    fun `every shape on the wallpaper has an outline`() {
+        val preview = AppearancePreviewView(RuntimeEnvironment.getApplication(), null).apply {
+            measure(exactly(WIDTH), exactly(HEIGHT))
+            layout(0, 0, WIDTH, HEIGHT)
+            showWallpapers(FakePictureImages { picture, width, height, _ -> solid(picture, width, height) }, jobs)
+        }
+        fun drawOn(picture: String): Bitmap {
+            preview.appearance = Appearance(background = Background(PictureId(picture)))
+            jobs.runAll()
+            shadowOf(Looper.getMainLooper()).idle()
+            return Bitmap.createBitmap(WIDTH, HEIGHT, Bitmap.Config.ARGB_8888).also { preview.draw(Canvas(it)) }
+        }
+        val onWhite = drawOn("white")
+
+        val shapes = lightShapes(drawOn("black"))
+
+        // The time, the date, the gear, and the tiles but the focused one.
+        assertEquals(9, shapes.size)
+        for (shape in shapes) {
+            val around = Rect(shape).apply { inset(-2, -2) }
+            assertTrue("the shape at $shape has no outline", (around.left until around.right).any { x ->
+                (around.top until around.bottom).any { y -> brightness(onWhite.getPixel(x, y)) < 128 }
+            })
+        }
+    }
+
+    private fun solid(picture: PictureId, width: Int, height: Int) = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        .apply { eraseColor(if (picture.value == "white") Color.WHITE else Color.BLACK) }
+
+    private fun brightness(color: Int) = minOf(Color.red(color), Color.green(color), Color.blue(color))
+
+    /** The bounds of each group of touching light pixels in [image]. */
+    private fun lightShapes(image: Bitmap): List<Rect> {
+        val seen = BooleanArray(image.width * image.height)
+        val shapes = mutableListOf<Rect>()
+        for (start in seen.indices) {
+            if (seen[start] || brightness(image.getPixel(start % image.width, start / image.width)) <= 128) continue
+            val bounds = Rect(start % image.width, start / image.width, start % image.width + 1, start / image.width + 1)
+            val next = ArrayDeque(listOf(start))
+            seen[start] = true
+            while (next.isNotEmpty()) {
+                val at = next.removeFirst()
+                val x = at % image.width
+                val y = at / image.width
+                bounds.union(x, y)
+                for (dx in -1..1) for (dy in -1..1) {
+                    val nx = x + dx
+                    val ny = y + dy
+                    if (nx !in 0 until image.width || ny !in 0 until image.height) continue
+                    val near = ny * image.width + nx
+                    if (seen[near] || brightness(image.getPixel(nx, ny)) <= 128) continue
+                    seen[near] = true
+                    next += near
+                }
+            }
+            shapes += bounds
+        }
+        return shapes
     }
 
     private companion object {

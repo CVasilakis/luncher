@@ -23,6 +23,8 @@ ui/
     │   │   │                     the previews' shape
     │   │   ├── ShortestShowing.kt  how long a wait has shown, so it shows half a second at least: WorkingDialog's,
     │   │   │                     and the share window's wheel
+    │   │   ├── WallpaperOutline.kt  the dark edge around what's drawn on the wallpaper, on the home screen
+    │   │   │                     and in the previews of it
     │   │   └── WorkingDialog.kt  a floating panel with a spinning wheel and a message, taking every key,
     │   │                         shown half a second at least: for work the user waits for (the wallpaper drawn,
     │   │                         a picture added); Cancel too, and Back, for work that can be stopped
@@ -31,8 +33,9 @@ ui/
     │       │                     a floating panel's window (the settings panels, the picture dialogs, WorkingDialog)
     │       ├── layout/           working_dialog: WorkingDialog's wheel and message, and its Cancel
     │       └── values/
-    │           ├── colors.xml    background, accent, primary and secondary text, a panel and its focused entry
-    │           ├── dimens.xml    a panel's corners, an entry's frame, WorkingDialog's sizes
+    │           ├── colors.xml    background, accent, primary and secondary text, a panel and its focused entry,
+    │           │                 the wallpaper outline
+    │           ├── dimens.xml    a panel's corners, an entry's frame, WorkingDialog's sizes, the wallpaper outline's width
     │           └── themes.xml    Theme.Luncher, the app's and the home screen's theme; Theme.Luncher.Working
     └── testFixtures/java/com/luncher/launcher/testing/
         ├── TvDevice.kt           the TV screens the JVM tests run on (TV_1080P, TV_SCREENS)

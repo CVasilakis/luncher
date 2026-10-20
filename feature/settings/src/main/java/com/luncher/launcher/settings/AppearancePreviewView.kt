@@ -18,6 +18,7 @@ import com.luncher.domain.layout.TileLayouts
 import com.luncher.domain.layout.TopBarItem
 import com.luncher.domain.layout.topBarLayout
 import com.luncher.domain.pictures.PictureImages
+import com.luncher.launcher.ui.WallpaperOutline
 import com.luncher.launcher.ui.color
 import com.luncher.launcher.ui.screenSize
 import com.luncher.launcher.ui.R as UiR
@@ -40,6 +41,10 @@ import kotlin.math.roundToInt
  * drawing allocates nothing. The wallpaper is drawn in the background ([showWallpapers]), from
  * the picture's working copy in milliseconds, the latest request winning, and kept while the
  * background and the size stay the same.
+ *
+ * What's on the wallpaper has the home screen's edge ([WallpaperOutline]), so the illustration
+ * reads on a white picture as the home screen does: the blocks and the tiles' outlines, at the
+ * sample's scale, a pixel at least; not the focus frame, which the home screen's has none of.
  */
 internal class AppearancePreviewView(context: Context, attrs: AttributeSet?) : View(context, attrs) {
 
@@ -121,6 +126,9 @@ internal class AppearancePreviewView(context: Context, attrs: AttributeSet?) : V
     private val focusPaint = stroke(context.color(UiR.color.accent))
     private val primaryPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = context.color(UiR.color.text_primary) }
     private val secondaryPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = context.color(UiR.color.text_secondary) }
+    private val outline = WallpaperOutline(context)
+    private val blockOutlinePaint = stroke(outline.color).apply { strokeJoin = Paint.Join.ROUND }
+    private val tileOutlinePaint = stroke(outline.color)
 
     private fun stroke(color: Int) = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
@@ -140,6 +148,9 @@ internal class AppearancePreviewView(context: Context, attrs: AttributeSet?) : V
         screen.set(left, top, left + SCREEN_WIDTH * scale, top + screenHeight * scale)
         tilePaint.strokeWidth = maxOf(1f, OUTLINE * scale)
         focusPaint.strokeWidth = maxOf(2f, FRAME * scale)
+        val edge = maxOf(1f, outline.widthDp * scale)
+        blockOutlinePaint.strokeWidth = 2 * edge
+        tileOutlinePaint.strokeWidth = tilePaint.strokeWidth + 2 * edge
         placeTiles()
         styleTiles()
         placeBar()
@@ -149,11 +160,15 @@ internal class AppearancePreviewView(context: Context, attrs: AttributeSet?) : V
     override fun onDraw(canvas: Canvas) {
         val wallpaper = wallpaper
         if (wallpaper != null) canvas.drawBitmap(wallpaper, null, screen, wallpaperPaint) else canvas.drawRect(screen, screenPaint)
-        canvas.drawRoundRect(time, BLOCK_RADIUS * scale, BLOCK_RADIUS * scale, primaryPaint)
-        canvas.drawRoundRect(date, BLOCK_RADIUS * scale, BLOCK_RADIUS * scale, secondaryPaint)
-        canvas.drawOval(gear, primaryPaint)
+        drawBlock(canvas, time, primaryPaint)
+        drawBlock(canvas, date, secondaryPaint)
+        if (!gear.isEmpty) {
+            canvas.drawOval(gear, blockOutlinePaint)
+            canvas.drawOval(gear, primaryPaint)
+        }
         for (i in tiles.indices) {
             if (i == FOCUSED) continue
+            canvas.drawRoundRect(tiles[i], tileRadius, tileRadius, tileOutlinePaint)
             canvas.drawRoundRect(tiles[i], tileRadius, tileRadius, tilePaint)
         }
         // Zoomed, as the home screen's focused tile.
@@ -162,6 +177,13 @@ internal class AppearancePreviewView(context: Context, attrs: AttributeSet?) : V
         canvas.scale(FOCUSED_ZOOM, FOCUSED_ZOOM, focused.centerX(), focused.centerY())
         canvas.drawRoundRect(focused, tileRadius, tileRadius, focusPaint)
         canvas.restore()
+    }
+
+    /** [block] with its outline. An item left out has an empty block, which stroked would still draw a dot. */
+    private fun drawBlock(canvas: Canvas, block: RectF, paint: Paint) {
+        if (block.isEmpty) return
+        canvas.drawRoundRect(block, BLOCK_RADIUS * scale, BLOCK_RADIUS * scale, blockOutlinePaint)
+        canvas.drawRoundRect(block, BLOCK_RADIUS * scale, BLOCK_RADIUS * scale, paint)
     }
 
     private fun placeTiles() {

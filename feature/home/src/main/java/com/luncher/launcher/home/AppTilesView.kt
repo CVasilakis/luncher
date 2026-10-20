@@ -20,6 +20,7 @@ import com.luncher.domain.layout.TileFocus
 import com.luncher.domain.layout.TileLayout
 import com.luncher.domain.layout.TileLayouts
 import com.luncher.domain.layout.TileMoves
+import com.luncher.launcher.ui.WallpaperOutline
 import com.luncher.launcher.ui.color
 import kotlin.math.ceil
 import com.luncher.launcher.ui.R as UiR
@@ -232,10 +233,14 @@ internal class AppTilesView(context: Context, attrs: AttributeSet?) : ViewGroup(
 
     private fun maxScrollY() = (paddingTop + tileLayout.contentHeight + paddingBottom - height).coerceAtLeast(0)
 
-    /** What the shelf draws besides its tiles: the label above it, and the empty slot while nothing is hidden. */
+    /**
+     * What the shelf draws besides its tiles: the label above it, and the empty slot while nothing
+     * is hidden. On the wallpaper, so each with [WallpaperOutline]'s edge.
+     */
     private inner class Shelf {
 
         private val color = context.color(UiR.color.text_secondary)
+        private val outline = WallpaperOutline(context)
 
         private val labelPaint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
             color = this@Shelf.color
@@ -246,12 +251,19 @@ internal class AppTilesView(context: Context, attrs: AttributeSet?) : ViewGroup(
         val labelHeight = labelMetrics.descent - labelMetrics.ascent
         private val labelWidth = ceil(labelPaint.measureText(label)).toInt()
 
+        private val dash = resources.getDimension(R.dimen.home_shelf_slot_dash)
         private val slotPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             style = Paint.Style.STROKE
             color = this@Shelf.color
             strokeWidth = resources.getDimension(R.dimen.home_shelf_slot_line)
-            val dash = resources.getDimension(R.dimen.home_shelf_slot_dash)
             pathEffect = DashPathEffect(floatArrayOf(dash, dash), 0f)
+        }
+
+        /** Under the slot's line: wider by the outline on both sides, each dash longer by it at both ends. */
+        private val slotOutlinePaint = Paint(slotPaint).apply {
+            color = outline.color
+            strokeWidth += 2 * outline.width
+            pathEffect = DashPathEffect(floatArrayOf(dash + 2 * outline.width, dash - 2 * outline.width), outline.width)
         }
         private val slot = RectF()
         private val captionPaint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -264,7 +276,9 @@ internal class AppTilesView(context: Context, attrs: AttributeSet?) : ViewGroup(
         fun draw(canvas: Canvas, layout: ShelfLayout) {
             val labelLeft = paddingLeft + layout.labelLeft(labelWidth).toFloat()
             val labelTop = paddingTop + layout.labelTop
-            canvas.drawText(label, labelLeft, labelTop - labelMetrics.ascent.toFloat(), labelPaint)
+            val labelBaseline = labelTop - labelMetrics.ascent.toFloat()
+            outline.under(labelPaint) { canvas.drawText(label, labelLeft, labelBaseline, labelPaint) }
+            canvas.drawText(label, labelLeft, labelBaseline, labelPaint)
 
             val empty = layout.emptySlot ?: return
             val left = paddingLeft + layout.left(empty).toFloat()
@@ -272,12 +286,14 @@ internal class AppTilesView(context: Context, attrs: AttributeSet?) : ViewGroup(
             val top = paddingTop + layout.top(empty).toFloat()
             slot.set(left + inset, top + inset, left + layout.tileWidth - inset, top + layout.tileHeight - inset)
             val radius = (paints.cornerRadius(layout.tileHeight) - inset).coerceAtLeast(0f)
+            canvas.drawRoundRect(slot, radius, radius, slotOutlinePaint)
             canvas.drawRoundRect(slot, radius, radius, slotPaint)
 
             val width = (layout.tileWidth - 2 * captionPadding).coerceAtLeast(0)
             val text = caption?.takeIf { it.width == width } ?: captionLayout(width).also { caption = it }
             canvas.save()
             canvas.translate(left + captionPadding, top + (layout.tileHeight - text.height) / 2f)
+            outline.under(captionPaint) { text.draw(canvas) }
             text.draw(canvas)
             canvas.restore()
         }

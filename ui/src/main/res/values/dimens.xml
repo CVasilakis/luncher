@@ -15,4 +15,8 @@
     <dimen name="working_entry_height">56dp</dimen>
     <dimen name="working_entry_padding">16dp</dimen>
     <dimen name="working_entry_gap">24dp</dimen>
+    <!-- How far the edge around what's drawn on the wallpaper reaches past the shape
+         (WallpaperOutline). The home screen's gear (feature/home's home_settings.xml) draws twice
+         this, in its own units. -->
+    <dimen name="wallpaper_outline">0.75dp</dimen>
 </resources>

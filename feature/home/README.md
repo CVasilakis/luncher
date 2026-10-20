@@ -23,6 +23,7 @@ feature/home/
     │   │   ├── HomeActivity.kt   the home screen: reads the apps, shows those not hidden, opens them
     │   │   ├── TopBarView.kt     the top bar: the clock and the settings entry where the appearance puts them
     │   │   ├── ClockView.kt      the top bar's time and date, following the Clock port
+    │   │   ├── OutlinedTextView.kt  a text on the wallpaper, with :ui's WallpaperOutline around it
     │   │   ├── AppTilesView.kt   places the tiles where the domain's TileLayout says; scrolls
     │   │   ├── AppTileView.kt    one app: its image, focus frame and zoom; held or hidden while arranging
     │   │   ├── TilePaints.kt     what every tile draws with: frames, dimming, the corners
@@ -103,6 +104,19 @@ that changes (the time, later e.g. the network) gets it from a port you can watc
 fake in `:domain`'s test fixtures that the test moves
 ([`FakeClock`](../../domain/src/testFixtures/kotlin/com/luncher/domain/clock/FakeClock.kt)), and is
 a view with `start(port)` and `stop()`, called from `HomeActivity`'s `onStart` and `onStop`.
+
+Everything the home screen draws straight on the wallpaper (the bar's items, arrange mode's title,
+hint and shelf, the message without apps) has a thin dark edge (`:ui`'s `WallpaperOutline`, which
+the editors' preview of the home screen draws too), so it reads on any picture, a white one too:
+0.75 dp past the shape, in the plain background's color at 80 %, so on the plain background it
+doesn't show. It's drawn under the shape, so it never thins it, and only when the shape is drawn,
+so it costs no memory and no time between redraws. An outlined text's padding has room for the
+edge, so its view never cuts it. A new item in the bar brings its own: a text is an
+`OutlinedTextView`; an icon, a vector, draws the same path stroked in `wallpaper_outline` first,
+as the gear does (`home_settings.xml`). `HomeOutlineTest` draws each item of the bar, and the
+message without apps, alone on white, and fails for one without it. The secondary texts (the date,
+the hint) are 70 % white, so the edge shows through them: on a light picture they read grey, as on
+the plain background.
 
 The bar itself isn't focusable. An item that should be reachable with the D-pad (the settings
 gear) is a focusable view in it, and Up from the first row of tiles moves there through
@@ -241,7 +255,7 @@ mode too, with a held app put down where it is.
 | `TileMoves` (`:domain`), in `TileGrid` | where a moved tile goes in the grid, and where one coming in from above or below lands |
 | `ShelfLayout` (`:domain`) | the positions: the shown tiles, the label, the shelf; the three placed together in the height as the tiles' vertical alignment says, and the label over the shelf as its rows that aren't full are, at the left, centered or at the right |
 | `ArrangeMode` | starts and ends the mode; turns keys into the session's moves and moves the tiles to match; stores the arrangement each time an app that moved is put down |
-| `AppTilesView` | with `shownCount` set, lays the tiles out with a `ShelfLayout` and draws the label and the empty slot; `moveTile` moves one without it losing focus |
+| `AppTilesView` | with `shownCount` set, lays the tiles out with a `ShelfLayout` and draws the label and the empty slot, outlined ([The top bar](#the-top-bar)); `moveTile` moves one without it losing focus |
 
 The first move fixes the order: from then on the shown apps keep the user's order instead of the
 one by name, and apps installed later come after them.

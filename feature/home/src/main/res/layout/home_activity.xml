@@ -35,7 +35,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1">
 
-                <TextView
+                <com.luncher.launcher.home.OutlinedTextView
                     android:id="@+id/home_time"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -43,7 +43,7 @@
                     android:textColor="@color/text_primary"
                     android:textSize="@dimen/home_time_text" />
 
-                <TextView
+                <com.luncher.launcher.home.OutlinedTextView
                     android:id="@+id/home_date"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -57,7 +57,7 @@
             <!-- As tall as the settings entry it replaces, so the tiles below stay where they are.
                  What the hint leaves of the bar: where a language's title and hint don't both
                  fit (a narrow screen, large text), the title ends in "…", never the hint. -->
-            <TextView
+            <com.luncher.launcher.home.OutlinedTextView
                 android:id="@+id/home_arrange_title"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
@@ -72,7 +72,7 @@
                 android:textSize="@dimen/home_time_text"
                 android:visibility="gone" />
 
-            <TextView
+            <com.luncher.launcher.home.OutlinedTextView
                 android:id="@+id/home_arrange_hint"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -108,7 +108,7 @@
             android:paddingBottom="@dimen/home_padding_vertical" />
     </LinearLayout>
 
-    <TextView
+    <com.luncher.launcher.home.OutlinedTextView
         android:id="@+id/home_empty"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
