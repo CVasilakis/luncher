@@ -252,6 +252,45 @@ class WallpaperTest {
         assertEquals(drawing to "kept", stored.kept)
     }
 
+    // What a preview draws at once (readyFor).
+
+    @Test
+    fun `gives a preview the image it shows, for its background only`() {
+        stored.kept = drawing to "kept"
+        wallpaper.show(background, 1920, 1080)
+
+        assertEquals("kept", wallpaper.readyFor(background))
+        assertNull("another style", wallpaper.readyFor(background.copy(dim = 40)))
+        assertNull("another picture", wallpaper.readyFor(background.copy(picture = forest)))
+        assertNull("no picture", wallpaper.readyFor(Background()))
+    }
+
+    @Test
+    fun `gives a preview nothing while it's drawn, nor before the home screen asked`() {
+        assertNull(wallpaper.readyFor(background))
+
+        wallpaper.show(background, 1920, 1080)
+        assertNull(wallpaper.readyFor(background))
+
+        drawInTheBackground()
+        assertEquals("sunset 1920x1080 dim 20", wallpaper.readyFor(background))
+    }
+
+    @Test
+    fun `gives a preview the background saved once it's drawn, not the one it replaces meanwhile`() {
+        stored.kept = drawing to "kept"
+        wallpaper.show(background, 1920, 1080)
+        val forestBackground = Background(forest)
+
+        wallpaper.save(forestBackground, 1920, 1080) {}
+        assertNull(wallpaper.readyFor(background))
+        assertNull(wallpaper.readyFor(forestBackground))
+
+        drawInTheBackground()
+        assertEquals("forest 1920x1080 dim 0", wallpaper.readyFor(forestBackground))
+        assertNull(wallpaper.readyFor(background))
+    }
+
     // Deleting pictures.
 
     @Test

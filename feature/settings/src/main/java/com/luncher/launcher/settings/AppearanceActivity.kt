@@ -81,7 +81,7 @@ class AppearanceActivity : Activity() {
         options.addView(reset)
 
         appearance = settings.read()
-        preview.showWallpapers(graph.pictureImages, graph.jobs)
+        preview.showWallpapers(graph.wallpaper, graph.pictureImages, graph.jobs)
         show()
         groups.first().header.requestFocus()
     }

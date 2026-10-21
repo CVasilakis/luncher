@@ -186,7 +186,9 @@ and the tiles, at the screen's size, filling the screen at the position the user
 stretched, dimmed and blurred as set. It's drawn once and kept, apart from the image caches, as
 one file in the app's private storage (`StoredWallpaper`,
 [`platform/README.md`](../../platform/README.md#pictures)), so a start reads it on the main thread
-and the home screen's first frame has it, as the tiles' images.
+and the home screen's first frame has it, as the tiles' images. The editors' previews draw it too,
+shrunk, while it's of their background (`Wallpaper.readyFor`), so it's in theirs at once as well
+([`feature/settings/README.md`](../settings/README.md#appearance)).
 
 `Wallpaper`, in `:domain`, says what the wallpaper is: none, ready, or being drawn and why. One
 per process, it's the same for every screen, and the home screen follows it from `onStart` to

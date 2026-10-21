@@ -49,6 +49,18 @@ class Wallpaper<Image>(
     var state: State<Image> = State.None
         private set
 
+    /**
+     * The image [state] shows, if it was drawn from [background]: a preview of the home screen
+     * draws it at once, scaled to its size, rather than drawing the picture again. Null while
+     * it's being drawn, and for another background.
+     */
+    fun readyFor(background: Background): Image? {
+        val state = state
+        val drawing = shown
+        if (state !is State.Ready || drawing !is WallpaperDrawing) return null
+        return if (drawing.picture == background.picture && drawing.style == background.style) state.image else null
+    }
+
     private val drawing = LatestRequest(jobs, JobPriority.WALLPAPER, onMain)
     private val listeners = mutableListOf<() -> Unit>()
 

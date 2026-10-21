@@ -50,7 +50,7 @@ interface SettingsGraph {
     /** The background thread, for what the screens load (thumbnails, previews). */
     val jobs: Jobs
 
-    /** The home screen's wallpaper, which the background editor saves through: drawn, then stored. */
+    /** The home screen's wallpaper, which the background editor saves through (drawn, then stored), and the previews draw when it's of their background. */
     val wallpaper: Wallpaper<Bitmap>
 
     /** Implemented by the Application, which holds the process's graph. */

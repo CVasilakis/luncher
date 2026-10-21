@@ -57,7 +57,7 @@ domain/src/
 │   ├── wallpaper/
 │   │   ├── WallpaperDrawing.kt  model and rule: what a wallpaper is drawn from (a picture, its style, the screen's size), and why the one kept won't do (DrawingCause)
 │   │   ├── StoredWallpaper.kt   port: the one wallpaper kept, drawn at the screen's size, so a start shows it at once
-│   │   └── Wallpaper.kt         helper: the wallpaper as it stands (none, ready, or being drawn and why), one per process, which a screen watches; saving a background (drawn, kept, then stored), and forgetting a deleted picture
+│   │   └── Wallpaper.kt         helper: the wallpaper as it stands (none, ready, or being drawn and why), one per process, which a screen watches; saving a background (drawn, kept, then stored), and forgetting a deleted picture; the image ready, for a preview of its background
 │   ├── clock/
 │   │   ├── ClockReading.kt      model: the time, time zone and hour format at one moment
 │   │   └── Clock.kt             port: the device's clock, and when what it shows changes

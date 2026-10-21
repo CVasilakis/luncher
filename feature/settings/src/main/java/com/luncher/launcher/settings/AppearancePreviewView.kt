@@ -18,6 +18,9 @@ import com.luncher.domain.layout.TileLayouts
 import com.luncher.domain.layout.TopBarItem
 import com.luncher.domain.layout.topBarLayout
 import com.luncher.domain.pictures.PictureImages
+import com.luncher.domain.wallpaper.Wallpaper
+import com.luncher.domain.wallpaper.WallpaperDrawing
+import com.luncher.domain.wallpaper.wallpaperDrawing
 import com.luncher.launcher.ui.WallpaperOutline
 import com.luncher.launcher.ui.color
 import com.luncher.launcher.ui.screenSize
@@ -38,9 +41,11 @@ import kotlin.math.roundToInt
  * density (its pixels per sample dp), so every dp value scales with it, and it can't disagree with
  * the home screen. Left to right in every language, like the home screen. What it draws from is
  * made anew only when the part of the appearance it comes from changes, compared with `==`, and
- * drawing allocates nothing. The wallpaper is drawn in the background ([showWallpapers]), from
- * the picture's working copy in milliseconds, the latest request winning, and kept while the
- * background and the size stay the same.
+ * drawing allocates nothing. The wallpaper is the home screen's own when it's of this background
+ * ([Wallpaper.readyFor]): it's in memory already, drawn and kept, so it's only [shrunk], and
+ * shows in the first frame, also the first after the TV started. Else it's drawn in the
+ * background ([showWallpapers]), from the picture's working copy, the latest request winning.
+ * Either is kept, and not drawn again, while the background and the size stay the same.
  *
  * What's on the wallpaper has the home screen's edge ([WallpaperOutline]), so the illustration
  * reads on a white picture as the home screen does: the blocks and the tiles' outlines, at the
@@ -62,13 +67,21 @@ internal class AppearancePreviewView(context: Context, attrs: AttributeSet?) : V
         }
 
     private var images: PictureImages<Bitmap>? = null
+    private var home: Wallpaper<Bitmap>? = null
     private var loading: LatestRequest? = null
 
     /** The background's picture as last drawn, at the screen's size; null for none. */
     private var wallpaper: Bitmap? = null
 
-    /** Draws the background's picture with [images], in [jobs]; until then, none is drawn. */
-    fun showWallpapers(images: PictureImages<Bitmap>, jobs: Jobs) {
+    /** What [wallpaper] was drawn from, so asking for it again does nothing; null while it's none. */
+    private var drawnFrom: WallpaperDrawing? = null
+
+    /**
+     * Draws the background's picture: [home]'s image when it's of that background, else with
+     * [images], in [jobs]; until then, none is drawn.
+     */
+    fun showWallpapers(home: Wallpaper<Bitmap>, images: PictureImages<Bitmap>, jobs: Jobs) {
+        this.home = home
         this.images = images
         loading = LatestRequest(jobs, JobPriority.PICTURE_SCREENS) { Handler(Looper.getMainLooper()).post(it) }
         loadWallpaper()
@@ -79,29 +92,46 @@ internal class AppearancePreviewView(context: Context, attrs: AttributeSet?) : V
         loading?.stop()
     }
 
+    /**
+     * Draws the picture [stopWallpaper] dropped, if one was; nothing when the one shown is the
+     * background's: back from the background editor, it may have saved a new background, which
+     * the editor sets right after, and the one it replaced isn't drawn meanwhile.
+     */
     fun resumeWallpaper() = loadWallpaper()
 
-    /** The background's picture: the one [images] kept, if they keep it at this size, else drawn in the background. */
+    /**
+     * The background's picture: none to do if it's the one shown; else the home screen's, if it's
+     * of this background; else the one [images] kept, if they keep it at this size; else drawn in
+     * the background.
+     */
     private fun loadWallpaper() {
         val images = images ?: return
         val loading = loading ?: return
         val background: Background = appearance.background
-        val picture = background.picture
         val width = screen.width().roundToInt()
         val height = screen.height().roundToInt()
-        if (picture == null || width <= 0 || height <= 0) {
+        val wanted = wallpaperDrawing(background, width, height)
+        if (wanted == null || width <= 0 || height <= 0) {
             loading.stop()
             wallpaper = null
+            drawnFrom = null
             return invalidate()
         }
-        val kept = images.cached(picture, width, height, background.style)
+        if (wanted == drawnFrom) {
+            loading.stop()
+            return
+        }
+        val home = home?.readyFor(background)
+        val kept = if (home != null) shrunk(home, width, height) else images.cached(wanted.picture, width, height, wanted.style)
         if (kept != null) {
             loading.stop()
             wallpaper = kept
+            drawnFrom = wanted
             return invalidate()
         }
-        loading.load({ stopped -> images.render(picture, width, height, background.style, stopped) }) { image ->
+        loading.load({ stopped -> images.render(wanted.picture, width, height, wanted.style, stopped) }) { image ->
             wallpaper = image
+            drawnFrom = if (image != null) wanted else null
             invalidate()
         }
     }
@@ -257,6 +287,28 @@ internal class AppearancePreviewView(context: Context, attrs: AttributeSet?) : V
 
     // The sample screen, in dp: about the home screen's paddings and sizes (feature/home's dimens).
     private companion object {
+        /**
+         * [image], the screen's wallpaper, shrunk to [width] x [height] px without its thin lines
+         * turning to moiré: halved once, and again while it's still twice as large or more, each
+         * half averaging 2 x 2 pixels (a filtered scale by exactly one half), then scaled the rest
+         * of the way. As the preview drawn from a working copy, which covers half the screen, so
+         * the two look alike. Scaled at once by nearly 2 or more, as drawing it does, each pixel
+         * would be read from 4 of many, the rest skipped. It takes milliseconds, and the first
+         * frame less time than drawing the image whole, which has over 4 times the pixels to
+         * upload.
+         */
+        fun shrunk(image: Bitmap, width: Int, height: Int): Bitmap {
+            var half = Bitmap.createScaledBitmap(image, image.width / 2, image.height / 2, true)
+            while (half.width / 2 >= width && half.height / 2 >= height) {
+                val next = Bitmap.createScaledBitmap(half, half.width / 2, half.height / 2, true)
+                half.recycle()
+                half = next
+            }
+            val shrunk = Bitmap.createScaledBitmap(half, width, height, true)
+            if (shrunk !== half) half.recycle()
+            return shrunk
+        }
+
         const val SCREEN_WIDTH = 960
         const val PADDING_HORIZONTAL = 48
         const val PADDING_TOP = 32

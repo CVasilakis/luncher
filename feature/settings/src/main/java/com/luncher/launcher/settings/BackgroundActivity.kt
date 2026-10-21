@@ -181,7 +181,7 @@ class BackgroundActivity : Activity() {
             ).joinToString("\n")
         }
 
-        preview.showWallpapers(images, graph.jobs)
+        preview.showWallpapers(graph.wallpaper, images, graph.jobs)
         show()
     }
 

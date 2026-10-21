@@ -169,7 +169,7 @@ they scroll when they're taller than the screen.
 | `AppearanceSettings` (`:domain`) / `PreferencesAppearanceSettings` (`:platform`) | port and adapter: the stored `Appearance`, read once per process; each write is stored at once, in the background, and told to the listeners (the home screen, while it's shown) |
 | `TileLayouts`, `topBarLayout` (`:domain`) | where the preview's tiles and top bar items go, by the home screen's own rules |
 | `AppearanceActivity` | the groups' entries, opening one at a time; a group edited apart as one entry; the options' rows (`OptionRow`, `OptionLabels.kt`'s exhaustive `when`s, so a new option doesn't compile until it has its labels) and the reset entry |
-| `Pictures`, `PictureImages` (`:domain`) | the wallpaper's name, and its picture drawn at the preview's size, from its working copy |
+| `Pictures`, `PictureImages`, `Wallpaper` (`:domain`) | the wallpaper's name, and its picture: the home screen's own, shrunk, when it's of the background; else drawn at the preview's size, from its working copy |
 | `AppearancePreviewView` | draws the preview: an illustration, not the real home screen (below) |
 
 **The preview** draws outlined tiles filled with white at 20 % (`settings_preview_tile`, in place of
@@ -193,10 +193,19 @@ its labels go in `optionLabel` and `optionValue` (`OptionLabels.kt`), in every t
 
 What keeps it light: the preview draws from shapes it keeps, made anew only when the part of the
 appearance they come from changes (compared with `==`), so a new corner radius lays out nothing,
-and drawing allocates nothing. The wallpaper's picture is drawn in the background from its
-working copy ([below](#background)), in milliseconds, the latest request winning, and dropped
-when the editor stops. Only the options' rows are views; the preview is one view. Nothing of the home
-screen runs meanwhile.
+and drawing allocates nothing. The wallpaper's picture is the home screen's own when it's of the
+background (`Wallpaper.readyFor`): the home screen read it as it started, so it's in memory, even
+the first time after the TV started, and the preview has it in its first frame, shrunk to its
+size on the main thread, in milliseconds: the first frame takes less than with the whole image,
+which has over 4 times the pixels to upload. Halved first, each half averaging 2 x 2 pixels,
+then scaled the rest of the way, as drawing it at once would turn thin lines to moiré
+(`AppearancePreviewViewTest`); as a working copy covers half the screen, the two look alike.
+Another background (the background editor's draft, a style tried) is drawn in the background
+from its working copy ([below](#background)), in milliseconds, the latest request winning, and
+dropped when the editor stops. A picture is drawn again only when what it's drawn from (the
+background, the preview's size) changes: back in an editor, the one it still shows stays, and back
+from saving a new background, the one replaced isn't drawn again before the new one. Only the
+options' rows are views; the preview is one view. Nothing of the home screen runs meanwhile.
 
 ### Background
 
@@ -283,10 +292,10 @@ it's dimmed, and the focus passes it by.
 | `Picture`, `PictureLibrary` (`:domain`) | a picture of the library; the library in the list's order, the newest first, and what each one is used for |
 | `Pictures`, `PictureImport` (`:domain`) / `FilesPictures` (`:platform`) | the library, which the screen follows while it shows, renaming and deleting, and adding to it |
 | `renaming` (`:domain`) | the name a picture renamed keeps, or why it can't: none typed, or another picture's |
-| `PreparedPictures`, `PictureImages` (`:domain`) / `WorkingCopyImages` (`:platform`) | each picture's working copy, made once; the preview's wallpaper drawn from it at each value tried |
+| `PreparedPictures`, `PictureImages` (`:domain`) / `WorkingCopyImages` (`:platform`) | each picture's working copy, made once; the preview's wallpaper drawn from it at each value tried, but the saved background's, the home screen's own ([above](#appearance)) |
 | `PictureImages` (`:domain`) / `CachedPictureImages` (`:platform`) | the thumbnails, drawn from the working copies at the row's size in pixels, and kept |
 | `pictureUses`, `withoutPictures` (`:domain`) | what each picture is used for, which deleting it says, and the background without it |
-| `Wallpaper` (`:domain`) | Save (`save`: drawn, kept, then stored) and deleting the wallpaper's picture (`forget`) |
+| `Wallpaper` (`:domain`) | Save (`save`: drawn, kept, then stored), deleting the wallpaper's picture (`forget`), and the saved background's image, which the preview shows while the draft is that background (`readyFor`) |
 | `pictureCut`, `OptionContext`, `Background.offeredIn` (`:domain`) | what filling the screen cuts from the draft's picture, the options' values that offers, and the draft without a position it doesn't |
 | `OptionRow`, `OptionList` | the options' rows, OK opening a list of the values the draft's picture offers, which the preview follows as the focus moves; Back in it puts the value from before back |
 | `PicturesDialog`, `RenameDialog` | the dialogs over the list: a picture's Rename and Delete, the question before deleting; the field for a new name, and why it's refused |
@@ -295,7 +304,8 @@ it's dimmed, and the focus passes it by.
 **Prepared once, then at once.** Each picture of the library has a working copy
 ([`platform/README.md`](../../platform/README.md#pictures)): the whole picture decoded once, as
 it's added, covering half the screen, from which its thumbnail and the preview at every value of
-an option the user tries are drawn in milliseconds, where the photo itself takes a decode each
+an option the user tries are drawn in milliseconds (but the background saved, whose preview is
+the home screen's own, [above](#appearance)), where the photo itself takes a decode each
 time (seconds, on a weak TV, for a large one). A picture not prepared for the screen as it is now (the TV switched
 resolution, an update draws pictures otherwise, its copy was lost) is prepared as the editor opens,
 before the user can do anything: a window (`WorkingDialog`) says "Preparing the picture…", or

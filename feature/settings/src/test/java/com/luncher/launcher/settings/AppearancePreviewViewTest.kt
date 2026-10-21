@@ -14,9 +14,13 @@ import com.luncher.domain.appearance.TileStyle
 import com.luncher.domain.appearance.VerticalAlignment
 import com.luncher.domain.appearance.appearanceChanges
 import android.os.Looper
+import com.luncher.domain.appearance.FakeAppearanceSettings
 import com.luncher.domain.jobs.ManualJobs
 import com.luncher.domain.pictures.FakePictureImages
 import com.luncher.domain.pictures.PictureId
+import com.luncher.domain.wallpaper.FakeStoredWallpaper
+import com.luncher.domain.wallpaper.Wallpaper
+import com.luncher.domain.wallpaper.WallpaperDrawing
 import com.luncher.launcher.testing.TV_1080P
 import org.robolectric.Shadows.shadowOf
 import org.junit.Assert.assertEquals
@@ -38,10 +42,16 @@ class AppearancePreviewViewTest {
 
     private val jobs = ManualJobs()
 
+    /** The home screen's wallpaper: none until a test keeps one and shows it. */
+    private val stored = FakeStoredWallpaper<Bitmap>()
+    private val home = Wallpaper(stored, FakePictureImages(::sampleWallpaper), FakeAppearanceSettings(), jobs) { it() }
+
+    private val images = FakePictureImages(::sampleWallpaper)
+
     private val preview = AppearancePreviewView(RuntimeEnvironment.getApplication(), null).apply {
         measure(exactly(WIDTH), exactly(HEIGHT))
         layout(0, 0, WIDTH, HEIGHT)
-        showWallpapers(FakePictureImages(::sampleWallpaper), jobs)
+        showWallpapers(home, images, jobs)
     }
 
     private val canvas = Canvas(Bitmap.createBitmap(WIDTH, HEIGHT, Bitmap.Config.ARGB_8888))
@@ -122,7 +132,7 @@ class AppearancePreviewViewTest {
         val preview = AppearancePreviewView(RuntimeEnvironment.getApplication(), null).apply {
             measure(exactly(WIDTH), View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED))
             layout(0, 0, measuredWidth, measuredHeight)
-            showWallpapers(FakePictureImages { picture, width, height, style -> sampleWallpaper(picture, width, height, style).also { drawn += width to height } }, jobs)
+            showWallpapers(home, FakePictureImages { picture, width, height, style -> sampleWallpaper(picture, width, height, style).also { drawn += width to height } }, jobs)
         }
 
         preview.appearance = Appearance(background = Background(PictureId("sunset")))
@@ -130,6 +140,84 @@ class AppearancePreviewViewTest {
 
         assertEquals(WIDTH * 3 / 4, preview.measuredHeight)
         assertEquals(listOf(WIDTH to WIDTH * 3 / 4), drawn)
+    }
+
+    // The home screen's wallpaper, in memory already, shows in the first frame: after the TV
+    // started, the picture isn't drawn again in the background.
+    @Test
+    fun `draws the home screen's wallpaper at once, when it's of the background`() {
+        val background = Background(PictureId("sunset"), dim = 20)
+        homeShows(background, solid(PictureId("white"), 1920, 1080))
+
+        preview.appearance = Appearance(background = background)
+
+        assertEquals(0, jobs.pending)
+        val drawn = Bitmap.createBitmap(WIDTH, HEIGHT, Bitmap.Config.ARGB_8888).also { preview.draw(Canvas(it)) }
+        assertEquals(Color.WHITE, drawn.getPixel(CLEAR_X, CLEAR_Y))
+    }
+
+    @Test
+    fun `draws the picture itself in another style than the home screen's`() {
+        homeShows(Background(PictureId("sunset")), solid(PictureId("white"), 1920, 1080))
+
+        preview.appearance = Appearance(background = Background(PictureId("sunset"), dim = 20))
+
+        assertEquals(1, jobs.pending)
+    }
+
+    // Drawing a 1920 px wallpaper at about 1000 px in one scale would read 2 of every 4 columns of
+    // fine stripes, some of them twice: bands of black and white where the TV shows gray.
+    @Test
+    fun `shrinks the home screen's wallpaper without moiré`() {
+        val background = Background(PictureId("stripes"))
+        val stripes = Bitmap.createBitmap(1920, 1080, Bitmap.Config.ARGB_8888)
+        for (x in 0 until stripes.width) for (y in 0 until stripes.height) stripes.setPixel(x, y, if (x % 2 == 0) Color.BLACK else Color.WHITE)
+        homeShows(background, stripes)
+
+        preview.appearance = Appearance(background = background)
+
+        val drawn = Bitmap.createBitmap(WIDTH, HEIGHT, Bitmap.Config.ARGB_8888).also { preview.draw(Canvas(it)) }
+        val grays = (CLEAR_X - 100..CLEAR_X + 100).map { brightness(drawn.getPixel(it, CLEAR_Y)) }
+        assertTrue("from ${grays.min()} to ${grays.max()}", grays.all { it in 112..143 })
+    }
+
+    // Back from another screen (onRestart), the picture shown is drawn again only if it was dropped.
+    @Test
+    fun `coming back with the background it shows draws nothing again`() {
+        draw(Appearance(background = Background(PictureId("sunset"))))
+        images.cache.clear()                            // as the working copies, which keep nothing
+
+        preview.stopWallpaper()
+        preview.resumeWallpaper()
+
+        assertEquals(0, jobs.pending)
+    }
+
+    // Back from the background editor, which saved a new background: the editor resumes the
+    // preview before it reads the appearance again, so the preview still has the one replaced.
+    @Test
+    fun `coming back after a new background was saved draws only the new one, the home screen's`() {
+        val old = Background(PictureId("sunset"))
+        val new = Background(PictureId("forest"), dim = 20)
+        homeShows(old, solid(PictureId("black"), 1920, 1080))
+        preview.appearance = Appearance(background = old)
+        preview.stopWallpaper()
+        home.save(new, 1920, 1080) {}
+        jobs.runAll()
+
+        preview.resumeWallpaper()
+        assertEquals("the background replaced isn't drawn", 0, jobs.pending)
+        preview.appearance = Appearance(background = new)
+
+        assertEquals(0, jobs.pending)
+        val drawn = Bitmap.createBitmap(WIDTH, HEIGHT, Bitmap.Config.ARGB_8888).also { preview.draw(Canvas(it)) }
+        assertEquals(sampleWallpaper(new.picture!!, WIDTH, HEIGHT, new.style).getPixel(CLEAR_X, CLEAR_Y), drawn.getPixel(CLEAR_X, CLEAR_Y))
+    }
+
+    /** The home screen showing [image] as [background]'s wallpaper, kept at 1080p. */
+    private fun homeShows(background: Background, image: Bitmap) {
+        stored.kept = WallpaperDrawing(background.picture!!, background.style, 1920, 1080) to image
+        home.show(background, 1920, 1080)
     }
 
     // What's on the wallpaper has the home screen's edge (WallpaperOutline): every light shape the
@@ -140,7 +228,7 @@ class AppearancePreviewViewTest {
         val preview = AppearancePreviewView(RuntimeEnvironment.getApplication(), null).apply {
             measure(exactly(WIDTH), exactly(HEIGHT))
             layout(0, 0, WIDTH, HEIGHT)
-            showWallpapers(FakePictureImages { picture, width, height, _ -> solid(picture, width, height) }, jobs)
+            showWallpapers(home, FakePictureImages { picture, width, height, _ -> solid(picture, width, height) }, jobs)
         }
         fun drawOn(picture: String): Bitmap {
             preview.appearance = Appearance(background = Background(PictureId(picture)))
@@ -199,6 +287,10 @@ class AppearancePreviewViewTest {
     private companion object {
         const val WIDTH = 1040
         const val HEIGHT = 585
+
+        /** A point on the sample screen with nothing over the wallpaper: between the date and the gear, above the tiles. */
+        const val CLEAR_X = WIDTH / 2
+        const val CLEAR_Y = 10
         const val RUNS = 1000
     }
 }
