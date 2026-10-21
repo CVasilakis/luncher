@@ -181,23 +181,24 @@ radius draws the same bitmaps, so no banner is drawn again. Drawing allocates no
 without rounded corners.
 
 The focused tile stands out in one of two styles (`TileStyle.focus`). **Frame**, the default: the
-accent-colored frame and a zoom of 1.1 (`home_tile_focus.xml`). **Lift**, as on Apple TV: no frame,
-a zoom of 1.15, and the tile rises toward the viewer (`translationZ`, `home_tile_lift`, in
-`home_tile_lift.xml`), so Android's renderer casts its shadow from its outline, a rounded
-rectangle with the tiles' corners (`TilePaints.tileOutline`). The shadow is the GPU's, as for any
-raised view since Android 5: no blurred bitmap, no software layer, nothing drawn per frame in
-Luncher's code; `AppTilesView` doesn't clip its tiles, so it shows past the tile. A held tile keeps
-its white frame and its zoom in both styles, so it stands out from one only focused.
+accent-colored frame and a zoom of 1.1 (`home_tile_focus.xml`). **Lift**: no frame, a zoom of 1.15,
+and the tile rises toward the viewer (`translationZ`, `home_tile_lift`, in `home_tile_lift.xml`), so
+Android's renderer casts its shadow from its outline, a rounded rectangle with the tiles' corners
+(`TilePaints.tileOutline`). The shadow is the GPU's, as for any raised view since Android 5: no
+blurred bitmap, no software layer, nothing drawn per frame in Luncher's code; `AppTilesView` doesn't
+clip its tiles, so it shows past the tile. A held tile keeps its white frame and its zoom in both
+styles, so it stands out from one only focused.
 
 With the app name shown (`TileGeometry.appName`, Off by default), the focused tile draws its app's
 name centered below it, in the primary text color, cut with "…" to the tile's width, outlined as
 everything on the wallpaper is ([The top bar](#the-top-bar)), fading in and out with the focus in
-the zoom's time. It's drawn with the tile, past its bottom edge, so it zooms and lifts with it; its
-text is cut once per tile size, and the fade is an animator made with the tile, so a focus move
-only starts it. The rows leave it room: `TilePaints.nameHeight`, the gap and a line of text at the
-largest zoom a tile gets, is the room `TileLayouts` keeps below each row, the last one too, so a
-name never covers the next row, and the rows at the bottom end that much higher. Scrolling to a
-focused tile shows its name too. The room doesn't change where the focus or a moved app goes.
+the zoom's time, and dimmed with a hidden app's tile in [arrange mode](#arrange-mode). It's drawn
+with the tile, past its bottom edge, so it zooms and lifts with it; its text is cut once per tile
+size, and the fade is an animator made with the tile, so a focus move only starts it. The rows leave
+it room: `TilePaints.nameHeight`, the gap and a line of text at the largest zoom a tile gets, is the
+room `TileLayouts` keeps below each row, the last one too, so a name never covers the next row, and
+the rows at the bottom end that much higher. Scrolling to a focused tile shows its name too. The
+room doesn't change where the focus or a moved app goes.
 
 ### The wallpaper
 

@@ -155,7 +155,10 @@ internal class AppTileView(
         if (paints.showsNames) drawName(canvas)
     }
 
-    /** The app's name below the tile, as faded in as the focus has it, with its outline. */
+    /**
+     * The app's name below the tile, as faded in as the focus has it, with its outline; a hidden
+     * app's as dimmed as its tile.
+     */
     private fun drawName(canvas: Canvas) {
         val shown = when {
             nameFade.isRunning -> nameFade.animatedFraction
@@ -165,7 +168,7 @@ internal class AppTileView(
         if (shown <= 0f) return
         val paint = paints.namePaint
         val outline = paints.nameOutline
-        val alpha = (shown * TilePaints.OPAQUE).toInt()
+        val alpha = (shown * if (hidden) TilePaints.HIDDEN_ALPHA else TilePaints.OPAQUE).toInt()
         val baseline = (height + paints.nameGap - paints.nameAscent).toFloat()
         outline.under(paint) {
             paint.alpha = Color.alpha(outline.color) * alpha / TilePaints.OPAQUE

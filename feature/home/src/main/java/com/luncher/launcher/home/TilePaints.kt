@@ -6,8 +6,10 @@ import android.graphics.Paint
 import android.text.TextPaint
 import android.view.View
 import android.view.ViewOutlineProvider
+import com.luncher.domain.appearance.AppName
 import com.luncher.domain.appearance.Corners
 import com.luncher.domain.appearance.FocusStyle
+import com.luncher.domain.appearance.TileGeometry
 import com.luncher.domain.appearance.TileStyle
 import com.luncher.launcher.ui.WallpaperOutline
 import com.luncher.launcher.ui.color
@@ -38,8 +40,12 @@ internal class TilePaints(context: Context) {
     /** How the focused tile stands out, from the home screen's style. */
     var focusStyle: FocusStyle = TileStyle().focus
 
-    /** Whether the focused tile shows its app's name below it, from the home screen's geometry. */
-    var showsNames = false
+    /**
+     * Whether the focused tile shows its app's name below it, from the home screen's geometry. It
+     * starts as the default geometry has it, as [AppTilesView]'s does: the view sets it only when
+     * its geometry changes, so a different start would leave the rows room for names never drawn.
+     */
+    var showsNames = TileGeometry().appName == AppName.WHEN_FOCUSED
 
     /** The app's name below its tile, on the wallpaper: with [nameOutline]'s edge, as the top bar's texts. */
     val namePaint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {

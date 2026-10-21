@@ -3,6 +3,7 @@ package com.luncher.launcher.home
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Outline
+import android.graphics.Paint
 import android.graphics.Rect
 import android.os.Looper
 import android.view.View
@@ -167,6 +168,39 @@ class HomeAppearanceTest {
         assertEquals(0f, tiles[1].translationZ)
         assertEquals(1f, tiles[1].scaleX)
         assertSame(activity.grid().paints.tileOutline, tiles[0].outlineProvider)
+    }
+
+    // The view sets the paints' names only when its geometry changes: before that, they must agree.
+    @Test
+    fun `the tiles show names as their first geometry says, before any change`() {
+        val tiles = AppTilesView(RuntimeEnvironment.getApplication(), null)
+
+        assertEquals(tiles.tileGeometry.appName == AppName.WHEN_FOCUSED, tiles.paints.showsNames)
+    }
+
+    // While arranging, a hidden app's tile on the shelf is dimmed: its name with it.
+    @Test
+    fun `a hidden app's name is drawn as dimmed as its tile`() {
+        appearance.appearance = Appearance(tileGeometry = TileGeometry(appName = AppName.WHEN_FOCUSED))
+        val tile = start().get().tiles()[1]
+        tile.requestFocus()
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofSeconds(1))   // the name's fade
+
+        assertEquals(TilePaints.OPAQUE, nameAlpha(tile))
+        tile.hidden = true
+        assertEquals(TilePaints.HIDDEN_ALPHA, nameAlpha(tile))
+    }
+
+    /** The alpha [tile] draws its name with: the last text it draws, its outline before it. */
+    private fun nameAlpha(tile: AppTileView): Int {
+        var alpha = -1
+        val canvas = object : Canvas(Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888)) {
+            override fun drawText(text: String, x: Float, y: Float, paint: Paint) {
+                alpha = paint.alpha
+            }
+        }
+        tile.draw(canvas)
+        return alpha
     }
 
     // The shadow is cast by the outline: the tile's shape, its round ends too.
