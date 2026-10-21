@@ -59,6 +59,12 @@ sealed interface ImportResult {
 
     /** No room left on the TV for its copy. */
     data object NoSpace : ImportResult
+
+    /**
+     * A folder, not a file: a file manager shares folders along with the pictures chosen. Not a
+     * picture that failed, so nothing says it wasn't added ([ReceivedPictures] leaves it out).
+     */
+    data object Folder : ImportResult
 }
 
 /**

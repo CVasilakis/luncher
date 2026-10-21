@@ -92,13 +92,14 @@ class SharePictureActivityTest {
     }
 
     @Test
-    fun `with no picture to pass, has the window say it couldn't read one`() {
+    fun `with no picture to pass, has the window say the app shared none`() {
         for (intent in listOf(Intent(Intent.ACTION_SEND).setType("image/jpeg"), Intent(Intent.ACTION_SEND).putExtra(Intent.EXTRA_STREAM, "not a Uri"), Intent("com.example.OTHER"))) {
             val started = send(intent)
 
             assertEquals(PictureReceivedActivity::class.java.name, started.component?.className)
             assertNull(pictures(started))
-            assertTrue(started.getBooleanExtra(PictureReceivedActivity.EXTRA_NOTHING_READABLE, false))
+            assertTrue(started.getBooleanExtra(PictureReceivedActivity.EXTRA_NOTHING_SHARED, false))
+            assertFalse(started.getBooleanExtra(PictureReceivedActivity.EXTRA_NOTHING_READABLE, false))
             assertFalse(started.flags and Intent.FLAG_GRANT_READ_URI_PERMISSION != 0)
         }
     }

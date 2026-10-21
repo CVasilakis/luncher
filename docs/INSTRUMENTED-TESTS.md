@@ -210,7 +210,7 @@ Another app is played by the test package itself, in `testing/`:
 
 | Part | What it is |
 |---|---|
-| `SamplePictures` | a content provider serving the sample files of `app/src/androidTest/assets/pictures/`, exported |
+| `SamplePictures` | a content provider serving the sample files of `app/src/androidTest/assets/pictures/`, and a folder (`FOLDER`), opened as Material Files opens one, whose reading fails; exported |
 | `GrantedPictures` | the same samples, from a provider that isn't exported, as a gallery's: only the read access a share gives opens them |
 | `StalledPictures` | an app whose picture never comes: it opens a stream it never sends on (`silent`), or never answers the open (`unopened`); exported |
 | `ShareSender` | another app's screen sending a `SEND_MULTIPLE` of the pictures it's given, as a gallery does; exported |

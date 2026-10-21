@@ -38,6 +38,7 @@ feature/settings/
     │   │   ├── PictureReceivedActivity.kt the window over the home screen after a share: shows the pictures being added, then their uses, or how many were saved and why the others weren't
     │   │   ├── PicturesDialog.kt the dialogs over the picture screens: a picture's actions, a question, a message; renaming one
     │   │   ├── PreviewColumn.kt  Add from folder's preview, Add all and note, the preview smaller on a short screen
+    │   │   ├── ListFrame.kt      a list's frame: Down past its last row stays there, not on the column beside it
     │   │   └── PictureTexts.kt   what the picture screens call things: sizes, names, why a picture wasn't added
     │   └── res/                  the themes (Theme.Luncher.Settings, .Panel, .FullScreen, .Pictures, .Pictures.Dialog,
     │                             .Pictures.NoDisplay), layouts, the thumbnails' frames, the warning mark, settings_* dimensions,
@@ -226,13 +227,15 @@ as its screen at the column's width, at least a quarter of that, so Save and Del
 on the smallest screens the column scrolls. In a right-to-left language it mirrors like the other
 settings screens; the preview's content and the pictures don't.
 
-The editor opens with the focus on the chosen picture, or No picture. Coming back to it (from Add
-from folder, another app, the TV's sleep), the focus is where it was, the list scrolled as it was:
-the list is made again only if pictures were added, deleted or moved meanwhile, and then the
-focus stays on what had it, unless that's a picture that's gone: then it goes to the one that took
-its place, or the one before it. Whether what had the focus is still there is told by its parents,
-not by whether it shows: Android shows the editor's window again only after `onStart`, where the
-editor reads the library again, so until then none of its views counts as shown.
+The editor opens with the focus on the chosen picture, or No picture. Down past the list's last
+entry leaves the focus there (`ListFrame`): Android would move it to the nearest entry below
+anywhere on the screen, an option, Save or Delete all; Left still goes to them. Coming back to it
+(from Add from folder, another app, the TV's sleep), the focus is where it was, the list scrolled
+as it was: the list is made again only if pictures were added, deleted or moved meanwhile, and then
+the focus stays on what had it, unless that's a picture that's gone: then it goes to the one that
+took its place, or the one before it. Whether what had the focus is still there is told by its
+parents, not by whether it shows: Android shows the editor's window again only after `onStart`,
+where the editor reads the library again, so until then none of its views counts as shown.
 
 What the user changes is a draft, the one exception to the appearance editor's rule of storing each
 change at once ([`ARCHITECTURE.md`](../../docs/ARCHITECTURE.md#appearance)): OK on a picture
@@ -411,19 +414,24 @@ meanwhile, so the old window, no longer holding it, ends nothing. Either way it 
 access to the pictures still to add as well: a new window needs it, as the old window's goes with
 it.
 
-The read access passed to the window is only the access Luncher was given (a grant, which goes
-in the intent's clip): any other Uri goes without one, for the library to judge, as an exported
-provider's may be read anyway, so passing it on never fails. An intent with no picture in it
-becomes the window's message that Luncher can't read it, never a crash; so does one the other app
-gave no access to, once the library has tried it. What the Uri points to is the library's to
-judge ([`platform/README.md`](../../platform/README.md#pictures)): a `file://` one, as Android up
-to 9 shares files, gets the message that says to use a drop folder instead, with its path.
+The read access passed to the window is only the access Luncher was given (a grant, which goes in
+the intent's clip): any other Uri goes without one, for the library to judge, as an exported
+provider's may be read anyway, so passing it on never fails. An intent with no picture in it (no
+Uri at all, a text only, extras that don't unparcel) becomes the window's message that the app
+shared no picture ("Nothing to add"), never a crash, not the message that a file can't be read,
+which says to copy a file that never came; one the other app gave no access to gets that message,
+once the library has tried it. A folder shared with the pictures, as a file manager does, is left
+out of the session once the library finds it (`ImportResult.Folder`): neither added nor counted as
+not added, and a share of folders only says there's nothing to add too. What the Uri points to is
+the library's to judge ([`platform/README.md`](../../platform/README.md#pictures)): a `file://`
+one, as Android up to 9 shares files, gets the message that says to use a drop folder instead, with
+its path.
 
 | Part | Job |
 |---|---|
 | `SharePictureActivity` | takes the pictures out of the share, refuses more than the limit, passes the Uris and the access Luncher holds to the window; the window alone while one shows, else a new one that takes an open session over |
 | `PictureReceivedActivity` | shows the session: the count while the pictures are added, then one picture's result and uses, or the counts; ends the session when it closes |
-| `ReceivedPictures` (`:domain`) | the session, one per process (Add all, below, has one of its own): the pictures added one at a time through `PictureImport`, each once, a share joining it, the window that holds it and may end it, whether one is being copied (`copying`), adding stopped with the session still open (`stop`), and how it went (`Outcome`: each picture's answer, and how many were cancelled) |
+| `ReceivedPictures` (`:domain`) | the session, one per process (Add all, below, has one of its own): the pictures added one at a time through `PictureImport`, each once, a share joining it, a folder left out, the window that holds it and may end it, whether one is being copied (`copying`), adding stopped with the session still open (`stop`), and how it went (`Outcome`: each picture's answer, and how many were cancelled; or nothing to add, only folders shared) |
 | `PictureLimits.MAX_SHARED` (`:domain`) | the most pictures one share brings |
 | `PictureImport` (`:domain`) / `FilesPictures` (`:platform`) | adding one picture to the library, cancellable, when its copying starts, and how it went (`ImportResult`) |
 | `pictureUseMenu` (`:domain`) | the uses a picture received alone offers |
@@ -469,6 +477,9 @@ and the note, the preview gets smaller (`PreviewColumn`), down to a quarter of i
 smallest screens the column then scrolls, to its end while Add all has the focus, so the note
 shows too.
 
+Down past the list's last picture leaves the focus there, as in the editor's list (`ListFrame`),
+not on Add all; Right goes to it.
+
 **Add all**, below the preview, adds every picture of the list that isn't marked, in the list's
 order, one at a time: a session of `ReceivedPictures` of the screen's own, not the process's,
 held only while it adds, since the screen stops the adding when it closes anyway. A window
@@ -499,6 +510,8 @@ adb shell am start -a android.intent.action.SEND -t image/jpeg --grant-read-uri-
   --eu android.intent.extra.STREAM content://com.luncher.launcher.debug.test.samples/progressive.jpg \
   -n com.luncher.launcher.debug/com.luncher.launcher.settings.SharePictureActivity
 # a picture that never comes (Cancel; or "can't read it" after 15 s): …debug.test.stalled/silent/cloud.jpg
+# a folder, as a file manager shares one ("Nothing to add"): -t '*/*', …debug.test.samples/Holidays
+# nothing shared ("Nothing to add"): the same without --eu
 ```
 
 `am start` can't send a list of Uris, so several pictures are shared through the test APK's

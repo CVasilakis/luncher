@@ -20,6 +20,10 @@ import com.luncher.domain.jobs.Cancellable
  * A share of more than [PictureLimits.MAX_SHARED] pictures adds none ([refuse]), so the user can
  * share again the ones they want.
  *
+ * A folder shared with the pictures ([ImportResult.Folder]) is left out once found, as if it hadn't
+ * come: neither added nor not added, nor counted in [total]. With nothing else, the session ends
+ * as [Outcome.Nothing].
+ *
  * Adding can be [stop]ped while the session goes on: the pictures still to add are cancelled, and
  * the end says how many, after how the others went.
  *
@@ -46,6 +50,9 @@ class ReceivedPictures<Source>(private val import: PictureImport<Source>) {
             /** How many were added to the library now. */
             val added: Int get() = results.count { it is ImportResult.Added }
         }
+
+        /** Every source the session received was a folder, and no share was refused: there was no picture to add. */
+        data object Nothing : Outcome
     }
 
     private class Entry<Source>(val source: Source) {
@@ -96,6 +103,7 @@ class ReceivedPictures<Source>(private val import: PictureImport<Source>) {
         get() {
             if (session == 0 || answered < total) return null
             val cancelled = entries.count { it.cancelled }
+            if (total == 0 && !refused) return Outcome.Nothing
             if (total == 1 && !refused && cancelled == 0) return Outcome.One(entries[0].result!!)
             return Outcome.Several(entries.mapNotNull { it.result }, cancelled, refused)
         }
@@ -185,22 +193,25 @@ class ReceivedPictures<Source>(private val import: PictureImport<Source>) {
         while (adding == null) {
             val entry = entries.firstOrNull { !it.answered } ?: return
             val started = session
+            var answered = false
             var waiting = false
             val handle = import.add(entry.source, copying = {
-                if (started == session && !entry.answered && !copying) {
+                if (started == session && !answered && !entry.answered && !copying) {
                     copying = true
                     changed()
                 }
             }) { result ->
                 if (started != session) return@add
-                entry.result = result
+                answered = true
+                // Not a picture of the session: gone from it, as if it hadn't come.
+                if (result == ImportResult.Folder) entries.remove(entry) else entry.result = result
                 copying = false
                 if (!waiting) return@add
                 adding = null
                 next()
                 changed()
             }
-            waiting = !entry.answered
+            waiting = !answered
             if (waiting) adding = handle
         }
     }

@@ -16,7 +16,7 @@ app/
 ├── lint.xml                          lint's exceptions for this module's files
 ├── src/test/                         JVM tests of the whole app: ThemesTest (../ui/README.md)
 ├── src/androidTest/                  instrumented tests on the emulator, of every module
-│   ├── AndroidManifest.xml           the test package's providers: SamplePictures (the sample pictures),
+│   ├── AndroidManifest.xml           the test package's providers: SamplePictures (the sample pictures, a folder),
 │   │                                 StalledPictures (a picture that never comes), GrantedPictures (the
 │   │                                 samples, opened only through a grant); ShareSender (another app's share)
 │   ├── assets/pictures/              sample pictures, 96 × 54 px, one per format, and four damaged, for PictureFormatsTest

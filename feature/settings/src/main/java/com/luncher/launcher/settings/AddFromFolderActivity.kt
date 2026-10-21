@@ -325,6 +325,8 @@ class AddFromFolderActivity : Activity() {
         val all = when (outcome) {
             is Outcome.One -> Outcome.Several(passedBy + outcome.result)
             is Outcome.Several -> outcome.copy(results = passedBy + outcome.results)
+            // The drop folders' listing has files only.
+            Outcome.Nothing -> Outcome.Several(passedBy)
         }
         endAddingAll()
         // Cancelled before any was added: nothing to say.

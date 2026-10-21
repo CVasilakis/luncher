@@ -343,6 +343,44 @@ class PictureShareTest {
         waitUntil(withId(R.id.settings_received_text), withText(containsString("Android/media/${application.packageName}")))
     }
 
+    // A file manager's share of a picture and a folder (Material Files'): the folder opens, and
+    // its reading fails. Left out, it's neither added nor said not to be.
+    @Test
+    fun aShareOfAPictureAndAFolder_addsThePicture_andSaysNothingOfTheFolder() {
+        share(
+            Intent(Intent.ACTION_SEND_MULTIPLE).setType("*/*")
+                .putParcelableArrayListExtra(Intent.EXTRA_STREAM, arrayListOf(SamplePictures.uri(SamplePictures.FOLDER), SamplePictures.uri("progressive.jpg")))
+                .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION),
+        )
+
+        waitForFocus(PictureReceivedActivity::class.java)
+        waitUntil(withId(R.id.settings_received_title), withText(R.string.settings_received_saved))
+        waitUntil(withId(R.id.settings_received_text), withText("progressive.jpg"))
+    }
+
+    @Test
+    fun aShareOfAFolderOnly_saysThereIsNothingToAdd() {
+        share(Intent(Intent.ACTION_SEND).setType("*/*").putExtra(Intent.EXTRA_STREAM, SamplePictures.uri(SamplePictures.FOLDER)))
+
+        waitForFocus(PictureReceivedActivity::class.java)
+        waitUntil(withId(R.id.settings_received_title), withText(R.string.settings_received_nothing))
+        waitUntil(withId(R.id.settings_received_text), withText(R.string.settings_received_nothing_text))
+        waitUntil(withText(R.string.settings_pictures_ok), hasFocus())
+    }
+
+    // A share with no picture in it (only a text, say): nothing to copy into the drop folder.
+    @Test
+    fun aShareWithNoPicture_saysThereIsNothingToAdd() {
+        share(Intent(Intent.ACTION_SEND).setType("image/png").putExtra(Intent.EXTRA_TEXT, "https://example.com/beach.png"))
+
+        waitForFocus(PictureReceivedActivity::class.java)
+        waitUntil(withId(R.id.settings_received_title), withText(R.string.settings_received_nothing))
+        waitUntil(withText(R.string.settings_pictures_ok), hasFocus())
+        press(KeyEvent.KEYCODE_DPAD_CENTER)
+
+        waitForFocus(HomeActivity::class.java)
+    }
+
     private companion object {
         const val TIMEOUT_MS = 10_000L
 

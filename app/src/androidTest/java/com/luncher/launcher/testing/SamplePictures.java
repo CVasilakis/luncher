@@ -21,12 +21,16 @@ import java.io.OutputStream;
 /**
  * Another app's pictures: a content provider of the test package, which serves the sample files
  * of its assets/pictures/ as a gallery or a file manager shares a picture, with its name and size.
- * Luncher reads them through it, never by a path.
+ * Luncher reads them through it, never by a path. It serves a folder too ({@link #FOLDER}), as
+ * Material Files shares one along with the pictures chosen: it opens, and reading it fails.
  *
  * In Java: it runs in the test package's own process, which has no Kotlin standard library (the
  * test APK leaves out what the app under test has, which runs in another process).
  */
 public class SamplePictures extends ContentProvider {
+
+    /** The name of the folder it serves: a folder, which no sample is named after. */
+    public static final String FOLDER = "Holidays";
 
     /** The sample {@code name} (assets/pictures/name), shared by another app. */
     public static Uri uri(String name) {
@@ -80,6 +84,12 @@ public class SamplePictures extends ContentProvider {
         Context context = getContext();
         String name = uri.getLastPathSegment();
         if (context == null || name == null) throw new FileNotFoundException(String.valueOf(uri));
+        if (FOLDER.equals(name)) {
+            File folder = new File(context.getCacheDir(), "folders/" + name);
+            //noinspection ResultOfMethodCallIgnored
+            folder.mkdirs();
+            return folder;
+        }
         File file = new File(context.getCacheDir(), "samples/" + name);
         if (file.exists()) return file;
         //noinspection ResultOfMethodCallIgnored

@@ -202,6 +202,40 @@ class PictureReceivedActivityTest {
     }
 
     @Test
+    fun `with nothing shared, says there's nothing to add, not to copy a file`() {
+        val activity = receive(Intent().putExtra(PictureReceivedActivity.EXTRA_NOTHING_SHARED, true))
+
+        assertEquals("Nothing to add", activity.title())
+        assertEquals("The app shared no picture.", activity.text())
+        assertEquals(listOf("OK"), activity.entries().map { it.text.toString() })
+        assertTrue(activity.entries().single().isFocused)
+        assertEquals(emptyList<Uri>(), library.added)
+    }
+
+    @Test
+    fun `a share of folders only says there's nothing to add`() {
+        library.results[shared] = ImportResult.Folder
+
+        val activity = receive()
+        waitOutTheWheel()
+
+        assertEquals("Nothing to add", activity.title())
+        assertEquals("The app shared no picture.", activity.text())
+    }
+
+    @Test
+    fun `a folder shared with a picture isn't mentioned, the picture said as if alone`() {
+        library.results[shared] = ImportResult.Folder
+        library.results[beach] = ImportResult.Added(holiday)
+
+        val activity = receive(share(shared, beach))
+        waitOutTheWheel()
+
+        assertEquals("Picture added", activity.title())
+        assertEquals("holiday.jpg", activity.text())
+    }
+
+    @Test
     fun `Back closes it`() {
         library.results[shared] = ImportResult.Added(holiday)
         val activity = receive()

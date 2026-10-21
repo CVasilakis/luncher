@@ -55,6 +55,7 @@ import com.luncher.launcher.testing.waitUntilMatches
 import org.hamcrest.Matcher
 import org.hamcrest.Matchers.allOf
 import org.hamcrest.Matchers.containsString
+import org.hamcrest.Matchers.not
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -252,6 +253,48 @@ class BackgroundActivityTest {
             pressInList(KeyEvent.KEYCODE_BACK)
             waitUntil(option(R.string.settings_appearance_position, R.string.settings_appearance_left), hasFocus())
             assertEquals("nothing stored", Background(wide.id), appearance.appearance.background)
+        }
+    }
+
+    @Test
+    fun downPastTheLastEntryOfTheList_staysThere_notOnSave() {
+        launchWith(picture("beach.png", added = 1), picture("sunset.jpg", added = 2)).use {
+            waitUntil(row(R.string.settings_pictures_no_picture), hasFocus())
+            press(KeyEvent.KEYCODE_DPAD_DOWN)
+            waitUntil(row("beach.png"), hasFocus())
+            press(KeyEvent.KEYCODE_DPAD_DOWN)
+            waitUntil(row("sunset.jpg"), hasFocus())
+            press(KeyEvent.KEYCODE_DPAD_DOWN)
+            waitUntil(row(R.string.settings_pictures_add_from_folder), hasFocus())
+
+            press(KeyEvent.KEYCODE_DPAD_DOWN)
+
+            waitUntil(row(R.string.settings_pictures_add_from_folder), hasFocus())
+            onView(withId(R.id.settings_background_save)).check(matches(not(hasFocus())))
+            onView(withId(R.id.settings_background_delete_all)).check(matches(not(hasFocus())))
+        }
+    }
+
+    @Test
+    fun downPastTheLastPictureOfAddFromFolder_staysThere_notOnAddAll() {
+        useTheTestsFolders()
+        dropFolder.mkdirs()
+        InstrumentationAssets.copy("pictures/baseline.jpg", File(dropFolder, "holiday.jpg"))
+        InstrumentationAssets.copy("pictures/progressive.jpg", File(dropFolder, "logo.jpg"))
+
+        ActivityScenario.launch(BackgroundActivity::class.java).use {
+            waitUntil(row(R.string.settings_pictures_no_picture), hasFocus())
+            press(KeyEvent.KEYCODE_DPAD_DOWN)
+            waitUntil(row(R.string.settings_pictures_add_from_folder), hasFocus())
+            press(KeyEvent.KEYCODE_DPAD_CENTER)
+            waitUntil(withText(containsString("logo.jpg")), isDisplayed())
+            waitUntil(withId(R.id.settings_pictures_folder_list), hasFocus())
+            press(KeyEvent.KEYCODE_DPAD_DOWN)
+
+            press(KeyEvent.KEYCODE_DPAD_DOWN)
+
+            waitUntil(withId(R.id.settings_pictures_folder_list), hasFocus())
+            onView(withId(R.id.settings_pictures_folder_add_all)).check(matches(not(hasFocus())))
         }
     }
 

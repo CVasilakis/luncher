@@ -153,6 +153,10 @@
     </plurals>
     <!-- The title instead when none of them was added. -->
     <string name="settings_received_none_added">Pictures not added</string>
+    <!-- The window's title instead when the share brought no picture: another app shared
+         nothing Luncher could take a picture from, or only folders. Below it, settings_received_nothing_text, and OK. -->
+    <string name="settings_received_nothing">Nothing to add</string>
+    <string name="settings_received_nothing_text">The app shared no picture.</string>
     <!-- Below the title, a line for each reason some pictures weren't added, with how many, in
          this order; a reason none has isn't shown. Each line counts pictures, e.g. "2 already in
          Luncher's pictures", "1 not a picture, or damaged". -->

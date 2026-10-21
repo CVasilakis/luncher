@@ -54,7 +54,8 @@ import com.luncher.launcher.ui.R as UiR
  * it), except one of Luncher's own drop folders ([dropFolders]). It's asked and read through
  * [OutsideReader], as the app may never answer: the job then gives up, after
  * [OutsideReader.LIMIT_MS] without an answer ([ImportResult.Unreadable]), or once the import is
- * cancelled.
+ * cancelled. A folder shared with the pictures, whose reading fails as a folder's, is
+ * [ImportResult.Folder].
  *
  * A picture whose name the library has ([nameClash]) isn't added: refused as soon as its name
  * and size are known, before it's copied when the source says its size, and again before it's
@@ -290,7 +291,11 @@ class FilesPictures(
                 }
             }
         } catch (e: IOException) {
-            if (noSpace(e)) ImportResult.NoSpace else ImportResult.Unreadable
+            when {
+                noSpace(e) -> ImportResult.NoSpace
+                isFolder(e) -> ImportResult.Folder
+                else -> ImportResult.Unreadable
+            }
         } catch (e: RuntimeException) {
             // Another app's provider: no access given (SecurityException), no such Uri
             // (IllegalArgumentException), or anything else it throws, which mustn't end Luncher.
@@ -369,7 +374,16 @@ class FilesPictures(
         return dropFolders().any { path.startsWith(it.canonicalPath + File.separator) }
     }
 
-    private fun noSpace(e: IOException): Boolean = (e.cause as? ErrnoException)?.errno == OsConstants.ENOSPC
+    private fun noSpace(e: IOException): Boolean = errno(e) == OsConstants.ENOSPC
+
+    /**
+     * A read that failed as the source is a folder: a file manager shares folders along with the
+     * pictures chosen, and opens one as a file (Material Files), whose reading then fails. One
+     * that refuses to open a folder can't be told from any other failure, and stays Unreadable.
+     */
+    private fun isFolder(e: IOException): Boolean = errno(e) == OsConstants.EISDIR
+
+    private fun errno(e: IOException): Int? = (e.cause as? ErrnoException)?.errno
 
     /**
      * A job: deletes the files, working copies and drawn images no entry of the index names

@@ -166,7 +166,11 @@ last one:
   share files, and Luncher asks for none ([`app/README.md`](../app/README.md#manifest-why-each-part-is-there)).
   The one exception is a file of Luncher's own drop folders, which Add from folder passes. It's
   asked and read through `outside/` ([above](#another-apps-answers)), as the app may never answer:
-  one that stops sending gives `Unreadable` after 15 s without an answer.
+  one that stops sending gives `Unreadable` after 15 s without an answer. A folder, which a file
+  manager shares along with the pictures chosen (Material Files), is `Folder`, which the share
+  window doesn't count: it's told by its reading failing as a folder's (`EISDIR`), since its type
+  doesn't tell it (Material Files names it after the folder's name, as for a file). A folder its
+  app refuses to open can't be told from any other failure, and stays `Unreadable`.
 - **An import can be cancelled wherever it is** (`add`'s handle): its job taken out of the queue
   if it hasn't started, its reading or its decode stopped, its copy deleted if it's made, and on the main
   thread, the steps that follow see it and stop. A file already moved into place but not yet named

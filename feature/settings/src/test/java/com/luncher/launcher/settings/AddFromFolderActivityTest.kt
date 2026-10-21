@@ -2,12 +2,14 @@ package com.luncher.launcher.settings
 
 import android.app.Activity
 import android.os.Looper
+import android.view.FocusFinder
 import android.view.KeyEvent
 import java.time.Duration
 import com.luncher.domain.pictures.ImportResult
 import com.luncher.launcher.ui.WorkingDialog
 import com.luncher.launcher.ui.R as UiR
 import android.view.View
+import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ListView
@@ -21,6 +23,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -520,6 +523,20 @@ class AddFromFolderActivityTest {
 
         assertFalse(activity.addAll().isFocusable)
         assertTrue(activity.addAll().alpha < 1f)
+    }
+
+    @Test
+    fun `Down past the last picture stays there, not on Add all, which Right still reaches`() {
+        graph(wallpaper, holiday, logo)
+        val activity = start()
+        val list = activity.list()
+        list.requestFocus()
+        list.setSelection(list.adapter.count - 1)
+        shadowOf(Looper.getMainLooper()).idle()
+
+        assertSame("Android alone goes to Add all", activity.addAll(), FocusFinder.getInstance().findNextFocus(activity.window.decorView as ViewGroup, list, View.FOCUS_DOWN))
+        assertSame(list, list.focusSearch(View.FOCUS_DOWN))
+        assertSame(activity.addAll(), list.focusSearch(View.FOCUS_RIGHT))
     }
 
     @Test

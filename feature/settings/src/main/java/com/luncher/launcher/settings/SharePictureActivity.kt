@@ -60,9 +60,9 @@ import com.luncher.domain.pictures.PictureLimits
  * the default needs every home app visible from API 30 on (the manifest's `<queries>`).
  *
  * Exported, so any app can send it anything: it reads nothing itself, only takes the Uri out of
- * the intent, and anything it can't take one from (extras that don't unparcel, no Uri at all)
- * becomes the window's message that Luncher can't read it, never a crash; so does a Uri the other
- * app gave no access to, once the library has tried it. What the Uri points to is the library's
+ * the intent, and anything it can't take one from (extras that don't unparcel, no Uri at all, a
+ * text only) becomes the window's message that the app shared no picture, never a crash; a Uri the
+ * other app gave no access to, the message that Luncher can't read it, once the library has tried it. What the Uri points to is the library's
  * to judge ([PictureImport][com.luncher.domain.pictures.PictureImport]).
  */
 class SharePictureActivity : Activity() {
@@ -82,7 +82,7 @@ class SharePictureActivity : Activity() {
         val pictures = sharedPictures(intent)
         val window = Intent(this, PictureReceivedActivity::class.java).putExtra(PictureReceivedActivity.EXTRA_TAKE_OVER, takingOver)
         val passed = when {
-            pictures.isEmpty() -> emptyList<Uri>().also { window.putExtra(PictureReceivedActivity.EXTRA_NOTHING_READABLE, true) }
+            pictures.isEmpty() -> emptyList<Uri>().also { window.putExtra(PictureReceivedActivity.EXTRA_NOTHING_SHARED, true) }
             !PictureLimits.allowsShare(pictures.size) -> emptyList<Uri>().also { window.putExtra(PictureReceivedActivity.EXTRA_TOO_MANY, true) }
             else -> pictures.also { window.putParcelableArrayListExtra(PictureReceivedActivity.EXTRA_PICTURES, ArrayList(it)) }
         }

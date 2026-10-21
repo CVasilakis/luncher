@@ -34,7 +34,9 @@ import com.luncher.launcher.ui.ShortestShowing
  * reason ([notAddedLines]), and OK. A share of more pictures than Luncher takes at a time adds
  * none, and the window says so, at once or at the end of the others. Every [ImportResult] is
  * handled ([whyNotAdded]); an app that stops sending a picture ends as Unreadable, after the
- * library's time limit.
+ * library's time limit. A folder shared with the pictures isn't mentioned; a share with no
+ * picture in it, or only folders, says there's nothing to add ([EXTRA_NOTHING_SHARED],
+ * [Outcome.Nothing]), not that a file can't be read: there's no file to copy anywhere.
  *
  * Cancel, or Back, while they're added, stops the adding: once a picture was saved, the window
  * then says how it went, with how many were cancelled ([ReceivedPictures.stop][com.luncher.domain.pictures.ReceivedPictures.stop]),
@@ -74,8 +76,8 @@ class PictureReceivedActivity : Activity() {
      */
     private var hold = 0
 
-    /** Whether the share had no picture Luncher could read, which the window says, with no hold. */
-    private var unreadable = false
+    /** Why the share brought no picture, which the window says, with no hold; null while it shows a session. */
+    private var empty: Empty? = null
 
     /** Whether the user chose to leave the window ([onUserLeaveHint]) since it was last in front: out of sight then, it closes. */
     private var leaving = false
@@ -101,7 +103,7 @@ class PictureReceivedActivity : Activity() {
         // Made anew after a configuration change, the window still holds the session, where it
         // was; after the process was gone, it's gone too, and the share is taken again.
         hold = if (kept != 0 && kept == received.holder) kept else take(intent)
-        unreadable = hold == 0
+        empty = if (hold == 0) emptyBecause(intent) else null
         received.addListener(changed)
         // Android 16 (API 36) on, for apps targeting it, sends Back here, not to onBackPressed.
         if (Build.VERSION.SDK_INT >= 36) {
@@ -133,7 +135,7 @@ class PictureReceivedActivity : Activity() {
         val joined = take(intent)
         if (joined != 0) {
             hold = joined
-            unreadable = false
+            empty = null
         }
         show()
     }
@@ -179,15 +181,19 @@ class PictureReceivedActivity : Activity() {
         hold = 0
     }
 
-    /** The pictures [intent] brings, into the session; the window's hold on it, or 0 if it brings none Luncher could read. */
+    /** The pictures [intent] brings, into the session; the window's hold on it, or 0 if it brings none: none shared, or none Luncher could read. */
     private fun take(intent: Intent): Int {
         // In place of a window that's gone: the session is this one's now, whatever the share brings.
         val over = if (intent.getBooleanExtra(EXTRA_TAKE_OVER, false)) received.hold() else 0
-        if (intent.getBooleanExtra(EXTRA_NOTHING_READABLE, false)) return over
+        if (intent.getBooleanExtra(EXTRA_NOTHING_READABLE, false) || intent.getBooleanExtra(EXTRA_NOTHING_SHARED, false)) return over
         if (intent.getBooleanExtra(EXTRA_TOO_MANY, false)) return received.refuse()
         val pictures = pictures(intent)
         return if (pictures.isEmpty()) over else received.receive(pictures)
     }
+
+    /** Why [intent] brought no picture: none shared, or none Luncher could read. */
+    private fun emptyBecause(intent: Intent): Empty =
+        if (intent.getBooleanExtra(EXTRA_NOTHING_SHARED, false)) Empty.NOTHING_SHARED else Empty.UNREADABLE
 
     private fun pictures(intent: Intent): List<Uri> =
         if (Build.VERSION.SDK_INT >= 33) {
@@ -200,7 +206,11 @@ class PictureReceivedActivity : Activity() {
     /** The session as it stands, or why there's none. */
     private fun show() {
         main.removeCallbacks(showLater)
-        if (unreadable) return showOne(ImportResult.Unreadable)
+        when (empty) {
+            Empty.UNREADABLE -> return showOne(ImportResult.Unreadable)
+            Empty.NOTHING_SHARED -> return showNothing()
+            null -> {}
+        }
         if (hold == 0 || hold != received.holder) return
         val outcome = received.outcome ?: return showAdding()
         // The wheel, once it showed, stays half a second at least.
@@ -212,6 +222,7 @@ class PictureReceivedActivity : Activity() {
         when (outcome) {
             is Outcome.One -> showOne(outcome.result)
             is Outcome.Several -> showSeveral(outcome)
+            Outcome.Nothing -> showNothing()
         }
     }
 
@@ -261,6 +272,15 @@ class PictureReceivedActivity : Activity() {
         focusFirst()
     }
 
+    /** No picture to add: the share had none, or only folders. */
+    private fun showNothing() {
+        showDone()
+        title.setText(R.string.settings_received_nothing)
+        text.setText(R.string.settings_received_nothing_text)
+        entry(getString(R.string.settings_pictures_ok)) { finish() }
+        focusFirst()
+    }
+
     /** The wheel stops and the entries go: what's done is said. */
     private fun showDone() {
         cancelShown = false
@@ -300,12 +320,18 @@ class PictureReceivedActivity : Activity() {
         /** Set by [SharePictureActivity] when a share had more pictures than [PictureLimits.MAX_SHARED]: none is passed. */
         const val EXTRA_TOO_MANY = "com.luncher.launcher.settings.TOO_MANY"
 
-        /** Set by [SharePictureActivity] when what another app sent had no picture it could pass on. */
+        /** Set by [SharePictureActivity] when Android refused to pass on the access to what another app shared. */
         const val EXTRA_NOTHING_READABLE = "com.luncher.launcher.settings.NOTHING_READABLE"
+
+        /** Set by [SharePictureActivity] when what another app sent had no picture in it: no Uri at all, or extras that don't unparcel. */
+        const val EXTRA_NOTHING_SHARED = "com.luncher.launcher.settings.NOTHING_SHARED"
 
         /** Set by [SharePictureActivity] when it opened this window in place of one that's gone, for which it took the session over: the window takes it. */
         const val EXTRA_TAKE_OVER = "com.luncher.launcher.settings.TAKE_OVER"
 
         private const val STATE_HOLD = "hold"
     }
+
+    /** Why a share brought no picture. */
+    private enum class Empty { UNREADABLE, NOTHING_SHARED }
 }

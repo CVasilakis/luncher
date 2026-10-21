@@ -20,6 +20,8 @@ class ReceivedPicturesTest {
         results["text"] = ImportResult.NotAPicture
         results["same name"] = ImportResult.SameFile(beach)
         results["name taken"] = ImportResult.NameTaken(forest)
+        results["folder"] = ImportResult.Folder
+        results["other folder"] = ImportResult.Folder
         answerLater = true
     }
     private val received = ReceivedPictures(library)
@@ -312,5 +314,63 @@ class ReceivedPicturesTest {
 
         assertEquals(0, received.session)
         assertEquals(0, told)
+    }
+
+    @Test
+    fun `a folder shared with the pictures is left out, neither added nor counted`() {
+        received.receive(listOf("beach", "folder", "forest"))
+        assertEquals(3, received.total)
+
+        library.finishAdding()
+        library.finishAdding()
+        assertEquals(2, received.total)
+        assertEquals(1, received.answered)
+        assertEquals(listOf("forest"), received.pending)
+
+        library.finishAdding()
+        assertEquals(Outcome.Several(listOf(ImportResult.Added(beach), ImportResult.Added(forest))), received.outcome)
+    }
+
+    @Test
+    fun `one picture shared with folders ends with its own answer`() {
+        received.receive(listOf("folder", "text", "other folder"))
+        repeat(3) { library.finishAdding() }
+
+        assertEquals(Outcome.One(ImportResult.NotAPicture), received.outcome)
+    }
+
+    @Test
+    fun `a share of folders only has no picture to add`() {
+        received.receive(listOf("folder", "other folder"))
+        library.finishAdding()
+
+        assertNull(received.outcome)
+
+        library.finishAdding()
+        assertEquals(Outcome.Nothing, received.outcome)
+        assertEquals(0, received.total)
+    }
+
+    @Test
+    fun `a folder answered at once doesn't stop the adding`() {
+        val atOnce = FakePictures<String>().apply {
+            results["folder"] = ImportResult.Folder
+            results["beach"] = ImportResult.Added(beach)
+        }
+        val received = ReceivedPictures(atOnce)
+
+        received.receive(listOf("folder", "beach"))
+
+        assertEquals(listOf("folder", "beach"), atOnce.added)
+        assertEquals(Outcome.One(ImportResult.Added(beach)), received.outcome)
+    }
+
+    @Test
+    fun `folders and a share of too many say the share was too many`() {
+        received.receive(listOf("folder"))
+        library.finishAdding()
+        received.refuse()
+
+        assertEquals(Outcome.Several(emptyList(), tooMany = true), received.outcome)
     }
 }

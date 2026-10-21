@@ -142,6 +142,8 @@
         <item quantity="other">تمت إضافة <xliff:g id="count" example="100">%d</xliff:g> صورة</item>
     </plurals>
     <string name="settings_received_none_added">لم تُضَف الصور</string>
+    <string name="settings_received_nothing">لا شيء لإضافته</string>
+    <string name="settings_received_nothing_text">لم يشارك التطبيق أي صورة.</string>
     <plurals name="settings_received_already_count">
         <item quantity="zero"><xliff:g id="count" example="0">%d</xliff:g> صورة موجودة بالفعل في صور Luncher</item>
         <item quantity="one">صورة واحدة موجودة بالفعل في صور Luncher</item>

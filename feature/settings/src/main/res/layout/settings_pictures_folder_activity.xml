@@ -36,7 +36,8 @@
         android:layout_height="0dp"
         android:layout_weight="1">
 
-        <FrameLayout
+        <!-- Down past the last picture stays there, not to Add all. -->
+        <com.luncher.launcher.settings.ListFrame
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_marginEnd="@dimen/settings_pictures_side_width">
@@ -58,7 +59,7 @@
                 android:layout_height="wrap_content"
                 android:textColor="@color/text_secondary"
                 android:textSize="@dimen/settings_pictures_text" />
-        </FrameLayout>
+        </com.luncher.launcher.settings.ListFrame>
 
         <!-- The preview at most this size, smaller on a short screen, so Add all and the note fit
              below it; on the smallest screens the column scrolls (PreviewColumn). -->

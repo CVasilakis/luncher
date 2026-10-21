@@ -122,6 +122,8 @@
         <item quantity="other"><xliff:g id="count" example="9">%d</xliff:g> εικόνες προστέθηκαν</item>
     </plurals>
     <string name="settings_received_none_added">Οι εικόνες δεν προστέθηκαν</string>
+    <string name="settings_received_nothing">Τίποτα για προσθήκη</string>
+    <string name="settings_received_nothing_text">Η εφαρμογή δεν κοινοποίησε καμία εικόνα.</string>
     <plurals name="settings_received_already_count">
         <item quantity="one"><xliff:g id="count" example="1">%d</xliff:g> υπάρχει ήδη στις εικόνες του Luncher</item>
         <item quantity="other"><xliff:g id="count" example="2">%d</xliff:g> υπάρχουν ήδη στις εικόνες του Luncher</item>

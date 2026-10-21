@@ -20,8 +20,9 @@ class ImportResultTest {
             ImportResult.TooLarge(SizeLimit.BYTES),
             ImportResult.Unreadable,
             ImportResult.NoSpace,
+            ImportResult.Folder,
         )
 
-        assertEquals(listOf(false, true, true, false, false, false, false, false, false), results.map { it.wasInLibrary })
+        assertEquals(listOf(false, true, true, false, false, false, false, false, false, false), results.map { it.wasInLibrary })
     }
 }

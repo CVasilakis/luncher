@@ -49,6 +49,8 @@ internal fun Context.whyNotAdded(result: ImportResult): String? = when (result) 
     }
     ImportResult.Unreadable -> getString(R.string.settings_pictures_unreadable, dropFolder())
     ImportResult.NoSpace -> getString(R.string.settings_pictures_no_space)
+    // Never a session's answer: ReceivedPictures leaves a folder out.
+    ImportResult.Folder -> null
 }
 
 /**
@@ -65,7 +67,7 @@ internal fun Context.refusal(result: ImportResult?): String? = when (result) {
     is ImportResult.SameFile -> getString(R.string.settings_pictures_already)
     is ImportResult.NameTaken -> getString(R.string.settings_pictures_folder_name_taken)
     ImportResult.NotAPicture -> getString(R.string.settings_pictures_folder_damaged)
-    null, is ImportResult.Added, is ImportResult.AlreadyThere, ImportResult.Unreadable, ImportResult.NoSpace -> null
+    null, is ImportResult.Added, is ImportResult.AlreadyThere, ImportResult.Unreadable, ImportResult.NoSpace, ImportResult.Folder -> null
 }
 
 /**

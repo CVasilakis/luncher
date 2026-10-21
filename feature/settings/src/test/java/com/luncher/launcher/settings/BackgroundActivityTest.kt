@@ -4,8 +4,10 @@ import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.os.Looper
+import android.view.FocusFinder
 import android.view.KeyEvent
 import android.view.View
+import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import android.widget.EditText
 import android.widget.ImageView
@@ -254,6 +256,22 @@ class BackgroundActivityTest {
         assertEquals("Off", activity.value("Dim"))
         assertTrue("a picture's row right of it", dim.focusSearch(View.FOCUS_RIGHT) in activity.listRows())
         assertNull("no list", shadowOf(activity.application).latestPopupWindow?.takeIf { it.isShowing })
+    }
+
+    @Test
+    fun `Down past the end of the pictures stays there, not on an option, Save or Delete all, which Left still reaches`() {
+        graph(beach, sunset, background = Background(beach.id))
+        val activity = start().get()
+        val list = activity.findViewById<LinearLayout>(R.id.settings_background_list)
+        val last = list.getChildAt(list.childCount - 1)
+        last.requestFocus()
+
+        val below = FocusFinder.getInstance().findNextFocus(activity.window.decorView as ViewGroup, last, View.FOCUS_DOWN)
+
+        assertTrue("Android alone leaves the list, for an option, Save or Delete all", below != null && below.parent !== list)
+        assertSame(last, last.focusSearch(View.FOCUS_DOWN))
+        val left = last.focusSearch(View.FOCUS_LEFT)
+        assertTrue("an option, Save or Delete all left of it", left != null && left.parent !== list)
     }
 
     @Test
