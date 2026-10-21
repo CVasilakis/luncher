@@ -70,7 +70,7 @@ domain/src/
 │       ├── TileLayout.kt        how an arrangement of tiles reports sizes and positions
 │       ├── TileMoves.kt         how it says where a tile the user moves goes, and which tile is nearest across
 │       ├── Direction.kt         model: a D-pad arrow
-│       ├── TileGrid.kt          rule: the grid (rows of tiles as wide as a width; the short row first or last, at the left, centered or at the right; at the top, centered or at the bottom of a height), and moves in it
+│       ├── TileGrid.kt          rule: the grid (rows of tiles as wide as a width; the short row first or last, at the left, centered or at the right; at the top, centered or at the bottom of a height; room below each row for the focused tile's name), and moves in it
 │       ├── TileFocus.kt         rule: where each arrow takes the focus among the tiles: along the row, the nearest tile up or down, and back the way it came
 │       ├── TileLayouts.kt       rule: the layouts for a TileGeometry, in pixels at a density; picks the arrangement and placement
 │       ├── ShelfLayout.kt       rule: the shown apps' tiles above a shelf of the hidden ones, while arranging

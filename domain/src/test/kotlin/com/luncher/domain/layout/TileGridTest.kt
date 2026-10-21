@@ -49,6 +49,41 @@ class TileGridTest {
         assertEquals(0, grid(tiles = 0).contentHeight)
     }
 
+    // Two rows, 25 px apart, each with 30 px below its tiles for the focused tile's name.
+    @Test
+    fun `leaves room for a name below each row, the last one too`() {
+        val grid = TileGrid(7, columns = 5, width = 1000, gap = 25, nameHeight = 30)
+
+        assertEquals(101, grid.tileHeight)                  // the tiles keep their size
+        assertEquals(listOf(0, 205), (5..6).map(grid::left))
+        assertEquals(101 + 30 + 25, grid.top(5))
+        assertEquals(2 * (101 + 30) + 25, grid.contentHeight)
+    }
+
+    @Test
+    fun `at the bottom, a name below the last row still fits the height`() {
+        val grid = TileGrid(7, columns = 5, width = 1000, gap = 25, height = 600, verticalAlignment = VerticalAlignment.BOTTOM, nameHeight = 30)
+
+        assertEquals(600 - 30, grid.top(5) + grid.tileHeight)
+        assertEquals(600, grid.contentHeight)
+    }
+
+    // Moves depend on the order and the columns only: the room for names changes none.
+    @Test
+    fun `the room for names changes no move`() {
+        val grid = TileGrid(7, columns = 5, width = 1000, gap = 25, nameHeight = 30)
+
+        for (index in 0 until 7) {
+            for (direction in Direction.entries) assertEquals(grid(tiles = 7).indexToward(index, direction), grid.indexToward(index, direction))
+            assertEquals(grid(tiles = 7).slot(index), grid.slot(index))
+        }
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun `needs a room for names that isn't negative`() {
+        TileGrid(7, columns = 5, width = 1000, gap = 25, nameHeight = -1)
+    }
+
     @Test
     fun `a space too narrow for the tiles gives empty tiles instead of failing`() {
         val grid = grid(tiles = 3, width = 50)

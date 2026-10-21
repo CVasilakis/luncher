@@ -10,7 +10,8 @@ import kotlin.math.roundToInt
  * top to bottom. The tiles share the [width] they get between them, [gap] apart, with the banner's
  * 16:9 shape; what's left over after rounding goes to equal margins on both sides, so the grid is
  * centered. The row that isn't full is the last one, or the first with [shortRowFirst], and goes
- * where [rowAlignment] says: at the left, centered, or at the right. The rows go where
+ * where [rowAlignment] says: at the left, centered, or at the right. Below each row, the last one
+ * too, is [nameHeight] of room for the focused tile's name, none by default. The rows go where
  * [verticalAlignment] says in the [height] they get, if they fit it; otherwise they start at the
  * top, and rows below the space scroll vertically.
  *
@@ -28,11 +29,13 @@ class TileGrid(
     private val shortRowFirst: Boolean = false,
     height: Int = 0,
     verticalAlignment: VerticalAlignment = VerticalAlignment.TOP,
+    nameHeight: Int = 0,
 ) : TileLayout, TileMoves {
 
     init {
         require(columns >= 1) { "columns must be at least 1: $columns" }
         require(tileCount >= 0) { "tileCount must not be negative: $tileCount" }
+        require(nameHeight >= 0) { "nameHeight must not be negative: $nameHeight" }
     }
 
     override val tileWidth: Int = ((width - gap * (columns - 1)) / columns).coerceAtLeast(0)
@@ -41,7 +44,10 @@ class TileGrid(
     private val margin: Int = ((width - tileWidth * columns - gap * (columns - 1)) / 2).coerceAtLeast(0)
     private val rows: Int = rows(tileCount)
 
-    private val rowsHeight: Int = if (rows == 0) 0 else rows * tileHeight + (rows - 1) * gap
+    /** A row's tiles and the room for a name below them. */
+    private val rowHeight: Int = tileHeight + nameHeight
+
+    private val rowsHeight: Int = if (rows == 0) 0 else rows * rowHeight + (rows - 1) * gap
 
     /** Above the first row: room left at the top when the rows are centered or at the bottom. */
     private val offset: Int = verticalAlignment.offset(rowsHeight, height)
@@ -51,7 +57,7 @@ class TileGrid(
 
     override fun left(index: Int): Int = margin + slot(index) * (tileWidth + gap) / 2
 
-    override fun top(index: Int): Int = offset + row(index, tileCount) * (tileHeight + gap)
+    override fun top(index: Int): Int = offset + row(index, tileCount) * (rowHeight + gap)
 
     override fun indexToward(index: Int, direction: Direction): Int? {
         val row = row(index, tileCount)
