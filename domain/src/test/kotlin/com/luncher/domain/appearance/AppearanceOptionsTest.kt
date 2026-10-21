@@ -22,6 +22,8 @@ class AppearanceOptionsTest {
                 AppearanceOption.HorizontalAlignment,
                 AppearanceOption.FullBottomRow,
                 AppearanceOption.CornerRadius,
+                AppearanceOption.FocusStyle,
+                AppearanceOption.AppName,
             ),
             catalog.groups[0].options,
         )

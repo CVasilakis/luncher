@@ -2,9 +2,11 @@ package com.luncher.launcher.appearance
 
 import android.content.Context
 import android.content.SharedPreferences
+import com.luncher.domain.appearance.AppName
 import com.luncher.domain.appearance.Appearance
 import com.luncher.domain.appearance.AppearanceOption
 import com.luncher.domain.appearance.Corners
+import com.luncher.domain.appearance.FocusStyle
 import com.luncher.domain.appearance.HorizontalAlignment
 import com.luncher.domain.appearance.Side
 import com.luncher.domain.appearance.TileGeometry
@@ -37,8 +39,9 @@ class PreferencesAppearanceSettingsTest {
             verticalAlignment = VerticalAlignment.CENTER,
             horizontalAlignment = HorizontalAlignment.RIGHT,
             fullBottomRow = false,
+            appName = AppName.WHEN_FOCUSED,
         ),
-        TileStyle(Corners.Radius(16)),
+        TileStyle(Corners.Radius(16), FocusStyle.LIFT),
         TopBarAppearance(clockSide = Side.RIGHT, timeSide = Side.RIGHT, showTime = true, showDate = false),
         Background(PictureId("0123456789abcdef0123456789abcdef"), Fit.STRETCH, PicturePosition.LEFT, 40, Blur.LIGHT),
     )
@@ -50,6 +53,8 @@ class PreferencesAppearanceSettingsTest {
         "tile_horizontal_alignment" to "RIGHT",
         "tile_full_bottom_row" to "false",
         "tile_corner_radius" to "16",
+        "tile_focus_style" to "LIFT",
+        "tile_app_name" to "WHEN_FOCUSED",
         "clock_side" to "RIGHT",
         "time_side" to "RIGHT",
         "show_time" to "true",
@@ -113,6 +118,19 @@ class PreferencesAppearanceSettingsTest {
         assertEquals(none, PreferencesAppearanceSettings(context).read())
     }
 
+    // The focus style and the app name were added after the other options: an older version stored
+    // neither, and the tiles keep the look they had.
+    @Test
+    fun `stored before the focus style and the app name, frames the focused tile without a name`() {
+        store(stored - "tile_focus_style" - "tile_app_name")
+
+        val before = changed.copy(
+            tileGeometry = changed.tileGeometry.copy(appName = AppName.OFF),
+            tileStyle = changed.tileStyle.copy(focus = FocusStyle.FRAME),
+        )
+        assertEquals(before, PreferencesAppearanceSettings(context).read())
+    }
+
     // The background was added after the other options: an older version stored none of it.
     @Test
     fun `stored before the background, has none`() {
@@ -150,6 +168,8 @@ class PreferencesAppearanceSettingsTest {
             Triple("tile_horizontal_alignment", "center", AppearanceOption.HorizontalAlignment),   // names are exact
             Triple("tile_full_bottom_row", "maybe", AppearanceOption.FullBottomRow),
             Triple("tile_corner_radius", "5", AppearanceOption.CornerRadius),
+            Triple("tile_focus_style", "GLOW", AppearanceOption.FocusStyle),
+            Triple("tile_app_name", "ALWAYS", AppearanceOption.AppName),
             Triple("clock_side", "right", AppearanceOption.ClockSide),   // names are exact
             Triple("time_side", "1", AppearanceOption.TimeSide),         // a position, never stored
             Triple("show_date", "hidden", AppearanceOption.ShowDate),

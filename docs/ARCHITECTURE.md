@@ -230,12 +230,14 @@ Adding an aspect, e.g. the focus frame's color:
 | Its label and its values' labels, in every translation | `:feature:settings` | the exhaustive `when` doesn't compile; lint ([`TRANSLATIONS.md`](TRANSLATIONS.md)) |
 | Its effect on the home screen, and on the preview where it shows | `:feature:home`, `:feature:settings` | a test that sets each option of the catalog to a value other than its default, and fails if the home screen, or the preview, draws the same |
 
-Today `Appearance` has four parts: `TileGeometry` (the tiles' size, spacing and alignment),
-`TileStyle` (their corners), `TopBarAppearance` (whether the time and the
-date show, the clock's side, and the time's side of the date) and `Background` (the wallpaper: a
-picture of the picture library, or none, and how it's drawn). The catalog's options, the vertical
-and the horizontal alignment, a full bottom row, the corner radius, the time and the date shown or
-hidden, the clock's side and the time's side, are changed in the settings' appearance editor
+Today `Appearance` has four parts: `TileGeometry` (the tiles' size, spacing and alignment, and
+whether the focused tile's name shows below it, which the rows leave room for), `TileStyle` (their
+corners, and how the focused one stands out: framed or lifted), `TopBarAppearance` (whether the
+time and the date show, the clock's side, and the time's side of the date) and `Background` (the
+wallpaper: a picture of the picture library, or none, and how it's drawn). The catalog's options,
+the vertical and the horizontal alignment, a full bottom row, the corner radius, the focus style,
+the app name, the time and the date shown or hidden, the clock's side and the time's side, are
+changed in the settings' appearance editor
 ([`feature/settings/README.md`](../feature/settings/README.md#appearance)); the wallpaper's fit,
 position, dim and blur in the background editor it opens (below). The wallpaper's picture
 isn't an option, since its values are the library's pictures, not a list known in `:domain`.

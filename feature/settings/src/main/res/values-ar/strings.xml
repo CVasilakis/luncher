@@ -17,6 +17,11 @@
     <string name="settings_appearance_corner_radius">استدارة الزوايا</string>
     <string name="settings_appearance_radius_dp"><xliff:g id="radius" example="8">%1$d</xliff:g> dp</string>
     <string name="settings_appearance_pill">كبسولة</string>
+    <string name="settings_appearance_focus_style">نمط التحديد</string>
+    <string name="settings_appearance_frame">إطار</string>
+    <string name="settings_appearance_lift">رفع</string>
+    <string name="settings_appearance_app_name">اسم التطبيق</string>
+    <string name="settings_appearance_when_focused">عند التحديد</string>
     <string name="settings_appearance_time">الوقت</string>
     <string name="settings_appearance_date">التاريخ</string>
     <string name="settings_appearance_shown">ظاهر</string>

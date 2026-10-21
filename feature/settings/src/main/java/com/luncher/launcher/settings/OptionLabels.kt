@@ -1,10 +1,12 @@
 package com.luncher.launcher.settings
 
 import android.content.Context
+import com.luncher.domain.appearance.AppName
 import com.luncher.domain.appearance.Appearance
 import com.luncher.domain.appearance.AppearanceOption
 import com.luncher.domain.appearance.AppearanceTopic
 import com.luncher.domain.appearance.Corners
+import com.luncher.domain.appearance.FocusStyle
 import com.luncher.domain.appearance.HorizontalAlignment
 import com.luncher.domain.appearance.Side
 import com.luncher.domain.appearance.VerticalAlignment
@@ -27,6 +29,8 @@ internal fun optionLabel(option: AppearanceOption<*>): Int = when (option) {
     AppearanceOption.HorizontalAlignment -> R.string.settings_appearance_horizontal_alignment
     AppearanceOption.FullBottomRow -> R.string.settings_appearance_full_bottom_row
     AppearanceOption.CornerRadius -> R.string.settings_appearance_corner_radius
+    AppearanceOption.FocusStyle -> R.string.settings_appearance_focus_style
+    AppearanceOption.AppName -> R.string.settings_appearance_app_name
     AppearanceOption.ShowTime -> R.string.settings_appearance_time
     AppearanceOption.ShowDate -> R.string.settings_appearance_date
     AppearanceOption.ClockSide -> R.string.settings_appearance_clock_side
@@ -46,6 +50,8 @@ internal fun Context.optionValue(option: AppearanceOption<*>, appearance: Appear
         is Corners.Radius -> getString(R.string.settings_appearance_radius_dp, corners.dp)
         Corners.Pill -> getString(R.string.settings_appearance_pill)
     }
+    AppearanceOption.FocusStyle -> getString(focus(AppearanceOption.FocusStyle.get(appearance)))
+    AppearanceOption.AppName -> getString(appName(AppearanceOption.AppName.get(appearance)))
     AppearanceOption.ShowTime -> getString(shown(AppearanceOption.ShowTime.get(appearance)))
     AppearanceOption.ShowDate -> getString(shown(AppearanceOption.ShowDate.get(appearance)))
     AppearanceOption.ClockSide -> getString(side(AppearanceOption.ClockSide.get(appearance)))
@@ -54,6 +60,16 @@ internal fun Context.optionValue(option: AppearanceOption<*>, appearance: Appear
     AppearanceOption.BackgroundPosition -> getString(position(AppearanceOption.BackgroundPosition.get(appearance)))
     AppearanceOption.BackgroundDim -> getString(dim(AppearanceOption.BackgroundDim.get(appearance)))
     AppearanceOption.BackgroundBlur -> getString(blur(AppearanceOption.BackgroundBlur.get(appearance)))
+}
+
+private fun focus(style: FocusStyle): Int = when (style) {
+    FocusStyle.FRAME -> R.string.settings_appearance_frame
+    FocusStyle.LIFT -> R.string.settings_appearance_lift
+}
+
+private fun appName(name: AppName): Int = when (name) {
+    AppName.OFF -> R.string.settings_appearance_off
+    AppName.WHEN_FOCUSED -> R.string.settings_appearance_when_focused
 }
 
 private fun fit(fit: Fit): Int = when (fit) {

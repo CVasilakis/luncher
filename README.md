@@ -31,6 +31,7 @@ It's made with performance in mind, to run smoothly even on old and weak Android
 - [x] Reorder your apps
 - [x] Hide the apps you don't use (quickly accessible from the hidden shelf)
 - [x] Customize the tile shape, from square to pill-shaped
+- [x] Lift the focused tile with a soft shadow instead of a frame, and show its app's name below it
 - [x] Set your own pictures as wallpaper, with dim and blur options
 
 **On the way**

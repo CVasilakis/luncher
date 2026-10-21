@@ -74,6 +74,8 @@ class AppearanceOptionTest {
         assertEquals(HorizontalAlignment.CENTER, AppearanceOption.HorizontalAlignment.default)
         assertEquals(true, AppearanceOption.FullBottomRow.default)
         assertEquals(Corners.Radius(12), AppearanceOption.CornerRadius.default)
+        assertEquals(FocusStyle.FRAME, AppearanceOption.FocusStyle.default)
+        assertEquals(AppName.OFF, AppearanceOption.AppName.default)
         assertEquals(Side.LEFT, AppearanceOption.ClockSide.default)
         assertEquals(Side.LEFT, AppearanceOption.TimeSide.default)
         assertEquals(true, AppearanceOption.ShowTime.default)
@@ -99,6 +101,25 @@ class AppearanceOptionTest {
             listOf(0, 4, 8, 12, 16, 24, 32).map { Corners.Radius(it) } + Corners.Pill,
             AppearanceOption.CornerRadius.values,
         )
+    }
+
+    // Lifted and a name below are new looks, never the default: the home screen looks as before.
+    @Test
+    fun `the focus style and the app name step from today's look to the new one`() {
+        assertEquals(listOf(FocusStyle.FRAME, FocusStyle.LIFT), AppearanceOption.FocusStyle.values)
+        assertEquals(listOf(AppName.OFF, AppName.WHEN_FOCUSED), AppearanceOption.AppName.values)
+    }
+
+    // The focus style only redraws the tiles; the name needs room between the rows, a new layout.
+    @Test
+    fun `the focus style changes the tiles' style, the app name their geometry`() {
+        val lifted = AppearanceOption.FocusStyle.set(Appearance(), FocusStyle.LIFT)
+        val named = AppearanceOption.AppName.set(Appearance(), AppName.WHEN_FOCUSED)
+
+        assertEquals(TileStyle(focus = FocusStyle.LIFT), lifted.tileStyle)
+        assertEquals(TileGeometry(), lifted.tileGeometry)
+        assertEquals(TileGeometry(appName = AppName.WHEN_FOCUSED), named.tileGeometry)
+        assertEquals(TileStyle(), named.tileStyle)
     }
 
     @Test

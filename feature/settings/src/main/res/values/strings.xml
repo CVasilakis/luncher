@@ -39,6 +39,17 @@
     <!-- Its last value: the tiles' ends fully round, half circles, their top and bottom straight,
          like a pill or a capsule. -->
     <string name="settings_appearance_pill">Pill</string>
+    <!-- An option: how the app tile the remote's focus is on stands out from the others. Its
+         values: Frame (a colored frame around it) and Lift (no frame: it grows and casts a
+         shadow, as if lifted off the screen). -->
+    <string name="settings_appearance_focus_style">Focus style</string>
+    <string name="settings_appearance_frame">Frame</string>
+    <string name="settings_appearance_lift">Lift</string>
+    <!-- An option: whether the app's name shows below its tile. Its values are Off
+         (settings_appearance_off) and When focused: below the tile the remote's focus is on
+         only. -->
+    <string name="settings_appearance_app_name">App name</string>
+    <string name="settings_appearance_when_focused">When focused</string>
     <!-- An option: whether the top bar shows the time of day. -->
     <string name="settings_appearance_time">Time</string>
     <!-- An option: whether the top bar shows the date. -->

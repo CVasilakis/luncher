@@ -76,6 +76,8 @@ class PreferencesAppearanceSettings(context: Context) : AppearanceSettings {
         AppearanceOption.HorizontalAlignment -> "tile_horizontal_alignment"
         AppearanceOption.FullBottomRow -> "tile_full_bottom_row"
         AppearanceOption.CornerRadius -> "tile_corner_radius"
+        AppearanceOption.FocusStyle -> "tile_focus_style"
+        AppearanceOption.AppName -> "tile_app_name"
         AppearanceOption.ClockSide -> "clock_side"
         AppearanceOption.TimeSide -> "time_side"
         AppearanceOption.ShowTime -> "show_time"
