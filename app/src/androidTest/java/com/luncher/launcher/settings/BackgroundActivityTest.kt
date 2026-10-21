@@ -2,8 +2,10 @@ package com.luncher.launcher.settings
 
 import android.graphics.Bitmap
 import android.net.Uri
+import android.os.SystemClock
 import android.view.KeyEvent
 import android.view.View
+import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.espresso.Espresso.onView
@@ -23,6 +25,7 @@ import androidx.test.espresso.matcher.ViewMatchers.withChild
 import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
 import com.luncher.domain.appearance.Appearance
 import com.luncher.domain.appearance.Background
 import com.luncher.domain.appearance.FakeAppearanceSettings
@@ -41,6 +44,7 @@ import com.luncher.launcher.pictures.CachedPictureImages
 import com.luncher.launcher.pictures.WorkingCopyImages
 import com.luncher.launcher.pictures.FilesPictures
 import com.luncher.launcher.pictures.MediaFolderPictures
+import com.luncher.launcher.testing.FailureCapture
 import com.luncher.launcher.testing.RetryWhenCovered
 import com.luncher.launcher.testing.longPressOk
 import com.luncher.launcher.testing.matchesNow
@@ -113,6 +117,7 @@ class BackgroundActivityTest {
             // In memory, every picture prepared: no window over the editor as it opens.
             override val preparedPictures: PreparedPictures = FakePreparedPictures()
             override val appearanceSettings = this@BackgroundActivityTest.appearance
+            override val folderPictures: FolderPictures<Uri, Bitmap> by lazy { MediaFolderPictures(application, jobs, folders = { listOf(dropFolder) }) }
         }
         return ActivityScenario.launch(BackgroundActivity::class.java)
     }
@@ -272,6 +277,65 @@ class BackgroundActivityTest {
     }
 
     @Test
+    fun backFromAddFromFolder_leavesTheFocusOnIt() {
+        val sunset = picture("sunset.jpg", added = 2)
+        launchWith(picture("beach.png", added = 1), sunset, background = Background(sunset.id)).use { scenario ->
+            openAddFromFolder(scenario)
+            press(KeyEvent.KEYCODE_BACK)
+
+            waitUntilDestroyed(AddFromFolderActivity::class.java)
+            waitUntil(row(R.string.settings_pictures_add_from_folder), hasFocus())
+            onView(allOf(withId(R.id.settings_background_chosen), isDisplayed())).check(matches(isDescendantOfA(row("sunset.jpg"))))
+        }
+    }
+
+    @Test
+    fun aPictureDeletedWhileAddFromFolderShows_backLeavesTheFocusOnAddFromFolder() {
+        val beach = picture("beach.png", added = 1)
+        val sunset = picture("sunset.jpg", added = 2)
+        launchWith(beach, sunset, background = Background(sunset.id)).use { scenario ->
+            openAddFromFolder(scenario)
+            // As another screen would: the editor reads the library again as it comes back.
+            InstrumentationRegistry.getInstrumentation().runOnMainSync { fake.delete(setOf(beach.id)) }
+            press(KeyEvent.KEYCODE_BACK)
+
+            waitUntilDestroyed(AddFromFolderActivity::class.java)
+            waitUntil(row(R.string.settings_pictures_add_from_folder), hasFocus())
+            onView(row("beach.png")).check(doesNotExist())
+        }
+    }
+
+    /**
+     * From the chosen picture, the newest of two, down to Add from folder, and OK on it: its list
+     * shows, with the drop folder's picture, and the editor is stopped under it. Android stops it
+     * only once Add from folder is idle, up to 10 s later; until then Back finds the editor merely
+     * paused, which it comes back from without reading the library again.
+     */
+    private fun openAddFromFolder(scenario: ActivityScenario<BackgroundActivity>) {
+        dropFolder.mkdirs()
+        InstrumentationAssets.copy("pictures/baseline.jpg", File(dropFolder, "holiday.jpg"))
+        waitUntil(row("sunset.jpg"), hasFocus())
+        press(KeyEvent.KEYCODE_DPAD_DOWN)
+        press(KeyEvent.KEYCODE_DPAD_DOWN)
+        waitUntil(row(R.string.settings_pictures_add_from_folder), hasFocus())
+        press(KeyEvent.KEYCODE_DPAD_CENTER)
+        waitUntil(withText(containsString("holiday.jpg")), isDisplayed())
+        waitUntil(withId(R.id.settings_pictures_folder_list), hasFocus())
+        waitUntilStopped(scenario)
+    }
+
+    /** Waits until the editor is stopped, under another screen. */
+    private fun waitUntilStopped(scenario: ActivityScenario<BackgroundActivity>) {
+        val deadline = SystemClock.uptimeMillis() + STOPPED_TIMEOUT_MS
+        while (scenario.state != Lifecycle.State.CREATED) {
+            if (SystemClock.uptimeMillis() > deadline) {
+                throw AssertionError("the editor wasn't stopped in ${STOPPED_TIMEOUT_MS / 1000} s: it's ${scenario.state}").also(FailureCapture::dump)
+            }
+            SystemClock.sleep(50)
+        }
+    }
+
+    @Test
     fun deleteAll_besideSave_deletesEveryPictureAfterAsking_cancelFirst() {
         val sunset = picture("sunset.jpg", added = 2)
         launchWith(picture("beach.png", added = 1), sunset, background = Background(sunset.id)).use {
@@ -331,13 +395,16 @@ class BackgroundActivityTest {
 
     private companion object {
         const val TIMEOUT_MS = 10_000L
+
+        /** Android's 10 s for a screen to go idle before it stops the one under it anyway, and a margin. */
+        const val STOPPED_TIMEOUT_MS = 20_000L
     }
 }
 
 /** The test package's assets. */
 private object InstrumentationAssets {
     fun copy(asset: String, to: File) {
-        androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().context.assets.open(asset).use { input ->
+        InstrumentationRegistry.getInstrumentation().context.assets.open(asset).use { input ->
             to.outputStream().use { input.copyTo(it) }
         }
     }

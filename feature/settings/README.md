@@ -216,6 +216,14 @@ as its screen at the column's width, at least a quarter of that, so Save and Del
 on the smallest screens the column scrolls. In a right-to-left language it mirrors like the other
 settings screens; the preview's content and the pictures don't.
 
+The editor opens with the focus on the chosen picture, or No picture. Coming back to it (from Add
+from folder, another app, the TV's sleep), the focus is where it was, the list scrolled as it was:
+the list is made again only if pictures were added, deleted or moved meanwhile, and then the
+focus stays on what had it, unless that's a picture that's gone: then it goes to the one that took
+its place, or the one before it. Whether what had the focus is still there is told by its parents,
+not by whether it shows: Android shows the editor's window again only after `onStart`, where the
+editor reads the library again, so until then none of its views counts as shown.
+
 What the user changes is a draft, the one exception to the appearance editor's rule of storing each
 change at once ([`ARCHITECTURE.md`](../../docs/ARCHITECTURE.md#appearance)): OK on a picture
 chooses it (its name in the accent color, a check beside it), and the preview follows; nothing is

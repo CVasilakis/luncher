@@ -280,11 +280,16 @@ class BackgroundActivity : Activity() {
         row.findViewById<TextView>(R.id.settings_background_name).setTextColor(color(if (chosen) UiR.color.accent else UiR.color.text_primary))
     }
 
-    /** The library as it is now: a row for each picture, its thumbnail read at once if it's kept, else drawn. */
+    /**
+     * The library as it is now: a row for each picture, its thumbnail read at once if it's kept,
+     * else drawn. The list is made again only when pictures were added, deleted or moved: as the
+     * editor comes back with none, the focus and the scroll stay as they are.
+     */
     private fun showLibrary() {
         val focused = window.decorView.findFocus()
         val focusedPicture = rows.entries.firstOrNull { it.value == focused }?.key
         val focusedIndex = focusedPicture?.let(library::indexOf) ?: -1
+        val listed = if (list.childCount > 0) library.pictures.map { it.id } else null
         library = PictureLibrary(pictures.read(), pictureUses(settings.read()))
         val ids = library.pictures.mapTo(HashSet()) { it.id }
         rows.keys.retainAll(ids)
@@ -298,11 +303,13 @@ class BackgroundActivity : Activity() {
             rows.getOrPut(picture.id) { pictureRow(picture) }.findViewById<TextView>(R.id.settings_background_name).text = nameOf(picture)
             if (!waiting && picture.id !in drawing && thumbnailOf(picture.id).drawable == null) draw(picture)
         }
-        list.removeAllViews()
-        list.addView(noneRow)
-        for (picture in library.pictures) list.addView(rows.getValue(picture.id))
-        list.addView(addRow)
-        if (library.pictures.isEmpty()) list.addView(howTo)
+        if (library.pictures.map { it.id } != listed) {
+            list.removeAllViews()
+            list.addView(noneRow)
+            for (picture in library.pictures) list.addView(rows.getValue(picture.id))
+            list.addView(addRow)
+            if (library.pictures.isEmpty()) list.addView(howTo)
+        }
         show()
 
         // A picture just added gets the focus; otherwise it stays, unless what had it is gone:
@@ -311,11 +318,25 @@ class BackgroundActivity : Activity() {
         toFocus = emptySet()
         when {
             added != null -> added.requestFocus()
-            focused != null && focused.isShown -> focused.requestFocus()
+            focused != null && isInEditor(focused) -> focused.requestFocus()
             focusedIndex >= 0 && rows.isNotEmpty() -> rows.values.elementAt(focusedIndex.coerceAtMost(rows.size - 1)).requestFocus()
             focused == null -> (draft.picture?.let { rows[it] } ?: noneRow).requestFocus()
             else -> noneRow.requestFocus()
         }
+    }
+
+    /**
+     * Whether [view] is still among the editor's views, not taken out of the list with its
+     * picture. Not [View.isShown]: Android shows the window again only after [onStart], so as the
+     * editor comes back from another screen or the TV's sleep, none of its views is shown yet.
+     */
+    private fun isInEditor(view: View): Boolean {
+        var parent = view.parent
+        while (parent is View) {
+            if (parent === window.decorView) return true
+            parent = parent.parent
+        }
+        return false
     }
 
     /** A row of the list named [name]; OK on it does [ok]. */
