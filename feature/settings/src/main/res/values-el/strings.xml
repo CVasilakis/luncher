@@ -45,6 +45,10 @@
     <string name="settings_appearance_on">Ναι</string>
     <string name="settings_appearance_off">Όχι</string>
     <string name="settings_appearance_reset">Επαναφορά προεπιλογών</string>
+    <string name="settings_appearance_reset_question">Επαναφορά της εμφάνισης στις προεπιλογές;</string>
+    <string name="settings_appearance_reset_text">Κάθε επιλογή επιστρέφει στην προεπιλογή της.</string>
+    <string name="settings_appearance_reset_text_background">Κάθε επιλογή επιστρέφει στην προεπιλογή της: η αρχική οθόνη θα μείνει χωρίς εικόνα. Η εικόνα παραμένει στις εικόνες του Luncher.</string>
+    <string name="settings_appearance_reset_confirm">Επαναφορά</string>
     <string name="settings_system">Ρυθμίσεις συστήματος</string>
     <string name="settings_system_unavailable">Καμία εφαρμογή ρυθμίσεων σε αυτή τη συσκευή</string>
 

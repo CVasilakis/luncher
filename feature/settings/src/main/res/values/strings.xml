@@ -97,6 +97,13 @@
     <string name="settings_appearance_arrow_next" translatable="false">›</string>
     <!-- The last entry of the appearance editor: puts every option back to how it was at first. -->
     <string name="settings_appearance_reset">Reset to defaults</string>
+    <!-- The question OK on it asks first, while any option isn't at its default; below it, what
+         resetting does; then the same when the background has a picture, which the home screen
+         loses but Luncher's pictures keep. Then the answer that resets, after Cancel. -->
+    <string name="settings_appearance_reset_question">Reset the appearance to defaults?</string>
+    <string name="settings_appearance_reset_text">Every option goes back to its default.</string>
+    <string name="settings_appearance_reset_text_background">Every option goes back to its default: the home screen will have no picture. The picture stays in Luncher\'s pictures.</string>
+    <string name="settings_appearance_reset_confirm">Reset</string>
     <!-- The entry that opens the device's own settings. -->
     <string name="settings_system">System settings</string>
     <!-- A message, when the device has no settings app to open. -->

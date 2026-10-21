@@ -40,7 +40,8 @@ import org.robolectric.annotation.GraphicsMode
 /**
  * The settings panels' layout on every screen of [TV_SCREENS], in every language: each panel
  * within the screen, a margin from its edges, and no text cut. Hide apps lists 12 apps, more than
- * fit, the last one hidden. The appearance editor shows every value of every option.
+ * fit, the last one hidden. The appearance editor shows every value of every option, and its
+ * reset question fits.
  */
 @RunWith(ParameterizedRobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)   // real text widths; without it a character is 1 px wide
@@ -124,6 +125,18 @@ class SettingsLayoutTest(private val screen: TvScreen) {
         assertWhole(screen, last.findViewById(R.id.settings_app_label))
         assertWhole(screen, last.findViewById(R.id.settings_app_hidden))
         assertPanelFits(activity)
+    }
+
+    // With a picture, the longer of its texts.
+    @Test
+    fun `the reset question fits`() {
+        val activity = Robolectric.buildActivity(AppearanceActivity::class.java).setup().get()
+        val options = activity.findViewById<ViewGroup>(R.id.settings_appearance_options)
+
+        options.getChildAt(options.childCount - 1).performClick()
+        shadowOf(Looper.getMainLooper()).idle()
+
+        assertDialogFits(screen, activity)
     }
 
     @Test

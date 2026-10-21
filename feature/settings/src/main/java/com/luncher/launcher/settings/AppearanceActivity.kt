@@ -1,6 +1,7 @@
 package com.luncher.launcher.settings
 
 import android.app.Activity
+import android.app.Dialog
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
@@ -19,7 +20,8 @@ import com.luncher.domain.appearance.appearanceOptions
  * an option step through its values, toward the arrow on that side, around from the last to the
  * first; each change is stored at once, and the home screen shows it when it comes back. An
  * option that changes nothing with the others as they are is dimmed, and the focus passes it by.
- * OK on the last entry puts every option back to its default. Back closes it, as any activity.
+ * OK on the last entry asks, Cancel focused, then puts every option back to its default. Back
+ * closes it, as any activity.
  *
  * A group edited apart (the background's) is one entry, its picture's name beside it: OK opens
  * its own screen ([BackgroundActivity]), where the picture and its options are saved together;
@@ -42,6 +44,9 @@ class AppearanceActivity : Activity() {
 
     /** The group whose options show; at most one, so the list stays short. */
     private var open: Group? = null
+
+    /** The reset question while it shows. */
+    private var dialog: Dialog? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -72,7 +77,7 @@ class AppearanceActivity : Activity() {
         }
         val reset = layoutInflater.inflate(R.layout.settings_entry, options, false) as TextView
         reset.setText(R.string.settings_appearance_reset)
-        reset.setOnClickListener { change(Appearance()) }
+        reset.setOnClickListener { confirmReset() }
         options.addView(reset)
 
         appearance = settings.read()
@@ -104,6 +109,11 @@ class AppearanceActivity : Activity() {
         preview.stopWallpaper()
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        dialog?.dismiss()
+    }
+
     /** [group]'s one entry, named after its topic, its picture's name beside it: OK opens its own screen. */
     private fun apartEntry(options: LinearLayout, group: AppearanceGroup) {
         val view = layoutInflater.inflate(R.layout.settings_appearance_apart, options, false)
@@ -117,6 +127,23 @@ class AppearanceActivity : Activity() {
     private fun toggle(group: Group) {
         open = if (open == group) null else group
         for (each in groups) each.show(open == each)
+    }
+
+    /**
+     * Asks before putting every option back to its default, Cancel focused, saying whether the
+     * home screen loses its picture; nothing to ask while every option is at its default already.
+     */
+    private fun confirmReset() {
+        if (appearance == Appearance()) return
+        val text = if (appearance.background.picture != null) R.string.settings_appearance_reset_text_background else R.string.settings_appearance_reset_text
+        dialog?.dismiss()
+        dialog = PicturesDialog(
+            this,
+            getString(R.string.settings_appearance_reset_question),
+            getString(text),
+            // Cancel first, so a repeated OK doesn't reset.
+            listOf(getString(R.string.settings_pictures_cancel) to {}, getString(R.string.settings_appearance_reset_confirm) to { change(Appearance()) }),
+        ).apply { show() }
     }
 
     private fun change(appearance: Appearance) {

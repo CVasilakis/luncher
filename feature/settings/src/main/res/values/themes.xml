@@ -32,8 +32,9 @@
     <!-- Pictures and Add from folder: full-screen, on the home screen's background. -->
     <style name="Theme.Luncher.Settings.Pictures" parent="@style/Theme.Luncher" />
 
-    <!-- A dialog over Pictures (a picture's actions, a confirmation, a message): a floating panel
-         like the settings panel, over the dimmed screen. -->
+    <!-- A dialog over Pictures (a picture's actions, a confirmation, a message) or the appearance
+         editor (the reset question): a floating panel like the settings panel, over the dimmed
+         screen. -->
     <style name="Theme.Luncher.Settings.Pictures.Dialog" parent="@android:style/Theme.DeviceDefault.Dialog.NoActionBar">
         <item name="android:windowBackground">@drawable/panel_background</item>
         <item name="android:colorBackground">@color/panel</item>

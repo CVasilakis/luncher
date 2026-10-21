@@ -151,7 +151,8 @@ The Background group is edited apart (`editedApart`): it's one entry, the pictur
 None, beside it, and OK on it opens the background editor ([below](#background)), where the
 picture and its options are saved together; back in the editor (`onResume`), the appearance and
 its picture's name (renamed there, say) are read again. The last entry, Reset
-to defaults, puts every option back, and the wallpaper to none. Back returns to the settings
+to defaults, asks first (Cancel focused, as Delete), then puts every option back, and the
+wallpaper to none; with every option at its default already, it does nothing. Back returns to the settings
 panel; the home screen shows the result when it comes back.
 
 It's started with `openOwnPanel`, like Hide apps, but covers the settings panel and the home screen

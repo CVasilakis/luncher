@@ -12,9 +12,9 @@ import com.luncher.launcher.ui.color
 import com.luncher.launcher.ui.R as UiR
 
 /**
- * A dialog over a pictures' screen, a floating panel like the settings panel: a [title], a [text],
- * and [entries] (a label each, and what OK on it does, which also closes the dialog), the first
- * one focused. Back closes it, as any dialog.
+ * A dialog over a pictures' screen or the appearance editor, a floating panel like the settings
+ * panel: a [title], a [text], and [entries] (a label each, and what OK on it does, which also
+ * closes the dialog), the first one focused. Back closes it, as any dialog.
  */
 internal class PicturesDialog(
     activity: Activity,

@@ -22,6 +22,7 @@ import com.luncher.launcher.testing.TV_1080P
 import com.luncher.launcher.testing.bounds
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -32,6 +33,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
+import org.robolectric.shadows.ShadowDialog
 
 @RunWith(RobolectricTestRunner::class)
 @Config(qualifiers = "en-rUS-$TV_1080P")
@@ -94,6 +96,29 @@ class AppearanceActivityTest {
         assertTrue(group(title).requestFocus())
         press(KeyEvent.KEYCODE_DPAD_CENTER)
         shadowOf(Looper.getMainLooper()).idle()   // the layout pass, for the options it shows
+    }
+
+    /** OK on the last entry, Reset to defaults. */
+    private fun AppearanceActivity.reset() {
+        assertTrue(children().last().requestFocus())
+        press(KeyEvent.KEYCODE_DPAD_CENTER)
+        shadowOf(Looper.getMainLooper()).idle()
+    }
+
+    /** The question showing: its title, its text and its answers; null if none shows. */
+    private fun question(): Triple<String, String, List<TextView>>? {
+        val dialog = ShadowDialog.getLatestDialog()?.takeIf { it.isShowing } ?: return null
+        val entries = dialog.findViewById<LinearLayout>(R.id.settings_pictures_dialog_entries)
+        return Triple(
+            dialog.findViewById<TextView>(R.id.settings_pictures_dialog_title).text.toString(),
+            dialog.findViewById<TextView>(R.id.settings_pictures_dialog_text).text.toString(),
+            (0 until entries.childCount).map { entries.getChildAt(it) as TextView },
+        )
+    }
+
+    private fun answer(label: String) {
+        question()!!.third.single { it.text == label }.performClick()
+        shadowOf(Looper.getMainLooper()).idle()
     }
 
     /** Opens the group titled [title], and puts the focus on its option labeled [label]. */
@@ -239,14 +264,13 @@ class AppearanceActivityTest {
     }
 
     @Test
-    fun `nothing is stored when nothing changes`() {
+    fun `nothing is asked or stored when nothing changes`() {
         val activity = start()
         val before = settings.appearance
-        val reset = activity.children().last()
 
-        assertTrue(reset.requestFocus())
-        activity.press(KeyEvent.KEYCODE_DPAD_CENTER)   // the defaults already
+        activity.reset()   // the defaults already
 
+        assertNull(question())
         assertSame(before, settings.appearance)
     }
 
@@ -309,17 +333,52 @@ class AppearanceActivityTest {
     }
 
     @Test
-    fun `OK on the reset entry puts every option back to its default, and stores it`() {
+    fun `OK on the reset entry asks, Cancel first, and Reset puts every option back to its default, and stores it`() {
         settings.appearance = Appearance(TileGeometry(verticalAlignment = VerticalAlignment.TOP), TileStyle(Corners.Pill))
         val activity = start()
-        val reset = activity.children().last()
 
-        assertTrue(reset.requestFocus())
-        activity.press(KeyEvent.KEYCODE_DPAD_CENTER)
+        activity.reset()
+        val (title, text, entries) = question()!!
+        assertEquals("Reset the appearance to defaults?", title)
+        assertEquals("Every option goes back to its default.", text)
+        assertEquals(listOf("Cancel", "Reset"), entries.map { it.text.toString() })
+        assertTrue("Cancel focused", entries[0].isFocused)
+        answer("Reset")
 
+        assertNull(question())
         assertEquals(Appearance(), settings.appearance)
         assertEquals("Bottom", activity.value("Vertical alignment"))
         assertEquals("12 dp", activity.value("Corner radius"))
+        assertTrue("the focus back on the reset entry", activity.children().last().isFocused)
+    }
+
+    @Test
+    fun `the reset question says the home screen loses its picture, and Reset leaves none`() {
+        settings.appearance = Appearance(background = Background(picture = SAMPLE_WALLPAPER))
+        val activity = start()
+
+        activity.reset()
+        assertEquals(
+            "Every option goes back to its default: the home screen will have no picture. The picture stays in Luncher's pictures.",
+            question()!!.second,
+        )
+        answer("Reset")
+
+        assertEquals(Appearance(), settings.appearance)
+    }
+
+    @Test
+    fun `Cancel on the reset question changes nothing`() {
+        val changed = Appearance(TileGeometry(verticalAlignment = VerticalAlignment.TOP))
+        settings.appearance = changed
+        val activity = start()
+
+        activity.reset()
+        answer("Cancel")
+
+        assertNull(question())
+        assertEquals(changed, settings.appearance)
+        assertEquals("Top", activity.value("Vertical alignment"))
     }
 
     @Test
