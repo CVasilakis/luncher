@@ -269,7 +269,7 @@
     <!-- Below the title of Add from folder: where its pictures are; %1$s is the folder's path. -->
     <string name="settings_pictures_folder_where">Pictures in the folder <xliff:g id="folder" example="Android/media/com.luncher.launcher">%1$s</xliff:g>, on this TV or a USB drive</string>
     <!-- Where a picture of that list is: the TV's own storage, or a USB drive (or a memory card). -->
-    <string name="settings_pictures_folder_this_tv">This TV</string>
+    <string name="settings_pictures_folder_local">Local</string>
     <string name="settings_pictures_folder_usb">USB drive</string>
     <!-- A picture of that list: where it is, then its file's name. -->
     <string name="settings_pictures_folder_row"><xliff:g id="where" example="USB drive">%1$s</xliff:g> · <xliff:g id="name" example="holiday.jpg">%2$s</xliff:g></string>

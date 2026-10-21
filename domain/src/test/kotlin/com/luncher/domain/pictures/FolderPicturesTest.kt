@@ -9,10 +9,17 @@ class FolderPicturesTest {
     private fun file(name: String, removable: Boolean = false) = FolderPicture(name, removable, 1, 1, 1, null, source = name)
 
     @Test
-    fun `lists the TV's own pictures first, then the drives', each by name`() {
+    fun `lists the TV's pictures and the drives' together, by name`() {
         val pictures = listOf(file("b.jpg", removable = true), file("z.jpg"), file("a.jpg", removable = true), file("c.jpg"))
 
-        assertEquals(listOf("c.jpg", "z.jpg", "a.jpg", "b.jpg"), inListOrder(pictures, Locale.US).map { it.name })
+        assertEquals(listOf("a.jpg", "b.jpg", "c.jpg", "z.jpg"), inListOrder(pictures, Locale.US).map { it.name })
+    }
+
+    @Test
+    fun `lists the TV's picture first of two named alike`() {
+        val pictures = listOf(file("a.jpg", removable = true), file("a.jpg"))
+
+        assertEquals(listOf(false, true), inListOrder(pictures, Locale.US).map { it.removable })
     }
 
     @Test

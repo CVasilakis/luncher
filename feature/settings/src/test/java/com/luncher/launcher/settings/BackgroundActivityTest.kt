@@ -197,12 +197,12 @@ class BackgroundActivityTest {
     }
 
     @Test
-    fun `lists No picture, the pictures newest first, then Add from folder, the stored one chosen`() {
-        graph(old, beach, sunset, background = Background(beach.id))
+    fun `lists No picture, the pictures by name, then Add from folder, the stored one chosen`() {
+        graph(old, sunset, beach, background = Background(beach.id))
 
         val activity = start().get()
 
-        assertEquals(listOf("No picture", "sunset.jpg", "beach.png ✓", "old.jpg", "Add from folder"), activity.list())
+        assertEquals(listOf("No picture", "beach.png ✓", "old.jpg", "sunset.jpg", "Add from folder"), activity.list())
         assertEquals("Hold OK on a picture to rename or delete it", activity.hint())
         assertEquals("the chosen one focused", "beach.png", activity.focused())
     }
@@ -317,7 +317,7 @@ class BackgroundActivityTest {
         activity.step("Dim")
         activity.step("Blur")
 
-        assertEquals(listOf("No picture", "sunset.jpg ✓", "beach.png", "Add from folder"), activity.list())
+        assertEquals(listOf("No picture", "beach.png", "sunset.jpg ✓", "Add from folder"), activity.list())
         assertEquals("Light", activity.value("Dim"))
         assertEquals("Light", activity.value("Blur"))
         assertEquals(Background(sunset.id, dim = 20, blur = com.luncher.domain.pictures.Blur.LIGHT), activity.findViewById<AppearancePreviewView>(R.id.settings_background_preview).appearance.background)
@@ -553,7 +553,7 @@ class BackgroundActivityTest {
     }
 
     @Test
-    fun `Rename asks for the new name, the cursor after the old one, and the row takes it, keeping its place and thumbnail`() {
+    fun `Rename asks for the new name, the cursor after the old one, and the row takes it, moving to its place by name with the focus and its thumbnail`() {
         graph(beach, sunset)
         graph.thumbnails.cache[beach.id to PictureStyle()] = sample("kept", 192, 108)
         val activity = start().get()
@@ -564,13 +564,13 @@ class BackgroundActivityTest {
         assertEquals("Rename picture", dialog()!!.first)
         assertEquals("beach.png", field().text.toString())
         assertEquals(9 to 9, field().selectionStart to field().selectionEnd)
-        rename("  Sea  ")
+        rename("  Waves  ")
 
         assertNull(dialog())
-        assertEquals(listOf(beach.copy(name = "Sea"), sunset), graph.library.pictures)
-        assertEquals(listOf("No picture ✓", "sunset.jpg", "Sea", "Add from folder"), activity.list())
-        assertEquals("Sea", activity.focused())
-        assertSame(thumbnail, activity.row("Sea").findViewById<ImageView>(R.id.settings_background_thumbnail).drawable)
+        assertEquals(listOf(beach.copy(name = "Waves"), sunset), graph.library.pictures)
+        assertEquals(listOf("No picture ✓", "sunset.jpg", "Waves", "Add from folder"), activity.list())
+        assertEquals("Waves", activity.focused())
+        assertSame(thumbnail, activity.row("Waves").findViewById<ImageView>(R.id.settings_background_thumbnail).drawable)
         drawInTheBackground()
         assertTrue("nothing drawn again", graph.thumbnails.rendered.none { it.first == beach.id })
     }
@@ -603,7 +603,7 @@ class BackgroundActivityTest {
         assertEquals(listOf(beach, sunset), graph.library.pictures)
         answer("Cancel")
         assertNull(dialog())
-        assertEquals(listOf("No picture ✓", "sunset.jpg", "beach.png", "Add from folder"), activity.list())
+        assertEquals(listOf("No picture ✓", "beach.png", "sunset.jpg", "Add from folder"), activity.list())
     }
 
     @Test
@@ -759,8 +759,8 @@ class BackgroundActivityTest {
         )
         idle()
 
-        assertEquals(listOf("No picture", "logo.png", "holiday.jpg", "sunset.jpg ✓", "Add from folder"), activity.list())
-        assertEquals("logo.png", activity.focused())
+        assertEquals(listOf("No picture", "holiday.jpg", "logo.png", "sunset.jpg ✓", "Add from folder"), activity.list())
+        assertEquals("holiday.jpg", activity.focused())
     }
 
     @Test
@@ -783,7 +783,7 @@ class BackgroundActivityTest {
         controller.restart().start().resume()
         idle()
 
-        assertEquals("added-5.jpg", activity.focused())
+        assertEquals("added-1.jpg", activity.focused())
     }
 
     @Test
@@ -814,7 +814,7 @@ class BackgroundActivityTest {
 
         val activity = start(Intent().putExtra(BackgroundActivity.EXTRA_PICTURE, sunset.id.value)).get()
 
-        assertEquals(listOf("No picture", "sunset.jpg ✓", "beach.png", "Add from folder"), activity.list())
+        assertEquals(listOf("No picture", "beach.png", "sunset.jpg ✓", "Add from folder"), activity.list())
         assertEquals("the stored options kept", "Light", activity.value("Dim"))
         assertEquals(Background(beach.id, dim = 20), stored)
     }
@@ -858,7 +858,7 @@ class BackgroundActivityTest {
         controller.configurationChange()
         idle()
 
-        assertEquals(listOf("No picture", "sunset.jpg ✓", "beach.png", "Add from folder"), controller.get().list())
+        assertEquals(listOf("No picture", "beach.png", "sunset.jpg ✓", "Add from folder"), controller.get().list())
         assertEquals("Light", controller.get().value("Dim"))
         assertEquals(Background(beach.id), stored)
     }

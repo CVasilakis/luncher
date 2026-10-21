@@ -212,9 +212,9 @@ options' rows are views; the preview is one view. Nothing of the home screen run
 The background editor (`BackgroundActivity`) is where the wallpaper is chosen and saved, opened
 from the appearance editor's Background entry, full-screen like it, or from the window after a
 share, with that picture chosen ([below](#adding-a-picture)). At the end, Luncher's picture
-library as a list: No picture, the pictures, the newest first, each with its thumbnail and name,
-then Add from folder ([below](#adding-a-picture)); a hint above them says a long press of OK
-renames or deletes a picture, as arrange mode's says what its keys do. While the library is empty, how to add
+library as a list: No picture, the pictures by name, as the device's language sorts words, each
+with its thumbnail and name, then Add from folder ([below](#adding-a-picture)); a hint above them
+says a long press of OK renames or deletes a picture, as arrange mode's says what its keys do. While the library is empty, how to add
 a picture follows: a share from another app, or the drop folder
 ([`platform/README.md`](../../platform/README.md#the-drop-folders)), with its path. At the start, a
 preview of the home screen with the chosen background, the background's options (Fit, Position,
@@ -273,8 +273,8 @@ name as a picture's is kept (`pictureName`: no control characters, trimmed, cut 
 color, the dialog staying open (`renaming`), as two pictures of one name would be told apart by
 nothing. A name is the library's index only: the picture's file, working copy and thumbnail, the
 stored wallpaper and the background setting go by its id, from its content, so nothing is copied,
-decoded or drawn again, and the row keeps its place (the list goes by when a picture was added)
-and its thumbnail. The appearance editor shows the new name beside Background when it comes back.
+decoded or drawn again; the row keeps its thumbnail, and moves to its new place by name, the
+focus with it. The appearance editor shows the new name beside Background when it comes back.
 
 **Delete** asks first, Cancel focused, so a repeated OK deletes nothing, saying what deleting it
 does, in one text for any picture and another for the background's: the picture goes from
@@ -289,7 +289,7 @@ it's dimmed, and the focus passes it by.
 
 | Part | Job |
 |---|---|
-| `Picture`, `PictureLibrary` (`:domain`) | a picture of the library; the library in the list's order, the newest first, and what each one is used for |
+| `Picture`, `PictureLibrary` (`:domain`) | a picture of the library; the library in the list's order, by name, and what each one is used for |
 | `Pictures`, `PictureImport` (`:domain`) / `FilesPictures` (`:platform`) | the library, which the screen follows while it shows, renaming and deleting, and adding to it |
 | `renaming` (`:domain`) | the name a picture renamed keeps, or why it can't: none typed, or another picture's |
 | `PreparedPictures`, `PictureImages` (`:domain`) / `WorkingCopyImages` (`:platform`) | each picture's working copy, made once; the preview's wallpaper drawn from it at each value tried, but the saved background's, the home screen's own ([above](#appearance)) |
@@ -423,9 +423,10 @@ to 9 shares files, gets the message that says to use a drop folder instead, with
 | `pictureUseMenu` (`:domain`) | the uses a picture received alone offers |
 
 **From a drop folder** (`AddFromFolderActivity`): the pictures a file manager or a computer put in
-`Android/media/<applicationId>`, on the TV or a USB drive, listed the TV's first, then the drives',
-each by name (`inListOrder`), with a preview of the selected one beside them, of the TV's shape
-as the wallpaper fills it, drawn in the background, a spinning wheel in its place meanwhile;
+`Android/media/<applicationId>`, on the TV or a USB drive, listed together by name, as the
+device's language sorts words (`inListOrder`), each row saying where it is ("Local" or "USB
+drive"), with a preview of the selected one beside them, of the TV's shape as the wallpaper
+fills it, drawn in the background, a spinning wheel in its place meanwhile;
 moving on stops the one being drawn at once
 ([`ARCHITECTURE.md`](../../docs/ARCHITECTURE.md#background-work-and-changes-while-shown), point 4).
 Once it's drawn, the others' are drawn ahead, one at a time, the nearest first (after it, then

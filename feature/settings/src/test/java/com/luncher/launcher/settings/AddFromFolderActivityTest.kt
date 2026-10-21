@@ -75,17 +75,17 @@ class AddFromFolderActivityTest {
     }
 
     @Test
-    fun `lists the TV's pictures first, then the drives', each by name, with their size`() {
+    fun `lists the TV's pictures and the drives' together, by name, with their size`() {
         graph(logo, holiday, wallpaper, phone)
 
         val activity = start()
 
         assertEquals(
             listOf(
-                "This TV · IMG_0001.HEIC | HEIF (HEIC) not supported on this TV",
-                "This TV · wallpaper-4k.jpg | 4000 × 3000 · 2.4 MB",
                 "USB drive · holiday.jpg | 4000 × 3000 · 2.4 MB",
+                "Local · IMG_0001.HEIC | HEIF (HEIC) not supported on this TV",
                 "USB drive · logo.png | 4000 × 3000 · 2.4 MB",
+                "Local · wallpaper-4k.jpg | 4000 × 3000 · 2.4 MB",
             ),
             activity.rows(),
         )
@@ -120,7 +120,7 @@ class AddFromFolderActivityTest {
         graph.jobs.runAll()
         shadowOf(Looper.getMainLooper()).idle()
 
-        assertEquals(listOf("logo.png"), graph.folderPictures.previewed.map { it.name })
+        assertEquals(listOf("wallpaper-4k.jpg"), graph.folderPictures.previewed.map { it.name })
         assertNotNull(activity.findViewById<ImageView>(R.id.settings_pictures_folder_preview).drawable)
     }
 
@@ -136,7 +136,7 @@ class AddFromFolderActivityTest {
         graph(wallpaper, holiday, library = library)
         val activity = start()
 
-        activity.list().performItemClick(null, 1, 1)
+        activity.list().performItemClick(null, 0, 0)
         shadowOf(Looper.getMainLooper()).idle()
 
         assertEquals(listOf(holiday.source), library.added)
@@ -338,7 +338,7 @@ class AddFromFolderActivityTest {
         library.finishAdding()
         shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(WorkingDialog.SHORTEST))
 
-        assertEquals("the list's order, not the marked ones", listOf(wallpaper.source, holiday.source, logo.source), library.added)
+        assertEquals("the list's order, not the marked ones", listOf(holiday.source, logo.source, wallpaper.source), library.added)
         val (title, text, entries) = message()
         assertEquals("2 pictures added", title)
         assertEquals("1 already in Luncher's pictures\n1 not a picture, or damaged\n1 in a format this TV can't show", text)
@@ -350,7 +350,7 @@ class AddFromFolderActivityTest {
         assertTrue(activity.isFinishing)
         assertEquals(Activity.RESULT_OK, shadowOf(activity).resultCode)
         assertEquals(
-            listOf("id-wallpaper-4k.jpg", "id-holiday.jpg"),
+            listOf("id-holiday.jpg", "id-wallpaper-4k.jpg"),
             shadowOf(activity).resultIntent.getStringArrayExtra(AddFromFolderActivity.EXTRA_ADDED_ALL)!!.toList(),
         )
     }
@@ -420,8 +420,8 @@ class AddFromFolderActivityTest {
         val activity = start()
         activity.addAll().performClick()
         idle()
-        library.finishAdding()   // wallpaper-4k.jpg: not a picture
         library.finishAdding()   // holiday.jpg: added
+        library.finishAdding()   // logo.png: not a picture
 
         checkNotNull(working()).findViewById<TextView>(UiR.id.working_cancel).performClick()
         idle()
@@ -429,7 +429,7 @@ class AddFromFolderActivityTest {
         val (title, text) = message()
         assertEquals("1 picture added", title)
         assertEquals("1 not a picture, or damaged\n1 not added: cancelled", text)
-        assertEquals(listOf(logo.source), library.cancelled)
+        assertEquals(listOf(wallpaper.source), library.cancelled)
     }
 
     @Test
@@ -473,7 +473,7 @@ class AddFromFolderActivityTest {
         FakePictures.picture("holiday.jpg", bytes = 2_400_000),
         FakePictures.picture("logo.png", bytes = 99_000),
     )
-    private val huge = folderPicture("panorama.jpg", bytes = 184_000_000, width = 21621, height = 7004)
+    private val huge = folderPicture("aerial.jpg", bytes = 184_000_000, width = 21621, height = 7004)
 
     @Test
     fun `marks the pictures it can tell can't be added, too large or named like one of the library`() {
@@ -483,10 +483,10 @@ class AddFromFolderActivityTest {
 
         assertEquals(
             listOf(
-                "This TV · panorama.jpg | 21621 × 7004 · 184 MB · Too large (over 50 MB)",
-                "This TV · wallpaper-4k.jpg | 4000 × 3000 · 2.4 MB",
+                "Local · aerial.jpg | 21621 × 7004 · 184 MB · Too large (over 50 MB)",
                 "USB drive · holiday.jpg | 4000 × 3000 · 2.4 MB · Already in Luncher's pictures",
                 "USB drive · logo.png | 4000 × 3000 · 2.4 MB · Name already used in Luncher's pictures",
+                "Local · wallpaper-4k.jpg | 4000 × 3000 · 2.4 MB",
             ),
             activity.rows(),
         )
@@ -496,7 +496,7 @@ class AddFromFolderActivityTest {
     fun `a picture over the pixels alone is said to be, its file small`() {
         graph(folderPicture("wide.jpg", bytes = 458_000, width = 9000, height = 8000))
 
-        assertEquals(listOf("This TV · wide.jpg | 9000 × 8000 · 458 kB · Too large (over 64 megapixels)"), start().rows())
+        assertEquals(listOf("Local · wide.jpg | 9000 × 8000 · 458 kB · Too large (over 64 megapixels)"), start().rows())
     }
 
     @Test
@@ -514,8 +514,8 @@ class AddFromFolderActivityTest {
                 .map { text.subSequence(spanned.getSpanStart(it), spanned.getSpanEnd(it)).toString() }
         }
 
-        assertEquals(listOf("HEIF (HEIC) not supported on this TV"), colored(0))
-        assertEquals(listOf("Too large (over 50 MB)"), colored(1))
+        assertEquals(listOf("Too large (over 50 MB)"), colored(0))
+        assertEquals(listOf("HEIF (HEIC) not supported on this TV"), colored(1))
         assertEquals(emptyList<String>(), colored(2))
     }
 
@@ -539,7 +539,7 @@ class AddFromFolderActivityTest {
         }
         assertEquals(emptyList<Any>(), known.added)
         graph.jobs.runAll()
-        assertEquals(emptyList<Any>(), graph.folderPictures.previewed)   // the selected one, the panorama, has none
+        assertEquals(emptyList<Any>(), graph.folderPictures.previewed)   // the selected one, aerial.jpg, has none
     }
 
     @Test

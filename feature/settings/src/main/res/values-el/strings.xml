@@ -98,7 +98,7 @@
     <string name="settings_pictures_no_space">Δεν υπάρχει αρκετός ελεύθερος χώρος στην τηλεόραση. Ελευθερώστε χώρο και μετά δοκιμάστε ξανά.</string>
     <string name="settings_pictures_name_taken">Υπάρχει ήδη άλλη εικόνα με όνομα <xliff:g id="name" example="holiday.jpg">%1$s</xliff:g> στις εικόνες του Luncher. Μετονομάστε ή διαγράψτε την στο Luncher, ή μετονομάστε αυτό το αρχείο, και μετά προσθέστε το ξανά.</string>
     <string name="settings_pictures_folder_where">Εικόνες στον φάκελο <xliff:g id="folder" example="Android/media/com.luncher.launcher">%1$s</xliff:g>, στην τηλεόραση ή σε ένα USB</string>
-    <string name="settings_pictures_folder_this_tv">Τηλεόραση</string>
+    <string name="settings_pictures_folder_local">Τοπικά</string>
     <string name="settings_pictures_folder_usb">USB</string>
     <string name="settings_pictures_folder_row"><xliff:g id="where" example="USB">%1$s</xliff:g> · <xliff:g id="name" example="holiday.jpg">%2$s</xliff:g></string>
     <string name="settings_pictures_folder_unsupported">Το <xliff:g id="format" example="HEIF (HEIC)">%1$s</xliff:g> δεν υποστηρίζεται σε αυτή την τηλεόραση</string>

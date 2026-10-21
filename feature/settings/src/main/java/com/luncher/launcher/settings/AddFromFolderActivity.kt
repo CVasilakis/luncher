@@ -386,7 +386,7 @@ class AddFromFolderActivity : Activity() {
         override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
             val view = convertView ?: layoutInflater.inflate(R.layout.settings_pictures_folder_row, parent, false)
             val picture = pictures[position]
-            val where = getString(if (picture.removable) R.string.settings_pictures_folder_usb else R.string.settings_pictures_folder_this_tv)
+            val where = getString(if (picture.removable) R.string.settings_pictures_folder_usb else R.string.settings_pictures_folder_local)
             view.findViewById<TextView>(R.id.settings_pictures_folder_name).text = getString(R.string.settings_pictures_folder_row, where, picture.name)
             val why = refusal(refused[picture.source])
             view.findViewById<TextView>(R.id.settings_pictures_folder_details).text = when {

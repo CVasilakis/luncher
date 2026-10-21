@@ -44,8 +44,11 @@ data class FolderPicture<Source>(
     val source: Source,
 )
 
-/** [pictures] as the Add from folder list shows them: the TV's own first, then the drives', each by name as [locale]'s language sorts words. */
+/**
+ * [pictures] as the Add from folder list shows them: by name as [locale]'s language sorts words,
+ * the TV's and the drives' together; of one name, the TV's first.
+ */
 fun <Source> inListOrder(pictures: List<FolderPicture<Source>>, locale: Locale): List<FolderPicture<Source>> {
     val collator = Collator.getInstance(locale)
-    return pictures.sortedWith(compareBy<FolderPicture<Source>> { it.removable }.thenComparator { a, b -> collator.compare(a.name, b.name) })
+    return pictures.sortedWith(Comparator<FolderPicture<Source>> { a, b -> collator.compare(a.name, b.name) }.thenBy { it.removable })
 }

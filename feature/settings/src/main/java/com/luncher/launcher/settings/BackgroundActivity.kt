@@ -35,10 +35,11 @@ import com.luncher.launcher.ui.WorkingDialog
 import com.luncher.launcher.ui.color
 import com.luncher.launcher.ui.screenSize
 import com.luncher.launcher.ui.R as UiR
+import java.util.Locale
 
 /**
  * The background editor, full-screen, opened from the appearance editor's Background entry. At the
- * end, the pictures to choose from: No picture, the library's pictures, the newest first, and Add
+ * end, the pictures to choose from: No picture, the library's pictures by name, and Add
  * from folder, a hint above them; at the start, a preview of the home screen with the chosen
  * background, as large as the room allows (no title, for it), the background's options, and Save
  * with Delete all beside it. Mirrored in a right-to-left language, like the other settings
@@ -100,7 +101,7 @@ class BackgroundActivity : Activity() {
     private lateinit var save: View
     private lateinit var deleteAll: View
     private val options = mutableListOf<OptionRow>()
-    private var library = PictureLibrary(emptyList())
+    private var library = PictureLibrary(emptyList(), Locale.getDefault())
 
     /** Each picture's row, kept while it's in the library, so its thumbnail is read or drawn once. */
     private val rows = LinkedHashMap<PictureId, View>()
@@ -290,7 +291,7 @@ class BackgroundActivity : Activity() {
         val focusedPicture = rows.entries.firstOrNull { it.value == focused }?.key
         val focusedIndex = focusedPicture?.let(library::indexOf) ?: -1
         val listed = if (list.childCount > 0) library.pictures.map { it.id } else null
-        library = PictureLibrary(pictures.read(), pictureUses(settings.read()))
+        library = PictureLibrary(pictures.read(), Locale.getDefault(), pictureUses(settings.read()))
         val ids = library.pictures.mapTo(HashSet()) { it.id }
         rows.keys.retainAll(ids)
         drawing.keys.filter { it !in ids }.forEach { drawing.remove(it)?.stop() }

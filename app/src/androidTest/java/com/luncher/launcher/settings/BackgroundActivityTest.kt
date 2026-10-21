@@ -174,9 +174,9 @@ class BackgroundActivityTest {
         launchWith(picture("old.jpg", added = 1), picture("beach.png", added = 2), picture("sunset.jpg", added = 3)).use {
             waitUntil(row(R.string.settings_pictures_no_picture), hasFocus())
             press(KeyEvent.KEYCODE_DPAD_DOWN)
-            waitUntil(row("sunset.jpg"), hasFocus())
-            press(KeyEvent.KEYCODE_DPAD_DOWN)
             waitUntil(row("beach.png"), hasFocus())
+            press(KeyEvent.KEYCODE_DPAD_DOWN)
+            waitUntil(row("old.jpg"), hasFocus())
             waitForFocus(BackgroundActivity::class.java)
             longPressOk()
 
@@ -189,9 +189,9 @@ class BackgroundActivityTest {
             waitUntil(withText(R.string.settings_pictures_delete), hasFocus(), inDialog = true)
             pressInDialog(KeyEvent.KEYCODE_DPAD_CENTER)
 
-            waitUntil(row("old.jpg"), hasFocus())
-            onView(row("beach.png")).check(doesNotExist())
-            assertEquals(listOf("old.jpg", "sunset.jpg"), fake.pictures.map { it.name }.sorted())
+            waitUntil(row("sunset.jpg"), hasFocus())
+            onView(row("old.jpg")).check(doesNotExist())
+            assertEquals(listOf("beach.png", "sunset.jpg"), fake.pictures.map { it.name }.sorted())
         }
     }
 
@@ -200,7 +200,7 @@ class BackgroundActivityTest {
         launchWith(picture("beach.png", added = 1), picture("sunset.jpg", added = 2)).use {
             waitUntil(row(R.string.settings_pictures_no_picture), hasFocus())
             press(KeyEvent.KEYCODE_DPAD_DOWN)
-            waitUntil(row("sunset.jpg"), hasFocus())
+            waitUntil(row("beach.png"), hasFocus())
             waitForFocus(BackgroundActivity::class.java)
             longPressOk()
 
@@ -210,16 +210,17 @@ class BackgroundActivityTest {
             // Typed without the keyboard, which then goes, so the arrows reach the dialog. The
             // cursor put at the end, as after typing: on API 22 and 24 setting the text leaves it
             // before the end, and Down there only moves it to the end.
-            onView(withId(R.id.settings_pictures_dialog_field)).inRoot(isDialog()).perform(replaceText("beach.png"), closeSoftKeyboard())
+            onView(withId(R.id.settings_pictures_dialog_field)).inRoot(isDialog()).perform(replaceText("sunset.jpg"), closeSoftKeyboard())
             pressInDialog(KeyEvent.KEYCODE_MOVE_END)
             pressInDialog(KeyEvent.KEYCODE_DPAD_DOWN)
             waitUntil(withText(R.string.settings_pictures_rename), hasFocus(), inDialog = true)
             pressInDialog(KeyEvent.KEYCODE_DPAD_CENTER)
             waitUntil(withId(R.id.settings_pictures_dialog_text), withText(R.string.settings_pictures_folder_name_taken), inDialog = true)
 
-            onView(withId(R.id.settings_pictures_dialog_field)).inRoot(isDialog()).perform(replaceText("Sunset"), pressImeActionButton())
-            waitUntil(row("Sunset"), hasFocus())
-            assertEquals(listOf("Sunset", "beach.png"), fake.pictures.map { it.name }.sorted())
+            // Its new name moves it after sunset.jpg, the focus with it.
+            onView(withId(R.id.settings_pictures_dialog_field)).inRoot(isDialog()).perform(replaceText("waves.png"), pressImeActionButton())
+            waitUntil(row("waves.png"), hasFocus())
+            assertEquals(listOf("sunset.jpg", "waves.png"), fake.pictures.map { it.name }.sorted())
         }
     }
 
@@ -306,7 +307,7 @@ class BackgroundActivityTest {
     }
 
     /**
-     * From the chosen picture, the newest of two, down to Add from folder, and OK on it: its list
+     * From the chosen picture, the last of two by name, down to Add from folder, and OK on it: its list
      * shows, with the drop folder's picture, and the editor is stopped under it. Android stops it
      * only once Add from folder is idle, up to 10 s later; until then Back finds the editor merely
      * paused, which it comes back from without reading the library again.
@@ -315,7 +316,6 @@ class BackgroundActivityTest {
         dropFolder.mkdirs()
         InstrumentationAssets.copy("pictures/baseline.jpg", File(dropFolder, "holiday.jpg"))
         waitUntil(row("sunset.jpg"), hasFocus())
-        press(KeyEvent.KEYCODE_DPAD_DOWN)
         press(KeyEvent.KEYCODE_DPAD_DOWN)
         waitUntil(row(R.string.settings_pictures_add_from_folder), hasFocus())
         press(KeyEvent.KEYCODE_DPAD_CENTER)
@@ -360,7 +360,7 @@ class BackgroundActivityTest {
     }
 
     @Test
-    fun addAll_addsEveryPictureOfTheDropFolder_thenFocusesTheNewest() {
+    fun addAll_addsEveryPictureOfTheDropFolder_thenFocusesTheFirstOfThem() {
         useTheTestsFolders()
         dropFolder.mkdirs()
         InstrumentationAssets.copy("pictures/baseline.jpg", File(dropFolder, "holiday.jpg"))
@@ -384,9 +384,9 @@ class BackgroundActivityTest {
             pressInDialog(KeyEvent.KEYCODE_DPAD_CENTER)
             waitUntilDestroyed(AddFromFolderActivity::class.java)
 
-            // The newest at the top of the list, focused; the background still No picture.
-            waitUntil(row("logo.jpg"), hasFocus())
-            onView(row("holiday.jpg")).check(matches(isDisplayed()))
+            // The first of them by name focused; the background still No picture.
+            waitUntil(row("holiday.jpg"), hasFocus())
+            onView(row("logo.jpg")).check(matches(isDisplayed()))
             onView(allOf(withId(R.id.settings_background_chosen), isDisplayed())).check(matches(isDescendantOfA(row(R.string.settings_pictures_no_picture))))
         }
     }
