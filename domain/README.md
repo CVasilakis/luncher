@@ -31,7 +31,7 @@ domain/src/
 │   │   ├── TileStyle.kt         model: how each tile is drawn (its corners)
 │   │   ├── Corners.kt           model and rule: a corner radius or round ends, in pixels for a tile's height
 │   │   ├── TopBarAppearance.kt  model: whether the time and the date show, the clock's side of the top bar, the time's side of the date
-│   │   ├── Background.kt        model and rule: the wallpaper, a picture of the library or none, and how it's drawn; only values its context offers
+│   │   ├── Background.kt        model and rule: the wallpaper, a picture of the library or none, and how it's drawn; only values its context offers; another picture chosen as it is
 │   │   ├── Side.kt              model: left or right, the screen's, in every language
 │   │   ├── AppearanceOption.kt  models and rules: each option the user can change, its values, those a context offers (OptionContext), stepping through them, around
 │   │   ├── AppearanceOptions.kt models and rule: which options the editor lists, in groups; a group edited apart (the background's)

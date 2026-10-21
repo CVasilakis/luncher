@@ -252,9 +252,14 @@ Bottom for a taller one. All four are dimmed without a
 picture; the position also with the picture stretched; the fit and the position also with a
 picture of the screen's shape, or so near it that filling would cut less than 1% (a 16:9
 picture on a 1366 × 768 TV), where every choice looks the same. A stretch stored for such a
-picture is kept, dimmed. The draft never holds a position its picture doesn't offer: opening
-the editor (the stored background, a picture just received, a draft kept), choosing another
-picture, or deleting the draft's makes it Center, so the next picture starts there too. Back, or Home, leaves the background as it was. **Save** stores the draft,
+picture is kept, dimmed. Another picture chosen (`Background.choosing`), as well as one Add
+from folder added, one just received, or No picture, starts as it is: Center, Dim and Blur Off,
+not the options set for the picture before, so the preview shows the picture itself and its
+options are set for it (a bright picture needs more dimming than a dark one). The fit is kept:
+it's about the picture's shape, not its look. The stored picture chosen again brings back its
+stored options, as the home screen shows it, and Save then just closes. The draft never holds a
+position its picture doesn't offer either: opening the editor with the stored background, or a
+draft kept, makes such a position Center. Back, or Home, leaves the background as it was. **Save** stores the draft,
 through the process's `Wallpaper` ([`feature/home/README.md`](../home/README.md#the-wallpaper)):
 - unchanged, the editor just closes: a stored position the draft shows as Center counts as
   unchanged, as it draws the same;
@@ -297,6 +302,7 @@ it's dimmed, and the focus passes it by.
 | `pictureUses`, `withoutPictures` (`:domain`) | what each picture is used for, which deleting it says, and the background without it |
 | `Wallpaper` (`:domain`) | Save (`save`: drawn, kept, then stored), deleting the wallpaper's picture (`forget`), and the saved background's image, which the preview shows while the draft is that background (`readyFor`) |
 | `pictureCut`, `OptionContext`, `Background.offeredIn` (`:domain`) | what filling the screen cuts from the draft's picture, the options' values that offers, and the draft without a position it doesn't |
+| `Background.choosing` (`:domain`) | the draft with another picture chosen: as it is, or as stored if it's the stored one |
 | `OptionRow`, `OptionList` | the options' rows, OK opening a list of the values the draft's picture offers, which the preview follows as the focus moves; Back in it puts the value from before back |
 | `PicturesDialog`, `RenameDialog` | the dialogs over the list: a picture's Rename and Delete, the question before deleting; the field for a new name, and why it's refused |
 | `BackgroundActivity` | the list, the draft, Save and its window, Delete all, the questions; chooses and focuses the picture Add from folder added (`EXTRA_ADDED`), or focuses the first in the list of those Add all added, choosing none (`EXTRA_ADDED_ALL`); starts with a picture just received chosen (`EXTRA_PICTURE`) |

@@ -35,4 +35,16 @@ data class Background(
         val positions = AppearanceOption.BackgroundPosition.values(context)
         return if (position in positions) this else copy(position = AppearanceOption.BackgroundPosition.default)
     }
+
+    /**
+     * This background with [picture] chosen in it: [stored] if that's its picture, so the stored
+     * one comes back as it's saved; else the position, the dim and the blur as by default, so
+     * another picture shows as it is, and its options are set for it. The fit is kept, as in
+     * [offeredIn]. The picture it has already changes nothing.
+     */
+    fun choosing(picture: PictureId?, stored: Background): Background = when (picture) {
+        this.picture -> this
+        stored.picture -> stored
+        else -> Background(picture, fit)
+    }
 }

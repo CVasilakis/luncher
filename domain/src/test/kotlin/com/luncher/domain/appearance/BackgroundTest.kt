@@ -41,4 +41,29 @@ class BackgroundTest {
         assertEquals(left, left.offeredIn(wide))
         assertEquals("the fit kept", left.copy(position = PicturePosition.CENTER), left.offeredIn(sameShape))
     }
+
+    @Test
+    fun `another picture chosen starts in the middle, neither dimmed nor blurred, its fit kept`() {
+        val stored = Background(PictureId("sunset"), Fit.FILL, PicturePosition.TOP, 20, Blur.LIGHT)
+        val draft = stored.copy(fit = Fit.STRETCH, dim = 40)
+
+        assertEquals(Background(PictureId("beach"), Fit.STRETCH), draft.choosing(PictureId("beach"), stored))
+        assertEquals("no picture alike", Background(null, Fit.STRETCH), draft.choosing(null, stored))
+    }
+
+    @Test
+    fun `the stored picture chosen comes back as it's stored`() {
+        val stored = Background(PictureId("sunset"), Fit.FILL, PicturePosition.TOP, 20, Blur.LIGHT)
+        val draft = Background(PictureId("beach"), Fit.STRETCH, dim = 60)
+
+        assertEquals(stored, draft.choosing(PictureId("sunset"), stored))
+        assertEquals("no picture stored", Background(dim = 20), Background(PictureId("beach")).choosing(null, Background(dim = 20)))
+    }
+
+    @Test
+    fun `the picture it has chosen again changes nothing`() {
+        val draft = Background(PictureId("beach"), Fit.FILL, PicturePosition.LEFT, 60, Blur.STRONG)
+
+        assertEquals(draft, draft.choosing(PictureId("beach"), Background(PictureId("sunset"))))
+    }
 }

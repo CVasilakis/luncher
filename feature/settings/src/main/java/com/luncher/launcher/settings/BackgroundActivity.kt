@@ -48,7 +48,8 @@ import java.util.Locale
  * What the user changes is a draft: OK on a picture chooses it, and OK on an option opens its
  * values in a list over it ([OptionList]), the preview showing the value with the focus, OK keeping
  * it, Back the one before; Left and Right only move the focus, from the options to the pictures
- * beside them. The values are those that move the chosen picture on this screen (an
+ * beside them. A picture chosen shows as it is, its position in the middle, neither dimmed nor
+ * blurred, with the fit kept; the stored one shows again as it's stored. The values are those that move the chosen picture on this screen (an
  * [OptionContext]): the position only along the side filling cuts, and neither it nor
  * the fit for a picture of the screen's shape. The draft never holds a position its picture doesn't
  * offer: it's the middle then. Nothing is stored until Save, so Back, or Home, leaves the
@@ -144,7 +145,7 @@ class BackgroundActivity : Activity() {
         // Its picture's shape is known once the library is read, as it starts (showLibrary).
         holdDraft(
             savedInstanceState?.let(::draftIn)
-                ?: intent.getStringExtra(EXTRA_PICTURE)?.let { stored.background.copy(picture = PictureId(it)) }
+                ?: intent.getStringExtra(EXTRA_PICTURE)?.let { stored.background.choosing(PictureId(it), stored.background) }
                 ?: stored.background,
         )
 
@@ -162,7 +163,7 @@ class BackgroundActivity : Activity() {
         deleteAll = findViewById(R.id.settings_background_delete_all)
         deleteAll.setOnClickListener { confirmDeleteAll() }
 
-        noneRow = row(getString(R.string.settings_pictures_no_picture)) { setDraft(draft.copy(picture = null)) }
+        noneRow = row(getString(R.string.settings_pictures_no_picture)) { choose(null) }
         noneRow.findViewById<ImageView>(R.id.settings_background_thumbnail).apply {
             setImageDrawable(ColorDrawable(color(UiR.color.background)))
             clipToOutline = true
@@ -238,6 +239,12 @@ class BackgroundActivity : Activity() {
 
     /** The stored appearance with the draft as its background: what the preview and the options show. */
     private fun appearance(): Appearance = stored.copy(background = draft)
+
+    /**
+     * Chooses [picture] in the draft ([Background.choosing]): the stored picture as it's stored,
+     * another one as it is, its position in the middle, neither dimmed nor blurred.
+     */
+    private fun choose(picture: PictureId?) = setDraft(draft.choosing(picture, stored.background))
 
     private fun setDraft(background: Background) {
         val before = draft
@@ -350,7 +357,7 @@ class BackgroundActivity : Activity() {
 
     /** A new row for [picture]: its thumbnail if it's kept, and its name; a long press of OK offers to rename or delete it. */
     private fun pictureRow(picture: Picture): View {
-        val row = row(nameOf(picture)) { setDraft(draft.copy(picture = picture.id)) }
+        val row = row(nameOf(picture)) { choose(picture.id) }
         val thumbnail = row.findViewById<ImageView>(R.id.settings_background_thumbnail)
         thumbnail.clipToOutline = true
         thumbnails.cached(picture.id, thumbnailWidth, thumbnailHeight, THUMBNAIL)?.let(thumbnail::setImageBitmap)
@@ -452,7 +459,7 @@ class BackgroundActivity : Activity() {
     /** The picture Add from folder added (or found there already): chosen and focused. */
     private fun chooseAdded(picture: PictureId) {
         toFocus = setOf(picture)
-        setDraft(draft.copy(picture = picture))
+        choose(picture)
         if (started) showLibrary()
     }
 

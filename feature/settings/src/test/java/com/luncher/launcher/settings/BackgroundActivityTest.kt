@@ -325,6 +325,55 @@ class BackgroundActivityTest {
     }
 
     @Test
+    fun `another picture chosen shows as it is, in the middle, neither dimmed nor blurred, the fit kept`() {
+        // Tall, as the portrait: Top would move it too.
+        val tower = picture("tower.jpg", added = 6, width = 3000, height = 4000)
+        graph(portrait, tower, background = Background(portrait.id))
+        val activity = start().get()
+        activity.step("Position")
+        activity.step("Dim")
+        activity.step("Blur")
+        activity.step("Fit")
+
+        activity.ok("tower.jpg")
+
+        assertEquals(Background(tower.id, Fit.STRETCH), activity.findViewById<AppearancePreviewView>(R.id.settings_background_preview).appearance.background)
+        assertEquals("Off", activity.value("Dim"))
+        assertEquals("Off", activity.value("Blur"))
+        assertEquals("Center", activity.value("Position"))
+        assertEquals("Stretch", activity.value("Fit"))
+    }
+
+    @Test
+    fun `the stored picture chosen again shows as it's stored, and Save then closes at once`() {
+        val saved = Background(portrait.id, position = PicturePosition.BOTTOM, dim = 40, blur = com.luncher.domain.pictures.Blur.MEDIUM)
+        graph(portrait, beach, background = saved)
+        val activity = start().get()
+
+        activity.ok("beach.png")
+        activity.step("Dim")
+        activity.ok("portrait.jpg")
+
+        assertEquals(saved, activity.findViewById<AppearancePreviewView>(R.id.settings_background_preview).appearance.background)
+        activity.save()
+        assertTrue(activity.isFinishing)
+        graph.jobs.runAll()
+        assertEquals("no wallpaper drawn", 0, graph.storedWallpaper.stored.size)
+    }
+
+    @Test
+    fun `OK on the chosen picture keeps its options`() {
+        graph(beach, sunset, background = Background(beach.id))
+        val activity = start().get()
+        activity.ok("sunset.jpg")
+        activity.step("Dim")
+
+        activity.ok("sunset.jpg")
+
+        assertEquals("Light", activity.value("Dim"))
+    }
+
+    @Test
     fun `stretched, the position is dimmed`() {
         graph(panorama, background = Background(panorama.id, fit = Fit.STRETCH))
 
@@ -387,7 +436,7 @@ class BackgroundActivityTest {
         activity.ok("panorama.jpg")
         assertEquals("Center", activity.value("Position"))
         activity.ok("portrait.jpg")
-        assertEquals("the middle kept, not the top again", "Center", activity.value("Position"))
+        assertEquals("the stored middle, not the draft's top", "Center", activity.value("Position"))
         activity.ok("panorama.jpg")
         activity.save()
         drawInTheBackground()
@@ -495,7 +544,7 @@ class BackgroundActivityTest {
 
         assertTrue(activity.isFinishing)
         assertNull(dialog())
-        assertEquals(Background(dim = 20), stored)
+        assertEquals(Background(), stored)
         drawInTheBackground()
         assertNull(graph.storedWallpaper.kept)
     }
@@ -815,7 +864,7 @@ class BackgroundActivityTest {
         val activity = start(Intent().putExtra(BackgroundActivity.EXTRA_PICTURE, sunset.id.value)).get()
 
         assertEquals(listOf("No picture", "beach.png", "sunset.jpg ✓", "Add from folder"), activity.list())
-        assertEquals("the stored options kept", "Light", activity.value("Dim"))
+        assertEquals("shown as it is", "Off", activity.value("Dim"))
         assertEquals(Background(beach.id, dim = 20), stored)
     }
 
