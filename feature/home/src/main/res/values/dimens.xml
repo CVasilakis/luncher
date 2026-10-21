@@ -6,6 +6,12 @@
     <!-- Between the top bar and the tiles; room for a focused tile's zoom in the first row. -->
     <dimen name="home_tiles_padding_top">24dp</dimen>
     <dimen name="home_tile_frame">3dp</dimen>
+    <!-- How high a lifted tile rises while it has focus: the size and softness of its shadow. -->
+    <dimen name="home_tile_lift">12dp</dimen>
+    <!-- The focused app's name below its tile, and the gap between the two, both before the
+         tile's zoom, which they're drawn with. -->
+    <dimen name="home_tile_name_text">16sp</dimen>
+    <dimen name="home_tile_name_gap">8dp</dimen>
     <dimen name="home_time_text">32sp</dimen>
     <dimen name="home_date_text">18sp</dimen>
     <!-- The message in place of the tiles: no TV apps installed, or all of them hidden. -->

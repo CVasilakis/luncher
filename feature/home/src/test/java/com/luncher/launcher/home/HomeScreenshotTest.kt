@@ -13,10 +13,12 @@ import android.view.View
 import com.github.takahirom.roborazzi.ExperimentalRoborazziApi
 import com.github.takahirom.roborazzi.captureRoboImage
 import com.github.takahirom.roborazzi.captureScreenRoboImage
+import com.luncher.domain.appearance.AppName
 import com.luncher.domain.appearance.Appearance
 import com.luncher.domain.appearance.Background
 import com.luncher.domain.appearance.Corners
 import com.luncher.domain.appearance.FakeAppearanceSettings
+import com.luncher.domain.appearance.FocusStyle
 import com.luncher.domain.appearance.HorizontalAlignment
 import com.luncher.domain.appearance.Side
 import com.luncher.domain.appearance.TileGeometry
@@ -202,6 +204,35 @@ class HomeScreenshotTest {
             TopBarAppearance(clockSide = Side.RIGHT, timeSide = Side.RIGHT),
         )
         start(appearance = appearance).window.decorView.captureRoboImage("src/test/screenshots/home/home_screen_appearance.png")
+    }
+
+    // The tvOS-like look: the focused tile lifted, without a frame, its shadow under it, and its
+    // app's name below it, the rows further apart.
+    @Test
+    fun homeScreenLiftedWithTheAppName() {
+        val appearance = Appearance(TileGeometry(appName = AppName.WHEN_FOCUSED), TileStyle(focus = FocusStyle.LIFT))
+
+        start(appearance = appearance).window.decorView.captureRoboImage("src/test/screenshots/home/home_screen_lifted_name.png")
+    }
+
+    // The same with the long name focused: cut to the tile's width.
+    @Test
+    fun homeScreenWithALongAppName() {
+        val activity = start(appearance = Appearance(TileGeometry(appName = AppName.WHEN_FOCUSED)))
+        val tiles = activity.findViewById<AppTilesView>(R.id.home_apps)
+        tiles.getChildAt(tiles.childCount - 1).requestFocus()
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofSeconds(1))   // the zoom and the name's fade
+
+        activity.window.decorView.captureRoboImage("src/test/screenshots/home/home_screen_long_name.png")
+    }
+
+    // Holding Music, lifted: the held tile's white frame tells it from one only focused.
+    @Test
+    fun arrangingLifted() {
+        val activity = start(hidden = listOf("weather"), appearance = Appearance(TileGeometry(appName = AppName.WHEN_FOCUSED), TileStyle(focus = FocusStyle.LIFT)))
+        activity.arrange("Music")
+
+        activity.window.decorView.captureRoboImage("src/test/screenshots/home/home_arranging_lifted.png")
     }
 
     // The date hidden: the time alone, the tiles where they are with both.

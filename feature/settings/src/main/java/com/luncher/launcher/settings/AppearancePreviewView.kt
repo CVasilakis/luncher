@@ -3,7 +3,9 @@ package com.luncher.launcher.settings
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.Path
 import android.graphics.RectF
 import android.os.Handler
 import android.os.Looper
@@ -11,6 +13,7 @@ import android.util.AttributeSet
 import android.view.View
 import com.luncher.domain.appearance.Appearance
 import com.luncher.domain.appearance.Background
+import com.luncher.domain.appearance.FocusStyle
 import com.luncher.domain.jobs.JobPriority
 import com.luncher.domain.jobs.Jobs
 import com.luncher.domain.jobs.LatestRequest
@@ -34,8 +37,10 @@ import kotlin.math.roundToInt
  * images or text. Not the real home screen: a made-up one, [SCREEN_WIDTH] dp wide and of the
  * TV's shape ([screenSize], as the wallpaper is drawn: 540 dp tall on a 16:9 TV), with [TILES]
  * tiles, chosen so every option's values look different: a full row and a short one, so left and
- * right differ, and the first tile focused, so the focus frame shows. The width stays, so a row
- * holds as many tiles on every shape.
+ * right differ, and the first tile focused, so the focus style shows: framed, or lifted with a
+ * shadow (a few dark, offset round rectangles around it, not a blur), and with the app name shown, a block
+ * below it, in the room the rows leave it. The width stays, so a row holds as many tiles on every
+ * shape.
  *
  * It's laid out by the same rules as the home screen, [TileLayouts] and [topBarLayout], at its own
  * density (its pixels per sample dp), so every dp value scales with it, and it can't disagree with
@@ -48,8 +53,9 @@ import kotlin.math.roundToInt
  * Either is kept, and not drawn again, while the background and the size stay the same.
  *
  * What's on the wallpaper has the home screen's edge ([WallpaperOutline]), so the illustration
- * reads on a white picture as the home screen does: the blocks and the tiles' outlines, at the
- * sample's scale, a pixel at least; not the focus frame, which the home screen's has none of.
+ * reads on a white picture as the home screen does: the blocks (the name's too) and the tiles'
+ * outlines, at the sample's scale, a pixel at least; not the focus frame, which the home screen's
+ * has none of.
  */
 internal class AppearancePreviewView(context: Context, attrs: AttributeSet?) : View(context, attrs) {
 
@@ -146,6 +152,21 @@ internal class AppearancePreviewView(context: Context, attrs: AttributeSet?) : V
     private val tiles = Array(TILES) { RectF() }
     private var tileHeight = 0
     private var tileRadius = 0f
+
+    /** The focused tile's zoom and whether it's lifted, from the style. */
+    private var focusZoom = FRAME_ZOOM
+    private var lifted = false
+
+    /**
+     * A lifted tile's shadow, layer by layer, each wider and lower, less the tile: the tiles' fill
+     * is see-through, and the shadow under it would darken the tile it lifts. Made anew with the
+     * tiles' places and corners, in place.
+     */
+    private val shadows = Array(SHADOW_LAYERS) { Path().apply { fillType = Path.FillType.EVEN_ODD } }
+    private val shadow = RectF()
+
+    /** The app name's block, below the focused tile. */
+    private val name = RectF()
     private val time = RectF()
     private val date = RectF()
     private val gear = RectF()
@@ -155,6 +176,7 @@ internal class AppearancePreviewView(context: Context, attrs: AttributeSet?) : V
     private val tileFillPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = context.color(R.color.settings_preview_tile) }
     private val tilePaint = stroke(context.color(UiR.color.text_secondary))
     private val focusPaint = stroke(context.color(UiR.color.accent))
+    private val shadowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.argb(SHADOW_ALPHA, 0, 0, 0) }
     private val primaryPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = context.color(UiR.color.text_primary) }
     private val secondaryPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = context.color(UiR.color.text_secondary) }
     private val outline = WallpaperOutline(context)
@@ -203,12 +225,16 @@ internal class AppearancePreviewView(context: Context, attrs: AttributeSet?) : V
             canvas.drawRoundRect(tiles[i], tileRadius, tileRadius, tileFillPaint)
             canvas.drawRoundRect(tiles[i], tileRadius, tileRadius, tilePaint)
         }
-        // Zoomed, as the home screen's focused tile.
+        // Zoomed, as the home screen's focused tile, its name with it.
         val focused = tiles[FOCUSED]
         canvas.save()
-        canvas.scale(FOCUSED_ZOOM, FOCUSED_ZOOM, focused.centerX(), focused.centerY())
+        canvas.scale(focusZoom, focusZoom, focused.centerX(), focused.centerY())
+        if (lifted) {
+            for (layer in shadows) canvas.drawPath(layer, shadowPaint)
+        }
         canvas.drawRoundRect(focused, tileRadius, tileRadius, tileFillPaint)
-        canvas.drawRoundRect(focused, tileRadius, tileRadius, focusPaint)
+        if (!lifted) canvas.drawRoundRect(focused, tileRadius, tileRadius, focusPaint)
+        drawBlock(canvas, name, primaryPaint)
         canvas.restore()
     }
 
@@ -221,8 +247,8 @@ internal class AppearancePreviewView(context: Context, attrs: AttributeSet?) : V
 
     private fun placeTiles() {
         if (scale == 0f) return
-        val grid = TileLayouts(appearance.tileGeometry, scale)
-            .tiles(TILES, (TILES_WIDTH * scale).roundToInt(), (tilesHeight * scale).roundToInt())
+        val layouts = TileLayouts(appearance.tileGeometry, scale, nameHeight = (NAME_ROOM * scale).roundToInt())
+        val grid = layouts.tiles(TILES, (TILES_WIDTH * scale).roundToInt(), (tilesHeight * scale).roundToInt())
         tileHeight = grid.tileHeight
         val left = screen.left + PADDING_HORIZONTAL * scale
         val top = screen.top + TILES_TOP * scale
@@ -231,10 +257,31 @@ internal class AppearancePreviewView(context: Context, attrs: AttributeSet?) : V
             val y = top + grid.top(i)
             tiles[i].set(x, y, x + grid.tileWidth, y + grid.tileHeight)
         }
+        val focused = tiles[FOCUSED]
+        if (layouts.nameRoom > 0) {
+            val nameLeft = focused.centerX() - NAME_WIDTH * scale / 2
+            val nameTop = focused.bottom + NAME_GAP * scale
+            name.set(nameLeft, nameTop, nameLeft + NAME_WIDTH * scale, nameTop + NAME_HEIGHT * scale)
+        } else {
+            name.setEmpty()
+        }
     }
 
     private fun styleTiles() {
-        tileRadius = appearance.tileStyle.corners.pixels(tileHeight, scale)
+        val style = appearance.tileStyle
+        tileRadius = style.corners.pixels(tileHeight, scale)
+        lifted = style.focus == FocusStyle.LIFT
+        focusZoom = if (lifted) LIFT_ZOOM else FRAME_ZOOM
+        val focused = tiles[FOCUSED]
+        for (i in shadows.indices) {
+            val spread = (i + 1) * SHADOW_SPREAD * scale
+            shadow.set(focused)
+            shadow.inset(-spread, -spread)
+            shadow.offset(0f, (i + 1) * SHADOW_DROP * scale)
+            shadows[i].reset()
+            shadows[i].addRoundRect(shadow, tileRadius + spread, tileRadius + spread, Path.Direction.CW)
+            shadows[i].addRoundRect(focused, tileRadius, tileRadius, Path.Direction.CW)
+        }
     }
 
     /**
@@ -319,7 +366,23 @@ internal class AppearancePreviewView(context: Context, attrs: AttributeSet?) : V
         const val TILES_WIDTH = SCREEN_WIDTH - 2 * PADDING_HORIZONTAL
         const val TILES = 7
         const val FOCUSED = 0
-        const val FOCUSED_ZOOM = 1.1f
+        /** The focused tile's zoom, framed or lifted (feature/home's AppTileView). */
+        const val FRAME_ZOOM = 1.1f
+        const val LIFT_ZOOM = 1.15f
+        /** A lifted tile's shadow: its layers, how much wider and lower each is than the last, and each one's darkness. */
+        const val SHADOW_LAYERS = 3
+        const val SHADOW_SPREAD = 2
+        const val SHADOW_DROP = 3
+        const val SHADOW_ALPHA = 40
+        /**
+         * The room below each row for the focused tile's name, about the home screen's
+         * (TilePaints.nameHeight: its gap and a 16 sp line, at the largest zoom); the name's block,
+         * as wide as a short name, and the gap above it.
+         */
+        const val NAME_ROOM = 31
+        const val NAME_WIDTH = 64
+        const val NAME_HEIGHT = 12
+        const val NAME_GAP = 8
         /** The tiles' outline, and the focused one's frame. */
         const val OUTLINE = 2
         const val FRAME = 3

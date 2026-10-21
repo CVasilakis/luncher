@@ -8,10 +8,12 @@ import android.view.KeyEvent
 import android.view.View
 import android.view.ViewConfiguration
 import android.widget.TextView
+import com.luncher.domain.appearance.AppName
 import com.luncher.domain.appearance.Appearance
 import com.luncher.domain.appearance.Background
 import com.luncher.domain.appearance.Corners
 import com.luncher.domain.appearance.FakeAppearanceSettings
+import com.luncher.domain.appearance.FocusStyle
 import com.luncher.domain.appearance.HorizontalAlignment
 import com.luncher.domain.appearance.Side
 import com.luncher.domain.appearance.TileGeometry
@@ -154,6 +156,14 @@ class HomeLayoutTest(private val screen: TvScreen) {
         for (a in tiles) for (b in tiles - a) {
             assertApart(screen, "${a.app.label} zoomed and ${b.app.label}", bounds(a, HELD_ZOOM), bounds(b))
         }
+        // Its name below it, as far as it can reach zoomed, clear of the others too.
+        val paints = findViewById<AppTilesView>(R.id.home_apps).paints
+        if (!paints.showsNames) return
+        for (a in tiles) {
+            val zoomed = bounds(a, HELD_ZOOM)
+            val name = RectF(zoomed.left, zoomed.bottom, zoomed.right, zoomed.bottom + paints.nameHeight)
+            for (b in tiles - a) assertApart(screen, "${a.app.label}'s name and ${b.app.label}", name, bounds(b))
+        }
     }
 
     @Test
@@ -180,6 +190,21 @@ class HomeLayoutTest(private val screen: TvScreen) {
         )
 
         `the home screen fits`()
+    }
+
+    // The focused tile lifted, its name below it: the rows further apart.
+    @Test
+    fun `the home screen fits with the focused tile lifted and its name shown`() {
+        appearance.appearance = Appearance(TileGeometry(appName = AppName.WHEN_FOCUSED), TileStyle(focus = FocusStyle.LIFT))
+
+        `the home screen fits`()
+    }
+
+    @Test
+    fun `arrange mode fits with the focused tile's name shown`() {
+        appearance.appearance = Appearance(TileGeometry(appName = AppName.WHEN_FOCUSED), TileStyle(focus = FocusStyle.LIFT))
+
+        `arrange mode fits`()
     }
 
     @Test

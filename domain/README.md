@@ -25,10 +25,12 @@ domain/src/
 │   │   └── Banner.kt            model and rule: which image a tile shows (the app's banner or its icon)
 │   ├── appearance/
 │   │   ├── Appearance.kt        model: how the home screen looks, as far as the user can change it, in parts (docs/ARCHITECTURE.md#appearance)
-│   │   ├── TileGeometry.kt      model: where tiles go and how big they are, in dp; their alignment
+│   │   ├── TileGeometry.kt      model: where tiles go and how big they are, in dp; their alignment; whether the focused tile's name shows below it
+│   │   ├── AppName.kt           model: an app's name below its tile, never or below the focused one
 │   │   ├── VerticalAlignment.kt model: the rows at the top, centered or at the bottom of the height
 │   │   ├── HorizontalAlignment.kt model: a row that isn't full at the left, centered or at the right
-│   │   ├── TileStyle.kt         model: how each tile is drawn (its corners)
+│   │   ├── TileStyle.kt         model: how each tile is drawn (its corners, how the focused one stands out)
+│   │   ├── FocusStyle.kt        model: the focused tile framed, or lifted with a shadow
 │   │   ├── Corners.kt           model and rule: a corner radius or round ends, in pixels for a tile's height
 │   │   ├── TopBarAppearance.kt  model: whether the time and the date show, the clock's side of the top bar, the time's side of the date
 │   │   ├── Background.kt        model and rule: the wallpaper, a picture of the library or none, and how it's drawn; only values its context offers; another picture chosen as it is

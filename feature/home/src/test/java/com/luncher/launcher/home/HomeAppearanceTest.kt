@@ -2,11 +2,15 @@ package com.luncher.launcher.home
 
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.graphics.Outline
+import android.graphics.Rect
 import android.os.Looper
 import android.view.View
+import com.luncher.domain.appearance.AppName
 import com.luncher.domain.appearance.Appearance
 import com.luncher.domain.appearance.Corners
 import com.luncher.domain.appearance.FakeAppearanceSettings
+import com.luncher.domain.appearance.FocusStyle
 import com.luncher.domain.appearance.HorizontalAlignment
 import com.luncher.domain.appearance.Side
 import com.luncher.domain.appearance.TileGeometry
@@ -150,6 +154,122 @@ class HomeAppearanceTest {
     }
 
     @Test
+    fun `lifts the focused tile without a frame as the appearance says, the others staying down`() {
+        appearance.appearance = Appearance(tileStyle = TileStyle(focus = FocusStyle.LIFT))
+
+        val activity = start().get()
+        idle()   // the focus animator's frames
+
+        val tiles = activity.tiles()
+        val lift = activity.resources.getDimension(R.dimen.home_tile_lift)
+        assertEquals(lift, tiles[0].translationZ)
+        assertEquals(AppTileView.LIFT_ZOOM, tiles[0].scaleX)
+        assertEquals(0f, tiles[1].translationZ)
+        assertEquals(1f, tiles[1].scaleX)
+        assertSame(activity.grid().paints.tileOutline, tiles[0].outlineProvider)
+    }
+
+    // The shadow is cast by the outline: the tile's shape, its round ends too.
+    @Test
+    fun `the lifted tile's shadow has the tiles' corners`() {
+        appearance.appearance = Appearance(tileStyle = TileStyle(Corners.Pill, FocusStyle.LIFT))
+
+        val activity = start().get()
+
+        val tile = activity.tiles().first()
+        val outline = Outline()
+        tile.outlineProvider.getOutline(tile, outline)
+        assertEquals(tile.height / 2f, outline.radius)
+        val bounds = Rect()
+        assertTrue(outline.getRect(bounds))
+        assertEquals(Rect(0, 0, tile.width, tile.height), bounds)
+    }
+
+    // A new focus style only swaps the tiles' animators: the tile is framed and down again at once.
+    @Test
+    fun `a new focus style lays nothing out again, and puts the focused tile down`() {
+        appearance.appearance = Appearance(tileStyle = TileStyle(focus = FocusStyle.LIFT))
+        val activity = start().get()
+        idle()
+
+        appearance.write(Appearance())
+
+        val tile = activity.tiles().first()
+        assertFalse(activity.grid().isLayoutRequested)
+        assertEquals(FocusStyle.FRAME, activity.grid().paints.focusStyle)
+        assertEquals(0f, tile.translationZ)
+        assertEquals(AppTileView.FRAME_ZOOM, tile.scaleX)
+    }
+
+    // The held tile keeps its white frame and its zoom, lifted too, so it stands out from one only focused.
+    @Test
+    fun `lifted, a held tile still has its zoom`() {
+        appearance.appearance = Appearance(tileStyle = TileStyle(focus = FocusStyle.LIFT))
+        val activity = start().get()
+        val tile = activity.tiles().first()
+
+        tile.performLongClick()
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofSeconds(1))
+
+        assertTrue(tile.held)
+        assertEquals(AppTileView.HELD_ZOOM, tile.scaleX)
+    }
+
+    @Test
+    fun `with the app names shown, the rows leave room below each for the focused tile's name`() {
+        val withNames = Appearance(topLeftTiles.copy(appName = AppName.WHEN_FOCUSED))
+        appearance.appearance = Appearance(topLeftTiles)
+        val activity = start().get()
+        idle()
+        val tiles = activity.tiles()
+        val rowsApart = tiles[5].top - tiles[0].top
+
+        appearance.write(withNames)
+        idle()
+
+        val paints = activity.grid().paints
+        assertTrue(paints.showsNames)
+        assertTrue("${paints.nameHeight} px for a name", paints.nameHeight > 0)
+        assertEquals(rowsApart + paints.nameHeight, tiles[5].top - tiles[0].top)
+        assertSame(tiles[0], tiles[0].focusSearch(View.FOCUS_LEFT))   // the moves the same
+        assertSame(tiles[5], tiles[0].focusSearch(View.FOCUS_DOWN))
+    }
+
+    // At the bottom, the last row is the room for a name higher, so the name stays on the screen.
+    @Test
+    fun `with the app names shown at the bottom, the last row leaves room for its name below it`() {
+        appearance.appearance = Appearance(TileGeometry(verticalAlignment = VerticalAlignment.BOTTOM, appName = AppName.WHEN_FOCUSED))
+
+        val activity = start().get()
+
+        val grid = activity.grid()
+        assertEquals(grid.height - grid.paddingBottom - grid.paints.nameHeight, activity.tiles().last().bottom)
+    }
+
+    // Rows that don't fit scroll: a tile focused at the bottom scrolls up until its name shows too.
+    @Test
+    fun `focusing a tile at the bottom scrolls its name into sight`() {
+        val application = RuntimeEnvironment.getApplication() as HomeTestApplication
+        application.graph = object : TestHomeGraph(application) {
+            override val installedApps = FakeInstalledApps((1..25).map { app("app%02d".format(it)) })
+            override val appearanceSettings = FakeAppearanceSettings(Appearance(topLeftTiles.copy(appName = AppName.WHEN_FOCUSED)))
+        }
+        val activity = start().get()
+        idle()
+        val grid = activity.grid()
+        val last = activity.tiles().last()
+
+        last.requestFocus()
+        // A layout pass scrolls to the focused tile at once, where the focus move's scroll is
+        // animated by drawn frames, which Robolectric doesn't draw.
+        grid.requestLayout()
+        idle()
+
+        assertTrue(grid.scrollY > 0)
+        assertEquals(grid.height - grid.paddingBottom, last.bottom + grid.paints.nameHeight - grid.scrollY)
+    }
+
+    @Test
     fun `arranges the top bar as the appearance says`() {
         appearance.appearance = Appearance(topBar = TopBarAppearance(clockSide = Side.RIGHT, timeSide = Side.RIGHT))
 
@@ -263,6 +383,13 @@ class HomeAppearanceTest {
         assertEquals(0, appearance.listenerCount)
     }
 
+    // The focused tile lifted, its name below it: neither allocates either.
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun `drawing the tiles allocates nothing lifted, with the focused tile's name`() {
+        drawingTheTilesAllocatesNothing(Appearance(TileGeometry(appName = AppName.WHEN_FOCUSED), TileStyle(Corners.Radius(16), FocusStyle.LIFT)))
+    }
+
     // Rule 5 (docs/ARCHITECTURE.md): drawing allocates nothing, with rounded corners too. Counts
     // what this thread allocates drawing the tiles, the focused one's frame included, after a new
     // style, which itself may allocate (a key that changes a stored value). Native graphics, since
@@ -270,9 +397,15 @@ class HomeAppearanceTest {
     @Test
     @GraphicsMode(GraphicsMode.Mode.NATIVE)
     fun `drawing the tiles allocates nothing after a new tile style`() {
+        drawingTheTilesAllocatesNothing(Appearance(tileStyle = TileStyle(Corners.Radius(16))))
+    }
+
+    /** Draws the tiles many times after [changed] is written, and fails if a draw allocates. */
+    private fun drawingTheTilesAllocatesNothing(changed: Appearance) {
         val activity = start().get()
         idle()
-        appearance.write(Appearance(tileStyle = TileStyle(Corners.Radius(16))))
+        appearance.write(changed)
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofSeconds(1))   // a new layout, the animators
         val grid = activity.grid()
         val canvas = Canvas(Bitmap.createBitmap(grid.width, grid.height, Bitmap.Config.ARGB_8888))
         val threads = ManagementFactory.getThreadMXBean() as com.sun.management.ThreadMXBean

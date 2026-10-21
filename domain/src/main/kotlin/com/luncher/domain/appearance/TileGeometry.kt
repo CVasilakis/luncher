@@ -23,4 +23,10 @@ data class TileGeometry(
      * the last, so the bottom row is always full. Nothing changes with the rows at the top.
      */
     val fullBottomRow: Boolean = true,
+    /**
+     * When an app's name shows below its tile. Shown below the focused one, the rows are further
+     * apart to leave it room, and the last row has the room below it too, so a name never covers
+     * a tile ([com.luncher.domain.layout.TileLayouts.nameRoom]).
+     */
+    val appName: AppName = AppName.OFF,
 )

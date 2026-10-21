@@ -175,8 +175,10 @@ they scroll when they're taller than the screen.
 
 **The preview** draws outlined tiles filled with white at 20 % (`settings_preview_tile`, in place of
 the banners) on the home screen's background (the wallpaper's picture, drawn at the sample screen's
-size in the background's style, or the plain color), the first one framed and zoomed as focused, and
-plain blocks for the time, the date and the settings gear: no names, images or text. It's a made-up
+size in the background's style, or the plain color), the first one zoomed as focused, framed or
+lifted (a few dark, offset rounded rectangles stand for the shadow), and plain blocks for the time,
+the date, the settings gear and, while the app name shows, the focused tile's name: no images or
+text. It's a made-up
 sample, not the user's apps: a screen 960 dp wide, of the TV's shape (`screenSize`, which the
 wallpaper is drawn at: 540 dp tall on a 16:9 TV), so a picture is cut as on the home screen, with
 seven tiles, a full row and a short one, so that every option's values look different. The width

@@ -12,6 +12,7 @@ import android.util.AttributeSet
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Scroller
+import com.luncher.domain.appearance.AppName
 import com.luncher.domain.appearance.TileGeometry
 import com.luncher.domain.appearance.TileStyle
 import com.luncher.domain.layout.Direction
@@ -34,6 +35,10 @@ import com.luncher.launcher.ui.R as UiR
  * While the user arranges apps ([shownCount] set), the tiles after the shown ones are the hidden
  * apps, on a shelf below a label ([ShelfLayout]); with none, an empty slot shows where hiding is.
  *
+ * While names show, the focused tile draws its app's name below itself, in the room the layout
+ * leaves below each row; this view doesn't clip its tiles (clipChildren, in home_activity.xml),
+ * so the name and a zoomed or lifted tile's shadow show past a tile's bounds.
+ *
  * D-pad focus goes where the layout's [TileFocus] says, a rule of :domain: Android's own search
  * would go to the nearest view that way anywhere, past the end of a row to another row or to the
  * top bar, and pick one of two tiles as near by itself. Only Up out of the first row is left to
@@ -45,33 +50,37 @@ internal class AppTilesView(context: Context, attrs: AttributeSet?) : ViewGroup(
     private val pixelsPerDp = resources.displayMetrics.density
     private val scroller = Scroller(context)
 
+    /** What every tile draws with: give it to each new tile. */
+    val paints = TilePaints(context)
+
     /**
      * Where the tiles go and how big they are, from the home screen's appearance. Its default is
-     * the home screen without settings.
+     * the home screen without settings. Whether the focused tile's name shows is part of it: the
+     * rows leave the name room ([TilePaints.nameHeight]), so it changes the layout.
      */
     var tileGeometry: TileGeometry = TileGeometry()
         set(value) {
             if (field == value) return
             field = value
-            layouts = TileLayouts(value, pixelsPerDp)
+            layouts = TileLayouts(value, pixelsPerDp, paints.nameHeight)
+            paints.showsNames = value.appName == AppName.WHEN_FOCUSED
+            for (i in 0 until childCount) getChildAt(i).invalidate()
             requestLayout()
         }
 
-    private var layouts = TileLayouts(tileGeometry, pixelsPerDp)
-
-    /** What every tile draws with: give it to each new tile. */
-    val paints = TilePaints(context)
+    private var layouts = TileLayouts(tileGeometry, pixelsPerDp, paints.nameHeight)
 
     /**
      * How the tiles are drawn, from the home screen's appearance: a new one changes [paints] and
-     * redraws the tiles, with the places and images they have.
+     * restyles the tiles, with the places and images they have.
      */
     var tileStyle: TileStyle = TileStyle()
         set(value) {
             if (field == value) return
             field = value
             paints.corners = value.corners
-            for (i in 0 until childCount) getChildAt(i).invalidate()
+            paints.focusStyle = value.focus
+            for (i in 0 until childCount) (getChildAt(i) as AppTileView).restyle()
         }
 
     /**
@@ -216,8 +225,9 @@ internal class AppTilesView(context: Context, attrs: AttributeSet?) : ViewGroup(
     private fun targetScrollX(child: View, from: Int) =
         scrollToShow(child.left - paddingLeft, child.right + paddingRight, from, width, maxScrollX())
 
+    // The focused tile's name too, below it, while names show.
     private fun targetScrollY(child: View, from: Int) =
-        scrollToShow(child.top - paddingTop, child.bottom + paddingBottom, from, height, maxScrollY())
+        scrollToShow(child.top - paddingTop, child.bottom + layouts.nameRoom + paddingBottom, from, height, maxScrollY())
 
     /** The scroll position nearest to [from] that shows [start] to [end] within [size], if it fits. */
     private fun scrollToShow(start: Int, end: Int, from: Int, size: Int, max: Int): Int {

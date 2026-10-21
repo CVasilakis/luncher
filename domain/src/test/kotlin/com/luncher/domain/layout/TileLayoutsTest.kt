@@ -1,5 +1,6 @@
 package com.luncher.domain.layout
 
+import com.luncher.domain.appearance.AppName
 import com.luncher.domain.appearance.TileGeometry
 import com.luncher.domain.appearance.HorizontalAlignment
 import com.luncher.domain.appearance.VerticalAlignment
@@ -191,6 +192,33 @@ class TileLayoutsTest {
         assertEquals(rightEdge, shelf.left(5) + shelf.tileWidth)   // the empty slot
         assertEquals(rightEdge - 50, shelf.labelLeft(labelWidth = 50))
         assertEquals(layouts.tiles(5, width, height).left(0), at(top, left).shelf(5, 0, width, height, 20).labelLeft(50))
+    }
+
+    @Test
+    fun `leaves room for the focused tile's name only while names show`() {
+        val names = TileLayouts(topLeft.copy(appName = AppName.WHEN_FOCUSED), pixelsPerDp = 1f, nameHeight = 30)
+        val none = TileLayouts(topLeft, pixelsPerDp = 1f, nameHeight = 30)
+
+        assertEquals(30, names.nameRoom)
+        assertEquals(0, none.nameRoom)
+        val tiles = names.tiles(tileCount = 7, width, height)
+        assertEquals(tiles.tileHeight + 30 + names.gap, tiles.top(5))
+        assertEquals(none.tiles(tileCount = 7, width, height).top(5) + 30, tiles.top(5))
+    }
+
+    // The name of a tile in the last shown row stays clear of the shelf's label, and the moves
+    // and the focus are those without names.
+    @Test
+    fun `while names show, arranging leaves them room too, and moves the same`() {
+        val names = TileLayouts(TileGeometry(appName = AppName.WHEN_FOCUSED), pixelsPerDp = 1f, nameHeight = 30)
+
+        val shelf = names.shelf(shownCount = 5, hiddenCount = 2, width, height = 0, labelHeight = 20)
+
+        assertEquals(shelf.top(0) + shelf.tileHeight + 30 + names.gap, shelf.labelTop)
+        val moves = names.moves(tileCount = 7, width)
+        val without = layouts().moves(tileCount = 7, width)
+        for (index in 0 until 7) assertEquals(without.indexToward(index, Direction.DOWN), moves.indexToward(index, Direction.DOWN))
+        assertEquals(layouts().focus(tileCount = 7, width).toward(1, Direction.DOWN), names.focus(tileCount = 7, width).toward(1, Direction.DOWN))
     }
 
     private fun layouts() = TileLayouts(TileGeometry(), pixelsPerDp = 1f)
