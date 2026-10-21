@@ -89,6 +89,19 @@ internal object PictureFiles {
         }
     }
 
+    /**
+     * Whether [file] is whole, as far as its format tells ([isWhole]): read before a picture is
+     * decoded to be added or previewed, as a decoder draws one cut short or damaged without an
+     * error on most versions. Read through the same stream as a decode, so it stops once [stopped]
+     * says so; then, or when the file can't be read, it's whole here, for the decode to judge.
+     */
+    fun whole(file: File, stopped: () -> Boolean = { false }): Boolean =
+        try {
+            StoppableInput(FileInputStream(file), stopped).use(::isWhole)
+        } catch (e: IOException) {
+            true
+        }
+
     /** The format [file] is in, when it's one Luncher names because a TV may not show it ([pictureFormatOf]). */
     fun format(file: File): PictureFormat? = pictureFormatOf(read(file, PICTURE_HEADER_BYTES))
 

@@ -253,9 +253,11 @@ class FilesPictures(
      * size, once it's copied); else [source]'s content copied into a new file of [folder], its
      * hash computed on the way, stopping past [PictureLimits.MAX_BYTES] or once [stop] is set;
      * refused if the [library] has that content already, under any name, before it's decoded;
-     * then checked to be within [PictureLimits.MAX_PIXELS], and decoded whole, once, into its
-     * working copy ([WorkingCopies]): a size alone can decode where the picture can't (AVIF on
-     * API 31), and the screens then show it without decoding it again.
+     * then checked to be within [PictureLimits.MAX_PIXELS], and whole ([PictureFiles.whole]: one cut
+     * short or damaged is [ImportResult.NotAPicture], as a decoder would draw it without an error),
+     * and decoded whole, once, into its working copy ([WorkingCopies]): a size alone can decode
+     * where the picture can't (AVIF on API 31), and the screens then show it without decoding it
+     * again.
      */
     private fun copy(source: Uri, stop: Stop, library: List<Picture>, copying: () -> Unit): Copied {
         val reader = OutsideReader(resolver, outsideCalls, stop)
@@ -315,6 +317,8 @@ class FilesPictures(
         val unfit = when {
             shape == null -> unsupportedOrNot(file)
             !PictureLimits.allowsSize(shape.width, shape.height) -> ImportResult.TooLarge(SizeLimit.PIXELS)
+            // Stopped, it's whole here, and the decode below stops at once.
+            !PictureFiles.whole(file) { stop.isStopped } -> ImportResult.NotAPicture
             else -> when (workingCopies.make(file, shape, copy) { stop.isStopped }) {
                 WorkingCopies.Made.MADE, WorkingCopies.Made.NOT_WRITTEN -> null
                 WorkingCopies.Made.NOT_DECODED -> if (stop.isStopped) ImportResult.Unreadable else unsupportedOrNot(file)

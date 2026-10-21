@@ -53,7 +53,8 @@ internal fun Context.whyNotAdded(result: ImportResult): String? = when (result) 
 
 /**
  * What Add from folder's row says of a picture that can't be added, as its listing tells
- * ([whyRefused][com.luncher.domain.pictures.whyRefused]); null for one that can, as far as it tells.
+ * ([whyRefused][com.luncher.domain.pictures.whyRefused]), or its preview found it damaged; null
+ * for one that can, as far as it tells.
  */
 internal fun Context.refusal(result: ImportResult?): String? = when (result) {
     is ImportResult.UnsupportedFormat -> getString(R.string.settings_pictures_folder_unsupported, formatName(result.format))
@@ -63,7 +64,8 @@ internal fun Context.refusal(result: ImportResult?): String? = when (result) {
     }
     is ImportResult.SameFile -> getString(R.string.settings_pictures_already)
     is ImportResult.NameTaken -> getString(R.string.settings_pictures_folder_name_taken)
-    null, is ImportResult.Added, is ImportResult.AlreadyThere, ImportResult.NotAPicture, ImportResult.Unreadable, ImportResult.NoSpace -> null
+    ImportResult.NotAPicture -> getString(R.string.settings_pictures_folder_damaged)
+    null, is ImportResult.Added, is ImportResult.AlreadyThere, ImportResult.Unreadable, ImportResult.NoSpace -> null
 }
 
 /**

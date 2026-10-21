@@ -247,7 +247,8 @@ Closed in front, they'd leave Android to bring forward the task next in line, wh
 app's (the device's settings, after `HomeKeyTest`), or, on API 22, to ask which home app; the next
 test would then wait for a home screen that can't come. That's also why it's in the system tier.
 
-`PictureFormatsTest` checks which sample decodes on the device's Android version. There's no HEIF
+`PictureFormatsTest` checks which sample decodes on the device's Android version, and that the
+damaged ones are refused on every version, as each draws them otherwise. There's no HEIF
 sample: nothing on the development machine can write one, and a phone's photo carries its owner's
 data. HEIF is checked by hand: on API 27 and older, adding one must give the message that this TV
 can't show it; from API 28 on, it must be added and show upright.

@@ -25,7 +25,8 @@ import java.util.concurrent.TimeUnit
 /**
  * Which picture formats this Android version decodes, as the library judges them when another app
  * shares one: the sample files of assets/pictures/ (96 x 54 px, red at the left, blue at the
- * right), added through the real library into a folder of the test's own, which it deletes after.
+ * right; `cut`, `stray-marker` and `flipped-bit` are samples damaged as their names say), added
+ * through the real library into a folder of the test's own, which it deletes after.
  * HEIF isn't among them: no sample can be made here, and it's checked by hand (docs).
  */
 @RunWith(AndroidJUnit4::class)
@@ -98,6 +99,14 @@ class PictureFormatsTest {
             assertTrue("$result", result is ImportResult.Added)
         } else {
             assertEquals(ImportResult.UnsupportedFormat(PictureFormat.AVIF), result)
+        }
+    }
+
+    @Test
+    fun aPictureCutShortOrDamaged_isNotAPictureOnEveryVersion() {
+        // Most versions decode each without an error, the rest black, transparent or gray.
+        for (name in listOf("cut.jpg", "stray-marker.jpg", "flipped-bit.png", "cut.webp")) {
+            assertEquals(name, ImportResult.NotAPicture, add(name))
         }
     }
 

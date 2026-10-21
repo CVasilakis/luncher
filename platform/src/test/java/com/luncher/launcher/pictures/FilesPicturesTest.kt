@@ -244,6 +244,16 @@ class FilesPicturesTest {
     }
 
     @Test
+    fun `refuses a picture cut short or damaged as not a picture, which its decoder would draw in part`() {
+        val photo = TestPictureFiles.jpeg(TestPictureFiles.stacked(320, 180, Color.RED, Color.BLUE), orientation = 1)
+        val damaged = red.copyOf().apply { this[size - 20] = (this[size - 20].toInt() xor 0x10).toByte() }   // in the image data
+
+        assertEquals(ImportResult.NotAPicture, add(shared("cut.jpg", photo.copyOf(photo.size * 2 / 3))))
+        assertEquals(ImportResult.NotAPicture, add(dropped("damaged.png", damaged)))
+        assertEquals(emptyList<Picture>(), library.read())
+    }
+
+    @Test
     fun `names a format this TV can't show`() {
         assertEquals(ImportResult.UnsupportedFormat(PictureFormat.HEIF), add(shared("IMG_0001.HEIC", TestPictureFiles.heic())))
     }

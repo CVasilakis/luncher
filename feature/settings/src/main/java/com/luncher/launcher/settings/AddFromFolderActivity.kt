@@ -40,8 +40,9 @@ import java.util.Locale
  * so the user can choose another. One that its listing and the library already tell can't be
  * added ([whyRefused]: a format this TV can't show, too large, a name the library has) is marked
  * in the list, why in the accent color, and OK on it says why at once, with no window. One this
- * TV can't show, or too large, has no preview: a warning mark shows in its place, as for a
- * picture whose preview can't be drawn (a damaged one), so nobody waits for one. The folders are
+ * TV can't show, or too large, has no preview: a warning mark shows in its place, so nobody
+ * waits for one. So does a picture whose preview can't be drawn, cut short or damaged, which is
+ * then marked too ([damaged]), as is one adding refused as not a picture. The folders are
  * read again each time it shows, so a drive plugged in meanwhile counts. Closed while it adds
  * (Home, or a configuration change), the adding stops.
  *
@@ -94,8 +95,15 @@ class AddFromFolderActivity : Activity() {
     private lateinit var noPreview: View
     private var pictures: List<FolderPicture<Uri>> = emptyList()
 
-    /** Why each of [pictures] can't be added, by its source, as far as the listing and the library tell. */
+    /** Why each of [pictures] can't be added, by its source, as far as the listing, the library and [damaged] tell. */
     private var refused: Map<Uri, ImportResult> = emptyMap()
+
+    /**
+     * The pictures found cut short or damaged, their preview not drawn, or adding them refused as
+     * not a picture, while the screen lives: marked as such. By the file as listed, so one changed
+     * since is tried again.
+     */
+    private val damaged = HashSet<FolderPicture<Uri>>()
     private val rows = Rows()
 
     /** Counts the listings: one that answers after [onStop] or a newer one is dropped. */
@@ -156,13 +164,7 @@ class AddFromFolderActivity : Activity() {
     private fun show(found: List<FolderPicture<Uri>>, looking: Boolean) {
         val selected = (list.selectedItem as? FolderPicture<*>)?.source
         pictures = found
-        val known = library.read()
-        refused = found.mapNotNull { picture -> whyRefused(picture, known)?.let { picture.source to it } }.toMap()
-        rows.notifyDataSetChanged()
-        val canAddAll = found.any { it.source !in refused }
-        addAll.alpha = if (canAddAll) 1f else DIMMED
-        addAll.isFocusable = canAddAll
-        addAll.isFocusableInTouchMode = canAddAll
+        mark()
         state.visibility = if (found.isEmpty()) View.VISIBLE else View.GONE
         state.setText(if (looking) R.string.settings_pictures_folder_looking else R.string.settings_pictures_folder_empty)
         side.visibility = if (found.isEmpty()) View.INVISIBLE else View.VISIBLE
@@ -172,11 +174,27 @@ class AddFromFolderActivity : Activity() {
         list.selectedItem?.let { showPreview(it as FolderPicture<*>) }
     }
 
+    /** Marks the pictures that can't be added, why in the list, and dims Add all while none can be. */
+    private fun mark() {
+        val known = library.read()
+        refused = pictures.mapNotNull { picture -> whyRefused(picture, known, picture in damaged)?.let { picture.source to it } }.toMap()
+        rows.notifyDataSetChanged()
+        val canAddAll = pictures.any { it.source !in refused }
+        addAll.alpha = if (canAddAll) 1f else DIMMED
+        addAll.isFocusable = canAddAll
+        addAll.isFocusableInTouchMode = canAddAll
+    }
+
+    /** Marks [picture] as cut short or damaged, unless it is already. */
+    private fun markDamaged(picture: FolderPicture<Uri>) {
+        if (damaged.add(picture)) mark()
+    }
+
     /**
      * Shows [picture]'s preview: at once if it's kept, else drawn in the background, the latest
      * selected one only, the wheel showing meanwhile; then the others' are drawn ahead. None of a
-     * picture this TV can't show, or too large to add, nor of one that can't be drawn: the
-     * warning mark instead.
+     * picture this TV can't show, too large to add, or damaged, nor of one that can't be drawn,
+     * which is then marked damaged: the warning mark instead.
      */
     private fun showPreview(picture: FolderPicture<*>?) {
         preview.setImageDrawable(null)
@@ -209,16 +227,19 @@ class AddFromFolderActivity : Activity() {
         previewing.load({ stopped -> folders.preview(shown, width, height, Framing(), stopped) }) { image ->
             loading.visibility = View.GONE
             preview.setImageBitmap(image)
-            if (image == null) noPreview.visibility = View.VISIBLE
             kept += shown.source
+            if (image == null) {
+                noPreview.visibility = View.VISIBLE
+                markDamaged(shown)
+            }
             drawAhead()
         }
     }
 
-    /** Whether a preview of [picture] is drawn: not of one this TV can't show, or too large to add. */
+    /** Whether a preview of [picture] is drawn: not of one this TV can't show, too large to add, or damaged. */
     private fun previewable(picture: FolderPicture<*>): Boolean {
         val why = refused[picture.source]
-        return why !is ImportResult.UnsupportedFormat && why !is ImportResult.TooLarge
+        return why !is ImportResult.UnsupportedFormat && why !is ImportResult.TooLarge && why != ImportResult.NotAPicture
     }
 
     /**
@@ -234,8 +255,9 @@ class AddFromFolderActivity : Activity() {
             .map { pictures[it] }
             .firstOrNull { it.source !in kept && previewable(it) && it.source != pictures[selected].source }
             ?: return
-        prefetching.load({ stopped -> folders.preview(next, width, height, Framing(), stopped) }) {
+        prefetching.load({ stopped -> folders.preview(next, width, height, Framing(), stopped) }) { image ->
             kept += next.source
+            if (image == null) markDamaged(next)
             drawAhead()
         }
     }
@@ -257,6 +279,7 @@ class AddFromFolderActivity : Activity() {
         }
         adding = pictureImport.add(picture.source) { result ->
             adding = null
+            if (result == ImportResult.NotAPicture) markDamaged(picture)
             working.close { if (!isDestroyed) added(result) }
         }
     }

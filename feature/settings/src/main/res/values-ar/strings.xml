@@ -124,6 +124,7 @@
         <item quantity="many">كبيرة جدًا (أكثر من <xliff:g id="megapixels" example="11">%d</xliff:g> ميغابكسل)</item>
         <item quantity="other">كبيرة جدًا (أكثر من <xliff:g id="megapixels" example="100">%d</xliff:g> ميغابكسل)</item>
     </plurals>
+    <string name="settings_pictures_folder_damaged">تالفة</string>
     <string name="settings_pictures_folder_name_taken">الاسم مستخدم بالفعل في صور Luncher</string>
     <string name="settings_pictures_folder_add_all">إضافة الكل</string>
     <string name="settings_pictures_folder_note">زر OK يضيف نسخة إلى صور Luncher. بعد ذلك، لن تكون هناك حاجة إلى الملف ولا إلى وحدة USB.</string>

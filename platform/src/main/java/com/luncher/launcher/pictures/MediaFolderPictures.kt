@@ -27,6 +27,9 @@ import com.luncher.launcher.ui.R as UiR
  * names ([PictureFiles.format]), marked as one this TV can't show. A picture's [Uri] is a
  * `file://` one, which [FilesPictures] adds from these folders only.
  *
+ * A picture cut short or damaged ([PictureFiles.whole]) has no preview, as adding it would refuse
+ * it: a decoder draws one without an error on most versions.
+ *
  * The previews it draws are kept in [previews], one file per picture (in the [PixelFiles] format,
  * the picture, its size and the preview's size and framing in the header, so a file of another
  * matches nothing), while Add from folder shows: a picture selected again, or drawn ahead, shows
@@ -60,8 +63,10 @@ class MediaFolderPictures(
     }
 
     override fun preview(picture: FolderPicture<Uri>, width: Int, height: Int, framing: Framing, stopped: () -> Boolean): Bitmap? {
-        val path = picture.source.path ?: return null
-        val image = PictureFiles.draw(File(path), width, height, framing, background, stopped) ?: return null
+        val file = File(picture.source.path ?: return null)
+        // Cut short or damaged, it isn't drawn: adding it would refuse it.
+        if (!PictureFiles.whole(file, stopped)) return null
+        val image = PictureFiles.draw(file, width, height, framing, background, stopped) ?: return null
         if (stopped()) return null
         val drawing = Drawing(picture, width, height, framing)
         // Only for writing: the reading buffers stay the main thread's.

@@ -108,6 +108,7 @@
         <item quantity="one">Πολύ μεγάλη (πάνω από <xliff:g id="megapixels" example="1">%d</xliff:g> megapixel)</item>
         <item quantity="other">Πολύ μεγάλη (πάνω από <xliff:g id="megapixels" example="64">%d</xliff:g> megapixel)</item>
     </plurals>
+    <string name="settings_pictures_folder_damaged">Κατεστραμμένη</string>
     <string name="settings_pictures_folder_name_taken">Το όνομα υπάρχει ήδη στις εικόνες του Luncher</string>
     <string name="settings_pictures_folder_add_all">Προσθήκη όλων</string>
     <string name="settings_pictures_folder_note">Το OK προσθέτει ένα αντίγραφο στις εικόνες του Luncher. Μετά από αυτό, το αρχείο και το USB δεν χρειάζονται πια.</string>

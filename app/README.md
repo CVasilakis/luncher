@@ -19,10 +19,10 @@ app/
 │   ├── AndroidManifest.xml           the test package's providers: SamplePictures (the sample pictures),
 │   │                                 StalledPictures (a picture that never comes), GrantedPictures (the
 │   │                                 samples, opened only through a grant); ShareSender (another app's share)
-│   ├── assets/pictures/              sample pictures, 96 × 54 px, one per format, for PictureFormatsTest
+│   ├── assets/pictures/              sample pictures, 96 × 54 px, one per format, and four damaged, for PictureFormatsTest
 │   └── java/com/luncher/launcher/
 │       ├── <feature>/                Espresso: one screen, real key events
-│       ├── pictures/                 which picture formats this Android version decodes (PictureFormatsTest)
+│       ├── pictures/                 which picture formats this Android version decodes, and that damaged ones are refused (PictureFormatsTest)
 │       ├── system/                   UI Automator, across apps: the Home key, the device's settings, a share
 │       │                             opening the home screen (API 24 on, SystemTierFilter)
 │       └── testing/                  shared by the tests: waits for the home screen, the focus and a closed

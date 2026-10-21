@@ -91,6 +91,13 @@ class PictureNamesTest {
     }
 
     @Test
+    fun `a drop folder's picture its preview found damaged is refused as not a picture, whatever its name`() {
+        assertEquals(ImportResult.NotAPicture, whyRefused(inFolder("beach.jpg"), library, damaged = true))
+        assertEquals(ImportResult.NotAPicture, whyRefused(inFolder("holiday.jpg", bytes = 3_000_000), library, damaged = true))
+        assertEquals("what its listing tells comes first", ImportResult.TooLarge(SizeLimit.BYTES), whyRefused(inFolder("big.jpg", bytes = PictureLimits.MAX_BYTES + 1), library, damaged = true))
+    }
+
+    @Test
     fun `a drop folder's name is compared as the library would keep it`() {
         assertEquals(ImportResult.SameFile(holiday), whyRefused(inFolder(" holiday.jpg "), library))
     }

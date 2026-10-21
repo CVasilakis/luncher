@@ -288,6 +288,72 @@ class AddFromFolderActivityTest {
         assertNotNull(activity.findViewById<ImageView>(R.id.settings_pictures_folder_preview).drawable)
     }
 
+    /** The graph of [pictures], whose previews are drawn but of [damaged], as a cut or damaged file's aren't. */
+    private fun graphWithDamaged(damaged: com.luncher.domain.pictures.FolderPicture<android.net.Uri>, vararg pictures: com.luncher.domain.pictures.FolderPicture<android.net.Uri>, library: FakePictures<android.net.Uri> = FakePictures()): TestPicturesGraph {
+        val graph = object : TestPicturesGraph(library) {
+            override val folderPictures = FakeFolderPictures(*pictures, draw = { picture, width, height -> if (picture == damaged) null else sample(picture.name, width, height) })
+        }
+        application.graph = graph
+        return graph
+    }
+
+    @Test
+    fun `a picture whose preview can't be drawn is marked damaged, and OK on it says why at once`() {
+        val damaged = folderPicture("damaged.jpg")
+        val library = FakePictures<android.net.Uri>()
+        val graph = graphWithDamaged(damaged, damaged, wallpaper, library = library)
+        val activity = start()
+        assertEquals("not before it's tried", "Local · damaged.jpg | 4000 × 3000 · 2.4 MB", activity.rows()[0])
+
+        graph.jobs.runAll()
+        idle()
+
+        assertEquals(listOf("Local · damaged.jpg | 4000 × 3000 · 2.4 MB · Damaged", "Local · wallpaper-4k.jpg | 4000 × 3000 · 2.4 MB"), activity.rows())
+        activity.list().performItemClick(null, 0, 0)
+        idle()
+        val (title, text) = message()
+        assertEquals("Picture not added" to "The file isn't a picture, or it's damaged.", title to text)
+        assertEquals(emptyList<Any>(), library.added)
+        assertNull(working())
+    }
+
+    @Test
+    fun `a picture drawn ahead and found damaged is marked, shows the warning mark at once, and Add all passes it by`() {
+        val damaged = folderPicture("zoo.jpg")
+        val library = FakePictures<android.net.Uri>().apply { results[wallpaper.source] = ImportResult.Added(FakePictures.picture("wallpaper-4k.jpg")) }
+        val graph = graphWithDamaged(damaged, wallpaper, damaged, library = library)
+        val activity = start()
+
+        graph.next()   // the selected one's
+        graph.next()   // the other's, ahead
+        assertEquals(listOf("wallpaper-4k.jpg", "zoo.jpg"), graph.folderPictures.previewed.map { it.name })
+        assertEquals("Local · zoo.jpg | 4000 × 3000 · 2.4 MB · Damaged", activity.rows()[1])
+        graph.folderPictures.previewed.clear()
+        activity.list().setSelection(1)
+        idle()
+        assertEquals(View.VISIBLE, activity.findViewById<View>(R.id.settings_pictures_folder_no_preview).visibility)
+        graph.jobs.runAll()
+        assertEquals("not drawn again", emptyList<Any>(), graph.folderPictures.previewed)
+
+        activity.addAll().performClick()
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(WorkingDialog.SHORTEST))
+
+        assertEquals(listOf(wallpaper.source), library.added)
+        assertEquals("1 picture added" to "1 not a picture, or damaged", message().let { it.first to it.second })
+    }
+
+    @Test
+    fun `a picture adding refuses as not a picture is marked damaged`() {
+        graph(holiday, library = FakePictures<android.net.Uri>().apply { results[holiday.source] = ImportResult.NotAPicture })
+        val activity = start()
+
+        activity.list().performItemClick(null, 0, 0)
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(WorkingDialog.SHORTEST))
+
+        assertEquals(listOf("USB drive · holiday.jpg | 4000 × 3000 · 2.4 MB · Damaged"), activity.rows())
+        assertFalse("nothing left to add", activity.addAll().isFocusable)
+    }
+
     @Test
     fun `stops previewing when it's hidden`() {
         val graph = graph(wallpaper)

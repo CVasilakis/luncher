@@ -87,6 +87,14 @@ class MediaFolderPicturesTest {
     }
 
     @Test
+    fun `draws no preview of a picture cut short, which its decoder would draw in part`() {
+        val photo = TestPictureFiles.jpeg(TestPictureFiles.stacked(320, 180, Color.RED, Color.BLUE), orientation = 1)
+        File(dropFolder, "cut.jpg").writeBytes(photo.copyOf(photo.size * 2 / 3))
+
+        assertNull(folders.preview(listed().single(), 32, 18, Framing()) { false })
+    }
+
+    @Test
     fun `stops drawing a preview once told, at its next read, giving nothing`() {
         File(dropFolder, "large.jpg").writeBytes(TestPictureFiles.jpeg(TestPictureFiles.halves(1600, 900, Color.RED, Color.BLUE), orientation = 1))
         val picture = listed().single()

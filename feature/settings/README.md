@@ -455,8 +455,15 @@ nothing: a file in a format this TV can't show ([which](../../platform/README.md
 over 50 MB or over 64 megapixels (`PictureLimits`), which have no preview either, and one named as
 a picture of the library, the same file (the same name and size: "Already in Luncher's pictures")
 or another. The listing goes by names: a file whose picture was renamed in the library isn't
-marked, and OK finds it there by its content, without decoding it. In place of a preview that isn't drawn, or that can't be (a damaged picture, once its
-decode fails), a warning mark shows, so nobody waits for one. Anything else that isn't a picture isn't listed. The folders are read again each time the screen
+marked, and OK finds it there by its content, without decoding it. A picture cut short or
+damaged can't be told from the listing, which reads only a file's start: its preview finds it,
+once it's tried (the selected picture's, or one drawn ahead), as does adding it
+([`platform/README.md`](../../platform/README.md#pictures)). It's then marked the same way,
+"Damaged", for as long as the screen shows (a file changed since is tried again), and OK on it
+says at once that the file isn't a picture or is damaged. Add all passes the marked ones by,
+counted among those not added; one not tried yet is refused as it's added, and counted the same.
+In place of a preview that isn't drawn, or can't be, a warning mark shows, so nobody waits for
+one. Anything else that isn't a picture isn't listed. The folders are read again each time the screen
 shows, so a USB drive plugged in meanwhile counts. On a screen too short for the preview, Add all
 and the note, the preview gets smaller (`PreviewColumn`), down to a quarter of its height; on the
 smallest screens the column then scrolls, to its end while Add all has the focus, so the note

@@ -79,11 +79,13 @@ fun renaming(picture: Picture, given: String, library: Collection<Picture>): Ren
 /**
  * Why a drop folder's [picture] can't be added to [library], as far as its listing tells, so Add
  * from folder says so at once, reading nothing: a format this TV can't show, more than
- * [PictureLimits] allow, or a name the library has ([nameClash]). Null when only adding it can
- * tell.
+ * [PictureLimits] allow, [damaged] (its preview found it cut short or damaged, which adding it
+ * would refuse whatever its name), or a name the library has ([nameClash]). Null when only adding
+ * it can tell.
  */
-fun whyRefused(picture: FolderPicture<*>, library: Collection<Picture>): ImportResult? = when {
+fun whyRefused(picture: FolderPicture<*>, library: Collection<Picture>, damaged: Boolean = false): ImportResult? = when {
     picture.unsupported != null -> ImportResult.UnsupportedFormat(picture.unsupported)
     else -> PictureLimits.exceeded(picture.bytes, picture.width, picture.height)?.let { ImportResult.TooLarge(it) }
+        ?: (if (damaged) ImportResult.NotAPicture else null)
         ?: nameClash(pictureName(picture.name), picture.bytes, library)
 }

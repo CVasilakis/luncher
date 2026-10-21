@@ -278,7 +278,7 @@
     <string name="settings_pictures_folder_unsupported"><xliff:g id="format" example="HEIF (HEIC)">%1$s</xliff:g> not supported on this TV</string>
     <!-- Below a picture of that list that can't be added, as the list already tells: its size and
          file size (%1$s, as settings_pictures_details writes them), then why (%2$s, in the accent
-         color: one of the three below, or settings_pictures_already). -->
+         color: one of the four below, or settings_pictures_already). -->
     <string name="settings_pictures_folder_refused"><xliff:g id="details" example="4000 × 3000 · 3.1 MB">%1$s</xliff:g> · <xliff:g id="why" example="Too large (over 50 MB)">%2$s</xliff:g></string>
     <!-- Its file is larger than the most a picture can be: %1$s, e.g. 50 MB. -->
     <string name="settings_pictures_folder_too_large_bytes">Too large (over <xliff:g id="size" example="50 MB">%1$s</xliff:g>)</string>
@@ -287,6 +287,9 @@
         <item quantity="one">Too large (over <xliff:g id="megapixels" example="1">%d</xliff:g> megapixel)</item>
         <item quantity="other">Too large (over <xliff:g id="megapixels" example="64">%d</xliff:g> megapixels)</item>
     </plurals>
+    <!-- Its file is cut short or damaged, as its preview found, or adding it: it can't be shown
+         whole. -->
+    <string name="settings_pictures_folder_damaged">Damaged</string>
     <!-- A name another picture of the library has: in that list, a picture's file of that name;
          also below the field of settings_pictures_rename_title, the name typed. -->
     <string name="settings_pictures_folder_name_taken">Name already used in Luncher\'s pictures</string>

@@ -38,8 +38,9 @@ platform/
     │   │   │   ├── WorkingCopies.kt                 the working copies: each picture decoded once, covering half the screen, kept as a JPEG
     │   │   │   ├── WorkingCopyImages.kt             PictureImages<Bitmap> and PreparedPictures on the working copies: what the screens show
     │   │   │   ├── CachedPictureImages.kt           PictureImages<Bitmap> in front of WorkingCopyImages: each picture's thumbnail kept in a file
-    │   │   │   ├── PictureFiles.kt                  reading a picture file: its size, upright, its format; drawing it framed in ARGB_8888
-    │   │   │   └── JpegOrientation.kt               a JPEG's orientation tag, read without ExifInterface
+    │   │   │   ├── PictureFiles.kt                  reading a picture file: its size, upright, its format, whether it's whole; drawing it framed in ARGB_8888
+    │   │   │   ├── JpegOrientation.kt               a JPEG's orientation tag, read without ExifInterface
+    │   │   │   └── WholeFiles.kt                    whether a JPEG, PNG or WebP is whole, by its structure, before it's decoded
     │   │   ├── jobs/
     │   │   │   └── BackgroundThreadJobs.kt          Jobs on one thread at background priority, with a priority queue
     │   │   ├── outside/                             asking another app, which may never answer (below)
@@ -152,9 +153,9 @@ last one:
   picture refused at once shows none.
   Adding streams the source into a new file, stopping past the size limit, hashing it on the way;
   a content the library has already, under any name (a picture renamed since, say), is answered
-  `AlreadyThere` then, before it's decoded; else it decodes its size, then all of it, once, into
-  its working copy, since a size alone can decode where the picture can't (AVIF on API 31), so a
-  picture added is ready for the screens at once;
+  `AlreadyThere` then, before it's decoded; else it decodes its size, checks the file is whole
+  (below), then decodes all of it, once, into its working copy, since a size alone can decode
+  where the picture can't (AVIF on API 31), so a picture added is ready for the screens at once;
   and then, on the main thread, either finds it in the index already or has it and its working
   copy moved into place and named. Deleting a picture deletes its file, its working copy and its
   thumbnail. Once per process, a job deletes the files, working copies and thumbnails the index
@@ -200,6 +201,21 @@ last one:
 - **A format a TV can't decode is named,** from the file's header (`pictureFormatOf`, in
   `:domain`), never its name: HEIF before API 28, AVIF before API 33. Anything else that doesn't
   decode is `NotAPicture`.
+- **A picture cut short or damaged is refused before it's decoded,** as `NotAPicture`, and Add
+  from folder draws no preview of it. Decoders don't say: from API 24 on, a JPEG, PNG or WebP cut
+  short decodes without an error (API 22 refuses one), the missing part black up to API 28,
+  transparent from API 30 on; a JPEG with a stray marker in its data decodes gray from there on,
+  on every version; a damaged PNG is partly black on API 24 to 26, and on API 22 and 23 its decode
+  can run forever without reading, which nothing can stop. `ImageDecoder`'s partial-image callback, from API 28 on, misses the gray
+  ones. So `PictureFiles.whole` reads the file's structure first (`isWhole`): a JPEG's segments
+  and scans up to its end marker, no marker where its data is, the restart markers in order; a
+  PNG's chunks up to its end, with the checksums of those the decoder needs; a WebP's length, as
+  its header says. Other formats are their decoder's to judge. It reads the file once more but
+  decodes nothing, in a fifth to a tenth of the time the photo's decode takes, through the same
+  stream as a decode, so it stops as one does. What follows a JPEG's end (a motion photo's video)
+  isn't read. Damage that leaves the structure whole (a flipped bit in a JPEG's data) shows as it
+  decodes, as no decoder says either. The library's own pictures aren't checked: they're drawn as
+  they decode.
 
 ### The drop folders
 
