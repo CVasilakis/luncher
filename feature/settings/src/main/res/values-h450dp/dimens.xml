@@ -1,10 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- On a screen 450 dp tall or more (every TV screen but 720p at the 1080p density), the side
-     sheet's margin and padding, and the gaps values/dimens.xml makes smaller on a shorter one. -->
+     sheet's margin and padding, Add from folder's margin above and below, and the gaps
+     values/dimens.xml makes smaller on a shorter one. -->
 <resources>
     <dimen name="settings_sheet_margin">24dp</dimen>
     <dimen name="settings_sheet_padding_top">32dp</dimen>
     <dimen name="settings_sheet_padding_bottom">24dp</dimen>
     <dimen name="settings_title_gap">16dp</dimen>
     <dimen name="settings_entry_padding_vertical">8dp</dimen>
+    <dimen name="settings_pictures_margin_vertical">32dp</dimen>
+    <dimen name="settings_pictures_title_gap">24dp</dimen>
 </resources>

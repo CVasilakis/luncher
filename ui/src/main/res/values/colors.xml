@@ -4,6 +4,9 @@
     <color name="accent">#FFFF7043</color>
     <color name="text_primary">#FFFFFFFF</color>
     <color name="text_secondary">#B3FFFFFF</color>
+    <!-- The home screen's secondary texts over a wallpaper: opaque, so they don't take the
+         picture's colors, which inside their dark edge looked muddy on a light picture. -->
+    <color name="text_secondary_on_picture">#FFD9DEE5</color>
     <!-- A panel over a screen (the settings panels, the picture dialogs, WorkingDialog), and the
          fill of its focused entry. -->
     <color name="panel">#FF1C232B</color>

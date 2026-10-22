@@ -19,13 +19,17 @@
     <dimen name="home_settings_padding">8dp</dimen>
     <!-- Moving an app: the key hint at the end of the top bar. -->
     <dimen name="home_move_hint_text">18sp</dimen>
-    <!-- A tile's menu: its least width, its padding around the entries (room for the focused one's
-         zoom too), an entry's height and inner padding, the gap after an entry's icon, the app's
-         name's padding above the entries, and the gap between the menu and the tile, zoomed, and
-         its name. -->
+    <!-- A tile's menu: its least width, its padding around the entries, an entry's height, its
+         corners (concentric with the menu's, a panel's here, :ui's corner_panel, less the padding;
+         TileMenu makes both follow the tiles') and inner padding, the gap after an entry's icon, the app's name's padding above the entries, and
+         the gap between the menu and the tile, zoomed, and its name. -->
     <dimen name="home_menu_width">220dp</dimen>
     <dimen name="home_menu_padding">10dp</dimen>
     <dimen name="home_menu_entry_height">52dp</dimen>
+    <dimen name="home_menu_entry_corner">18dp</dimen>
+    <!-- The least of them in a menu with round corners, which otherwise get a third of the
+         menu's where concentric ones would be nearly square (TileMenu.entryCorner). -->
+    <dimen name="home_menu_entry_corner_least">2dp</dimen>
     <dimen name="home_menu_entry_padding">16dp</dimen>
     <dimen name="home_menu_icon_gap">16dp</dimen>
     <dimen name="home_menu_title_padding_top">2dp</dimen>

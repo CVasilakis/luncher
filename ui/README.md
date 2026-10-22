@@ -24,7 +24,7 @@ ui/
     │   │   │                     the state colors and backgrounds its views share
     │   │   ├── ThemedText.kt     a text in a role of the theme, inverse on a focused entry, its icon too
     │   │   ├── ThemedIcon.kt     an icon (icon_…) in a role of the theme
-    │   │   ├── ListEntry.kt      an entry: inverse while focused, tinted while chosen, outlined while open; zoomed
+    │   │   ├── ListEntry.kt      an entry: inverse while focused, tinted while chosen, outlined while open; a field zoomed
     │   │   ├── EntryText.kt      an entry of one line, its icon before it: a menu's
     │   │   ├── PillButton.kt     a button: filled, tonal or danger, its icon beside its text, giving way
     │   │   ├── ScrollFrame.kt    a scrolling list's frame: cut along its rounded corners, fading out where there's more
@@ -43,21 +43,21 @@ ui/
     │   │                         shown half a second at least: for work the user waits for (the wallpaper drawn,
     │   │                         a picture added); Cancel too, and Back, for work that can be stopped
     │   └── res/
-    │       ├── animator/         entry_zoom, button_zoom: a focused entry's zoom, a button's zoom and lift
+    │       ├── animator/         entry_zoom, button_zoom: a focused field's zoom, a button's zoom and lift
     │       ├── drawable/         icon_…, the line icons (white, tinted where they're used); panel_background,
     │       │                     a floating panel's window before it's styled
     │       ├── layout/           working_dialog: WorkingDialog's wheel and message, and its Cancel
     │       ├── values/
-    │       │   ├── attrs.xml     the themed views' attributes: colorRole, fill, kind
-    │       │   ├── colors.xml    the home screen's: background, accent, primary and secondary text, the wallpaper
-    │       │   │                 outline; a panel, as a window is before it's styled
+    │       │   ├── attrs.xml     the themed views' attributes: colorRole, fill, zooms, entryCorner, kind
+    │       │   ├── colors.xml    the home screen's: background, accent, primary and secondary text (opaque over
+    │       │   │                 a picture), the wallpaper outline; a panel, as a window is before it's styled
     │       │   ├── dimens.xml    the design system's type, corners, zoom, buttons, icons and fade; a panel's corners,
     │       │   │                 WorkingDialog's sizes, the wallpaper outline's width, the tile name's text size and gap
     │       │   └── themes.xml    Theme.Luncher, the app's and the home screen's theme; Theme.Luncher.Working
     │       └── values-h450dp/    a screen's title on a screen 450 dp tall or more (smaller on 720p at 1080p density)
     └── testFixtures/java/com/luncher/launcher/testing/
         ├── TvDevice.kt           the TV screens the JVM tests run on (TV_1080P, TV_SCREENS)
-        ├── LayoutChecks.kt       the layout tests' checks: bounds, inside, apart, whole text
+        ├── LayoutChecks.kt       the layout tests' checks: bounds, inside, apart, whole text, a zoom not cut
         └── Captures.kt           the screenshots' captures, the window in front given the focus first
 ```
 
@@ -85,11 +85,13 @@ can, the focused thing stands out from afar, and every color comes from the user
   `stylePanel` and `styleScreen`, which style its window too) as it's made, and again, in place,
   when the theme changes. A themed text's or icon's role is its `colorRole` attribute:
   `onSurface`, `onSurfaceVariant`, `primary`, `error`.
-- **Focus: the inverse color and a little zoom.** A focused entry (`ListEntry`,
+- **Focus: the inverse color, and a little zoom off lists.** A focused entry (`ListEntry`,
   `EntryText`) is filled with `inverseSurface`, light on a dark theme and dark on a light one,
-  its texts and icons the inverse too (they take its state, `duplicateParentState`), zoomed by
-  `entry_zoom` (1.05), with no shadow: entries sit close, and one would fall on the next entry,
-  and through a chosen entry's tint as it settled; a focused button (`PillButton`) turns to the
+  its texts and icons the inverse too (they take its state, `duplicateParentState`). A row of a
+  list or a menu keeps its size: the inverse color says enough, and zooming rows played an
+  animation at every key, the one scrolling cost measured in Add from folder's list. A field (the
+  background editor's options, `zooms="true"`) is zoomed by `entry_zoom` (1.03), with no shadow:
+  fields sit close, and one would fall on the next; a focused button (`PillButton`) turns to the
   inverse color (a danger one to the error color), zoomed by `button_zoom` and lifted by
   `button_lift`, so the GPU casts its shadow. The zoom and the lift are state animators made
   with each view, so a key press only starts them. A focused
@@ -103,9 +105,17 @@ can, the focused thing stands out from afar, and every color comes from the user
   field (the background editor's options) is filled with `surfaceHigh`, its value under its name, a
   mark that it opens a list; outlined in the accent while its list shows (`activated`). The entry
   chosen (the background's picture) is tinted with the accent (`activated`).
+- **Corners nest.** An entry next to its container's corners (a list in its container, an
+  option's values, a tile's menu) has corners concentric with the container's: the container's
+  radius less the padding between them (`corner_entry_in_container`, 10 dp in a 20 dp container),
+  set with `entryCorner`, so the two curves run side by side. A tile's menu follows the tiles'
+  corners, and its entries with it (`EntryText.corner`,
+  [`feature/home/`](../feature/home/README.md#a-tiles-menu)). An entry far from its container's
+  corners (a side sheet's, a dialog's) keeps `corner_entry` (12 dp).
 - **Room for the zoom, inside what clips.** A parent that clips cuts each child to the child's own
-  bounds, so a zoomed entry needs its room inside the view that holds it: a list's padding, with
-  `clipToPadding` off, and `clipChildren` off on what's between it and what clips.
+  bounds, so a zoomed field or button needs its room inside the view that holds it: padding, with
+  `clipToPadding` off, and `clipChildren` off on what's between it and what clips. The layout
+  tests check it (`assertZoomShown`). A list's padding stays as a margin around its rows.
 - **A list that scrolls keeps its corners, fades out where there's more, and scrolls ahead of the
   focus.** In a `ScrollFrame`, what scrolls under the frame's edges is cut along its rounded
   corners (its outline, clipped by the GPU, no layer, no bitmap); while there's more below, or

@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- A picture to choose in the background editor: its thumbnail, its name, on two lines at most
-     (Add from folder needs both on the smallest screens), and a check while it's the draft's; it's
-     activated then, tinted with the accent. Also No picture (the plain background as its
-     thumbnail) and Add from folder (a plus in place of the thumbnail). -->
+     (Add from folder needs both on the smallest screens), below it its size in px and its file's
+     size, as Add from folder shows them (no place: it's in Luncher's own storage), and a check
+     while it's the draft's; it's activated then, tinted with the accent. Also No picture (the
+     plain background as its thumbnail) and Add from folder (a plus in place of the thumbnail),
+     with no line below. -->
 <com.luncher.launcher.ui.ListEntry xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
@@ -14,7 +16,8 @@
     android:paddingLeft="@dimen/settings_entry_padding"
     android:paddingTop="@dimen/settings_background_row_padding"
     android:paddingRight="@dimen/settings_entry_padding"
-    android:paddingBottom="@dimen/settings_background_row_padding">
+    android:paddingBottom="@dimen/settings_background_row_padding"
+    app:entryCorner="@dimen/corner_entry_in_container">
 
     <ImageView
         android:id="@+id/settings_background_thumbnail"
@@ -24,16 +27,35 @@
         android:importantForAccessibility="no"
         android:scaleType="centerCrop" />
 
-    <com.luncher.launcher.ui.ThemedText
-        android:id="@+id/settings_background_name"
+    <LinearLayout
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="@dimen/settings_entry_icon_gap"
         android:layout_weight="1"
         android:duplicateParentState="true"
-        android:ellipsize="end"
-        android:maxLines="2"
-        android:textSize="@dimen/text_entry" />
+        android:orientation="vertical">
+
+        <com.luncher.launcher.ui.ThemedText
+            android:id="@+id/settings_background_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:duplicateParentState="true"
+            android:ellipsize="end"
+            android:maxLines="2"
+            android:textSize="@dimen/text_entry" />
+
+        <com.luncher.launcher.ui.ThemedText
+            android:id="@+id/settings_background_details"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/settings_entry_line_gap"
+            android:duplicateParentState="true"
+            android:ellipsize="end"
+            android:singleLine="true"
+            android:textSize="@dimen/text_supporting"
+            android:visibility="gone"
+            app:colorRole="onSurfaceVariant" />
+    </LinearLayout>
 
     <com.luncher.launcher.ui.ThemedIcon
         android:id="@+id/settings_background_chosen"

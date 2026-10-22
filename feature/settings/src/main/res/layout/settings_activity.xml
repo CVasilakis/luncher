@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The settings panel: a side sheet at the screen's end (Sheet.kt), its title, then its entries,
+<!-- The settings panel: a side sheet on the home screen's gear's side (Sheet.kt), its title, then its entries,
      which scroll on a screen too short for them all. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/settings_panel"
@@ -24,8 +24,8 @@
         android:textSize="@dimen/text_title" />
 
     <!-- SettingsActivity adds a settings_entry for each entry of settingsMenu, in order; they
-         scroll a row ahead of the focus, on a screen too short for them. Room inside for the
-         focused entry's zoom. -->
+         scroll a row ahead of the focus, on a screen too short for them. A margin inside around
+         them. -->
     <com.luncher.launcher.ui.LookAheadScrollView
         android:id="@+id/settings_entries_scroll"
         android:layout_width="match_parent"

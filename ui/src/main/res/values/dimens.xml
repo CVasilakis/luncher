@@ -16,13 +16,19 @@
     <dimen name="corner_entry">12dp</dimen>
     <dimen name="corner_panel">28dp</dimen>
     <dimen name="corner_picture">8dp</dimen>
-    <!-- A list's container (ScrollFrame): an entry's corners and the room around them. -->
+    <!-- A list's container (ScrollFrame, an option's list): its corners; an entry's in it,
+         concentric with them: the container's less the 10 dp it leaves around its entries
+         (settings_container_padding, settings_option_list_padding), so the two curves run side
+         by side. An entry far from a container's corners (in a side sheet, a dialog) keeps
+         corner_entry. -->
     <dimen name="corner_container">20dp</dimen>
-    <!-- How much a focused entry grows (Material for TV's list items), and a button (less than
+    <dimen name="corner_entry_in_container">10dp</dimen>
+    <!-- How much a focused field grows (a little, as Material for TV's list items: a scale, so a
+         wide one grows more; a list's rows don't), and a button (less than
          Material for TV's 1.1: Luncher's buttons are wide, two side by side a gap apart), and how
          high a button is lifted, for its shadow (an entry isn't: entries sit close, and its shadow
          would fall on the next). -->
-    <item name="entry_zoom" format="float" type="dimen">1.05</item>
+    <item name="entry_zoom" format="float" type="dimen">1.03</item>
     <item name="button_zoom" format="float" type="dimen">1.06</item>
     <dimen name="button_lift">4dp</dimen>
     <!-- A button: its height at least, its padding at the sides, the gap after its icon. An

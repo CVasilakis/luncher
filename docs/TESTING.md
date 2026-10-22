@@ -138,7 +138,8 @@ text larger. `HomeLayoutTest`, `SettingsLayoutTest` and `BackgroundLayoutTest` r
 there, [`TRANSLATIONS.md`](TRANSLATIONS.md)), and check rules rather than pixels
 (`LayoutChecks.kt`): everything inside the TV's overscan margin, tiles clear of each other and of
 the top bar even zoomed, tiles of about the size meant, no text cut (except the move title,
-which ends in "…" where it must), panels a margin from the screen's edges. A new element of a
+which ends in "…" where it must), panels a margin from the screen's edges, a focused field or
+button's zoom and shadow cut neither by what holds it nor by the screen (`assertZoomShown`). A new element of a
 screen gets its check there, a new screen a `*LayoutTest` of its own, and a screen to support a
 line in `TV_SCREENS`. Their text checks need native graphics, like the
 screenshots: without them, Robolectric measures every character as 1 px wide. A few of these

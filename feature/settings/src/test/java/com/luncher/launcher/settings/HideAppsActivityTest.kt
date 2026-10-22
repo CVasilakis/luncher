@@ -122,7 +122,7 @@ class HideAppsActivityTest {
         assertEquals(2, activity.list().selectedItemPosition)
     }
 
-    /** A row and the gap below it, and the list's padding above and below, room for the focused row's zoom. */
+    /** A row and the gap below it, and the list's padding above and below, a margin around the rows. */
     private fun HideAppsActivity.row() = resources.getDimensionPixelSize(R.dimen.settings_row_height) + resources.getDimensionPixelSize(R.dimen.settings_entry_gap)
 
     private fun HideAppsActivity.listPadding() = list().paddingTop + list().paddingBottom

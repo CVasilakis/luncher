@@ -203,6 +203,8 @@ internal class AppearancePreviewView(context: Context, attrs: AttributeSet?) : V
     private val shadowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.argb(SHADOW_ALPHA, 0, 0, 0) }
     private val primaryPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = context.color(UiR.color.text_primary) }
     private val secondaryPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = context.color(UiR.color.text_secondary) }
+    /** The date over a picture, opaque, as the home screen's. */
+    private val secondaryOnPicturePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = context.color(UiR.color.text_secondary_on_picture) }
     private val outline = WallpaperOutline(context)
 
     /**
@@ -265,7 +267,7 @@ internal class AppearancePreviewView(context: Context, attrs: AttributeSet?) : V
             canvas.drawRoundRect(edge, radius, radius, edgePaint)
         }
         drawBlock(canvas, time, primaryPaint)
-        drawBlock(canvas, date, secondaryPaint)
+        drawBlock(canvas, date, if (wallpaper != null) secondaryOnPicturePaint else secondaryPaint)
         if (!gear.isEmpty) {
             canvas.drawOval(gear, blockOutlinePaint)
             canvas.drawOval(gear, primaryPaint)

@@ -18,7 +18,7 @@ import com.luncher.launcher.ui.R as UiR
  * in a chip between arrows, which Left and Right step through, toward the arrow on that side,
  * around from the last value to the first; the accent's swatch before it, for the accent color.
  * With [opens], in the background editor (settings_background_option, a field), OK opens the
- * values in a list ([OptionList]) instead, beside the options, the field outlined and its mark
+ * values in a list ([OptionList]) instead, beside the field, the field outlined and its mark
  * pointing there while it shows; Left and Right move the focus, as on any other entry: the
  * pictures are beside the options there. The values offered are those [context] offers (the
  * background's picture's shape, say); an option that changes nothing with the others as they are,

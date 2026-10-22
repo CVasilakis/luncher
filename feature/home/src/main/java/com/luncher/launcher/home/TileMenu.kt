@@ -8,10 +8,12 @@ import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
 import com.luncher.domain.appearance.ColorRoles
+import com.luncher.domain.appearance.Corners
 import com.luncher.domain.apps.AppAction
 import com.luncher.domain.apps.InstalledApp
 import com.luncher.domain.layout.PixelBounds
 import com.luncher.domain.layout.tileMenuPlacement
+import com.luncher.launcher.ui.EntryText
 import com.luncher.launcher.ui.stylePanel
 import com.luncher.launcher.ui.R as UiR
 
@@ -20,7 +22,7 @@ import com.luncher.launcher.ui.R as UiR
  * the tile, or below it where there's no room above ([tileMenuPlacement]), the app's name, then
  * what the user can do to the app (the domain's [AppAction]s), each with its icon, the first one
  * focused. OK on one closes the menu and does it; Back closes it, as any dialog. In the theme's
- * colors ([style]).
+ * colors, its corners as round as the tiles' up to a panel's ([style], [menuCorner]).
  *
  * A window of its own, so Android keeps the keys and the focus in it while it shows, and the tile
  * under it keeps its focus, zoomed as it is. Made once, the first time it's needed, and shown again
@@ -31,6 +33,11 @@ internal class TileMenu(private val activity: Activity) : Dialog(activity, R.sty
     private val entries: LinearLayout
     private val title: TextView
     private var roles: ColorRoles? = null
+    private var corners: Corners? = null
+
+    /** The menu's corners and its entries', in px, as [style] last set them. */
+    private var corner = 0f
+    private var entryCorner = 0f
 
     /** The app whose menu shows; null while it doesn't. */
     var app: InstalledApp? = null
@@ -43,11 +50,20 @@ internal class TileMenu(private val activity: Activity) : Dialog(activity, R.sty
         setOnDismissListener { app = null }
     }
 
-    /** In the theme's colors: [roles]. Made anew only when they change. */
-    fun style(roles: ColorRoles) {
-        if (roles == this.roles) return
+    /**
+     * In the theme's colors, [roles], its corners following the tiles' [corners] (see
+     * [menuCorner]), its entries' concentric with them ([entryCorner]). Made anew only when either changes.
+     */
+    fun style(roles: ColorRoles, corners: Corners) {
+        if (roles == this.roles && corners == this.corners) return
         this.roles = roles
-        checkNotNull(window).stylePanel(roles)
+        this.corners = corners
+        val resources = context.resources
+        corner = menuCorner(corners, resources.getDimension(UiR.dimen.corner_panel), resources.displayMetrics.density)
+        val density = resources.displayMetrics.density
+        entryCorner = entryCorner(corner, resources.getDimension(R.dimen.home_menu_padding), resources.getDimension(R.dimen.home_menu_entry_corner_least), density)
+        for (i in 0 until entries.childCount) (entries.getChildAt(i) as EntryText).corner = entryCorner
+        checkNotNull(window).stylePanel(roles, corner)
     }
 
     /** Shows the menu of [tile], with its app's [actions], in their order; OK on one gives it to [act]. */
@@ -55,7 +71,8 @@ internal class TileMenu(private val activity: Activity) : Dialog(activity, R.sty
         entries.removeAllViews()
         title.text = tile.app.label
         for (action in actions) {
-            val entry = layoutInflater.inflate(R.layout.home_tile_menu_entry, entries, false) as TextView
+            val entry = layoutInflater.inflate(R.layout.home_tile_menu_entry, entries, false) as EntryText
+            if (roles != null) entry.corner = entryCorner
             entry.setText(label(action))
             entry.setCompoundDrawablesRelativeWithIntrinsicBounds(icon(action), 0, 0, 0)
             entry.setOnClickListener {
@@ -64,7 +81,7 @@ internal class TileMenu(private val activity: Activity) : Dialog(activity, R.sty
             }
             entries.addView(entry)
         }
-        roles?.let { checkNotNull(window).stylePanel(it) }   // the new entries too
+        roles?.let { checkNotNull(window).stylePanel(it, corner) }   // the new entries too
         placeAt(tile)
         app = tile.app
         show()
@@ -107,4 +124,29 @@ internal class TileMenu(private val activity: Activity) : Dialog(activity, R.sty
         AppAction.Move -> UiR.drawable.icon_move
         AppAction.Hide -> UiR.drawable.icon_eye_off
     }
+}
+
+/**
+ * A tile's menu's corner radius, in px, for tiles with [corners]: as round as the tiles', so the
+ * menu looks of a piece with them, but no rounder than a panel's ([panel], `corner_panel`): a
+ * small menu with larger corners would look like a pill, so pill tiles and larger radii get a
+ * panel's corners. [pixelsPerDp] turns a radius in dp into px.
+ */
+internal fun menuCorner(corners: Corners, panel: Float, pixelsPerDp: Float): Float = when (corners) {
+    is Corners.Radius -> minOf(corners.dp * pixelsPerDp, panel)
+    Corners.Pill -> panel
+}
+
+/**
+ * The corner radius, in px, of an entry in a tile's menu with corners of [menu] px: concentric
+ * with them, [menu] less the [padding] between them, where that's round enough; else a third of
+ * [menu], in whole dp ([pixelsPerDp]), and at least [least] (2 dp): where concentric ones would
+ * be square or nearly (tiles of 4, 8 or 12 dp), the entry's corners still read as rounded, as
+ * the menu's do, and in proportion to them. 2 dp for tiles of 4 and 8 dp, 4 dp for 12, from 16 dp
+ * on concentric. A square menu's (tiles of 0 dp) are square.
+ */
+internal fun entryCorner(menu: Float, padding: Float, least: Float, pixelsPerDp: Float): Float {
+    if (menu <= 0f) return 0f
+    val third = kotlin.math.floor(menu / pixelsPerDp / 3) * pixelsPerDp
+    return maxOf(menu - padding, third, least)
 }

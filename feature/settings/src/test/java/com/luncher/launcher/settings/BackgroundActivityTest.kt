@@ -31,6 +31,7 @@ import com.luncher.launcher.testing.TV_1080P
 import com.luncher.launcher.ui.WorkingDialog
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
@@ -259,19 +260,19 @@ class BackgroundActivityTest {
 
     @Test
     fun `Left and Right on an option move the focus, to the pictures, and change nothing`() {
-        graph(beach, background = Background(beach.id))
+        graph(portrait, background = Background(portrait.id))
         val activity = start().get()
-        val dim = activity.option("Dim")
-        dim.requestFocus()
+        val blur = activity.option("Blur")
+        blur.requestFocus()
 
         for (key in listOf(KeyEvent.KEYCODE_DPAD_RIGHT, KeyEvent.KEYCODE_DPAD_LEFT)) {
             assertFalse(activity.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, key)))
             activity.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_UP, key))
         }
 
-        assertEquals("Off", activity.value("Dim"))
-        assertSame("Blur right of it, in the grid", activity.option("Blur"), dim.focusSearch(View.FOCUS_RIGHT))
-        assertTrue("a picture's row right of Blur", activity.option("Blur").focusSearch(View.FOCUS_RIGHT) in activity.listRows())
+        assertEquals("Off", activity.value("Blur"))
+        assertSame("Position right of it, in the grid", activity.option("Position"), blur.focusSearch(View.FOCUS_RIGHT))
+        assertTrue("a picture's row right of Position", activity.option("Position").focusSearch(View.FOCUS_RIGHT) in activity.listRows())
         assertNull("no list", shadowOf(activity.application).latestPopupWindow?.takeIf { it.isShowing })
     }
 
@@ -321,6 +322,32 @@ class BackgroundActivityTest {
         }
     }
 
+    // As Add from folder's rows, without where: every picture here is in Luncher's own storage.
+    @Test
+    fun `a picture's row says its size in px and its file's, No picture and Add from folder nothing`() {
+        graph(portrait, background = Background(portrait.id))
+        val activity = start().get()
+        fun View.details() = findViewById<TextView>(R.id.settings_background_details)
+
+        assertEquals("3024 × 4032 · 1.0 MB", activity.row("portrait.jpg").details().text.toString())
+        assertEquals(View.VISIBLE, activity.row("portrait.jpg").details().visibility)
+        assertEquals(View.GONE, activity.row("No picture").details().visibility)
+        assertEquals(View.GONE, activity.row("Add from folder").details().visibility)
+    }
+
+    // A list's rows keep their size while focused; the fields, not in a list, zoom, as buttons do.
+    @Test
+    fun `the fields zoom while focused, the pictures' rows and an option's values don't`() {
+        graph(portrait, background = Background(portrait.id))
+        val activity = start().get()
+
+        for (field in activity.options()) assertNotNull("a field zooms", field.stateListAnimator)
+        for (row in activity.listRows()) assertNull("a picture's row doesn't zoom", row.stateListAnimator)
+        val list = activity.open("Dim")
+        for (entry in list.entries()) assertNull("an option's value doesn't zoom", entry.stateListAnimator)
+        list.dismiss()
+    }
+
     @Test
     fun `OK on an option lists its values, the one it has focused and checked`() {
         graph(beach, background = Background(beach.id, dim = 40))
@@ -336,25 +363,38 @@ class BackgroundActivityTest {
         assertFalse(activity.option("Dim").isActivated)
     }
 
-    // Beside the options, over the pictures, so it covers none of the fields nor the preview.
+    // Beside the field, so it covers neither the field nor the preview: a field at the start
+    // (Dim) has its list over the other column, to its end, a field at the end (Position) over the pictures.
     @Test
-    fun `an option's list opens beside the options, its value level with the field`() {
-        graph(beach, background = Background(beach.id, dim = 40))
+    fun `an option's list opens beside its field, its value level with the field`() {
+        graph(portrait, background = Background(portrait.id, dim = 40))
         val activity = start().get()
-
-        val list = activity.open("Dim")
-
         val options = activity.findViewById<View>(R.id.settings_background_options)
-        val optionsAt = IntArray(2).also(options::getLocationInWindow)
-        // Where the list's window is, on the editor's.
-        val window = list.contentView.rootView.layoutParams as android.view.WindowManager.LayoutParams
-        assertTrue("list at ${window.x}, options end at ${optionsAt[0] + options.width}", window.x >= optionsAt[0] + options.width)
-        val field = activity.option("Dim")
-        val fieldAt = IntArray(2).also(field::getLocationInWindow)
-        val medium = list.entries().single { it.checked() }
-        val mediumAt = IntArray(2).also(medium::getLocationInWindow)
-        // Within a dp: halves of odd heights round to whole pixels.
-        assertEquals(fieldAt[1] + field.height / 2f, window.y + mediumAt[1] + medium.height / 2f, activity.resources.displayMetrics.density)
+        val optionsEnd = IntArray(2).also(options::getLocationInWindow)[0] + options.width
+
+        for ((label, value) in listOf("Dim" to "Medium", "Position" to "Center")) {
+            val list = activity.open(label)
+
+            // Where the list's window is, on the editor's.
+            val window = list.contentView.rootView.layoutParams as android.view.WindowManager.LayoutParams
+            val field = activity.option(label)
+            val fieldAt = IntArray(2).also(field::getLocationInWindow)
+            val fieldEnd = fieldAt[0] + field.width
+            assertTrue("$label's list at ${window.x}, its field ends at $fieldEnd", window.x >= fieldEnd)
+            if (label == "Dim") {
+                assertTrue("Dim's list at ${window.x}, over Fit (the options end at $optionsEnd)", window.x < optionsEnd)
+                // Covering the other column whole, to the options' end.
+                assertTrue("Dim's list ends at ${window.x + list.width}, before the options' end at $optionsEnd", window.x + list.width >= optionsEnd)
+            }
+            else assertTrue("Position's list at ${window.x}, beside the options (they end at $optionsEnd)", window.x >= optionsEnd)
+            val checked = list.entries().single { it.checked() }
+            assertEquals(value, checked.text.toString())
+            val checkedAt = IntArray(2).also(checked::getLocationInWindow)
+            // Within a dp: halves of odd heights round to whole pixels.
+            assertEquals(fieldAt[1] + field.height / 2f, window.y + checkedAt[1] + checked.height / 2f, activity.resources.displayMetrics.density)
+            list.dismiss()
+            idle()
+        }
     }
 
     @Test
@@ -501,9 +541,10 @@ class BackgroundActivityTest {
         }
         for (label in listOf("Dim", "Blur")) assertTrue(label, activity.option(label).isFocusable)
         val dimmed = setOf(activity.option("Fit"), activity.option("Position"))
-        assertFalse("up from Dim", activity.option("Dim").focusSearch(View.FOCUS_UP) in dimmed)
+        assertFalse("right from Blur", activity.option("Blur").focusSearch(View.FOCUS_RIGHT) in dimmed)
+        assertFalse("right from Dim", activity.option("Dim").focusSearch(View.FOCUS_RIGHT) in dimmed)
         assertFalse("from the pictures", activity.row("No picture").focusSearch(View.FOCUS_LEFT) in dimmed)
-        assertSame(activity.option("Blur"), activity.option("Dim").focusSearch(View.FOCUS_RIGHT))
+        assertSame(activity.option("Dim"), activity.option("Blur").focusSearch(View.FOCUS_DOWN))
     }
 
     @Test

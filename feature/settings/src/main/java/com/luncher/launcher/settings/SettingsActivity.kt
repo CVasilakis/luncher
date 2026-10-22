@@ -30,7 +30,7 @@ class SettingsActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.settings_activity)
-        placeAsSheet(checkNotNull(window))
+        placeAsSheet(checkNotNull(window), graph.appearanceSettings.read().topBar)
         entries = findViewById(R.id.settings_entries)
         show(settingsMenu())
         window.stylePanel(theme.roles)

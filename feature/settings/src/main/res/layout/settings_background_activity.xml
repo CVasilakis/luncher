@@ -15,12 +15,15 @@
 
     <!-- The overscan margin at the start, less the room the content keeps for a focused entry's
          zoom; the gap to the pictures at the end. The preview as tall as the room left
-         (BackgroundStartColumn); on the smallest screens, moving the focus scrolls it. -->
+         (BackgroundStartColumn); on the smallest screens, moving the focus scrolls it. It cuts
+         its content neither at its padding nor at the content's edges, which end at Save and
+         Delete all: their zoom and shadow reach past them. -->
     <com.luncher.launcher.settings.BackgroundStartColumn
         android:id="@+id/settings_background_start"
         android:layout_width="0dp"
         android:layout_height="match_parent"
         android:layout_weight="1"
+        android:clipChildren="false"
         android:clipToPadding="false"
         android:paddingStart="@dimen/settings_screen_margin_less_room"
         android:paddingTop="@dimen/settings_appearance_margin_vertical"
@@ -136,8 +139,8 @@
                 android:scrollbars="none">
 
                 <!-- No picture, the library's pictures, Add from folder; while the library is empty,
-                     how to add a picture. BackgroundActivity adds them. Room for the focused
-                     one's zoom. -->
+                     how to add a picture. BackgroundActivity adds them. A margin inside around
+                     them, which their corners follow. -->
                 <LinearLayout
                     android:id="@+id/settings_background_list"
                     android:layout_width="match_parent"

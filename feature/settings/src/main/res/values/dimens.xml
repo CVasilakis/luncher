@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- The settings panels as a side sheet (Sheet.kt): its width, its margin from the screen's
-         edges, its padding; the room an entry's zoom needs around it, inside the list (ui's
-         entry_zoom: a 1.05 zoom of the sheet's width, half on each side). The margin and the
+         edges, its padding; the margin around the rows, inside the list (the room their zoom
+         needed when they had one). The margin and the
          padding above and below, and the gaps marked "short" below, are smaller here, on a screen
          less than 450 dp tall (720p at the 1080p density), so the settings panel's entries fit it;
          values-h450dp has them for every other screen. -->
@@ -75,9 +75,9 @@
     <dimen name="settings_background_thumbnail_width">80dp</dimen>
     <dimen name="settings_background_thumbnail_height">45dp</dimen>
 
-    <!-- An option's values in a list beside the options (OptionList): its padding around the
-         entries, room for the focused one's zoom too; its least width, its gap to the options, its
-         shadow, its corners; an entry's height. -->
+    <!-- An option's values in a list beside its field (OptionList): its padding around the
+         entries, which their corners follow; its least width, its gap to the field, its shadow,
+         its corners; an entry's height. -->
     <dimen name="settings_option_list_padding">10dp</dimen>
     <dimen name="settings_option_list_min_width">200dp</dimen>
     <dimen name="settings_option_list_gap">16dp</dimen>
@@ -89,14 +89,18 @@
          the title, and the selected one's name below its preview; below the title and that line;
          between a picture and its text, a thumbnail's corners; a row of the list at least; the gap
          between the list and the preview's column; the warning mark in place of a preview that
-         can't be drawn. -->
+         can't be drawn. The margin above and below and the gap below the title are short, so the
+         list shows more than two rows below 450 dp tall. -->
     <dimen name="settings_pictures_margin_horizontal">48dp</dimen>
-    <dimen name="settings_pictures_margin_vertical">32dp</dimen>
+    <dimen name="settings_pictures_margin_vertical">20dp</dimen>
     <dimen name="settings_pictures_where_text">16sp</dimen>
-    <dimen name="settings_pictures_title_gap">24dp</dimen>
+    <dimen name="settings_pictures_title_gap">16dp</dimen>
     <dimen name="settings_pictures_tile_text_gap">8dp</dimen>
     <dimen name="settings_pictures_tile_corner">8dp</dimen>
     <dimen name="settings_pictures_row_height">64dp</dimen>
+    <!-- The least height of Add from folder's preview: shorter than a row of the list, it goes,
+         with its label and name. -->
+    <dimen name="settings_pictures_preview_least">64dp</dimen>
     <dimen name="settings_pictures_side_gap">32dp</dimen>
     <dimen name="settings_pictures_warning">48dp</dimen>
 

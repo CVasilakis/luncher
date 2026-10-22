@@ -26,6 +26,8 @@ import com.luncher.launcher.testing.TvScreen
 import com.luncher.launcher.testing.assertApart
 import com.luncher.launcher.testing.assertInside
 import com.luncher.launcher.testing.assertWhole
+import com.luncher.launcher.testing.assertZoomShown
+import com.luncher.launcher.testing.floatResource
 import com.luncher.launcher.testing.bounds
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -40,6 +42,7 @@ import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import org.robolectric.shadows.ShadowDialog
 import kotlin.math.abs
+import com.luncher.launcher.ui.R as UiR
 
 /**
  * The background editor, Add from folder and the window after a share on every screen of
@@ -134,6 +137,22 @@ class BackgroundLayoutTest(private val screen: TvScreen) {
             val margin = activity.resources.getDimension(R.dimen.settings_appearance_margin_vertical)
             val save = bounds(activity.findViewById(R.id.settings_background_save))
             assertTrue("Save at $save, below the margin on $screen", save.bottom <= metrics.heightPixels - margin + 1)
+        }
+        // Each focused, zoomed whole, a button with its shadow, as the column scrolls to it. (The
+        // pictures' rows don't zoom.)
+        val entryZoom = preview.floatResource(UiR.dimen.entry_zoom)
+        val buttonZoom = preview.floatResource(UiR.dimen.button_zoom)
+        val lift = activity.resources.getDimension(UiR.dimen.button_lift)
+        for ((what, id) in listOf("Save" to R.id.settings_background_save, "Delete all" to R.id.settings_background_delete_all)) {
+            val button = activity.findViewById<View>(id)
+            assertTrue("$what can't take the focus on $screen", button.requestFocus())
+            idle()
+            assertZoomShown(screen, what, button, buttonZoom, lift)
+        }
+        for (field in activity.children(R.id.settings_background_options).flatMap { line -> (0 until (line as ViewGroup).childCount).map(line::getChildAt) }) {
+            field.requestFocus()
+            idle()
+            assertZoomShown(screen, "an option", field, entryZoom)
         }
         for (row in activity.children(R.id.settings_background_list)) {
             activity.assertAcross("a picture's row", row)
@@ -287,6 +306,8 @@ class BackgroundLayoutTest(private val screen: TvScreen) {
             )
         }
         application.graph = graph
+        // A remote's keys: the list selects only out of touch mode, where Robolectric starts.
+        androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().setInTouchMode(false)
         val activity = Robolectric.buildActivity(AddFromFolderActivity::class.java).setup().get()
         idle()
         val list = activity.findViewById<ListView>(R.id.settings_pictures_folder_list)
@@ -295,20 +316,43 @@ class BackgroundLayoutTest(private val screen: TvScreen) {
         val margin = activity.resources.getDimension(R.dimen.settings_pictures_margin_vertical)
 
         activity.assertShown("title", activity.findViewById(R.id.settings_pictures_folder_title))
-        activity.assertShown("where", activity.findViewById(R.id.settings_pictures_folder_where))
-        activity.assertShown("preview", preview)
+        // One line, cut at its start at most: the folder, at its end, stays whole.
+        val where = activity.findViewById<TextView>(R.id.settings_pictures_folder_where)
+        assertInside(screen, activity.inside(), "where", bounds(where))
+        assertEquals("where on $screen", 1, where.layout.lineCount)
+        val folder = where.text.indexOf("Android/media/")
+        assertTrue("\"${where.text}\" cut past its start on $screen: ${where.layout.getEllipsisCount(0)} letters", where.layout.getEllipsisStart(0) == 0 && where.layout.getEllipsisCount(0) <= folder)
         activity.assertShown("note", activity.findViewById(R.id.settings_pictures_folder_note))
-        assertApart(screen, "list and preview", bounds(list), bounds(preview))
-        // Of the TV's shape, as the wallpaper fills the screen, to a pixel's rounding.
-        assertTrue(
-            "preview ${preview.width} x ${preview.height} on $screen, ${metrics.widthPixels} x ${metrics.heightPixels}",
-            abs(preview.width.toLong() * metrics.heightPixels - preview.height.toLong() * metrics.widthPixels) < metrics.widthPixels + metrics.heightPixels,
-        )
+        // The preview with its label and name, as tall as a row of the list at least; else none of them, and none drawn.
+        val label = activity.findViewById<TextView>(R.id.settings_pictures_folder_preview_label)
+        val name = activity.findViewById<View>(R.id.settings_pictures_folder_selected)
+        graph.jobs.runAll()
+        idle()
+        if (activity.findViewById<View>(R.id.settings_pictures_folder_preview_frame).visibility == View.VISIBLE) {
+            activity.assertShown("preview", preview)
+            activity.assertShown("its label", label)
+            assertEquals(View.VISIBLE, name.visibility)
+            assertApart(screen, "list and preview", bounds(list), bounds(preview))
+            val least = activity.resources.getDimension(R.dimen.settings_pictures_preview_least)
+            assertTrue("preview ${preview.height} px tall on $screen, $least at least", preview.height >= least - 0.5f)
+            // Of the TV's shape, as the wallpaper fills the screen, to a pixel's rounding.
+            assertTrue(
+                "preview ${preview.width} x ${preview.height} on $screen, ${metrics.widthPixels} x ${metrics.heightPixels}",
+                abs(preview.width.toLong() * metrics.heightPixels - preview.height.toLong() * metrics.widthPixels) < metrics.widthPixels + metrics.heightPixels,
+            )
+            assertEquals("previews drawn on $screen", listOf("holiday.jpg"), graph.folderPictures.previewed.map { it.name })
+            assertTrue("holiday.jpg previewed on $screen", (preview as android.widget.ImageView).drawable != null)
+        } else {
+            assertEquals("the preview's label on $screen", View.GONE, label.visibility)
+            assertEquals("the picture's name on $screen", View.GONE, name.visibility)
+            assertEquals("previews drawn on $screen", emptyList<String>(), graph.folderPictures.previewed.map { it.name })
+        }
         // On the smallest screens the column scrolls: to its end, the note, as Add all takes the focus.
         val addAll = activity.findViewById<TextView>(R.id.settings_pictures_folder_add_all)
         addAll.requestFocus()
         idle()
         activity.assertShown("Add all", addAll)
+        assertZoomShown(screen, "Add all", addAll, addAll.floatResource(UiR.dimen.button_zoom), activity.resources.getDimension(UiR.dimen.button_lift))
         assertTrue("Add all below the screen on $screen", bounds(addAll).bottom <= metrics.heightPixels - margin)
         assertTrue("note below the screen on $screen", bounds(activity.findViewById(R.id.settings_pictures_folder_note)).bottom <= metrics.heightPixels - margin)
         for (i in 0 until list.childCount) activity.assertShown("a picture's details", list.getChildAt(i).findViewById(R.id.settings_pictures_folder_details))

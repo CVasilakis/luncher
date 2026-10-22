@@ -14,7 +14,8 @@
     android:paddingLeft="@dimen/settings_entry_padding"
     android:paddingTop="@dimen/settings_entry_padding_vertical"
     android:paddingRight="@dimen/settings_entry_padding"
-    android:paddingBottom="@dimen/settings_entry_padding_vertical">
+    android:paddingBottom="@dimen/settings_entry_padding_vertical"
+    app:entryCorner="@dimen/corner_entry_in_container">
 
     <com.luncher.launcher.ui.ThemedIcon
         android:id="@+id/settings_group_icon"

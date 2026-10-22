@@ -265,15 +265,15 @@ class BackgroundActivityTest {
         val wide = picture("wide.jpg", added = 1, width = 6000, height = 1000)
         launchWith(wide, background = Background(wide.id)).use {
             waitUntil(row("wide.jpg"), hasFocus())
-            // Left, to the field at the grid's end, Position; Left again, Fit beside it.
+            // Left, to the field at the grid's end, Position; Left again, Blur beside it.
             press(KeyEvent.KEYCODE_DPAD_LEFT)
             waitUntil(option(R.string.settings_appearance_position, R.string.settings_appearance_center), hasFocus())
             press(KeyEvent.KEYCODE_DPAD_LEFT)
-            waitUntil(option(R.string.settings_appearance_fit, R.string.settings_appearance_fill), hasFocus())
+            waitUntil(option(R.string.settings_appearance_blur, R.string.settings_appearance_off), hasFocus())
             press(KeyEvent.KEYCODE_DPAD_RIGHT)
             press(KeyEvent.KEYCODE_DPAD_RIGHT)
             waitUntil(withId(R.id.settings_background_list), hasFocus())   // a row beside the options
-            onView(option(R.string.settings_appearance_fit, R.string.settings_appearance_fill)).check(matches(isDisplayed()))
+            onView(option(R.string.settings_appearance_blur, R.string.settings_appearance_off)).check(matches(isDisplayed()))
 
             press(KeyEvent.KEYCODE_DPAD_LEFT)
             waitUntil(option(R.string.settings_appearance_position, R.string.settings_appearance_center), hasFocus())

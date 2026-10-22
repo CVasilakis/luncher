@@ -86,6 +86,22 @@ class HomeWallpaperTest {
         assertNull(working())
     }
 
+    // Translucent, a secondary text takes a light picture's colors, muddy inside its dark edge.
+    @Test
+    fun `the date is opaque over the picture, translucent on the plain color`() {
+        val activity = start().get()
+        val date = activity.findViewById<TextView>(R.id.home_date)
+        assertEquals("while it's drawn", activity.getColor(UiR.color.text_secondary), date.currentTextColor)
+
+        drawInTheBackground()
+        assertEquals(activity.getColor(UiR.color.text_secondary_on_picture), date.currentTextColor)
+
+        appearance.appearance = Appearance(topLeftTiles)
+        start().get().let { plain ->
+            assertEquals(plain.getColor(UiR.color.text_secondary), plain.findViewById<TextView>(R.id.home_date).currentTextColor)
+        }
+    }
+
     @Test
     fun `draws one not kept at the screen's size, saying so over the plain color, then shows it`() {
         val activity = start().get()

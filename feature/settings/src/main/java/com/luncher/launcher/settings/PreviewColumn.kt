@@ -9,41 +9,51 @@ import android.widget.ScrollView
 import com.luncher.launcher.ui.screenSize
 
 /**
- * Add from folder's column beside the list: the preview, of the TV's shape as the wallpaper fills
- * it, as wide as the column, and below it the picture's name, Add all and the note. On a
- * screen too short for them all, the preview gets smaller, so the others still show whole; at
- * least a quarter of its height, so it still shows on the smallest screens, where the column then
- * scrolls: to its end while Add all has the focus, so the note shows too, and back to its top
- * when the list has it. The preview is drawn at the size it gets here.
+ * Add from folder's column beside the list: the preview's label, the preview, of the TV's shape as
+ * the wallpaper fills it, as wide as the column, and below it the picture's name, Add all and the
+ * note. On a screen too short for them all, the preview gets smaller, so the others still show
+ * whole; where it would be shorter than a row of the list (`settings_pictures_preview_least`: a
+ * short screen, large text, a long translation), the label, the preview and the name go, and none
+ * is drawn ([previewSize] 0 x 0). Where even Add all and the note don't fit, the column scrolls: to
+ * its end while Add all has the focus, so the note shows too, and back to its top when the list
+ * has it. The preview is drawn at the size it gets here.
  */
 internal class PreviewColumn(context: Context, attrs: AttributeSet?) : ScrollView(context, attrs) {
 
     private val content: ViewGroup get() = getChildAt(0) as ViewGroup
+    private val label: View get() = content.findViewById(R.id.settings_pictures_folder_preview_label)
+    private val frame: View get() = content.findViewById(R.id.settings_pictures_folder_preview_frame)
+    private val name: View get() = content.findViewById(R.id.settings_pictures_folder_selected)
+    private val least = resources.getDimensionPixelSize(R.dimen.settings_pictures_preview_least)
 
+    /** Whether the preview shows, with its label and name, as last measured. */
+    val showsPreview: Boolean get() = frame.visibility == VISIBLE
+
+    // What the preview would get is worked out with its label and name shown, whether they show
+    // now or not, so hiding them, which leaves more room, never brings them back.
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-        val preview = content.getChildAt(0)
         val width = MeasureSpec.getSize(widthMeasureSpec) - paddingLeft - paddingRight - content.paddingLeft - content.paddingRight
         val screen = context.screenSize()
-        // What the views below the preview take, with their gaps.
-        var below = 0
-        for (i in 1 until content.childCount) {
+        // What the views other than the preview take, with their gaps.
+        var others = 0
+        for (i in 0 until content.childCount) {
             val child = content.getChildAt(i)
-            if (child.visibility == GONE) continue
+            if (child === frame || (child.visibility == GONE && child !== label && child !== name)) continue
             val params = child.layoutParams as LinearLayout.LayoutParams
             child.measure(
                 MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY),
                 if (params.height >= 0) MeasureSpec.makeMeasureSpec(params.height, MeasureSpec.EXACTLY) else MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED),
             )
-            below += child.measuredHeight + params.topMargin
+            others += child.measuredHeight + params.topMargin + params.bottomMargin
         }
-        val natural = screen.heightAt(width)
-        var previewHeight = natural
+        var previewHeight = screen.heightAt(width)
         if (MeasureSpec.getMode(heightMeasureSpec) != MeasureSpec.UNSPECIFIED) {
-            val room = MeasureSpec.getSize(heightMeasureSpec) - paddingTop - paddingBottom - below
-            previewHeight = previewHeight.coerceAtMost(room).coerceAtLeast(natural / 4)
+            previewHeight = previewHeight.coerceAtMost(MeasureSpec.getSize(heightMeasureSpec) - paddingTop - paddingBottom - others)
         }
-        preview.layoutParams.width = screen.widthAt(previewHeight)
-        preview.layoutParams.height = previewHeight
+        val shown = if (previewHeight >= least) VISIBLE else GONE
+        for (view in listOf(label, frame, name)) if (view.visibility != shown) view.visibility = shown
+        frame.layoutParams.width = screen.widthAt(previewHeight.coerceAtLeast(0))
+        frame.layoutParams.height = previewHeight.coerceAtLeast(0)
         super.onMeasure(widthMeasureSpec, heightMeasureSpec)
     }
 
@@ -57,8 +67,8 @@ internal class PreviewColumn(context: Context, attrs: AttributeSet?) : ScrollVie
         (layoutParams as MarginLayoutParams).setMargins(-room, 0, -room, 0)
     }
 
-    /** The preview's size as last laid out: what it's drawn at. 0 x 0 before the first layout. */
-    val previewSize: Pair<Int, Int> get() = content.getChildAt(0).let { it.width to it.height }
+    /** The preview's size as last laid out: what it's drawn at. 0 x 0 before the first layout, and while it doesn't show. */
+    val previewSize: Pair<Int, Int> get() = if (showsPreview) frame.width to frame.height else 0 to 0
 
     /** Called when the preview's size changes, to draw it again at the new size. */
     var onPreviewSized: (() -> Unit)? = null

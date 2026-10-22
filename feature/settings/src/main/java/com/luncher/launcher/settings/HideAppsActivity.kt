@@ -44,7 +44,7 @@ class HideAppsActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.settings_hide_apps_activity)
-        placeAsSheet(checkNotNull(window))
+        placeAsSheet(checkNotNull(window), graph.appearanceSettings.read().topBar)
         list = findViewById(R.id.settings_apps)
         window.stylePanel(theme.roles)
         readApps()

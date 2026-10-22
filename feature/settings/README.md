@@ -22,7 +22,7 @@ feature/settings/
     │   ├── java/com/luncher/launcher/settings/
     │   │   ├── SettingsGraph.kt  the ports the settings screens need; Activity.graph
     │   │   ├── ScreenTheme.kt    a screen's theme colors, and its restyling in place when the theme changes
-    │   │   ├── Sheet.kt          placeAsSheet: a panel's window as a side sheet at the screen's end
+    │   │   ├── Sheet.kt          placeAsSheet: a panel's window as a side sheet on the home screen's gear's side
     │   │   ├── SettingsActivity.kt   the settings panel: lists the domain's settingsMenu, opens entries
     │   │   ├── HideAppsActivity.kt   the Hide apps list: every app by name; OK hides or shows one
     │   │   ├── PanelHeight.kt    a sheet's list as tall as its rows, or as the screen leaves room for
@@ -33,7 +33,7 @@ feature/settings/
     │   │   ├── EditorStartColumn.kt  its title, preview and buttons, the preview as large as the room left
     │   │   ├── StepperRow.kt     an option's name, and its value's chip beside it or below it
     │   │   ├── OptionRow.kt      an option's row: both editors'; Left and Right step it, or OK opens its list
-    │   │   ├── OptionList.kt     an option's values in a list beside the options: the background editor's
+    │   │   ├── OptionList.kt     an option's values in a list beside its field: the background editor's
     │   │   ├── OptionLabels.kt   what the options, their values and groups are called, the groups' icons, the accents' swatches
     │   │   ├── BackgroundActivity.kt the background editor: the pictures, the draft, Save; renames and deletes pictures, prepares them
     │   │   ├── BackgroundStartColumn.kt  its preview, options, Save and Delete all, the preview as large as the room left
@@ -43,7 +43,7 @@ feature/settings/
     │   │   ├── PictureReceivedActivity.kt the window over the home screen after a share: shows the pictures being added, then their uses, or how many were saved and why the others weren't
     │   │   ├── PicturesDialog.kt the dialogs over the picture screens: a picture's actions (ActionsDialog), a question, a message; renaming one (NameField)
     │   │   ├── Badge.kt          a dialog's mark beside its title: done, danger or info
-    │   │   ├── PreviewColumn.kt  Add from folder's preview, Add all and note, the preview smaller on a short screen
+    │   │   ├── PreviewColumn.kt  Add from folder's preview, Add all and note, the preview smaller on a short screen, gone below a row's height
     │   │   ├── ListFrame.kt      a list's frame (a :ui ScrollFrame): Down past its last row stays there, not on the column beside it
     │   │   └── PictureTexts.kt   what the picture screens call things: sizes, names, why a picture wasn't added
     │   └── res/                  the themes (Theme.Luncher.Settings, .Panel, .FullScreen, .Pictures, .Pictures.Dialog,
@@ -86,7 +86,7 @@ declares how the activities behave, and the build merges the two.
 ## The look
 
 Every screen here is built from `:ui`'s themed components ([`ui/README.md`](../../ui/README.md#the-design-system)):
-entries that turn inverse and zoom while focused, pill buttons, fields, lists in rounded
+entries that turn inverse while focused, pill buttons and fields that also zoom, lists in rounded
 containers that fade out where there's more and scroll a row ahead of the focus. The texts, icons and buttons take their colors from the
 theme the appearance holds (`ThemeAppearance`: an accent and dark or light,
 [`ARCHITECTURE.md`](../../docs/ARCHITECTURE.md#appearance)), through `ScreenTheme`: a screen styles
@@ -104,9 +104,11 @@ spacing in `values/`, so the same layouts fit it.
 ## The settings panel
 
 Its entries are Hide apps ([below](#hidden-apps)), Appearance ([below](#appearance)) and the
-device's own settings. `SettingsActivity` is a side sheet at the screen's end over the dimmed home
-screen (`placeAsSheet`: at most `settings_sheet_width` wide, as tall as the screen less its
-margin; at the left in a right-to-left language), its theme, `Theme.Luncher.Settings`, a platform
+device's own settings. `SettingsActivity` is a side sheet over the dimmed home screen, on the side of the
+screen where the home screen's gear is, so it opens beside it (`placeAsSheet`: at most
+`settings_sheet_width` wide, as tall as the screen less its margin; at the right by default, at
+the left once the clock is moved to the right; the screen's side in any language, as the home
+screen doesn't mirror, though the panel's content does), its theme, `Theme.Luncher.Settings`, a platform
 dialog theme. Each entry is one line: its icon, its name, centered in the entry's height, and at
 its end where it goes: a chevron to a panel of Luncher's, an arrow out of it to another app. On a screen too short for them all, the entries
 would scroll a row ahead of the focus (a `LookAheadScrollView`); the three of them fit on every TV
@@ -260,13 +262,14 @@ The background editor (`BackgroundActivity`) is where the wallpaper is chosen an
 from the appearance editor's Background button, full-screen like it. At the end, below their
 label (Pictures), Luncher's picture library as a list in its container (a `ListFrame`: cut along
 its rounded corners, fading out where there's more, scrolling a row ahead of the focus): No picture, the pictures by
-name, as the device's language sorts words, each with its thumbnail and name, then Add from folder
+name, as the device's language sorts words, each with its thumbnail, its name and below it its
+size in px and its file's size (as in Add from folder, without where: it's in Luncher's storage), then Add from folder
 ([below](#adding-a-picture)); a hint at the label's end says a long press of OK renames or
 deletes a picture, as the home screen's says what the keys do while moving an app. While the library is empty, how to add
 a picture follows: a share from another app, or the drop folder
 ([`platform/README.md`](../../platform/README.md#the-drop-folders)), with its path. At the start,
 with no label, a preview of the home screen with the chosen background, of the
-TV's shape with rounded corners, the background's options (Fit, Position, Dim, Blur) as a 2 × 2
+TV's shape with rounded corners, the background's options (Blur and Position, then Dim and Fit) as a 2 × 2
 grid of fields, each its name above its value, and Save (filled) with Delete all (outlined, in
 the error color) beside it, half the row each; two fields, or the buttons, go one below the other
 when either doesn't fit its half (`EntriesRow`: a long translation on a narrow screen). There's no
@@ -290,11 +293,12 @@ What the user changes is a draft, the one exception to the appearance editor's r
 change at once ([`ARCHITECTURE.md`](../../docs/ARCHITECTURE.md#appearance)): OK on a picture
 chooses it (tinted with the accent, a check beside it), and the preview follows; nothing is
 stored. An option's field shows its value with a mark pointing toward its list, not between
-arrows: OK on it opens its values in a list (`OptionList`, a `PopupWindow`) beside the options, at
-their end edge, over the pictures, so nothing of the options or the preview is covered: the value
-it has focused, checked, level with the field, moved up or down only to stay inside the overscan
-margin; the field outlined in the accent meanwhile (activated). In a right-to-left language it
-opens on the other side. The preview shows each value the focus comes to; OK keeps it, and Back
+arrows: OK on it opens its values in a list (`OptionList`, a `PopupWindow`) beside the field, at
+its end edge, so neither the field nor the preview is covered: a field of the second column has
+it over the pictures; one of the first reaches the grid's end edge, so it covers the other
+column's fields, and Delete all where it's as low, whole, not a part of them. The value it has focused,
+checked, level with the field, moved up or down only to stay inside the overscan margin; the
+field outlined in the accent meanwhile (activated). In a right-to-left language it opens on the other side. The preview shows each value the focus comes to; OK keeps it, and Back
 closes the list (not the editor) with the value from before. Left and Right on the fields don't
 change anything: they move the focus, as on the other entries, so Right goes from the second
 column to the pictures beside the options. The appearance editor keeps its arrows: nothing is beside
@@ -487,7 +491,9 @@ its path.
 | `PictureImport` (`:domain`) / `FilesPictures` (`:platform`) | adding one picture to the library, cancellable, when its copying starts, and how it went (`ImportResult`) |
 
 **From a drop folder** (`AddFromFolderActivity`): the pictures a file manager or a computer put in
-`Android/media/<applicationId>`, on the TV or a USB drive, listed together by name, as the
+`Android/media/<applicationId>`, on the TV or a USB drive, which a line below the title says, on
+one line, the folder last, so where it doesn't fit (the smallest screens) only its start is cut;
+listed together by name, as the
 device's language sorts words (`inListOrder`), below their label and how many there are, in a
 container like the editor's pictures; each row with an icon of where it is (a TV or a USB drive),
 its name, then where it is ("Local" or "USB drive") and its size. Beside them, below its label, a
@@ -527,9 +533,13 @@ counted among those not added; one not tried yet is refused as it's added, and c
 In place of a preview that isn't drawn, or can't be, a warning mark shows, so nobody waits for
 one. Anything else that isn't a picture isn't listed. The folders are read again each time the screen
 shows, so a USB drive plugged in meanwhile counts. On a screen too short for the preview, Add all
-and the note, the preview gets smaller (`PreviewColumn`), down to a quarter of its height; on the
-smallest screens the column then scrolls, to its end while Add all has the focus, so the note
-shows too.
+and the note, the preview gets smaller (`PreviewColumn`); where it would be shorter than a row of
+the list (64 dp: the smallest screens, large text, a long translation), the preview goes, with
+its label and the picture's name, and none is drawn: Add all and the note are the column. Where
+even they don't fit, the column scrolls, to its end while Add all has the focus, so the note
+shows too. The 64 dp were chosen from the preview's heights measured on screens 360 to 540 dp
+tall in each language, with normal and large text: the room left to it depends as much on the
+text as on the screen.
 
 The list scrolls a row ahead of the selection, as the editor's does. Down past its last picture
 leaves the focus there, as in the editor's list (`ListFrame`), not on Add all; Right goes to it.

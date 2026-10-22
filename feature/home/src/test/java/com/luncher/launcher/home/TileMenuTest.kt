@@ -6,6 +6,9 @@ import android.view.KeyEvent
 import android.view.View
 import android.view.ViewConfiguration
 import android.widget.TextView
+import com.luncher.domain.appearance.Corners
+import com.luncher.domain.appearance.FakeAppearanceSettings
+import com.luncher.domain.appearance.TileStyle
 import com.luncher.domain.apps.AppArrangement
 import com.luncher.domain.apps.FakeAppArrangements
 import com.luncher.domain.apps.FakeInstalledApps
@@ -203,6 +206,35 @@ class TileMenuTest {
 
         assertFalse(menu.isShowing)
         assertEquals("abcdefgh", activity.labels())
+    }
+
+    // Of a piece with the tiles, up to a panel's corners; its entries' concentric with its own.
+    @Test
+    fun `the menu's corners follow the tiles', up to a panel's, its entries' inside them`() {
+        val settings = (RuntimeEnvironment.getApplication() as HomeTestApplication).graph.appearanceSettings as FakeAppearanceSettings
+        val density = RuntimeEnvironment.getApplication().resources.displayMetrics.density
+        // The tiles' corners; the menu's and its entries' in dp.
+        val cases = listOf(
+            Corners.Radius(0) to (0f to 0f),
+            Corners.Radius(4) to (4f to 2f),
+            Corners.Radius(8) to (8f to 2f),
+            Corners.Radius(12) to (12f to 4f),
+            Corners.Radius(16) to (16f to 6f),
+            Corners.Radius(24) to (24f to 14f),
+            Corners.Radius(32) to (28f to 18f),
+            Corners.Pill to (28f to 18f),
+        )
+        for ((corners, expected) in cases) {
+            settings.appearance = settings.appearance.copy(tileStyle = TileStyle(corners = corners))
+            val controller = start()
+            val menu = controller.get().longPress("a")
+
+            val panel = checkNotNull(menu.window).decorView.background as android.graphics.drawable.GradientDrawable
+            assertEquals("the menu's, with $corners", expected.first * density, panel.cornerRadius, 0.5f)
+            for (entry in menu.entries()) assertEquals("an entry's, with $corners", expected.second * density, (entry as com.luncher.launcher.ui.EntryText).corner, 0.5f)
+            menu.dismiss()
+            controller.pause().stop().destroy()
+        }
     }
 
     @Test

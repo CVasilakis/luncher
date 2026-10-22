@@ -23,8 +23,19 @@
         <attr name="colorRole" />
     </declare-styleable>
 
+    <!-- An entry's corners, where it isn't corner_entry: in a container, concentric with its
+         corners. -->
+    <attr name="entryCorner" format="dimension" />
+
+    <declare-styleable name="EntryText">
+        <attr name="entryCorner" />
+    </declare-styleable>
+
     <declare-styleable name="ListEntry">
         <attr name="fill" />
+        <attr name="entryCorner" />
+        <!-- Grows a little while focused: a field, not a row of a list. -->
+        <attr name="zooms" format="boolean" />
     </declare-styleable>
 
     <declare-styleable name="PillButton">

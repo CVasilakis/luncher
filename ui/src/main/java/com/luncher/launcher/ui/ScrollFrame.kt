@@ -21,9 +21,9 @@ import com.luncher.domain.appearance.ColorRoles
  * list's container on a screen of its own (`surface`) or a field's (`high`); or none, on a panel,
  * whose color the fades go to.
  *
- * The list gives its focused entry room for its zoom inside itself, as padding with
- * `clipToPadding="false"`: a parent that clips cuts each child to the child's own bounds, so room
- * outside the list would be cut with it.
+ * The list keeps a margin around its rows inside itself, as padding with `clipToPadding="false"`,
+ * its rows' corners concentric with the frame's (`corner_entry_in_container`): a parent that clips
+ * cuts each child to the child's own bounds, so a margin outside the list would be cut with it.
  */
 open class ScrollFrame @JvmOverloads constructor(context: Context, attrs: AttributeSet? = null) :
     FrameLayout(context, attrs), Themed, ViewTreeObserver.OnScrollChangedListener {

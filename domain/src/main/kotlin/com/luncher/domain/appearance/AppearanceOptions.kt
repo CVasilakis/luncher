@@ -56,11 +56,12 @@ fun appearanceOptions(): AppearanceOptions =
             ),
             AppearanceGroup(
                 AppearanceTopic.BACKGROUND,
+                // Two a row in the background editor: Blur and Position, then Dim and Fit.
                 listOf(
-                    AppearanceOption.BackgroundFit,
+                    AppearanceOption.BackgroundBlur,
                     AppearanceOption.BackgroundPosition,
                     AppearanceOption.BackgroundDim,
-                    AppearanceOption.BackgroundBlur,
+                    AppearanceOption.BackgroundFit,
                 ),
                 editedApart = true,
             ),

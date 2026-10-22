@@ -70,8 +70,8 @@
 
     <!-- AppearanceActivity sets the width: settings_appearance_options_width, or half the screen.
          The groups' container, its top level with the title, which grows with a group opened and
-         scrolls when taller than the room below the title; moving the focus scrolls it. Room
-         inside for the focused entry's zoom. The overscan margin at the end only (lint's
+         scrolls when taller than the room below the title; moving the focus scrolls it. A margin
+         inside around the entries. The overscan margin at the end only (lint's
          RtlSymmetry wants both sides set). -->
     <FrameLayout
         android:id="@+id/settings_appearance_end"

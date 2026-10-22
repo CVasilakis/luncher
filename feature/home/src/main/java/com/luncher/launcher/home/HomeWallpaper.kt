@@ -24,8 +24,13 @@ import com.luncher.launcher.ui.R as UiR
  *
  * A start reads a wallpaper kept on the main thread (in [Wallpaper.show]), so the first frame has
  * it, as the tiles' images. A drawing goes on when the home screen stops, and shows when it's back.
+ * [onPicture] is told whether a picture shows, the first time and whenever that changes.
  */
-internal class HomeWallpaper(private val activity: Activity, private val wallpaper: Wallpaper<Bitmap>) {
+internal class HomeWallpaper(
+    private val activity: Activity,
+    private val wallpaper: Wallpaper<Bitmap>,
+    private val onPicture: (Boolean) -> Unit,
+) {
 
     private val plain = ColorDrawable(activity.color(UiR.color.background))
 
@@ -91,8 +96,10 @@ internal class HomeWallpaper(private val activity: Activity, private val wallpap
 
     private fun setImage(image: Bitmap?) {
         if (applied && image === shown) return
+        val pictureChanged = !applied || (image == null) != (shown == null)
         applied = true
         shown = image
         activity.window.setBackgroundDrawable(if (image == null) plain else BitmapDrawable(activity.resources, image))
+        if (pictureChanged) onPicture(image != null)
     }
 }

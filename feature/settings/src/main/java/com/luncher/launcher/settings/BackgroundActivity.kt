@@ -52,7 +52,7 @@ import java.util.Locale
  * screens; the preview's content isn't.
  *
  * What the user changes is a draft: OK on a picture chooses it (a check, the accent's tint), and OK
- * on an option opens its values in a list beside the options, over the pictures ([OptionList]),
+ * on an option opens its values in a list beside its field ([OptionList]),
  * the preview showing the value with the focus, OK keeping it, Back the one before; Left and Right only move the focus, from the options to the pictures
  * beside them. A picture chosen shows as it is, its position in the middle, neither dimmed nor
  * blurred, with the fit kept; the stored one shows again as it's stored. The values are those that move the chosen picture on this screen (an
@@ -394,9 +394,16 @@ class BackgroundActivity : Activity() {
         return row
     }
 
-    /** A new row for [picture]: its thumbnail if it's kept, and its name; a long press of OK offers to rename or delete it. */
+    /**
+     * A new row for [picture]: its thumbnail if it's kept, its name, and below it its size in px
+     * and its file's size; a long press of OK offers to rename or delete it.
+     */
     private fun pictureRow(picture: Picture): View {
         val row = row(nameOf(picture)) { choose(picture.id) }
+        row.findViewById<TextView>(R.id.settings_background_details).apply {
+            text = details(picture.width, picture.height, picture.bytes)
+            visibility = View.VISIBLE
+        }
         row.styleAll(theme.roles)
         val thumbnail = row.findViewById<ImageView>(R.id.settings_background_thumbnail)
         thumbnail.clipToOutline = true

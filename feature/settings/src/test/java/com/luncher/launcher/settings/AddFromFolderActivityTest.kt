@@ -94,7 +94,7 @@ class AddFromFolderActivityTest {
             ),
             activity.rows(),
         )
-        assertEquals("Pictures in the folder Android/media/${activity.packageName}, on this TV or a USB drive", activity.findViewById<TextView>(R.id.settings_pictures_folder_where).text.toString())
+        assertEquals("Pictures on this TV or a USB drive, in the folder Android/media/${activity.packageName}", activity.findViewById<TextView>(R.id.settings_pictures_folder_where).text.toString())
     }
 
     @Test

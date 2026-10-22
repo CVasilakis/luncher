@@ -22,6 +22,8 @@ import com.luncher.domain.apps.appActions
 import com.luncher.domain.apps.homeApps
 import com.luncher.launcher.settings.R as SettingsR
 import com.luncher.launcher.settings.SettingsActivity
+import com.luncher.launcher.ui.color
+import com.luncher.launcher.ui.R as UiR
 import java.util.Locale
 
 /**
@@ -82,7 +84,7 @@ class HomeActivity : Activity() {
         val arranged = arranged ?: return@OnLongClickListener false
         val tile = it as AppTileView
         val menu = menu ?: TileMenu(this).also { menu = it }
-        menu.style(colorRoles(shownTheme ?: appearanceSettings.read().theme))
+        menu.style(colorRoles(shownTheme ?: appearanceSettings.read().theme), tiles.tileStyle.corners)
         menu.show(tile, appActions(arranged, tile.app)) { action -> act(action, tile) }
         true
     }
@@ -96,7 +98,7 @@ class HomeActivity : Activity() {
         clockView = findViewById(R.id.home_clock)
         settingsEntry = findViewById(R.id.home_settings)
         settingsEntry.setOnClickListener { openSettings() }
-        wallpaper = HomeWallpaper(this, graph.wallpaper)
+        wallpaper = HomeWallpaper(this, graph.wallpaper, ::showOnPicture)
         move = MoveMode(
             tiles,
             normalBar = listOf(clockView, settingsEntry),
@@ -195,8 +197,18 @@ class HomeActivity : Activity() {
                 setColor(roles.homeAccent)
             })
         }
-        menu?.style(roles)
+        menu?.style(roles, tiles.tileStyle.corners)
         wallpaper.roles = roles
+    }
+
+    /**
+     * The secondary texts (the date, the move hint, why there are no tiles) in an opaque gray over
+     * a picture: translucent, they'd take its colors, muddy inside their dark edge on a light one.
+     * On the plain color, translucent, as Luncher's other secondary texts.
+     */
+    private fun showOnPicture(onPicture: Boolean) {
+        val color = color(if (onPicture) UiR.color.text_secondary_on_picture else UiR.color.text_secondary)
+        for (id in intArrayOf(R.id.home_date, R.id.home_move_hint, R.id.home_empty)) findViewById<TextView>(id).setTextColor(color)
     }
 
     /** What OK on an entry of [tile]'s menu does. */

@@ -13,7 +13,7 @@ class AppearanceOptionsTest {
         assertEquals(listOf(AppearanceTopic.TILES, AppearanceTopic.TOP_BAR, AppearanceTopic.THEME, AppearanceTopic.BACKGROUND), catalog.groups.map { it.topic })
         assertEquals(listOf(AppearanceOption.AccentColor, AppearanceOption.ThemeMode), catalog.groups[2].options)
         assertEquals(
-            listOf(AppearanceOption.BackgroundFit, AppearanceOption.BackgroundPosition, AppearanceOption.BackgroundDim, AppearanceOption.BackgroundBlur),
+            listOf(AppearanceOption.BackgroundBlur, AppearanceOption.BackgroundPosition, AppearanceOption.BackgroundDim, AppearanceOption.BackgroundFit),
             catalog.groups[3].options,
         )
         assertEquals(listOf(false, false, false, true), catalog.groups.map { it.editedApart })

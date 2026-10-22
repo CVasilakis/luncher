@@ -24,6 +24,8 @@
         android:text="@string/settings_pictures_add_from_folder"
         android:textSize="@dimen/text_display" />
 
+    <!-- One line, cut at its start where it doesn't fit (the smallest screens): the folder, at
+         the sentence's end, stays in sight. -->
     <com.luncher.launcher.ui.ThemedText
         android:id="@+id/settings_pictures_folder_where"
         android:layout_width="match_parent"
@@ -32,7 +34,9 @@
         android:layout_marginBottom="@dimen/settings_pictures_title_gap"
         android:drawableStart="@drawable/icon_folder"
         android:drawablePadding="@dimen/icon_gap"
+        android:ellipsize="start"
         android:gravity="center_vertical"
+        android:singleLine="true"
         android:textSize="@dimen/settings_pictures_where_text"
         app:colorRole="onSurfaceVariant" />
 
@@ -80,7 +84,7 @@
                 app:fill="surface">
 
                 <!-- A pictures_folder_row per picture; the selected one looks focused while the
-                     list has the focus. Room inside for its zoom. -->
+                     list has the focus. A margin inside around them, which their corners follow. -->
                 <com.luncher.launcher.ui.LookAheadListView
                     android:id="@+id/settings_pictures_folder_list"
                     android:layout_width="match_parent"
@@ -104,7 +108,8 @@
         </LinearLayout>
 
         <!-- The preview's column: its label, then the preview, smaller on a short screen, so Add
-             all and the note fit below it; on the smallest screens the column scrolls
+             all and the note fit below it; where it would be smaller than a row of the list, no
+             label, preview nor name; where even then they don't fit, the column scrolls
              (PreviewColumn). -->
         <LinearLayout
             android:id="@+id/settings_pictures_folder_side_column"
@@ -113,10 +118,6 @@
             android:layout_gravity="end"
             android:clipChildren="false"
             android:orientation="vertical">
-
-            <com.luncher.launcher.ui.ThemedText
-                style="@style/Widget.Luncher.Settings.Label"
-                android:text="@string/settings_pictures_folder_preview_label" />
 
             <com.luncher.launcher.settings.PreviewColumn
                 android:id="@+id/settings_pictures_folder_side"
@@ -132,6 +133,11 @@
                     android:clipChildren="false"
                     android:clipToPadding="false"
                     android:orientation="vertical">
+
+                    <com.luncher.launcher.ui.ThemedText
+                        android:id="@+id/settings_pictures_folder_preview_label"
+                        style="@style/Widget.Luncher.Settings.Label"
+                        android:text="@string/settings_pictures_folder_preview_label" />
 
                     <!-- Drawn at exactly its size, as the picture fills the TV's screen; PreviewColumn
                          sets it. Its corners rounded. A spinning wheel in its middle while it's drawn;

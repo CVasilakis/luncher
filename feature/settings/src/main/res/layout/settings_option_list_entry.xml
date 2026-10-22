@@ -10,7 +10,8 @@
     android:gravity="center_vertical"
     android:orientation="horizontal"
     android:paddingLeft="@dimen/settings_entry_padding"
-    android:paddingRight="@dimen/settings_entry_padding">
+    android:paddingRight="@dimen/settings_entry_padding"
+    app:entryCorner="@dimen/corner_entry_in_container">
 
     <com.luncher.launcher.ui.ThemedText
         android:id="@+id/settings_option_list_value"

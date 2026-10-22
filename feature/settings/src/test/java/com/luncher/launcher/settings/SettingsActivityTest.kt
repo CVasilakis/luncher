@@ -6,6 +6,9 @@ import android.view.KeyEvent
 import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
+import com.luncher.domain.appearance.Appearance
+import com.luncher.domain.appearance.Side
+import com.luncher.domain.appearance.TopBarAppearance
 import com.luncher.launcher.testing.TV_1080P
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -136,7 +139,7 @@ class SettingsActivityTest {
         assertEquals(entry.width.toFloat(), entry.getLineRight(0))
     }
 
-    // A side sheet at the screen's end, the right, a margin from its edges.
+    // A side sheet beside the home screen's gear, at the right by default, a margin from its edges.
     @Test
     fun `is a side sheet at the right, as tall as the screen less its margins`() {
         val activity = start()
@@ -148,10 +151,29 @@ class SettingsActivityTest {
         assertEquals(activity.resources.displayMetrics.heightPixels - 2 * margin, window.height)
     }
 
-    // Mirrored, as the panels are in a right-to-left language.
+    // The clock moved to the right puts the gear at the left: the panel opens beside it.
+    @Test
+    fun `is at the left when the clock is at the right, the gear at the left`() {
+        val graph = (RuntimeEnvironment.getApplication() as SettingsTestApplication).graph as TestSettingsGraph
+        graph.appearanceSettings.appearance = Appearance(topBar = TopBarAppearance(clockSide = Side.RIGHT))
+
+        assertEquals(android.view.Gravity.LEFT or android.view.Gravity.CENTER_VERTICAL, start().window.attributes.gravity)
+    }
+
+    // Without a clock, the gear is at the right, wherever the clock would be.
+    @Test
+    fun `is at the right when the clock is hidden`() {
+        val graph = (RuntimeEnvironment.getApplication() as SettingsTestApplication).graph as TestSettingsGraph
+        graph.appearanceSettings.appearance = Appearance(topBar = TopBarAppearance(showTime = false, showDate = false, clockSide = Side.RIGHT))
+
+        assertEquals(android.view.Gravity.RIGHT or android.view.Gravity.CENTER_VERTICAL, start().window.attributes.gravity)
+    }
+
+    // The home screen doesn't mirror in a right-to-left language, so its gear stays at the right,
+    // and the panel with it; its content mirrors.
     @Test
     @Config(qualifiers = "ar-$TV_1080P")
-    fun `is at the left in a right-to-left language`() {
-        assertEquals(android.view.Gravity.LEFT or android.view.Gravity.CENTER_VERTICAL, start().window.attributes.gravity)
+    fun `is beside the gear in a right-to-left language too`() {
+        assertEquals(android.view.Gravity.RIGHT or android.view.Gravity.CENTER_VERTICAL, start().window.attributes.gravity)
     }
 }

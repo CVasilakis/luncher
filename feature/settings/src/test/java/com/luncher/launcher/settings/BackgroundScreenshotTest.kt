@@ -101,16 +101,27 @@ class BackgroundScreenshotTest {
         captureScreenFocused("src/test/screenshots/settings/settings_background_saving.png")
     }
 
-    // OK on Blur: its values in a list beside the options, over the pictures, Light, the one it
-    // has, checked and focused, level with the field, and the preview showing it.
+    // OK on Fit, at the grid's end: its values in a list beside it, over the pictures, Fill, the
+    // one it has, checked and focused, level with the field.
     @Test
     fun optionList() {
         val activity = editor(*library)
-        val blur = (activity.findViewById<ViewGroup>(R.id.settings_background_options).getChildAt(1) as ViewGroup).getChildAt(1)
-        blur.requestFocus()
-        blur.performClick()
+        val fit = (activity.findViewById<ViewGroup>(R.id.settings_background_options).getChildAt(1) as ViewGroup).getChildAt(1)
+        fit.requestFocus()
+        fit.performClick()
         idle()
         captureScreenFocused("src/test/screenshots/settings/settings_background_option_list.png")
+    }
+
+    // OK on Dim, in the first column: its list beside it, over Blur, so the preview stays in sight.
+    @Test
+    fun optionListOfTheFirstColumn() {
+        val activity = editor(*library)
+        val dim = (activity.findViewById<ViewGroup>(R.id.settings_background_options).getChildAt(1) as ViewGroup).getChildAt(0)
+        dim.requestFocus()
+        dim.performClick()
+        idle()
+        captureScreenFocused("src/test/screenshots/settings/settings_background_option_list_start.png")
     }
 
     /** A long press of OK on [name]'s row, then the entry [index] of what it offers. */
@@ -249,6 +260,18 @@ class BackgroundScreenshotTest {
             folderPicture("wallpaper-4k.jpg"),
             folderPicture("IMG_0001.HEIC", unsupported = PictureFormat.HEIF),
         ).window.decorView.captureFocused("src/test/screenshots/pictures/pictures_add_from_folder.png")
+    }
+
+    // 720p at the 1080p density, 640x360 dp: the folder's line cut at its start, the margins short.
+    @Test
+    @Config(qualifiers = "+w640dp-h360dp")
+    fun addFromFolderOnASmallScreen() {
+        folderScreen(
+            folderPicture("holiday.jpg", removable = true),
+            folderPicture("logo-netflix.png", removable = true),
+            folderPicture("wallpaper-4k.jpg"),
+            folderPicture("IMG_0001.HEIC", unsupported = PictureFormat.HEIF),
+        ).window.decorView.captureFocused("src/test/screenshots/pictures/pictures_add_from_folder_small_screen.png")
     }
 
     @Test

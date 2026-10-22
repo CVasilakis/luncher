@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The tiles. A line icon on a 24-unit grid, white: tinted where it's used (Themed). -->
+<!-- The tiles: four of a TV's banners, two rows of two, rounded, apart enough that the gaps stay
+     open at 24 dp. A line icon on a 24-unit grid, white: tinted where it's used (Themed). -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"
     android:viewportWidth="24"
     android:viewportHeight="24">
     <path
-        android:pathData="M4,4 L11,4 L11,11 L4,11 Z M13,4 L20,4 L20,11 L13,11 Z M4,13 L11,13 L11,20 L4,20 Z M13,13 L20,13 L20,20 L13,20 Z"
+        android:pathData="M4,5.5 H9 A1.5,1.5 0 0 1 10.5,7 V9.5 A1.5,1.5 0 0 1 9,11 H4 A1.5,1.5 0 0 1 2.5,9.5 V7 A1.5,1.5 0 0 1 4,5.5 Z M15,5.5 H20 A1.5,1.5 0 0 1 21.5,7 V9.5 A1.5,1.5 0 0 1 20,11 H15 A1.5,1.5 0 0 1 13.5,9.5 V7 A1.5,1.5 0 0 1 15,5.5 Z M4,14 H9 A1.5,1.5 0 0 1 10.5,15.5 V18 A1.5,1.5 0 0 1 9,19.5 H4 A1.5,1.5 0 0 1 2.5,18 V15.5 A1.5,1.5 0 0 1 4,14 Z M15,14 H20 A1.5,1.5 0 0 1 21.5,15.5 V18 A1.5,1.5 0 0 1 20,19.5 H15 A1.5,1.5 0 0 1 13.5,18 V15.5 A1.5,1.5 0 0 1 15,14 Z"
         android:strokeColor="#FFFFFFFF"
         android:strokeLineCap="round"
         android:strokeLineJoin="round"

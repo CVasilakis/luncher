@@ -15,7 +15,8 @@
     android:paddingStart="@dimen/settings_appearance_option_indent"
     android:paddingTop="@dimen/settings_entry_padding_vertical"
     android:paddingEnd="@dimen/settings_entry_padding_end_chip"
-    android:paddingBottom="@dimen/settings_entry_padding_vertical">
+    android:paddingBottom="@dimen/settings_entry_padding_vertical"
+    app:entryCorner="@dimen/corner_entry_in_container">
 
     <com.luncher.launcher.ui.ThemedText
         android:id="@+id/settings_option_label"

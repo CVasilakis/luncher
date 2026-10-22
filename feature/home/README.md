@@ -28,7 +28,8 @@ feature/home/
     │   │   ├── AppTileView.kt    one app: its image, focus frame and zoom, or lift and shadow; its name; held while moved
     │   │   ├── TilePaints.kt     what every tile draws with: frames, dimming, the name, the corners, the focus style, the shadow's outline
     │   │   ├── HomeWallpaper.kt  the wallpaper, the window's background, as the process's Wallpaper says; a window while it's drawn again
-    │   │   ├── TileMenu.kt       a tile's menu: the domain's AppActions for its app, in a window above or below it
+    │   │   ├── TileMenu.kt       a tile's menu: the domain's AppActions for its app, in a window above or below it,
+    │   │   │                     its corners following the tiles'
     │   │   └── MoveMode.kt       moving an app: keys to the domain's MoveSession, the top bar's title and hint
     │   └── res/                  the focused tile's zoom, or zoom and lift (animator/), the settings gear (its focus
     │                             disc is set in code, in the accent), home_activity.xml, the tile menu's layouts and theme
@@ -96,7 +97,8 @@ one job, so a new arrangement, image source or top bar item changes one of them:
 gear at the other: by default the clock at the left, the time before the date, and the gear at the
 right; the appearance can swap them, and hide the time, the date or both. With both hidden, the
 gear is at the right, wherever the clock's side says. The domain's `topBarLayout` decides where
-each goes, so the editor's preview shows them alike. A hidden time or date is invisible, not gone:
+each goes, so the editor's preview shows them alike, and the settings panel opens on the gear's
+side ([`settings/README.md`](../settings/README.md#the-settings-panel)). A hidden time or date is invisible, not gone:
 the bar keeps its height, so the tiles below it never move. Left and right are the screen's in every language
 ([why](../../app/README.md#manifest-why-each-part-is-there)); later items (e.g. status
 indicators) go with the settings gear. The time always gets its room first; a date too long for
@@ -117,8 +119,10 @@ edge, so its view never cuts it. A new item in the bar brings its own: a text is
 `OutlinedTextView`; an icon, a vector, draws the same path stroked in `wallpaper_outline` first,
 as the gear does (`home_settings.xml`). `HomeOutlineTest` draws each item of the bar, and the
 message without apps, alone on white, and fails for one without it. The secondary texts (the date,
-the hint) are 70 % white, so the edge shows through them: on a light picture they read grey, as on
-the plain background.
+the hint, the message without apps) are 70 % white on the plain background, and an opaque light
+grey (`text_secondary_on_picture`) over a picture (`HomeWallpaper` says when one shows):
+translucent, they took a light picture's colors, muddy inside their dark edge. The editors'
+preview draws the date's block alike.
 
 The bar itself isn't focusable. An item that should be reachable with the D-pad (the settings
 gear) is a focusable view in it, and Up from the first row of tiles moves there through
@@ -266,6 +270,12 @@ centered it would leave that margin (a row's first or last tile), its edge lines
 tile's edge on that side. It lists
 what the user can do to that app, the first entry focused; OK on one closes the menu and does it,
 Back closes it. The tile stays focused and zoomed under it, so it's clear which app it's for.
+Its corners are as round as the tiles' (the appearance's corner radius), so it looks of a piece
+with them, up to a panel's 28 dp: a pill, or 32 dp, gets 28 dp, as rounder would make a small
+menu look like a pill; its entries' corners are concentric with its own where that's round
+enough, else a third of the menu's, at least 2 dp: 2 dp for tiles of 4 and 8 dp, 4 dp for 12,
+concentric from 16 dp; square in a square menu (`menuCorner`, `entryCorner`). No other
+panel follows the tiles.
 
 | Entry | Does |
 |---|---|
@@ -277,7 +287,7 @@ Back closes it. The tile stays focused and zoomed under it, so it's clear which 
 | `AppAction`, `appActions` (`:domain`) | which actions there are, and which the menu of an app offers, in order |
 | `tileMenuPlacement` (`:domain`) | where the menu goes: above the tile as it's drawn (zoomed, its name below it), below where there's no room; across centered, or in line with the tile's edge where centered would leave the room |
 | `AppTileView.focusedBounds` | where the tile is drawn on the screen while it has focus, for that rule |
-| `TileMenu` | the menu's window: the app's name as its title, an entry for each action with its icon and label from exhaustive `when`s over `AppAction`, placed where the rule says; in the theme's colors (`style`) |
+| `TileMenu` | the menu's window: the app's name as its title, an entry for each action with its icon and label from exhaustive `when`s over `AppAction`, placed where the rule says; in the theme's colors, its corners following the tiles' (`style`, `menuCorner`) |
 | `HomeActivity` | opens the menu on a long press, and does what an entry says, in an exhaustive `when` too: Move starts `MoveMode`, Hide stores the arrangement with the app hidden, which shows as any change of it does |
 
 A new action (the app's info in the device's settings, a picture of the user's own for its tile)
@@ -285,7 +295,8 @@ is a type of `AppAction`, offered by `appActions`, which then doesn't compile in
 until the menu has its label and icon, and `HomeActivity` what it does.
 
 The menu is styled like the settings ([`ui/README.md`](../../ui/README.md#the-design-system)):
-its entries (`EntryText`) turn inverse and zoom while focused, and it takes the theme's colors,
+its entries (`EntryText`) turn inverse while focused, keeping their size as a list's rows do,
+and it takes the theme's colors,
 light or dark, as the settings panel does. The home screen applies the theme as it follows the
 appearance (`showTheme`, only when the theme part changed): the accent on the tiles' focus frame
 (`AppTilesView.accent`) and on the gear's focus disc, the colors on the menu and on the window
