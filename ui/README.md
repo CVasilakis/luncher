@@ -23,6 +23,8 @@ ui/
     │   │   │                     the previews' shape
     │   │   ├── ShortestShowing.kt  how long a wait has shown, so it shows half a second at least: WorkingDialog's,
     │   │   │                     and the share window's wheel
+    │   │   ├── TileName.kt       the app name below the focused tile: its paint, its gap, the room it takes
+    │   │   │                     below a tile; the home screen's, and the room the appearance preview leaves
     │   │   ├── WallpaperOutline.kt  the dark edge around what's drawn on the wallpaper, on the home screen
     │   │   │                     and in the previews of it
     │   │   └── WorkingDialog.kt  a floating panel with a spinning wheel and a message, taking every key,
@@ -35,7 +37,8 @@ ui/
     │       └── values/
     │           ├── colors.xml    background, accent, primary and secondary text, a panel and its focused entry,
     │           │                 the wallpaper outline
-    │           ├── dimens.xml    a panel's corners, an entry's frame, WorkingDialog's sizes, the wallpaper outline's width
+    │           ├── dimens.xml    a panel's corners, an entry's frame, WorkingDialog's sizes, the wallpaper outline's width,
+    │           │                 the tile name's text size and gap
     │           └── themes.xml    Theme.Luncher, the app's and the home screen's theme; Theme.Luncher.Working
     └── testFixtures/java/com/luncher/launcher/testing/
         ├── TvDevice.kt           the TV screens the JVM tests run on (TV_1080P, TV_SCREENS)

@@ -183,12 +183,14 @@ text. It's a made-up sample, not the user's apps: a screen 960 dp wide, of the T
 the home screen, with seven tiles, a full row and a short one, so that every option's values look
 different. The width stays on every shape, so a row holds as many tiles. It lays them out with
 `TileLayouts` and `topBarLayout` at its own density (its pixels per sample dp), so every dp value
-scales with it and it can't disagree with the home screen. What's on the wallpaper has the home
-screen's edge (`WallpaperOutline`, [`feature/home/README.md`](../home/README.md#the-top-bar)), so
-the illustration reads on a white picture too: the blocks and the tiles' outlines, at the sample's
-scale but a pixel at least (there the tiles' fill doesn't show, their outlines do); not the focus
-frame, as on the home screen. A new shape gets it too: `AppearancePreviewViewTest` fails for a light
-shape without it. It isn't focusable.
+scales with it and it can't disagree with the home screen. The room the rows leave the focused
+tile's name is measured as the home screen's (`:ui`'s `TileName`, at the largest zoom), so it
+follows the device's font size and the language's font there too. What's on the wallpaper has the
+home screen's edge (`WallpaperOutline`, [`feature/home/README.md`](../home/README.md#the-top-bar)),
+so the illustration reads on a white picture too: the blocks and the tiles' outlines, at the
+sample's scale but a pixel at least (there the tiles' fill doesn't show, their outlines do); not the
+focus frame, as on the home screen. A new shape gets it too: `AppearancePreviewViewTest` fails for a
+light shape without it. It isn't focusable.
 
 To add an option: [`ARCHITECTURE.md`](../../docs/ARCHITECTURE.md#appearance), "Adding an aspect";
 its labels go in `optionLabel` and `optionValue` (`OptionLabels.kt`), in every translation.

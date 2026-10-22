@@ -81,7 +81,7 @@ one job, so a new arrangement, image source or top bar item changes one of them:
 | `AppTilesView` | lays tiles out where the `TileLayout` says, moves the focus where the `TileFocus` says, and scrolls to the focused one; holds the `TilePaints` its tiles share |
 | `bannerFor` (`:domain`) | which image a tile shows |
 | `AppImages` (`:domain`), `CachedBannerImages` and `BannerImages` (`:platform`) | draws that image into a bitmap of the tile's size, or reads the one an earlier start drew |
-| `AppTileView` | draws that bitmap, the focus frame and zoom, or the lift ([below](#appearance)), with the corners `TilePaints` gives, and the focused app's name below it if the geometry says; in arrange mode, a white frame and a bigger zoom when held, dimmed when hidden |
+| `AppTileView` | draws that bitmap, the focus frame and zoom, or the lift ([below](#appearance)), with the corners `TilePaints` gives, and the focused app's name below it if the geometry says; in arrange mode, a white frame and the largest zoom when held, dimmed when hidden |
 | `Clock` (`:domain`) | what time it is, in which time zone and hour format, and when that changes |
 | `AndroidClock` (`:platform`) | reads those from Android, and watches the time broadcasts only while something listens |
 | `ClockView` | formats a reading in the device's language; the time and the date side by side, in the order the top bar gives, either or both hidden |
@@ -186,8 +186,8 @@ and the tile rises toward the viewer (`translationZ`, `home_tile_lift`, in `home
 Android's renderer casts its shadow from its outline, a rounded rectangle with the tiles' corners
 (`TilePaints.tileOutline`). The shadow is the GPU's, as for any raised view since Android 5: no
 blurred bitmap, no software layer, nothing drawn per frame in Luncher's code; `AppTilesView` doesn't
-clip its tiles, so it shows past the tile. A held tile keeps its white frame and its zoom in both
-styles, so it stands out from one only focused.
+clip its tiles, so it shows past the tile. A held tile keeps its white frame and its zoom of 1.15 in
+both styles; a lifted one only focused is as big, so there the white frame tells the two apart.
 
 With the app name shown (`TileGeometry.appName`, Off by default), the focused tile draws its app's
 name centered below it, in the primary text color, cut with "…" to the tile's width, outlined as
@@ -195,10 +195,12 @@ everything on the wallpaper is ([The top bar](#the-top-bar)), fading in and out 
 the zoom's time, and dimmed with a hidden app's tile in [arrange mode](#arrange-mode). It's drawn
 with the tile, past its bottom edge, so it zooms and lifts with it; its text is cut once per tile
 size, and the fade is an animator made with the tile, so a focus move only starts it. The rows leave
-it room: `TilePaints.nameHeight`, the gap and a line of text at the largest zoom a tile gets, is the
-room `TileLayouts` keeps below each row, the last one too, so a name never covers the next row, and
-the rows at the bottom end that much higher. Scrolling to a focused tile shows its name too. The
-room doesn't change where the focus or a moved app goes.
+it room: `TilePaints.nameHeight`, the gap and a line of text at the largest zoom a tile gets,
+measured by `:ui`'s `TileName` (which the [appearance editor's
+preview](../settings/README.md#appearance) measures with too), is the room `TileLayouts` keeps below
+each row, the last one too, so a name never covers the next row, and the rows at the bottom end that
+much higher. Scrolling to a focused tile shows its name too. The room doesn't change where the focus
+or a moved app goes.
 
 ### The wallpaper
 
@@ -262,7 +264,7 @@ shows where hiding is.
 
 | While… | Arrows | OK | Back |
 |---|---|---|---|
-| holding an app (white frame, bigger zoom) | move it | put it down | put it down, end the mode |
+| holding an app (white frame, the largest zoom) | move it | put it down | put it down, end the mode |
 | not holding one | move the focus | pick up the focused app, shown or hidden | end the mode |
 
 Left and Right move the held app one place along the order, wrapping rows; Up and Down one row, to

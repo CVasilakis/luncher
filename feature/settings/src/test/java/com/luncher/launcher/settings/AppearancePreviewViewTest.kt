@@ -1,10 +1,12 @@
 package com.luncher.launcher.settings
 
+import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Rect
 import android.view.View
+import com.luncher.domain.appearance.AppName
 import com.luncher.domain.appearance.Appearance
 import com.luncher.domain.appearance.Background
 import com.luncher.domain.appearance.Corners
@@ -48,7 +50,9 @@ class AppearancePreviewViewTest {
 
     private val images = FakePictureImages(::sampleWallpaper)
 
-    private val preview = AppearancePreviewView(RuntimeEnvironment.getApplication(), null).apply {
+    private val preview = preview(RuntimeEnvironment.getApplication())
+
+    private fun preview(context: android.content.Context) = AppearancePreviewView(context, null).apply {
         measure(exactly(WIDTH), exactly(HEIGHT))
         layout(0, 0, WIDTH, HEIGHT)
         showWallpapers(home, images, jobs)
@@ -60,11 +64,11 @@ class AppearancePreviewViewTest {
 
     private fun exactly(size: Int) = View.MeasureSpec.makeMeasureSpec(size, View.MeasureSpec.EXACTLY)
 
-    private fun draw(appearance: Appearance): Bitmap {
-        preview.appearance = appearance
+    private fun draw(appearance: Appearance, view: AppearancePreviewView = preview): Bitmap {
+        view.appearance = appearance
         jobs.runAll()                                   // its wallpaper, drawn in the background
         shadowOf(Looper.getMainLooper()).idle()        // and shown
-        return Bitmap.createBitmap(WIDTH, HEIGHT, Bitmap.Config.ARGB_8888).also { preview.draw(Canvas(it)) }
+        return Bitmap.createBitmap(WIDTH, HEIGHT, Bitmap.Config.ARGB_8888).also { view.draw(Canvas(it)) }
     }
 
     /** The bytes this thread allocates running [block], on average over many runs, after as many to warm up. */
@@ -82,6 +86,20 @@ class AppearancePreviewViewTest {
         for (change in appearanceChanges()) {
             assertFalse("$change draws as ${change.option} at its default", draw(change.base).sameAs(draw(change.changed)))
         }
+    }
+
+    // The room the rows leave for the focused tile's name is measured as the home screen's is
+    // (:ui's TileName), so it grows with the device's font size as there. Nothing else in the
+    // sample is text, so without the name the font size changes nothing.
+    @Test
+    fun `the room for the app name follows the font size, as on the home screen`() {
+        val application = RuntimeEnvironment.getApplication()
+        val larger = Configuration(application.resources.configuration).apply { fontScale = 1.3f }
+        val largerText = preview(application.createConfigurationContext(larger))
+        val names = Appearance(TileGeometry(appName = AppName.WHEN_FOCUSED))
+
+        assertFalse("the same room at 1.3", draw(names).sameAs(draw(names, largerText)))
+        assertTrue(draw(Appearance()).sameAs(draw(Appearance(), largerText)))
     }
 
     // Rule 5 (docs/ARCHITECTURE.md): drawing allocates nothing.

@@ -33,8 +33,9 @@ import com.luncher.domain.apps.bannerFor
  * tile's width, fading in and out with the focus; drawn with the tile, outside its bounds, which
  * [AppTilesView] doesn't clip, so it zooms with it.
  *
- * While the user arranges apps, a [held] tile has a white frame and a bigger zoom, apart from one
- * that's only focused, and a [hidden] app's tile is dimmed.
+ * While the user arranges apps, a [held] tile has a white frame and the largest zoom, apart from
+ * one that's only focused (lifted, that one is as big: the frame tells them apart), and a
+ * [hidden] app's tile is dimmed, its name too.
  */
 @SuppressLint("ViewConstructor") // Created in code only, never from XML.
 internal class AppTileView(

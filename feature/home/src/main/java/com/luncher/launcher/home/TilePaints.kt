@@ -11,9 +11,9 @@ import com.luncher.domain.appearance.Corners
 import com.luncher.domain.appearance.FocusStyle
 import com.luncher.domain.appearance.TileGeometry
 import com.luncher.domain.appearance.TileStyle
+import com.luncher.launcher.ui.TileName
 import com.luncher.launcher.ui.WallpaperOutline
 import com.luncher.launcher.ui.color
-import kotlin.math.ceil
 import com.luncher.launcher.ui.R as UiR
 
 /**
@@ -47,32 +47,25 @@ internal class TilePaints(context: Context) {
      */
     var showsNames = TileGeometry().appName == AppName.WHEN_FOCUSED
 
-    /** The app's name below its tile, on the wallpaper: with [nameOutline]'s edge, as the top bar's texts. */
-    val namePaint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = context.color(UiR.color.text_primary)
-        textSize = context.resources.getDimension(R.dimen.home_tile_name_text)
-    }
+    /**
+     * The app's name below its tile, as :ui's [TileName] has it, so the appearance editor's preview
+     * leaves it the same room; on the wallpaper, with [nameOutline]'s edge, as the top bar's texts.
+     */
+    private val name = TileName(context)
+    val namePaint: TextPaint = name.paint
     val nameOutline = WallpaperOutline(context)
 
-    /** The name's ascent, read once: each read of the font's metrics allocates. */
-    val nameAscent: Int
-
-    /** Between a tile's bottom edge and its name's top, before the zoom. */
-    val nameGap: Int = context.resources.getDimensionPixelSize(R.dimen.home_tile_name_gap)
+    /** The name's ascent, and the gap between a tile's bottom edge and the name's top, before the zoom. */
+    val nameAscent: Int = name.ascent
+    val nameGap: Int = name.gap
 
     /**
      * How far below a tile its name reaches, the gap included, at the most a tile is zoomed
      * ([AppTileView.LARGEST_ZOOM]): the room the rows leave below each tile while names show
-     * ([com.luncher.domain.layout.TileLayouts]). The name is drawn with the tile, so it's zoomed
-     * as the tile is, and what the zoom adds above it the gap between the rows already has room for.
+     * ([com.luncher.domain.layout.TileLayouts]). What the zoom adds above the name, the gap
+     * between the rows already has room for.
      */
-    val nameHeight: Int
-
-    init {
-        val metrics = namePaint.fontMetricsInt
-        nameAscent = metrics.ascent
-        nameHeight = ceil(AppTileView.LARGEST_ZOOM * (nameGap + metrics.descent - metrics.ascent)).toInt()
-    }
+    val nameHeight: Int = name.room(AppTileView.LARGEST_ZOOM)
 
     /**
      * The shape a lifted tile's shadow takes: the tile's, with its corners. Shared by every tile;

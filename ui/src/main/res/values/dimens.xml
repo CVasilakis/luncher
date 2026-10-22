@@ -19,4 +19,9 @@
          (WallpaperOutline). The home screen's gear (feature/home's home_settings.xml) draws twice
          this, in its own units. -->
     <dimen name="wallpaper_outline">0.75dp</dimen>
+    <!-- The app's name below the focused tile (TileName), and the gap between the two, both before
+         the tile's zoom, which they're drawn with: the home screen's, and the room the appearance
+         editor's preview leaves it. -->
+    <dimen name="tile_name_text">16sp</dimen>
+    <dimen name="tile_name_gap">8dp</dimen>
 </resources>
