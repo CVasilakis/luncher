@@ -9,7 +9,6 @@ import android.widget.TextView
 import com.luncher.domain.appearance.AppName
 import com.luncher.domain.appearance.Appearance
 import com.luncher.domain.appearance.Corners
-import com.luncher.domain.appearance.FocusStyle
 import com.luncher.domain.appearance.HorizontalAlignment
 import com.luncher.domain.appearance.FakeAppearanceSettings
 import com.luncher.domain.appearance.Side
@@ -154,7 +153,7 @@ class AppearanceActivityTest {
         assertEquals(
             listOf(
                 "Tiles open", "Vertical alignment: Bottom", "Horizontal alignment: Center", "Full bottom row: On",
-                "Corner radius: 12 dp", "Focus style: Frame", "App name: Off", "Time and date", "Theme",
+                "Corner radius: 12 dp", "Focus frame: On", "App name: Off", "Time and date", "Theme",
             ),
             activity.lines(),
         )
@@ -271,17 +270,17 @@ class AppearanceActivityTest {
 
     // The tvOS-like look, a step away each: the focused tile lifted, its name below it.
     @Test
-    fun `the focus style steps to Lift, and the app name to When focused`() {
+    fun `the focus frame steps to Off, and the app name to When focused`() {
         val activity = start()
-        activity.focus("Tiles", "Focus style")
+        activity.focus("Tiles", "Focus frame")
 
-        activity.press(KeyEvent.KEYCODE_DPAD_RIGHT)
-        assertEquals("Lift", activity.value("Focus style"))
+        activity.press(KeyEvent.KEYCODE_DPAD_LEFT)
+        assertEquals("Off", activity.value("Focus frame"))
         assertTrue(activity.row("App name").requestFocus())
         activity.press(KeyEvent.KEYCODE_DPAD_RIGHT)
         assertEquals("When focused", activity.value("App name"))
 
-        assertEquals(Appearance(TileGeometry(appName = AppName.WHEN_FOCUSED), TileStyle(focus = FocusStyle.LIFT)), settings.appearance)
+        assertEquals(Appearance(TileGeometry(appName = AppName.WHEN_FOCUSED), TileStyle(focusFrame = false)), settings.appearance)
         assertEquals(settings.appearance, activity.findViewById<AppearancePreviewView>(R.id.settings_appearance_preview).appearance)
     }
 

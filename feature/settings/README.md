@@ -220,8 +220,10 @@ they scroll when they're taller than the screen, a row ahead of the focus.
 
 **The preview**, its corners rounded and, on the plain background, edged in the theme's outline color, draws outlined tiles filled with white at 20 % (`settings_preview_tile`, in place of
 the banners) on the home screen's background (the wallpaper's picture, drawn at the sample screen's
-size in the background's style, or the plain color), the first one zoomed as focused, framed or
-lifted (a few dark, offset rounded rectangles stand for the shadow; the frame in the accent's vivid tone, as on the home screen), and plain blocks for the time,
+size in the background's style, or the plain color), the first one zoomed as focused, as much
+framed as lifted (with the focus frame on, the frame in the accent's vivid tone inside its edge, as
+on the home screen; off, outlined as the other tiles, with a dozen faint rounded rectangles, each a
+little wider and lower, for the shadow), and plain blocks for the time,
 the date, the settings gear and, while the app name shows, the focused tile's name: no images or
 text. It's a made-up sample, not the user's apps: a screen 960 dp wide, of the TV's shape
 (`screenSize`, which the wallpaper is drawn at: 540 dp tall on a 16:9 TV), so a picture is cut as on

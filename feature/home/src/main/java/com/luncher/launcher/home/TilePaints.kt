@@ -8,7 +8,6 @@ import android.view.View
 import android.view.ViewOutlineProvider
 import com.luncher.domain.appearance.AppName
 import com.luncher.domain.appearance.Corners
-import com.luncher.domain.appearance.FocusStyle
 import com.luncher.domain.appearance.TileGeometry
 import com.luncher.domain.appearance.ThemeAppearance
 import com.luncher.domain.appearance.TileStyle
@@ -20,8 +19,8 @@ import com.luncher.launcher.ui.R as UiR
 
 /**
  * What every tile draws with besides its own image: the focus frame, the held frame, the focused
- * app's name, the corners and the focus style from the home screen's [TileStyle], and the outline
- * a lifted tile's shadow takes.
+ * app's name, the corners and whether the focused tile is framed, from the home screen's
+ * [TileStyle], and the outline a lifted tile's shadow takes.
  * [AppTilesView] holds the one set its tiles share, so a style change updates it once and redraws,
  * without touching each tile's own state.
  */
@@ -36,8 +35,8 @@ internal class TilePaints(context: Context) {
     /** The tiles' corners, from the home screen's style. */
     var corners: Corners = TileStyle().corners
 
-    /** How the focused tile stands out, from the home screen's style. */
-    var focusStyle: FocusStyle = TileStyle().focus
+    /** Whether the focused tile is framed, else lifted, from the home screen's style. */
+    var framed: Boolean = TileStyle().focusFrame
 
     /**
      * Whether the focused tile shows its app's name below it, from the home screen's geometry. It

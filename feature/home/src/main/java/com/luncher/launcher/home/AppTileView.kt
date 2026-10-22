@@ -14,19 +14,19 @@ import android.graphics.RectF
 import android.graphics.Shader
 import android.text.TextUtils
 import android.view.View
-import com.luncher.domain.appearance.FocusStyle
 import com.luncher.domain.apps.AppImages
 import com.luncher.domain.apps.InstalledApp
 import com.luncher.domain.apps.bannerFor
 import com.luncher.domain.layout.PixelBounds
 
 /**
- * One app on the home screen: its banner, and while it has focus, as [TilePaints.focusStyle] says,
- * a frame and a slight zoom, or no frame, a bigger zoom and a shadow, as if lifted. The image is
- * drawn at the tile's size whenever that size changes (the number of columns, for example), so
- * drawing the tile is a single bitmap copy. With rounded corners ([TilePaints]), the same bitmap
- * fills a rounded rectangle through a shader made with it, and the frame and the shadow follow the
- * corners: a new radius only redraws, with the image as it is.
+ * One app on the home screen: its banner, and while it has focus, a zoom with, as
+ * [TilePaints.framed] says, a frame inside its edge or a shadow, as if lifted: as big either way,
+ * since the frame takes no room outside the tile. The image is drawn at the tile's size whenever
+ * that size changes (the number of columns, for example), so drawing the tile is a single bitmap
+ * copy. With rounded corners ([TilePaints]), the same bitmap fills a rounded rectangle through a
+ * shader made with it, and the frame and the shadow follow the corners: a new radius only redraws,
+ * with the image as it is.
  *
  * The shadow is Android's own, cast by the tile's outline as it rises (its translationZ, in the
  * state animator), drawn by the GPU: nothing is blurred or allocated for it. With
@@ -34,15 +34,15 @@ import com.luncher.domain.layout.PixelBounds
  * tile's width, fading in and out with the focus; drawn with the tile, outside its bounds, which
  * [AppTilesView] doesn't clip, so it zooms with it.
  *
- * While the user moves its app, a [held] tile has a white frame and the largest zoom, apart from
- * one that's only focused (lifted, that one is as big: the frame tells them apart).
+ * While the user moves its app, a [held] tile has a white frame, and the focused one's zoom: the
+ * frame tells it apart from one only focused.
  */
 @SuppressLint("ViewConstructor") // Created in code only, never from XML.
 internal class AppTileView(
     context: Context,
     val app: InstalledApp,
     private val images: AppImages<Bitmap>,
-    /** Shared by every tile: the frames, the name's paint, the corners and the focus style. */
+    /** Shared by every tile: the frames, the name's paint, the corners and whether the focused tile is framed. */
     private val paints: TilePaints,
 ) : View(context) {
 
@@ -68,8 +68,8 @@ internal class AppTileView(
         addUpdateListener { invalidate() }
     }
 
-    /** The focus style the state animator is for; null before the first. */
-    private var focusStyle: FocusStyle? = null
+    /** Whether the state animator is the framed tile's; null before the first. */
+    private var framed: Boolean? = null
 
     /** The user holds this tile, to move it. */
     var held = false
@@ -78,7 +78,7 @@ internal class AppTileView(
             field = value
             val zoom = when {
                 value -> HELD_ZOOM
-                isFocused -> focusedZoom()   // as the focus animator leaves it
+                isFocused -> FOCUSED_ZOOM   // as the focus animator leaves it
                 else -> 1f
             }
             animate().scaleX(zoom).scaleY(zoom)
@@ -96,16 +96,19 @@ internal class AppTileView(
     }
 
     /**
-     * Takes the style [paints] have now: a new focus style swaps the state animator, which zooms
-     * and lifts the tile, and puts it at once where the new one has it; new corners give the
-     * shadow a new outline. Then redraws.
+     * Takes the style [paints] have now: the frame turned on or off swaps the state animator,
+     * which zooms the tile, and lifts it without the frame, and puts it at once where the new one
+     * has it; new corners give the shadow a new outline. Then redraws.
      */
     fun restyle() {
-        val style = paints.focusStyle
-        if (style != focusStyle) {
-            focusStyle = style
+        val frame = paints.framed
+        if (frame != framed) {
+            framed = frame
             translationZ = 0f   // the frame's animator doesn't lift, so it wouldn't bring the tile down
-            stateListAnimator = AnimatorInflater.loadStateListAnimator(context, focusAnimator(style))
+            stateListAnimator = AnimatorInflater.loadStateListAnimator(
+                context,
+                if (frame) R.animator.home_tile_focus else R.animator.home_tile_lift,
+            )
             jumpDrawablesToCurrentState()
         }
         invalidateOutline()
@@ -136,7 +139,7 @@ internal class AppTileView(
         }
         val frame = when {
             held -> paints.heldFrame
-            isFocused && paints.focusStyle == FocusStyle.FRAME -> paints.focusFrame
+            isFocused && paints.framed -> paints.focusFrame
             else -> null
         }
         if (frame != null) {
@@ -189,31 +192,20 @@ internal class AppTileView(
         val left = location[0] + this.left - parent.scrollX
         val top = location[1] + this.top - parent.scrollY
         // Zoomed around its middle, where the state animator's zoom leaves the pivot.
-        val grownX = (width * (focusedZoom() - 1) / 2).toInt()
-        val grownY = (height * (focusedZoom() - 1) / 2).toInt()
+        val grownX = (width * (FOCUSED_ZOOM - 1) / 2).toInt()
+        val grownY = (height * (FOCUSED_ZOOM - 1) / 2).toInt()
         val bottom = if (paints.showsNames) top + height + paints.nameHeight else top + height + grownY
         return PixelBounds(left - grownX, top - grownY, left + width + grownX, bottom)
     }
 
-    private fun focusedZoom() = when (paints.focusStyle) {
-        FocusStyle.FRAME -> FRAME_ZOOM
-        FocusStyle.LIFT -> LIFT_ZOOM
-    }
-
-    private fun focusAnimator(style: FocusStyle) = when (style) {
-        FocusStyle.FRAME -> R.animator.home_tile_focus
-        FocusStyle.LIFT -> R.animator.home_tile_lift
-    }
-
     companion object {
-        /** The focused tile's zoom, framed (home_tile_focus.xml) and lifted (home_tile_lift.xml). */
-        const val FRAME_ZOOM = 1.1f
-        const val LIFT_ZOOM = 1.15f
+        /** The focused tile's zoom, framed (home_tile_focus.xml) or lifted (home_tile_lift.xml). */
+        const val FOCUSED_ZOOM = 1.15f
 
-        /** A held tile's zoom, while the user arranges apps. */
-        const val HELD_ZOOM = 1.15f
+        /** A held tile's zoom, while the user moves its app: the focused one's. */
+        const val HELD_ZOOM = FOCUSED_ZOOM
 
-        /** The most a tile grows, framed, lifted or held. */
-        const val LARGEST_ZOOM = HELD_ZOOM
+        /** The most a tile grows, focused or held. */
+        const val LARGEST_ZOOM = FOCUSED_ZOOM
     }
 }

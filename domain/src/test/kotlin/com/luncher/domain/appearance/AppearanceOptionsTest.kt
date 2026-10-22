@@ -23,7 +23,7 @@ class AppearanceOptionsTest {
                 AppearanceOption.HorizontalAlignment,
                 AppearanceOption.FullBottomRow,
                 AppearanceOption.CornerRadius,
-                AppearanceOption.FocusStyle,
+                AppearanceOption.FocusFrame,
                 AppearanceOption.AppName,
             ),
             catalog.groups[0].options,

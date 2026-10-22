@@ -232,12 +232,12 @@ Adding an aspect, e.g. the focus frame's color:
 
 Today `Appearance` has five parts: `TileGeometry` (the tiles' size, spacing and alignment, and
 whether the focused tile's name shows below it, which the rows leave room for), `TileStyle` (their
-corners, and how the focused one stands out: framed or lifted), `TopBarAppearance` (whether the
+corners, and whether the focused one is framed or lifted), `TopBarAppearance` (whether the
 time and the date show, the clock's side, and the time's side of the date), `Background` (the
 wallpaper: a picture of the picture library, or none, and how it's drawn) and `ThemeAppearance`
 (Luncher's theme: the accent color, and whether the menus and settings are dark or light). The
 catalog's options, the vertical and the horizontal alignment, a full bottom row, the corner
-radius, the focus style, the app name, the time and the date shown or hidden, the clock's side and
+radius, the focus frame, the app name, the time and the date shown or hidden, the clock's side and
 the time's side, the accent color and the mode, are changed in the settings' appearance editor
 ([`feature/settings/README.md`](../feature/settings/README.md#appearance)); the wallpaper's fit,
 position, dim and blur in the background editor it opens (below). The wallpaper's picture

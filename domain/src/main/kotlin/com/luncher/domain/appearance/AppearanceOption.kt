@@ -6,7 +6,6 @@ import com.luncher.domain.pictures.PictureCut
 import com.luncher.domain.pictures.PicturePosition
 import com.luncher.domain.appearance.AccentColor as Accent
 import com.luncher.domain.appearance.AppName as Name
-import com.luncher.domain.appearance.FocusStyle as Focus
 import com.luncher.domain.appearance.HorizontalAlignment as Horizontal
 import com.luncher.domain.appearance.ThemeMode as Mode
 import com.luncher.domain.appearance.VerticalAlignment as Vertical
@@ -84,12 +83,12 @@ sealed interface AppearanceOption<T> {
             appearance.copy(tileStyle = appearance.tileStyle.copy(corners = value))
     }
 
-    /** How the focused tile stands out: framed, or lifted with a shadow. */
-    data object FocusStyle : AppearanceOption<Focus> {
-        override val values: List<Focus> = Focus.entries
-        override fun get(appearance: Appearance) = appearance.tileStyle.focus
-        override fun set(appearance: Appearance, value: Focus) =
-            appearance.copy(tileStyle = appearance.tileStyle.copy(focus = value))
+    /** Whether the focused tile is framed; without a frame, it's lifted with a shadow. */
+    data object FocusFrame : AppearanceOption<Boolean> {
+        override val values: List<Boolean> = listOf(false, true)
+        override fun get(appearance: Appearance) = appearance.tileStyle.focusFrame
+        override fun set(appearance: Appearance, value: Boolean) =
+            appearance.copy(tileStyle = appearance.tileStyle.copy(focusFrame = value))
     }
 
     /** Whether the focused tile's app name shows below it. */

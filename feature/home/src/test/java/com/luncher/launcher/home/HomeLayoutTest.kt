@@ -11,7 +11,6 @@ import com.luncher.domain.appearance.Appearance
 import com.luncher.domain.appearance.Background
 import com.luncher.domain.appearance.Corners
 import com.luncher.domain.appearance.FakeAppearanceSettings
-import com.luncher.domain.appearance.FocusStyle
 import com.luncher.domain.appearance.HorizontalAlignment
 import com.luncher.domain.appearance.Side
 import com.luncher.domain.appearance.TileGeometry
@@ -193,14 +192,14 @@ class HomeLayoutTest(private val screen: TvScreen) {
     // The focused tile lifted, its name below it: the rows further apart.
     @Test
     fun `the home screen fits with the focused tile lifted and its name shown`() {
-        appearance.appearance = Appearance(TileGeometry(appName = AppName.WHEN_FOCUSED), TileStyle(focus = FocusStyle.LIFT))
+        appearance.appearance = Appearance(TileGeometry(appName = AppName.WHEN_FOCUSED), TileStyle(focusFrame = false))
 
         `the home screen fits`()
     }
 
     @Test
     fun `moving an app fits with the focused tile's name shown`() {
-        appearance.appearance = Appearance(TileGeometry(appName = AppName.WHEN_FOCUSED), TileStyle(focus = FocusStyle.LIFT))
+        appearance.appearance = Appearance(TileGeometry(appName = AppName.WHEN_FOCUSED), TileStyle(focusFrame = false))
 
         `moving an app fits`()
     }

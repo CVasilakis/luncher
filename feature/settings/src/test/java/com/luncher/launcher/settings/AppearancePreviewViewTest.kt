@@ -244,23 +244,32 @@ class AppearancePreviewViewTest {
     // orange, isn't light, and has none, as on the home screen.
     @Test
     fun `every shape on the wallpaper has an outline`() {
+        // The time, the date, the gear, and the tiles but the focused one.
+        assertShapesOutlined(TileStyle(), shapes = 9)
+    }
+
+    // Without the frame, the focused tile is outlined as the others, which counts it among them.
+    @Test
+    fun `lifted, the focused tile is outlined as the others, with the wallpaper's edge`() {
+        assertShapesOutlined(TileStyle(focusFrame = false), shapes = 10)
+    }
+
+    private fun assertShapesOutlined(style: TileStyle, shapes: Int) {
         val preview = AppearancePreviewView(RuntimeEnvironment.getApplication(), null).apply {
             measure(exactly(WIDTH), exactly(HEIGHT))
             layout(0, 0, WIDTH, HEIGHT)
             showWallpapers(home, FakePictureImages { picture, width, height, _ -> solid(picture, width, height) }, jobs)
         }
         fun drawOn(picture: String): Bitmap {
-            preview.appearance = Appearance(background = Background(PictureId(picture)))
+            preview.appearance = Appearance(tileStyle = style, background = Background(PictureId(picture)))
             jobs.runAll()
             shadowOf(Looper.getMainLooper()).idle()
             return Bitmap.createBitmap(WIDTH, HEIGHT, Bitmap.Config.ARGB_8888).also { preview.draw(Canvas(it)) }
         }
         val onWhite = drawOn("white")
 
-        val shapes = lightShapes(drawOn("black"))
+        val shapes = lightShapes(drawOn("black")).also { assertEquals(shapes, it.size) }
 
-        // The time, the date, the gear, and the tiles but the focused one.
-        assertEquals(9, shapes.size)
         for (shape in shapes) {
             val around = Rect(shape).apply { inset(-2, -2) }
             assertTrue("the shape at $shape has no outline", (around.left until around.right).any { x ->

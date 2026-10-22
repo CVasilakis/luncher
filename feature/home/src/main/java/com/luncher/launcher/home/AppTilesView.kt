@@ -55,10 +55,6 @@ internal class AppTilesView(context: Context, attrs: AttributeSet?) : ViewGroup(
 
     private var layouts = TileLayouts(tileGeometry, pixelsPerDp, paints.nameHeight)
 
-    /**
-     * How the tiles are drawn, from the home screen's appearance: a new one changes [paints] and
-     * restyles the tiles, with the places and images they have.
-     */
     /** The focused tile's frame's color: the theme's accent, as the home screen shows it. */
     var accent: Int = paints.focusFrame.color
         set(value) {
@@ -68,12 +64,16 @@ internal class AppTilesView(context: Context, attrs: AttributeSet?) : ViewGroup(
             for (i in 0 until childCount) getChildAt(i).invalidate()
         }
 
+    /**
+     * How the tiles are drawn, from the home screen's appearance: a new one changes [paints] and
+     * restyles the tiles, with the places and images they have.
+     */
     var tileStyle: TileStyle = TileStyle()
         set(value) {
             if (field == value) return
             field = value
             paints.corners = value.corners
-            paints.focusStyle = value.focus
+            paints.framed = value.focusFrame
             for (i in 0 until childCount) (getChildAt(i) as AppTileView).restyle()
         }
 

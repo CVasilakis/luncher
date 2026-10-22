@@ -16,7 +16,6 @@ import android.view.ViewOutlineProvider
 import com.luncher.domain.appearance.Appearance
 import com.luncher.domain.appearance.Background
 import com.luncher.domain.appearance.colorRoles
-import com.luncher.domain.appearance.FocusStyle
 import com.luncher.domain.jobs.JobPriority
 import com.luncher.domain.jobs.Jobs
 import com.luncher.domain.jobs.LatestRequest
@@ -41,8 +40,9 @@ import kotlin.math.roundToInt
  * images or text. Not the real home screen: a made-up one, [SCREEN_WIDTH] dp wide and of the
  * TV's shape ([screenSize], as the wallpaper is drawn: 540 dp tall on a 16:9 TV), with [TILES]
  * tiles, chosen so every option's values look different: a full row and a short one, so left and
- * right differ, and the first tile focused, so the focus style shows: framed, or lifted with a
- * shadow (a few dark, offset round rectangles around it, not a blur), and with the app name shown, a block
+ * right differ, and the first tile focused, so the focus frame shows: on, the frame inside its
+ * edge; off, the tile outlined as the others, lifted with a shadow (a dozen faint round rectangles
+ * around it, each a little wider and lower, not a blur); and with the app name shown, a block
  * below it, in the room the rows leave it. The width stays, so a row holds as many tiles on every
  * shape.
  *
@@ -172,9 +172,12 @@ internal class AppearancePreviewView(context: Context, attrs: AttributeSet?) : V
     private var tileHeight = 0
     private var tileRadius = 0f
 
-    /** The focused tile's zoom and whether it's lifted, from the style. */
-    private var focusZoom = FRAME_ZOOM
+    /** Whether the focused tile is lifted, from the style; else framed. */
     private var lifted = false
+
+    /** The focused tile's frame's line, inside the tile's edge, and its corners' radius. */
+    private val frame = RectF()
+    private var frameRadius = 0f
 
     /**
      * A lifted tile's shadow, layer by layer, each wider and lower, less the tile: the tiles' fill
@@ -218,7 +221,7 @@ internal class AppearancePreviewView(context: Context, attrs: AttributeSet?) : V
 
     init {
         val tileName = TileName(context)
-        nameRoom = tileName.roomDp(LIFT_ZOOM)
+        nameRoom = tileName.roomDp(FOCUS_ZOOM)
         nameGap = tileName.gapDp
     }
     private val blockOutlinePaint = stroke(outline.color).apply { strokeJoin = Paint.Join.ROUND }
@@ -273,22 +276,28 @@ internal class AppearancePreviewView(context: Context, attrs: AttributeSet?) : V
             canvas.drawOval(gear, primaryPaint)
         }
         for (i in tiles.indices) {
-            if (i == FOCUSED) continue
-            canvas.drawRoundRect(tiles[i], tileRadius, tileRadius, tileOutlinePaint)
-            canvas.drawRoundRect(tiles[i], tileRadius, tileRadius, tileFillPaint)
-            canvas.drawRoundRect(tiles[i], tileRadius, tileRadius, tilePaint)
+            if (i != FOCUSED) drawTile(canvas, tiles[i])
         }
         // Zoomed, as the home screen's focused tile, its name with it.
         val focused = tiles[FOCUSED]
         canvas.save()
-        canvas.scale(focusZoom, focusZoom, focused.centerX(), focused.centerY())
+        canvas.scale(FOCUS_ZOOM, FOCUS_ZOOM, focused.centerX(), focused.centerY())
         if (lifted) {
             for (layer in shadows) canvas.drawPath(layer, shadowPaint)
+            drawTile(canvas, focused)
+        } else {
+            canvas.drawRoundRect(focused, tileRadius, tileRadius, tileFillPaint)
+            canvas.drawRoundRect(frame, frameRadius, frameRadius, focusPaint)
         }
-        canvas.drawRoundRect(focused, tileRadius, tileRadius, tileFillPaint)
-        if (!lifted) canvas.drawRoundRect(focused, tileRadius, tileRadius, focusPaint)
         drawBlock(canvas, name, primaryPaint)
         canvas.restore()
+    }
+
+    /** A tile as every one but a framed focused tile is drawn: filled, with its outline, and the edge over a picture. */
+    private fun drawTile(canvas: Canvas, tile: RectF) {
+        canvas.drawRoundRect(tile, tileRadius, tileRadius, tileOutlinePaint)
+        canvas.drawRoundRect(tile, tileRadius, tileRadius, tileFillPaint)
+        canvas.drawRoundRect(tile, tileRadius, tileRadius, tilePaint)
     }
 
     /** [block] with its outline. An item left out has an empty block, which stroked would still draw a dot. */
@@ -323,9 +332,13 @@ internal class AppearancePreviewView(context: Context, attrs: AttributeSet?) : V
     private fun styleTiles() {
         val style = appearance.tileStyle
         tileRadius = style.corners.pixels(tileHeight, scale)
-        lifted = style.focus == FocusStyle.LIFT
-        focusZoom = if (lifted) LIFT_ZOOM else FRAME_ZOOM
+        lifted = !style.focusFrame
         val focused = tiles[FOCUSED]
+        // As the home screen's: the line's middle half its width inside the edge, its corners as much tighter.
+        val inset = focusPaint.strokeWidth / 2
+        frame.set(focused)
+        frame.inset(inset, inset)
+        frameRadius = (tileRadius - inset).coerceAtLeast(0f)
         for (i in shadows.indices) {
             val spread = (i + 1) * SHADOW_SPREAD * scale
             shadow.set(focused)
@@ -419,14 +432,17 @@ internal class AppearancePreviewView(context: Context, attrs: AttributeSet?) : V
         const val TILES_WIDTH = SCREEN_WIDTH - 2 * PADDING_HORIZONTAL
         const val TILES = 7
         const val FOCUSED = 0
-        /** The focused tile's zoom, framed or lifted (feature/home's AppTileView); lifted is the largest. */
-        const val FRAME_ZOOM = 1.1f
-        const val LIFT_ZOOM = 1.15f
-        /** A lifted tile's shadow: its layers, how much wider and lower each is than the last, and each one's darkness. */
-        const val SHADOW_LAYERS = 3
-        const val SHADOW_SPREAD = 2
-        const val SHADOW_DROP = 3
-        const val SHADOW_ALPHA = 40
+        /** The focused tile's zoom, framed or lifted (feature/home's AppTileView), the largest. */
+        const val FOCUS_ZOOM = 1.15f
+        /**
+         * A lifted tile's shadow: its layers, how much wider and lower each is than the last, in dp,
+         * and each one's darkness. They overlap, so it's darkest at the tile, about 40 %, and fades
+         * in small steps to its outer edge, 6 dp out and 9 dp down.
+         */
+        const val SHADOW_LAYERS = 12
+        const val SHADOW_SPREAD = 0.5f
+        const val SHADOW_DROP = 0.75f
+        const val SHADOW_ALPHA = 11
         /** The name's block, as wide as a short name. */
         const val NAME_WIDTH = 64
         const val NAME_HEIGHT = 12

@@ -30,8 +30,7 @@ domain/src/
 │   │   ├── AppName.kt           model: an app's name below its tile, never or below the focused one
 │   │   ├── VerticalAlignment.kt model: the rows at the top, centered or at the bottom of the height
 │   │   ├── HorizontalAlignment.kt model: a row that isn't full at the left, centered or at the right
-│   │   ├── TileStyle.kt         model: how each tile is drawn (its corners, how the focused one stands out)
-│   │   ├── FocusStyle.kt        model: the focused tile framed, or lifted with a shadow
+│   │   ├── TileStyle.kt         model: how each tile is drawn (its corners, whether the focused one is framed or lifted)
 │   │   ├── Corners.kt           model and rule: a corner radius or round ends, in pixels for a tile's height
 │   │   ├── TopBarAppearance.kt  model: whether the time and the date show, the clock's side of the top bar, the time's side of the date
 │   │   ├── Background.kt        model and rule: the wallpaper, a picture of the library or none, and how it's drawn; only values its context offers; another picture chosen as it is

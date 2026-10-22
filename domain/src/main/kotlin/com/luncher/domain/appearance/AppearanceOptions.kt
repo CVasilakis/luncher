@@ -34,7 +34,7 @@ fun appearanceOptions(): AppearanceOptions =
                     AppearanceOption.HorizontalAlignment,
                     AppearanceOption.FullBottomRow,
                     AppearanceOption.CornerRadius,
-                    AppearanceOption.FocusStyle,
+                    AppearanceOption.FocusFrame,
                     AppearanceOption.AppName,
                 ),
             ),

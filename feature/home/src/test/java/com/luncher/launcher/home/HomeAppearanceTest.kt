@@ -5,13 +5,13 @@ import android.graphics.Canvas
 import android.graphics.Outline
 import android.graphics.Paint
 import android.graphics.Rect
+import android.graphics.RectF
 import android.os.Looper
 import android.view.View
 import com.luncher.domain.appearance.AppName
 import com.luncher.domain.appearance.Appearance
 import com.luncher.domain.appearance.Corners
 import com.luncher.domain.appearance.FakeAppearanceSettings
-import com.luncher.domain.appearance.FocusStyle
 import com.luncher.domain.appearance.HorizontalAlignment
 import com.luncher.domain.appearance.Side
 import com.luncher.domain.appearance.TileGeometry
@@ -156,7 +156,7 @@ class HomeAppearanceTest {
 
     @Test
     fun `lifts the focused tile without a frame as the appearance says, the others staying down`() {
-        appearance.appearance = Appearance(tileStyle = TileStyle(focus = FocusStyle.LIFT))
+        appearance.appearance = Appearance(tileStyle = TileStyle(focusFrame = false))
 
         val activity = start().get()
         idle()   // the focus animator's frames
@@ -164,7 +164,7 @@ class HomeAppearanceTest {
         val tiles = activity.tiles()
         val lift = activity.resources.getDimension(R.dimen.home_tile_lift)
         assertEquals(lift, tiles[0].translationZ)
-        assertEquals(AppTileView.LIFT_ZOOM, tiles[0].scaleX)
+        assertEquals(AppTileView.FOCUSED_ZOOM, tiles[0].scaleX)
         assertEquals(0f, tiles[1].translationZ)
         assertEquals(1f, tiles[1].scaleX)
         assertSame(activity.grid().paints.tileOutline, tiles[0].outlineProvider)
@@ -193,7 +193,7 @@ class HomeAppearanceTest {
     // The shadow is cast by the outline: the tile's shape, its round ends too.
     @Test
     fun `the lifted tile's shadow has the tiles' corners`() {
-        appearance.appearance = Appearance(tileStyle = TileStyle(Corners.Pill, FocusStyle.LIFT))
+        appearance.appearance = Appearance(tileStyle = TileStyle(Corners.Pill, focusFrame = false))
 
         val activity = start().get()
 
@@ -206,10 +206,31 @@ class HomeAppearanceTest {
         assertEquals(Rect(0, 0, tile.width, tile.height), bounds)
     }
 
-    // A new focus style only swaps the tiles' animators: the tile is framed and down again at once.
+    // Framed, the focused tile is as big as lifted: its frame takes no room outside it.
     @Test
-    fun `a new focus style lays nothing out again, and puts the focused tile down`() {
-        appearance.appearance = Appearance(tileStyle = TileStyle(focus = FocusStyle.LIFT))
+    fun `framed, the focused tile zooms as much as lifted, its frame inside its edge, and stays down`() {
+        val activity = start().get()
+        idle()   // the focus animator's frames
+
+        val tile = activity.tiles().first()
+        assertEquals(AppTileView.FOCUSED_ZOOM, tile.scaleX)
+        assertEquals(0f, tile.translationZ)
+        val focusFrame = activity.grid().paints.focusFrame
+        val frame = RectF()
+        val canvas = object : Canvas(Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888)) {
+            override fun drawRoundRect(rect: RectF, rx: Float, ry: Float, paint: Paint) {
+                if (paint === focusFrame) frame.set(rect)
+            }
+        }
+        tile.draw(canvas)
+        val half = focusFrame.strokeWidth / 2
+        assertEquals(RectF(half, half, tile.width - half, tile.height - half), frame)
+    }
+
+    // The frame turned on only swaps the tiles' animators: the tile is framed and down again at once.
+    @Test
+    fun `the focus frame turned on lays nothing out again, and puts the focused tile down`() {
+        appearance.appearance = Appearance(tileStyle = TileStyle(focusFrame = false))
         val activity = start().get()
         idle()
 
@@ -217,15 +238,15 @@ class HomeAppearanceTest {
 
         val tile = activity.tiles().first()
         assertFalse(activity.grid().isLayoutRequested)
-        assertEquals(FocusStyle.FRAME, activity.grid().paints.focusStyle)
+        assertTrue(activity.grid().paints.framed)
         assertEquals(0f, tile.translationZ)
-        assertEquals(AppTileView.FRAME_ZOOM, tile.scaleX)
+        assertEquals(AppTileView.FOCUSED_ZOOM, tile.scaleX)
     }
 
-    // The held tile keeps its white frame and its zoom, lifted too, so it stands out from one only focused.
+    // The held tile keeps its white frame and its zoom, lifted too: the frame tells it from one only focused.
     @Test
     fun `lifted, a held tile still has its zoom`() {
-        appearance.appearance = Appearance(tileStyle = TileStyle(focus = FocusStyle.LIFT))
+        appearance.appearance = Appearance(tileStyle = TileStyle(focusFrame = false))
         val activity = start().get()
         val tile = activity.tiles().first()
 
@@ -408,7 +429,7 @@ class HomeAppearanceTest {
     @Test
     @GraphicsMode(GraphicsMode.Mode.NATIVE)
     fun `drawing the tiles allocates nothing lifted, with the focused tile's name`() {
-        drawingTheTilesAllocatesNothing(Appearance(TileGeometry(appName = AppName.WHEN_FOCUSED), TileStyle(Corners.Radius(16), FocusStyle.LIFT)))
+        drawingTheTilesAllocatesNothing(Appearance(TileGeometry(appName = AppName.WHEN_FOCUSED), TileStyle(Corners.Radius(16), focusFrame = false)))
     }
 
     // Rule 5 (docs/ARCHITECTURE.md): drawing allocates nothing, with rounded corners too. Counts

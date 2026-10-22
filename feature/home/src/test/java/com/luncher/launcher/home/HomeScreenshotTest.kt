@@ -17,7 +17,6 @@ import com.luncher.domain.appearance.Appearance
 import com.luncher.domain.appearance.Background
 import com.luncher.domain.appearance.Corners
 import com.luncher.domain.appearance.FakeAppearanceSettings
-import com.luncher.domain.appearance.FocusStyle
 import com.luncher.domain.appearance.HorizontalAlignment
 import com.luncher.domain.appearance.Side
 import com.luncher.domain.appearance.TileGeometry
@@ -219,7 +218,7 @@ class HomeScreenshotTest {
     // app's name below it, the rows further apart.
     @Test
     fun homeScreenLiftedWithTheAppName() {
-        val appearance = Appearance(TileGeometry(appName = AppName.WHEN_FOCUSED), TileStyle(focus = FocusStyle.LIFT))
+        val appearance = Appearance(TileGeometry(appName = AppName.WHEN_FOCUSED), TileStyle(focusFrame = false))
 
         start(appearance = appearance).window.decorView.captureFocused("src/test/screenshots/home/home_screen_lifted_name.png")
     }
@@ -238,7 +237,7 @@ class HomeScreenshotTest {
     // Moving Music, lifted: the held tile's white frame tells it from one only focused.
     @Test
     fun movingLifted() {
-        val activity = start(hidden = listOf("weather"), appearance = Appearance(TileGeometry(appName = AppName.WHEN_FOCUSED), TileStyle(focus = FocusStyle.LIFT)))
+        val activity = start(hidden = listOf("weather"), appearance = Appearance(TileGeometry(appName = AppName.WHEN_FOCUSED), TileStyle(focusFrame = false)))
         activity.moveMusic()
 
         activity.window.decorView.captureFocused("src/test/screenshots/home/home_moving_lifted.png")

@@ -25,8 +25,8 @@ feature/home/
     │   │   ├── ClockView.kt      the top bar's time and date, following the Clock port
     │   │   ├── OutlinedTextView.kt  a text on the wallpaper, with :ui's WallpaperOutline around it
     │   │   ├── AppTilesView.kt   places the tiles where the domain's TileLayout says; scrolls
-    │   │   ├── AppTileView.kt    one app: its image, focus frame and zoom, or lift and shadow; its name; held while moved
-    │   │   ├── TilePaints.kt     what every tile draws with: frames, dimming, the name, the corners, the focus style, the shadow's outline
+    │   │   ├── AppTileView.kt    one app: its image, focus zoom with a frame or a lift and shadow; its name; held while moved
+    │   │   ├── TilePaints.kt     what every tile draws with: frames, dimming, the name, the corners, the focus frame on or off, the shadow's outline
     │   │   ├── HomeWallpaper.kt  the wallpaper, the window's background, as the process's Wallpaper says; a window while it's drawn again
     │   │   ├── TileMenu.kt       a tile's menu: the domain's AppActions for its app, in a window above or below it,
     │   │   │                     its corners following the tiles'
@@ -77,14 +77,14 @@ one job, so a new arrangement, image source or top bar item changes one of them:
 | Part | Job |
 |---|---|
 | `homeApps` (`:domain`) | which apps show, in which order, and which are hidden: the installed apps matched to the stored `AppArrangement` ([Hidden apps](../settings/README.md#hidden-apps)) |
-| `Appearance` (`:domain`) | how the home screen looks, as the user set it in the [appearance editor](../settings/README.md#appearance), in parts: `TileGeometry` (the tiles' width, the gap between them, their vertical and horizontal alignment, whether the focused tile's name shows), `TileStyle` (their corners: a radius, 12 dp by default, or round ends; the focus style: a frame by default, or lifted), `TopBarAppearance` (whether the time and the date show, the clock's side, the time's side of the date), `Background` (the wallpaper: a picture of the picture library, or none, its fit, position, dim and blur). [Below](#appearance): how each part is applied. |
+| `Appearance` (`:domain`) | how the home screen looks, as the user set it in the [appearance editor](../settings/README.md#appearance), in parts: `TileGeometry` (the tiles' width, the gap between them, their vertical and horizontal alignment, whether the focused tile's name shows), `TileStyle` (their corners: a radius, 12 dp by default, or round ends; the focus frame: on by default, else the focused tile lifted), `TopBarAppearance` (whether the time and the date show, the clock's side, the time's side of the date), `Background` (the wallpaper: a picture of the picture library, or none, its fit, position, dim and blur). [Below](#appearance): how each part is applied. |
 | `AppearanceSettings` (`:domain`), `PreferencesAppearanceSettings` (`:platform`) | the stored appearance, and when it changes |
 | `TileLayout`, `TileLayouts` (`:domain`) | where each tile goes and how big it is; `TileGrid` is the only one so far, with as many columns as fit tiles of about the geometry's width (`TileGrid.columnsFor`), so tiles keep their size next to the top bar's text on any screen. `TileLayouts` is the only place that picks the arrangement, for the tiles' places and for moving an app alike. |
 | `TileFocus` (`:domain`) | where each arrow takes the focus among the tiles ([below](#focus)) |
 | `AppTilesView` | lays tiles out where the `TileLayout` says, moves the focus where the `TileFocus` says, and scrolls to the focused one; holds the `TilePaints` its tiles share |
 | `bannerFor` (`:domain`) | which image a tile shows |
 | `AppImages` (`:domain`), `CachedBannerImages` and `BannerImages` (`:platform`) | draws that image into a bitmap of the tile's size, or reads the one an earlier start drew |
-| `AppTileView` | draws that bitmap, the focus frame and zoom, or the lift ([below](#appearance)), with the corners `TilePaints` gives, and the focused app's name below it if the geometry says; while its app is [moved](#moving-an-app), a white frame and the largest zoom |
+| `AppTileView` | draws that bitmap, the focus zoom with the frame or the lift ([below](#appearance)), with the corners `TilePaints` gives, and the focused app's name below it if the geometry says; while its app is [moved](#moving-an-app), a white frame |
 | `Clock` (`:domain`) | what time it is, in which time zone and hour format, and when that changes |
 | `AndroidClock` (`:platform`) | reads those from Android, and watches the time broadcasts only while something listens |
 | `ClockView` | formats a reading in the device's language; the time and the date side by side, in the order the top bar gives, either or both hidden |
@@ -162,7 +162,7 @@ screen reads an equal appearance. What a change costs depends on the part:
 | Part | Goes to | A change costs |
 |---|---|---|
 | `TileGeometry` | `AppTilesView.tileGeometry` | a new layout from `TileLayouts` (it's an input of the layout, with the width, the height and the number of tiles), and a layout pass; new banner bitmaps only for tiles whose size changes, so a new placement, or the name shown, draws none |
-| `TileStyle` | `AppTilesView.tileStyle` | the radius and the focus style in the `TilePaints` all tiles share, and a redraw; a new focus style also gives each tile the state animator of that style: no layout pass, no new bitmaps |
+| `TileStyle` | `AppTilesView.tileStyle` | the radius and the focus frame in the `TilePaints` all tiles share, and a redraw; the frame turned on or off also gives each tile the state animator that lifts it or not: no layout pass, no new bitmaps |
 | `TopBarAppearance` | `TopBarView.appearance` | the bar's items moved (focus on the gear stays), and a layout pass of the bar only |
 | `Background` | `HomeWallpaper.show` | the window's background: the picture kept at the screen's size, or drawn again in the background while a window says so ([below](#the-wallpaper)); nothing else is laid out or drawn anew |
 
@@ -186,15 +186,16 @@ half the tile's height, which is what round ends are, so they're half circles on
 radius draws the same bitmaps, so no banner is drawn again. Drawing allocates nothing, with or
 without rounded corners.
 
-The focused tile stands out in one of two styles (`TileStyle.focus`). **Frame**, the default: the
-frame in the theme's accent, its vivid tone (`ColorRoles.homeAccent`, Orange by default), and a
-zoom of 1.1 (`home_tile_focus.xml`). **Lift**: no frame, a zoom of 1.15,
-and the tile rises toward the viewer (`translationZ`, `home_tile_lift`, in `home_tile_lift.xml`), so
+The focused tile zooms by 1.15 (`home_tile_focus.xml`). With the focus frame on
+(`TileStyle.focusFrame`, the default), it has a frame in the theme's accent, its vivid tone
+(`ColorRoles.homeAccent`, Orange by default), drawn inside its edge, so it's as big framed as not.
+With the frame off, it rises toward the viewer instead, at the same zoom (`translationZ`,
+`home_tile_lift`, in `home_tile_lift.xml`), so
 Android's renderer casts its shadow from its outline, a rounded rectangle with the tiles' corners
 (`TilePaints.tileOutline`). The shadow is the GPU's, as for any raised view since Android 5: no
 blurred bitmap, no software layer, nothing drawn per frame in Luncher's code; `AppTilesView` doesn't
-clip its tiles, so it shows past the tile. A held tile keeps its white frame and its zoom of 1.15 in
-both styles; a lifted one only focused is as big, so there the white frame tells the two apart.
+clip its tiles, so it shows past the tile. A held tile has a white frame, with the frame on or off,
+and the same zoom: the white frame tells it apart from one only focused.
 
 With the app name shown (`TileGeometry.appName`, Off by default), the focused tile draws its app's
 name centered below it, in the primary text color, cut with "…" to the tile's width, outlined as
@@ -321,7 +322,7 @@ it is.
 
 | Key | Does |
 |---|---|
-| Arrows | move the held app (white frame, the largest zoom) |
+| Arrows | move the held app (white frame, the focused tile's zoom) |
 | OK | puts it down where it is, and ends the mode |
 | Back | the same |
 

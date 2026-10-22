@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Lifts an app tile while it has focus, for the Lift focus style: a bigger zoom than the frame's
+<!-- Lifts an app tile while it has focus, with the focus frame off: the framed tile's zoom
      (home_tile_focus.xml), and a rise toward the viewer, which makes Android's renderer cast the
      tile's shadow, from its outline. Declared once per tile, so a key press starts existing
      animators instead of creating new ones. -->
