@@ -20,10 +20,10 @@ data class AppearanceGroup(
     val editedApart: Boolean = false,
 )
 
-/** The part of the home screen a group's options change; each screen names it in its language. */
-enum class AppearanceTopic { TILES, TOP_BAR, BACKGROUND }
+/** The part of the home screen a group's options change, or the theme; each screen names it in its language. */
+enum class AppearanceTopic { TILES, TOP_BAR, THEME, BACKGROUND }
 
-/** The options the user can change, and where each one goes: the tiles', the top bar's, then the background's. */
+/** The options the user can change, and where each one goes: the tiles', the top bar's, the theme's, then the background's. */
 fun appearanceOptions(): AppearanceOptions =
     AppearanceOptions(
         listOf(
@@ -45,6 +45,13 @@ fun appearanceOptions(): AppearanceOptions =
                     AppearanceOption.ShowDate,
                     AppearanceOption.ClockSide,
                     AppearanceOption.TimeSide,
+                ),
+            ),
+            AppearanceGroup(
+                AppearanceTopic.THEME,
+                listOf(
+                    AppearanceOption.AccentColor,
+                    AppearanceOption.ThemeMode,
                 ),
             ),
             AppearanceGroup(

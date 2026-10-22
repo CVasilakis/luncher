@@ -1,44 +1,67 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The Hide apps list: a panel like the settings panel, as wide as this view. -->
+<!-- The Hide apps list: a side sheet like the settings panel, in its place (Sheet.kt): its title,
+     what OK does, then the apps. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/settings_hide_apps_panel"
-    android:layout_width="@dimen/settings_panel_width"
-    android:layout_height="wrap_content"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:clipChildren="false"
+    android:clipToPadding="false"
     android:orientation="vertical"
-    android:padding="@dimen/settings_panel_padding">
+    android:paddingStart="@dimen/settings_sheet_padding_horizontal"
+    android:paddingTop="@dimen/settings_sheet_padding_top"
+    android:paddingEnd="@dimen/settings_sheet_padding_horizontal"
+    android:paddingBottom="@dimen/settings_sheet_padding_bottom">
 
-    <TextView
-        android:layout_width="wrap_content"
+    <com.luncher.launcher.ui.ThemedText
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="@dimen/settings_title_gap"
+        android:layout_marginStart="@dimen/settings_zoom_room_horizontal"
+        android:layout_marginEnd="@dimen/settings_zoom_room_horizontal"
         android:includeFontPadding="false"
         android:text="@string/settings_hide_apps"
-        android:textColor="@color/text_primary"
-        android:textSize="@dimen/settings_title_text" />
+        android:textSize="@dimen/text_title" />
 
-    <!-- A settings_app_row per app; HideAppsActivity sets the height. Rows are recycled while
-         scrolling, and the selector frames the selected one like a focused settings entry. The
-         scrollbar sits in the panel's padding, clear of the frame; rows keep the entries' width.
-         The strip is at the end only, as Android puts the scrollbar: on the left in a
-         right-to-left language. -->
-    <ListView
-        android:id="@+id/settings_apps"
+    <com.luncher.launcher.ui.ThemedText xmlns:app="http://schemas.android.com/apk/res-auto"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_marginEnd="@dimen/settings_list_scrollbar_negative"
-        android:divider="@null"
-        android:dividerHeight="0dp"
-        android:listSelector="@drawable/entry_background"
-        android:paddingStart="0dp"
-        android:paddingEnd="@dimen/settings_list_scrollbar"
-        android:scrollbarStyle="outsideOverlay" />
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/settings_zoom_room_horizontal"
+        android:layout_marginTop="@dimen/settings_entry_line_gap"
+        android:layout_marginEnd="@dimen/settings_zoom_room_horizontal"
+        android:layout_marginBottom="@dimen/settings_title_gap"
+        android:text="@string/settings_hide_apps_hint"
+        android:textSize="@dimen/text_supporting"
+        app:colorRole="onSurfaceVariant" />
 
-    <TextView
+    <!-- A settings_app_row per app; HideAppsActivity sets the list's height, which ends on half a
+         row when they don't all fit, fading out. Rows are recycled while scrolling; the selected
+         one is the focused entry. Room inside for its zoom. -->
+    <com.luncher.launcher.ui.ScrollFrame
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <ListView
+            android:id="@+id/settings_apps"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:clipToPadding="false"
+            android:divider="@android:color/transparent"
+            android:dividerHeight="@dimen/settings_entry_gap"
+            android:listSelector="@android:color/transparent"
+            android:paddingLeft="@dimen/settings_zoom_room_horizontal"
+            android:paddingTop="@dimen/settings_zoom_room_vertical"
+            android:paddingRight="@dimen/settings_zoom_room_horizontal"
+            android:paddingBottom="@dimen/settings_zoom_room_vertical"
+            android:scrollbars="none" />
+    </com.luncher.launcher.ui.ScrollFrame>
+
+    <com.luncher.launcher.ui.ThemedText xmlns:app="http://schemas.android.com/apk/res-auto"
         android:id="@+id/settings_no_apps"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/settings_zoom_room_horizontal"
         android:text="@string/settings_no_apps"
-        android:textColor="@color/text_secondary"
-        android:textSize="@dimen/settings_entry_text"
-        android:visibility="gone" />
+        android:textSize="@dimen/text_entry"
+        android:visibility="gone"
+        app:colorRole="onSurfaceVariant" />
 </LinearLayout>

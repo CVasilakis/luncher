@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- An entry of a tile's menu: OK on it does what it says to the tile's app. -->
-<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+<!-- An entry of a tile's menu, its icon before it: OK on it does what it says to the tile's app. -->
+<com.luncher.launcher.ui.EntryText xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="@dimen/home_menu_entry_height"
-    android:background="@drawable/entry_background"
+    android:drawablePadding="@dimen/home_menu_icon_gap"
     android:ellipsize="end"
     android:focusable="true"
     android:focusableInTouchMode="true"
@@ -11,5 +11,4 @@
     android:paddingLeft="@dimen/home_menu_entry_padding"
     android:paddingRight="@dimen/home_menu_entry_padding"
     android:singleLine="true"
-    android:textColor="@color/text_primary"
-    android:textSize="@dimen/home_menu_entry_text" />
+    android:textSize="@dimen/text_entry" />

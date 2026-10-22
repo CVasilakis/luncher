@@ -7,7 +7,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.text.SpannableString
+import android.text.SpannableStringBuilder
 import android.text.Spanned
 import android.text.style.ForegroundColorSpan
 import android.view.View
@@ -27,19 +27,23 @@ import com.luncher.domain.pictures.ReceivedPictures
 import com.luncher.domain.pictures.ReceivedPictures.Outcome
 import com.luncher.domain.pictures.inListOrder
 import com.luncher.domain.pictures.whyRefused
+import com.luncher.domain.appearance.ColorRoles
 import com.luncher.launcher.ui.WorkingDialog
-import com.luncher.launcher.ui.color
+import com.luncher.launcher.ui.roundRect
+import com.luncher.launcher.ui.styleAll
+import com.luncher.launcher.ui.styleScreen
 import com.luncher.launcher.ui.R as UiR
 import java.util.Locale
 
 /**
  * The pictures in Luncher's drop folders, on the TV and on USB drives ([FolderPictures][graph]):
- * a list, in the order of [inListOrder], with a preview of the selected one beside it. OK on one
+ * a list, in the order of [inListOrder], each with where it is (a USB drive or the TV) and its
+ * size below its name, with a preview of the selected one beside it, its name below it. OK on one
  * adds it to the library while a window says so, with Cancel, then returns it to
  * [BackgroundActivity] ([EXTRA_ADDED]), which chooses it; or says why it wasn't added, and stays,
  * so the user can choose another. One that its listing and the library already tell can't be
  * added ([whyRefused]: a format this TV can't show, too large, a name the library has) is marked
- * in the list, why in the accent color, and OK on it says why at once, with no window. One this
+ * in the list, why in the error color, and OK on it says why at once, with no window. One this
  * TV can't show, or too large, has no preview: a warning mark shows in its place, so nobody
  * waits for one. So does a picture whose preview can't be drawn, cut short or damaged, which is
  * then marked too ([damaged]), as is one adding refused as not a picture. The folders are
@@ -66,6 +70,13 @@ class AddFromFolderActivity : Activity() {
     private val folders by lazy { graph.folderPictures }
     private val library by lazy { graph.pictures }
     private val pictureImport by lazy { graph.pictureImport }
+    private val theme by lazy {
+        ScreenTheme(graph.appearanceSettings) {
+            checkNotNull(window).styleScreen(it)
+            stylePreview(it)
+            list.invalidateViews()
+        }
+    }
 
     /** The picture being added, while the window says so. */
     private var adding: Cancellable? = null
@@ -93,6 +104,8 @@ class AddFromFolderActivity : Activity() {
     private lateinit var preview: ImageView
     private lateinit var loading: View
     private lateinit var noPreview: View
+    private lateinit var selectedName: TextView
+    private lateinit var count: TextView
     private var pictures: List<FolderPicture<Uri>> = emptyList()
 
     /** Why each of [pictures] can't be added, by its source, as far as the listing, the library and [damaged] tell. */
@@ -119,8 +132,11 @@ class AddFromFolderActivity : Activity() {
         preview = findViewById(R.id.settings_pictures_folder_preview)
         loading = findViewById(R.id.settings_pictures_folder_loading)
         noPreview = findViewById(R.id.settings_pictures_folder_no_preview)
+        selectedName = findViewById(R.id.settings_pictures_folder_selected)
+        count = findViewById(R.id.settings_pictures_folder_count)
         addAll = findViewById(R.id.settings_pictures_folder_add_all)
         addAll.setOnClickListener { addAll() }
+        shareTheWidth()
         // A screen opened anew starts with none kept (one killed while it showed left them); made
         // anew by a configuration change, it finds them.
         if (savedInstanceState == null) folders.forgetPreviews()
@@ -132,11 +148,31 @@ class AddFromFolderActivity : Activity() {
         }
         list.setOnItemClickListener { _, _, position, _ -> choose(pictures[position]) }
         side.onPreviewSized = { showPreview(list.selectedItem as? FolderPicture<*>) }
+        // The selected row looks focused only while the list has the focus: not while Add all has it.
+        list.setOnFocusChangeListener { _, _ -> list.invalidateViews() }
         show(emptyList(), looking = true)
+        window.styleScreen(theme.roles)
+        stylePreview(theme.roles)
+    }
+
+    /** The list and the preview's column share the width, the preview's [SIDE] of it, a gap between them. */
+    private fun shareTheWidth() {
+        val margin = resources.getDimensionPixelSize(R.dimen.settings_pictures_margin_horizontal)
+        val gap = resources.getDimensionPixelSize(R.dimen.settings_pictures_side_gap)
+        val side = ((resources.displayMetrics.widthPixels - 2 * margin - gap) * SIDE).toInt()
+        findViewById<View>(R.id.settings_pictures_folder_side_column).layoutParams.width = side
+        (findViewById<View>(R.id.settings_pictures_folder_list_column).layoutParams as ViewGroup.MarginLayoutParams).marginEnd = side + gap
+    }
+
+    /** The preview's corners, rounded, and its color while there's none. */
+    private fun stylePreview(roles: ColorRoles) {
+        preview.background = roundRect(roles.surfaceHighest, resources.getDimension(R.dimen.settings_preview_corner))
+        preview.clipToOutline = true
     }
 
     override fun onStart() {
         super.onStart()
+        theme.start()
         started = true
         val request = ++listing
         folders.list { found ->
@@ -146,6 +182,7 @@ class AddFromFolderActivity : Activity() {
 
     override fun onStop() {
         super.onStop()
+        theme.stop()
         started = false
         listing++
         previewing.stop()
@@ -168,6 +205,7 @@ class AddFromFolderActivity : Activity() {
         state.visibility = if (found.isEmpty()) View.VISIBLE else View.GONE
         state.setText(if (looking) R.string.settings_pictures_folder_looking else R.string.settings_pictures_folder_empty)
         side.visibility = if (found.isEmpty()) View.INVISIBLE else View.VISIBLE
+        count.text = if (looking) "" else resources.getQuantityString(R.plurals.settings_pictures_folder_count, found.size, found.size)
         if (found.isEmpty()) return showPreview(null)
         list.setSelection(found.indexOfFirst { it.source == selected }.coerceAtLeast(0))
         list.requestFocus()
@@ -200,6 +238,7 @@ class AddFromFolderActivity : Activity() {
         preview.setImageDrawable(null)
         loading.visibility = View.GONE
         noPreview.visibility = View.GONE
+        selectedName.text = picture?.name
         // The thread for what the user waits for: what's drawn ahead stops, and goes on after.
         prefetching.stop()
         val shown = pictures.firstOrNull { it.source == picture?.source }
@@ -272,7 +311,7 @@ class AddFromFolderActivity : Activity() {
         if (adding != null || addingAllHold != 0) return
         previewing.stop()
         prefetching.stop()
-        val working = working ?: WorkingDialog(this).also { working = it }
+        val working = working ?: WorkingDialog(this, theme.roles).also { working = it }
         working.show(getString(R.string.settings_pictures_adding), getString(R.string.settings_pictures_cancel)) {
             adding?.cancel()
             adding = null
@@ -314,7 +353,7 @@ class AddFromFolderActivity : Activity() {
     /** The window while Add all adds, which of how many; at the end, how it went. */
     private fun addingAllChanged() {
         if (addingAllHold == 0) return
-        val working = working ?: WorkingDialog(this).also { working = it }
+        val working = working ?: WorkingDialog(this, theme.roles).also { working = it }
         val outcome = addingAll.outcome
         if (outcome == null) {
             val total = addingAll.total
@@ -365,9 +404,11 @@ class AddFromFolderActivity : Activity() {
         dialog?.dismiss()
         dialog = PicturesDialog(
             this,
+            theme.roles,
             title,
             notAddedLines(outcome).joinToString("\n").ifEmpty { null },
-            listOf(getString(R.string.settings_pictures_ok) to done),
+            listOf(DialogButton(getString(R.string.settings_pictures_ok), DialogButton.Kind.FILLED, action = done)),
+            if (outcome.added > 0) Badge.Kind.DONE to UiR.drawable.icon_check else Badge.Kind.DANGER to UiR.drawable.icon_warning,
         ).apply {
             setOnCancelListener { done() }
             show()
@@ -383,9 +424,11 @@ class AddFromFolderActivity : Activity() {
         dialog?.dismiss()
         dialog = PicturesDialog(
             this,
+            theme.roles,
             notAddedTitle(why),
             whyNotAdded(why).orEmpty(),
-            listOf(getString(R.string.settings_pictures_ok) to {}),
+            listOf(DialogButton(getString(R.string.settings_pictures_ok), DialogButton.Kind.FILLED) {}),
+            notAddedMark(why),
         ).apply { show() }
     }
 
@@ -397,6 +440,9 @@ class AddFromFolderActivity : Activity() {
         const val EXTRA_ADDED_ALL = "com.luncher.launcher.settings.ADDED_ALL"
 
         private const val DIMMED = 0.4f
+
+        /** The preview's column's share of the width; the list has the rest. */
+        private const val SIDE = 0.41f
     }
 
     /** The rows of [pictures], reusing the views of rows scrolled away. */
@@ -412,22 +458,25 @@ class AddFromFolderActivity : Activity() {
             val view = convertView ?: layoutInflater.inflate(R.layout.settings_pictures_folder_row, parent, false)
             val picture = pictures[position]
             val where = getString(if (picture.removable) R.string.settings_pictures_folder_usb else R.string.settings_pictures_folder_local)
-            view.findViewById<TextView>(R.id.settings_pictures_folder_name).text = getString(R.string.settings_pictures_folder_row, where, picture.name)
+            view.findViewById<ImageView>(R.id.settings_pictures_folder_where_icon).setImageResource(if (picture.removable) UiR.drawable.icon_usb else UiR.drawable.icon_tv)
+            view.findViewById<TextView>(R.id.settings_pictures_folder_name).text = picture.name
             val why = refusal(refused[picture.source])
-            view.findViewById<TextView>(R.id.settings_pictures_folder_details).text = when {
+            val details = when {
                 // Its size unknown: only why.
-                picture.unsupported != null -> why?.let { accented(it, it) }
-                why != null -> accented(getString(R.string.settings_pictures_folder_refused, details(picture.width, picture.height, picture.bytes), why), why)
+                picture.unsupported != null -> why.orEmpty()
+                why != null -> getString(R.string.settings_pictures_folder_refused, details(picture.width, picture.height, picture.bytes), why)
                 else -> details(picture.width, picture.height, picture.bytes)
             }
+            view.findViewById<TextView>(R.id.settings_pictures_folder_details).text = withError(getString(R.string.settings_pictures_folder_row, where, details), why)
+            view.styleAll(theme.roles)
             return view
         }
 
-        /** [text] with its [part] (why the picture can't be added: its end) in the accent color, so it stands out. */
-        private fun accented(text: String, part: String): CharSequence {
-            val start = text.lastIndexOf(part).takeIf { it >= 0 } ?: return text
-            return SpannableString(text).apply {
-                setSpan(ForegroundColorSpan(color(UiR.color.accent)), start, start + part.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        /** [text] with its [part] (why the picture can't be added: its end) in the error color, so it stands out. */
+        private fun withError(text: String, part: String?): CharSequence {
+            val start = part?.let { text.lastIndexOf(it) }?.takeIf { it >= 0 } ?: return text
+            return SpannableStringBuilder(text).apply {
+                setSpan(ForegroundColorSpan(theme.roles.error), start, start + part.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
             }
         }
     }

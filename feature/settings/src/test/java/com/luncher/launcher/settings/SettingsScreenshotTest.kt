@@ -5,8 +5,11 @@ import android.view.View
 import android.widget.LinearLayout
 import android.widget.ListView
 import android.widget.TextView
-import com.github.takahirom.roborazzi.captureRoboImage
+import com.luncher.launcher.testing.captureFocused
+import com.luncher.domain.appearance.AccentColor
 import com.luncher.domain.appearance.Appearance
+import com.luncher.domain.appearance.ThemeAppearance
+import com.luncher.domain.appearance.ThemeMode
 import com.luncher.domain.appearance.Corners
 import com.luncher.domain.appearance.FakeAppearanceSettings
 import com.luncher.domain.appearance.HorizontalAlignment
@@ -46,7 +49,7 @@ class SettingsScreenshotTest {
     fun settingsPanel() {
         val activity = Robolectric.buildActivity(SettingsActivity::class.java).setup().get()
 
-        activity.window.decorView.captureRoboImage("src/test/screenshots/settings/settings_panel.png")
+        activity.window.decorView.captureFocused("src/test/screenshots/settings/settings_panel.png")
     }
 
     // 720p at the 1080p density, 640x360 dp, the shortest TV screen: all three entries fit.
@@ -55,13 +58,13 @@ class SettingsScreenshotTest {
     fun settingsPanelOnASmallScreen() {
         val activity = Robolectric.buildActivity(SettingsActivity::class.java).setup().get()
 
-        activity.window.decorView.captureRoboImage("src/test/screenshots/settings/settings_panel_small_screen.png")
+        activity.window.decorView.captureFocused("src/test/screenshots/settings/settings_panel_small_screen.png")
     }
 
     // Nine apps, two of them hidden, and a name too long for its row: six and a half rows show, the rest scroll.
     @Test
     fun hideAppsPanel() {
-        hideApps().captureRoboImage("src/test/screenshots/settings/settings_hide_apps.png")
+        hideApps().captureFocused("src/test/screenshots/settings/settings_hide_apps.png")
     }
 
     // 720p at the 1080p density, 640x360 dp: as many rows as leave the panel its margin, still
@@ -69,12 +72,12 @@ class SettingsScreenshotTest {
     @Test
     @Config(qualifiers = "+w640dp-h360dp")
     fun hideAppsPanelOnASmallScreen() {
-        hideApps().captureRoboImage("src/test/screenshots/settings/settings_hide_apps_small_screen.png")
+        hideApps().captureFocused("src/test/screenshots/settings/settings_hide_apps_small_screen.png")
     }
 
     @Test
     fun appearanceEditor() {
-        appearanceEditor(Appearance()).window.decorView.captureRoboImage("src/test/screenshots/settings/settings_appearance.png")
+        appearanceEditor(Appearance()).window.decorView.captureFocused("src/test/screenshots/settings/settings_appearance.png")
     }
 
     // Every option away from its default but the time's and the date's, which would hide what the
@@ -92,7 +95,7 @@ class SettingsScreenshotTest {
         )
         activity.child { it.findViewById<TextView>(R.id.settings_option_label)?.text == "Corner radius" }.requestFocus()
 
-        activity.window.decorView.captureRoboImage("src/test/screenshots/settings/settings_appearance_changed.png")
+        activity.window.decorView.captureFocused("src/test/screenshots/settings/settings_appearance_changed.png")
     }
 
     // The top bar's group open, the date hidden: the order, which needs both, dimmed.
@@ -101,7 +104,7 @@ class SettingsScreenshotTest {
         val activity = appearanceEditor(Appearance(topBar = TopBarAppearance(showDate = false)), open = "Time and date")
         activity.child { it.findViewById<TextView>(R.id.settings_option_label)?.text == "Date" }.requestFocus()
 
-        activity.window.decorView.captureRoboImage("src/test/screenshots/settings/settings_appearance_top_bar.png")
+        activity.window.decorView.captureFocused("src/test/screenshots/settings/settings_appearance_top_bar.png")
     }
 
     // 720p at the 1080p density, 640x360 dp: the options take half the screen, and scroll.
@@ -109,7 +112,7 @@ class SettingsScreenshotTest {
     @Config(qualifiers = "+w640dp-h360dp")
     fun appearanceEditorOnASmallScreen() {
         appearanceEditor(Appearance(), open = "Tiles").window.decorView
-            .captureRoboImage("src/test/screenshots/settings/settings_appearance_small_screen.png")
+            .captureFocused("src/test/screenshots/settings/settings_appearance_small_screen.png")
     }
 
     // Arabic: mirrored, the options at the left; the preview's content still left to right.
@@ -117,17 +120,36 @@ class SettingsScreenshotTest {
     @Config(qualifiers = "ar-rEG-$TV_1080P")
     fun appearanceEditorInArabic() {
         appearanceEditor(Appearance(), open = "المربعات").window.decorView
-            .captureRoboImage("src/test/screenshots/settings/settings_appearance_arabic.png")
+            .captureFocused("src/test/screenshots/settings/settings_appearance_arabic.png")
     }
 
     // With a picture, dimmed and blurred: the preview draws it under the tiles. The focus on the
-    // background's entry, the picture's name beside it.
+    // Background button, below the preview.
     @Test
     fun appearanceEditorBackground() {
         val activity = appearanceEditor(Appearance(background = Background(picture = SAMPLE_WALLPAPER, dim = 20, blur = Blur.LIGHT)))
-        activity.child { it.findViewById<View>(R.id.settings_apart_value) != null }.requestFocus()
+        activity.findViewById<View>(R.id.settings_appearance_background).requestFocus()
 
-        activity.window.decorView.captureRoboImage("src/test/screenshots/settings/settings_appearance_background.png")
+        activity.window.decorView.captureFocused("src/test/screenshots/settings/settings_appearance_background.png")
+    }
+
+    // The Theme group open, the accent color focused, with its swatch.
+    @Test
+    fun appearanceEditorTheme() {
+        val activity = appearanceEditor(Appearance(), open = "Theme")
+        activity.child { it.findViewById<TextView>(R.id.settings_option_label)?.text == "Accent color" }.requestFocus()
+
+        activity.window.decorView.captureFocused("src/test/screenshots/settings/settings_appearance_theme.png")
+    }
+
+    // A theme of the user's: the blue accent, light. The editor in its colors, and the preview's
+    // focus frame in the accent, as the home screen's, which stays dark.
+    @Test
+    fun appearanceEditorLightBlue() {
+        val activity = appearanceEditor(Appearance(theme = ThemeAppearance(AccentColor.BLUE, ThemeMode.LIGHT)), open = "Theme")
+        activity.child { it.findViewById<TextView>(R.id.settings_option_label)?.text == "Mode" }.requestFocus()
+
+        activity.window.decorView.captureFocused("src/test/screenshots/settings/settings_appearance_light_blue.png")
     }
 
     // The preview alone, with the defaults and with each value of each option: a loop over the
@@ -135,12 +157,12 @@ class SettingsScreenshotTest {
     @Test
     fun appearancePreview() {
         val preview = appearanceEditor(Appearance()).findViewById<AppearancePreviewView>(R.id.settings_appearance_preview)
-        preview.captureRoboImage("src/test/screenshots/settings/preview/default.png")
+        preview.captureFocused("src/test/screenshots/settings/preview/default.png")
         for (change in appearanceChanges()) {
             preview.appearance = change.changed
             drawWallpaper()
             val name = "${change.option}_${change.value}".lowercase()
-            preview.captureRoboImage("src/test/screenshots/settings/preview/$name.png")
+            preview.captureFocused("src/test/screenshots/settings/preview/$name.png")
         }
     }
 

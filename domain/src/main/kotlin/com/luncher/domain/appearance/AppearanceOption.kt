@@ -4,9 +4,11 @@ import com.luncher.domain.pictures.Blur
 import com.luncher.domain.pictures.Fit
 import com.luncher.domain.pictures.PictureCut
 import com.luncher.domain.pictures.PicturePosition
+import com.luncher.domain.appearance.AccentColor as Accent
 import com.luncher.domain.appearance.AppName as Name
 import com.luncher.domain.appearance.FocusStyle as Focus
 import com.luncher.domain.appearance.HorizontalAlignment as Horizontal
+import com.luncher.domain.appearance.ThemeMode as Mode
 import com.luncher.domain.appearance.VerticalAlignment as Vertical
 
 /**
@@ -42,6 +44,12 @@ sealed interface AppearanceOption<T> {
      * isn't known.
      */
     fun values(context: OptionContext): List<T> = values
+
+    /**
+     * Whether the option changes what the home screen draws, and the editors' preview of it; false
+     * for one that changes only the menus and the settings (the theme's mode).
+     */
+    val showsOnHome: Boolean get() = true
 
     /** Where the rows of tiles go in the height. */
     data object VerticalAlignment : AppearanceOption<Vertical> {
@@ -124,6 +132,23 @@ sealed interface AppearanceOption<T> {
         override fun set(appearance: Appearance, value: Side) =
             appearance.copy(topBar = appearance.topBar.copy(timeSide = value))
         override fun appliesTo(appearance: Appearance, context: OptionContext) = appearance.topBar.showTime && appearance.topBar.showDate
+    }
+
+    /** The accent color of the menus and settings, and of the home screen's focus frames. */
+    data object AccentColor : AppearanceOption<Accent> {
+        override val values: List<Accent> = Accent.entries
+        override fun get(appearance: Appearance) = appearance.theme.accent
+        override fun set(appearance: Appearance, value: Accent) =
+            appearance.copy(theme = appearance.theme.copy(accent = value))
+    }
+
+    /** Whether the menus and settings are dark or light; the home screen stays as it is. */
+    data object ThemeMode : AppearanceOption<Mode> {
+        override val values: List<Mode> = Mode.entries
+        override fun get(appearance: Appearance) = appearance.theme.mode
+        override fun set(appearance: Appearance, value: Mode) =
+            appearance.copy(theme = appearance.theme.copy(mode = value))
+        override val showsOnHome: Boolean get() = false
     }
 
     /**

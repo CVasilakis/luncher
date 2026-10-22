@@ -33,8 +33,6 @@
     <string name="settings_appearance_time_first">Ώρα αριστερά</string>
     <string name="settings_appearance_date_first">Ώρα δεξιά</string>
     <string name="settings_appearance_background">Φόντο</string>
-    <string name="settings_appearance_picture">Εικόνα</string>
-    <string name="settings_appearance_no_picture">Καμία</string>
     <string name="settings_appearance_fit">Προσαρμογή</string>
     <string name="settings_appearance_fill">Γέμισμα</string>
     <string name="settings_appearance_stretch">Τέντωμα</string>
@@ -105,7 +103,7 @@
     <string name="settings_pictures_folder_where">Εικόνες στον φάκελο <xliff:g id="folder" example="Android/media/com.luncher.launcher">%1$s</xliff:g>, στην τηλεόραση ή σε ένα USB</string>
     <string name="settings_pictures_folder_local">Τοπικά</string>
     <string name="settings_pictures_folder_usb">USB</string>
-    <string name="settings_pictures_folder_row"><xliff:g id="where" example="USB">%1$s</xliff:g> · <xliff:g id="name" example="holiday.jpg">%2$s</xliff:g></string>
+    <string name="settings_pictures_folder_row"><xliff:g id="where" example="USB">%1$s</xliff:g> · <xliff:g id="details" example="4000 × 3000 · 2.4 MB">%2$s</xliff:g></string>
     <string name="settings_pictures_folder_unsupported">Το <xliff:g id="format" example="HEIF (HEIC)">%1$s</xliff:g> δεν υποστηρίζεται σε αυτή την τηλεόραση</string>
     <string name="settings_pictures_folder_refused"><xliff:g id="details" example="4000 × 3000 · 3,1 MB">%1$s</xliff:g> · <xliff:g id="why" example="Πολύ μεγάλη (πάνω από 50 MB)">%2$s</xliff:g></string>
     <string name="settings_pictures_folder_too_large_bytes">Πολύ μεγάλη (πάνω από <xliff:g id="size" example="50 MB">%1$s</xliff:g>)</string>
@@ -169,4 +167,32 @@
         <item quantity="one">Πάρα πολλές εικόνες: έως <xliff:g id="most" example="1">%d</xliff:g> εικόνα μπορεί να προστεθεί τη φορά. Μοιραστείτε λιγότερες και μετά δοκιμάστε ξανά.</item>
         <item quantity="other">Πάρα πολλές εικόνες: έως <xliff:g id="most" example="100">%d</xliff:g> εικόνες μπορούν να προστεθούν τη φορά. Μοιραστείτε λιγότερες και μετά δοκιμάστε ξανά.</item>
     </plurals>
+    <string name="settings_hide_apps_none">Καμία κρυφή</string>
+    <plurals name="settings_hide_apps_count">
+        <item quantity="one"><xliff:g id="count" example="1">%d</xliff:g> κρυφή</item>
+        <item quantity="other"><xliff:g id="count" example="2">%d</xliff:g> κρυφές</item>
+    </plurals>
+    <string name="settings_appearance_summary">Πλακίδια, ώρα και ημερομηνία, θέμα, φόντο</string>
+    <string name="settings_system_summary">Οι ρυθμίσεις της τηλεόρασης</string>
+    <string name="settings_hide_apps_hint">Το OK κρύβει μια εφαρμογή ή την εμφανίζει ξανά</string>
+    <string name="settings_appearance_theme">Θέμα</string>
+    <string name="settings_appearance_accent">Χρώμα έμφασης</string>
+    <string name="settings_appearance_mode">Λειτουργία</string>
+    <string name="settings_appearance_orange">Πορτοκαλί</string>
+    <string name="settings_appearance_pink">Ροζ</string>
+    <string name="settings_appearance_purple">Μωβ</string>
+    <string name="settings_appearance_blue">Μπλε</string>
+    <string name="settings_appearance_teal">Κυανοπράσινο</string>
+    <string name="settings_appearance_green">Πράσινο</string>
+    <string name="settings_appearance_amber">Κεχριμπαρί</string>
+    <string name="settings_appearance_gray">Γκρι</string>
+    <string name="settings_appearance_dark">Σκούρα</string>
+    <string name="settings_appearance_light_mode">Φωτεινή</string>
+    <string name="settings_background_pictures">Εικόνες</string>
+    <string name="settings_pictures_folder_label">Στον φάκελο</string>
+    <plurals name="settings_pictures_folder_count">
+        <item quantity="one"><xliff:g id="count" example="1">%d</xliff:g> εικόνα</item>
+        <item quantity="other"><xliff:g id="count" example="5">%d</xliff:g> εικόνες</item>
+    </plurals>
+    <string name="settings_pictures_folder_preview_label">Προεπισκόπηση</string>
 </resources>

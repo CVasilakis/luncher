@@ -10,7 +10,7 @@ import com.luncher.launcher.ui.screenSize
 
 /**
  * Add from folder's column beside the list: the preview, of the TV's shape as the wallpaper fills
- * it, at most `settings_pictures_preview_width` wide, and below it Add all and the note. On a
+ * it, as wide as the column, and below it the picture's name, Add all and the note. On a
  * screen too short for them all, the preview gets smaller, so the others still show whole; at
  * least a quarter of its height, so it still shows on the smallest screens, where the column then
  * scrolls: to its end while Add all has the focus, so the note shows too, and back to its top

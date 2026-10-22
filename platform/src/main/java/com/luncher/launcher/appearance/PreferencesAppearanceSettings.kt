@@ -82,6 +82,8 @@ class PreferencesAppearanceSettings(context: Context) : AppearanceSettings {
         AppearanceOption.TimeSide -> "time_side"
         AppearanceOption.ShowTime -> "show_time"
         AppearanceOption.ShowDate -> "show_date"
+        AppearanceOption.AccentColor -> "theme_accent"
+        AppearanceOption.ThemeMode -> "theme_mode"
         AppearanceOption.BackgroundFit -> "background_fit"
         AppearanceOption.BackgroundPosition -> "background_position"
         AppearanceOption.BackgroundDim -> "background_dim"

@@ -9,9 +9,6 @@ sealed interface PictureUse {
     data object Wallpaper : PictureUse
 }
 
-/** Every use a picture can be put to, in the order a picture just received offers them. */
-val pictureUseMenu: List<PictureUse> = listOf(PictureUse.Wallpaper)
-
 /** The pictures [appearance] uses, and what for. */
 fun pictureUses(appearance: Appearance): Map<PictureId, List<PictureUse>> {
     val picture = appearance.background.picture ?: return emptyMap()

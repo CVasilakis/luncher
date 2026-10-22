@@ -11,7 +11,6 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.matcher.ViewMatchers.hasFocus
 import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
-import androidx.test.espresso.matcher.ViewMatchers.withChild
 import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -28,7 +27,6 @@ import com.luncher.launcher.home.HomeActivity
 import com.luncher.launcher.pictures.CachedPictureImages
 import com.luncher.launcher.pictures.WorkingCopyImages
 import com.luncher.launcher.pictures.FilesPictures
-import com.luncher.launcher.settings.BackgroundActivity
 import com.luncher.launcher.settings.PictureReceivedActivity
 import com.luncher.launcher.settings.R
 import com.luncher.launcher.settings.SharePictureActivity
@@ -158,27 +156,10 @@ class PictureShareTest {
         waitForFocus(PictureReceivedActivity::class.java)
         waitUntil(withId(R.id.settings_received_title), withText(R.string.settings_received_saved))
         waitUntil(withId(R.id.settings_received_text), withText("progressive.jpg"))
-        waitUntil(withText(R.string.settings_appearance_background), hasFocus())
+        waitUntil(withText(R.string.settings_pictures_ok), hasFocus())
 
         press(KeyEvent.KEYCODE_BACK)
         waitForFocus(HomeActivity::class.java)
-    }
-
-    @Test
-    fun background_opensTheEditorWithTheReceivedPictureChosen() {
-        share(
-            Intent(Intent.ACTION_SEND).setType("image/jpeg")
-                .putExtra(Intent.EXTRA_STREAM, SamplePictures.uri("progressive.jpg"))
-                .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION),
-        )
-        waitForFocus(PictureReceivedActivity::class.java)
-        waitUntil(withText(R.string.settings_appearance_background), hasFocus())
-
-        press(KeyEvent.KEYCODE_DPAD_CENTER)
-
-        waitForFocus(BackgroundActivity::class.java)
-        waitUntil(withChild(allOf(withId(R.id.settings_background_name), withText("progressive.jpg"))), hasFocus())
-        waitUntil(allOf(withId(R.id.settings_background_chosen), isDisplayed()), isDisplayed())
     }
 
     // Another app's picture, shared without giving access to it: Android refuses to pass on access

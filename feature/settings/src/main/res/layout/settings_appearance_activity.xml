@@ -1,64 +1,109 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The appearance editor: the title and the preview at the start, the options at the end, level
-     with the title (AppearanceEditorLayout). Mirrored in a right-to-left language, like the other
-     settings panels; the preview's content isn't. -->
+<!-- The appearance editor: at the start the title, a preview of the home screen, and below it
+     Background and Reset to defaults; at the end the groups of options in their container, its
+     top level with the title (AppearanceEditorLayout). Mirrored in a right-to-left language,
+     like the other settings panels; the preview's content isn't. -->
 <com.luncher.launcher.settings.AppearanceEditorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:baselineAligned="false"
+    android:clipChildren="false"
     android:orientation="horizontal">
 
-    <!-- The title right above the preview, the two centered in the height. -->
-    <LinearLayout
+    <!-- The title right above the preview, the buttons below it, the three centered in the height;
+         the preview smaller where they wouldn't fit (EditorStartColumn). -->
+    <com.luncher.launcher.settings.EditorStartColumn
+        android:id="@+id/settings_appearance_start"
         android:layout_width="0dp"
         android:layout_height="match_parent"
         android:layout_weight="1"
         android:layout_marginStart="@dimen/settings_appearance_margin_horizontal"
         android:layout_marginTop="@dimen/settings_appearance_margin_vertical"
-        android:layout_marginEnd="@dimen/settings_panel_padding"
+        android:layout_marginEnd="@dimen/settings_screen_gap"
         android:layout_marginBottom="@dimen/settings_appearance_margin_vertical"
+        android:clipChildren="false"
         android:gravity="center_vertical"
         android:orientation="vertical">
 
-        <TextView
+        <com.luncher.launcher.ui.ThemedText
             android:id="@+id/settings_appearance_title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/settings_title_gap"
+            android:layout_marginBottom="@dimen/settings_screen_title_gap"
             android:includeFontPadding="false"
             android:text="@string/settings_appearance"
-            android:textColor="@color/text_primary"
-            android:textSize="@dimen/settings_appearance_title_text" />
+            android:textSize="@dimen/text_display" />
 
-        <!-- As tall as its screen, of the TV's shape, at most the rest of the height. Not focusable: only the
-             options are. -->
+        <!-- As tall as its screen, of the TV's shape, at most the rest of the height. Not focusable:
+             only the options and the buttons are. -->
         <com.luncher.launcher.settings.AppearancePreviewView
             android:id="@+id/settings_appearance_preview"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
-    </LinearLayout>
+
+        <!-- Side by side, half the row each; one below the other when either doesn't fit its half (EntriesRow). -->
+        <com.luncher.launcher.settings.EntriesRow
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/settings_screen_gap"
+            android:baselineAligned="false"
+            android:clipChildren="false"
+            android:orientation="horizontal">
+
+            <!-- Opens the background editor, where the picture and its options are saved together. -->
+            <com.luncher.launcher.ui.PillButton
+                android:id="@+id/settings_appearance_background"
+                style="@style/Widget.Luncher.Settings.Button"
+                android:drawableStart="@drawable/icon_image"
+                android:text="@string/settings_appearance_background"
+                app:kind="tonal" />
+
+            <com.luncher.launcher.ui.PillButton
+                android:id="@+id/settings_appearance_reset"
+                style="@style/Widget.Luncher.Settings.Button"
+                android:drawableStart="@drawable/icon_reset"
+                android:text="@string/settings_appearance_reset"
+                app:kind="danger" />
+        </com.luncher.launcher.settings.EntriesRow>
+    </com.luncher.launcher.settings.EditorStartColumn>
 
     <!-- AppearanceActivity sets the width: settings_appearance_options_width, or half the screen.
-         Scrolls when the options are taller than the screen; moving the focus scrolls it. Its top
-         padding is where the title is, set by AppearanceEditorLayout. The
-         overscan margin at the end only: the preview's margin is at the start (and lint's
+         The groups' container, its top level with the title, which grows with a group opened and
+         scrolls when taller than the room below the title; moving the focus scrolls it. Room
+         inside for the focused entry's zoom. The overscan margin at the end only (lint's
          RtlSymmetry wants both sides set). -->
-    <ScrollView
-        android:id="@+id/settings_appearance_scroll"
+    <FrameLayout
+        android:id="@+id/settings_appearance_end"
         android:layout_width="@dimen/settings_appearance_options_width"
         android:layout_height="match_parent"
-        android:clipToPadding="false"
         android:paddingStart="0dp"
         android:paddingTop="@dimen/settings_appearance_margin_vertical"
         android:paddingEnd="@dimen/settings_appearance_margin_horizontal"
-        android:paddingBottom="@dimen/settings_appearance_margin_vertical"
-        android:scrollbarStyle="outsideOverlay">
+        android:paddingBottom="@dimen/settings_appearance_margin_vertical">
 
-        <!-- AppearanceActivity adds each group, its options below it, then the reset entry. -->
-        <LinearLayout
-            android:id="@+id/settings_appearance_options"
+        <com.luncher.launcher.ui.ScrollFrame
+            android:id="@+id/settings_appearance_frame"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical" />
-    </ScrollView>
+            app:fill="surface">
+
+            <ScrollView
+                android:id="@+id/settings_appearance_scroll"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:scrollbars="none">
+
+                <!-- AppearanceActivity adds each group, its options below it. -->
+                <LinearLayout
+                    android:id="@+id/settings_appearance_options"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:clipChildren="false"
+                    android:clipToPadding="false"
+                    android:orientation="vertical"
+                    android:padding="@dimen/settings_container_padding" />
+            </ScrollView>
+        </com.luncher.launcher.ui.ScrollFrame>
+    </FrameLayout>
 </com.luncher.launcher.settings.AppearanceEditorLayout>

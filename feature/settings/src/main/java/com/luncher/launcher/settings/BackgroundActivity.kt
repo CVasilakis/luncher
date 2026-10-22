@@ -3,6 +3,7 @@ package com.luncher.launcher.settings
 import android.app.Activity
 import android.app.Dialog
 import android.content.Intent
+import android.content.res.ColorStateList
 import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.os.Handler
@@ -14,6 +15,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import com.luncher.domain.appearance.Appearance
 import com.luncher.domain.appearance.Background
+import com.luncher.domain.appearance.ColorRoles
 import com.luncher.domain.appearance.OptionContext
 import com.luncher.domain.appearance.appearanceOptions
 import com.luncher.domain.jobs.JobPriority
@@ -31,23 +33,27 @@ import com.luncher.domain.pictures.Renaming
 import com.luncher.domain.pictures.pictureCut
 import com.luncher.domain.pictures.pictureUses
 import com.luncher.domain.pictures.renaming
+import com.luncher.launcher.ui.ThemedText
 import com.luncher.launcher.ui.WorkingDialog
 import com.luncher.launcher.ui.color
+import com.luncher.launcher.ui.roundRect
 import com.luncher.launcher.ui.screenSize
+import com.luncher.launcher.ui.styleAll
+import com.luncher.launcher.ui.styleScreen
 import com.luncher.launcher.ui.R as UiR
 import java.util.Locale
 
 /**
- * The background editor, full-screen, opened from the appearance editor's Background entry. At the
- * end, the pictures to choose from: No picture, the library's pictures by name, and Add
- * from folder, a hint above them; at the start, a preview of the home screen with the chosen
- * background, as large as the room allows (no title, for it), the background's options, and Save
- * with Delete all beside it. Mirrored in a right-to-left language, like the other settings
+ * The background editor, full-screen, opened from the appearance editor's Background button. At
+ * the end, the pictures to choose from, in their container: No picture, the library's pictures by
+ * name, and Add from folder, a hint below them; at the start, a preview of the home screen with the
+ * chosen background, as large as the room allows, the background's options, a 2 x 2 grid of fields,
+ * and Save with Delete all beside it. Mirrored in a right-to-left language, like the other settings
  * screens; the preview's content isn't.
  *
- * What the user changes is a draft: OK on a picture chooses it, and OK on an option opens its
- * values in a list over it ([OptionList]), the preview showing the value with the focus, OK keeping
- * it, Back the one before; Left and Right only move the focus, from the options to the pictures
+ * What the user changes is a draft: OK on a picture chooses it (a check, the accent's tint), and OK
+ * on an option opens its values in a list beside the options, over the pictures ([OptionList]),
+ * the preview showing the value with the focus, OK keeping it, Back the one before; Left and Right only move the focus, from the options to the pictures
  * beside them. A picture chosen shows as it is, its position in the middle, neither dimmed nor
  * blurred, with the fit kept; the stored one shows again as it's stored. The values are those that move the chosen picture on this screen (an
  * [OptionContext]): the position only along the side filling cuts, and neither it nor
@@ -66,8 +72,6 @@ import java.util.Locale
  * [AddFromFolderActivity], which adds a picture, and the editor chooses and focuses the one it
  * returns; or adds several (Add all), and the editor focuses the first of them in the list,
  * choosing none.
- * Opened with a picture ([EXTRA_PICTURE], from the window after a share), it starts with that one
- * chosen, not saved.
  *
  * All thumbnails are read at once when it shows, from what the thumbnails' [PictureImages][graph]
  * kept; those not kept are drawn in the background and show as each is done. Pictures that aren't
@@ -84,6 +88,12 @@ class BackgroundActivity : Activity() {
     private val prepared by lazy { graph.preparedPictures }
     private val wallpaper by lazy { graph.wallpaper }
     private val main = Handler(Looper.getMainLooper())
+    private val theme by lazy {
+        ScreenTheme(settings) {
+            checkNotNull(window).styleScreen(it)
+            styleRows(it)
+        }
+    }
 
     /** The appearance as stored, which the preview shows with the [draft]. */
     private lateinit var stored: Appearance
@@ -98,7 +108,7 @@ class BackgroundActivity : Activity() {
     private lateinit var list: LinearLayout
     private lateinit var noneRow: View
     private lateinit var addRow: View
-    private lateinit var howTo: TextView
+    private lateinit var howTo: ThemedText
     private lateinit var save: View
     private lateinit var deleteAll: View
     private val options = mutableListOf<OptionRow>()
@@ -143,20 +153,24 @@ class BackgroundActivity : Activity() {
 
         stored = settings.read()
         // Its picture's shape is known once the library is read, as it starts (showLibrary).
-        holdDraft(
-            savedInstanceState?.let(::draftIn)
-                ?: intent.getStringExtra(EXTRA_PICTURE)?.let { stored.background.choosing(PictureId(it), stored.background) }
-                ?: stored.background,
-        )
+        holdDraft(savedInstanceState?.let(::draftIn) ?: stored.background)
 
+        // The options' fields, two a row; one below the other where either doesn't fit its half (EntriesRow).
         val optionsView = findViewById<LinearLayout>(R.id.settings_background_options)
-        val indent = resources.getDimensionPixelSize(R.dimen.settings_entry_padding)
+        val gap = resources.getDimensionPixelSize(R.dimen.settings_fields_gap)
+        var fields: LinearLayout? = null
         for (option in appearanceOptions().groups.single { it.editedApart }.options) {
-            val view = layoutInflater.inflate(R.layout.settings_appearance_option, optionsView, false)
-            // Not set in from a group, as in the appearance editor: the screen is the group's.
-            view.setPaddingRelative(indent, view.paddingTop, view.paddingEnd, view.paddingBottom)
-            optionsView.addView(view)
-            options += OptionRow(option, view, ::appearance, { context }, { changed -> setDraft(changed.background) }, listed = true)
+            val line = fields?.takeIf { it.childCount < 2 } ?: EntriesRow(this, null).apply {
+                clipChildren = false
+                if (optionsView.childCount > 0) setPadding(0, gap, 0, 0)
+                optionsView.addView(this)
+                fields = this
+            }
+            val view = layoutInflater.inflate(R.layout.settings_background_option, line, false)
+            line.addView(view)
+            options += OptionRow(option, view, ::appearance, { context }, { changed -> setDraft(changed.background) }) { row ->
+                OptionList(option, row.view, optionsView, appearance(), context, theme.roles, { changed -> setDraft(changed.background) }, row::listClosed)
+            }
         }
         save = findViewById(R.id.settings_background_save)
         save.setOnClickListener { save() }
@@ -169,10 +183,13 @@ class BackgroundActivity : Activity() {
             clipToOutline = true
         }
         addRow = row(getString(R.string.settings_pictures_add_from_folder)) { addFromFolder() }
-        addRow.findViewById<View>(R.id.settings_background_thumbnail).setBackgroundResource(R.drawable.settings_pictures_add_tile)
-        howTo = TextView(this, null, 0).apply {
-            setTextColor(color(UiR.color.text_secondary))
-            setTextSize(TypedValue.COMPLEX_UNIT_PX, resources.getDimension(R.dimen.settings_pictures_small_text))
+        addRow.findViewById<ImageView>(R.id.settings_background_thumbnail).apply {
+            setImageResource(UiR.drawable.icon_plus)
+            scaleType = ImageView.ScaleType.CENTER
+        }
+        howTo = ThemedText(this).apply {
+            role = ThemedText.ON_SURFACE_VARIANT
+            setTextSize(TypedValue.COMPLEX_UNIT_PX, resources.getDimension(UiR.dimen.text_supporting))
             val padding = resources.getDimensionPixelSize(R.dimen.settings_entry_padding)
             setPadding(padding, padding, padding, 0)
             text = listOf(
@@ -185,10 +202,28 @@ class BackgroundActivity : Activity() {
 
         preview.showWallpapers(graph.wallpaper, images, graph.jobs)
         show()
+        window.styleScreen(theme.roles)
+        styleRows(theme.roles)
+    }
+
+    /**
+     * What styleScreen can't reach: the rows not in the list now (made, or taken out as the library
+     * changes), how to add a picture, and Add from folder's plus.
+     */
+    private fun styleRows(roles: ColorRoles) {
+        noneRow.styleAll(roles)
+        addRow.styleAll(roles)
+        for (row in rows.values) row.styleAll(roles)
+        howTo.style(roles)
+        addRow.findViewById<ImageView>(R.id.settings_background_thumbnail).apply {
+            background = roundRect(roles.surfaceHighest, resources.getDimension(UiR.dimen.corner_picture))
+            imageTintList = ColorStateList.valueOf(roles.primary)
+        }
     }
 
     override fun onStart() {
         super.onStart()
+        theme.start()
         started = true
         pictures.addListener(showLibrary)
         showLibrary()
@@ -201,6 +236,7 @@ class BackgroundActivity : Activity() {
 
     override fun onStop() {
         super.onStop()
+        theme.stop()
         started = false
         pictures.removeListener(showLibrary)
         for (request in drawing.values) request.stop()
@@ -283,9 +319,10 @@ class BackgroundActivity : Activity() {
         deleteAll.isFocusableInTouchMode = any
     }
 
+    /** The draft's picture: checked, its row tinted with the accent and its name in it (activated). */
     private fun markChosen(row: View, chosen: Boolean) {
         row.findViewById<View>(R.id.settings_background_chosen).visibility = if (chosen) View.VISIBLE else View.GONE
-        row.findViewById<TextView>(R.id.settings_background_name).setTextColor(color(if (chosen) UiR.color.accent else UiR.color.text_primary))
+        row.isActivated = chosen
     }
 
     /**
@@ -358,6 +395,7 @@ class BackgroundActivity : Activity() {
     /** A new row for [picture]: its thumbnail if it's kept, and its name; a long press of OK offers to rename or delete it. */
     private fun pictureRow(picture: Picture): View {
         val row = row(nameOf(picture)) { choose(picture.id) }
+        row.styleAll(theme.roles)
         val thumbnail = row.findViewById<ImageView>(R.id.settings_background_thumbnail)
         thumbnail.clipToOutline = true
         thumbnails.cached(picture.id, thumbnailWidth, thumbnailHeight, THUMBNAIL)?.let(thumbnail::setImageBitmap)
@@ -399,7 +437,7 @@ class BackgroundActivity : Activity() {
 
     /** The window, saying which picture of how many is prepared; Cancel, or Back, closes the editor. */
     private fun showPreparing() {
-        val working = working ?: WorkingDialog(this).also { working = it }
+        val working = working ?: WorkingDialog(this, theme.roles).also { working = it }
         working.show(preparingText(), getString(R.string.settings_pictures_cancel)) {
             stopPreparing()
             finish()
@@ -444,7 +482,7 @@ class BackgroundActivity : Activity() {
             wallpaper.save(draft, screen.width, screen.height) {}
             return finish()
         }
-        val working = working ?: WorkingDialog(this).also { working = it }
+        val working = working ?: WorkingDialog(this, theme.roles).also { working = it }
         working.show(getString(R.string.settings_background_applying))
         wallpaper.save(draft, screen.width, screen.height) {
             working.close { if (!isDestroyed) finish() }
@@ -472,11 +510,15 @@ class BackgroundActivity : Activity() {
     /** What can be done to [picture]: rename it or delete it, under its name and size. */
     private fun offerActions(picture: Picture) {
         show(
-            PicturesDialog(
+            ActionsDialog(
                 this,
+                theme.roles,
                 nameOf(picture),
                 details(picture.width, picture.height, picture.bytes),
-                listOf(getString(R.string.settings_pictures_rename) to { askName(picture) }, getString(R.string.settings_pictures_delete) to { confirmDelete(picture) }),
+                listOf(
+                    MenuAction(getString(R.string.settings_pictures_rename), UiR.drawable.icon_pencil) { askName(picture) },
+                    MenuAction(getString(R.string.settings_pictures_delete), UiR.drawable.icon_trash, deletes = true) { confirmDelete(picture) },
+                ),
             ),
         )
     }
@@ -484,7 +526,7 @@ class BackgroundActivity : Activity() {
     /** Asks for [picture]'s new name, and keeps the dialog, saying why, while it can't be that. */
     private fun askName(picture: Picture) {
         show(
-            RenameDialog(this, picture.name) { typed ->
+            RenameDialog(this, theme.roles, picture.name) { typed ->
                 when (val renamed = renaming(picture, typed, library.pictures)) {
                     is Renaming.To -> {
                         pictures.rename(picture.id, renamed.name)
@@ -501,10 +543,15 @@ class BackgroundActivity : Activity() {
         show(
             PicturesDialog(
                 this,
+                theme.roles,
                 getString(R.string.settings_pictures_delete_question, nameOf(picture)),
                 deleteText(library.usesOf(picture.id)),
                 // Cancel first, so a repeated OK doesn't delete.
-                listOf(getString(R.string.settings_pictures_cancel) to {}, getString(R.string.settings_pictures_delete) to { delete(setOf(picture.id)) }),
+                listOf(
+                    DialogButton(getString(R.string.settings_pictures_cancel), DialogButton.Kind.TONAL) {},
+                    DialogButton(getString(R.string.settings_pictures_delete), DialogButton.Kind.DANGER, UiR.drawable.icon_trash) { delete(setOf(picture.id)) },
+                ),
+                Badge.Kind.DANGER to UiR.drawable.icon_trash,
             ),
         )
     }
@@ -518,16 +565,18 @@ class BackgroundActivity : Activity() {
         show(
             PicturesDialog(
                 this,
+                theme.roles,
                 getString(R.string.settings_background_delete_all_question),
                 resources.getQuantityString(text, count, count),
                 listOf(
-                    getString(R.string.settings_pictures_cancel) to {},
-                    getString(R.string.settings_pictures_delete) to {
+                    DialogButton(getString(R.string.settings_pictures_cancel), DialogButton.Kind.TONAL) {},
+                    DialogButton(getString(R.string.settings_pictures_delete), DialogButton.Kind.DANGER, UiR.drawable.icon_trash) {
                         delete(library.pictures.mapTo(HashSet()) { it.id })
                         // Delete all is dimmed now, with nothing left to delete.
                         save.requestFocus()
                     },
                 ),
+                Badge.Kind.DANGER to UiR.drawable.icon_trash,
             ),
         )
     }
@@ -566,9 +615,6 @@ class BackgroundActivity : Activity() {
         }
 
     internal companion object {
-        /** The id of a picture to start with, chosen in the draft: one just received ([PictureReceivedActivity]). */
-        const val EXTRA_PICTURE = "com.luncher.launcher.settings.PICTURE"
-
         private const val ADD_FROM_FOLDER = 1
         private const val DRAFT_PICTURE = "draft_picture"
         private const val DRAFT_FIT = "draft_fit"

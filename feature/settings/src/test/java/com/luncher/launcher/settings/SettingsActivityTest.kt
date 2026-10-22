@@ -3,8 +3,13 @@ package com.luncher.launcher.settings
 import android.content.Intent
 import android.provider.Settings
 import android.view.KeyEvent
+import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
+import com.luncher.domain.apps.AppArrangement
+import com.luncher.domain.apps.FakeAppArrangements
+import com.luncher.domain.apps.FakeInstalledApps
+import com.luncher.domain.apps.FakeInstalledApps.Companion.app
 import com.luncher.launcher.testing.TV_1080P
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -24,10 +29,14 @@ class SettingsActivityTest {
 
     private fun start() = Robolectric.buildActivity(SettingsActivity::class.java).setup().get()
 
-    private fun SettingsActivity.entries(): List<TextView> {
+    private fun SettingsActivity.entries(): List<View> {
         val entries = findViewById<LinearLayout>(R.id.settings_entries)
-        return (0 until entries.childCount).map { entries.getChildAt(it) as TextView }
+        return (0 until entries.childCount).map { entries.getChildAt(it) }
     }
+
+    private fun SettingsActivity.titles(): List<TextView> = entries().map { it.findViewById(R.id.settings_entry_title) }
+
+    private fun SettingsActivity.summaries(): List<String> = entries().map { it.findViewById<TextView>(R.id.settings_entry_summary).text.toString() }
 
     private fun SettingsActivity.press(keyCode: Int) {
         dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, keyCode))
@@ -36,7 +45,7 @@ class SettingsActivityTest {
 
     @Test
     fun `lists hiding apps, the appearance and the pictures, then the system settings`() {
-        assertEquals(listOf("Hide apps", "Appearance", "System settings"), start().entries().map { it.text.toString() })
+        assertEquals(listOf("Hide apps", "Appearance", "System settings"), start().titles().map { it.text.toString() })
     }
 
     @Test
@@ -61,7 +70,7 @@ class SettingsActivityTest {
         controller.configurationChange().visible()   // Robolectric shows the new window only when told
 
         val activity = controller.get()
-        assertEquals(listOf("Hide apps", "Appearance", "System settings"), activity.entries().map { it.text.toString() })
+        assertEquals(listOf("Hide apps", "Appearance", "System settings"), activity.titles().map { it.text.toString() })
         assertTrue(activity.entries().first().isFocused)
     }
 
@@ -126,10 +135,64 @@ class SettingsActivityTest {
     @Test
     @Config(qualifiers = "fa-rIR-$TV_1080P")
     fun `lines its entries up at the right in right-to-left languages, English ones too`() {
-        val entries = start().entries()
-        val entry = entries.first().layout
+        val titles = start().titles()
+        val entry = titles.first().layout
 
-        assertEquals("Hide apps", entries.first().text.toString())
+        assertEquals("Hide apps", titles.first().text.toString())
         assertEquals(entry.width.toFloat(), entry.getLineRight(0))
+    }
+
+    @Test
+    fun `says below each entry what it's about, how many apps are hidden, what the appearance covers, whose settings`() {
+        assertEquals(listOf("None hidden", "Tiles, time and date, theme, background", "The TV's own settings"), start().summaries())
+    }
+
+    @Test
+    fun `counts the hidden apps that are installed`() {
+        val application = RuntimeEnvironment.getApplication() as SettingsTestApplication
+        application.graph = object : TestSettingsGraph() {
+            override val installedApps = FakeInstalledApps(app("movies"), app("music"), app("news"))
+            override val appArrangements = FakeAppArrangements(
+                AppArrangement(order = null, hidden = listOf(app("music").launchable, app("news").launchable, app("gone").launchable)),
+            )
+        }
+
+        assertEquals("2 hidden", start().summaries().first())
+    }
+
+    // Back from Hide apps, where an app was hidden.
+    @Test
+    fun `counts them again when it shows again`() {
+        val arrangements = FakeAppArrangements()
+        val application = RuntimeEnvironment.getApplication() as SettingsTestApplication
+        application.graph = object : TestSettingsGraph() {
+            override val installedApps = FakeInstalledApps(app("movies"), app("music"))
+            override val appArrangements = arrangements
+        }
+        val controller = Robolectric.buildActivity(SettingsActivity::class.java).setup()
+
+        arrangements.save(AppArrangement(order = null, hidden = listOf(app("music").launchable)))
+        controller.pause().stop().restart().start().resume()
+
+        assertEquals("1 hidden", controller.get().summaries().first())
+    }
+
+    // A side sheet at the screen's end, the right, a margin from its edges.
+    @Test
+    fun `is a side sheet at the right, as tall as the screen less its margins`() {
+        val activity = start()
+        val window = activity.window.attributes
+        val margin = activity.resources.getDimensionPixelSize(R.dimen.settings_sheet_margin)
+
+        assertEquals(android.view.Gravity.RIGHT or android.view.Gravity.CENTER_VERTICAL, window.gravity)
+        assertEquals(margin, window.x)
+        assertEquals(activity.resources.displayMetrics.heightPixels - 2 * margin, window.height)
+    }
+
+    // Mirrored, as the panels are in a right-to-left language.
+    @Test
+    @Config(qualifiers = "ar-$TV_1080P")
+    fun `is at the left in a right-to-left language`() {
+        assertEquals(android.view.Gravity.LEFT or android.view.Gravity.CENTER_VERTICAL, start().window.attributes.gravity)
     }
 }

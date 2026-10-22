@@ -112,10 +112,14 @@ class BackgroundActivityTest {
 
     private fun Activity.hint() = findViewById<TextView>(R.id.settings_background_hint).text.toString()
 
-    private fun Activity.option(label: String): View {
+    /** The options' fields, in order: two a row. */
+    private fun Activity.options(): List<View> {
         val options = findViewById<LinearLayout>(R.id.settings_background_options)
-        return (0 until options.childCount).map(options::getChildAt).single { it.findViewById<TextView>(R.id.settings_option_label).text.toString() == label }
+        return (0 until options.childCount).map(options::getChildAt).flatMap { line -> (0 until (line as LinearLayout).childCount).map(line::getChildAt) }
     }
+
+    private fun Activity.option(label: String): View =
+        options().single { it.findViewById<TextView>(R.id.settings_option_label).text.toString() == label }
 
     private fun Activity.value(label: String) = option(label).findViewById<TextView>(R.id.settings_option_value).text.toString()
 
@@ -129,10 +133,16 @@ class BackgroundActivityTest {
         return list
     }
 
-    private fun PopupWindow.entries(): List<TextView> {
+    private fun PopupWindow.entries(): List<View> {
         val list = contentView as LinearLayout
-        return (0 until list.childCount).map { list.getChildAt(it) as TextView }
+        return (0 until list.childCount).map { list.getChildAt(it) }
     }
+
+    /** A value's name, in an option's list. */
+    private val View.text: CharSequence get() = findViewById<TextView>(R.id.settings_option_list_value).text
+
+    /** Whether a value of an option's list is checked: the option's value. */
+    private fun View.checked() = findViewById<View>(R.id.settings_option_list_check).visibility == View.VISIBLE
 
     /** The entry of the list that has the focus. */
     private fun PopupWindow.focused() = entries().single { it.isFocused }.text.toString()
@@ -254,7 +264,8 @@ class BackgroundActivityTest {
         }
 
         assertEquals("Off", activity.value("Dim"))
-        assertTrue("a picture's row right of it", dim.focusSearch(View.FOCUS_RIGHT) in activity.listRows())
+        assertSame("Blur right of it, in the grid", activity.option("Blur"), dim.focusSearch(View.FOCUS_RIGHT))
+        assertTrue("a picture's row right of Blur", activity.option("Blur").focusSearch(View.FOCUS_RIGHT) in activity.listRows())
         assertNull("no list", shadowOf(activity.application).latestPopupWindow?.takeIf { it.isShowing })
     }
 
@@ -275,15 +286,39 @@ class BackgroundActivityTest {
     }
 
     @Test
-    fun `OK on an option lists its values, the one it has focused and in the accent color`() {
+    fun `OK on an option lists its values, the one it has focused and checked`() {
         graph(beach, background = Background(beach.id, dim = 40))
         val activity = start().get()
 
         val list = activity.open("Dim")
 
         assertEquals("Medium", list.focused())
-        val accent = activity.getColor(UiR.color.accent)
-        assertEquals(listOf("Medium"), list.entries().filter { it.currentTextColor == accent }.map { it.text.toString() })
+        assertEquals(listOf("Medium"), list.entries().filter { it.checked() }.map { it.text.toString() })
+        assertTrue("the field shows its list open", activity.option("Dim").isActivated)
+        list.dismiss()
+        idle()
+        assertFalse(activity.option("Dim").isActivated)
+    }
+
+    // Beside the options, over the pictures, so it covers none of the fields nor the preview.
+    @Test
+    fun `an option's list opens beside the options, its value level with the field`() {
+        graph(beach, background = Background(beach.id, dim = 40))
+        val activity = start().get()
+
+        val list = activity.open("Dim")
+
+        val options = activity.findViewById<View>(R.id.settings_background_options)
+        val optionsAt = IntArray(2).also(options::getLocationInWindow)
+        // Where the list's window is, on the editor's.
+        val window = list.contentView.rootView.layoutParams as android.view.WindowManager.LayoutParams
+        assertTrue("list at ${window.x}, options end at ${optionsAt[0] + options.width}", window.x >= optionsAt[0] + options.width)
+        val field = activity.option("Dim")
+        val fieldAt = IntArray(2).also(field::getLocationInWindow)
+        val medium = list.entries().single { it.checked() }
+        val mediumAt = IntArray(2).also(medium::getLocationInWindow)
+        // Within a dp: halves of odd heights round to whole pixels.
+        assertEquals(fieldAt[1] + field.height / 2f, window.y + mediumAt[1] + medium.height / 2f, activity.resources.displayMetrics.density)
     }
 
     @Test
@@ -432,7 +467,7 @@ class BackgroundActivityTest {
         val dimmed = setOf(activity.option("Fit"), activity.option("Position"))
         assertFalse("up from Dim", activity.option("Dim").focusSearch(View.FOCUS_UP) in dimmed)
         assertFalse("from the pictures", activity.row("No picture").focusSearch(View.FOCUS_LEFT) in dimmed)
-        assertSame(activity.option("Blur"), activity.option("Dim").focusSearch(View.FOCUS_DOWN))
+        assertSame(activity.option("Blur"), activity.option("Dim").focusSearch(View.FOCUS_RIGHT))
     }
 
     @Test
@@ -475,16 +510,6 @@ class BackgroundActivityTest {
         graph.jobs.runAll()
         assertEquals("no wallpaper drawn", 0, graph.storedWallpaper.stored.size)
         assertEquals("nothing stored", Background(panorama.id, position = PicturePosition.TOP, dim = 20), stored)
-    }
-
-    @Test
-    fun `opened with a picture received, starts with a position it offers`() {
-        graph(portrait, panorama, background = Background(portrait.id, position = PicturePosition.BOTTOM))
-
-        val activity = start(Intent().putExtra(BackgroundActivity.EXTRA_PICTURE, panorama.id.value)).get()
-
-        assertEquals("Center", activity.value("Position"))
-        assertEquals(PicturePosition.CENTER, activity.findViewById<AppearancePreviewView>(R.id.settings_background_preview).appearance.background.position)
     }
 
     @Test
@@ -873,17 +898,6 @@ class BackgroundActivityTest {
         assertEquals(listOf("No picture", "holiday.jpg ✓", "sunset.jpg", "Add from folder"), activity.list())
         assertEquals("holiday.jpg", activity.focused())
         assertEquals("Hold OK on a picture to rename or delete it", activity.hint())
-    }
-
-    @Test
-    fun `opened with a picture just received, starts with it chosen, not saved`() {
-        graph(beach, sunset, background = Background(beach.id, dim = 20))
-
-        val activity = start(Intent().putExtra(BackgroundActivity.EXTRA_PICTURE, sunset.id.value)).get()
-
-        assertEquals(listOf("No picture", "beach.png", "sunset.jpg ✓", "Add from folder"), activity.list())
-        assertEquals("shown as it is", "Off", activity.value("Dim"))
-        assertEquals(Background(beach.id, dim = 20), stored)
     }
 
     @Test

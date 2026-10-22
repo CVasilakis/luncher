@@ -1,52 +1,78 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- A dialog over Pictures: a title, a text, and its entries (a picture's actions, a
-     confirmation's choices, a message's OK). PicturesDialog adds the entries. RenameDialog shows
-     the field, and the text below it says why a name can't be. -->
+<!-- A dialog over a pictures' screen or the appearance editor: its mark beside its title (gone
+     without one), a text starting below the mark, and its buttons side by side, or one below the
+     other when either doesn't fit (a picture's actions are entries one below the other, a menu).
+     PicturesDialog adds the buttons. RenameDialog shows the field, and the line below it says why
+     a name can't be. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/settings_pictures_dialog_panel"
     android:layout_width="@dimen/settings_pictures_dialog_width"
     android:layout_height="wrap_content"
+    android:clipChildren="false"
+    android:clipToPadding="false"
     android:orientation="vertical"
     android:padding="@dimen/settings_pictures_dialog_padding">
 
-    <TextView
-        android:id="@+id/settings_pictures_dialog_title"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:includeFontPadding="false"
-        android:textColor="@color/text_primary"
-        android:textSize="@dimen/settings_pictures_status_text"
-        android:textStyle="bold" />
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <com.luncher.launcher.settings.Badge
+            android:id="@+id/settings_pictures_dialog_mark"
+            android:layout_width="@dimen/settings_badge"
+            android:layout_height="@dimen/settings_badge"
+            android:layout_marginEnd="@dimen/settings_badge_gap"
+            android:importantForAccessibility="no"
+            android:padding="@dimen/settings_badge_padding"
+            android:visibility="gone" />
+
+        <com.luncher.launcher.ui.ThemedText
+            android:id="@+id/settings_pictures_dialog_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:includeFontPadding="false"
+            android:textSize="@dimen/text_dialog_title" />
+    </LinearLayout>
 
     <!-- Labelled by the title, which RenameDialog sets, as lint can't see. No hint: in a script
          of taller lines, it makes the field taller than the smallest screens leave room for. -->
-    <EditText
+    <com.luncher.launcher.settings.NameField
         android:id="@+id/settings_pictures_dialog_field"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/settings_pictures_tile_text_gap"
+        android:layout_marginTop="@dimen/settings_dialog_text_gap"
         android:imeOptions="actionDone|flagNoExtractUi"
         android:importantForAutofill="no"
         android:inputType="text|textNoSuggestions"
+        android:paddingLeft="@dimen/settings_entry_padding"
+        android:paddingTop="@dimen/settings_field_padding_vertical"
+        android:paddingRight="@dimen/settings_entry_padding"
+        android:paddingBottom="@dimen/settings_field_padding_vertical"
         android:singleLine="true"
-        android:textColor="@color/text_primary"
-        android:textSize="@dimen/settings_pictures_text"
+        android:textSize="@dimen/text_entry"
         android:visibility="gone"
         tools:ignore="LabelFor" />
 
-    <TextView
+    <com.luncher.launcher.ui.ThemedText
         android:id="@+id/settings_pictures_dialog_text"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/settings_pictures_tile_text_gap"
-        android:layout_marginBottom="@dimen/settings_pictures_tile_text_gap"
-        android:textColor="@color/text_secondary"
-        android:textSize="@dimen/settings_pictures_small_text" />
+        android:layout_marginTop="@dimen/settings_dialog_text_gap"
+        android:lineSpacingMultiplier="1.15"
+        android:textSize="@dimen/settings_dialog_text"
+        app:colorRole="onSurfaceVariant" />
 
-    <LinearLayout
+    <com.luncher.launcher.settings.EntriesRow
         android:id="@+id/settings_pictures_dialog_entries"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical" />
+        android:layout_marginTop="@dimen/settings_dialog_buttons_gap"
+        android:baselineAligned="false"
+        android:clipChildren="false"
+        android:orientation="horizontal" />
 </LinearLayout>

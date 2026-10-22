@@ -1,33 +1,54 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- A picture of the drop folders: where it is and its name, then its size, or that this TV
-     can't show it, on more lines where it needs them. Not focusable: the list moves its
-     selection. -->
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<!-- A picture of the drop folders: a USB drive or the TV, where it is, then its name, and below it
+     where it is again in words and its size, or why it can't be added, in the error color, on more
+     lines where it needs them. Not focusable: the list moves its selection; the selected row looks
+     focused. -->
+<com.luncher.launcher.ui.ListEntry xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:gravity="center_vertical"
     android:minHeight="@dimen/settings_pictures_row_height"
-    android:orientation="vertical"
-    android:paddingLeft="@dimen/settings_pictures_entry_padding"
-    android:paddingTop="@dimen/settings_pictures_tile_text_gap"
-    android:paddingRight="@dimen/settings_pictures_entry_padding"
-    android:paddingBottom="@dimen/settings_pictures_tile_text_gap">
+    android:orientation="horizontal"
+    android:paddingLeft="@dimen/settings_entry_padding"
+    android:paddingTop="@dimen/settings_entry_padding_vertical"
+    android:paddingRight="@dimen/settings_entry_padding"
+    android:paddingBottom="@dimen/settings_entry_padding_vertical">
 
-    <TextView
-        android:id="@+id/settings_pictures_folder_name"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:ellipsize="end"
-        android:singleLine="true"
-        android:textColor="@color/text_primary"
-        android:textSize="@dimen/settings_pictures_text" />
+    <com.luncher.launcher.ui.ThemedIcon
+        android:id="@+id/settings_pictures_folder_where_icon"
+        android:layout_width="@dimen/icon"
+        android:layout_height="@dimen/icon"
+        android:duplicateParentState="true"
+        android:importantForAccessibility="no"
+        app:colorRole="onSurfaceVariant" />
 
-    <TextView
-        android:id="@+id/settings_pictures_folder_details"
-        android:layout_width="match_parent"
+    <LinearLayout
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:ellipsize="end"
-        android:maxLines="3"
-        android:textColor="@color/text_secondary"
-        android:textSize="@dimen/settings_pictures_small_text" />
-</LinearLayout>
+        android:layout_marginStart="@dimen/settings_entry_icon_gap"
+        android:layout_weight="1"
+        android:duplicateParentState="true"
+        android:orientation="vertical">
+
+        <com.luncher.launcher.ui.ThemedText
+            android:id="@+id/settings_pictures_folder_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:duplicateParentState="true"
+            android:ellipsize="end"
+            android:singleLine="true"
+            android:textSize="@dimen/text_entry" />
+
+        <com.luncher.launcher.ui.ThemedText
+            android:id="@+id/settings_pictures_folder_details"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/settings_entry_line_gap"
+            android:duplicateParentState="true"
+            android:ellipsize="end"
+            android:maxLines="3"
+            android:textSize="@dimen/text_supporting"
+            app:colorRole="onSurfaceVariant" />
+    </LinearLayout>
+</com.luncher.launcher.ui.ListEntry>

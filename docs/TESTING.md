@@ -121,7 +121,11 @@ outside a broken Back looks the same as a working one.
 Reference images are committed. When a change alters a screen on purpose, record, look at the new
 image, and commit it with the change. A dialog is a window of its own: `captureScreenRoboImage`
 draws it over its screen, every window at once (an experimental Roborazzi API, opted in where
-it's used, `BackgroundScreenshotTest` and `HomeScreenshotTest`). A plain `testDebugUnitTest` runs the screenshot tests without
+it's used, `BackgroundScreenshotTest` and `HomeScreenshotTest`). Capture through
+`captureFocused` and `captureScreenFocused` (`ui/src/testFixtures/…/testing/Captures.kt`), which
+first give the front window the input focus, as Android does: Robolectric gives no window the
+focus, and an entry looks focused only while its window has it, so without them no focus shows,
+and with a dialog over a screen the screen's entry would look focused under it. A plain `testDebugUnitTest` runs the screenshot tests without
 comparing images. Screenshots need Robolectric's native graphics
 (`@GraphicsMode(GraphicsMode.Mode.NATIVE)`), available on Linux x86-64, macOS and Windows.
 

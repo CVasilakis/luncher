@@ -7,6 +7,7 @@ import android.os.Looper
 import android.view.KeyEvent
 import android.view.View
 import android.widget.TextView
+import com.luncher.domain.appearance.ColorRoles
 
 /**
  * A floating panel over the dimmed screen, with a spinning wheel and a message, for work the user
@@ -14,13 +15,14 @@ import android.widget.TextView
  * meanwhile. Work that can be stopped shows Cancel too, focused, which Back does as well; other
  * work ignores Back. [show] shows it at once; [close] closes it no sooner than [SHORTEST] ms after
  * it showed ([ShortestShowing]), so it never just flashes; Cancel closes it at once, the user's own
- * choice. Main thread only.
+ * choice. In the theme's colors, [roles]. Main thread only.
  */
-class WorkingDialog(context: Context) {
+class WorkingDialog(context: Context, roles: ColorRoles) {
 
     private val dialog = Dialog(context, R.style.Theme_Luncher_Working).apply {
         setContentView(R.layout.working_dialog)
         setCancelable(false)
+        checkNotNull(window).stylePanel(roles)
     }
     private val message: TextView = dialog.findViewById(R.id.working_message)
     private val cancel: TextView = dialog.findViewById(R.id.working_cancel)

@@ -5,12 +5,16 @@ import android.app.Activity
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.os.Build
+import android.graphics.drawable.GradientDrawable
+import android.graphics.drawable.StateListDrawable
 import android.os.Bundle
 import android.view.KeyEvent
 import android.view.View
 import android.widget.TextView
 import android.window.OnBackInvokedDispatcher
 import com.luncher.domain.appearance.Appearance
+import com.luncher.domain.appearance.ThemeAppearance
+import com.luncher.domain.appearance.colorRoles
 import com.luncher.domain.apps.AppAction
 import com.luncher.domain.apps.ArrangedApps
 import com.luncher.domain.apps.InstalledApp
@@ -56,6 +60,9 @@ class HomeActivity : Activity() {
 
     private val showAppearance: () -> Unit = { show(appearanceSettings.read()) }
 
+    /** The theme the screen shows, so an equal one changes nothing; null before the first. */
+    private var shownTheme: ThemeAppearance? = null
+
     // Hidden or shown in the settings, over the home screen, or hidden from a tile's menu: shown at
     // once. Not while moving an app, whose own save this is, with the tiles showing it already.
     private val showArrangement: () -> Unit = { if (!move.active) refresh() }
@@ -75,6 +82,7 @@ class HomeActivity : Activity() {
         val arranged = arranged ?: return@OnLongClickListener false
         val tile = it as AppTileView
         val menu = menu ?: TileMenu(this).also { menu = it }
+        menu.style(colorRoles(shownTheme ?: appearanceSettings.read().theme))
         menu.show(tile, appActions(arranged, tile.app)) { action -> act(action, tile) }
         true
     }
@@ -168,6 +176,27 @@ class HomeActivity : Activity() {
         tiles.tileStyle = appearance.tileStyle
         topBar.appearance = appearance.topBar
         wallpaper.show(appearance.background)
+        showTheme(appearance.theme)
+    }
+
+    /**
+     * The theme's accent on the tiles' focus frame and the gear's disc, and its colors in the
+     * tile's menu and the window while the wallpaper is drawn; the home screen itself stays dark,
+     * on its wallpaper. Applied only when the theme changed.
+     */
+    private fun showTheme(theme: ThemeAppearance) {
+        if (theme == shownTheme) return
+        shownTheme = theme
+        val roles = colorRoles(theme)
+        tiles.accent = roles.homeAccent
+        settingsEntry.background = StateListDrawable().apply {
+            addState(intArrayOf(android.R.attr.state_focused), GradientDrawable().apply {
+                shape = GradientDrawable.OVAL
+                setColor(roles.homeAccent)
+            })
+        }
+        menu?.style(roles)
+        wallpaper.roles = roles
     }
 
     /** What OK on an entry of [tile]'s menu does. */

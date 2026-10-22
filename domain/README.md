@@ -25,7 +25,7 @@ domain/src/
 │   │   ├── AppAction.kt         model and rule: what the user can do to an app from its tile's menu, one type each, and which the menu offers
 │   │   └── Banner.kt            model and rule: which image a tile shows (the app's banner or its icon)
 │   ├── appearance/
-│   │   ├── Appearance.kt        model: how the home screen looks, as far as the user can change it, in parts (docs/ARCHITECTURE.md#appearance)
+│   │   ├── Appearance.kt        model: how the home screen looks, as far as the user can change it, and Luncher's theme, in parts (docs/ARCHITECTURE.md#appearance)
 │   │   ├── TileGeometry.kt      model: where tiles go and how big they are, in dp; their alignment; whether the focused tile's name shows below it
 │   │   ├── AppName.kt           model: an app's name below its tile, never or below the focused one
 │   │   ├── VerticalAlignment.kt model: the rows at the top, centered or at the bottom of the height
@@ -36,7 +36,10 @@ domain/src/
 │   │   ├── TopBarAppearance.kt  model: whether the time and the date show, the clock's side of the top bar, the time's side of the date
 │   │   ├── Background.kt        model and rule: the wallpaper, a picture of the library or none, and how it's drawn; only values its context offers; another picture chosen as it is
 │   │   ├── Side.kt              model: left or right, the screen's, in every language
-│   │   ├── AppearanceOption.kt  models and rules: each option the user can change, its values, those a context offers (OptionContext), stepping through them, around
+│   │   ├── ThemeAppearance.kt   model: Luncher's theme, the accent color and the mode (ThemeMode: dark or light)
+│   │   ├── AccentColor.kt       model: the accent colors to choose from, each with its tones, precomputed
+│   │   ├── ColorRoles.kt        model and rule: the colors of the menus and settings by what each is for, and the home screen's accent, for a theme (colorRoles)
+│   │   ├── AppearanceOption.kt  models and rules: each option the user can change, its values, those a context offers (OptionContext), stepping through them, around; whether it shows on the home screen
 │   │   ├── AppearanceOptions.kt models and rule: which options the editor lists, in groups; a group edited apart (the background's)
 │   │   └── AppearanceSettings.kt port: the stored appearance, and when it changes
 │   ├── jobs/
@@ -53,7 +56,7 @@ domain/src/
 │   │   ├── PictureFormat.kt     model and rule: the formats a TV may not show (HEIF, AVIF), recognized by a file's header
 │   │   ├── Framing.kt           model and rules: how a picture fills a space of another shape (Fit, PicturePosition), which part of it shows, and what filling cuts from it (PictureCut: nothing under 1%, its sides, or its top and bottom)
 │   │   ├── PictureStyle.kt      model and rule: a picture's framing, dim and blur (Blur: off, then three levels of equal steps), as it's drawn
-│   │   ├── PictureUse.kt        model and rule: what a picture is used for (the wallpaper), the uses a received picture offers (pictureUseMenu), and an appearance without deleted pictures
+│   │   ├── PictureUse.kt        model and rule: what a picture is used for (the wallpaper), and an appearance without deleted pictures
 │   │   ├── PictureImages.kt     port: a picture drawn at a size in a style, in the UI's image type; kept or drawn anew, a screen's drawing stopped when it's dropped
 │   │   ├── PreparedPictures.kt  port: each picture prepared once for the screens (its working copy), and whether it is for the screen as it is now
 │   │   └── FolderPictures.kt    port, model and rule: the pictures in the drop folders, their preview, and the order they're listed in

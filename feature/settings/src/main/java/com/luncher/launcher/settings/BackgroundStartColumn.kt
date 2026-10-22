@@ -11,7 +11,8 @@ import com.luncher.launcher.ui.screenSize
  * the other. The preview gets the height the others leave, at most its height at the column's
  * width (of the TV's shape, as its sample screen), so Save and Delete all show without scrolling;
  * at least a quarter of that, so it still shows on the smallest screens, where the column then
- * scrolls as the focus moves.
+ * scrolls as the focus moves. It keeps the TV's shape, centered, so its rounded corners are the
+ * picture's.
  */
 internal class BackgroundStartColumn(context: Context, attrs: AttributeSet?) : ScrollView(context, attrs) {
 
@@ -21,13 +22,18 @@ internal class BackgroundStartColumn(context: Context, attrs: AttributeSet?) : S
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         val content = getChildAt(0)
         val preview = content.findViewById<View>(R.id.settings_background_preview)
-        val natural = context.screenSize().heightAt(MeasureSpec.getSize(widthMeasureSpec) - paddingLeft - paddingRight)
+        val screen = context.screenSize()
+        val width = MeasureSpec.getSize(widthMeasureSpec) - paddingLeft - paddingRight - content.paddingLeft - content.paddingRight
+        val natural = screen.heightAt(width)
+        preview.layoutParams.width = width
         preview.layoutParams.height = natural
         super.onMeasure(widthMeasureSpec, heightMeasureSpec)
         val room = MeasureSpec.getSize(heightMeasureSpec) - paddingTop - paddingBottom
         val beyond = content.measuredHeight - room
         if (MeasureSpec.getMode(heightMeasureSpec) == MeasureSpec.UNSPECIFIED || beyond <= 0) return
-        preview.layoutParams.height = (natural - beyond).coerceAtLeast(natural / 4)
+        val height = (natural - beyond).coerceAtLeast(natural / 4)
+        preview.layoutParams.height = height
+        preview.layoutParams.width = screen.widthAt(height)
         super.onMeasure(widthMeasureSpec, heightMeasureSpec)
     }
 }

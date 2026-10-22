@@ -1,20 +1,51 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- The themed views' (Themed.kt): Material for TV's sizes, on Android TV's 960 x 540 dp
+         canvas. The type: a screen's title (smaller on a screen less than 450 dp tall, 720p at
+         the 1080p density; values-h450dp has every other screen's), a panel's or a dialog's, an
+         entry's text, a line below it or a hint, a section's label above a list, a button's. -->
+    <dimen name="text_display">28sp</dimen>
+    <dimen name="text_title">28sp</dimen>
+    <dimen name="text_dialog_title">24sp</dimen>
+    <dimen name="text_entry">18sp</dimen>
+    <dimen name="text_supporting">14sp</dimen>
+    <dimen name="text_label">14sp</dimen>
+    <dimen name="text_button">16sp</dimen>
+    <!-- Corners: an entry's, a field's; a panel's and a dialog's; a picture's. A button and a
+         chip have round ends. -->
+    <dimen name="corner_entry">12dp</dimen>
+    <dimen name="corner_panel">28dp</dimen>
+    <dimen name="corner_picture">8dp</dimen>
+    <!-- A list's container (ScrollFrame): an entry's corners and the room around them. -->
+    <dimen name="corner_container">20dp</dimen>
+    <!-- How much a focused entry grows (Material for TV's list items), and a button (less than
+         Material for TV's 1.1: Luncher's buttons are wide, two side by side a gap apart), and how
+         high either is lifted, for its shadow. -->
+    <item name="entry_zoom" format="float" type="dimen">1.05</item>
+    <item name="button_zoom" format="float" type="dimen">1.06</item>
+    <dimen name="entry_lift">4dp</dimen>
+    <!-- A button: its height at least, its padding at the sides, the gap after its icon. An
+         icon's size; a small one, beside a line of text. -->
+    <dimen name="button_height">48dp</dimen>
+    <dimen name="button_padding">24dp</dimen>
+    <dimen name="icon_gap">8dp</dimen>
+    <dimen name="icon">24dp</dimen>
+    <dimen name="icon_small">18dp</dimen>
+    <!-- An outlined button's edge (Delete all, Reset to defaults); an open field's (ListEntry). -->
+    <dimen name="outline">1.5dp</dimen>
+    <dimen name="open_field_edge">2dp</dimen>
+    <!-- A scrolling list's fade into its container, over its last half row (ScrollFrame). -->
+    <dimen name="scroll_fade">40dp</dimen>
     <!-- A panel's corners; the focus frame of an entry in it (entry_background). -->
     <dimen name="panel_corner">12dp</dimen>
-    <dimen name="entry_frame">3dp</dimen>
-    <dimen name="entry_corner">8dp</dimen>
     <!-- WorkingDialog: the panel's padding, its spinning wheel and the gap to the message, the
-         message's size and width at most. -->
-    <dimen name="working_padding">32dp</dimen>
+         message's size and width at most; the gap above its Cancel. -->
+    <dimen name="working_padding">28dp</dimen>
     <dimen name="working_spinner">40dp</dimen>
-    <dimen name="working_gap">24dp</dimen>
-    <dimen name="working_text">20sp</dimen>
+    <dimen name="working_gap">20dp</dimen>
+    <dimen name="working_text">18sp</dimen>
     <dimen name="working_text_width">400dp</dimen>
-    <!-- Its Cancel: as tall as a settings panel's entry, below the message. -->
-    <dimen name="working_entry_height">56dp</dimen>
-    <dimen name="working_entry_padding">16dp</dimen>
-    <dimen name="working_entry_gap">24dp</dimen>
+    <dimen name="working_entry_gap">28dp</dimen>
     <!-- How far the edge around what's drawn on the wallpaper reaches past the shape
          (WallpaperOutline). The home screen's gear (feature/home's home_settings.xml) draws twice
          this, in its own units. -->

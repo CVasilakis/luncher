@@ -5,27 +5,31 @@ import android.app.Dialog
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import com.luncher.domain.appearance.Appearance
-import com.luncher.domain.appearance.AppearanceGroup
+import com.luncher.domain.appearance.AppearanceTopic
 import com.luncher.domain.appearance.OptionContext
 import com.luncher.domain.appearance.appearanceOptions
+import com.luncher.launcher.ui.styleScreen
+import com.luncher.launcher.ui.R as UiR
 
 /**
- * The editor of the home screen's appearance, full-screen: the groups of options of the domain's
- * [appearanceOptions] at the right (the left in a right-to-left language, mirrored like the other
- * panels), and the title and a preview of the result beside them. OK on a group shows its options
- * below it, and hides those of the group that showed; all are hidden at first. Left and Right on
- * an option step through its values, toward the arrow on that side, around from the last to the
- * first; each change is stored at once, and the home screen shows it when it comes back. An
- * option that changes nothing with the others as they are is dimmed, and the focus passes it by.
- * OK on the last entry asks, Cancel focused, then puts every option back to its default. Back
- * closes it, as any activity.
+ * The editor of the home screen's appearance and Luncher's theme, full-screen: the groups of
+ * options of the domain's [appearanceOptions] at the end (the start in a right-to-left language,
+ * mirrored like the other panels), in their container, and at the start the title, a preview of
+ * the result, and below it Background and Reset to defaults. OK on a group shows its options below
+ * it, and hides those of the group that showed; all are hidden at first. Left and Right on an
+ * option step through its values, toward the arrow on that side, around from the last to the
+ * first; each change is stored at once, the theme's restyling the editor in place, and the home
+ * screen shows it when it comes back. An option that changes nothing with the others as they are
+ * is dimmed, and the focus passes it by. Reset to defaults asks, Cancel focused, then puts every
+ * option back to its default. Back closes it, as any activity.
  *
- * A group edited apart (the background's) is one entry, its picture's name beside it: OK opens
- * its own screen ([BackgroundActivity]), where the picture and its options are saved together;
- * back here, the editor reads the appearance again.
+ * The group edited apart (the background's) is the Background button: it opens its own screen
+ * ([BackgroundActivity]), where the picture and its options are saved together; back here, the
+ * editor reads the appearance again.
  *
  * Which options there are, in which groups, their values and what a step does are the domain's;
  * what each one is called is decided in OptionLabels.kt, per option.
@@ -33,10 +37,8 @@ import com.luncher.domain.appearance.appearanceOptions
 class AppearanceActivity : Activity() {
 
     private val settings by lazy { graph.appearanceSettings }
-    private val pictures by lazy { graph.pictures }
+    private val theme by lazy { ScreenTheme(settings) { checkNotNull(window).styleScreen(it) } }
 
-    /** The entries of the groups edited apart, which show the background's picture. */
-    private val apartValues = mutableListOf<TextView>()
     private lateinit var appearance: Appearance
     private lateinit var preview: AppearancePreviewView
     private val rows = mutableListOf<OptionRow>()
@@ -53,17 +55,13 @@ class AppearanceActivity : Activity() {
         setContentView(R.layout.settings_appearance_activity)
         preview = findViewById(R.id.settings_appearance_preview)
         // Its width, or on a narrow screen half of it, so the preview keeps the other half.
-        val scroll = findViewById<View>(R.id.settings_appearance_scroll)
-        scroll.layoutParams.width = minOf(
+        findViewById<View>(R.id.settings_appearance_end).layoutParams.width = minOf(
             resources.getDimensionPixelSize(R.dimen.settings_appearance_options_width),
             resources.displayMetrics.widthPixels / 2,
         )
         val options = findViewById<LinearLayout>(R.id.settings_appearance_options)
         for (group in appearanceOptions().groups) {
-            if (group.editedApart) {
-                apartEntry(options, group)
-                continue
-            }
+            if (group.editedApart) continue   // the Background button
             val header = layoutInflater.inflate(R.layout.settings_appearance_group, options, false)
             options.addView(header)
             val rows = group.options.map { option ->
@@ -73,29 +71,33 @@ class AppearanceActivity : Activity() {
                 OptionRow(option, view, { appearance }, { OptionContext.UNKNOWN }, ::change)
             }
             this.rows += rows
-            groups += Group(header, topicTitle(group.topic), rows.map { it.view })
+            groups += Group(header, group.topic, rows.map { it.view })
         }
-        val reset = layoutInflater.inflate(R.layout.settings_entry, options, false) as TextView
-        reset.setText(R.string.settings_appearance_reset)
-        reset.setOnClickListener { confirmReset() }
-        options.addView(reset)
+        findViewById<View>(R.id.settings_appearance_background).setOnClickListener {
+            startActivity(Intent(this, BackgroundActivity::class.java))
+        }
+        findViewById<View>(R.id.settings_appearance_reset).setOnClickListener { confirmReset() }
 
         appearance = settings.read()
         preview.showWallpapers(graph.wallpaper, graph.pictureImages, graph.jobs)
         show()
+        window.styleScreen(theme.roles)
         groups.first().header.requestFocus()
     }
 
-    // Back from the background editor, which may have saved a new background, or renamed its
-    // picture. In onResume: it can close before this screen was ever stopped.
+    override fun onStart() {
+        super.onStart()
+        theme.start()
+    }
+
+    // Back from the background editor, which may have saved a new background. In onResume: it can
+    // close before this screen was ever stopped.
     override fun onResume() {
         super.onResume()
         val stored = settings.read()
         if (stored != appearance) {
             appearance = stored
             show()
-        } else {
-            showPictureName()
         }
     }
 
@@ -106,21 +108,13 @@ class AppearanceActivity : Activity() {
 
     override fun onStop() {
         super.onStop()
+        theme.stop()
         preview.stopWallpaper()
     }
 
     override fun onDestroy() {
         super.onDestroy()
         dialog?.dismiss()
-    }
-
-    /** [group]'s one entry, named after its topic, its picture's name beside it: OK opens its own screen. */
-    private fun apartEntry(options: LinearLayout, group: AppearanceGroup) {
-        val view = layoutInflater.inflate(R.layout.settings_appearance_apart, options, false)
-        options.addView(view)
-        view.findViewById<TextView>(R.id.settings_apart_title).setText(topicTitle(group.topic))
-        view.setOnClickListener { startActivity(Intent(this, BackgroundActivity::class.java)) }
-        apartValues += view.findViewById<TextView>(R.id.settings_apart_value)
     }
 
     /** Shows [group]'s options, and hides any other group's; or hides [group]'s if they show. */
@@ -139,10 +133,15 @@ class AppearanceActivity : Activity() {
         dialog?.dismiss()
         dialog = PicturesDialog(
             this,
+            theme.roles,
             getString(R.string.settings_appearance_reset_question),
             getString(text),
             // Cancel first, so a repeated OK doesn't reset.
-            listOf(getString(R.string.settings_pictures_cancel) to {}, getString(R.string.settings_appearance_reset_confirm) to { change(Appearance()) }),
+            listOf(
+                DialogButton(getString(R.string.settings_pictures_cancel), DialogButton.Kind.TONAL) {},
+                DialogButton(getString(R.string.settings_appearance_reset_confirm), DialogButton.Kind.DANGER, UiR.drawable.icon_reset) { change(Appearance()) },
+            ),
+            Badge.Kind.DANGER to UiR.drawable.icon_reset,
         ).apply { show() }
     }
 
@@ -155,39 +154,25 @@ class AppearanceActivity : Activity() {
 
     private fun show() {
         for (row in rows) row.show()
-        showPictureName()
         preview.appearance = appearance
     }
 
-    /** The background's picture's name, as the library has it now, beside the Background entry. */
-    private fun showPictureName() {
-        val picture = appearance.background.picture
-        val name = picture?.let { id -> pictures.read().firstOrNull { it.id == id } }?.name
-        for (row in apartValues) {
-            row.text = when {
-                picture == null -> getString(R.string.settings_appearance_no_picture)
-                name.isNullOrEmpty() -> getString(R.string.settings_appearance_picture)
-                else -> name
-            }
-        }
-    }
-
     /** A group's entry, which shows or hides its options' [rows] below it. Hidden at first. */
-    private inner class Group(val header: View, title: Int, private val rows: List<View>) {
+    private inner class Group(val header: View, topic: AppearanceTopic, private val rows: List<View>) {
 
-        private val arrow = header.findViewById<View>(R.id.settings_group_arrow)
+        private val arrow = header.findViewById<ImageView>(R.id.settings_group_arrow)
 
         init {
-            header.findViewById<TextView>(R.id.settings_group_title).setText(title)
+            header.findViewById<TextView>(R.id.settings_group_title).setText(topicTitle(topic))
+            header.findViewById<ImageView>(R.id.settings_group_icon).setImageResource(topicIcon(topic))
             header.setOnClickListener { toggle(this) }
             show(false)
         }
 
         fun show(open: Boolean) {
             for (row in rows) row.visibility = if (open) View.VISIBLE else View.GONE
-            // The arrow turns to point down, at the options: the other way round when mirrored.
-            val down = if (header.layoutDirection == View.LAYOUT_DIRECTION_RTL) -90f else 90f
-            arrow.rotation = if (open) down else 0f
+            // Down at the options to show, up while they show.
+            arrow.setImageResource(if (open) UiR.drawable.icon_caret_up else UiR.drawable.icon_caret_down)
         }
     }
 }

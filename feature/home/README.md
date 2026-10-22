@@ -30,8 +30,8 @@ feature/home/
     │   │   ├── HomeWallpaper.kt  the wallpaper, the window's background, as the process's Wallpaper says; a window while it's drawn again
     │   │   ├── TileMenu.kt       a tile's menu: the domain's AppActions for its app, in a window above or below it
     │   │   └── MoveMode.kt       moving an app: keys to the domain's MoveSession, the top bar's title and hint
-    │   └── res/                  the focused tile's zoom, or zoom and lift (animator/), the settings gear and its focus
-    │                             disc, home_activity.xml, the tile menu's layouts and theme
+    │   └── res/                  the focused tile's zoom, or zoom and lift (animator/), the settings gear (its focus
+    │                             disc is set in code, in the accent), home_activity.xml, the tile menu's layouts and theme
     │                             (Theme.Luncher.Home.Menu), home_* dimensions and strings, and their
     │                             translations in values-el/ and values-ar/ (docs/TRANSLATIONS.md)
     └── test/
@@ -183,7 +183,8 @@ radius draws the same bitmaps, so no banner is drawn again. Drawing allocates no
 without rounded corners.
 
 The focused tile stands out in one of two styles (`TileStyle.focus`). **Frame**, the default: the
-accent-colored frame and a zoom of 1.1 (`home_tile_focus.xml`). **Lift**: no frame, a zoom of 1.15,
+frame in the theme's accent, its vivid tone (`ColorRoles.homeAccent`, Orange by default), and a
+zoom of 1.1 (`home_tile_focus.xml`). **Lift**: no frame, a zoom of 1.15,
 and the tile rises toward the viewer (`translationZ`, `home_tile_lift`, in `home_tile_lift.xml`), so
 Android's renderer casts its shadow from its outline, a rounded rectangle with the tiles' corners
 (`TilePaints.tileOutline`). The shadow is the GPU's, as for any raised view since Android 5: no
@@ -276,12 +277,20 @@ Back closes it. The tile stays focused and zoomed under it, so it's clear which 
 | `AppAction`, `appActions` (`:domain`) | which actions there are, and which the menu of an app offers, in order |
 | `tileMenuPlacement` (`:domain`) | where the menu goes: above the tile as it's drawn (zoomed, its name below it), below where there's no room; across centered, or in line with the tile's edge where centered would leave the room |
 | `AppTileView.focusedBounds` | where the tile is drawn on the screen while it has focus, for that rule |
-| `TileMenu` | the menu's window: an entry for each action, its label from an exhaustive `when` over `AppAction`, placed where the rule says |
+| `TileMenu` | the menu's window: the app's name as its title, an entry for each action with its icon and label from exhaustive `when`s over `AppAction`, placed where the rule says; in the theme's colors (`style`) |
 | `HomeActivity` | opens the menu on a long press, and does what an entry says, in an exhaustive `when` too: Move starts `MoveMode`, Hide stores the arrangement with the app hidden, which shows as any change of it does |
 
 A new action (the app's info in the device's settings, a picture of the user's own for its tile)
 is a type of `AppAction`, offered by `appActions`, which then doesn't compile in `:feature:home`
-until the menu has its label and `HomeActivity` what it does.
+until the menu has its label and icon, and `HomeActivity` what it does.
+
+The menu is styled like the settings ([`ui/README.md`](../../ui/README.md#the-design-system)):
+its entries (`EntryText`) turn inverse and zoom while focused, and it takes the theme's colors,
+light or dark, as the settings panel does. The home screen applies the theme as it follows the
+appearance (`showTheme`, only when the theme part changed): the accent on the tiles' focus frame
+(`AppTilesView.accent`) and on the gear's focus disc, the colors on the menu and on the window
+that says the wallpaper is being drawn (`HomeWallpaper.roles`). Light or dark leaves the home
+screen itself dark, on its wallpaper.
 
 The menu is a dialog, a window of its own, so Android keeps the keys and the focus in it while it
 shows, and the tile under it keeps its focus. The home screen behind it isn't paused, so it still

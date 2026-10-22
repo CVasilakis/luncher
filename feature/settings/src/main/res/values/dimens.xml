@@ -1,79 +1,119 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- The settings panels as a side sheet (Sheet.kt): its width, its margin from the screen's
+         edges, its padding; the room an entry's zoom needs around it, inside the list (ui's
+         entry_zoom: a 1.05 zoom of the sheet's width, half on each side). The margin and the
+         padding above and below, and the gaps marked "short" below, are smaller here, on a screen
+         less than 450 dp tall (720p at the 1080p density), so the settings panel's entries fit it;
+         values-h450dp has them for every other screen. -->
+    <dimen name="settings_sheet_width">360dp</dimen>
+    <dimen name="settings_sheet_margin">16dp</dimen>
+    <dimen name="settings_sheet_padding_horizontal">14dp</dimen>
+    <dimen name="settings_sheet_padding_top">20dp</dimen>
+    <dimen name="settings_sheet_padding_bottom">16dp</dimen>
+    <dimen name="settings_zoom_room_horizontal">10dp</dimen>
+    <dimen name="settings_zoom_room_vertical">4dp</dimen>
+    <!-- Between a panel's title and its first entry (short). -->
+    <dimen name="settings_title_gap">10dp</dimen>
 
-    <dimen name="settings_panel_width">420dp</dimen>
-    <dimen name="settings_panel_padding">24dp</dimen>
-    <dimen name="settings_title_text">24sp</dimen>
-    <!-- Between the title and the first entry. -->
-    <dimen name="settings_title_gap">16dp</dimen>
-    <dimen name="settings_entry_height">56dp</dimen>
+    <!-- An entry: its height at least, its padding at the sides, above and below (short), the gap
+         after its icon, between its title and its line below; the gap between entries. A row of
+         Hide apps, of an option's list, of a picture's actions, as tall as an entry at least; the
+         gap between an app's name and its "Hidden". -->
+    <dimen name="settings_entry_min_height">56dp</dimen>
     <dimen name="settings_entry_padding">16dp</dimen>
-    <dimen name="settings_entry_text">20sp</dimen>
-    <!-- The Hide apps list: at most six and a half rows tall, then it scrolls; the half row shows
-         there's more. On a small screen fewer, so the panel keeps the margin from the screen's
-         top and bottom edges. Between an app's name and its state. -->
-    <dimen name="settings_list_max_height">364dp</dimen>
-    <dimen name="settings_panel_margin">32dp</dimen>
+    <dimen name="settings_entry_padding_vertical">6dp</dimen>
+    <dimen name="settings_entry_icon_gap">16dp</dimen>
+    <dimen name="settings_entry_line_gap">2dp</dimen>
+    <dimen name="settings_entry_gap">4dp</dimen>
+    <dimen name="settings_row_height">52dp</dimen>
     <dimen name="settings_app_state_gap">16dp</dimen>
-    <!-- The strip at the list's end, in the panel's padding, where its scrollbar goes. -->
-    <dimen name="settings_list_scrollbar">12dp</dimen>
-    <dimen name="settings_list_scrollbar_negative">-12dp</dimen>
-    <!-- The appearance editor, full-screen: its content inside the TV's overscan margin, as the
-         home screen's; the options at most this wide, and half the screen on a narrow one; an
-         option set in from its group; the gap around a value between its arrows; the title,
-         large in the room beside the options. -->
+
+    <!-- A chip (Chip.kt): its height at least (more with large text), its padding at the sides. A
+         stepped option's: its padding beside its arrows, the gaps inside it, the accent's swatch,
+         the value's size; the padding at the option's end, before its chip. -->
+    <dimen name="settings_chip_height">28dp</dimen>
+    <dimen name="settings_chip_padding">12dp</dimen>
+    <dimen name="settings_chip_padding_arrow">6dp</dimen>
+    <dimen name="settings_chip_gap">6dp</dimen>
+    <dimen name="settings_swatch">14dp</dimen>
+    <dimen name="text_chip">16sp</dimen>
+    <dimen name="settings_entry_padding_end_chip">8dp</dimen>
+
+    <!-- A screen of its own (the editors, Add from folder): its content inside the TV's overscan
+         margin; between its columns, and below the preview; below its title; between buttons side
+         by side; a list's container's padding, room for its focused entry's zoom too; the margin
+         and the gap between the columns, less that room, which a column's content keeps inside
+         it; a section's label above its content, the gap between them; the preview's corners. -->
     <dimen name="settings_appearance_margin_horizontal">48dp</dimen>
     <dimen name="settings_appearance_margin_vertical">32dp</dimen>
-    <dimen name="settings_appearance_options_width">440dp</dimen>
-    <dimen name="settings_appearance_option_indent">32dp</dimen>
-    <dimen name="settings_appearance_value_gap">8dp</dimen>
-    <dimen name="settings_appearance_title_text">40sp</dimen>
-    <!-- The background editor's pictures: a row's padding above and below; its thumbnail, 16:9,
-         the size the thumbnails are drawn at. -->
-    <dimen name="settings_background_row_padding">8dp</dimen>
-    <dimen name="settings_background_thumbnail_width">96dp</dimen>
-    <dimen name="settings_background_thumbnail_height">54dp</dimen>
-    <!-- An option's values in a list over its row (OptionList): its padding above and below the
-         entries, its least width, its shadow; the mark beside the row's value that OK opens it,
-         and its gap to the value. -->
-    <dimen name="settings_option_list_padding">8dp</dimen>
-    <dimen name="settings_option_list_min_width">160dp</dimen>
-    <dimen name="settings_option_list_elevation">8dp</dimen>
-    <dimen name="settings_option_list_mark">24dp</dimen>
-    <dimen name="settings_option_list_mark_gap">4dp</dimen>
-    <!-- The window after a share: its spinning wheel while the picture is added. -->
-    <dimen name="settings_received_spinner">32dp</dimen>
+    <dimen name="settings_screen_gap">20dp</dimen>
+    <dimen name="settings_screen_title_gap">20dp</dimen>
+    <dimen name="settings_buttons_gap">16dp</dimen>
+    <dimen name="settings_container_padding">10dp</dimen>
+    <dimen name="settings_screen_margin_less_room">38dp</dimen>
+    <dimen name="settings_screen_gap_less_room">10dp</dimen>
+    <dimen name="settings_label_gap">12dp</dimen>
+    <dimen name="settings_preview_corner">16dp</dimen>
 
-    <!-- Add from folder, full-screen as the appearance editor: the content inside the TV's overscan
-         margin. -->
+    <!-- The appearance editor: the groups' container at most this wide, and half the screen on a
+         narrow one; an option set in from its group, level with the group's name (the group's
+         padding, icon and its gap); the gap between an option's name and its value. -->
+    <dimen name="settings_appearance_options_width">440dp</dimen>
+    <dimen name="settings_appearance_option_indent">56dp</dimen>
+    <dimen name="settings_appearance_value_gap">8dp</dimen>
+
+    <!-- The background editor: its fields, their height at least, their padding at the end, their
+         label's size and their value's, the gap between them; a picture's row, its padding above
+         and below; its thumbnail, 16:9, the size the thumbnails are drawn at. -->
+    <dimen name="settings_field_height">56dp</dimen>
+    <dimen name="settings_field_padding_end">12dp</dimen>
+    <dimen name="text_field_label">13sp</dimen>
+    <dimen name="text_field_value">17sp</dimen>
+    <dimen name="settings_fields_gap">12dp</dimen>
+    <dimen name="settings_background_row_padding">8dp</dimen>
+    <dimen name="settings_background_thumbnail_width">80dp</dimen>
+    <dimen name="settings_background_thumbnail_height">45dp</dimen>
+
+    <!-- An option's values in a list beside the options (OptionList): its padding around the
+         entries, room for the focused one's zoom too; its least width, its gap to the options, its
+         shadow, its corners; an entry's height. -->
+    <dimen name="settings_option_list_padding">10dp</dimen>
+    <dimen name="settings_option_list_min_width">200dp</dimen>
+    <dimen name="settings_option_list_gap">16dp</dimen>
+    <dimen name="settings_option_list_elevation">16dp</dimen>
+    <dimen name="settings_option_list_corner">20dp</dimen>
+    <dimen name="settings_option_list_entry_height">48dp</dimen>
+
+    <!-- Add from folder: its content inside the TV's overscan margin; where the pictures are, below
+         the title, and the selected one's name below its preview; below the title and that line;
+         between a picture and its text, a thumbnail's corners; a row of the list at least; the gap
+         between the list and the preview's column; the warning mark in place of a preview that
+         can't be drawn. -->
     <dimen name="settings_pictures_margin_horizontal">48dp</dimen>
     <dimen name="settings_pictures_margin_vertical">32dp</dimen>
-    <dimen name="settings_pictures_title_text">40sp</dimen>
-    <dimen name="settings_pictures_status_text">20sp</dimen>
-    <dimen name="settings_pictures_text">20sp</dimen>
-    <dimen name="settings_pictures_small_text">16sp</dimen>
-    <!-- Below the title and its status line. -->
+    <dimen name="settings_pictures_where_text">16sp</dimen>
     <dimen name="settings_pictures_title_gap">24dp</dimen>
-    <!-- Between a picture and its text; a thumbnail's corners. -->
     <dimen name="settings_pictures_tile_text_gap">8dp</dimen>
     <dimen name="settings_pictures_tile_corner">8dp</dimen>
-    <!-- The focus frame and the dashes of Add from folder's empty thumbnail. -->
-    <dimen name="settings_pictures_frame">3dp</dimen>
-    <dimen name="settings_pictures_dash">8dp</dimen>
-    <dimen name="settings_pictures_dash_line">2dp</dimen>
-    <!-- An entry (a dialog's, Add from folder's), as the settings panel's. -->
-    <dimen name="settings_pictures_entry_height">56dp</dimen>
-    <dimen name="settings_pictures_entry_padding">16dp</dimen>
-    <!-- Add from folder: a row of the list at least, and the preview of the selected one beside
-         it at most, of the TV's shape. -->
-    <dimen name="settings_pictures_row_height">72dp</dimen>
-    <dimen name="settings_pictures_preview_width">288dp</dimen>
-    <!-- The preview's column and the gap before it: the list's margin at its end. -->
-    <dimen name="settings_pictures_side_width">320dp</dimen>
-    <!-- The warning mark in place of a preview that can't be drawn. -->
+    <dimen name="settings_pictures_row_height">64dp</dimen>
+    <dimen name="settings_pictures_side_gap">32dp</dimen>
     <dimen name="settings_pictures_warning">48dp</dimen>
-    <!-- A dialog: its width at most, its padding. -->
-    <dimen name="settings_pictures_dialog_width">480dp</dimen>
-    <dimen name="settings_pictures_dialog_padding">24dp</dimen>
+
+    <!-- A dialog: its width at most, its padding, its margin from the screen's edges at least; its
+         mark (Badge.kt), the icon's padding in it, the gap to the title; the gap below the title,
+         its text's size, the gap above the buttons; the rename field's padding above and below its
+         text, its edge. The window after a share: its spinning wheel while the picture is added. -->
+    <dimen name="settings_pictures_dialog_width">460dp</dimen>
+    <dimen name="settings_pictures_dialog_padding">28dp</dimen>
     <dimen name="settings_pictures_dialog_margin">32dp</dimen>
+    <dimen name="settings_badge">40dp</dimen>
+    <dimen name="settings_badge_padding">9dp</dimen>
+    <dimen name="settings_badge_gap">16dp</dimen>
+    <dimen name="settings_dialog_text_gap">12dp</dimen>
+    <dimen name="settings_dialog_text">16sp</dimen>
+    <dimen name="settings_dialog_buttons_gap">28dp</dimen>
+    <dimen name="settings_field_padding_vertical">12dp</dimen>
+    <dimen name="settings_field_edge">2dp</dimen>
+    <dimen name="settings_received_spinner">32dp</dimen>
 </resources>

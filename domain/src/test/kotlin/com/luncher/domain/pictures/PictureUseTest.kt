@@ -35,9 +35,4 @@ class PictureUseTest {
         assertEquals(wallpaper, withoutPictures(wallpaper, setOf(PictureId("other"))))
         assertEquals(Appearance(), withoutPictures(Appearance(), setOf(sunset)))
     }
-
-    @Test
-    fun `a picture received can be made the wallpaper`() {
-        assertEquals(listOf(PictureUse.Wallpaper), pictureUseMenu)
-    }
 }

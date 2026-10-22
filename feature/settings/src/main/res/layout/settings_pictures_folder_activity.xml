@@ -1,141 +1,202 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Add from folder: the title and where the pictures are, then the list of them, and beside it a
-     preview of the selected one, Add all and what OK does. -->
+<!-- Add from folder: the title and where the pictures are, then the list of them below its label,
+     and beside it, below its label, a preview of the selected one, its name, Add all and what OK
+     does. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:clipChildren="false"
     android:orientation="vertical"
     android:paddingLeft="@dimen/settings_pictures_margin_horizontal"
     android:paddingTop="@dimen/settings_pictures_margin_vertical"
     android:paddingRight="@dimen/settings_pictures_margin_horizontal"
     android:paddingBottom="@dimen/settings_pictures_margin_vertical">
 
-    <TextView
+    <com.luncher.launcher.ui.ThemedText
         android:id="@+id/settings_pictures_folder_title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:ellipsize="end"
         android:includeFontPadding="false"
         android:singleLine="true"
-        android:ellipsize="end"
         android:text="@string/settings_pictures_add_from_folder"
-        android:textColor="@color/text_primary"
-        android:textSize="@dimen/settings_pictures_title_text" />
+        android:textSize="@dimen/text_display" />
 
-    <TextView
+    <com.luncher.launcher.ui.ThemedText
         android:id="@+id/settings_pictures_folder_where"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="@dimen/settings_pictures_tile_text_gap"
         android:layout_marginBottom="@dimen/settings_pictures_title_gap"
-        android:textColor="@color/text_secondary"
-        android:textSize="@dimen/settings_pictures_status_text" />
+        android:drawableStart="@drawable/icon_folder"
+        android:drawablePadding="@dimen/icon_gap"
+        android:gravity="center_vertical"
+        android:textSize="@dimen/settings_pictures_where_text"
+        app:colorRole="onSurfaceVariant" />
 
-    <!-- The list, and the preview's column at its end. -->
+    <!-- The list, and the preview's column at its end; AddFromFolderActivity shares the width
+         between them, the list the larger part. -->
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1">
+        android:layout_weight="1"
+        android:clipChildren="false">
 
-        <!-- Down past the last picture stays there, not to Add all. -->
-        <com.luncher.launcher.settings.ListFrame
+        <LinearLayout
+            android:id="@+id/settings_pictures_folder_list_column"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_marginEnd="@dimen/settings_pictures_side_width">
-
-            <!-- A pictures_folder_row per picture; selected, framed like a focused entry. -->
-            <ListView
-                android:id="@+id/settings_pictures_folder_list"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:divider="@null"
-                android:dividerHeight="0dp"
-                android:listSelector="@drawable/entry_background"
-                android:scrollbarStyle="outsideOverlay" />
-
-            <!-- Looking for them, or none there. -->
-            <TextView
-                android:id="@+id/settings_pictures_folder_state"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:textColor="@color/text_secondary"
-                android:textSize="@dimen/settings_pictures_text" />
-        </com.luncher.launcher.settings.ListFrame>
-
-        <!-- The preview at most this size, smaller on a short screen, so Add all and the note fit
-             below it; on the smallest screens the column scrolls (PreviewColumn). -->
-        <com.luncher.launcher.settings.PreviewColumn
-            android:id="@+id/settings_pictures_folder_side"
-            android:layout_width="@dimen/settings_pictures_preview_width"
-            android:layout_height="match_parent"
-            android:layout_gravity="end"
-            android:scrollbars="none">
+            android:orientation="vertical">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical">
+                android:orientation="horizontal">
 
-                <!-- Drawn at exactly its size, as the picture fills the TV's screen; PreviewColumn sets
-                     it. A spinning wheel in its middle while it's drawn; a warning mark there when
-                     there's none to draw (a picture this TV can't show, too large, or damaged). -->
-                <FrameLayout
+                <com.luncher.launcher.ui.ThemedText
+                    style="@style/Widget.Luncher.Settings.Label"
                     android:layout_width="0dp"
-                    android:layout_height="0dp">
+                    android:layout_weight="1"
+                    android:text="@string/settings_pictures_folder_label" />
 
-                    <ImageView
-                        android:id="@+id/settings_pictures_folder_preview"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:background="@drawable/settings_pictures_thumbnail_background"
-                        android:importantForAccessibility="no"
-                        android:scaleType="fitXY" />
-
-                    <ProgressBar
-                        android:id="@+id/settings_pictures_folder_loading"
-                        android:layout_width="@dimen/settings_received_spinner"
-                        android:layout_height="@dimen/settings_received_spinner"
-                        android:layout_gravity="center"
-                        android:indeterminate="true"
-                        android:indeterminateTint="@color/accent"
-                        android:visibility="gone" />
-
-                    <ImageView
-                        android:id="@+id/settings_pictures_folder_no_preview"
-                        android:layout_width="@dimen/settings_pictures_warning"
-                        android:layout_height="@dimen/settings_pictures_warning"
-                        android:layout_gravity="center"
-                        android:importantForAccessibility="no"
-                        android:src="@drawable/settings_pictures_warning"
-                        android:visibility="gone" />
-                </FrameLayout>
-
-                <!-- Adds every picture of the list that can be added; dimmed, and passed by, when none can. -->
-                <TextView
-                    android:id="@+id/settings_pictures_folder_add_all"
-                    android:layout_width="match_parent"
-                    android:layout_height="@dimen/settings_pictures_entry_height"
-                    android:layout_marginTop="@dimen/settings_pictures_tile_text_gap"
-                    android:background="@drawable/entry_background"
-                    android:ellipsize="end"
-                    android:focusable="true"
-                    android:focusableInTouchMode="true"
-                    android:gravity="center_vertical"
-                    android:paddingLeft="@dimen/settings_pictures_entry_padding"
-                    android:paddingRight="@dimen/settings_pictures_entry_padding"
+                <!-- How many pictures the folders have. -->
+                <com.luncher.launcher.ui.ThemedText
+                    android:id="@+id/settings_pictures_folder_count"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/settings_appearance_value_gap"
                     android:singleLine="true"
-                    android:text="@string/settings_pictures_folder_add_all"
-                    android:textColor="@color/accent"
-                    android:textSize="@dimen/settings_pictures_text" />
+                    android:textSize="@dimen/text_supporting"
+                    app:colorRole="onSurfaceVariant" />
+            </LinearLayout>
 
-                <TextView
-                    android:id="@+id/settings_pictures_folder_note"
+            <!-- Down past the last picture stays there, not to Add all. Cut along its corners,
+                 fading out while there's more below. -->
+            <com.luncher.launcher.settings.ListFrame
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:fill="surface">
+
+                <!-- A pictures_folder_row per picture; the selected one looks focused while the
+                     list has the focus. Room inside for its zoom. -->
+                <ListView
+                    android:id="@+id/settings_pictures_folder_list"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/settings_pictures_tile_text_gap"
-                    android:text="@string/settings_pictures_folder_note"
-                    android:textColor="@color/text_secondary"
-                    android:textSize="@dimen/settings_pictures_small_text" />
-            </LinearLayout>
-        </com.luncher.launcher.settings.PreviewColumn>
+                    android:clipToPadding="false"
+                    android:divider="@android:color/transparent"
+                    android:dividerHeight="@dimen/settings_entry_gap"
+                    android:listSelector="@android:color/transparent"
+                    android:padding="@dimen/settings_container_padding"
+                    android:scrollbars="none" />
+
+                <!-- Looking for them, or none there. -->
+                <com.luncher.launcher.ui.ThemedText
+                    android:id="@+id/settings_pictures_folder_state"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="@dimen/settings_entry_padding"
+                    android:textSize="@dimen/text_entry"
+                    app:colorRole="onSurfaceVariant" />
+            </com.luncher.launcher.settings.ListFrame>
+        </LinearLayout>
+
+        <!-- The preview's column: its label, then the preview, smaller on a short screen, so Add
+             all and the note fit below it; on the smallest screens the column scrolls
+             (PreviewColumn). -->
+        <LinearLayout
+            android:id="@+id/settings_pictures_folder_side_column"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_gravity="end"
+            android:clipChildren="false"
+            android:orientation="vertical">
+
+            <com.luncher.launcher.ui.ThemedText
+                style="@style/Widget.Luncher.Settings.Label"
+                android:text="@string/settings_pictures_folder_preview_label" />
+
+            <com.luncher.launcher.settings.PreviewColumn
+                android:id="@+id/settings_pictures_folder_side"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:clipToPadding="false"
+                android:scrollbars="none">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:clipChildren="false"
+                    android:clipToPadding="false"
+                    android:orientation="vertical">
+
+                    <!-- Drawn at exactly its size, as the picture fills the TV's screen; PreviewColumn
+                         sets it. Its corners rounded. A spinning wheel in its middle while it's drawn;
+                         a warning mark there when there's none to draw (a picture this TV can't show,
+                         too large, or damaged). -->
+                    <FrameLayout
+                        android:id="@+id/settings_pictures_folder_preview_frame"
+                        android:layout_width="0dp"
+                        android:layout_height="0dp">
+
+                        <ImageView
+                            android:id="@+id/settings_pictures_folder_preview"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:importantForAccessibility="no"
+                            android:scaleType="fitXY" />
+
+                        <com.luncher.launcher.ui.ThemedSpinner
+                            android:id="@+id/settings_pictures_folder_loading"
+                            android:layout_width="@dimen/settings_received_spinner"
+                            android:layout_height="@dimen/settings_received_spinner"
+                            android:layout_gravity="center"
+                            android:indeterminate="true"
+                            android:visibility="gone" />
+
+                        <com.luncher.launcher.ui.ThemedIcon
+                            android:id="@+id/settings_pictures_folder_no_preview"
+                            android:layout_width="@dimen/settings_pictures_warning"
+                            android:layout_height="@dimen/settings_pictures_warning"
+                            android:layout_gravity="center"
+                            android:importantForAccessibility="no"
+                            android:src="@drawable/icon_warning"
+                            android:visibility="gone"
+                            app:colorRole="error" />
+                    </FrameLayout>
+
+                    <!-- The selected picture's name. -->
+                    <com.luncher.launcher.ui.ThemedText
+                        android:id="@+id/settings_pictures_folder_selected"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/settings_pictures_tile_text_gap"
+                        android:ellipsize="end"
+                        android:singleLine="true"
+                        android:textSize="@dimen/settings_pictures_where_text" />
+
+                    <!-- Adds every picture of the list that can be added; dimmed, and passed by, when none can. -->
+                    <com.luncher.launcher.ui.PillButton
+                        android:id="@+id/settings_pictures_folder_add_all"
+                        style="@style/Widget.Luncher.Settings.Button"
+                        android:layout_width="match_parent"
+                        android:layout_marginTop="@dimen/settings_screen_gap"
+                        android:drawableStart="@drawable/icon_plus"
+                        android:text="@string/settings_pictures_folder_add_all"
+                        app:kind="tonal" />
+
+                    <com.luncher.launcher.ui.ThemedText
+                        android:id="@+id/settings_pictures_folder_note"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/settings_label_gap"
+                        android:text="@string/settings_pictures_folder_note"
+                        android:textSize="@dimen/text_supporting"
+                        app:colorRole="onSurfaceVariant" />
+                </LinearLayout>
+            </com.luncher.launcher.settings.PreviewColumn>
+        </LinearLayout>
     </FrameLayout>
 </LinearLayout>

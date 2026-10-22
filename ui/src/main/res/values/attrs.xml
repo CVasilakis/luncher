@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Which of the theme's colors a themed text or icon takes (ThemedText, ThemedIcon). -->
+    <attr name="colorRole" format="enum">
+        <enum name="onSurface" value="0" />
+        <enum name="onSurfaceVariant" value="1" />
+        <enum name="primary" value="2" />
+        <enum name="error" value="3" />
+    </attr>
+
+    <!-- What fills an entry, a frame, while nothing else does: nothing, or a field's color. -->
+    <attr name="fill" format="enum">
+        <enum name="none" value="0" />
+        <enum name="high" value="1" />
+        <enum name="surface" value="2" />
+    </attr>
+
+    <declare-styleable name="ThemedText">
+        <attr name="colorRole" />
+    </declare-styleable>
+
+    <declare-styleable name="ThemedIcon">
+        <attr name="colorRole" />
+    </declare-styleable>
+
+    <declare-styleable name="ListEntry">
+        <attr name="fill" />
+    </declare-styleable>
+
+    <declare-styleable name="PillButton">
+        <attr name="kind" format="enum">
+            <enum name="filled" value="0" />
+            <enum name="tonal" value="1" />
+            <enum name="danger" value="2" />
+        </attr>
+    </declare-styleable>
+
+    <declare-styleable name="ScrollFrame">
+        <attr name="fill" />
+    </declare-styleable>
+</resources>

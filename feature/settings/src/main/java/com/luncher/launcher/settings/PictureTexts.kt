@@ -10,6 +10,7 @@ import com.luncher.domain.pictures.PictureUse
 import com.luncher.domain.pictures.ReceivedPictures.Outcome
 import com.luncher.domain.pictures.SizeLimit
 import com.luncher.domain.pictures.wasInLibrary
+import com.luncher.launcher.ui.R as UiR
 
 // What the pictures' screens call things, in the user's language.
 
@@ -34,6 +35,10 @@ internal fun Context.formatName(format: PictureFormat): String = when (format) {
 /** The title of the message for a picture not added: that Luncher's pictures had it already, or that it wasn't added. */
 internal fun Context.notAddedTitle(result: ImportResult): String =
     getString(if (result.wasInLibrary) R.string.settings_pictures_already else R.string.settings_pictures_not_added)
+
+/** The mark beside [notAddedTitle]: neutral for one Luncher's pictures had already, which isn't a failure; else a warning. */
+internal fun notAddedMark(result: ImportResult): Pair<Badge.Kind, Int> =
+    if (result.wasInLibrary) Badge.Kind.INFO to UiR.drawable.icon_info else Badge.Kind.DANGER to UiR.drawable.icon_warning
 
 /** Below [notAddedTitle]: why the picture wasn't added, or the name of the one Luncher's pictures had; null when it was added. */
 internal fun Context.whyNotAdded(result: ImportResult): String? = when (result) {

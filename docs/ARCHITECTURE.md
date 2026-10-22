@@ -15,7 +15,7 @@ slow CPU and storage). Two goals shape the structure:
 :feature:home      ──▶  :domain, :ui; :feature:settings, for its activity's class
 :feature:settings  ──▶  :domain, :ui
 :platform          ──▶  :domain, :ui
-:ui                     depends on nothing
+:ui                ──▶  :domain, for the theme's colors (ColorRoles)
 :domain                 depends on nothing; pure Kotlin
 ```
 
@@ -23,7 +23,7 @@ slow CPU and storage). Two goals shape the structure:
 |---|---|---|
 | [`domain/`](../domain/README.md) | **Models** (data), **rules** (what the launcher decides: which apps show, in which order, with which banner) and **ports** (interfaces for what the rules and screens need from the device) | Kotlin standard library only. Android isn't on its classpath, so an `android.*` import doesn't compile. |
 | [`feature/<name>/`](../feature/README.md) | One feature's **UI**: its activities, views, layouts and resources | `:domain`, `:ui`; another feature only to start its activity by class |
-| [`ui/`](../ui/README.md) | What every screen shares, UI only: the app-wide theme and colors, shared views and helpers | Android platform APIs |
+| [`ui/`](../ui/README.md) | What every screen shares, UI only: the app-wide theme, the themed views the menus and settings are made of, and helpers | Android platform APIs, `:domain` (the theme's colors, `ColorRoles`, which its views take) |
 | [`platform/`](../platform/README.md) | The **adapters**: port implementations on Android APIs (PackageManager, SharedPreferences, the clock, files) | Android platform APIs, `:domain`, `:ui` |
 | [`app/`](../app/README.md) | The **composition root** (`AppGraph`), which creates the adapters and gives each feature its ports; the application's manifest, icon, version and release build | every module |
 
@@ -180,7 +180,7 @@ fixed list of steps that touches nothing else, and each step forgotten fails to 
 a test.
 
 1. **`Appearance`, in `:domain`'s `appearance/`, is one immutable model, made of parts.** Each
-   part goes to the one part of the home screen that draws it, and holds values that cost the
+   part goes to the one part of the screens that draws it, and holds values that cost the
    same to apply: `TileGeometry` (where tiles go and how big they are: a new layout, and new
    images when their size changes) is one; how a tile is drawn (a redraw only) would be another.
    Its defaults are the home screen as it looks without settings. Values are dp or choices, never
@@ -228,16 +228,17 @@ Adding an aspect, e.g. the focus frame's color:
 | Its option in the catalog | `:domain` | unit tests |
 | Its storage key | `:platform` | the exhaustive `when` doesn't compile; a round trip of every option in the catalog |
 | Its label and its values' labels, in every translation | `:feature:settings` | the exhaustive `when` doesn't compile; lint ([`TRANSLATIONS.md`](TRANSLATIONS.md)) |
-| Its effect on the home screen, and on the preview where it shows | `:feature:home`, `:feature:settings` | a test that sets each option of the catalog to a value other than its default, and fails if the home screen, or the preview, draws the same |
+| Its effect on the home screen, and on the preview where it shows; an option of the menus and settings only (`showsOnHome` false, the theme's mode) on a settings screen instead | `:feature:home`, `:feature:settings` | a test that sets each option of the catalog to a value other than its default, and fails if the home screen, or the preview, draws the same; for an option the home screen doesn't show, if the appearance editor draws the same (`SettingsThemeTest`) |
 
-Today `Appearance` has four parts: `TileGeometry` (the tiles' size, spacing and alignment, and
+Today `Appearance` has five parts: `TileGeometry` (the tiles' size, spacing and alignment, and
 whether the focused tile's name shows below it, which the rows leave room for), `TileStyle` (their
 corners, and how the focused one stands out: framed or lifted), `TopBarAppearance` (whether the
-time and the date show, the clock's side, and the time's side of the date) and `Background` (the
-wallpaper: a picture of the picture library, or none, and how it's drawn). The catalog's options,
-the vertical and the horizontal alignment, a full bottom row, the corner radius, the focus style,
-the app name, the time and the date shown or hidden, the clock's side and the time's side, are
-changed in the settings' appearance editor
+time and the date show, the clock's side, and the time's side of the date), `Background` (the
+wallpaper: a picture of the picture library, or none, and how it's drawn) and `ThemeAppearance`
+(Luncher's theme: the accent color, and whether the menus and settings are dark or light). The
+catalog's options, the vertical and the horizontal alignment, a full bottom row, the corner
+radius, the focus style, the app name, the time and the date shown or hidden, the clock's side and
+the time's side, the accent color and the mode, are changed in the settings' appearance editor
 ([`feature/settings/README.md`](../feature/settings/README.md#appearance)); the wallpaper's fit,
 position, dim and blur in the background editor it opens (below). The wallpaper's picture
 isn't an option, since its values are the library's pictures, not a list known in `:domain`.
@@ -251,6 +252,18 @@ a TV, too slow for each value the user tries. Save goes through `Wallpaper` in `
 keeps the picture first, then stores the background, so the setting never names a wallpaper that
 isn't drawn and the home screen always has one to show
 ([`feature/home/README.md`](../feature/home/README.md#the-wallpaper)).
+
+**The theme** is the one part every screen draws, not only the home screen. Its colors aren't
+chosen one by one: `colorRoles`, a rule in `:domain`'s `appearance/`, turns the theme into a
+`ColorRoles`, the colors of the menus and settings by what each is for (a panel, a text on it, the
+accent, a focused entry, an error), from the accent's tones, which `AccentColor` holds,
+precomputed. The accent also shows on the home screen (`homeAccent`: a focused tile's frame); the
+mode doesn't, as the home screen is drawn on its wallpaper, so that option is `showsOnHome` false.
+`:ui`'s themed views take the roles ([`ui/README.md`](../ui/README.md#the-design-system)): a
+screen styles them as it's made, and again, in place, when the theme changes while it's started
+(the appearance editor's Theme group changes it while the editor shows). A new color in the menus
+is a role in `ColorRoles`, with its value in each mode and a contrast check
+(`ColorRolesTest`), never a color resource a view names.
 
 ## Where things go
 
@@ -269,6 +282,8 @@ isn't drawn and the home screen always has one to show
 | A new setting | its entry: `settingsMenu` in `:domain`'s `settings/`, and its label and action in `:feature:settings`; a value it stores comes through a port you can watch, so the screens it affects update while it changes; a screen of its own (a list, like Hide apps) is another activity in `:feature:settings`. Steps: [`feature/settings/README.md`](../feature/settings/README.md#the-settings-panel) |
 | A new screen of its own, which no feature's screens open or share anything with | a new feature module (below) |
 | A shared view, style or UI helper | `:ui`, resources without a prefix |
+| A view of the menus and settings with a color (an entry, a button, a field, a list that scrolls) | one of `:ui`'s themed views, styled from `ColorRoles`; a new kind of view is a `Themed` view in `:ui` if two features use it, else in its feature ([`ui/README.md`](../ui/README.md#the-design-system)) |
+| A color of the menus and settings | a role in `ColorRoles` (`:domain`'s `appearance/`), for each mode, with its contrast checked in `ColorRolesTest` ([The theme](#appearance)) |
 | Text the user sees | a string in the `strings.xml` of the module that shows it, with a comment for translators, and in every translation ([`TRANSLATIONS.md`](TRANSLATIONS.md)) |
 | Build or version changes | [`gradle/`](../gradle/README.md); settings every Android module shares: [`build-logic/`](../build-logic/README.md) |
 | A guide that covers the whole project, or a topic too narrow for the document above it | [`docs/`](README.md) |

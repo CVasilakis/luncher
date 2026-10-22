@@ -16,6 +16,7 @@ import com.luncher.domain.pictures.SizeLimit
 import com.luncher.launcher.testing.TV_1080P
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -73,7 +74,7 @@ class PictureReceivedActivityTest {
         waitOutTheWheel()
         assertEquals("Picture added", activity.title())
         assertTrue(!activity.spinning())
-        assertEquals(listOf("Background"), activity.entries().map { it.text.toString() })
+        assertEquals(listOf("OK"), activity.entries().map { it.text.toString() })
     }
 
     @Test
@@ -134,15 +135,18 @@ class PictureReceivedActivityTest {
     }
 
     @Test
-    fun `once saved, names the picture and offers its uses, the first focused`() {
+    fun `once saved, names the picture, a check beside the title, and OK focused`() {
         library.results[shared] = ImportResult.Added(holiday)
 
         val activity = receive()
 
         assertEquals("Picture added", activity.title())
         assertEquals("holiday.jpg", activity.text())
-        assertEquals(listOf("Background"), activity.entries().map { it.text.toString() })
+        assertEquals(listOf("OK"), activity.entries().map { it.text.toString() })
         assertTrue(activity.entries().first().isFocused)
+        val mark = activity.findViewById<Badge>(R.id.settings_received_mark)
+        assertEquals(View.VISIBLE, mark.visibility)
+        assertEquals(Badge.Kind.DONE, mark.kind)
         assertEquals(listOf(holiday), library.pictures)
     }
 
@@ -157,17 +161,18 @@ class PictureReceivedActivityTest {
         assertEquals(listOf("OK"), activity.entries().map { it.text.toString() })
     }
 
+    // It's in Luncher's pictures now, where the background editor offers it: nothing else to choose here.
     @Test
-    fun `Background opens the background editor with the picture chosen, and closes the window`() {
+    fun `one picture added says so, with its name, and OK closes the window`() {
         library.results[shared] = ImportResult.Added(holiday)
         val activity = receive()
 
-        activity.entries().single { it.text == "Background" }.performClick()
-
-        val started = shadowOf(activity).nextStartedActivity
-        assertEquals(BackgroundActivity::class.java.name, started.component?.className)
-        assertEquals(holiday.id.value, started.getStringExtra(BackgroundActivity.EXTRA_PICTURE))
+        assertEquals("Picture added", activity.title())
+        assertEquals("holiday.jpg", activity.text())
+        assertEquals(listOf("OK"), activity.entries().map { it.text.toString() })
+        activity.entries().single().performClick()
         assertTrue(activity.isFinishing)
+        assertNull(shadowOf(activity).nextStartedActivity)
     }
 
     @Test

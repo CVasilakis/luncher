@@ -452,7 +452,8 @@ class HomeAppearanceTest {
     fun `every value of every option changes what the home screen draws`() {
         val activity = start().get()
 
-        for (change in appearanceChanges()) {
+        // Every option that shows there: the theme's mode is the menus' and settings' only (SettingsThemeTest).
+        for (change in appearanceChanges().filter { it.option.showsOnHome }) {
             val base = draw(activity, change.base)
             val changed = draw(activity, change.changed)
             assertFalse("$change draws as ${change.option} at its default", base.sameAs(changed))

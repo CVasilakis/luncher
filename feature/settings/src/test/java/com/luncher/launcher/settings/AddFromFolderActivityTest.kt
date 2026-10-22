@@ -19,6 +19,8 @@ import com.luncher.domain.pictures.FakePictures
 import com.luncher.domain.pictures.PictureFormat
 import androidx.test.platform.app.InstrumentationRegistry
 import com.luncher.launcher.testing.TV_1080P
+import com.luncher.domain.appearance.ThemeAppearance
+import com.luncher.domain.appearance.colorRoles
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -85,10 +87,10 @@ class AddFromFolderActivityTest {
 
         assertEquals(
             listOf(
-                "USB drive · holiday.jpg | 4000 × 3000 · 2.4 MB",
-                "Local · IMG_0001.HEIC | HEIF (HEIC) not supported on this TV",
-                "USB drive · logo.png | 4000 × 3000 · 2.4 MB",
-                "Local · wallpaper-4k.jpg | 4000 × 3000 · 2.4 MB",
+                "holiday.jpg | USB drive · 4000 × 3000 · 2.4 MB",
+                "IMG_0001.HEIC | Local · HEIF (HEIC) not supported on this TV",
+                "logo.png | USB drive · 4000 × 3000 · 2.4 MB",
+                "wallpaper-4k.jpg | Local · 4000 × 3000 · 2.4 MB",
             ),
             activity.rows(),
         )
@@ -306,12 +308,12 @@ class AddFromFolderActivityTest {
         val library = FakePictures<android.net.Uri>()
         val graph = graphWithDamaged(damaged, damaged, wallpaper, library = library)
         val activity = start()
-        assertEquals("not before it's tried", "Local · damaged.jpg | 4000 × 3000 · 2.4 MB", activity.rows()[0])
+        assertEquals("not before it's tried", "damaged.jpg | Local · 4000 × 3000 · 2.4 MB", activity.rows()[0])
 
         graph.jobs.runAll()
         idle()
 
-        assertEquals(listOf("Local · damaged.jpg | 4000 × 3000 · 2.4 MB · Damaged", "Local · wallpaper-4k.jpg | 4000 × 3000 · 2.4 MB"), activity.rows())
+        assertEquals(listOf("damaged.jpg | Local · 4000 × 3000 · 2.4 MB · Damaged", "wallpaper-4k.jpg | Local · 4000 × 3000 · 2.4 MB"), activity.rows())
         activity.list().performItemClick(null, 0, 0)
         idle()
         val (title, text) = message()
@@ -330,7 +332,7 @@ class AddFromFolderActivityTest {
         graph.next()   // the selected one's
         graph.next()   // the other's, ahead
         assertEquals(listOf("wallpaper-4k.jpg", "zoo.jpg"), graph.folderPictures.previewed.map { it.name })
-        assertEquals("Local · zoo.jpg | 4000 × 3000 · 2.4 MB · Damaged", activity.rows()[1])
+        assertEquals("zoo.jpg | Local · 4000 × 3000 · 2.4 MB · Damaged", activity.rows()[1])
         graph.folderPictures.previewed.clear()
         activity.list().setSelection(1)
         idle()
@@ -353,7 +355,7 @@ class AddFromFolderActivityTest {
         activity.list().performItemClick(null, 0, 0)
         shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(WorkingDialog.SHORTEST))
 
-        assertEquals(listOf("USB drive · holiday.jpg | 4000 × 3000 · 2.4 MB · Damaged"), activity.rows())
+        assertEquals(listOf("holiday.jpg | USB drive · 4000 × 3000 · 2.4 MB · Damaged"), activity.rows())
         assertFalse("nothing left to add", activity.addAll().isFocusable)
     }
 
@@ -566,10 +568,10 @@ class AddFromFolderActivityTest {
 
         assertEquals(
             listOf(
-                "Local · aerial.jpg | 21621 × 7004 · 184 MB · Too large (over 50 MB)",
-                "USB drive · holiday.jpg | 4000 × 3000 · 2.4 MB · Already in Luncher's pictures",
-                "USB drive · logo.png | 4000 × 3000 · 2.4 MB · Name already used in Luncher's pictures",
-                "Local · wallpaper-4k.jpg | 4000 × 3000 · 2.4 MB",
+                "aerial.jpg | Local · 21621 × 7004 · 184 MB · Too large (over 50 MB)",
+                "holiday.jpg | USB drive · 4000 × 3000 · 2.4 MB · Already in Luncher's pictures",
+                "logo.png | USB drive · 4000 × 3000 · 2.4 MB · Name already used in Luncher's pictures",
+                "wallpaper-4k.jpg | Local · 4000 × 3000 · 2.4 MB",
             ),
             activity.rows(),
         )
@@ -579,14 +581,14 @@ class AddFromFolderActivityTest {
     fun `a picture over the pixels alone is said to be, its file small`() {
         graph(folderPicture("wide.jpg", bytes = 458_000, width = 9000, height = 8000))
 
-        assertEquals(listOf("Local · wide.jpg | 9000 × 8000 · 458 kB · Too large (over 64 megapixels)"), start().rows())
+        assertEquals(listOf("wide.jpg | Local · 9000 × 8000 · 458 kB · Too large (over 64 megapixels)"), start().rows())
     }
 
     @Test
-    fun `why a picture can't be added is in the accent color, its size not`() {
+    fun `why a picture can't be added is in the error color, its size not`() {
         graph(huge, phone, wallpaper)
         val activity = start()
-        val accent = activity.getColor(UiR.color.accent)
+        val accent = colorRoles(ThemeAppearance()).error
         val list = activity.list()
 
         fun colored(position: Int): List<String> {

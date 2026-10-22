@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Lint's exceptions for this module's files, each with its reason (adding to the root lint.xml). -->
+<lint>
+    <!-- The tests' Captures.kt gives the window in front the input focus, as Android does on a TV,
+         through the hidden ViewRootImpl, the way Robolectric's own ActivityController does: only
+         in the JVM tests, never on a device. -->
+    <issue id="PrivateApi">
+        <ignore path="src/testFixtures/java/com/luncher/launcher/testing/Captures.kt" />
+    </issue>
+</lint>

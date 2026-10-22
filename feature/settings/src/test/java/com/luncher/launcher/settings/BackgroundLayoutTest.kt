@@ -20,6 +20,7 @@ import com.luncher.domain.pictures.ImportResult
 import com.luncher.domain.pictures.PictureFormat
 import com.luncher.domain.pictures.SizeLimit
 import com.luncher.launcher.testing.TV_SCREENS
+import com.luncher.launcher.ui.screenSize
 import com.luncher.launcher.testing.TV_SCREENS_IN_EVERY_LANGUAGE
 import com.luncher.launcher.testing.TvScreen
 import com.luncher.launcher.testing.assertApart
@@ -123,7 +124,10 @@ class BackgroundLayoutTest(private val screen: TvScreen) {
         activity.assertShown("Save", activity.findViewById(R.id.settings_background_save))
         activity.assertShown("hint", activity.findViewById(R.id.settings_background_hint))
         assertApart(screen, "preview and pictures", bounds(preview), bounds(end))
-        assertTrue("preview ${preview.width} px wide on $screen", preview.width >= metrics.widthPixels / 3)
+        // As tall as the room left, of the TV's shape, a quarter of its height at the column's width at least.
+        val column = activity.findViewById<View>(R.id.settings_background_start)
+        val natural = activity.screenSize().heightAt(column.width - column.paddingLeft - column.paddingRight - 2 * activity.resources.getDimensionPixelSize(R.dimen.settings_container_padding))
+        assertTrue("preview ${preview.height} px tall on $screen, ${natural / 4} at least", preview.height >= natural / 4)
         // Save above the overscan margin without scrolling, where the screen is as tall as 1080p's
         // 540 dp or more; a shorter one scrolls the column instead.
         if (metrics.heightPixels / metrics.density >= 540) {
@@ -133,7 +137,7 @@ class BackgroundLayoutTest(private val screen: TvScreen) {
         }
         for (row in activity.children(R.id.settings_background_list)) {
             activity.assertAcross("a picture's row", row)
-            row.findViewById<TextView>(R.id.settings_background_chosen)?.let { activity.assertAcross("its check", it) }
+            row.findViewById<View>(R.id.settings_background_chosen)?.let { activity.assertAcross("its check", it) }
         }
         // Luncher's own names whole: No picture, first, and Add from folder, last.
         val rows = activity.children(R.id.settings_background_list)
@@ -141,7 +145,7 @@ class BackgroundLayoutTest(private val screen: TvScreen) {
         // Each option's list whole on the screen, inside the margins across, and each value it
         // offers chosen in turn, in order, the first last again, so the fit is back to filling for
         // the position.
-        val options = activity.children(R.id.settings_background_options)
+        val options = activity.children(R.id.settings_background_options).flatMap { line -> (0 until (line as ViewGroup).childCount).map(line::getChildAt) }
         val catalog = appearanceOptions().groups.single { it.editedApart }.options
         for ((row, option) in options.zip(catalog)) {
             activity.assertShown("an option", row)
@@ -174,7 +178,7 @@ class BackgroundLayoutTest(private val screen: TvScreen) {
         assertTrue("$option's list at $area, outside the margins ${inside()} on $screen", area.left >= inside().left && area.right <= inside().right)
         val margin = resources.getDimension(R.dimen.settings_appearance_margin_vertical)
         assertTrue("$option's list at $area, outside the margin on $screen", area.top >= margin - 1 && area.bottom <= metrics.heightPixels - margin + 1)
-        for (index in 0 until list.childCount) assertWhole(screen, list.getChildAt(index) as TextView)
+        for (index in 0 until list.childCount) assertWhole(screen, list.getChildAt(index).findViewById(R.id.settings_option_list_value))
         return list
     }
 
@@ -263,7 +267,7 @@ class BackgroundLayoutTest(private val screen: TvScreen) {
     private fun assertWindowFits(activity: Activity, text: Boolean) {
         val panel = activity.findViewById<View>(R.id.settings_received_panel)
         val metrics = activity.resources.displayMetrics
-        val margin = activity.resources.getDimensionPixelSize(R.dimen.settings_panel_margin)
+        val margin = activity.resources.getDimensionPixelSize(R.dimen.settings_pictures_dialog_margin)
         assertTrue(
             "window ${panel.width} x ${panel.height} on $screen, ${metrics.widthPixels} x ${metrics.heightPixels} less $margin around",
             panel.width <= metrics.widthPixels - 2 * margin && panel.height <= metrics.heightPixels - 2 * margin,

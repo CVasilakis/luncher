@@ -78,21 +78,24 @@ class SettingsLayoutTest(private val screen: TvScreen) {
     }
 
     /**
-     * Measures [activity]'s panel as its floating window does, as large as its content, and checks
-     * that it fits the screen less the margin on each side. Last in a test: measuring again changes
-     * the views' text layouts, and the list's rows.
+     * Checks that [activity]'s side sheet fits the screen less its margin on each side, and that
+     * its content, measured at the sheet's width as large as it is, fits the sheet's height. Last in
+     * a test: measuring again changes the views' text layouts, and the list's rows.
      */
     private fun assertPanelFits(activity: Activity) {
-        val panel = activity.findViewById<ViewGroup>(android.R.id.content).getChildAt(0)
-        // The size its layout sets (the width), else as large as its content (the height).
-        fun spec(size: Int) = View.MeasureSpec.makeMeasureSpec(size.coerceAtLeast(0), if (size >= 0) View.MeasureSpec.EXACTLY else View.MeasureSpec.UNSPECIFIED)
-        panel.measure(spec(panel.layoutParams.width), spec(panel.layoutParams.height))
+        val window = activity.window.attributes
         val metrics = activity.resources.displayMetrics
-        val margin = activity.resources.getDimensionPixelSize(R.dimen.settings_panel_margin)
+        val margin = activity.resources.getDimensionPixelSize(R.dimen.settings_sheet_margin)
         assertTrue(
-            "panel ${panel.measuredWidth} x ${panel.measuredHeight} on $screen, ${metrics.widthPixels} x ${metrics.heightPixels} less $margin around",
-            panel.measuredWidth <= metrics.widthPixels - 2 * margin && panel.measuredHeight <= metrics.heightPixels - 2 * margin,
+            "sheet ${window.width} x ${window.height} on $screen, ${metrics.widthPixels} x ${metrics.heightPixels} less $margin around",
+            window.width <= metrics.widthPixels - 2 * margin && window.height <= metrics.heightPixels - 2 * margin,
         )
+        val panel = activity.findViewById<ViewGroup>(android.R.id.content).getChildAt(0)
+        panel.measure(
+            View.MeasureSpec.makeMeasureSpec(window.width, View.MeasureSpec.EXACTLY),
+            View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
+        )
+        assertTrue("content ${panel.measuredHeight} px in a sheet ${window.height} px tall on $screen", panel.measuredHeight <= window.height)
     }
 
     @Test
@@ -100,7 +103,9 @@ class SettingsLayoutTest(private val screen: TvScreen) {
         val activity = Robolectric.buildActivity(SettingsActivity::class.java).setup().get()
         val entries = activity.findViewById<LinearLayout>(R.id.settings_entries)
 
-        for (i in 0 until entries.childCount) assertWhole(screen, entries.getChildAt(i) as TextView)
+        for (i in 0 until entries.childCount) {
+            assertWhole(screen, entries.getChildAt(i).findViewById(R.id.settings_entry_title))
+        }
         assertPanelFits(activity)
     }
 
@@ -108,10 +113,14 @@ class SettingsLayoutTest(private val screen: TvScreen) {
     fun `Hide apps fits, ending on half a row`() {
         val activity = Robolectric.buildActivity(HideAppsActivity::class.java).setup().get()
         val list = activity.findViewById<ListView>(R.id.settings_apps)
-        val row = activity.resources.getDimensionPixelSize(R.dimen.settings_entry_height)
+        val row = activity.resources.getDimensionPixelSize(R.dimen.settings_row_height) + activity.resources.getDimensionPixelSize(R.dimen.settings_entry_gap)
+        val rowsHeight = list.layoutParams.height - list.paddingTop - list.paddingBottom
 
-        assertEquals("list ${list.layoutParams.height} px, rows $row px, on $screen", row / 2, list.layoutParams.height % row)
-        assertTrue("list shorter than a row on $screen", list.layoutParams.height > row)
+        // All of them where they fit (a screen as tall as 1080p at 160 dpi's 1080 dp); else half a row last.
+        if (rowsHeight != apps.size * row) {
+            assertEquals("list ${list.layoutParams.height} px, rows $row px, on $screen", row / 2, rowsHeight % row)
+        }
+        assertTrue("list shorter than a row on $screen", rowsHeight > row)
         val rows = (0 until list.childCount).map { list.getChildAt(it) }
         for (view in rows) assertWhole(screen, view.findViewById(R.id.settings_app_label))
         list.setSelection(apps.lastIndex)   // the hidden app, "Hidden" after its name
@@ -131,9 +140,8 @@ class SettingsLayoutTest(private val screen: TvScreen) {
     @Test
     fun `the reset question fits`() {
         val activity = Robolectric.buildActivity(AppearanceActivity::class.java).setup().get()
-        val options = activity.findViewById<ViewGroup>(R.id.settings_appearance_options)
 
-        options.getChildAt(options.childCount - 1).performClick()
+        activity.findViewById<View>(R.id.settings_appearance_reset).performClick()
         shadowOf(Looper.getMainLooper()).idle()
 
         assertDialogFits(screen, activity)
@@ -151,10 +159,18 @@ class SettingsLayoutTest(private val screen: TvScreen) {
         val groups = children.filter { it.findViewById<View>(R.id.settings_group_title) != null }
 
         assertWhole(screen, title)
-        val first = bounds(groups.first())
-        assertEquals("first group's middle on $screen", bounds(title).centerY(), first.centerY(), 1f)
+        val container = bounds(activity.findViewById(R.id.settings_appearance_frame))
+        assertEquals("the groups' container's top on $screen", bounds(title).top, container.top, 1f)
         assertApart(screen, "title and preview", bounds(title), bounds(preview))
-        assertApart(screen, "preview and options", bounds(preview), bounds(activity.findViewById(R.id.settings_appearance_scroll)))
+        assertApart(screen, "preview and options", bounds(preview), container)
+        // Below the preview, inside the overscan margin, their texts whole.
+        for (id in listOf(R.id.settings_appearance_background, R.id.settings_appearance_reset)) {
+            val button = activity.findViewById<TextView>(id)
+            assertWhole(screen, button)
+            assertApart(screen, "preview and ${button.text}", bounds(preview), bounds(button))
+            val area = bounds(button)
+            assertTrue("${button.text} at $area outside the overscan margin on $screen", area.left >= margin && area.bottom <= metrics.heightPixels - activity.resources.getDimension(R.dimen.settings_appearance_margin_vertical))
+        }
         assertTrue("preview ${preview.width} px wide on $screen", preview.width >= metrics.widthPixels / 3)
         assertTrue("preview ${preview.height} px tall on $screen", preview.height >= metrics.heightPixels / 4)
         // Each group open in turn, each of its options through its values, in order, ending at
@@ -165,7 +181,6 @@ class SettingsLayoutTest(private val screen: TvScreen) {
         val next = if (options.layoutDirection == View.LAYOUT_DIRECTION_RTL) KeyEvent.KEYCODE_DPAD_LEFT else KeyEvent.KEYCODE_DPAD_RIGHT
         // The background's group is one entry, edited in its own screen (BackgroundLayoutTest).
         val catalog = appearanceOptions().groups.filter { !it.editedApart }
-        children.mapNotNull { it.findViewById<TextView>(R.id.settings_apart_title) }.forEach { assertWhole(screen, it) }
         for ((index, group) in groups.withIndex()) {
             assertTrue(group.requestFocus())
             activity.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DPAD_CENTER))

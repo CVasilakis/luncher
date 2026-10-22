@@ -10,7 +10,9 @@ import com.luncher.domain.appearance.AppName
 import com.luncher.domain.appearance.Corners
 import com.luncher.domain.appearance.FocusStyle
 import com.luncher.domain.appearance.TileGeometry
+import com.luncher.domain.appearance.ThemeAppearance
 import com.luncher.domain.appearance.TileStyle
+import com.luncher.domain.appearance.colorRoles
 import com.luncher.launcher.ui.TileName
 import com.luncher.launcher.ui.WallpaperOutline
 import com.luncher.launcher.ui.color
@@ -25,8 +27,8 @@ import com.luncher.launcher.ui.R as UiR
  */
 internal class TilePaints(context: Context) {
 
-    /** A focused tile's frame. */
-    val focusFrame = frame(context.color(UiR.color.accent), context)
+    /** A focused tile's frame, in the theme's accent ([AppTilesView.accent]). */
+    val focusFrame = frame(colorRoles(ThemeAppearance()).homeAccent, context)
 
     /** A held tile's frame, while the user moves its app. */
     val heldFrame = frame(context.color(UiR.color.text_primary), context)

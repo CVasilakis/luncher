@@ -1,15 +1,34 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- A value of an option's list (OptionList): as tall as an entry, so the value focused lines up
-     with the option's row. -->
-<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+<!-- A value of an option's list (OptionList): its name, and a check if it's the option's value.
+     As tall as the background editor's field, so the value focused lines up with it. -->
+<com.luncher.launcher.ui.ListEntry xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="@dimen/settings_entry_height"
-    android:background="@drawable/entry_background"
+    android:layout_height="@dimen/settings_option_list_entry_height"
     android:focusable="true"
     android:focusableInTouchMode="true"
     android:gravity="center_vertical"
+    android:orientation="horizontal"
     android:paddingLeft="@dimen/settings_entry_padding"
-    android:paddingRight="@dimen/settings_entry_padding"
-    android:singleLine="true"
-    android:textColor="@color/text_primary"
-    android:textSize="@dimen/settings_entry_text" />
+    android:paddingRight="@dimen/settings_entry_padding">
+
+    <com.luncher.launcher.ui.ThemedText
+        android:id="@+id/settings_option_list_value"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:duplicateParentState="true"
+        android:singleLine="true"
+        android:textSize="@dimen/text_entry" />
+
+    <com.luncher.launcher.ui.ThemedIcon
+        android:id="@+id/settings_option_list_check"
+        android:layout_width="@dimen/icon"
+        android:layout_height="@dimen/icon"
+        android:layout_marginStart="@dimen/settings_entry_icon_gap"
+        android:duplicateParentState="true"
+        android:importantForAccessibility="no"
+        android:src="@drawable/icon_check"
+        android:visibility="invisible"
+        app:colorRole="primary" />
+</com.luncher.launcher.ui.ListEntry>

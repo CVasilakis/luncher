@@ -10,9 +10,8 @@ import android.graphics.Shader
 import android.os.Looper
 import android.view.KeyEvent
 import android.view.View
-import com.github.takahirom.roborazzi.ExperimentalRoborazziApi
-import com.github.takahirom.roborazzi.captureRoboImage
-import com.github.takahirom.roborazzi.captureScreenRoboImage
+import com.luncher.launcher.testing.captureFocused
+import com.luncher.launcher.testing.captureScreenFocused
 import com.luncher.domain.appearance.AppName
 import com.luncher.domain.appearance.Appearance
 import com.luncher.domain.appearance.Background
@@ -128,7 +127,7 @@ class HomeScreenshotTest {
         val background = Background(landscape(), Fit.FILL, PicturePosition.BOTTOM, dim = 20, blur = Blur.LIGHT)
 
         start(appearance = Appearance(background = background)).window.decorView
-            .captureRoboImage("src/test/screenshots/home/home_screen_wallpaper.png")
+            .captureFocused("src/test/screenshots/home/home_screen_wallpaper.png")
     }
 
     // The same, sharp and not dimmed, stretched: all of the 4:3 picture, wider.
@@ -137,25 +136,23 @@ class HomeScreenshotTest {
         val background = Background(landscape(), Fit.STRETCH)
 
         start(appearance = Appearance(background = background)).window.decorView
-            .captureRoboImage("src/test/screenshots/home/home_screen_wallpaper_stretched.png")
+            .captureFocused("src/test/screenshots/home/home_screen_wallpaper_stretched.png")
     }
 
     // The wallpaper drawn again for a TV that switched to another screen size: the plain
     // background, and a window over it saying so, which takes every key meanwhile.
     @Test
-    @OptIn(ExperimentalRoborazziApi::class)   // captureScreenRoboImage, the one capture of a dialog over its screen
     fun homeScreenFittingTheWallpaper() {
         fittingTheWallpaper()
-        captureScreenRoboImage("src/test/screenshots/home/home_screen_fitting_wallpaper.png")
+        captureScreenFocused("src/test/screenshots/home/home_screen_fitting_wallpaper.png")
     }
 
     // The same in Arabic: the window mirrors, the home screen doesn't.
     @Test
     @Config(qualifiers = "ar-rEG-$TV_1080P")
-    @OptIn(ExperimentalRoborazziApi::class)
     fun homeScreenFittingTheWallpaperInArabic() {
         fittingTheWallpaper()
-        captureScreenRoboImage("src/test/screenshots/home/home_screen_fitting_wallpaper_arabic.png")
+        captureScreenFocused("src/test/screenshots/home/home_screen_fitting_wallpaper_arabic.png")
     }
 
     private fun fittingTheWallpaper() {
@@ -187,14 +184,14 @@ class HomeScreenshotTest {
 
     @Test
     fun homeScreen() {
-        start().window.decorView.captureRoboImage("src/test/screenshots/home/home_screen.png")
+        start().window.decorView.captureFocused("src/test/screenshots/home/home_screen.png")
     }
 
     // A 4:3 screen, 720x540 dp: four tiles in a row, of about the size they have at 1080p.
     @Test
     @Config(qualifiers = "+w720dp")
     fun homeScreen4by3() {
-        start().window.decorView.captureRoboImage("src/test/screenshots/home/home_screen_4by3.png")
+        start().window.decorView.captureFocused("src/test/screenshots/home/home_screen_4by3.png")
     }
 
     // 1080p at 160 dpi, as some TV boxes are set, 1920x1080 dp: ten tiles in a row, of about the
@@ -202,7 +199,7 @@ class HomeScreenshotTest {
     @Test
     @Config(qualifiers = "+w1920dp-h1080dp-mdpi")
     fun homeScreen160dpi() {
-        start().window.decorView.captureRoboImage("src/test/screenshots/home/home_screen_160dpi.png")
+        start().window.decorView.captureFocused("src/test/screenshots/home/home_screen_160dpi.png")
     }
 
     // Every option away from its default but the time's and the date's, which would hide what the
@@ -215,7 +212,7 @@ class HomeScreenshotTest {
             TileStyle(Corners.Radius(12)),
             TopBarAppearance(clockSide = Side.RIGHT, timeSide = Side.RIGHT),
         )
-        start(appearance = appearance).window.decorView.captureRoboImage("src/test/screenshots/home/home_screen_appearance.png")
+        start(appearance = appearance).window.decorView.captureFocused("src/test/screenshots/home/home_screen_appearance.png")
     }
 
     // The tvOS-like look: the focused tile lifted, without a frame, its shadow under it, and its
@@ -224,7 +221,7 @@ class HomeScreenshotTest {
     fun homeScreenLiftedWithTheAppName() {
         val appearance = Appearance(TileGeometry(appName = AppName.WHEN_FOCUSED), TileStyle(focus = FocusStyle.LIFT))
 
-        start(appearance = appearance).window.decorView.captureRoboImage("src/test/screenshots/home/home_screen_lifted_name.png")
+        start(appearance = appearance).window.decorView.captureFocused("src/test/screenshots/home/home_screen_lifted_name.png")
     }
 
     // The same with the long name focused: cut to the tile's width.
@@ -235,7 +232,7 @@ class HomeScreenshotTest {
         tiles.getChildAt(tiles.childCount - 1).requestFocus()
         shadowOf(Looper.getMainLooper()).idleFor(Duration.ofSeconds(1))   // the zoom and the name's fade
 
-        activity.window.decorView.captureRoboImage("src/test/screenshots/home/home_screen_long_name.png")
+        activity.window.decorView.captureFocused("src/test/screenshots/home/home_screen_long_name.png")
     }
 
     // Moving Music, lifted: the held tile's white frame tells it from one only focused.
@@ -244,14 +241,14 @@ class HomeScreenshotTest {
         val activity = start(hidden = listOf("weather"), appearance = Appearance(TileGeometry(appName = AppName.WHEN_FOCUSED), TileStyle(focus = FocusStyle.LIFT)))
         activity.moveMusic()
 
-        activity.window.decorView.captureRoboImage("src/test/screenshots/home/home_moving_lifted.png")
+        activity.window.decorView.captureFocused("src/test/screenshots/home/home_moving_lifted.png")
     }
 
     // The date hidden: the time alone, the tiles where they are with both.
     @Test
     fun homeScreenWithoutTheDate() {
         start(appearance = Appearance(topBar = TopBarAppearance(showDate = false))).window.decorView
-            .captureRoboImage("src/test/screenshots/home/home_screen_without_date.png")
+            .captureFocused("src/test/screenshots/home/home_screen_without_date.png")
     }
 
     @Test
@@ -259,7 +256,7 @@ class HomeScreenshotTest {
         val activity = start()
         activity.findViewById<View>(R.id.home_settings).requestFocus()
 
-        activity.window.decorView.captureRoboImage("src/test/screenshots/home/home_settings_focused.png")
+        activity.window.decorView.captureFocused("src/test/screenshots/home/home_settings_focused.png")
     }
 
     // Moving Music, an app hidden, which doesn't show meanwhile.
@@ -268,35 +265,32 @@ class HomeScreenshotTest {
         val activity = start(hidden = listOf("weather"))
         activity.moveMusic()
 
-        activity.window.decorView.captureRoboImage("src/test/screenshots/home/home_moving.png")
+        activity.window.decorView.captureFocused("src/test/screenshots/home/home_moving.png")
     }
 
     // The menu of a tile in the second row: above it.
     @Test
-    @OptIn(ExperimentalRoborazziApi::class)
     fun menuAbove() {
         start().openMenu("Radio")
 
-        captureScreenRoboImage("src/test/screenshots/home/home_menu_above.png")
+        captureScreenFocused("src/test/screenshots/home/home_menu_above.png")
     }
 
     // The menu of a tile in the first row, the rows at the top, its name shown: below the name,
     // where there's no room above.
     @Test
-    @OptIn(ExperimentalRoborazziApi::class)
     fun menuBelow() {
         start(appearance = Appearance(topLeftTiles.copy(appName = AppName.WHEN_FOCUSED))).openMenu("Music")
 
-        captureScreenRoboImage("src/test/screenshots/home/home_menu_below.png")
+        captureScreenFocused("src/test/screenshots/home/home_menu_below.png")
     }
 
     // The same in Arabic: the menu mirrors, the home screen doesn't.
     @Test
     @Config(qualifiers = "ar-rEG-$TV_1080P")
-    @OptIn(ExperimentalRoborazziApi::class)
     fun menuInArabic() {
         start().openMenu("Radio")
 
-        captureScreenRoboImage("src/test/screenshots/home/home_menu_arabic.png")
+        captureScreenFocused("src/test/screenshots/home/home_menu_arabic.png")
     }
 }

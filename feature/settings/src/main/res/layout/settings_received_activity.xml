@@ -1,13 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The window over the home screen after another app shared pictures: like the settings panel,
-     a title, after a spinning wheel while they're added; then, for one picture, its name or why
-     it wasn't added, for several, how many weren't; and the entries. -->
+<!-- The window over the home screen after another app shared pictures: like a dialog, its mark
+     beside its title (a spinning wheel there while the pictures are added); then, for one picture,
+     its name or why it wasn't added, for several, how many weren't, starting below the mark; and
+     its button. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/settings_received_panel"
-    android:layout_width="@dimen/settings_panel_width"
+    android:layout_width="@dimen/settings_pictures_dialog_width"
     android:layout_height="wrap_content"
+    android:clipChildren="false"
+    android:clipToPadding="false"
     android:orientation="vertical"
-    android:padding="@dimen/settings_panel_padding">
+    android:padding="@dimen/settings_pictures_dialog_padding">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -15,43 +19,59 @@
         android:gravity="center_vertical"
         android:orientation="horizontal">
 
-        <ProgressBar
-            android:id="@+id/settings_received_spinner"
-            android:layout_width="@dimen/settings_received_spinner"
-            android:layout_height="@dimen/settings_received_spinner"
-            android:layout_marginEnd="@dimen/settings_entry_padding"
-            android:indeterminate="true"
-            android:indeterminateTint="@color/accent" />
+        <!-- The mark, or the wheel in its place; gone when neither shows. -->
+        <FrameLayout
+            android:id="@+id/settings_received_mark_place"
+            android:layout_width="@dimen/settings_badge"
+            android:layout_height="@dimen/settings_badge"
+            android:layout_marginEnd="@dimen/settings_badge_gap">
 
-        <TextView
+            <com.luncher.launcher.ui.ThemedSpinner
+                android:id="@+id/settings_received_spinner"
+                android:layout_width="@dimen/settings_received_spinner"
+                android:layout_height="@dimen/settings_received_spinner"
+                android:layout_gravity="center"
+                android:indeterminate="true" />
+
+            <com.luncher.launcher.settings.Badge
+                android:id="@+id/settings_received_mark"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:importantForAccessibility="no"
+                android:padding="@dimen/settings_badge_padding"
+                android:visibility="gone" />
+        </FrameLayout>
+
+        <com.luncher.launcher.ui.ThemedText
             android:id="@+id/settings_received_title"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:includeFontPadding="false"
-            android:textColor="@color/text_primary"
-            android:textSize="@dimen/settings_title_text" />
+            android:textSize="@dimen/text_dialog_title" />
     </LinearLayout>
 
     <!-- The picture's name, the user's, which may end in "…"; or why it wasn't added, whole; for
          several, how many weren't added, and whether a share had too many. Gone while they're
          added. -->
-    <TextView
+    <com.luncher.launcher.ui.ThemedText
         android:id="@+id/settings_received_text"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/settings_title_gap"
+        android:layout_marginTop="@dimen/settings_dialog_text_gap"
         android:ellipsize="end"
+        android:lineSpacingMultiplier="1.15"
         android:maxLines="8"
-        android:textColor="@color/text_secondary"
-        android:textSize="@dimen/settings_pictures_small_text" />
+        android:textSize="@dimen/settings_dialog_text"
+        app:colorRole="onSurfaceVariant" />
 
-    <!-- PictureReceivedActivity adds the entries: Cancel while the pictures are added; then, for
-         one saved, a use for each of pictureUseMenu; else OK. -->
-    <LinearLayout
+    <!-- PictureReceivedActivity adds the button: Cancel while the pictures are added; then OK. -->
+    <com.luncher.launcher.settings.EntriesRow
         android:id="@+id/settings_received_entries"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/settings_title_gap"
-        android:orientation="vertical" />
+        android:layout_marginTop="@dimen/settings_dialog_buttons_gap"
+        android:baselineAligned="false"
+        android:clipChildren="false"
+        android:orientation="horizontal" />
 </LinearLayout>

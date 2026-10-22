@@ -3,6 +3,7 @@ package com.luncher.launcher.settings
 import android.os.Looper
 import android.view.KeyEvent
 import android.view.View
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import com.luncher.domain.appearance.AppName
@@ -21,6 +22,13 @@ import com.luncher.domain.appearance.SAMPLE_WALLPAPER
 import com.luncher.domain.pictures.Blur
 import com.luncher.domain.pictures.Fit
 import com.luncher.launcher.testing.TV_1080P
+import com.luncher.launcher.ui.R as UiR
+import com.luncher.domain.appearance.AccentColor
+import com.luncher.domain.appearance.ThemeAppearance
+import com.luncher.domain.appearance.ThemeMode
+import com.luncher.domain.appearance.colorRoles
+import android.graphics.drawable.ColorDrawable
+import android.graphics.drawable.GradientDrawable
 import com.luncher.launcher.testing.bounds
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -62,26 +70,25 @@ class AppearanceActivityTest {
     private fun AppearanceActivity.rows() = children().filter { it.findViewById<View>(R.id.settings_option_value) != null }
 
     /**
-     * What shows: each group's title, "open" after it while its options show; each option as
-     * "Label: value"; a group edited apart as "Title: its picture"; the last entry.
+     * What shows: each group's title, "open" after it while its options show (its mark pointing
+     * up); each option as "Label: value".
      */
     private fun AppearanceActivity.lines() = children().filter { it.visibility == View.VISIBLE }.map { child ->
         val title = child.findViewById<TextView>(R.id.settings_group_title)
         val value = child.findViewById<TextView>(R.id.settings_option_value)
-        val apart = child.findViewById<TextView>(R.id.settings_apart_title)
         when {
-            title != null -> if (child.findViewById<View>(R.id.settings_group_arrow).rotation != 0f) "${title.text} open" else title.text.toString()
+            title != null -> {
+                val arrow = shadowOf(child.findViewById<ImageView>(R.id.settings_group_arrow).drawable).createdFromResId
+                if (arrow == UiR.drawable.icon_caret_up) "${title.text} open" else title.text.toString()
+            }
             value != null -> "${child.findViewById<TextView>(R.id.settings_option_label).text}: ${value.text}"
-            apart != null -> "${apart.text}: ${child.findViewById<TextView>(R.id.settings_apart_value).text}"
-            else -> (child as TextView).text.toString()
+            else -> error("an entry neither a group nor an option")
         }
     }
 
-    /** The entry of the group titled [title], edited here or apart. */
+    /** The entry of the group titled [title]. */
     private fun AppearanceActivity.group(title: String) =
-        children().single { child ->
-            listOf(R.id.settings_group_title, R.id.settings_apart_title).any { child.findViewById<TextView>(it)?.text?.toString() == title }
-        }
+        children().single { child -> child.findViewById<TextView>(R.id.settings_group_title)?.text?.toString() == title }
 
     private fun AppearanceActivity.row(label: String) =
         rows().single { it.findViewById<TextView>(R.id.settings_option_label).text.toString() == label }
@@ -100,9 +107,9 @@ class AppearanceActivityTest {
         shadowOf(Looper.getMainLooper()).idle()   // the layout pass, for the options it shows
     }
 
-    /** OK on the last entry, Reset to defaults. */
+    /** OK on Reset to defaults, below the preview. */
     private fun AppearanceActivity.reset() {
-        assertTrue(children().last().requestFocus())
+        assertTrue(findViewById<View>(R.id.settings_appearance_reset).requestFocus())
         press(KeyEvent.KEYCODE_DPAD_CENTER)
         shadowOf(Looper.getMainLooper()).idle()
     }
@@ -130,8 +137,8 @@ class AppearanceActivityTest {
     }
 
     @Test
-    fun `lists the groups, their options hidden, then the reset entry`() {
-        assertEquals(listOf("Tiles", "Time and date", "Background: None", "Reset to defaults"), start().lines())
+    fun `lists the groups, their options hidden`() {
+        assertEquals(listOf("Tiles", "Time and date", "Theme"), start().lines())
     }
 
     @Test
@@ -147,8 +154,7 @@ class AppearanceActivityTest {
         assertEquals(
             listOf(
                 "Tiles open", "Vertical alignment: Bottom", "Horizontal alignment: Center", "Full bottom row: On",
-                "Corner radius: 12 dp", "Focus style: Frame", "App name: Off", "Time and date", "Background: None",
-                "Reset to defaults",
+                "Corner radius: 12 dp", "Focus style: Frame", "App name: Off", "Time and date", "Theme",
             ),
             activity.lines(),
         )
@@ -156,44 +162,77 @@ class AppearanceActivityTest {
 
         activity.toggle("Time and date")
         assertEquals(
-            listOf("Tiles", "Time and date open", "Time: Shown", "Date: Shown", "Side: Left", "Order: Time first", "Background: None", "Reset to defaults"),
+            listOf("Tiles", "Time and date open", "Time: Shown", "Date: Shown", "Side: Left", "Order: Time first", "Theme"),
             activity.lines(),
         )
 
         activity.toggle("Time and date")
-        assertEquals(listOf("Tiles", "Time and date", "Background: None", "Reset to defaults"), activity.lines())
+        assertEquals(listOf("Tiles", "Time and date", "Theme"), activity.lines())
     }
 
     @Test
-    fun `the background is one entry, its picture's name beside it`() {
-        assertEquals("Background: None", start().lines()[2])
-
-        settings.appearance = Appearance(background = Background(picture = SAMPLE_WALLPAPER, dim = 40, blur = Blur.LIGHT))
-        assertEquals("Background: sunset.jpg", start().lines()[2])
-    }
-
-    @Test
-    fun `OK on the background opens the background editor, and shows what it saved after`() {
+    fun `Background, below the preview, opens the background editor, and the preview shows what it saved after`() {
         val controller = Robolectric.buildActivity(AppearanceActivity::class.java).setup()
         val activity = controller.get()
 
-        activity.group("Background").performClick()
+        activity.findViewById<View>(R.id.settings_appearance_background).performClick()
 
         assertEquals(BackgroundActivity::class.java.name, shadowOf(activity).nextStartedActivity.component?.className)
         settings.appearance = Appearance(background = Background(picture = SAMPLE_WALLPAPER))   // saved there
         controller.pause().resume()   // back before it was stopped, as a quick save can be
-        assertEquals("Background: sunset.jpg", activity.lines()[2])
+        assertEquals(SAMPLE_WALLPAPER, activity.findViewById<AppearancePreviewView>(R.id.settings_appearance_preview).appearance.background.picture)
     }
 
     @Test
-    fun `shows the background's picture renamed in the background editor`() {
-        settings.appearance = Appearance(background = Background(picture = SAMPLE_WALLPAPER))
-        val controller = Robolectric.buildActivity(AppearanceActivity::class.java).setup()
+    fun `the theme's group offers the accent color and the mode, orange and dark at first`() {
+        val activity = start()
 
-        (application.graph as TestSettingsGraph).library.rename(SAMPLE_WALLPAPER, "Evening")   // there
-        controller.pause().resume()
+        activity.toggle("Theme")
 
-        assertEquals("Background: Evening", controller.get().lines()[2])
+        assertEquals(listOf("Tiles", "Time and date", "Theme open", "Accent color: Orange", "Mode: Dark"), activity.lines())
+        assertEquals(View.VISIBLE, activity.row("Accent color").findViewById<View>(R.id.settings_option_swatch).visibility)
+        assertEquals(View.GONE, activity.row("Mode").findViewById<View>(R.id.settings_option_swatch).visibility)
+    }
+
+    @Test
+    fun `Right steps through the accent colors and stores each at once`() {
+        val activity = start()
+        activity.focus("Theme", "Accent color")
+
+        activity.press(KeyEvent.KEYCODE_DPAD_RIGHT)
+        assertEquals("Pink", activity.value("Accent color"))
+        assertEquals(AccentColor.PINK, settings.appearance.theme.accent)
+        activity.press(KeyEvent.KEYCODE_DPAD_LEFT)
+        activity.press(KeyEvent.KEYCODE_DPAD_LEFT)
+        assertEquals("Gray", activity.value("Accent color"))
+    }
+
+    // In place, while the editor shows: its window and its texts take the new theme's colors at once.
+    @Test
+    fun `the light mode restyles the editor at once`() {
+        val activity = start()
+        activity.focus("Theme", "Mode")
+        val title = activity.findViewById<TextView>(R.id.settings_appearance_title)
+        assertEquals(colorRoles(ThemeAppearance()).onSurface, title.currentTextColor)
+
+        activity.press(KeyEvent.KEYCODE_DPAD_RIGHT)
+
+        val light = colorRoles(ThemeAppearance(mode = ThemeMode.LIGHT))
+        assertEquals("Light", activity.value("Mode"))
+        assertEquals(light.onSurface, title.currentTextColor)
+        assertEquals(light.screen, (activity.window.decorView.background as ColorDrawable).color)
+        assertTrue("the focus stays", activity.row("Mode").isFocused)
+    }
+
+    // The swatch is the accent as the menus show it, in the mode they have.
+    @Test
+    fun `the accent's swatch is its color in the menus`() {
+        settings.appearance = Appearance(theme = ThemeAppearance(AccentColor.BLUE, ThemeMode.LIGHT))
+        val activity = start()
+        activity.toggle("Theme")
+
+        val swatch = activity.row("Accent color").findViewById<View>(R.id.settings_option_swatch).background as GradientDrawable
+        assertEquals(colorRoles(ThemeAppearance(AccentColor.BLUE, ThemeMode.LIGHT)).primary, swatch.color?.defaultColor)
     }
 
     @Test
@@ -348,7 +387,7 @@ class AppearanceActivityTest {
         assertEquals("Hidden", activity.value("Date"))
         assertFalse(activity.row("Side").isFocusable)
         assertFalse(activity.row("Order").isFocusable)
-        assertSame(activity.group("Background"), activity.row("Date").focusSearch(View.FOCUS_DOWN))
+        assertSame(activity.group("Theme"), activity.row("Date").focusSearch(View.FOCUS_DOWN))
     }
 
     @Test
@@ -368,7 +407,7 @@ class AppearanceActivityTest {
         assertEquals(Appearance(), settings.appearance)
         assertEquals("Bottom", activity.value("Vertical alignment"))
         assertEquals("12 dp", activity.value("Corner radius"))
-        assertTrue("the focus back on the reset entry", activity.children().last().isFocused)
+        assertTrue("the focus back on Reset to defaults", activity.findViewById<View>(R.id.settings_appearance_reset).isFocused)
     }
 
     @Test
@@ -407,18 +446,18 @@ class AppearanceActivityTest {
         val title = activity.findViewById<View>(R.id.settings_appearance_title)
         val preview = activity.findViewById<View>(R.id.settings_appearance_preview)
         assertEquals(title.left, preview.left)
-        val gap = activity.resources.getDimensionPixelSize(R.dimen.settings_title_gap)
+        val gap = activity.resources.getDimensionPixelSize(R.dimen.settings_screen_title_gap)
         assertEquals(title.bottom + gap, preview.top)
         assertFalse(preview.isFocusable)
     }
 
     @Test
-    fun `the options start level with the title`() {
+    fun `the groups' container starts level with the title`() {
         val activity = start()
 
         val title = bounds(activity.findViewById(R.id.settings_appearance_title))
-        val first = bounds(activity.group("Tiles"))
-        assertEquals(title.centerY(), first.centerY(), 1f)
+        val container = bounds(activity.findViewById(R.id.settings_appearance_frame))
+        assertEquals(title.top, container.top, 1f)
     }
 
     @Test

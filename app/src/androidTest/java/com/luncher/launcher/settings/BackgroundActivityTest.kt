@@ -17,7 +17,9 @@ import androidx.test.espresso.assertion.ViewAssertions.doesNotExist
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.matcher.RootMatchers.isDialog
 import androidx.test.espresso.matcher.RootMatchers.isPlatformPopup
+import androidx.test.espresso.matcher.ViewMatchers.hasDescendant
 import androidx.test.espresso.matcher.ViewMatchers.hasFocus
+import androidx.test.espresso.matcher.ViewMatchers.isAssignableFrom
 import androidx.test.espresso.matcher.ViewMatchers.isDescendantOfA
 import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
 import androidx.test.espresso.matcher.ViewMatchers.isRoot
@@ -30,20 +32,20 @@ import com.luncher.domain.appearance.Appearance
 import com.luncher.domain.appearance.Background
 import com.luncher.domain.appearance.FakeAppearanceSettings
 import com.luncher.domain.pictures.FakePictureImages
-import com.luncher.domain.pictures.FakePreparedPictures
-import com.luncher.domain.pictures.PreparedPictures
 import com.luncher.domain.pictures.FakePictures
 import com.luncher.domain.pictures.FakePictures.Companion.picture
+import com.luncher.domain.pictures.FakePreparedPictures
 import com.luncher.domain.pictures.FolderPictures
 import com.luncher.domain.pictures.PictureImages
 import com.luncher.domain.pictures.PictureImport
 import com.luncher.domain.pictures.Pictures
+import com.luncher.domain.pictures.PreparedPictures
 import com.luncher.launcher.AppGraph
 import com.luncher.launcher.LuncherApplication
 import com.luncher.launcher.pictures.CachedPictureImages
-import com.luncher.launcher.pictures.WorkingCopyImages
 import com.luncher.launcher.pictures.FilesPictures
 import com.luncher.launcher.pictures.MediaFolderPictures
+import com.luncher.launcher.pictures.WorkingCopyImages
 import com.luncher.launcher.testing.FailureCapture
 import com.luncher.launcher.testing.RetryWhenCovered
 import com.luncher.launcher.testing.longPressOk
@@ -52,9 +54,10 @@ import com.luncher.launcher.testing.waitForFocus
 import com.luncher.launcher.testing.waitForHomeScreen
 import com.luncher.launcher.testing.waitUntilDestroyed
 import com.luncher.launcher.testing.waitUntilMatches
+import com.luncher.launcher.ui.ListEntry
+import java.io.File
 import org.hamcrest.Matcher
 import org.hamcrest.Matchers.allOf
-import org.hamcrest.Matchers.containsString
 import org.hamcrest.Matchers.not
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -62,7 +65,6 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.io.File
 
 /** The background editor and Add from folder on a real device, driven by real key events. */
 @RunWith(AndroidJUnit4::class)
@@ -151,11 +153,43 @@ class BackgroundActivityTest {
         onView(isRoot()).inRoot(isPlatformPopup()).perform(pressKey(keyCode))
     }
 
-    /** The background's option named [label], with [value]. */
+    /** A file of Add from folder's list: its name, not the selected one's under the preview. */
+    private fun fileNamed(name: String) = allOf(withId(R.id.settings_pictures_folder_name), withText(name))
+
+    /** The background's option named [label], with [value]: a field of the grid. */
     private fun option(label: Int, value: Int) = allOf(
-        withChild(withText(label)),
-        withChild(allOf(withId(R.id.settings_option_value), withText(value))),
+        isAssignableFrom(ListEntry::class.java),
+        hasDescendant(allOf(withId(R.id.settings_option_label), withText(label))),
+        hasDescendant(allOf(withId(R.id.settings_option_value), withText(value))),
     )
+
+    /** A value of an option's list, named [value]. */
+    private fun listed(value: Int) = withChild(allOf(withId(R.id.settings_option_list_value), withText(value)))
+
+    /**
+     * From a picture of the list, the focus to Save: Left to the fields, down them to the buttons,
+     * and Left from Delete all, beside Save.
+     */
+    private fun focusSave() {
+        press(KeyEvent.KEYCODE_DPAD_LEFT)
+        repeat(6) {
+            when {
+                hasFocus(withId(R.id.settings_background_save)) -> return
+                hasFocus(withId(R.id.settings_background_delete_all)) -> press(KeyEvent.KEYCODE_DPAD_LEFT)
+                else -> press(KeyEvent.KEYCODE_DPAD_DOWN)
+            }
+        }
+    }
+
+    /**
+     * From a dialog's first button to the one labeled [label]: Right, beside it, or Down where the
+     * buttons are one below the other (a narrow screen, a long translation).
+     */
+    private fun pressToButton(label: Int) {
+        pressInDialog(KeyEvent.KEYCODE_DPAD_RIGHT)
+        if (!matchesNow(withText(label), hasFocus(), isDialog())) pressInDialog(KeyEvent.KEYCODE_DPAD_DOWN)
+        waitUntil(withText(label), hasFocus(), inDialog = true)
+    }
 
     /** The list's row named [name]. */
     private fun row(name: String) = withChild(allOf(withId(R.id.settings_background_name), withText(name)))
@@ -186,8 +220,7 @@ class BackgroundActivityTest {
             waitUntil(withText(R.string.settings_pictures_delete), hasFocus(), inDialog = true)
             pressInDialog(KeyEvent.KEYCODE_DPAD_CENTER)
             waitUntil(withText(R.string.settings_pictures_cancel), hasFocus(), inDialog = true)
-            pressInDialog(KeyEvent.KEYCODE_DPAD_DOWN)
-            waitUntil(withText(R.string.settings_pictures_delete), hasFocus(), inDialog = true)
+            pressToButton(R.string.settings_pictures_delete)
             pressInDialog(KeyEvent.KEYCODE_DPAD_CENTER)
 
             waitUntil(row("sunset.jpg"), hasFocus())
@@ -214,6 +247,8 @@ class BackgroundActivityTest {
             onView(withId(R.id.settings_pictures_dialog_field)).inRoot(isDialog()).perform(replaceText("sunset.jpg"), closeSoftKeyboard())
             pressInDialog(KeyEvent.KEYCODE_MOVE_END)
             pressInDialog(KeyEvent.KEYCODE_DPAD_DOWN)
+            // Below the field, Cancel, then Rename beside it.
+            if (!matchesNow(withText(R.string.settings_pictures_rename), hasFocus(), isDialog())) pressToButton(R.string.settings_pictures_rename)
             waitUntil(withText(R.string.settings_pictures_rename), hasFocus(), inDialog = true)
             pressInDialog(KeyEvent.KEYCODE_DPAD_CENTER)
             waitUntil(withId(R.id.settings_pictures_dialog_text), withText(R.string.settings_pictures_folder_name_taken), inDialog = true)
@@ -230,26 +265,29 @@ class BackgroundActivityTest {
         val wide = picture("wide.jpg", added = 1, width = 6000, height = 1000)
         launchWith(wide, background = Background(wide.id)).use {
             waitUntil(row("wide.jpg"), hasFocus())
+            // Left, to the field at the grid's end, Position; Left again, Fit beside it.
+            press(KeyEvent.KEYCODE_DPAD_LEFT)
+            waitUntil(option(R.string.settings_appearance_position, R.string.settings_appearance_center), hasFocus())
             press(KeyEvent.KEYCODE_DPAD_LEFT)
             waitUntil(option(R.string.settings_appearance_fit, R.string.settings_appearance_fill), hasFocus())
             press(KeyEvent.KEYCODE_DPAD_RIGHT)
-            waitUntil(withId(R.id.settings_background_list), hasFocus())   // the row beside Fit
+            press(KeyEvent.KEYCODE_DPAD_RIGHT)
+            waitUntil(withId(R.id.settings_background_list), hasFocus())   // a row beside the options
             onView(option(R.string.settings_appearance_fit, R.string.settings_appearance_fill)).check(matches(isDisplayed()))
 
             press(KeyEvent.KEYCODE_DPAD_LEFT)
-            press(KeyEvent.KEYCODE_DPAD_DOWN)
             waitUntil(option(R.string.settings_appearance_position, R.string.settings_appearance_center), hasFocus())
             press(KeyEvent.KEYCODE_DPAD_CENTER)
-            waitUntil(withText(R.string.settings_appearance_center), hasFocus(), inList = true)
+            waitUntil(listed(R.string.settings_appearance_center), hasFocus(), inList = true)
             pressInList(KeyEvent.KEYCODE_DPAD_DOWN)
-            waitUntil(withText(R.string.settings_appearance_left), hasFocus(), inList = true)
+            waitUntil(listed(R.string.settings_appearance_left), hasFocus(), inList = true)
             pressInList(KeyEvent.KEYCODE_DPAD_CENTER)
             waitUntil(option(R.string.settings_appearance_position, R.string.settings_appearance_left), hasFocus())
 
             press(KeyEvent.KEYCODE_DPAD_CENTER)
-            waitUntil(withText(R.string.settings_appearance_left), hasFocus(), inList = true)
+            waitUntil(listed(R.string.settings_appearance_left), hasFocus(), inList = true)
             pressInList(KeyEvent.KEYCODE_DPAD_DOWN)
-            waitUntil(withText(R.string.settings_appearance_right), hasFocus(), inList = true)
+            waitUntil(listed(R.string.settings_appearance_right), hasFocus(), inList = true)
             pressInList(KeyEvent.KEYCODE_BACK)
             waitUntil(option(R.string.settings_appearance_position, R.string.settings_appearance_left), hasFocus())
             assertEquals("nothing stored", Background(wide.id), appearance.appearance.background)
@@ -287,7 +325,7 @@ class BackgroundActivityTest {
             press(KeyEvent.KEYCODE_DPAD_DOWN)
             waitUntil(row(R.string.settings_pictures_add_from_folder), hasFocus())
             press(KeyEvent.KEYCODE_DPAD_CENTER)
-            waitUntil(withText(containsString("logo.jpg")), isDisplayed())
+            waitUntil(fileNamed("logo.jpg"), isDisplayed())
             waitUntil(withId(R.id.settings_pictures_folder_list), hasFocus())
             press(KeyEvent.KEYCODE_DPAD_DOWN)
 
@@ -310,7 +348,7 @@ class BackgroundActivityTest {
             waitUntil(row(R.string.settings_pictures_add_from_folder), hasFocus())
             press(KeyEvent.KEYCODE_DPAD_CENTER)
 
-            waitUntil(withText(containsString("holiday.jpg")), isDisplayed())
+            waitUntil(fileNamed("holiday.jpg"), isDisplayed())
             waitUntil(withId(R.id.settings_pictures_folder_list), hasFocus())
             press(KeyEvent.KEYCODE_DPAD_CENTER)
 
@@ -362,7 +400,7 @@ class BackgroundActivityTest {
         press(KeyEvent.KEYCODE_DPAD_DOWN)
         waitUntil(row(R.string.settings_pictures_add_from_folder), hasFocus())
         press(KeyEvent.KEYCODE_DPAD_CENTER)
-        waitUntil(withText(containsString("holiday.jpg")), isDisplayed())
+        waitUntil(fileNamed("holiday.jpg"), isDisplayed())
         waitUntil(withId(R.id.settings_pictures_folder_list), hasFocus())
         waitUntilStopped(scenario)
     }
@@ -384,16 +422,14 @@ class BackgroundActivityTest {
         launchWith(picture("beach.png", added = 1), sunset, background = Background(sunset.id)).use {
             waitUntil(row("sunset.jpg"), hasFocus())
             // Left, to the options, and down them to Save; Right, beside it, Delete all.
-            press(KeyEvent.KEYCODE_DPAD_LEFT)
-            repeat(5) { if (!hasFocus(withId(R.id.settings_background_save))) press(KeyEvent.KEYCODE_DPAD_DOWN) }
+            focusSave()
             waitUntil(withId(R.id.settings_background_save), hasFocus())
             press(KeyEvent.KEYCODE_DPAD_RIGHT)
             waitUntil(withId(R.id.settings_background_delete_all), hasFocus())
             press(KeyEvent.KEYCODE_DPAD_CENTER)
 
             waitUntil(withText(R.string.settings_pictures_cancel), hasFocus(), inDialog = true)
-            pressInDialog(KeyEvent.KEYCODE_DPAD_DOWN)
-            waitUntil(withText(R.string.settings_pictures_delete), hasFocus(), inDialog = true)
+            pressToButton(R.string.settings_pictures_delete)
             pressInDialog(KeyEvent.KEYCODE_DPAD_CENTER)
 
             waitUntil(withId(R.id.settings_background_save), hasFocus())
@@ -415,7 +451,7 @@ class BackgroundActivityTest {
             waitUntil(row(R.string.settings_pictures_add_from_folder), hasFocus())
             press(KeyEvent.KEYCODE_DPAD_CENTER)
 
-            waitUntil(withText(containsString("logo.jpg")), isDisplayed())
+            waitUntil(fileNamed("logo.jpg"), isDisplayed())
             waitUntil(withId(R.id.settings_pictures_folder_list), hasFocus())
             press(KeyEvent.KEYCODE_DPAD_RIGHT)
             waitUntil(withId(R.id.settings_pictures_folder_add_all), hasFocus())

@@ -1,56 +1,70 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- An option of the appearance editor, below its group and set in from it: its name, and its
-     value between arrows, which Left and Right step through, around. In the background editor,
-     OptionRow hides the arrows and marks the value instead: OK opens its list. Its name may take
-     up to three lines, on a narrow screen in a longer language. -->
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<!-- An option of the appearance editor, below its group, its name level with the group's: its
+     value in a chip between arrows, which Left and Right step through, around; for the accent
+     color, its swatch before it. Where the chip leaves the name too little room, the chip goes
+     below it (StepperRow). -->
+<com.luncher.launcher.settings.StepperRow xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@drawable/entry_background"
     android:focusable="true"
     android:focusableInTouchMode="true"
     android:gravity="center_vertical"
-    android:minHeight="@dimen/settings_entry_height"
+    android:minHeight="@dimen/settings_row_height"
     android:orientation="horizontal"
     android:paddingStart="@dimen/settings_appearance_option_indent"
-    android:paddingTop="@dimen/settings_appearance_value_gap"
-    android:paddingEnd="@dimen/settings_entry_padding"
-    android:paddingBottom="@dimen/settings_appearance_value_gap">
+    android:paddingTop="@dimen/settings_entry_padding_vertical"
+    android:paddingEnd="@dimen/settings_entry_padding_end_chip"
+    android:paddingBottom="@dimen/settings_entry_padding_vertical">
 
-    <TextView
+    <com.luncher.launcher.ui.ThemedText
         android:id="@+id/settings_option_label"
-        android:layout_width="0dp"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:ellipsize="end"
-        android:maxLines="3"
-        android:textColor="@color/text_primary"
-        android:textSize="@dimen/settings_entry_text" />
+        android:duplicateParentState="true"
+        android:textSize="@dimen/text_entry" />
 
-    <TextView
-        android:id="@+id/settings_option_previous"
+    <com.luncher.launcher.settings.ChipFrame
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="@dimen/settings_appearance_value_gap"
-        android:text="@string/settings_appearance_arrow_previous"
-        android:textColor="@color/text_primary"
-        android:textSize="@dimen/settings_entry_text" />
+        android:minHeight="@dimen/settings_chip_height"
+        android:duplicateParentState="true"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingLeft="@dimen/settings_chip_padding_arrow"
+        android:paddingRight="@dimen/settings_chip_padding_arrow">
 
-    <TextView
-        android:id="@+id/settings_option_value"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="@dimen/settings_appearance_value_gap"
-        android:layout_marginEnd="@dimen/settings_appearance_value_gap"
-        android:singleLine="true"
-        android:textColor="@color/text_primary"
-        android:textSize="@dimen/settings_entry_text" />
+        <com.luncher.launcher.ui.ThemedIcon
+            android:id="@+id/settings_option_previous"
+            android:layout_width="@dimen/icon_small"
+            android:layout_height="@dimen/icon_small"
+            android:duplicateParentState="true"
+            android:importantForAccessibility="no"
+            android:src="@drawable/icon_chevron_back" />
 
-    <TextView
-        android:id="@+id/settings_option_next"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/settings_appearance_arrow_next"
-        android:textColor="@color/text_primary"
-        android:textSize="@dimen/settings_entry_text" />
-</LinearLayout>
+        <View
+            android:id="@+id/settings_option_swatch"
+            android:layout_width="@dimen/settings_swatch"
+            android:layout_height="@dimen/settings_swatch"
+            android:layout_marginStart="@dimen/settings_chip_gap"
+            android:visibility="gone" />
+
+        <com.luncher.launcher.ui.ThemedText
+            android:id="@+id/settings_option_value"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/settings_chip_gap"
+            android:layout_marginEnd="@dimen/settings_chip_gap"
+            android:duplicateParentState="true"
+            android:singleLine="true"
+            android:textSize="@dimen/text_chip" />
+
+        <com.luncher.launcher.ui.ThemedIcon
+            android:id="@+id/settings_option_next"
+            android:layout_width="@dimen/icon_small"
+            android:layout_height="@dimen/icon_small"
+            android:duplicateParentState="true"
+            android:importantForAccessibility="no"
+            android:src="@drawable/icon_chevron" />
+    </com.luncher.launcher.settings.ChipFrame>
+</com.luncher.launcher.settings.StepperRow>

@@ -9,13 +9,14 @@ class AppearanceOptionsTest {
     private val catalog = appearanceOptions()
 
     @Test
-    fun `lists the tiles' options, the top bar's, then the background's, after its picture`() {
-        assertEquals(listOf(AppearanceTopic.TILES, AppearanceTopic.TOP_BAR, AppearanceTopic.BACKGROUND), catalog.groups.map { it.topic })
+    fun `lists the tiles' options, the top bar's, the theme's, then the background's, after its picture`() {
+        assertEquals(listOf(AppearanceTopic.TILES, AppearanceTopic.TOP_BAR, AppearanceTopic.THEME, AppearanceTopic.BACKGROUND), catalog.groups.map { it.topic })
+        assertEquals(listOf(AppearanceOption.AccentColor, AppearanceOption.ThemeMode), catalog.groups[2].options)
         assertEquals(
             listOf(AppearanceOption.BackgroundFit, AppearanceOption.BackgroundPosition, AppearanceOption.BackgroundDim, AppearanceOption.BackgroundBlur),
-            catalog.groups[2].options,
+            catalog.groups[3].options,
         )
-        assertEquals(listOf(false, false, true), catalog.groups.map { it.editedApart })
+        assertEquals(listOf(false, false, false, true), catalog.groups.map { it.editedApart })
         assertEquals(
             listOf(
                 AppearanceOption.VerticalAlignment,

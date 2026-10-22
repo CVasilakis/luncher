@@ -5,6 +5,9 @@ import android.graphics.Bitmap
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.ColorDrawable
 import com.luncher.domain.appearance.Background
+import com.luncher.domain.appearance.ColorRoles
+import com.luncher.domain.appearance.ThemeAppearance
+import com.luncher.domain.appearance.colorRoles
 import com.luncher.domain.wallpaper.DrawingCause
 import com.luncher.domain.wallpaper.Wallpaper
 import com.luncher.launcher.ui.WorkingDialog
@@ -28,6 +31,17 @@ internal class HomeWallpaper(private val activity: Activity, private val wallpap
 
     /** Made the first time the wallpaper is drawn while the home screen shows. */
     private var working: WorkingDialog? = null
+
+    /**
+     * The theme's colors, for the window while the wallpaper is drawn; a new one takes effect the
+     * next time it shows.
+     */
+    var roles: ColorRoles = colorRoles(ThemeAppearance())
+        set(value) {
+            if (value == field) return
+            field = value
+            if (working?.isShowing != true) working = null
+        }
 
     /** The image the window shows, null for the plain color, once [applied]. */
     private var shown: Bitmap? = null
@@ -63,7 +77,7 @@ internal class HomeWallpaper(private val activity: Activity, private val wallpap
             }
             is Wallpaper.State.Drawing -> {
                 setImage(null)
-                val working = working ?: WorkingDialog(activity).also { working = it }
+                val working = working ?: WorkingDialog(activity, roles).also { working = it }
                 working.show(activity.getString(message(state.cause)))
             }
         }

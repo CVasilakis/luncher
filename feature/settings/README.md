@@ -21,28 +21,35 @@ feature/settings/
     │   ├── AndroidManifest.xml   the screens' activities, how they behave, the home apps it sees (below)
     │   ├── java/com/luncher/launcher/settings/
     │   │   ├── SettingsGraph.kt  the ports the settings screens need; Activity.graph
+    │   │   ├── ScreenTheme.kt    a screen's theme colors, and its restyling in place when the theme changes
+    │   │   ├── Sheet.kt          placeAsSheet: a panel's window as a side sheet at the screen's end
     │   │   ├── SettingsActivity.kt   the settings panel: lists the domain's settingsMenu, opens entries
     │   │   ├── HideAppsActivity.kt   the Hide apps list: every app by name; OK hides or shows one
-    │   │   ├── PanelHeight.kt    a panel's list as tall as the screen leaves room for, ending on half a row
+    │   │   ├── PanelHeight.kt    a sheet's list as tall as the screen leaves room for, ending on half a row
+    │   │   ├── Chip.kt           Chip (an app's "Hidden"), ChipFrame (a stepped value between its arrows)
     │   │   ├── AppearanceActivity.kt the appearance editor: the options, Left and Right step them
     │   │   ├── AppearancePreviewView.kt  the editor's preview: an illustration of the home screen
-    │   │   ├── AppearanceEditorLayout.kt the editor's columns: the options level with the title
+    │   │   ├── AppearanceEditorLayout.kt the editor's columns: the options' container level with the title
+    │   │   ├── EditorStartColumn.kt  its title, preview and buttons, the preview as large as the room left
+    │   │   ├── StepperRow.kt     an option's name, and its value's chip beside it or below it
     │   │   ├── OptionRow.kt      an option's row: both editors'; Left and Right step it, or OK opens its list
-    │   │   ├── OptionList.kt     an option's values in a list over its row: the background editor's
-    │   │   ├── OptionLabels.kt   what the options, their values and groups are called
+    │   │   ├── OptionList.kt     an option's values in a list beside the options: the background editor's
+    │   │   ├── OptionLabels.kt   what the options, their values and groups are called, the groups' icons, the accents' swatches
     │   │   ├── BackgroundActivity.kt the background editor: the pictures, the draft, Save; renames and deletes pictures, prepares them
     │   │   ├── BackgroundStartColumn.kt  its preview, options, Save and Delete all, the preview as large as the room left
-    │   │   ├── EntriesRow.kt     entries side by side, or one below the other when one doesn't fit: Save and Delete all
+    │   │   ├── EntriesRow.kt     buttons (or fields) side by side, or one below the other when one doesn't fit
     │   │   ├── AddFromFolderActivity.kt  the drop folders' pictures, a preview of the selected one; OK adds it, then returns it; Add all
     │   │   ├── SharePictureActivity.kt   where another app's share arrives: opens the home screen and the window, no screen
     │   │   ├── PictureReceivedActivity.kt the window over the home screen after a share: shows the pictures being added, then their uses, or how many were saved and why the others weren't
-    │   │   ├── PicturesDialog.kt the dialogs over the picture screens: a picture's actions, a question, a message; renaming one
+    │   │   ├── PicturesDialog.kt the dialogs over the picture screens: a picture's actions (ActionsDialog), a question, a message; renaming one (NameField)
+    │   │   ├── Badge.kt          a dialog's mark beside its title: done, danger or info
     │   │   ├── PreviewColumn.kt  Add from folder's preview, Add all and note, the preview smaller on a short screen
-    │   │   ├── ListFrame.kt      a list's frame: Down past its last row stays there, not on the column beside it
+    │   │   ├── ListFrame.kt      a list's frame (a :ui ScrollFrame): Down past its last row stays there, not on the column beside it
     │   │   └── PictureTexts.kt   what the picture screens call things: sizes, names, why a picture wasn't added
     │   └── res/                  the themes (Theme.Luncher.Settings, .Panel, .FullScreen, .Pictures, .Pictures.Dialog,
-    │                             .Pictures.NoDisplay), layouts, the thumbnails' frames, the warning mark, settings_* dimensions,
-    │                             colors and strings (the window and the focused entry are :ui's), their
+    │                             .Pictures.NoDisplay) and the label and button styles, layouts, the thumbnails' frame,
+    │                             settings_* dimensions (compact ones in values/, the rest in values-h450dp/), colors
+    │                             and strings (the components, icons and colors of the theme are :ui's), their
     │                             translations in values-el/ and values-ar/ (docs/TRANSLATIONS.md)
     └── test/
         ├── java/…/settings/      JVM tests; TestSettingsGraph.kt: the ports a test gives the screens,
@@ -76,30 +83,52 @@ The intent filters that make `SharePictureActivity` a target of other apps' shar
 to declare ([`app/README.md`](../../app/README.md#manifest-why-each-part-is-there)); the module
 declares how the activities behave, and the build merges the two.
 
+## The look
+
+Every screen here is built from `:ui`'s themed components ([`ui/README.md`](../../ui/README.md#the-design-system)):
+entries that turn inverse and zoom while focused, pill buttons, fields, lists in rounded
+containers that fade out at their end. The texts, icons and buttons take their colors from the
+theme the appearance holds (`ThemeAppearance`: an accent and dark or light,
+[`ARCHITECTURE.md`](../../docs/ARCHITECTURE.md#appearance)), through `ScreenTheme`: a screen styles
+its views and its window with its `roles` as it's made, and while it's started, a change of the
+theme restyles it in place, with no new activity (the appearance editor's Theme group, [below](#appearance)).
+The screens under the editor find the change as they come back (`onStart`). Another option
+changed restyles nothing: only the theme part is compared. The manifest's themes stay dark, so a
+light screen is light from its first frame but a window Android shows before it is never white
+([`ui/README.md`](../../ui/README.md#the-theme)).
+
+A screen of 450 dp or more tall (1080p and 720p at their usual densities) gets the normal
+spacing (`values-h450dp/`); a shorter one (720p at the 1080p density, 360 dp tall) the compact
+spacing in `values/`, so the same layouts fit it.
+
 ## The settings panel
 
 Its entries are Hide apps ([below](#hidden-apps)), Appearance ([below](#appearance)) and the
-device's own settings. On a screen too short for them all, the entries scroll, as many showing as
-leave the panel a margin from the screen's edges, ending on half an entry, as Hide apps' list
-does; the three of them fit on every TV screen the layout tests check.
-`SettingsActivity` is a floating window over the dimmed home screen (its theme,
-`Theme.Luncher.Settings`, is a platform dialog theme). Back closes it, as any activity, and so does
-Home: the home screen is `singleTask`, and Android closes what's above it in its task. The home
-screen's focus is where it was.
+device's own settings. `SettingsActivity` is a side sheet at the screen's end over the dimmed home
+screen (`placeAsSheet`: at most `settings_sheet_width` wide, as tall as the screen less its
+margin; at the left in a right-to-left language), its theme, `Theme.Luncher.Settings`, a platform
+dialog theme. Each entry has its icon, its name, a line about it (how many apps are hidden, what
+the appearance covers, "The TV's own settings") and at its end where it goes: a chevron to a panel
+of Luncher's, an arrow out of it to another app. On a screen too short for them all, the entries
+scroll, ending on half an entry that fades out, as Hide apps' list does; the three of them fit on
+every TV screen the layout tests check. Back closes it, as any activity, and so does Home: the home
+screen is `singleTask`, and Android closes what's above it in its task. The home screen's focus is
+where it was.
 
 | Part | Job |
 |---|---|
 | `settingsMenu` (`:domain`) | which entries the panel lists, in order |
 | `SettingsEntry` (`:domain`) | the kinds of entry, one type each |
-| `SettingsActivity` | shows the entries one below the other, all equally far apart; each entry's label (`label`) and what OK on it does (`open`) |
+| `SettingsActivity` | shows the entries one below the other, all equally far apart; each entry's name (`label`), line (`summary`), icon (`icon`), end mark (`end`) and what OK on it does (`open`) |
 
 An entry with settings of its own
 opens them in a panel of its own ([below](#hidden-apps)) rather than in more of this one. To add
 an entry:
 
 1. A `SettingsEntry` type in `:domain`, placed by `settingsMenu`, with its unit test.
-2. Its label and action in `SettingsActivity`: `label` and `open` are exhaustive `when`s, so this
-   module doesn't compile until both handle the new type.
+2. Its name, line, icon, end mark and action in `SettingsActivity`: `label`, `summary`, `icon`,
+   `end` and `open` are exhaustive `when`s, so this module doesn't compile until all handle the
+   new type.
 3. A value the entry changes (e.g. whether the date shows) is read and stored through a port with
    an adapter, like any data from the device ([`ARCHITECTURE.md`](../../docs/ARCHITECTURE.md#where-things-go)).
 
@@ -109,9 +138,10 @@ again when the panel closes, keeping its tiles when nothing changed.
 
 ### Hidden apps
 
-Hide apps (`HideAppsActivity`) is a panel of its own, opened in the settings panel's place: it
-lists every app by name; OK on one hides it or shows it again, and Back returns to the settings
-panel. It's the one place a hidden app is shown again; an app is also hidden from its tile's menu
+Hide apps (`HideAppsActivity`) is a panel of its own, a side sheet in the settings panel's place:
+below its title, a hint that OK hides an app or shows it again, then every app by name, each with
+a TV icon, or a crossed-out eye and a "Hidden" chip while it's hidden; OK on one hides it or shows
+it again, and Back returns to the settings panel. It's the one place a hidden app is shown again; an app is also hidden from its tile's menu
 on the home screen ([`../home/README.md`](../home/README.md#a-tiles-menu)). The home screen behind shows each change at once: it follows the stored arrangement while
 it's started, as it stays behind the floating panels. The list itself follows the installed apps
 while it shows: an app installed or removed meanwhile appears in it, or leaves it, at once.
@@ -131,35 +161,47 @@ nothing itself.
 | `HideAppsActivity` | shows that list, stores each change; reads the apps again when they change while it shows, and when it comes back |
 
 The list is a platform `ListView`: it creates views only for the rows on screen, and reuses them
-while scrolling. It shows at most six and a half rows, so the half row says there's more; on a
-small screen (e.g. 720p at the 1080p density, 360 dp tall) as many as leave the panel a margin
-from the screen's edges, still ending on half a row.
+while scrolling. It shows at most six and a half rows, so the half row says there's more, and
+fades out there until the last app is in sight (a `ScrollFrame`, no scroll bar); on a small screen
+(e.g. 720p at the 1080p density, 360 dp tall) as many as leave the sheet a margin from the
+screen's edges, still ending on half a row (`listHeight`, measured at the sheet's width, so a
+title on two lines counts).
 
 ### Appearance
 
 Appearance (`AppearanceActivity`) is the editor of the home screen's
-[appearance](../../docs/ARCHITECTURE.md#appearance): full-screen, with its large title right above a
-preview of the home screen at the left, the two centered in the height, and the options at the
-right, starting level with the title. The options are in groups
-(Tiles, Time and date, Background), each an entry of its own, closed at first: OK on one shows its options
-below it and closes the group that was open, so the list stays short; OK again closes it. Each
-option shows its value between arrows; Left and Right step it through its values, around from the
-last to the first, and each change is stored at once, the preview following. An option that
+[appearance](../../docs/ARCHITECTURE.md#appearance) and of Luncher's theme: full-screen, with its
+large title right above a preview of the home screen at the left, and below the preview two
+buttons, Background and Reset to defaults, the three centered in the height (`EditorStartColumn`:
+the preview as large as the room the others leave, at least a quarter of it); the options at the
+right, in their container, starting level with the title (`AppearanceEditorLayout`). The options
+are in groups (Tiles, Time and date, Theme), each an entry of its own with its icon and a mark
+pointing down, or up while it's open, closed at first: OK on one shows its options below it and
+closes the group that was open, so the list stays short; OK again closes it. Each option shows its
+value in a chip between arrows, beside its name or, where that leaves the name too little room,
+below it (`StepperRow`); Left and Right step it through its values, around from the last to the
+first, and each change is stored at once, the preview following.
+
+The Theme group holds the accent color (Orange, the default, Pink, Purple, Blue, Teal, Green,
+Amber, Gray; each value with its swatch) and the mode, Dark or Light. They change the menus and
+settings, and the accent the home screen's focus frame and settings gear too, while the mode
+leaves the home screen dark on its wallpaper. A change restyles the editor in place
+([above](#the-look)); the preview's frame takes the accent too. An option that
 changes nothing with the others as they are (a full bottom row with the rows at the top; the
 side with the time and the date hidden; their order with either hidden), or with what else
 decides it (the background's picture's shape, in the background editor:
 [below](#background)), is dimmed, and the focus passes it by.
-The Background group is edited apart (`editedApart`): it's one entry, the picture's name, or
-None, beside it, and OK on it opens the background editor ([below](#background)), where the
-picture and its options are saved together; back in the editor (`onResume`), the appearance and
-its picture's name (renamed there, say) are read again. The last entry, Reset
-to defaults, asks first (Cancel focused, as Delete), then puts every option back, and the
-wallpaper to none; with every option at its default already, it does nothing. Back returns to the settings
+The background's group is edited apart (`editedApart`): it's the Background button, which opens
+the background editor ([below](#background)), where the picture and its options are saved
+together; back in the editor (`onResume`), the appearance is read again. Reset to defaults, in the
+error color like Delete all, asks first (Cancel focused, as Delete), then puts every option back,
+the theme too, and the wallpaper to none; with every option at its default already, it does
+nothing. Back returns to the settings
 panel; the home screen shows the result when it comes back.
 
 It's started with `openOwnPanel`, like Hide apps, but covers the settings panel and the home screen
 whole (its theme). In a right-to-left language it mirrors like the other panels: the options at
-the left, each value at the left of its name, and Left steps toward the arrow on that side, the
+the left, each value's chip at the left of its name, and Left steps toward the arrow on that side, the
 next value. The preview's content doesn't: it shows the home screen, which stays left to right
 ([why](../../app/README.md#manifest-why-each-part-is-there)). The options take at most
 `settings_appearance_options_width`, and half of a narrow screen, so the preview keeps the rest;
@@ -170,14 +212,15 @@ they scroll when they're taller than the screen.
 | `appearanceOptions`, `AppearanceOption` (`:domain`) | which options there are, in which groups; each one's values, in order, the part of `Appearance` it reads and changes, whether it applies, and what a step does, with the values an `OptionContext` offers (all of them here) |
 | `AppearanceSettings` (`:domain`) / `PreferencesAppearanceSettings` (`:platform`) | port and adapter: the stored `Appearance`, read once per process; each write is stored at once, in the background, and told to the listeners (the home screen, while it's shown) |
 | `TileLayouts`, `topBarLayout` (`:domain`) | where the preview's tiles and top bar items go, by the home screen's own rules |
-| `AppearanceActivity` | the groups' entries, opening one at a time; a group edited apart as one entry; the options' rows (`OptionRow`, `OptionLabels.kt`'s exhaustive `when`s, so a new option doesn't compile until it has its labels) and the reset entry |
-| `Pictures`, `PictureImages`, `Wallpaper` (`:domain`) | the wallpaper's name, and its picture: the home screen's own, shrunk, when it's of the background; else drawn at the preview's size, from its working copy |
+| `AppearanceActivity` | the groups' entries, opening one at a time; a group edited apart as a button; the options' rows (`OptionRow`, `OptionLabels.kt`'s exhaustive `when`s, so a new option doesn't compile until it has its labels, and a group its icon) and the reset button; its restyling when the theme changes (`ScreenTheme`) |
+| `ThemeAppearance`, `colorRoles` (`:domain`) | the theme the Theme group changes, and the colors every screen here takes from it |
+| `PictureImages`, `Wallpaper` (`:domain`) | the wallpaper's picture: the home screen's own, shrunk, when it's of the background; else drawn at the preview's size, from its working copy |
 | `AppearancePreviewView` | draws the preview: an illustration, not the real home screen (below) |
 
-**The preview** draws outlined tiles filled with white at 20 % (`settings_preview_tile`, in place of
+**The preview**, its corners rounded and, on the plain background, edged in the theme's outline color, draws outlined tiles filled with white at 20 % (`settings_preview_tile`, in place of
 the banners) on the home screen's background (the wallpaper's picture, drawn at the sample screen's
 size in the background's style, or the plain color), the first one zoomed as focused, framed or
-lifted (a few dark, offset rounded rectangles stand for the shadow), and plain blocks for the time,
+lifted (a few dark, offset rounded rectangles stand for the shadow; the frame in the accent's vivid tone, as on the home screen), and plain blocks for the time,
 the date, the settings gear and, while the app name shows, the focused tile's name: no images or
 text. It's a made-up sample, not the user's apps: a screen 960 dp wide, of the TV's shape
 (`screenSize`, which the wallpaper is drawn at: 540 dp tall on a 16:9 TV), so a picture is cut as on
@@ -215,17 +258,20 @@ options' rows are views; the preview is one view. Nothing of the home screen run
 ### Background
 
 The background editor (`BackgroundActivity`) is where the wallpaper is chosen and saved, opened
-from the appearance editor's Background entry, full-screen like it, or from the window after a
-share, with that picture chosen ([below](#adding-a-picture)). At the end, Luncher's picture
-library as a list: No picture, the pictures by name, as the device's language sorts words, each
-with its thumbnail and name, then Add from folder ([below](#adding-a-picture)); a hint above them
-says a long press of OK renames or deletes a picture, as the home screen's says what the keys do while moving an app. While the library is empty, how to add
+from the appearance editor's Background button, full-screen like it. At the end, below their
+label (Pictures), Luncher's picture library as a list in its container (a `ListFrame`: cut along
+its rounded corners, fading out at its end while there's more below): No picture, the pictures by
+name, as the device's language sorts words, each with its thumbnail and name, then Add from folder
+([below](#adding-a-picture)); a hint at the label's end says a long press of OK renames or
+deletes a picture, as the home screen's says what the keys do while moving an app. While the library is empty, how to add
 a picture follows: a share from another app, or the drop folder
-([`platform/README.md`](../../platform/README.md#the-drop-folders)), with its path. At the start, a
-preview of the home screen with the chosen background, the background's options (Fit, Position,
-Dim, Blur, rows like the appearance editor's), and Save with Delete all beside it, in red, half
-the row each, or Delete all below Save when either doesn't fit its half (`EntriesRow`: a long
-translation on a narrow screen). There's no title: the preview gets that room.
+([`platform/README.md`](../../platform/README.md#the-drop-folders)), with its path. At the start,
+below their label (Background), a preview of the home screen with the chosen background, of the
+TV's shape with rounded corners, the background's options (Fit, Position, Dim, Blur) as a 2 × 2
+grid of fields, each its name above its value, and Save (filled) with Delete all (outlined, in
+the error color) beside it, half the row each; two fields, or the buttons, go one below the other
+when either doesn't fit its half (`EntriesRow`: a long translation on a narrow screen). There's no
+title: the preview gets that room.
 The preview is as large as the room the others leave (`BackgroundStartColumn`), at most as tall
 as its screen at the column's width, at least a quarter of that, so Save and Delete all show without scrolling on a 1080p screen;
 on the smallest screens the column scrolls. In a right-to-left language it mirrors like the other
@@ -243,15 +289,16 @@ where the editor reads the library again, so until then none of its views counts
 
 What the user changes is a draft, the one exception to the appearance editor's rule of storing each
 change at once ([`ARCHITECTURE.md`](../../docs/ARCHITECTURE.md#appearance)): OK on a picture
-chooses it (its name in the accent color, a check beside it), and the preview follows; nothing is
-stored. An option's row shows its value with a mark pointing down, not between arrows: OK on it
-opens its values in a list (`OptionList`, a `PopupWindow`) over the row's value, the value it has
-focused and lined up with the row, in the accent color; the list's end at the row's end, moved
-up or down only to stay inside the overscan margin. The preview shows each value the focus comes
-to; OK keeps it, and Back closes the list (not the editor) with the value from before. Left and
-Right on the rows don't change
-anything: they move the focus, as on the other entries, so Right goes to the pictures beside the
-options (the row level with the option). The appearance editor keeps its arrows: nothing is beside
+chooses it (tinted with the accent, a check beside it), and the preview follows; nothing is
+stored. An option's field shows its value with a mark pointing toward its list, not between
+arrows: OK on it opens its values in a list (`OptionList`, a `PopupWindow`) beside the options, at
+their end edge, over the pictures, so nothing of the options or the preview is covered: the value
+it has focused, checked, level with the field, moved up or down only to stay inside the overscan
+margin; the field outlined in the accent meanwhile (activated). In a right-to-left language it
+opens on the other side. The preview shows each value the focus comes to; OK keeps it, and Back
+closes the list (not the editor) with the value from before. Left and Right on the fields don't
+change anything: they move the focus, as on the other entries, so Right goes from the second
+column to the pictures beside the options. The appearance editor keeps its arrows: nothing is beside
 its options. The options offer only what moves the chosen picture on this screen, by how filling
 the screen cuts it (`pictureCut`, from the picture's size and `screenSize`, the wallpaper's): the
 position's list holds Center, Left and Right for a picture wider than the screen, Center, Top and
@@ -260,7 +307,7 @@ picture; the position also with the picture stretched; the fit and the position 
 picture of the screen's shape, or so near it that filling would cut less than 1% (a 16:9
 picture on a 1366 × 768 TV), where every choice looks the same. A stretch stored for such a
 picture is kept, dimmed. Another picture chosen (`Background.choosing`), as well as one Add
-from folder added, one just received, or No picture, starts as it is: Center, Dim and Blur Off,
+from folder added, or No picture, starts as it is: Center, Dim and Blur Off,
 not the options set for the picture before, so the preview shows the picture itself and its
 options are set for it (a bright picture needs more dimming than a dark one). The fit is kept:
 it's about the picture's shape, not its look. The stored picture chosen again brings back its
@@ -276,19 +323,21 @@ through the process's `Wallpaper` ([`feature/home/README.md`](../home/README.md#
   background stored, and the window closes, after half a second at least, and the editor with
   it. If the user goes home meanwhile, the drawing goes on, and the home screen says so instead.
 
-A **long press of OK** on a picture offers Rename and Delete, under its name and size.
+A **long press of OK** on a picture offers Rename and Delete (in the error color), each with its
+icon, under its name and size (`ActionsDialog`).
 
 **Rename** asks for the new name in a field holding the old one, the TV's keyboard up, the cursor
-at the end (where the keyboard puts it anyway). Rename below it, or the keyboard's Done, keeps the
+at the end (where the keyboard puts it anyway; `NameField`, outlined in the accent while it has
+the focus). Cancel and Rename below it, or the keyboard's Done, keeps the
 name as a picture's is kept (`pictureName`: no control characters, trimmed, cut in the middle past
-255 units); a name another picture has, or nothing typed, is refused below the field in the accent
-color, the dialog staying open (`renaming`), as two pictures of one name would be told apart by
+255 units); a name another picture has, or nothing typed, is refused below the field in the error
+color, the field outlined in it, the dialog staying open (`renaming`), as two pictures of one name would be told apart by
 nothing. A name is the library's index only: the picture's file, working copy and thumbnail, the
 stored wallpaper and the background setting go by its id, from its content, so nothing is copied,
 decoded or drawn again; the row keeps its thumbnail, and moves to its new place by name, the
-focus with it. The appearance editor shows the new name beside Background when it comes back.
+focus with it.
 
-**Delete** asks first, Cancel focused, so a repeated OK deletes nothing, saying what deleting it
+**Delete** asks first, its badge beside the title (`Badge`, as every dialog's mark), Cancel focused, so a repeated OK deletes nothing, saying what deleting it
 does, in one text for any picture and another for the background's: the picture goes from
 Luncher's pictures only, and the background's picture leaves the home screen with no picture.
 That happens at once (`Wallpaper.forget`): the background stored without a picture, then the kept
@@ -311,8 +360,8 @@ it's dimmed, and the focus passes it by.
 | `pictureCut`, `OptionContext`, `Background.offeredIn` (`:domain`) | what filling the screen cuts from the draft's picture, the options' values that offers, and the draft without a position it doesn't |
 | `Background.choosing` (`:domain`) | the draft with another picture chosen: as it is, or as stored if it's the stored one |
 | `OptionRow`, `OptionList` | the options' rows, OK opening a list of the values the draft's picture offers, which the preview follows as the focus moves; Back in it puts the value from before back |
-| `PicturesDialog`, `RenameDialog` | the dialogs over the list: a picture's Rename and Delete, the question before deleting; the field for a new name, and why it's refused |
-| `BackgroundActivity` | the list, the draft, Save and its window, Delete all, the questions; chooses and focuses the picture Add from folder added (`EXTRA_ADDED`), or focuses the first in the list of those Add all added, choosing none (`EXTRA_ADDED_ALL`); starts with a picture just received chosen (`EXTRA_PICTURE`) |
+| `PicturesDialog`, `ActionsDialog`, `RenameDialog` | the dialogs over the list, a badge beside the title and the text below starting under it: the question before deleting; a picture's Rename and Delete; the field for a new name, and why it's refused |
+| `BackgroundActivity` | the list, the draft, Save and its window, Delete all, the questions; chooses and focuses the picture Add from folder added (`EXTRA_ADDED`), or focuses the first in the list of those Add all added, choosing none (`EXTRA_ADDED_ALL`) |
 
 **Prepared once, then at once.** Each picture of the library has a working copy
 ([`platform/README.md`](../../platform/README.md#pictures)): the whole picture decoded once, as
@@ -340,7 +389,8 @@ picture or several, or "Set as" of one (`SEND`, `SEND_MULTIPLE` or `ATTACH_DATA`
 takes the pictures' Uris out of the intent (a Share's stream, one or a list, else every item of
 its clip, as an app may send them only there; each once), then opens, in one `startActivities`,
 Luncher's home screen and over it a window (`PictureReceivedActivity`) with the Uris and the read
-access the other app gave, and finishes at once. Back from the window is the home screen.
+access the other app gave, and finishes at once. Back from the window, or OK, is the home screen;
+the pictures are then in the background editor's list.
 
 While Luncher is the device's home app (a `HOME` intent resolves to it), the home screen is opened
 as Home opens it, with a `HOME` intent to Luncher's package that names no component. On API 24 to
@@ -365,17 +415,15 @@ before anything is read. Android itself can't pass a much larger share: one of 1
 on API 22 to 28, as the intent is too large to start the activity
 (`TransactionTooLargeException`), and nothing tells Luncher.
 
-The window, floating like the settings panel, shows the pictures being added, one at a time: the
-process's `ReceivedPictures`, a session that the window owns. While they're added, it says "Adding
-the picture…", or "Adding picture 2 of 5…", on one line, and Cancel, focused; after a spinning
-wheel once a picture is copied (`ReceivedPictures.copying`, which `PictureImport` reports as the
+The window, floating like a dialog, its mark beside the title (a `Badge`), shows the pictures
+being added, one at a time: the process's `ReceivedPictures`, a session that the window owns.
+While they're added, it says "Adding the picture…", or "Adding picture 2 of 5…", on one line, and
+Cancel, focused; a spinning wheel in the mark's place once a picture is copied (`ReceivedPictures.copying`, which `PictureImport` reports as the
 copying starts): the real work, which then shows half a second at least (`ShortestShowing`, from
 `:ui`), so it never flashes, and stays until the end, not on and off between pictures. A picture
 refused for what its app says of its name or size, before anything is copied, shows no wheel: why
-is said at once. Then, for one picture, "Picture added", its name and an entry for each use a picture can
-be put to (`pictureUseMenu`, today Background, which opens the background editor with the picture
-chosen, not saved, and closes the window); or, with OK, "Picture not added" and why
-(`whyNotAdded`). A picture the library has already, by its content or as the same file (the same
+is said at once. Then, for one picture, "Picture added" and its name, with OK; or "Picture not
+added" and why (`whyNotAdded`), with OK. A picture the library has already, by its content or as the same file (the same
 name and size), isn't an error: "Already in Luncher's pictures", its name, and OK
 (`ImportResult.wasInLibrary`). For several, how many were added now ("3 pictures added", or
 "Pictures not added"), then a line for each reason some weren't, with how many, in a fixed order,
@@ -434,17 +482,20 @@ its path.
 | Part | Job |
 |---|---|
 | `SharePictureActivity` | takes the pictures out of the share, refuses more than the limit, passes the Uris and the access Luncher holds to the window; the window alone while one shows, else a new one that takes an open session over |
-| `PictureReceivedActivity` | shows the session: the count while the pictures are added, then one picture's result and uses, or the counts; ends the session when it closes |
+| `PictureReceivedActivity` | shows the session: the count while the pictures are added, then one picture's result, or the counts; ends the session when it closes |
 | `ReceivedPictures` (`:domain`) | the session, one per process (Add all, below, has one of its own): the pictures added one at a time through `PictureImport`, each once, a share joining it, a folder left out, the window that holds it and may end it, whether one is being copied (`copying`), adding stopped with the session still open (`stop`), and how it went (`Outcome`: each picture's answer, and how many were cancelled; or nothing to add, only folders shared) |
 | `PictureLimits.MAX_SHARED` (`:domain`) | the most pictures one share brings |
 | `PictureImport` (`:domain`) / `FilesPictures` (`:platform`) | adding one picture to the library, cancellable, when its copying starts, and how it went (`ImportResult`) |
-| `pictureUseMenu` (`:domain`) | the uses a picture received alone offers |
 
 **From a drop folder** (`AddFromFolderActivity`): the pictures a file manager or a computer put in
 `Android/media/<applicationId>`, on the TV or a USB drive, listed together by name, as the
-device's language sorts words (`inListOrder`), each row saying where it is ("Local" or "USB
-drive"), with a preview of the selected one beside them, of the TV's shape as the wallpaper
-fills it, drawn in the background, a spinning wheel in its place meanwhile;
+device's language sorts words (`inListOrder`), below their label and how many there are, in a
+container like the editor's pictures; each row with an icon of where it is (a TV or a USB drive),
+its name, then where it is ("Local" or "USB drive") and its size. Beside them, below its label, a
+preview of the selected one, rounded, of the TV's shape as the wallpaper fills it, drawn in the
+background, a spinning wheel in its place meanwhile, and the selected picture's name below it. The
+column takes 41 % of the width (`shareTheWidth`, set in code, as nested weights would measure the
+list twice);
 moving on stops the one being drawn at once
 ([`ARCHITECTURE.md`](../../docs/ARCHITECTURE.md#background-work-and-changes-while-shown), point 4).
 Once it's drawn, the others' are drawn ahead, one at a time, the nearest first (after it, then
@@ -462,7 +513,7 @@ focuses it: the user waits in one place, and nothing moves under them. Refused, 
 why (`ImportResult`, an exhaustive `when` in `whyNotAdded`) and stays, for another choice.
 Closing it while it adds (Home) stops the adding. What the listing
 and the library already tell can't be added (`whyRefused`, in `:domain`) is marked in the list,
-after its size, why in the accent color so it stands out, and OK on it says why at once, reading
+after where it is, why in the error color so it stands out, and OK on it says why at once, reading
 nothing: a file in a format this TV can't show ([which](../../platform/README.md#pictures)), one
 over 50 MB or over 64 megapixels (`PictureLimits`), which have no preview either, and one named as
 a picture of the library, the same file (the same name and size: "Already in Luncher's pictures")
@@ -484,7 +535,7 @@ shows too.
 Down past the list's last picture leaves the focus there, as in the editor's list (`ListFrame`),
 not on Add all; Right goes to it.
 
-**Add all**, below the preview, adds every picture of the list that isn't marked, in the list's
+**Add all**, below the preview, a tonal button, adds every picture of the list that isn't marked, in the list's
 order, one at a time: a session of `ReceivedPictures` of the screen's own, not the process's,
 held only while it adds, since the screen stops the adding when it closes anyway. A window
 (`WorkingDialog`) says "Adding picture 2 of 5…", with Cancel, focused, which Back does too. Then a

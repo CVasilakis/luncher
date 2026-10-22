@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- An option of the background editor, a field of the 2 x 2 grid: its name above its value, and
+     a mark that OK opens its values in a list beside the options (OptionList). Outlined while its
+     list shows. -->
+<com.luncher.launcher.ui.ListEntry xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="0dp"
+    android:layout_height="wrap_content"
+    android:layout_weight="1"
+    android:focusable="true"
+    android:focusableInTouchMode="true"
+    android:gravity="center_vertical"
+    android:minHeight="@dimen/settings_field_height"
+    android:orientation="horizontal"
+    android:paddingStart="@dimen/settings_entry_padding"
+    android:paddingTop="@dimen/settings_entry_padding_vertical"
+    android:paddingEnd="@dimen/settings_field_padding_end"
+    android:paddingBottom="@dimen/settings_entry_padding_vertical"
+    app:fill="high">
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:duplicateParentState="true"
+        android:orientation="vertical">
+
+        <com.luncher.launcher.ui.ThemedText
+            android:id="@+id/settings_option_label"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:duplicateParentState="true"
+            android:ellipsize="end"
+            android:fontFamily="sans-serif-medium"
+            android:singleLine="true"
+            android:textSize="@dimen/text_field_label"
+            app:colorRole="onSurfaceVariant" />
+
+        <com.luncher.launcher.ui.ThemedText
+            android:id="@+id/settings_option_value"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:duplicateParentState="true"
+            android:ellipsize="end"
+            android:singleLine="true"
+            android:textSize="@dimen/text_field_value" />
+    </LinearLayout>
+
+    <com.luncher.launcher.ui.ThemedIcon
+        android:id="@+id/settings_option_mark"
+        android:layout_width="@dimen/icon"
+        android:layout_height="@dimen/icon"
+        android:duplicateParentState="true"
+        android:importantForAccessibility="no"
+        android:src="@drawable/icon_caret_down"
+        app:colorRole="onSurfaceVariant" />
+</com.luncher.launcher.ui.ListEntry>

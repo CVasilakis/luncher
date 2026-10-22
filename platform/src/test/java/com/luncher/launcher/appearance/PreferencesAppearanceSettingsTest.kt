@@ -10,10 +10,13 @@ import com.luncher.domain.appearance.FocusStyle
 import com.luncher.domain.appearance.HorizontalAlignment
 import com.luncher.domain.appearance.Side
 import com.luncher.domain.appearance.TileGeometry
+import com.luncher.domain.appearance.ThemeAppearance
+import com.luncher.domain.appearance.ThemeMode
 import com.luncher.domain.appearance.TileStyle
 import com.luncher.domain.appearance.TopBarAppearance
 import com.luncher.domain.appearance.VerticalAlignment
 import com.luncher.domain.appearance.appearanceOptions
+import com.luncher.domain.appearance.AccentColor
 import com.luncher.domain.appearance.Background
 import com.luncher.domain.pictures.Blur
 import com.luncher.domain.pictures.Fit
@@ -44,6 +47,7 @@ class PreferencesAppearanceSettingsTest {
         TileStyle(Corners.Radius(16), FocusStyle.LIFT),
         TopBarAppearance(clockSide = Side.RIGHT, timeSide = Side.RIGHT, showTime = true, showDate = false),
         Background(PictureId("0123456789abcdef0123456789abcdef"), Fit.STRETCH, PicturePosition.LEFT, 40, Blur.LIGHT),
+        ThemeAppearance(AccentColor.TEAL, ThemeMode.LIGHT),
     )
 
     // The stored format, written out: a TV keeps it across updates, so a change of it has to read
@@ -64,6 +68,8 @@ class PreferencesAppearanceSettingsTest {
         "background_dim" to "40",
         "background_blur" to "LIGHT",
         "background_picture" to "0123456789abcdef0123456789abcdef",
+        "theme_accent" to "TEAL",
+        "theme_mode" to "LIGHT",
     )
 
     private fun store(values: Map<String, Any>) {
@@ -131,6 +137,14 @@ class PreferencesAppearanceSettingsTest {
         assertEquals(before, PreferencesAppearanceSettings(context).read())
     }
 
+    // The theme was added last: an older version stored none of it, and the screens keep the look they had.
+    @Test
+    fun `stored before the theme, has the orange accent, dark`() {
+        store(stored - "theme_accent" - "theme_mode")
+
+        assertEquals(changed.copy(theme = ThemeAppearance()), PreferencesAppearanceSettings(context).read())
+    }
+
     // The background was added after the other options: an older version stored none of it.
     @Test
     fun `stored before the background, has none`() {
@@ -175,6 +189,8 @@ class PreferencesAppearanceSettingsTest {
             Triple("show_date", "hidden", AppearanceOption.ShowDate),
             Triple("background_dim", "25", AppearanceOption.BackgroundDim),
             Triple("background_blur", "HEAVY", AppearanceOption.BackgroundBlur),
+            Triple("theme_accent", "RED", AppearanceOption.AccentColor),
+            Triple("theme_mode", "dark", AppearanceOption.ThemeMode),   // names are exact
         )
         for ((key, value, option) in unknown) {
             preferences.edit().clear().commit()

@@ -1,35 +1,47 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- A group of options in the appearance editor, named after the part of the home screen they
-     change: OK shows its options below it, or hides them again. Its arrow points at the options
-     while they show. -->
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+     change, or the theme, its icon before it: OK shows its options below it, or hides them again.
+     Its mark points down while they're hidden, up while they show. -->
+<com.luncher.launcher.ui.ListEntry xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@drawable/entry_background"
     android:focusable="true"
     android:focusableInTouchMode="true"
     android:gravity="center_vertical"
-    android:minHeight="@dimen/settings_entry_height"
+    android:minHeight="@dimen/settings_row_height"
     android:orientation="horizontal"
     android:paddingLeft="@dimen/settings_entry_padding"
-    android:paddingRight="@dimen/settings_entry_padding">
+    android:paddingTop="@dimen/settings_entry_padding_vertical"
+    android:paddingRight="@dimen/settings_entry_padding"
+    android:paddingBottom="@dimen/settings_entry_padding_vertical">
 
-    <TextView
+    <com.luncher.launcher.ui.ThemedIcon
+        android:id="@+id/settings_group_icon"
+        android:layout_width="@dimen/icon"
+        android:layout_height="@dimen/icon"
+        android:duplicateParentState="true"
+        android:importantForAccessibility="no"
+        app:colorRole="onSurfaceVariant" />
+
+    <com.luncher.launcher.ui.ThemedText
         android:id="@+id/settings_group_title"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/settings_entry_icon_gap"
         android:layout_weight="1"
+        android:duplicateParentState="true"
         android:ellipsize="end"
         android:maxLines="2"
-        android:textColor="@color/text_primary"
-        android:textSize="@dimen/settings_entry_text" />
+        android:textSize="@dimen/text_entry" />
 
-    <TextView
+    <com.luncher.launcher.ui.ThemedIcon
         android:id="@+id/settings_group_arrow"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="@dimen/icon"
+        android:layout_height="@dimen/icon"
         android:layout_marginStart="@dimen/settings_appearance_value_gap"
-        android:text="@string/settings_appearance_arrow_next"
-        android:textColor="@color/text_primary"
-        android:textSize="@dimen/settings_entry_text" />
-</LinearLayout>
+        android:duplicateParentState="true"
+        android:importantForAccessibility="no"
+        android:src="@drawable/icon_caret_down"
+        app:colorRole="onSurfaceVariant" />
+</com.luncher.launcher.ui.ListEntry>

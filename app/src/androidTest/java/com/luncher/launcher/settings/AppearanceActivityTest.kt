@@ -13,7 +13,9 @@ import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.Espresso.pressBack
 import androidx.test.espresso.action.ViewActions.pressKey
 import androidx.test.espresso.assertion.ViewAssertions.matches
+import androidx.test.espresso.matcher.ViewMatchers.hasDescendant
 import androidx.test.espresso.matcher.ViewMatchers.hasFocus
+import androidx.test.espresso.matcher.ViewMatchers.isAssignableFrom
 import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
 import androidx.test.espresso.matcher.ViewMatchers.isRoot
 import androidx.test.espresso.matcher.ViewMatchers.withChild
@@ -27,11 +29,11 @@ import com.luncher.domain.appearance.VerticalAlignment
 import com.luncher.domain.pictures.FakePictureImages
 import com.luncher.domain.pictures.FakePictures
 import com.luncher.domain.pictures.FakePictures.Companion.picture
-import com.luncher.domain.pictures.PictureImages
-import com.luncher.domain.pictures.PreparedPictures
 import com.luncher.domain.pictures.FakePreparedPictures
+import com.luncher.domain.pictures.PictureImages
 import com.luncher.domain.pictures.PictureImport
 import com.luncher.domain.pictures.Pictures
+import com.luncher.domain.pictures.PreparedPictures
 import com.luncher.domain.wallpaper.FakeStoredWallpaper
 import com.luncher.domain.wallpaper.Wallpaper
 import com.luncher.launcher.AppGraph
@@ -42,6 +44,7 @@ import com.luncher.launcher.testing.waitForFocus
 import com.luncher.launcher.testing.waitForHomeScreen
 import com.luncher.launcher.testing.waitUntilDestroyed
 import com.luncher.launcher.testing.waitUntilMatches
+import com.luncher.launcher.ui.ListEntry
 import org.hamcrest.Matcher
 import org.hamcrest.Matchers.allOf
 import org.junit.After
@@ -91,11 +94,14 @@ class AppearanceActivityTest {
     /** The editor's entry of the group titled [title]. */
     private fun group(title: Int) = allOf(withChild(withText(title)), withChild(withId(R.id.settings_group_arrow)))
 
-    /** The editor's row of the option labeled [label]. */
-    private fun option(label: Int) = allOf(withChild(withText(label)), withChild(withId(R.id.settings_option_value)))
+    /** The editor's row of the option labeled [label]: its name, and its value in a chip. */
+    private fun option(label: Int) = allOf(withChild(withText(label)), hasDescendant(withId(R.id.settings_option_value)))
 
     /** An option's row showing [value]; another option can show the same value. */
-    private fun hasValue(value: Int) = withChild(allOf(withText(value), withId(R.id.settings_option_value)))
+    private fun hasValue(value: Int) = hasDescendant(allOf(withText(value), withId(R.id.settings_option_value)))
+
+    /** An entry of the settings panel named [title]. */
+    private fun panelEntry(title: Int) = allOf(isAssignableFrom(ListEntry::class.java), hasDescendant(allOf(withId(R.id.settings_entry_title), withText(title))))
 
     /**
      * Checks [condition] on the view [view] matches, retrying while a window comes up. Espresso
@@ -106,9 +112,9 @@ class AppearanceActivityTest {
     @Test
     fun okOnAGroup_showsItsOptions_dpadStepsThemAround_andBackReturnsToThePanel() {
         launchThePanel().use {
-            waitUntil(withText(R.string.settings_hide_apps), hasFocus())
+            waitUntil(panelEntry(R.string.settings_hide_apps), hasFocus())
             press(KeyEvent.KEYCODE_DPAD_DOWN)
-            waitUntil(withText(R.string.settings_appearance), hasFocus())
+            waitUntil(panelEntry(R.string.settings_appearance), hasFocus())
             press(KeyEvent.KEYCODE_DPAD_CENTER)
             waitUntil(group(R.string.settings_appearance_tiles), hasFocus())
 
@@ -132,7 +138,7 @@ class AppearanceActivityTest {
             waitUntilDestroyed(AppearanceActivity::class.java)
 
             // The panel, in front again, with the focus where it was.
-            waitUntil(withText(R.string.settings_appearance), hasFocus())
+            waitUntil(panelEntry(R.string.settings_appearance), hasFocus())
             waitUntil(withText(R.string.settings_system), isDisplayed())
         }
     }
@@ -154,9 +160,9 @@ class AppearanceActivityTest {
         }
         ActivityScenario.launch(AppearanceActivity::class.java).use {
             waitUntil(group(R.string.settings_appearance_tiles), hasFocus())
-            press(KeyEvent.KEYCODE_DPAD_DOWN)
-            press(KeyEvent.KEYCODE_DPAD_DOWN)
-            waitUntil(apart(R.string.settings_appearance_background), hasFocus())
+            // Left, to the buttons below the preview: Reset to defaults, then Background.
+            repeat(3) { if (!hasFocus(withId(R.id.settings_appearance_background))) press(KeyEvent.KEYCODE_DPAD_LEFT) }
+            waitUntil(withId(R.id.settings_appearance_background), hasFocus())
             press(KeyEvent.KEYCODE_DPAD_CENTER)
 
             // The background editor: No picture chosen and focused, then the pictures.
@@ -165,21 +171,27 @@ class AppearanceActivityTest {
             waitUntil(withChild(withText("sunset.jpg")), hasFocus())
             press(KeyEvent.KEYCODE_DPAD_CENTER)
             waitUntil(allOf(withId(R.id.settings_background_chosen), isDisplayed()), isDisplayed())
-            // Left, to the options, and down them to Save.
+            // Left, to the fields, down them to the buttons, and Left from Delete all to Save.
             press(KeyEvent.KEYCODE_DPAD_LEFT)
-            repeat(5) { if (!hasFocus(withId(R.id.settings_background_save))) press(KeyEvent.KEYCODE_DPAD_DOWN) }
+            repeat(6) {
+                when {
+                    hasFocus(withId(R.id.settings_background_save)) -> {}
+                    hasFocus(withId(R.id.settings_background_delete_all)) -> press(KeyEvent.KEYCODE_DPAD_LEFT)
+                    else -> press(KeyEvent.KEYCODE_DPAD_DOWN)
+                }
+            }
             waitUntil(withId(R.id.settings_background_save), hasFocus())
             assertEquals("nothing stored before Save", null, settings.appearance.background.picture)
             press(KeyEvent.KEYCODE_DPAD_CENTER)
 
-            // Drawn, stored, and back in the appearance editor, which names it.
+            // Drawn, stored, and back in the appearance editor, whose preview shows it.
             val deadline = SystemClock.uptimeMillis() + TIMEOUT_MS
             while (settings.appearance.background.picture == null && SystemClock.uptimeMillis() < deadline) SystemClock.sleep(POLL_MS)
             assertEquals(picture("sunset.jpg").id, settings.appearance.background.picture)
             // The editor's window is closing: keys and checks go to the appearance editor once it has the focus.
             waitForFocus(AppearanceActivity::class.java)
             waitUntilDestroyed(BackgroundActivity::class.java)
-            waitUntil(allOf(withId(R.id.settings_apart_value), withText("sunset.jpg")), isDisplayed())
+            waitUntil(withId(R.id.settings_appearance_background), isDisplayed())
         }
     }
 
@@ -187,9 +199,6 @@ class AppearanceActivityTest {
     private val plainImages = FakePictureImages { _, width, height, _ ->
         Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888).apply { eraseColor(0xFF336699.toInt()) }
     }
-
-    /** The editor's entry of the group titled [title], edited in a screen of its own. */
-    private fun apart(title: Int) = allOf(withChild(withText(title)), withChild(withId(R.id.settings_apart_value)))
 
     /** Whether the view [view] matches has the focus now. */
     private fun hasFocus(view: Matcher<View>): Boolean = matchesNow(view, hasFocus())

@@ -1,35 +1,47 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The panel: a floating window as wide as this view, and as tall as its entries, or as the
-     screen leaves room for. -->
+<!-- The settings panel: a side sheet at the screen's end (Sheet.kt), its title, then its entries,
+     which scroll on a screen too short for them all. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/settings_panel"
-    android:layout_width="@dimen/settings_panel_width"
-    android:layout_height="wrap_content"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:clipChildren="false"
+    android:clipToPadding="false"
     android:orientation="vertical"
-    android:padding="@dimen/settings_panel_padding">
+    android:paddingStart="@dimen/settings_sheet_padding_horizontal"
+    android:paddingTop="@dimen/settings_sheet_padding_top"
+    android:paddingEnd="@dimen/settings_sheet_padding_horizontal"
+    android:paddingBottom="@dimen/settings_sheet_padding_bottom">
 
-    <TextView
-        android:layout_width="wrap_content"
+    <com.luncher.launcher.ui.ThemedText
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/settings_zoom_room_horizontal"
+        android:layout_marginEnd="@dimen/settings_zoom_room_horizontal"
         android:layout_marginBottom="@dimen/settings_title_gap"
         android:includeFontPadding="false"
         android:text="@string/settings_title"
-        android:textColor="@color/text_primary"
-        android:textSize="@dimen/settings_title_text" />
+        android:textSize="@dimen/text_title" />
 
-    <!-- SettingsActivity adds a settings_entry for each entry of settingsMenu, in order, and sets
-         the height: all of them, or on a short screen as many as fit, ending on half an entry, and
-         they scroll as the focus moves. -->
+    <!-- SettingsActivity adds a settings_entry for each entry of settingsMenu, in order; they
+         scroll as the focus moves. Room inside for the focused entry's zoom. -->
     <ScrollView
         android:id="@+id/settings_entries_scroll"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="0dp"
+        android:layout_weight="1"
         android:scrollbars="none">
 
         <LinearLayout
             android:id="@+id/settings_entries"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical" />
+            android:clipChildren="false"
+            android:clipToPadding="false"
+            android:orientation="vertical"
+            android:paddingLeft="@dimen/settings_zoom_room_horizontal"
+            android:paddingTop="@dimen/settings_zoom_room_vertical"
+            android:paddingRight="@dimen/settings_zoom_room_horizontal"
+            android:paddingBottom="@dimen/settings_zoom_room_vertical" />
     </ScrollView>
 </LinearLayout>

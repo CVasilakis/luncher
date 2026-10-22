@@ -10,9 +10,12 @@ import android.graphics.RectF
 import android.os.Handler
 import android.os.Looper
 import android.util.AttributeSet
+import android.graphics.Outline
 import android.view.View
+import android.view.ViewOutlineProvider
 import com.luncher.domain.appearance.Appearance
 import com.luncher.domain.appearance.Background
+import com.luncher.domain.appearance.colorRoles
 import com.luncher.domain.appearance.FocusStyle
 import com.luncher.domain.jobs.JobPriority
 import com.luncher.domain.jobs.Jobs
@@ -60,6 +63,18 @@ import kotlin.math.roundToInt
  */
 internal class AppearancePreviewView(context: Context, attrs: AttributeSet?) : View(context, attrs) {
 
+    init {
+        // Its corners rounded, the drawn screen's: cut along its outline, by the GPU.
+        outlineProvider = object : ViewOutlineProvider() {
+            override fun getOutline(view: View, outline: Outline) {
+                outline.setRoundRect(screen.left.toInt(), screen.top.toInt(), screen.right.toInt(), screen.bottom.toInt(), cornerRadius)
+            }
+        }
+        clipToOutline = true
+    }
+
+    private val cornerRadius = resources.getDimension(R.dimen.settings_preview_corner)
+
     var appearance: Appearance = Appearance()
         set(value) {
             val old = field
@@ -70,6 +85,9 @@ internal class AppearancePreviewView(context: Context, attrs: AttributeSet?) : V
             if (value.tileStyle != old.tileStyle || value.tileGeometry != old.tileGeometry) styleTiles()
             if (value.topBar != old.topBar) placeBar()
             if (value.background != old.background) loadWallpaper()
+            // The accent's, as the home screen frames its focused tile; the mode isn't the home screen's.
+            if (value.theme.accent != old.theme.accent) focusPaint.color = colorRoles(value.theme).homeAccent
+            if (value.theme != old.theme) edgePaint.color = colorRoles(value.theme).outlineVariant
             invalidate()
         }
 
@@ -176,7 +194,12 @@ internal class AppearancePreviewView(context: Context, attrs: AttributeSet?) : V
     private val wallpaperPaint = Paint(Paint.FILTER_BITMAP_FLAG)
     private val tileFillPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = context.color(R.color.settings_preview_tile) }
     private val tilePaint = stroke(context.color(UiR.color.text_secondary))
-    private val focusPaint = stroke(context.color(UiR.color.accent))
+    private val focusPaint = stroke(colorRoles(appearance.theme).homeAccent)
+    /** The plain background's edge, in the theme's: on the screen's dark, nothing else shows where it ends. */
+    private val edgePaint = stroke(colorRoles(appearance.theme).outlineVariant).apply {
+        strokeWidth = resources.getDimension(UiR.dimen.outline)
+    }
+    private val edge = RectF()
     private val shadowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.argb(SHADOW_ALPHA, 0, 0, 0) }
     private val primaryPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = context.color(UiR.color.text_primary) }
     private val secondaryPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = context.color(UiR.color.text_secondary) }
@@ -215,6 +238,9 @@ internal class AppearancePreviewView(context: Context, attrs: AttributeSet?) : V
         val left = (w - SCREEN_WIDTH * scale) / 2
         val top = (h - screenHeight * scale) / 2
         screen.set(left, top, left + SCREEN_WIDTH * scale, top + screenHeight * scale)
+        edge.set(screen)
+        edge.inset(edgePaint.strokeWidth / 2, edgePaint.strokeWidth / 2)
+        invalidateOutline()
         tilePaint.strokeWidth = maxOf(1f, OUTLINE * scale)
         focusPaint.strokeWidth = maxOf(2f, FRAME * scale)
         val edge = maxOf(1f, outline.widthDp * scale)
@@ -228,7 +254,12 @@ internal class AppearancePreviewView(context: Context, attrs: AttributeSet?) : V
 
     override fun onDraw(canvas: Canvas) {
         val wallpaper = wallpaper
-        if (wallpaper != null) canvas.drawBitmap(wallpaper, null, screen, wallpaperPaint) else canvas.drawRect(screen, screenPaint)
+        if (wallpaper != null) {
+            canvas.drawBitmap(wallpaper, null, screen, wallpaperPaint)
+        } else {
+            canvas.drawRect(screen, screenPaint)
+            canvas.drawRoundRect(edge, cornerRadius, cornerRadius, edgePaint)
+        }
         drawBlock(canvas, time, primaryPaint)
         drawBlock(canvas, date, secondaryPaint)
         if (!gear.isEmpty) {

@@ -33,11 +33,12 @@ It's made with performance in mind, to run smoothly even on old and weak Android
 - [x] Customize the tile shape, from square to pill-shaped
 - [x] Lift the focused tile with a soft shadow instead of a frame, and show its app's name below it
 - [x] Set your own pictures as wallpaper, with dim and blur options
+- [x] Pick an accent color, and dark or light menus and settings
 
 **On the way**
 
 - [ ] Your own custom banners for app tiles
-- [ ] More appearance settings: tile size and spacing, accent colors and much more
+- [ ] More appearance settings: tile size and spacing and much more
 - [ ] Wi-Fi, VPN and notifications in the status bar, without ever asking for internet access
 - [ ] Folders to group your apps
 - [ ] A lightweight animated background option (if possible)

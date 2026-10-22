@@ -121,25 +121,34 @@ class HideAppsActivityTest {
         assertEquals(2, activity.list().selectedItemPosition)
     }
 
+    /** A row and the gap below it, and the list's padding above and below, room for the focused row's zoom. */
+    private fun HideAppsActivity.row() = resources.getDimensionPixelSize(R.dimen.settings_row_height) + resources.getDimensionPixelSize(R.dimen.settings_entry_gap)
+
+    private fun HideAppsActivity.listPadding() = list().paddingTop + list().paddingBottom
+
+    // As tall as the side sheet leaves, the last row cut in half and fading out: there's more.
     @Test
-    fun `shows six and a half rows at most, so the half row says there's more`() {
-        installedApps.apps = List(12) { app("app%02d".format(it)) }
+    fun `ends on half a row when the apps don't all fit, the sheet as tall as the screen less its margins`() {
+        installedApps.apps = List(30) { app("app%02d".format(it)) }
 
         val activity = start()
 
-        val row = activity.resources.getDimensionPixelSize(R.dimen.settings_entry_height)
-        assertEquals(row * 13 / 2, activity.list().layoutParams.height)
+        val row = activity.row()
+        val height = activity.list().layoutParams.height - activity.listPadding()
+        assertEquals(row / 2, height % row)
+        assertTrue(height > 6 * row)
+        val margin = activity.resources.getDimensionPixelSize(R.dimen.settings_sheet_margin)
+        assertEquals(activity.resources.displayMetrics.heightPixels - 2 * margin, activity.window.attributes.height)
     }
 
     @Test
     fun `is only as tall as its rows when they fit`() {
         val activity = start()
 
-        val row = activity.resources.getDimensionPixelSize(R.dimen.settings_entry_height)
-        assertEquals(row * 3, activity.list().layoutParams.height)
+        assertEquals(activity.row() * 3 + activity.listPadding(), activity.list().layoutParams.height)
     }
 
-    // A 720p screen at the 1080p density: 360 dp tall, too little for six and a half rows.
+    // A 720p screen at the 1080p density: 360 dp tall.
     @Test
     @Config(qualifiers = "en-rUS-w640dp-h360dp-land-television-xhdpi-notouch-dpad")
     fun `on a small screen the panel stays within it, still ending on half a row`() {
@@ -147,32 +156,46 @@ class HideAppsActivityTest {
 
         val activity = start()
 
-        val row = activity.resources.getDimensionPixelSize(R.dimen.settings_entry_height)
-        val margin = activity.resources.getDimensionPixelSize(R.dimen.settings_panel_margin)
+        val row = activity.row()
+        val margin = activity.resources.getDimensionPixelSize(R.dimen.settings_sheet_margin)
         val panel = activity.findViewById<View>(R.id.settings_hide_apps_panel)
         val unspecified = View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
         panel.forceLayout()   // measured already with the same specs, before the list had its height
         activity.list().forceLayout()
         panel.measure(unspecified, unspecified)
         assertTrue(panel.measuredHeight <= activity.resources.displayMetrics.heightPixels - 2 * margin)
-        assertEquals(row / 2, activity.list().layoutParams.height % row)
-        assertTrue(activity.list().layoutParams.height > row)
+        val height = activity.list().layoutParams.height - activity.listPadding()
+        assertEquals(row / 2, height % row)
+        assertTrue(height > row)
     }
 
     // Unlike the home screen (HomeActivityTest), which stays left to right.
     @Test
     @Config(qualifiers = "ar-rEG-$TV_1080P")
-    fun `mirrors in right-to-left languages, the scrollbar's strip on the left`() {
+    fun `mirrors in right-to-left languages`() {
         val list = start().list()
 
         val row = list.getChildAt(1)   // Music, hidden
         val label = row.findViewById<View>(R.id.settings_app_label)
         val hidden = row.findViewById<View>(R.id.settings_app_hidden)
+        val icon = row.findViewById<View>(R.id.settings_app_icon)
         assertTrue("label at ${label.left}, hidden at ${hidden.right}", hidden.right <= label.left)
+        assertTrue("icon at ${icon.left}, label at ${label.right}", label.right <= icon.left)
         val text = (label as TextView).layout
         assertEquals(text.width.toFloat(), text.getLineRight(0))   // an English name at the right too
-        assertEquals(list.resources.getDimensionPixelSize(R.dimen.settings_list_scrollbar), list.paddingLeft)
-        assertEquals(0, list.paddingRight)
+    }
+
+    // The crossed eye and "Hidden" say which apps are hidden; the selected row looks focused.
+    @Test
+    fun `a hidden app has a crossed eye and Hidden, a shown one neither`() {
+        val list = start().list()
+
+        val shown = list.getChildAt(0)   // Movies
+        val hidden = list.getChildAt(1)  // Music
+        assertEquals(View.GONE, shown.findViewById<View>(R.id.settings_app_hidden).visibility)
+        assertEquals(View.VISIBLE, hidden.findViewById<View>(R.id.settings_app_hidden).visibility)
+        assertEquals(com.luncher.launcher.ui.R.drawable.icon_eye_off, shadowOf((hidden.findViewById<android.widget.ImageView>(R.id.settings_app_icon)).drawable).createdFromResId)
+        assertEquals(com.luncher.launcher.ui.R.drawable.icon_tv, shadowOf((shown.findViewById<android.widget.ImageView>(R.id.settings_app_icon)).drawable).createdFromResId)
     }
 
     @Test

@@ -13,11 +13,12 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import android.window.OnBackInvokedDispatcher
 import com.luncher.domain.pictures.ImportResult
-import com.luncher.domain.pictures.Picture
-import com.luncher.domain.pictures.PictureUse
 import com.luncher.domain.pictures.ReceivedPictures.Outcome
-import com.luncher.domain.pictures.pictureUseMenu
+import com.luncher.launcher.ui.PillButton
 import com.luncher.launcher.ui.ShortestShowing
+import com.luncher.launcher.ui.styleAll
+import com.luncher.launcher.ui.stylePanel
+import com.luncher.launcher.ui.R as UiR
 
 /**
  * The window over the home screen after another app shared pictures ([SharePictureActivity]
@@ -27,11 +28,10 @@ import com.luncher.launcher.ui.ShortestShowing
  * of 5…", and Cancel, focused; after a spinning wheel once a picture is being copied, the real
  * work, which then shows half a second at least ([ShortestShowing]), so it never flashes. A
  * picture refused for what its app says of its name or size shows no wheel: why is said at once.
- * Then, for one picture, "Picture added",
- * its name, and an entry for each use of [pictureUseMenu] (Background opens the background editor
- * with it chosen, not saved); or, with OK, that Luncher's pictures had it already, and its name,
- * or why it wasn't added. For several, how many were added, then how many weren't for each
- * reason ([notAddedLines]), and OK. A share of more pictures than Luncher takes at a time adds
+ * Then, for one picture, "Picture added" and its name, that Luncher's pictures had it already, and
+ * its name, or why it wasn't added; for several, how many were added, then how many weren't for
+ * each reason ([notAddedLines]); and OK, a mark beside the title saying how it went. The picture is
+ * in Luncher's pictures, where the background editor offers it. A share of more pictures than Luncher takes at a time adds
  * none, and the window says so, at once or at the end of the others. Every [ImportResult] is
  * handled ([whyNotAdded]); an app that stops sending a picture ends as Unreadable, after the
  * library's time limit. A folder shared with the pictures isn't mentioned; a share with no
@@ -46,7 +46,7 @@ import com.luncher.launcher.ui.ShortestShowing
  * [SharePictureActivity] sends only it while it shows on top of one of Luncher's tasks), and its
  * pictures join the session, after the others.
  *
- * Closing the window ends the session ([finish]: OK, Cancel, Back, or an entry), the pictures
+ * Closing the window ends the session ([finish]: OK, Cancel, or Back), the pictures
  * still to add cancelled, those added staying in the library; so does Android closing it
  * ([onDestroy]: Home, while Luncher is the home app, as the home screen clears its task), so no
  * picture is added for a window that's gone, nor read once its access, given to the window, has
@@ -65,7 +65,10 @@ class PictureReceivedActivity : Activity() {
     private lateinit var title: TextView
     private lateinit var text: TextView
     private lateinit var spinner: View
+    private lateinit var mark: Badge
+    private lateinit var markPlace: View
     private lateinit var entries: LinearLayout
+    private val theme by lazy { ScreenTheme(graph.appearanceSettings) { checkNotNull(window).stylePanel(it) } }
 
     private val received get() = graph.receivedPictures
 
@@ -98,7 +101,10 @@ class PictureReceivedActivity : Activity() {
         title = findViewById(R.id.settings_received_title)
         text = findViewById(R.id.settings_received_text)
         spinner = findViewById(R.id.settings_received_spinner)
+        mark = findViewById(R.id.settings_received_mark)
+        markPlace = findViewById(R.id.settings_received_mark_place)
         entries = findViewById(R.id.settings_received_entries)
+        window.stylePanel(theme.roles)
         val kept = savedInstanceState?.getInt(STATE_HOLD) ?: 0
         // Made anew after a configuration change, the window still holds the session, where it
         // was; after the process was gone, it's gone too, and the share is taken again.
@@ -145,6 +151,11 @@ class PictureReceivedActivity : Activity() {
         outState.putInt(STATE_HOLD, hold)
     }
 
+    override fun onStart() {
+        super.onStart()
+        theme.start()
+    }
+
     override fun onResume() {
         super.onResume()
         leaving = false
@@ -160,6 +171,7 @@ class PictureReceivedActivity : Activity() {
 
     override fun onStop() {
         super.onStop()
+        theme.stop()
         if (leaving && !isFinishing && !isChangingConfigurations) finish()
     }
 
@@ -232,34 +244,41 @@ class PictureReceivedActivity : Activity() {
         // From the first picture copied on, until the end: not on and off from one picture to the next.
         if (received.copying && !wheel.isShowing) {
             spinner.visibility = View.VISIBLE
+            markPlace.visibility = View.VISIBLE
             wheel.start()
         }
         if (cancelShown) return
         cancelShown = true
-        if (!wheel.isShowing) spinner.visibility = View.GONE
+        mark.visibility = View.GONE
+        if (!wheel.isShowing) {
+            spinner.visibility = View.GONE
+            markPlace.visibility = View.GONE
+        }
         text.visibility = View.GONE
         entries.removeAllViews()
-        entry(getString(R.string.settings_pictures_cancel)) { cancel() }
+        button(getString(R.string.settings_pictures_cancel), PillButton.TONAL) { cancel() }
         focusFirst()
     }
 
     private fun showOne(result: ImportResult) {
         showDone()
         if (result !is ImportResult.Added) {
+            showMark(notAddedMark(result))
             title.text = notAddedTitle(result)
             text.text = whyNotAdded(result)
-            entry(getString(R.string.settings_pictures_ok)) { finish() }
+            button(getString(R.string.settings_pictures_ok), PillButton.FILLED) { finish() }
             return focusFirst()
         }
-        val picture = result.picture
+        showMark(Badge.Kind.DONE to UiR.drawable.icon_check)
         title.setText(R.string.settings_received_saved)
-        text.text = nameOf(picture)
-        for (use in pictureUseMenu) entry(getString(label(use))) { use(picture, use) }
+        text.text = nameOf(result.picture)
+        button(getString(R.string.settings_pictures_ok), PillButton.FILLED) { finish() }
         focusFirst()
     }
 
     private fun showSeveral(outcome: Outcome.Several) {
         showDone()
+        showMark(if (outcome.added > 0) Badge.Kind.DONE to UiR.drawable.icon_check else Badge.Kind.DANGER to UiR.drawable.icon_warning)
         title.text = if (outcome.added > 0) {
             resources.getQuantityString(R.plurals.settings_received_saved_count, outcome.added, outcome.added)
         } else {
@@ -268,16 +287,17 @@ class PictureReceivedActivity : Activity() {
         val lines = notAddedLines(outcome)
         text.text = lines.joinToString("\n")
         text.visibility = if (lines.isEmpty()) View.GONE else View.VISIBLE
-        entry(getString(R.string.settings_pictures_ok)) { finish() }
+        button(getString(R.string.settings_pictures_ok), PillButton.FILLED) { finish() }
         focusFirst()
     }
 
     /** No picture to add: the share had none, or only folders. */
     private fun showNothing() {
         showDone()
+        showMark(Badge.Kind.INFO to UiR.drawable.icon_info)
         title.setText(R.string.settings_received_nothing)
         text.setText(R.string.settings_received_nothing_text)
-        entry(getString(R.string.settings_pictures_ok)) { finish() }
+        button(getString(R.string.settings_pictures_ok), PillButton.FILLED) { finish() }
         focusFirst()
     }
 
@@ -290,23 +310,21 @@ class PictureReceivedActivity : Activity() {
         entries.removeAllViews()
     }
 
-    private fun label(use: PictureUse): Int = when (use) {
-        PictureUse.Wallpaper -> R.string.settings_appearance_background
+    /** The mark beside the title, saying how it went: [mark]'s kind and icon. */
+    private fun showMark(mark: Pair<Badge.Kind, Int>) {
+        this.mark.kind = mark.first
+        this.mark.setImageResource(mark.second)
+        this.mark.visibility = View.VISIBLE
+        markPlace.visibility = View.VISIBLE
     }
 
-    /** Opens the screen where [picture] is put to [use], chosen there, and closes this window: Back there returns to the home screen. */
-    private fun use(picture: Picture, use: PictureUse) {
-        when (use) {
-            PictureUse.Wallpaper -> startActivity(Intent(this, BackgroundActivity::class.java).putExtra(BackgroundActivity.EXTRA_PICTURE, picture.id.value))
-        }
-        finish()
-    }
-
-    private fun entry(label: String, ok: () -> Unit) {
-        val view = layoutInflater.inflate(R.layout.settings_entry, entries, false) as TextView
+    private fun button(label: String, kind: Int, ok: () -> Unit) {
+        val view = layoutInflater.inflate(R.layout.settings_pictures_button, entries, false) as PillButton
         view.text = label
+        view.kind = kind
         view.setOnClickListener { ok() }
         entries.addView(view)
+        view.styleAll(theme.roles)
     }
 
     private fun focusFirst() {

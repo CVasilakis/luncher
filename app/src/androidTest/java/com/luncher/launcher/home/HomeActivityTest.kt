@@ -1,9 +1,9 @@
 package com.luncher.launcher.home
 
 import android.graphics.Bitmap
+import android.graphics.drawable.BitmapDrawable
 import android.os.Handler
 import android.os.Looper
-import android.graphics.drawable.BitmapDrawable
 import android.os.SystemClock
 import android.view.KeyEvent
 import android.view.View
@@ -18,8 +18,10 @@ import androidx.test.espresso.action.ViewActions.pressKey
 import androidx.test.espresso.assertion.ViewAssertions.doesNotExist
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.matcher.RootMatchers.isDialog
+import androidx.test.espresso.matcher.ViewMatchers.hasDescendant
 import androidx.test.espresso.matcher.ViewMatchers.hasFocus
 import androidx.test.espresso.matcher.ViewMatchers.hasSibling
+import androidx.test.espresso.matcher.ViewMatchers.isAssignableFrom
 import androidx.test.espresso.matcher.ViewMatchers.isCompletelyDisplayed
 import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
 import androidx.test.espresso.matcher.ViewMatchers.isRoot
@@ -43,6 +45,7 @@ import com.luncher.domain.wallpaper.Wallpaper
 import com.luncher.launcher.AppGraph
 import com.luncher.launcher.LuncherApplication
 import com.luncher.launcher.settings.HideAppsActivity
+import com.luncher.launcher.settings.R as SettingsR
 import com.luncher.launcher.settings.SettingsActivity
 import com.luncher.launcher.testing.RetryWhenCovered
 import com.luncher.launcher.testing.focus
@@ -51,6 +54,7 @@ import com.luncher.launcher.testing.resolvedHome
 import com.luncher.launcher.testing.waitForHomeScreen
 import com.luncher.launcher.testing.waitUntilDestroyed
 import com.luncher.launcher.testing.waitUntilMatches
+import com.luncher.launcher.ui.ListEntry
 import org.hamcrest.Matcher
 import org.hamcrest.Matchers.allOf
 import org.hamcrest.Matchers.not
@@ -61,7 +65,6 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import com.luncher.launcher.settings.R as SettingsR
 
 /** The home screen on a real device, driven by real key events. */
 @RunWith(AndroidJUnit4::class)
@@ -138,6 +141,10 @@ class HomeActivityTest {
     /** Checks [condition] on the view [view] matches, retrying while an animation settles or a window comes up. */
     private fun waitUntil(view: Matcher<View>, condition: Matcher<View>) = waitUntilMatches(view, condition, TIMEOUT_MS)
 
+    /** The settings panel's entry named [title]: the entry has the focus, not its name. */
+    private fun settingsEntry(title: Int) =
+        allOf(isAssignableFrom(ListEntry::class.java), hasDescendant(allOf(withId(SettingsR.id.settings_entry_title), withText(title))))
+
     /**
      * Waits until the settings panel is in front again with the input focus, on its Hide apps
      * entry, after Back has closed the Hide apps list over it, so that the next key goes to the
@@ -150,7 +157,7 @@ class HomeActivityTest {
      */
     private fun waitForTheSettingsPanel() {
         try {
-            waitUntil(withText(SettingsR.string.settings_hide_apps), hasFocus())
+            waitUntil(settingsEntry(SettingsR.string.settings_hide_apps), hasFocus())
         } catch (e: Throwable) {
             throw AssertionError("The settings panel didn't get the focus back in ${TIMEOUT_MS / 1000} s: ${focus()}", e)
         }
@@ -286,7 +293,7 @@ class HomeActivityTest {
             press(KeyEvent.KEYCODE_DPAD_UP)
             press(KeyEvent.KEYCODE_DPAD_CENTER)
 
-            waitUntil(withText(SettingsR.string.settings_hide_apps), allOf(isDisplayed(), hasFocus()))
+            waitUntil(settingsEntry(SettingsR.string.settings_hide_apps), allOf(isDisplayed(), hasFocus()))
         }
     }
 
@@ -296,7 +303,7 @@ class HomeActivityTest {
             waitUntilTile("Games", hasFocus())
 
             press(KeyEvent.KEYCODE_MENU)                    // the settings panel
-            waitUntil(withText(SettingsR.string.settings_hide_apps), hasFocus())
+            waitUntil(settingsEntry(SettingsR.string.settings_hide_apps), hasFocus())
             press(KeyEvent.KEYCODE_DPAD_CENTER)             // Hide apps, with Games selected
             waitUntil(withId(SettingsR.id.settings_apps), isDisplayed())
             press(KeyEvent.KEYCODE_DPAD_DOWN)

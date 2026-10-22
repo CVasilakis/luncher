@@ -83,7 +83,8 @@ class AppearancePreviewViewTest {
     // a value of it that looks like another in the sample, fails here.
     @Test
     fun `every value of every option changes what the preview draws`() {
-        for (change in appearanceChanges()) {
+        // Every option that shows there: the theme's mode is the menus' and settings' only (SettingsThemeTest).
+        for (change in appearanceChanges().filter { it.option.showsOnHome }) {
             assertFalse("$change draws as ${change.option} at its default", draw(change.base).sameAs(draw(change.changed)))
         }
     }

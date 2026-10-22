@@ -1,14 +1,15 @@
 # ui/
 
-What every screen shares, UI only, `:ui`: the app-wide theme and colors, and helpers and views two
-features both use. It depends on no other module, and holds no ports and nothing of a single
-feature: a feature's own resources and views stay in its module. Why it exists:
+What every screen shares, UI only, `:ui`: the app-wide theme, the themed views the menus and
+settings are made of (the design system, [below](#the-design-system)), and helpers and views two
+features both use. It holds no ports and nothing of a single feature: a feature's own resources
+and views stay in its module. Why it exists:
 [`../docs/ARCHITECTURE.md`](../docs/ARCHITECTURE.md#where-things-go).
 
 | | |
 |---|---|
 | Package | `com.luncher.launcher.ui` |
-| Depends on | nothing |
+| Depends on | `:domain`, for the theme's colors (`ColorRoles`), which its views take |
 
 ## Layout
 
@@ -19,6 +20,16 @@ ui/
     ├── main/
     │   ├── java/com/luncher/launcher/ui/
     │   │   ├── Colors.kt         color(id): a color resource on every API level
+    │   │   ├── Themed.kt         the design system's base: a view styled from ColorRoles (Themed), styleAll,
+    │   │   │                     the state colors and backgrounds its views share
+    │   │   ├── ThemedText.kt     a text in a role of the theme, inverse on a focused entry, its icon too
+    │   │   ├── ThemedIcon.kt     an icon (icon_…) in a role of the theme
+    │   │   ├── ListEntry.kt      an entry: inverse while focused, tinted while chosen, outlined while open; zoomed
+    │   │   ├── EntryText.kt      an entry of one line, its icon before it: a menu's
+    │   │   ├── PillButton.kt     a button: filled, tonal or danger, its icon beside its text, giving way
+    │   │   ├── ScrollFrame.kt    a scrolling list's frame: cut along its rounded corners, fading out below
+    │   │   ├── ThemedSpinner.kt  a wait's spinning wheel, in the accent
+    │   │   ├── Windows.kt        a panel's window and a screen's own, styled
     │   │   ├── ScreenSize.kt     screenSize(): the screen's size in px, what the wallpaper is drawn at and
     │   │   │                     the previews' shape
     │   │   ├── ShortestShowing.kt  how long a wait has shown, so it shows half a second at least: WorkingDialog's,
@@ -27,25 +38,29 @@ ui/
     │   │   │                     below a tile; the home screen's, and the room the appearance preview leaves
     │   │   ├── WallpaperOutline.kt  the dark edge around what's drawn on the wallpaper, on the home screen
     │   │   │                     and in the previews of it
-    │   │   └── WorkingDialog.kt  a floating panel with a spinning wheel and a message, taking every key,
+    │   │   └── WorkingDialog.kt  a floating panel in the theme's colors, a spinning wheel and a message, taking every key,
     │   │                         shown half a second at least: for work the user waits for (the wallpaper drawn,
     │   │                         a picture added); Cancel too, and Back, for work that can be stopped
     │   └── res/
-    │       ├── drawable/         entry_background, a focusable entry's frame while focused; panel_background,
-    │       │                     a floating panel's window (the settings panels, the picture dialogs, WorkingDialog)
+    │       ├── animator/         entry_zoom, button_zoom: a focused entry's and button's zoom and lift
+    │       ├── drawable/         icon_…, the line icons (white, tinted where they're used); panel_background,
+    │       │                     a floating panel's window before it's styled
     │       ├── layout/           working_dialog: WorkingDialog's wheel and message, and its Cancel
-    │       └── values/
-    │           ├── colors.xml    background, accent, primary and secondary text, a panel and its focused entry,
-    │           │                 the wallpaper outline
-    │           ├── dimens.xml    a panel's corners, an entry's frame, WorkingDialog's sizes, the wallpaper outline's width,
-    │           │                 the tile name's text size and gap
-    │           └── themes.xml    Theme.Luncher, the app's and the home screen's theme; Theme.Luncher.Working
+    │       ├── values/
+    │       │   ├── attrs.xml     the themed views' attributes: colorRole, fill, kind
+    │       │   ├── colors.xml    the home screen's: background, accent, primary and secondary text, the wallpaper
+    │       │   │                 outline; a panel, as a window is before it's styled
+    │       │   ├── dimens.xml    the design system's type, corners, zoom, buttons, icons and fade; a panel's corners,
+    │       │   │                 WorkingDialog's sizes, the wallpaper outline's width, the tile name's text size and gap
+    │       │   └── themes.xml    Theme.Luncher, the app's and the home screen's theme; Theme.Luncher.Working
+    │       └── values-h450dp/    a screen's title on a screen 450 dp tall or more (smaller on 720p at 1080p density)
     └── testFixtures/java/com/luncher/launcher/testing/
         ├── TvDevice.kt           the TV screens the JVM tests run on (TV_1080P, TV_SCREENS)
-        └── LayoutChecks.kt       the layout tests' checks: bounds, inside, apart, whole text
+        ├── LayoutChecks.kt       the layout tests' checks: bounds, inside, apart, whole text
+        └── Captures.kt           the screenshots' captures, the window in front given the focus first
 ```
 
-Resources here have no prefix (`accent`, `Theme.Luncher`); a feature's are named after it
+Resources here have no prefix (`accent`, `Theme.Luncher`, `icon_check`); a feature's are named after it
 (`home_tile_frame`). Code refers to them through this module's R class, imported as
 `com.luncher.launcher.ui.R as UiR` next to the module's own `R`; layouts and themes by name, as
 any resource.
@@ -53,6 +68,54 @@ any resource.
 The test fixtures are what the screens' JVM tests share, in every module
 (`testImplementation(testFixtures(project(":ui")))`): how they're used,
 [`../docs/TESTING.md`](../docs/TESTING.md#layouts-on-other-screens).
+
+## The design system
+
+The menus and the settings (a tile's menu, the settings panels, the editors, the picture screens,
+the dialogs) are made of a few themed views, Material 3 for TV's: what can be pressed looks like it
+can, the focused thing stands out from afar, and every color comes from the user's theme.
+
+- **Colors are roles, from the theme.** A view never names a color: it takes one of the domain's
+  `ColorRoles` (`colorRoles`, [`../docs/ARCHITECTURE.md`](../docs/ARCHITECTURE.md#appearance)) by
+  what it's for. Each view is `Themed`: `style(roles)` builds its drawables and color lists from
+  the roles, in code (a color state list can't name a theme's attribute before API 23, and the
+  theme changes while a screen shows), and keeps the roles it was styled with, so styling it again
+  with equal ones makes nothing anew. A screen styles all of its views with `styleAll` (or
+  `stylePanel` and `styleScreen`, which style its window too) as it's made, and again, in place,
+  when the theme changes. A themed text's or icon's role is its `colorRole` attribute:
+  `onSurface`, `onSurfaceVariant`, `primary`, `error`.
+- **Focus: the inverse color, a little zoom and a lift.** A focused entry (`ListEntry`,
+  `EntryText`) is filled with `inverseSurface`, light on a dark theme and dark on a light one,
+  its texts and icons the inverse too (they take its state, `duplicateParentState`), zoomed by
+  `entry_zoom` (1.05) and lifted, so the GPU casts its shadow; a focused button (`PillButton`)
+  turns to the inverse color (a danger one to the error color), zoomed by `button_zoom`. The zoom
+  and the lift are state animators made with each view, so a key press only starts them. A focused
+  view looks focused only while its window has the focus: a dialog or a list over a screen takes
+  the keys, and what had the focus under it looks as it is otherwise. A list's selected row
+  (`ListView`, which moves a selection, not the focus) looks focused while the list has the focus.
+- **What can be pressed looks like it.** Buttons have round ends: `filled` with the accent for the
+  action of a screen or dialog (Save, OK), `tonal` for the others (Cancel, Add all), `danger`, an
+  edge of the error color, for what deletes or resets. A button's icon sits beside its text, the
+  two centered together; where they don't fit, the icon gives way, so the text shows whole. A
+  field (the background editor's options) is filled with `surfaceHigh`, its value under its name, a
+  mark that it opens a list; outlined in the accent while its list shows (`activated`). The entry
+  chosen (the background's picture) is tinted with the accent (`activated`).
+- **Room for the zoom, inside what clips.** A parent that clips cuts each child to the child's own
+  bounds, so a zoomed entry needs its room inside the view that holds it: a list's padding, with
+  `clipToPadding` off, and `clipChildren` off on what's between it and what clips.
+- **A list that scrolls keeps its corners, and fades out below.** In a `ScrollFrame`, what scrolls
+  under the frame's edges is cut along its rounded corners (its outline, clipped by the GPU, no
+  layer, no bitmap); while there's more below, the last half row fades into the frame's color, one
+  gradient drawn over it, shown and hidden as the list scrolls, never while its end shows.
+- **Sizes.** Android TV's 960 x 540 dp canvas, the 48 dp margin at the sides and 27 to 32 dp above
+  and below, an 8 dp grid; Material for TV's type, a little larger for the distance (an entry's 18
+  sp, a line below it 14 sp, a screen's title 34 sp, smaller below 450 dp tall). Icons are line
+  drawings of this module (`icon_…`), white, tinted where they're used; the ones that point the
+  way the text reads (a chevron, opening another app) mirror in a right-to-left language.
+
+What keeps it light: a view's drawables are made when it's styled (a screen's start, a new
+theme), never while drawing or for a key press; a theme the screen has already is compared and
+skipped. A shadow is the GPU's, cast from a view's outline. A fade is one gradient over the list.
 
 ## The theme
 
@@ -68,7 +131,9 @@ themes (`Theme.DeviceDefault…`), not AppCompat, like every activity's `android
 (`windowBackground`, `colorBackground`, `windowSplashScreenBackground`) is set, dark, in the
 themes (this one, a feature's own), rather than left to `Theme.DeviceDefault`, which device makers
 may restyle. `ThemesTest`, in `:app`, checks every activity of the merged manifest, drawing their
-backgrounds over black.
+backgrounds over black. The user's theme, light ones too, is applied in code as a screen is made
+(`styleScreen`, `stylePanel`), before its first frame: Android shows no starting window for a
+screen opened from another of Luncher's (`windowDisablePreview`), nor for a floating one.
 
 **Texts at their view's start:** every theme (this one, a feature's own) sets `textAlignment` to
 `viewStart`, so in a right-to-left language each text lines up with the screen's direction rather

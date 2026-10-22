@@ -1,9 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- WorkingDialog: a spinning wheel and a message beside it; below them Cancel, for work that can
-     be stopped, gone otherwise. -->
+<!-- WorkingDialog: a spinning wheel and a message beside it; below them Cancel, a button, for work
+     that can be stopped, gone otherwise. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
+    android:clipChildren="false"
+    android:clipToPadding="false"
     android:orientation="vertical"
     android:padding="@dimen/working_padding">
 
@@ -13,37 +16,35 @@
         android:gravity="center_vertical"
         android:orientation="horizontal">
 
-        <ProgressBar
+        <com.luncher.launcher.ui.ThemedSpinner
             android:id="@+id/working_spinner"
             android:layout_width="@dimen/working_spinner"
             android:layout_height="@dimen/working_spinner"
-            android:indeterminate="true"
-            android:indeterminateTint="@color/accent" />
+            android:indeterminate="true" />
 
-        <TextView
+        <com.luncher.launcher.ui.ThemedText
             android:id="@+id/working_message"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="@dimen/working_gap"
             android:maxWidth="@dimen/working_text_width"
-            android:textColor="@color/text_primary"
             android:textSize="@dimen/working_text" />
     </LinearLayout>
 
-    <TextView
+    <com.luncher.launcher.ui.PillButton
         android:id="@+id/working_cancel"
         android:layout_width="match_parent"
-        android:layout_height="@dimen/working_entry_height"
+        android:layout_height="wrap_content"
         android:layout_marginTop="@dimen/working_entry_gap"
-        android:background="@drawable/entry_background"
         android:ellipsize="end"
         android:focusable="true"
         android:focusableInTouchMode="true"
-        android:gravity="center_vertical"
-        android:paddingLeft="@dimen/working_entry_padding"
-        android:paddingRight="@dimen/working_entry_padding"
+        android:fontFamily="sans-serif-medium"
+        android:minHeight="@dimen/button_height"
+        android:paddingLeft="@dimen/button_padding"
+        android:paddingRight="@dimen/button_padding"
         android:singleLine="true"
-        android:textColor="@color/text_primary"
-        android:textSize="@dimen/working_text"
-        android:visibility="gone" />
+        android:textSize="@dimen/text_button"
+        android:visibility="gone"
+        app:kind="tonal" />
 </LinearLayout>

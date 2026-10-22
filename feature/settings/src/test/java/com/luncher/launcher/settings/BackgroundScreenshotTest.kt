@@ -9,9 +9,8 @@ import android.view.ViewGroup
 import android.widget.EditText
 import android.widget.TextView
 import androidx.test.platform.app.InstrumentationRegistry
-import com.github.takahirom.roborazzi.ExperimentalRoborazziApi
-import com.github.takahirom.roborazzi.captureRoboImage
-import com.github.takahirom.roborazzi.captureScreenRoboImage
+import com.luncher.launcher.testing.captureFocused
+import com.luncher.launcher.testing.captureScreenFocused
 import com.luncher.domain.appearance.Appearance
 import com.luncher.domain.appearance.Background
 import com.luncher.domain.pictures.Blur
@@ -40,8 +39,6 @@ import org.robolectric.shadows.ShadowDialog
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(qualifiers = "en-rUS-$TV_1080P")
-// captureScreenRoboImage, the one capture of a dialog over its screen, both windows.
-@OptIn(ExperimentalRoborazziApi::class)
 class BackgroundScreenshotTest {
 
     private val application = RuntimeEnvironment.getApplication() as SettingsTestApplication
@@ -85,13 +82,13 @@ class BackgroundScreenshotTest {
     // The wallpaper chosen and focused, its options at their values, the preview drawing it.
     @Test
     fun backgroundEditor() {
-        editor(*library).window.decorView.captureRoboImage("src/test/screenshots/settings/settings_background.png")
+        editor(*library).window.decorView.captureFocused("src/test/screenshots/settings/settings_background.png")
     }
 
     // No picture yet: how to add one.
     @Test
     fun backgroundEditorEmpty() {
-        editor().window.decorView.captureRoboImage("src/test/screenshots/settings/settings_background_empty.png")
+        editor().window.decorView.captureFocused("src/test/screenshots/settings/settings_background_empty.png")
     }
 
     // After Save: the window saying the wallpaper is being drawn.
@@ -101,19 +98,19 @@ class BackgroundScreenshotTest {
         activity.row("beach.png").performClick()
         activity.findViewById<View>(R.id.settings_background_save).performClick()
         idle()
-        captureScreenRoboImage("src/test/screenshots/settings/settings_background_saving.png")
+        captureScreenFocused("src/test/screenshots/settings/settings_background_saving.png")
     }
 
-    // OK on Blur: its values in a list over its value, Light, the one it has, focused, and the
-    // preview showing it.
+    // OK on Blur: its values in a list beside the options, over the pictures, Light, the one it
+    // has, checked and focused, level with the field, and the preview showing it.
     @Test
     fun optionList() {
         val activity = editor(*library)
-        val blur = activity.findViewById<ViewGroup>(R.id.settings_background_options).getChildAt(3)
+        val blur = (activity.findViewById<ViewGroup>(R.id.settings_background_options).getChildAt(1) as ViewGroup).getChildAt(1)
         blur.requestFocus()
         blur.performClick()
         idle()
-        captureScreenRoboImage("src/test/screenshots/settings/settings_background_option_list.png")
+        captureScreenFocused("src/test/screenshots/settings/settings_background_option_list.png")
     }
 
     /** A long press of OK on [name]'s row, then the entry [index] of what it offers. */
@@ -129,14 +126,14 @@ class BackgroundScreenshotTest {
     fun pictureActions() {
         editor(*library).row("sunset.jpg").performLongClick()
         idle()
-        captureScreenRoboImage("src/test/screenshots/settings/settings_background_actions.png")
+        captureScreenFocused("src/test/screenshots/settings/settings_background_actions.png")
     }
 
     // Delete on the wallpaper's picture: the question, saying it's the wallpaper.
     @Test
     fun deleteQuestion() {
         editor(*library).longPress("sunset.jpg", 1)
-        captureScreenRoboImage("src/test/screenshots/settings/settings_background_delete.png")
+        captureScreenFocused("src/test/screenshots/settings/settings_background_delete.png")
     }
 
     // Delete all, beside Save, with the background's picture among them: the question, Cancel focused.
@@ -144,7 +141,7 @@ class BackgroundScreenshotTest {
     fun deleteAllQuestion() {
         editor(*library).findViewById<android.view.View>(R.id.settings_background_delete_all).performClick()
         idle()
-        captureScreenRoboImage("src/test/screenshots/settings/settings_background_delete_all.png")
+        captureScreenFocused("src/test/screenshots/settings/settings_background_delete_all.png")
     }
 
     // Rename, and another picture's name typed: the field, and why the name can't be.
@@ -155,7 +152,7 @@ class BackgroundScreenshotTest {
         dialog.findViewById<EditText>(R.id.settings_pictures_dialog_field).setText("beach.png")
         dialog.findViewById<ViewGroup>(R.id.settings_pictures_dialog_entries).getChildAt(0).performClick()
         idle()
-        captureScreenRoboImage("src/test/screenshots/settings/settings_background_rename.png")
+        captureScreenFocused("src/test/screenshots/settings/settings_background_rename.png")
     }
 
     /** The window over the home screen after a share of [shared], which adds as [result]. */
@@ -171,14 +168,14 @@ class BackgroundScreenshotTest {
     fun pictureReceived() {
         val shared = Uri.parse("content://com.example.files/holiday.jpg")
         received(shared, ImportResult.Added(picture("holiday.jpg", added = 9)))
-        captureScreenRoboImage("src/test/screenshots/settings/settings_received.png")
+        captureScreenFocused("src/test/screenshots/settings/settings_received.png")
     }
 
     // While it's added.
     @Test
     fun pictureReceivedAdding() {
         received(Uri.parse("content://com.example.files/holiday.jpg"), null)
-        captureScreenRoboImage("src/test/screenshots/settings/settings_received_adding.png")
+        captureScreenFocused("src/test/screenshots/settings/settings_received_adding.png")
     }
 
     /** The window after a share of four photos, the last not a picture, the second being added with [adding]. */
@@ -198,14 +195,14 @@ class BackgroundScreenshotTest {
     @Test
     fun picturesReceivedAdding() {
         receivedFour(adding = true)
-        captureScreenRoboImage("src/test/screenshots/settings/settings_received_several_adding.png")
+        captureScreenFocused("src/test/screenshots/settings/settings_received_several_adding.png")
     }
 
     // Four photos shared at once, one of them not a picture: how many were saved, and how many not.
     @Test
     fun picturesReceived() {
         receivedFour(adding = false)
-        captureScreenRoboImage("src/test/screenshots/settings/settings_received_several.png")
+        captureScreenFocused("src/test/screenshots/settings/settings_received_several.png")
     }
 
     // A shared iPhone photo on a TV that can't show HEIC.
@@ -213,21 +210,21 @@ class BackgroundScreenshotTest {
     fun pictureReceivedUnsupported() {
         val shared = Uri.parse("content://com.example.files/IMG_0001.HEIC")
         received(shared, ImportResult.UnsupportedFormat(PictureFormat.HEIF))
-        captureScreenRoboImage("src/test/screenshots/settings/settings_received_unsupported.png")
+        captureScreenFocused("src/test/screenshots/settings/settings_received_unsupported.png")
     }
 
     // 720p at the 1080p density, 640x360 dp: the pictures take half the screen; the start scrolls.
     @Test
     @Config(qualifiers = "+w640dp-h360dp")
     fun backgroundEditorOnASmallScreen() {
-        editor(*library).window.decorView.captureRoboImage("src/test/screenshots/settings/settings_background_small_screen.png")
+        editor(*library).window.decorView.captureFocused("src/test/screenshots/settings/settings_background_small_screen.png")
     }
 
     // Arabic: mirrored, the pictures at the left; the preview's content and the pictures themselves aren't.
     @Test
     @Config(qualifiers = "ar-rEG-$TV_1080P")
     fun backgroundEditorInArabic() {
-        editor(*library).window.decorView.captureRoboImage("src/test/screenshots/settings/settings_background_arabic.png")
+        editor(*library).window.decorView.captureFocused("src/test/screenshots/settings/settings_background_arabic.png")
     }
 
     /** Add from folder with [pictures] in the folders, the first selected and previewed; the library [library]. */
@@ -251,12 +248,12 @@ class BackgroundScreenshotTest {
             folderPicture("logo-netflix.png", removable = true),
             folderPicture("wallpaper-4k.jpg"),
             folderPicture("IMG_0001.HEIC", unsupported = PictureFormat.HEIF),
-        ).window.decorView.captureRoboImage("src/test/screenshots/pictures/pictures_add_from_folder.png")
+        ).window.decorView.captureFocused("src/test/screenshots/pictures/pictures_add_from_folder.png")
     }
 
     @Test
     fun addFromFolderEmpty() {
-        folderScreen().window.decorView.captureRoboImage("src/test/screenshots/pictures/pictures_add_from_folder_empty.png")
+        folderScreen().window.decorView.captureFocused("src/test/screenshots/pictures/pictures_add_from_folder_empty.png")
     }
 
     // What the list tells can't be added, marked: too large, the same file, another of the name.
@@ -268,7 +265,7 @@ class BackgroundScreenshotTest {
             folderPicture("panorama.jpg", bytes = 184_000_000, width = 21621, height = 7004),
             folderPicture("wallpaper-4k.jpg"),
             library = FakePictures(picture("holiday.jpg", bytes = 2_400_000), picture("logo-netflix.png", bytes = 80_000)),
-        ).window.decorView.captureRoboImage("src/test/screenshots/pictures/pictures_add_from_folder_refused.png")
+        ).window.decorView.captureFocused("src/test/screenshots/pictures/pictures_add_from_folder_refused.png")
     }
 
     // OK on a picture: the window while it's added, Cancel focused.
@@ -277,7 +274,7 @@ class BackgroundScreenshotTest {
         val activity = folderScreen(folderPicture("wallpaper-4k.jpg"), library = FakePictures<Uri>().apply { answerLater = true })
         activity.findViewById<android.widget.ListView>(R.id.settings_pictures_folder_list).performItemClick(null, 0, 0)
         idle()
-        captureScreenRoboImage("src/test/screenshots/pictures/pictures_add_from_folder_adding.png")
+        captureScreenFocused("src/test/screenshots/pictures/pictures_add_from_folder_adding.png")
     }
 
     // Add all, some added, some not: how it went, before returning to the background editor.
@@ -292,6 +289,6 @@ class BackgroundScreenshotTest {
         val activity = folderScreen(holiday, logo, folderPicture("beach.png"), folderPicture("damaged.jpg"), library = library)
         activity.findViewById<android.view.View>(R.id.settings_pictures_folder_add_all).performClick()
         shadowOf(Looper.getMainLooper()).idleFor(java.time.Duration.ofMillis(com.luncher.launcher.ui.WorkingDialog.SHORTEST))
-        captureScreenRoboImage("src/test/screenshots/pictures/pictures_add_from_folder_added_all.png")
+        captureScreenFocused("src/test/screenshots/pictures/pictures_add_from_folder_added_all.png")
     }
 }

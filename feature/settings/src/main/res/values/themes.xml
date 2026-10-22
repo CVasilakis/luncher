@@ -55,4 +55,34 @@
         <item name="android:windowAnimationStyle">@null</item>
         <item name="android:windowContentOverlay">@null</item>
     </style>
+
+    <!-- A section's label, above its content (the background editor's, Add from folder's). -->
+    <style name="Widget.Luncher.Settings.Label" parent="">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginBottom">@dimen/settings_label_gap</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:letterSpacing">0.04</item>
+        <item name="android:singleLine">true</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:textSize">@dimen/text_label</item>
+        <item name="colorRole">onSurfaceVariant</item>
+    </style>
+
+    <!-- A button of the settings screens (ui's PillButton): as wide as EntriesRow gives it, or
+         its layout, its text on one line, its icon before it. -->
+    <style name="Widget.Luncher.Settings.Button" parent="">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:minHeight">@dimen/button_height</item>
+        <item name="android:paddingLeft">@dimen/button_padding</item>
+        <item name="android:paddingRight">@dimen/button_padding</item>
+        <item name="android:drawablePadding">@dimen/icon_gap</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:singleLine">true</item>
+        <item name="android:focusable">true</item>
+        <item name="android:focusableInTouchMode">true</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:textSize">@dimen/text_button</item>
+    </style>
 </resources>

@@ -1,6 +1,7 @@
 package com.luncher.launcher.settings
 
 import android.content.Context
+import com.luncher.domain.appearance.AccentColor
 import com.luncher.domain.appearance.AppName
 import com.luncher.domain.appearance.Appearance
 import com.luncher.domain.appearance.AppearanceOption
@@ -9,10 +10,13 @@ import com.luncher.domain.appearance.Corners
 import com.luncher.domain.appearance.FocusStyle
 import com.luncher.domain.appearance.HorizontalAlignment
 import com.luncher.domain.appearance.Side
+import com.luncher.domain.appearance.ThemeMode
 import com.luncher.domain.appearance.VerticalAlignment
+import com.luncher.domain.appearance.colorRoles
 import com.luncher.domain.pictures.Blur
 import com.luncher.domain.pictures.Fit
 import com.luncher.domain.pictures.PicturePosition
+import com.luncher.launcher.ui.R as UiR
 
 // What the appearance's options, their values and groups are called, in the user's language: one
 // exhaustive `when` each, so a new option doesn't compile until it has its labels. The appearance
@@ -21,7 +25,16 @@ import com.luncher.domain.pictures.PicturePosition
 internal fun topicTitle(topic: AppearanceTopic): Int = when (topic) {
     AppearanceTopic.TILES -> R.string.settings_appearance_tiles
     AppearanceTopic.TOP_BAR -> R.string.settings_appearance_top_bar
+    AppearanceTopic.THEME -> R.string.settings_appearance_theme
     AppearanceTopic.BACKGROUND -> R.string.settings_appearance_background
+}
+
+/** The icon before a group's name. */
+internal fun topicIcon(topic: AppearanceTopic): Int = when (topic) {
+    AppearanceTopic.TILES -> UiR.drawable.icon_grid
+    AppearanceTopic.TOP_BAR -> UiR.drawable.icon_clock
+    AppearanceTopic.THEME -> UiR.drawable.icon_palette
+    AppearanceTopic.BACKGROUND -> UiR.drawable.icon_image
 }
 
 internal fun optionLabel(option: AppearanceOption<*>): Int = when (option) {
@@ -35,6 +48,8 @@ internal fun optionLabel(option: AppearanceOption<*>): Int = when (option) {
     AppearanceOption.ShowDate -> R.string.settings_appearance_date
     AppearanceOption.ClockSide -> R.string.settings_appearance_clock_side
     AppearanceOption.TimeSide -> R.string.settings_appearance_time_side
+    AppearanceOption.AccentColor -> R.string.settings_appearance_accent
+    AppearanceOption.ThemeMode -> R.string.settings_appearance_mode
     AppearanceOption.BackgroundFit -> R.string.settings_appearance_fit
     AppearanceOption.BackgroundPosition -> R.string.settings_appearance_position
     AppearanceOption.BackgroundDim -> R.string.settings_appearance_dim
@@ -56,10 +71,34 @@ internal fun Context.optionValue(option: AppearanceOption<*>, appearance: Appear
     AppearanceOption.ShowDate -> getString(shown(AppearanceOption.ShowDate.get(appearance)))
     AppearanceOption.ClockSide -> getString(side(AppearanceOption.ClockSide.get(appearance)))
     AppearanceOption.TimeSide -> getString(order(AppearanceOption.TimeSide.get(appearance)))
+    AppearanceOption.AccentColor -> getString(accent(AppearanceOption.AccentColor.get(appearance)))
+    AppearanceOption.ThemeMode -> getString(mode(AppearanceOption.ThemeMode.get(appearance)))
     AppearanceOption.BackgroundFit -> getString(fit(AppearanceOption.BackgroundFit.get(appearance)))
     AppearanceOption.BackgroundPosition -> getString(position(AppearanceOption.BackgroundPosition.get(appearance)))
     AppearanceOption.BackgroundDim -> getString(dim(AppearanceOption.BackgroundDim.get(appearance)))
     AppearanceOption.BackgroundBlur -> getString(blur(AppearanceOption.BackgroundBlur.get(appearance)))
+}
+
+private fun accent(accent: AccentColor): Int = when (accent) {
+    AccentColor.ORANGE -> R.string.settings_appearance_orange
+    AccentColor.PINK -> R.string.settings_appearance_pink
+    AccentColor.PURPLE -> R.string.settings_appearance_purple
+    AccentColor.BLUE -> R.string.settings_appearance_blue
+    AccentColor.TEAL -> R.string.settings_appearance_teal
+    AccentColor.GREEN -> R.string.settings_appearance_green
+    AccentColor.AMBER -> R.string.settings_appearance_amber
+    AccentColor.GRAY -> R.string.settings_appearance_gray
+}
+
+private fun mode(mode: ThemeMode): Int = when (mode) {
+    ThemeMode.DARK -> R.string.settings_appearance_dark
+    ThemeMode.LIGHT -> R.string.settings_appearance_light_mode
+}
+
+/** The color shown before [option]'s value, for the accent: the accent itself, as the menus show it. */
+internal fun optionSwatch(option: AppearanceOption<*>, appearance: Appearance): Int? = when (option) {
+    AppearanceOption.AccentColor -> colorRoles(appearance.theme).primary
+    else -> null
 }
 
 private fun focus(style: FocusStyle): Int = when (style) {
