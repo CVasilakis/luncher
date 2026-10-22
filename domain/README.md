@@ -22,6 +22,7 @@ domain/src/
 │   │   ├── AppArrangements.kt   port: where the arrangement is kept, and when it changes
 │   │   ├── HomeApps.kt          rule: which apps the home screen shows, in which order, and which are hidden
 │   │   ├── ArrangedApps.kt      model and rules: the shown and hidden apps; hiding or showing one, and what to store
+│   │   ├── AppAction.kt         model and rule: what the user can do to an app from its tile's menu, one type each, and which the menu offers
 │   │   └── Banner.kt            model and rule: which image a tile shows (the app's banner or its icon)
 │   ├── appearance/
 │   │   ├── Appearance.kt        model: how the home screen looks, as far as the user can change it, in parts (docs/ARCHITECTURE.md#appearance)
@@ -67,15 +68,15 @@ domain/src/
 │   │   ├── SettingsEntry.kt     model: the kinds of entry the settings panel lists, one type each
 │   │   └── SettingsMenu.kt      rule: which entries the panel lists, in order
 │   ├── arrange/
-│   │   └── ArrangeSession.kt    rule: the user arranging apps, holding one and moving it among and between shown and hidden
+│   │   └── MoveSession.kt       rule: the user moving one shown app among the others
 │   └── layout/
 │       ├── TileLayout.kt        how an arrangement of tiles reports sizes and positions
-│       ├── TileMoves.kt         how it says where a tile the user moves goes, and which tile is nearest across
+│       ├── TileMoves.kt         how it says where a tile the user moves goes, and which row and place across a tile is at
 │       ├── Direction.kt         model: a D-pad arrow
 │       ├── TileGrid.kt          rule: the grid (rows of tiles as wide as a width; the short row first or last, at the left, centered or at the right; at the top, centered or at the bottom of a height; room below each row for the focused tile's name), and moves in it
 │       ├── TileFocus.kt         rule: where each arrow takes the focus among the tiles: along the row, the nearest tile up or down, and back the way it came
 │       ├── TileLayouts.kt       rule: the layouts for a TileGeometry, in pixels at a density; picks the arrangement and placement
-│       ├── ShelfLayout.kt       rule: the shown apps' tiles above a shelf of the hidden ones, while arranging
+│       ├── TileMenuPlacement.kt rule: where a tile's menu goes, above or below the tile, inside the screen's room
 │       └── TopBarLayout.kt      rule: which edge of the top bar each of its items is at, for a TopBarAppearance
 ├── test/kotlin/…/               unit tests (docs/TESTING.md), same packages as the code
 └── testFixtures/kotlin/…/       fakes of the ports, used by the tests of every module
@@ -100,7 +101,7 @@ Packages are by topic (`appearance/`, `apps/`, `arrange/`, `clock/`, `jobs/`, `l
 - Models are immutable (`data class` with `val`s).
 - Rules are plain functions or classes that take models and return models. They have no side effects,
   so they're testable without fakes. The exceptions are the rules that follow the user's key
-  presses, `ArrangeSession` and `TileFocus`: they keep state (the held app, the last move) and
+  presses, `MoveSession` and `TileFocus`: they keep state (the held app, the last move) and
   change it in place, so a key press allocates nothing
   ([`ARCHITECTURE.md`](../docs/ARCHITECTURE.md#rules), rule 5). It's still pure Kotlin, tested the
   same way.

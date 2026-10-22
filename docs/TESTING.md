@@ -46,7 +46,7 @@ Use the lowest tier that can catch the regression; each step up is slower and mo
 - **That a key press or a frame allocates nothing** ([`ARCHITECTURE.md`](ARCHITECTURE.md#rules),
   rule 5): Android JVM test counting the bytes the test's thread allocates, with native graphics,
   around only the steps Robolectric doesn't stand in for: measuring and drawing, not scrolling,
-  whose stand-ins allocate (`ArrangeModeTest`).
+  whose stand-ins allocate (`MoveModeTest`).
 - **Real key events on a screen** (D-pad focus movement, OK, Back): Espresso.
 - **Anything across apps or the system** (Home key, launching an app and returning, being the
   default home): UI Automator.
@@ -133,7 +133,7 @@ text larger. `HomeLayoutTest`, `SettingsLayoutTest` and `BackgroundLayoutTest` r
 `ui/src/testFixtures/…/testing/TvDevice.kt`, in each language Luncher's texts are in (`LANGUAGES`
 there, [`TRANSLATIONS.md`](TRANSLATIONS.md)), and check rules rather than pixels
 (`LayoutChecks.kt`): everything inside the TV's overscan margin, tiles clear of each other and of
-the top bar even zoomed, tiles of about the size meant, no text cut (except the arrange title,
+the top bar even zoomed, tiles of about the size meant, no text cut (except the move title,
 which ends in "…" where it must), panels a margin from the screen's edges. A new element of a
 screen gets its check there, a new screen a `*LayoutTest` of its own, and a screen to support a
 line in `TV_SCREENS`. Their text checks need native graphics, like the

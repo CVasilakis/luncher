@@ -4,9 +4,7 @@ import android.graphics.Bitmap
 import android.graphics.RectF
 import android.os.Looper
 import android.text.format.DateFormat
-import android.view.KeyEvent
 import android.view.View
-import android.view.ViewConfiguration
 import android.widget.TextView
 import com.luncher.domain.appearance.AppName
 import com.luncher.domain.appearance.Appearance
@@ -201,23 +199,20 @@ class HomeLayoutTest(private val screen: TvScreen) {
     }
 
     @Test
-    fun `arrange mode fits with the focused tile's name shown`() {
+    fun `moving an app fits with the focused tile's name shown`() {
         appearance.appearance = Appearance(TileGeometry(appName = AppName.WHEN_FOCUSED), TileStyle(focus = FocusStyle.LIFT))
 
-        `arrange mode fits`()
+        `moving an app fits`()
     }
 
     @Test
-    fun `arrange mode fits`() {
+    fun `moving an app fits`() {
         val activity = start()
         val tile = activity.tiles().first()
-        tile.requestFocus()
-        activity.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DPAD_CENTER))
-        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(ViewConfiguration.getLongPressTimeout() + 50L))
-        activity.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_DPAD_CENTER))
+        tile.startMoving()
         shadowOf(Looper.getMainLooper()).idleFor(Duration.ofSeconds(1))   // the next frames: layout, zoom
-        val title = activity.findViewById<TextView>(R.id.home_arrange_title)
-        val hint = activity.findViewById<TextView>(R.id.home_arrange_hint)
+        val title = activity.findViewById<TextView>(R.id.home_move_title)
+        val hint = activity.findViewById<TextView>(R.id.home_move_hint)
         assertTrue(tile.held)
 
         for (view in listOf(title, hint)) assertInside(screen, activity.safeArea(), activity.name(view), bounds(view))

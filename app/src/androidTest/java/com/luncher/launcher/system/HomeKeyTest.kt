@@ -14,9 +14,11 @@ import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.Until
 import com.luncher.launcher.home.HomeActivity
 import com.luncher.launcher.settings.SettingsActivity
+import com.luncher.launcher.testing.focus
 import com.luncher.launcher.testing.longPressOk
 import com.luncher.launcher.testing.resolvedActivity
 import com.luncher.launcher.testing.resolvedHome
+import com.luncher.launcher.testing.waitForDialogFocus
 import com.luncher.launcher.testing.waitForFocus
 import com.luncher.launcher.testing.waitForHomeScreen
 import org.junit.After
@@ -292,27 +294,32 @@ class HomeKeyTest {
         assertTrue("Luncher isn't in front", device.wait(Until.hasObject(By.pkg(LUNCHER)), TIMEOUT_MS))
     }
 
+    // Not moving an app: the menu offers Move only with another app shown, and the device's apps
+    // are what they are. Home reaches the home screen the same way either way (onNewIntent), which
+    // ends moving too, as the JVM tests check.
     @Test
-    fun homeKey_endsArrangeMode() {
-        // Luncher is in front, settled (makeLuncherTheHome); a Home now could reach it late and end
-        // the mode the long press starts. Seen with a focused tile, so it's laid out (its window
+    fun homeKey_closesTheTilesMenu() {
+        // Luncher is in front, settled (makeLuncherTheHome); a Home now could reach it late, before
+        // the menu the long press opens. Seen with a focused tile, so it's laid out (its window
         // can get the focus before that, and a long press sent then was lost), and its window has
         // the focus: keys go there.
         assertTrue("Luncher isn't in front", device.wait(Until.hasObject(By.pkg(LUNCHER).focused(true)), TIMEOUT_MS))
         waitForFocus(HomeActivity::class.java)
+        val home = focus()
         longPressOk()   // on the focused app
-        assertTrue("Arrange mode didn't start", device.wait(Until.hasObject(ARRANGE_TITLE), TIMEOUT_MS))
+        assertTrue("The tile's menu didn't open", device.wait(Until.hasObject(TILE_MENU), TIMEOUT_MS))
+        waitForDialogFocus(home)
 
         device.pressHome()
 
-        assertTrue("Arrange mode didn't end", device.wait(Until.gone(ARRANGE_TITLE), TIMEOUT_MS))
-        assertTrue("The settings entry didn't come back", device.hasObject(By.res(LUNCHER, "home_settings")))
+        assertTrue("The tile's menu didn't close", device.wait(Until.gone(TILE_MENU), TIMEOUT_MS))
+        assertTrue("The settings entry isn't there", device.hasObject(By.res(LUNCHER, "home_settings")))
     }
 
     private companion object {
         /** The app under test, e.g. com.luncher.launcher.debug (a debug build's ID). */
         val LUNCHER: String = InstrumentationRegistry.getInstrumentation().targetContext.packageName
-        val ARRANGE_TITLE: BySelector = By.res(LUNCHER, "home_arrange_title")
+        val TILE_MENU: BySelector = By.res(LUNCHER, "home_tile_menu")
         const val TAG = "HomeKeyTest"
 
         /**

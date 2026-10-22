@@ -11,8 +11,10 @@ import android.view.View
 import android.widget.TextView
 import android.window.OnBackInvokedDispatcher
 import com.luncher.domain.appearance.Appearance
+import com.luncher.domain.apps.AppAction
 import com.luncher.domain.apps.ArrangedApps
 import com.luncher.domain.apps.InstalledApp
+import com.luncher.domain.apps.appActions
 import com.luncher.domain.apps.homeApps
 import com.luncher.launcher.settings.R as SettingsR
 import com.luncher.launcher.settings.SettingsActivity
@@ -21,8 +23,8 @@ import java.util.Locale
 /**
  * The home screen: the time, the date and a settings entry above the TV apps the user didn't hide,
  * as tiles; OK on a tile opens its app, OK on the settings entry (or the Menu key) opens the
- * settings panel. A long press of OK on a tile starts [ArrangeMode], where the user moves and
- * hides apps; it gets every key first while it's on.
+ * settings panel. A long press of OK on a tile opens its [TileMenu], to move its app ([MoveMode],
+ * which gets every key first while it's on) or hide it.
  *
  * How it looks follows the user's [Appearance] while it's shown: each part goes to the view that
  * draws it (the background to the window, [HomeWallpaper]), which compares it with what it has, so
@@ -38,36 +40,42 @@ class HomeActivity : Activity() {
     private lateinit var topBar: TopBarView
     private lateinit var tiles: AppTilesView
     private lateinit var clockView: ClockView
+    private lateinit var settingsEntry: View
     private lateinit var empty: TextView
-    private lateinit var arrange: ArrangeMode
+    private lateinit var move: MoveMode
     private lateinit var wallpaper: HomeWallpaper
+
+    /** The tiles' menu: made the first time a long press opens it. */
+    private var menu: TileMenu? = null
 
     /** What the tiles show; null until the first [onResume]. */
     private var shown: List<InstalledApp>? = null
 
-    /** The apps as last read, shown and hidden: where arrange mode starts from. */
+    /** The apps as last read, shown and hidden: what the tiles' menu acts on. */
     private var arranged: ArrangedApps? = null
 
     private val showAppearance: () -> Unit = { show(appearanceSettings.read()) }
 
-    // Hidden or shown in the settings, over the home screen: shown at once. Not while arranging,
-    // whose own saves these are, with the tiles showing them already.
-    private val showArrangement: () -> Unit = { if (!arrange.active) refresh() }
+    // Hidden or shown in the settings, over the home screen, or hidden from a tile's menu: shown at
+    // once. Not while moving an app, whose own save this is, with the tiles showing it already.
+    private val showArrangement: () -> Unit = { if (!move.active) refresh() }
 
-    /** Apps installed, updated or removed while the user arranges apps, read when the mode ends. */
-    private var appsChangedWhileArranging = false
+    /** Apps installed, updated or removed while the user moves an app, read when the mode ends. */
+    private var appsChangedWhileMoving = false
 
-    // Installed, updated or removed while shown: shown at once, or, while arranging, whose tiles
-    // are the user's work in progress, once it ends.
+    // Installed, updated or removed while shown: shown at once, or, while moving an app, whose
+    // tiles are the user's work in progress, once it ends.
     private val showAppChanges: () -> Unit = {
-        if (arrange.active) appsChangedWhileArranging = true else refresh()
+        if (move.active) appsChangedWhileMoving = true else refresh()
     }
 
     private val openApp = View.OnClickListener { open((it as AppTileView).app) }
 
-    private val startArranging = View.OnLongClickListener {
+    private val openMenu = View.OnLongClickListener {
         val arranged = arranged ?: return@OnLongClickListener false
-        arrange.start(arranged, it as AppTileView)
+        val tile = it as AppTileView
+        val menu = menu ?: TileMenu(this).also { menu = it }
+        menu.show(tile, appActions(arranged, tile.app)) { action -> act(action, tile) }
         true
     }
 
@@ -78,25 +86,24 @@ class HomeActivity : Activity() {
         tiles = findViewById(R.id.home_apps)
         empty = findViewById(R.id.home_empty)
         clockView = findViewById(R.id.home_clock)
-        val settingsEntry = findViewById<View>(R.id.home_settings)
+        settingsEntry = findViewById(R.id.home_settings)
         settingsEntry.setOnClickListener { openSettings() }
         wallpaper = HomeWallpaper(this, graph.wallpaper)
-        arrange = ArrangeMode(
+        move = MoveMode(
             tiles,
             normalBar = listOf(clockView, settingsEntry),
-            title = findViewById(R.id.home_arrange_title),
-            hint = findViewById(R.id.home_arrange_hint),
-            images,
+            title = findViewById(R.id.home_move_title),
+            hint = findViewById(R.id.home_move_hint),
             arrangements,
-            onEnd = ::arrangingEnded,
+            onEnd = ::movingEnded,
         )
-        // A home activity must not finish on Back: Back only ends arrange mode. From Android 16
+        // A home activity must not finish on Back: Back only ends moving an app. From Android 16
         // (API 36) on, Back no longer calls onBackPressed in apps targeting it, nor reaches them
         // as a key, and closes the activity unless a callback takes it; before that,
         // onBackPressed below does.
         if (Build.VERSION.SDK_INT >= 36) {
             onBackInvokedDispatcher.registerOnBackInvokedCallback(OnBackInvokedDispatcher.PRIORITY_DEFAULT) {
-                arrange.back()
+                move.back()
             }
         }
     }
@@ -117,7 +124,9 @@ class HomeActivity : Activity() {
 
     override fun onStop() {
         super.onStop()
-        arrange.end()   // leaving the home screen (another app, the screen off) ends it
+        // Leaving the home screen (another app, the screen off) closes the menu and ends moving.
+        menu?.dismiss()
+        move.end()
         clockView.stop()
         wallpaper.stop()
         appearanceSettings.removeListener(showAppearance)
@@ -127,19 +136,20 @@ class HomeActivity : Activity() {
 
     override fun onResume() {
         super.onResume()
-        // Paused and resumed while arranging (a system dialog came and went): the tiles are the
-        // user's work in progress, so the apps are read again only when the mode ends.
-        if (!arrange.active) refresh()
+        // Paused and resumed while moving an app (a system dialog came and went): the tiles are
+        // the user's work in progress, so the apps are read again only when the mode ends.
+        if (!move.active) refresh()
     }
 
     // Home while the home screen is in front.
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        arrange.end()
+        menu?.dismiss()
+        move.end()
     }
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean =
-        arrange.dispatchKeyEvent(event) || super.dispatchKeyEvent(event)
+        move.dispatchKeyEvent(event) || super.dispatchKeyEvent(event)
 
     /**
      * Reads the apps again: apps may have been installed or removed, or hidden or shown in the
@@ -160,19 +170,32 @@ class HomeActivity : Activity() {
         wallpaper.show(appearance.background)
     }
 
-    /** Arrange mode ended: the tiles show [arranged] already, unless apps changed meanwhile. */
-    private fun arrangingEnded(arranged: ArrangedApps) {
+    /** What OK on an entry of [tile]'s menu does. */
+    private fun act(action: AppAction, tile: AppTileView) {
+        val arranged = arranged ?: return
+        when (action) {
+            AppAction.Move -> move.start(arranged, tile)
+            // Stored, and shown as any change of the arrangement is (showArrangement).
+            AppAction.Hide -> arrangements.save(arranged.hide(tile.app).arrangement)
+        }
+    }
+
+    /** Moving an app ended: the tiles show [arranged] already, unless apps changed meanwhile. */
+    private fun movingEnded(arranged: ArrangedApps) {
         this.arranged = arranged
         shown = arranged.shown
-        showWhyEmpty(arranged)
-        if (appsChangedWhileArranging) {
-            appsChangedWhileArranging = false
+        if (appsChangedWhileMoving) {
+            appsChangedWhileMoving = false
             refresh()
         }
     }
 
     private fun show(apps: List<InstalledApp>) {
-        val focused = (tiles.focusedChild as? AppTileView)?.app?.launchable
+        // The menu is of a tile that may be gone, or of an app that changed.
+        menu?.dismiss()
+        val focusedTile = tiles.focusedChild as? AppTileView
+        val focused = focusedTile?.app?.launchable
+        val focusedIndex = focusedTile?.let { tiles.indexOfChild(it) } ?: 0
         // Focus in the top bar (on the settings entry) stays there; the tiles don't take it.
         val topBarFocused = topBar.hasFocus()
         // Apps still there keep their tile and its image: installing one app draws one banner.
@@ -182,13 +205,15 @@ class HomeActivity : Activity() {
             tiles.addView(
                 kept[app] ?: AppTileView(this, app, images, tiles.paints).apply {
                     setOnClickListener(openApp)
-                    setOnLongClickListener(startArranging)
+                    setOnLongClickListener(openMenu)
                 },
             )
         }
         shown = apps
-        val index = apps.indexOfFirst { it.launchable == focused }.coerceAtLeast(0)
-        if (!topBarFocused) tiles.getChildAt(index)?.requestFocus()
+        // The focused app gone (hidden, uninstalled): the tile now in its place, or the last one;
+        // without tiles, the settings entry.
+        val index = apps.indexOfFirst { it.launchable == focused }.takeIf { it >= 0 } ?: focusedIndex.coerceAtMost(apps.size - 1)
+        if (!topBarFocused) (tiles.getChildAt(index) ?: settingsEntry).requestFocus()
     }
 
     /** Without tiles, says why: nothing installed, or everything hidden (and where to show apps again). */
@@ -241,5 +266,5 @@ class HomeActivity : Activity() {
     // (OnBackInvokedCallback). Doesn't call super, which would close the home screen.
     @SuppressLint("GestureBackNavigation")
     @Deprecated("Deprecated in Java")
-    override fun onBackPressed() = arrange.back()
+    override fun onBackPressed() = move.back()
 }

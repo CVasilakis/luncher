@@ -174,21 +174,6 @@ class TileGridTest {
         assertEquals(listOf(0, 8, 0, 6, 2), listOf(0, 4, 5, 8, 11).map(twelve::slot))
     }
 
-    @Test
-    fun `a tile coming in from above takes the first row, at its slot`() {
-        assertEquals(3, twelve.entryIndex(Direction.DOWN, slot = 6))
-        assertEquals(2, grid(tiles = 2).entryIndex(Direction.DOWN, slot = 8))   // as near as there are tiles
-        assertEquals(0, grid(tiles = 0).entryIndex(Direction.DOWN, slot = 8))
-    }
-
-    @Test
-    fun `a tile coming in from below takes the last row, at its slot`() {
-        assertEquals(11, twelve.entryIndex(Direction.UP, slot = 2))
-        assertEquals(12, twelve.entryIndex(Direction.UP, slot = 8))   // after the last tile
-        assertEquals(8, grid(tiles = 10).entryIndex(Direction.UP, slot = 6))   // a full last row
-        assertEquals(0, grid(tiles = 0).entryIndex(Direction.UP, slot = 4))
-    }
-
     // Alignment: a short row at the right or centered, the short row first, the rows at the bottom
     // or centered in the height.
 
@@ -308,23 +293,6 @@ class TileGridTest {
         assertEquals(3, grid.indexToward(0, Direction.DOWN))   // slot 3: 3 and 4 as near
     }
 
-    @Test
-    fun `centered, a tile coming in lands where the longer row puts it nearest`() {
-        // One more in the last row makes it 5, 6 and the new tile at slots 2, 4 and 6.
-        assertEquals(5, sevenCentered.entryIndex(Direction.UP, slot = 0))
-        assertEquals(6, sevenCentered.entryIndex(Direction.UP, slot = 4))
-        assertEquals(7, sevenCentered.entryIndex(Direction.UP, slot = 8))
-    }
-
-    @Test
-    fun `the focus coming in lands on the edge row's nearest tile`() {
-        assertEquals(3, twelve.edgeIndex(Direction.DOWN, slot = 6))
-        assertEquals(11, twelve.edgeIndex(Direction.UP, slot = 6))           // as near as the row goes
-        assertEquals(5, sevenCentered.edgeIndex(Direction.UP, slot = 4))    // the left one of two as near
-        assertEquals(6, sevenCentered.edgeIndex(Direction.UP, slot = 5))
-        assertEquals(null, grid(tiles = 0).edgeIndex(Direction.DOWN, slot = 0))
-    }
-
     // Twelve tiles aligned right: rows 0-4, 5-9, and 10-11 in columns 3 and 4.
     private val twelveRight = placed(tiles = 12, row = HorizontalAlignment.RIGHT)
 
@@ -356,26 +324,5 @@ class TileGridTest {
     fun `with the short row first, up where it has no tile in the column goes to its nearest place`() {
         assertEquals(1, twelveShortFirst.indexToward(6, Direction.UP))
         assertEquals(0, placed(tiles = 12, row = HorizontalAlignment.RIGHT, shortRowFirst = true).indexToward(2, Direction.UP))
-    }
-
-    @Test
-    fun `aligned right, a tile coming in lands at its slot`() {
-        assertEquals(12, twelveRight.entryIndex(Direction.UP, slot = 8))   // 10 and 11 move left
-        assertEquals(11, twelveRight.entryIndex(Direction.UP, slot = 6))
-        assertEquals(10, twelveRight.entryIndex(Direction.UP, slot = 0))   // as near as the row goes
-        assertEquals(3, twelveRight.entryIndex(Direction.DOWN, slot = 6))  // a full first row
-    }
-
-    @Test
-    fun `with the short row first, a tile coming in from below lands in the last row, at its slot`() {
-        // 7 to 11 are the last row; one more tile makes the first row three long.
-        assertEquals(10, twelveShortFirst.entryIndex(Direction.UP, slot = 4))
-        assertEquals(12, twelveShortFirst.entryIndex(Direction.UP, slot = 8))
-    }
-
-    @Test
-    fun `with the short row first, a tile coming in from above lands in the first row, at its slot`() {
-        assertEquals(1, twelveShortFirst.entryIndex(Direction.DOWN, slot = 2))
-        assertEquals(2, twelveShortFirst.entryIndex(Direction.DOWN, slot = 8))   // as near as the row goes
     }
 }

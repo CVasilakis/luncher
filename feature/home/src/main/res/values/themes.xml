@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- A tile's menu (TileMenu): a small floating panel like the settings panel, over the home
+         screen, which isn't dimmed, so the tile it's for stays as it is. -->
+    <style name="Theme.Luncher.Home.Menu" parent="@android:style/Theme.DeviceDefault.Dialog.NoActionBar">
+        <item name="android:windowBackground">@drawable/panel_background</item>
+        <item name="android:colorBackground">@color/panel</item>
+        <item name="android:colorAccent">@color/accent</item>
+        <item name="android:backgroundDimEnabled">false</item>
+        <item name="android:textAlignment">viewStart</item>
+        <!-- The dialog theme's minimum width is a share of the screen; the layout sets the width. -->
+        <item name="android:windowMinWidthMajor">0dp</item>
+        <item name="android:windowMinWidthMinor">0dp</item>
+    </style>
+</resources>

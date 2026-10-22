@@ -16,8 +16,8 @@
         <!-- The clock at one edge, the settings entry (later e.g. status indicators too) at the
              other: which is where, TopBarView decides from the appearance, and moves them. Not
              focusable itself: D-pad Up from the tiles reaches only what's focusable in it. While
-             the user arranges apps, the mode's title and key hint take the place of the clock
-             and the settings entry. -->
+             the user moves an app, the mode's title and key hint take the place of the clock and
+             the settings entry. -->
         <com.luncher.launcher.home.TopBarView
             android:id="@+id/home_top_bar"
             android:layout_width="match_parent"
@@ -58,7 +58,7 @@
                  What the hint leaves of the bar: where a language's title and hint don't both
                  fit (a narrow screen, large text), the title ends in "…", never the hint. -->
             <com.luncher.launcher.home.OutlinedTextView
-                android:id="@+id/home_arrange_title"
+                android:id="@+id/home_move_title"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
@@ -67,18 +67,19 @@
                 android:minHeight="@dimen/home_settings_size"
                 android:includeFontPadding="false"
                 android:singleLine="true"
-                android:text="@string/home_arrange_title"
+                android:text="@string/home_move_title"
                 android:textColor="@color/text_primary"
                 android:textSize="@dimen/home_time_text"
                 android:visibility="gone" />
 
             <com.luncher.launcher.home.OutlinedTextView
-                android:id="@+id/home_arrange_hint"
+                android:id="@+id/home_move_hint"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:singleLine="true"
+                android:text="@string/home_move_hint"
                 android:textColor="@color/text_secondary"
-                android:textSize="@dimen/home_arrange_hint_text"
+                android:textSize="@dimen/home_move_hint_text"
                 android:visibility="gone" />
 
             <!-- Opens the settings panel. Focusable, so Up from the first row of tiles reaches it. -->

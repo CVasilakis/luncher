@@ -128,7 +128,9 @@ error; and Android can give the focus to a window before its first layout.
 
 - Before a key from UI Automator or `Instrumentation.sendKeySync`, a test sees the screen, then
   calls `waitForFocus()` (`Focus.kt`), which fails after 10 s, saying what has the focus.
-  `longPressOk()` (`Keys.kt`) waits for a window of Luncher that way too.
+  `longPressOk()` (`Keys.kt`) waits for a window of Luncher that way too. A dialog's window has
+  its activity's name there, so `waitForDialogFocus()` tells it from the activity's own window by
+  the window's identity (`HomeKeyTest`, with a tile's menu).
 - Espresso's actions wait for a focused, laid-out window themselves, but only briefly for the
   activity a Back closed to pause. So after a key that changes the window in front, an in-app test
   waits until the new window shows what it expects, focused, before the next key

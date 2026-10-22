@@ -10,7 +10,7 @@ class TileFocusTest {
     // half a column off the first row's.
     private fun grid(tiles: Int) = TileGrid(tiles, columns = 5, width = 1000, gap = 25, HorizontalAlignment.CENTER)
 
-    private fun seven() = TileFocus(grid(7), shownCount = 7)
+    private fun seven() = TileFocus(grid(7), tileCount = 7)
 
     @Test
     fun `left and right go along the row`() {
@@ -67,7 +67,7 @@ class TileFocusTest {
 
     @Test
     fun `after going back, the same key goes on by the nearest tile`() {
-        val focus = TileFocus(grid(12), shownCount = 12)   // 0-4, 5-9, then 10 and 11 centered
+        val focus = TileFocus(grid(12), tileCount = 12)   // 0-4, 5-9, then 10 and 11 centered
 
         assertEquals(11, focus.toward(9, Direction.DOWN))
         assertEquals(9, focus.toward(11, Direction.UP))
@@ -92,36 +92,5 @@ class TileFocusTest {
         assertEquals(5, seven().toward(5, Direction.LEFT))    // nor back to the one above
         assertEquals(6, seven().toward(6, Direction.RIGHT))
         assertEquals(0, seven().toward(0, Direction.LEFT))
-    }
-
-    // While arranging: five shown tiles, a full row, above two hidden ones, centered.
-    private fun shelf() = TileFocus(grid(5), shownCount = 5, shelf = grid(2))
-
-    @Test
-    fun `crosses between the shown tiles' last row and the shelf's first`() {
-        assertEquals(6, shelf().toward(4, Direction.DOWN))   // the shelf's second tile, nearest
-        assertEquals(5, shelf().toward(0, Direction.DOWN))
-        assertEquals(1, shelf().toward(5, Direction.UP))     // 1 and 2 as near
-    }
-
-    @Test
-    fun `the opposite key goes back across the shelf too`() {
-        val focus = shelf()
-
-        assertEquals(6, focus.toward(4, Direction.DOWN))
-        assertEquals(4, focus.toward(6, Direction.UP))
-    }
-
-    @Test
-    fun `left and right never cross between the shown tiles and the shelf`() {
-        assertEquals(4, shelf().toward(4, Direction.RIGHT))
-        assertEquals(5, shelf().toward(5, Direction.LEFT))
-        assertEquals(6, shelf().toward(5, Direction.RIGHT))
-    }
-
-    @Test
-    fun `stays down with nothing on the shelf, and leaves up with nothing shown above it`() {
-        assertEquals(2, TileFocus(grid(5), shownCount = 5, shelf = grid(0)).toward(2, Direction.DOWN))
-        assertEquals(null, TileFocus(grid(0), shownCount = 0, shelf = grid(2)).toward(0, Direction.UP))
     }
 }

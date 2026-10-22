@@ -36,7 +36,7 @@ import com.luncher.launcher.apps.BannerImages
 
 /**
  * The default tile size, in rows from the top left with the short row last, so a tile's index
- * tells its row and column: what the tests of keys, focus and arranging are written for. The
+ * tells its row and column: what the tests of keys, focus and moving apps are written for. The
  * default look is the screenshots' and [HomeLayoutTest]'s.
  */
 val topLeftTiles = TileGeometry(

@@ -11,7 +11,7 @@ how a string is written so that it translates well, and what a new string or lan
 
 | Module | Texts | Languages |
 |---|---|---|
-| `:feature:home` | the home screen and arrange mode | `res/values/strings.xml` (English), `res/values-el/` (Greek), `res/values-ar/` (Arabic) |
+| `:feature:home` | the home screen, a tile's menu and moving an app | `res/values/strings.xml` (English), `res/values-el/` (Greek), `res/values-ar/` (Arabic) |
 | `:feature:settings` | the settings panels, the appearance and background editors, Add from folder, the window after a share | the same |
 | `:app` | the app's name | `translatable="false"`: a name, the same in every language |
 
@@ -69,18 +69,18 @@ The English follows these rules; a translation keeps them as its language allows
 - **A comment above each,** in `values/`: where it shows and what it's for. The translations
   don't repeat them.
 - **Parts that stay as they are** go in `<xliff:g>` with an example, as the D-pad's arrows in the
-  arrange hint.
+  hint while moving an app.
 - **One string for each sentence,** never one built from pieces in code: a translation may need
   the parts in another order. What a sentence takes from elsewhere is a format argument
   (`%1$s`). `home_all_hidden` takes the settings panel's title and its Hide apps entry that way,
   from `:feature:settings`, so the message and the panel always name them alike.
 - **Counts** go in `<plurals>`: many languages have more than two forms.
 - **Room for longer text.** A translation often runs a third longer than the English, Greek's
-  arrange title almost twice. Where text can't grow, the layout says what gives way: the arrange
+  move title more than twice. Where text can't grow, the layout says what gives way: the move
   title ends in "…" on a narrow screen, never the key hint.
 - **In a right-to-left language,** a left-to-right part that should keep its order goes between
   U+2066 and U+2069, a left-to-right isolate, written `\u2066` and `\u2069` in the string: the
-  arrange hint's arrows in Arabic would otherwise show in reverse order. An arrow that means
+  move hint's arrows in Arabic would otherwise show in reverse order. An arrow that means
   "then" points the way the text reads (`←` in Arabic's `home_all_hidden`).
 
 ## A new string, a new language

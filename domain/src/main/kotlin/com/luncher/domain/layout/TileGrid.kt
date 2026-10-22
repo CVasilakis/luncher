@@ -2,7 +2,6 @@ package com.luncher.domain.layout
 
 import com.luncher.domain.appearance.HorizontalAlignment
 import com.luncher.domain.appearance.VerticalAlignment
-import kotlin.math.abs
 import kotlin.math.roundToInt
 
 /**
@@ -73,39 +72,7 @@ class TileGrid(
 
     override fun slot(index: Int): Int = slot(index, tileCount)
 
-    /**
-     * The tile comes into the row at that edge as it is now, and takes the place that puts it
-     * nearest to [slot] once the tiles after it have moved on one place: so a full row's last
-     * tile moves on to the next row, and with [shortRowFirst], the first row's to the row above.
-     * A centered row is one tile longer then, and so half a column further left.
-     */
-    override fun entryIndex(direction: Direction, slot: Int): Int {
-        if (tileCount == 0) return 0
-        val row = if (direction == Direction.UP) rows - 1 else 0
-        val start = rowStart(row, tileCount)
-        // The same row with the tile in: counted from the top, or from the bottom when the first
-        // row is the short one, since then a new row starts at the top.
-        val count = tileCount + 1
-        val rowWithIt = if (shortRowFirst) row + rows(count) - rows else row
-        var best = start
-        var bestDistance = Int.MAX_VALUE
-        for (index in start..start + rowLength(row, tileCount)) {
-            // Another row is always farther than any slot of the same row.
-            val distance = abs(row(index, count) - rowWithIt) * (2 * columns + 1) + abs(slot(index, count) - slot)
-            if (distance < bestDistance) {
-                best = index
-                bestDistance = distance
-            }
-        }
-        return best
-    }
-
-    override fun edgeIndex(direction: Direction, slot: Int): Int? {
-        if (tileCount == 0) return null
-        return nearest(if (direction == Direction.UP) rows - 1 else 0, slot)
-    }
-
-    // Rows and slots of a grid of [count] tiles, these or with one more coming in.
+    // Rows and slots of a grid of [count] tiles.
 
     private fun rows(count: Int): Int = (count + columns - 1) / columns
 

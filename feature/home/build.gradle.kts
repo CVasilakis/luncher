@@ -1,4 +1,4 @@
-// The home screen: the top bar, the tiles and arrange mode (README.md).
+// The home screen: the top bar, the tiles, their menu and moving an app (README.md).
 plugins {
     alias(libs.plugins.luncher.android.library)
     alias(libs.plugins.roborazzi)

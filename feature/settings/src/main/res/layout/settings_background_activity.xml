@@ -102,7 +102,7 @@
         android:paddingEnd="@dimen/settings_appearance_margin_horizontal"
         android:paddingBottom="@dimen/settings_appearance_margin_vertical">
 
-        <!-- How to rename or delete a picture, at the top, as arrange mode's hint. -->
+        <!-- How to rename or delete a picture, at the top, as the home screen's hint while moving an app. -->
         <TextView
             android:id="@+id/settings_background_hint"
             android:layout_width="match_parent"

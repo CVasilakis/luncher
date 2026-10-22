@@ -121,9 +121,9 @@ class HomeActivityTest {
     // against the key hint.
     @Test
     @Config(qualifiers = "ar-rEG-$TV_1080P")
-    fun `puts a right-to-left arrange title at the left too`() {
+    fun `puts a right-to-left move title at the left too`() {
         val activity = start().get()
-        val title = activity.findViewById<TextView>(R.id.home_arrange_title)
+        val title = activity.findViewById<TextView>(R.id.home_move_title)
 
         title.visibility = View.VISIBLE
         shadowOf(Looper.getMainLooper()).idle()   // the layout pass

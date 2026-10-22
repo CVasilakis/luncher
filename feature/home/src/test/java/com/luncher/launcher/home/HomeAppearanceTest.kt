@@ -178,19 +178,6 @@ class HomeAppearanceTest {
         assertEquals(tiles.tileGeometry.appName == AppName.WHEN_FOCUSED, tiles.paints.showsNames)
     }
 
-    // While arranging, a hidden app's tile on the shelf is dimmed: its name with it.
-    @Test
-    fun `a hidden app's name is drawn as dimmed as its tile`() {
-        appearance.appearance = Appearance(tileGeometry = TileGeometry(appName = AppName.WHEN_FOCUSED))
-        val tile = start().get().tiles()[1]
-        tile.requestFocus()
-        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofSeconds(1))   // the name's fade
-
-        assertEquals(TilePaints.OPAQUE, nameAlpha(tile))
-        tile.hidden = true
-        assertEquals(TilePaints.HIDDEN_ALPHA, nameAlpha(tile))
-    }
-
     /** The alpha [tile] draws its name with: the last text it draws, its outline before it. */
     private fun nameAlpha(tile: AppTileView): Int {
         var alpha = -1
@@ -242,7 +229,7 @@ class HomeAppearanceTest {
         val activity = start().get()
         val tile = activity.tiles().first()
 
-        tile.performLongClick()
+        tile.startMoving()
         shadowOf(Looper.getMainLooper()).idleFor(Duration.ofSeconds(1))
 
         assertTrue(tile.held)

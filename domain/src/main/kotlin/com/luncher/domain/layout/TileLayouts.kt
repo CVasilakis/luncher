@@ -42,21 +42,6 @@ class TileLayouts(geometry: TileGeometry, pixelsPerDp: Float, nameHeight: Int = 
     /** Where the D-pad takes the focus among [tileCount] tiles [width] pixels wide, laid out as [tiles]. */
     fun focus(tileCount: Int, width: Int): TileFocus = TileFocus(moves(tileCount, width), tileCount)
 
-    /** Where the D-pad takes the focus among [shownCount] tiles and a shelf of [hiddenCount], laid out as [shelf]. */
-    fun shelfFocus(shownCount: Int, hiddenCount: Int, width: Int): TileFocus =
-        TileFocus(moves(shownCount, width), shownCount, moves(hiddenCount, width))
-
-    /**
-     * While the user arranges apps: [shownCount] tiles above a shelf of [hiddenCount], under a
-     * label [labelHeight] tall, in [width] by [height] pixels. Placed as a whole, as [tiles] are.
-     */
-    fun shelf(shownCount: Int, hiddenCount: Int, width: Int, height: Int, labelHeight: Int): ShelfLayout =
-        ShelfLayout(
-            shown = grid(shownCount, width, height = 0, VerticalAlignment.TOP),
-            hidden = grid(maxOf(hiddenCount, 1), width, height = 0, VerticalAlignment.TOP),
-            shownCount, hiddenCount, labelHeight, gap, height, vertical, labelAlignment = horizontal,
-        )
-
     private fun grid(tileCount: Int, width: Int, height: Int, vertical: VerticalAlignment) =
         TileGrid(
             tileCount, TileGrid.columnsFor(width, tileWidth, gap), width, gap,

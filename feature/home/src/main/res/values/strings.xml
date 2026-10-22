@@ -8,17 +8,16 @@
     <string name="home_all_hidden">All apps are hidden. Open <xliff:g id="settings" example="Settings">%1$s</xliff:g> → <xliff:g id="hide_apps" example="Hide apps">%2$s</xliff:g> to show them again.</string>
     <!-- The gear at the end of the top bar, for screen readers: it opens the settings panel. -->
     <string name="home_settings">Settings</string>
-    <!-- Arrange mode: the top bar's title and which keys do what, and the shelf of hidden apps.
-         OK and Back are the remote's buttons; the arrows are its D-pad, and stay as they are. -->
-    <string name="home_arrange_title">Arrange apps</string>
-    <!-- While an app is held: the D-pad moves it, OK puts it down, Back ends arrange mode. -->
-    <string name="home_arrange_hint_holding"><xliff:g id="arrows" example="↑↓←→">↑↓←→</xliff:g> Move · OK Drop · Back Done</string>
-    <!-- While no app is held: OK picks up the focused app, Back ends arrange mode. -->
-    <string name="home_arrange_hint_browsing">OK Pick up · Back Done</string>
-    <!-- The label above the shelf of hidden apps. -->
-    <string name="home_hidden">Hidden</string>
-    <!-- In the empty slot on the shelf, while no app is hidden. -->
-    <string name="home_hidden_empty">Move apps here to hide them</string>
+    <!-- The menu a long press of OK on an app's tile opens, over the home screen: what the user
+         can do to that app. Move: move its tile to another place on the home screen. -->
+    <string name="home_menu_move">Move</string>
+    <!-- Hide: take the app off the home screen at once (Settings → Hide apps shows it again). -->
+    <string name="home_menu_hide">Hide</string>
+    <!-- While the user moves an app chosen in that menu: the top bar's title, and which keys do
+         what. OK and Back are the remote's buttons; the arrows are its D-pad, and stay as they
+         are. The D-pad moves the app; OK, or Back, puts it down where it is. -->
+    <string name="home_move_title">Move app</string>
+    <string name="home_move_hint"><xliff:g id="arrows" example="↑↓←→">↑↓←→</xliff:g> Move · OK Done</string>
     <!-- While the wallpaper is drawn again, in a window over the home screen, which waits for it:
          the TV's screen changed size (it switched to 4K, say), so the wallpaper is drawn for it. -->
     <string name="home_wallpaper_screen_changed">Fitting the background to this screen…</string>

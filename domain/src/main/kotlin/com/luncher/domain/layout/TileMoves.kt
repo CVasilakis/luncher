@@ -20,18 +20,4 @@ interface TileMoves {
      * that isn't full can put its tiles. Tiles at the same slot are above each other.
      */
     fun slot(index: Int): Int
-
-    /**
-     * Where a tile that comes in over the edge goes, as its index among these tiles plus itself:
-     * moving [Direction.DOWN] it comes in at the top, moving [Direction.UP] at the bottom; at
-     * [slot], or as near to it as there are tiles.
-     */
-    fun entryIndex(direction: Direction, slot: Int): Int
-
-    /**
-     * Where the focus lands when it comes in over the edge: moving [Direction.DOWN], the first
-     * row's tile nearest to [slot], moving [Direction.UP], the last row's; of two as near, the
-     * left one. Null without tiles.
-     */
-    fun edgeIndex(direction: Direction, slot: Int): Int?
 }

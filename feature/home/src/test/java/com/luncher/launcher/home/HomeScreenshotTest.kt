@@ -165,12 +165,24 @@ class HomeScreenshotTest {
         shadowOf(Looper.getMainLooper()).idle()
     }
 
-    /** Starts arranging as a long press of OK on the tile of [label] would. */
-    private fun HomeActivity.arrange(label: String) {
+    private fun HomeActivity.tile(label: String): AppTileView {
         val tiles = findViewById<AppTilesView>(R.id.home_apps)
-        val tile = (0 until tiles.childCount).map { tiles.getChildAt(it) as AppTileView }.single { it.app.label == label }
-        tile.requestFocus()
-        tile.performLongClick()
+        return (0 until tiles.childCount).map { tiles.getChildAt(it) as AppTileView }.single { it.app.label == label }
+    }
+
+    /** Opens the menu of the tile of [label], as a long press of OK on it would, its zoom done. */
+    private fun HomeActivity.openMenu(label: String) {
+        tile(label).requestFocus()
+        tile(label).performLongClick()
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofSeconds(1))
+    }
+
+    /** Moves Music one place right, as Move in its menu and the D-pad would. */
+    private fun HomeActivity.moveMusic() {
+        tile("Music").startMoving()
+        dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DPAD_RIGHT))
+        dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_DPAD_RIGHT))
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofSeconds(1))
     }
 
     @Test
@@ -226,13 +238,13 @@ class HomeScreenshotTest {
         activity.window.decorView.captureRoboImage("src/test/screenshots/home/home_screen_long_name.png")
     }
 
-    // Holding Music, lifted: the held tile's white frame tells it from one only focused.
+    // Moving Music, lifted: the held tile's white frame tells it from one only focused.
     @Test
-    fun arrangingLifted() {
+    fun movingLifted() {
         val activity = start(hidden = listOf("weather"), appearance = Appearance(TileGeometry(appName = AppName.WHEN_FOCUSED), TileStyle(focus = FocusStyle.LIFT)))
-        activity.arrange("Music")
+        activity.moveMusic()
 
-        activity.window.decorView.captureRoboImage("src/test/screenshots/home/home_arranging_lifted.png")
+        activity.window.decorView.captureRoboImage("src/test/screenshots/home/home_moving_lifted.png")
     }
 
     // The date hidden: the time alone, the tiles where they are with both.
@@ -240,25 +252,6 @@ class HomeScreenshotTest {
     fun homeScreenWithoutTheDate() {
         start(appearance = Appearance(topBar = TopBarAppearance(showDate = false))).window.decorView
             .captureRoboImage("src/test/screenshots/home/home_screen_without_date.png")
-    }
-
-    // Arrange mode with the tiles at the bottom right: the shelf below them, all at the bottom.
-    @Test
-    fun arrangingAtTheBottomRight() {
-        val activity = start(hidden = listOf("weather"), appearance = Appearance(TileGeometry(verticalAlignment = VerticalAlignment.BOTTOM, horizontalAlignment = HorizontalAlignment.RIGHT)))
-        activity.arrange("Music")
-
-        activity.window.decorView.captureRoboImage("src/test/screenshots/home/home_arranging_bottom_right.png")
-    }
-
-    // Arrange mode centered both ways: the shown tiles, the label and the shelf in the middle of the
-    // space, the rows that aren't full and the label in the middle of the width.
-    @Test
-    fun arrangingCentered() {
-        val activity = start(hidden = listOf("weather"), appearance = Appearance(TileGeometry(verticalAlignment = VerticalAlignment.CENTER, horizontalAlignment = HorizontalAlignment.CENTER)))
-        activity.arrange("Music")
-
-        activity.window.decorView.captureRoboImage("src/test/screenshots/home/home_arranging_centered.png")
     }
 
     @Test
@@ -269,23 +262,41 @@ class HomeScreenshotTest {
         activity.window.decorView.captureRoboImage("src/test/screenshots/home/home_settings_focused.png")
     }
 
-    // Holding Music, one app on the shelf.
+    // Moving Music, an app hidden, which doesn't show meanwhile.
     @Test
-    fun arrangingHoldingAnApp() {
+    fun moving() {
         val activity = start(hidden = listOf("weather"))
-        activity.arrange("Music")
+        activity.moveMusic()
 
-        activity.window.decorView.captureRoboImage("src/test/screenshots/home/home_arranging_holding.png")
+        activity.window.decorView.captureRoboImage("src/test/screenshots/home/home_moving.png")
     }
 
-    // Having put Music down: the focus only, and the empty slot of a shelf with nothing on it.
+    // The menu of a tile in the second row: above it.
     @Test
-    fun arrangingNothingHidden() {
-        val activity = start()
-        activity.arrange("Music")
-        activity.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DPAD_CENTER))
-        activity.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_DPAD_CENTER))
+    @OptIn(ExperimentalRoborazziApi::class)
+    fun menuAbove() {
+        start().openMenu("Radio")
 
-        activity.window.decorView.captureRoboImage("src/test/screenshots/home/home_arranging_empty_shelf.png")
+        captureScreenRoboImage("src/test/screenshots/home/home_menu_above.png")
+    }
+
+    // The menu of a tile in the first row, the rows at the top, its name shown: below the name,
+    // where there's no room above.
+    @Test
+    @OptIn(ExperimentalRoborazziApi::class)
+    fun menuBelow() {
+        start(appearance = Appearance(topLeftTiles.copy(appName = AppName.WHEN_FOCUSED))).openMenu("Music")
+
+        captureScreenRoboImage("src/test/screenshots/home/home_menu_below.png")
+    }
+
+    // The same in Arabic: the menu mirrors, the home screen doesn't.
+    @Test
+    @Config(qualifiers = "ar-rEG-$TV_1080P")
+    @OptIn(ExperimentalRoborazziApi::class)
+    fun menuInArabic() {
+        start().openMenu("Radio")
+
+        captureScreenRoboImage("src/test/screenshots/home/home_menu_arabic.png")
     }
 }

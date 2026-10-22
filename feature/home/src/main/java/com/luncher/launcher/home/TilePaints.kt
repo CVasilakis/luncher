@@ -17,9 +17,9 @@ import com.luncher.launcher.ui.color
 import com.luncher.launcher.ui.R as UiR
 
 /**
- * What every tile draws with besides its own image: the focus frame, the held frame, the dimming
- * of a hidden app, the focused app's name, the corners and the focus style from the home screen's
- * [TileStyle], and the outline a lifted tile's shadow takes.
+ * What every tile draws with besides its own image: the focus frame, the held frame, the focused
+ * app's name, the corners and the focus style from the home screen's [TileStyle], and the outline
+ * a lifted tile's shadow takes.
  * [AppTilesView] holds the one set its tiles share, so a style change updates it once and redraws,
  * without touching each tile's own state.
  */
@@ -28,11 +28,8 @@ internal class TilePaints(context: Context) {
     /** A focused tile's frame. */
     val focusFrame = frame(context.color(UiR.color.accent), context)
 
-    /** A held tile's frame, while the user arranges apps. */
+    /** A held tile's frame, while the user moves its app. */
     val heldFrame = frame(context.color(UiR.color.text_primary), context)
-
-    /** Draws a hidden app's image, dimmed. */
-    val dim = Paint().apply { alpha = HIDDEN_ALPHA }
 
     /** The tiles' corners, from the home screen's style. */
     var corners: Corners = TileStyle().corners
@@ -89,7 +86,6 @@ internal class TilePaints(context: Context) {
     }
 
     companion object {
-        const val HIDDEN_ALPHA = 102   // 40 %
         const val OPAQUE = 255
     }
 }

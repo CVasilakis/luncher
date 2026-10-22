@@ -17,6 +17,7 @@ import androidx.test.espresso.Espresso.pressBackUnconditionally
 import androidx.test.espresso.action.ViewActions.pressKey
 import androidx.test.espresso.assertion.ViewAssertions.doesNotExist
 import androidx.test.espresso.assertion.ViewAssertions.matches
+import androidx.test.espresso.matcher.RootMatchers.isDialog
 import androidx.test.espresso.matcher.ViewMatchers.hasFocus
 import androidx.test.espresso.matcher.ViewMatchers.hasSibling
 import androidx.test.espresso.matcher.ViewMatchers.isCompletelyDisplayed
@@ -121,6 +122,15 @@ class HomeActivityTest {
     private fun press(keyCode: Int) {
         onView(isRoot()).perform(pressKey(keyCode))
     }
+
+    /** Sends a key to a tile's menu, a window of its own over the home screen. */
+    private fun pressInMenu(keyCode: Int) {
+        onView(isRoot()).inRoot(isDialog()).perform(pressKey(keyCode))
+    }
+
+    /** Waits until the entry labeled [label] of a tile's menu has the focus: the menu is up and gets the keys. */
+    private fun waitUntilMenuEntryFocused(label: Int) =
+        waitUntilMatches(withText(label), hasFocus(), TIMEOUT_MS, root = isDialog())
 
     /** Checks [condition] on the tile labeled [label], retrying while an animation settles. */
     private fun waitUntilTile(label: String, condition: Matcher<View>) = waitUntil(withContentDescription(label), condition)
@@ -331,7 +341,7 @@ class HomeActivityTest {
         }
     }
 
-    /** The labels of the tiles, in order: the shown apps, then while arranging the hidden ones. */
+    /** The labels of the tiles, in order. */
     private fun ActivityScenario<HomeActivity>.labels(): List<String> {
         var labels = emptyList<String>()
         onActivity { activity ->
@@ -343,56 +353,70 @@ class HomeActivityTest {
     }
 
     @Test
-    fun longPressOk_startsArranging_andArrowsMoveTheHeldApp() {
+    fun longPressOk_opensTheTilesMenu_andBackClosesIt() {
         launchWith("games", "movies", "music").use { scenario ->
             waitUntilTile("Games", hasFocus())
 
             longPressOk()
-            waitUntil(withId(R.id.home_arrange_title), isDisplayed())
-            onView(withText(R.string.home_arrange_hint_holding)).check(matches(isDisplayed()))
+            waitUntilMenuEntryFocused(R.string.home_menu_move)
+            onView(withText(R.string.home_menu_hide)).inRoot(isDialog()).check(matches(isDisplayed()))
+            pressInMenu(KeyEvent.KEYCODE_BACK)
 
+            waitUntilTile("Games", hasFocus())
+            assertEquals(listOf("Games", "Movies", "Music"), scenario.labels())
+            assertEquals(Lifecycle.State.RESUMED, scenario.state)
+        }
+    }
+
+    @Test
+    fun moveInTheTilesMenu_holdsTheApp_arrowsMoveIt_andOkPutsItDown() {
+        launchWith("games", "movies", "music").use { scenario ->
+            waitUntilTile("Games", hasFocus())
+            longPressOk()
+            waitUntilMenuEntryFocused(R.string.home_menu_move)
+
+            pressInMenu(KeyEvent.KEYCODE_DPAD_CENTER)
+            waitUntil(withId(R.id.home_move_title), isDisplayed())
             press(KeyEvent.KEYCODE_DPAD_RIGHT)
             press(KeyEvent.KEYCODE_DPAD_CENTER)   // put it down
 
-            waitUntil(withText(R.string.home_arrange_hint_browsing), isDisplayed())
+            waitUntil(withId(R.id.home_settings), isDisplayed())
             assertEquals(listOf("Movies", "Games", "Music"), scenario.labels())
             waitUntilTile("Games", hasFocus())
         }
     }
 
     @Test
-    fun movingAnAppBelowTheLastRow_hidesIt_andBackEndsArranging() {
+    fun backKey_whileMovingAnApp_putsItDown() {
         launchWith("games", "movies", "music").use { scenario ->
             waitUntilTile("Games", hasFocus())
             longPressOk()
-            waitUntil(withId(R.id.home_arrange_title), isDisplayed())
+            waitUntilMenuEntryFocused(R.string.home_menu_move)
+            pressInMenu(KeyEvent.KEYCODE_DPAD_CENTER)
+            waitUntil(withId(R.id.home_move_title), isDisplayed())
 
-            press(KeyEvent.KEYCODE_DPAD_DOWN)     // onto the shelf
+            press(KeyEvent.KEYCODE_DPAD_RIGHT)
             pressBack()
 
-            waitUntil(withId(R.id.home_arrange_title), not(isDisplayed()))
             waitUntil(withId(R.id.home_settings), isDisplayed())
-            assertEquals(listOf("Movies", "Music"), scenario.labels())
+            assertEquals(listOf("Movies", "Games", "Music"), scenario.labels())
             assertEquals(Lifecycle.State.RESUMED, scenario.state)
         }
     }
 
     @Test
-    fun okOnAHiddenApp_picksItUp_andUpShowsItAgain() {
+    fun hideInTheTilesMenu_removesTheTile() {
         launchWith("games", "movies", "music").use { scenario ->
             waitUntilTile("Games", hasFocus())
             longPressOk()
-            waitUntil(withId(R.id.home_arrange_title), isDisplayed())
-            press(KeyEvent.KEYCODE_DPAD_DOWN)     // Games onto the shelf
-            press(KeyEvent.KEYCODE_DPAD_CENTER)   // put it down there
-            waitUntil(withText(R.string.home_arrange_hint_browsing), isDisplayed())
+            waitUntilMenuEntryFocused(R.string.home_menu_move)
 
-            press(KeyEvent.KEYCODE_DPAD_CENTER)   // pick it up again
-            press(KeyEvent.KEYCODE_DPAD_UP)       // back among the shown apps
-            pressBack()
+            pressInMenu(KeyEvent.KEYCODE_DPAD_DOWN)
+            waitUntilMenuEntryFocused(R.string.home_menu_hide)
+            pressInMenu(KeyEvent.KEYCODE_DPAD_CENTER)
 
-            waitUntil(withId(R.id.home_settings), isDisplayed())
-            assertEquals(listOf("Games", "Movies", "Music"), scenario.labels())
+            waitUntilTile("Movies", hasFocus())   // the tile now in its place
+            assertEquals(listOf("Movies", "Music"), scenario.labels())
         }
     }
 

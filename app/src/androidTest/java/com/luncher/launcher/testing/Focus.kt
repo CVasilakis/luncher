@@ -17,6 +17,8 @@ data class Focus(
     val window: String?,
     /** The focused activity's record (ActivityRecord{<hash> …}), which `dumpsys activity activities` names too. */
     internal val record: String?,
+    /** The focused window's own hash (Window{<hash> …}): another window with the same title has another. */
+    internal val windowId: String?,
     private val lines: String,
 ) {
 
@@ -45,8 +47,9 @@ internal fun focusIn(windows: String): Focus {
     val record = app?.let { FOCUSED_ACTIVITY.find(it) }
     return Focus(
         activity = record?.groupValues?.get(2),
-        window = window?.let { FOCUSED_WINDOW.find(it)?.groupValues?.get(1) },
+        window = window?.let { FOCUSED_WINDOW.find(it)?.groupValues?.get(2) },
         record = record?.groupValues?.get(1),
+        windowId = window?.let { FOCUSED_WINDOW.find(it)?.groupValues?.get(1) },
         lines = "$app $window",
     )
 }
@@ -70,6 +73,17 @@ fun waitForFocus(packageName: String, timeoutMs: Long = FOCUS_TIMEOUT_MS) {
     waitForFocus(packageName, timeoutMs) { it.isIn(packageName) }
 }
 
+/**
+ * Waits until a dialog over the screen that had the input focus in [screen] gets it: the same
+ * activity focused, and another window of it. Android gives a dialog's window the activity's
+ * name, so only its own identity (Window{<hash> …}) tells the two apart. Fails after [timeoutMs].
+ */
+fun waitForDialogFocus(screen: Focus, timeoutMs: Long = FOCUS_TIMEOUT_MS) {
+    waitForFocus("A dialog over ${screen.window}", timeoutMs) {
+        it.activity == screen.activity && it.window == screen.window && it.windowId != screen.windowId
+    }
+}
+
 private fun waitForFocus(name: String, timeoutMs: Long, has: (Focus) -> Boolean) {
     val deadline = SystemClock.uptimeMillis() + timeoutMs
     while (true) {
@@ -83,6 +97,6 @@ private fun waitForFocus(name: String, timeoutMs: Long, has: (Focus) -> Boolean)
 }
 
 private val FOCUSED_ACTIVITY = Regex("""ActivityRecord\{(\S+) \S+ ([^ }]+)""")
-private val FOCUSED_WINDOW = Regex("""mCurrentFocus=Window\{\S+ \S+ (.*)\}$""")
+private val FOCUSED_WINDOW = Regex("""mCurrentFocus=Window\{(\S+) \S+ (.*)\}$""")
 private const val FOCUS_TIMEOUT_MS = 10_000L
 private const val FOCUS_POLL_MS = 200L

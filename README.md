@@ -29,7 +29,7 @@ It's made with performance in mind, to run smoothly even on old and weak Android
 - [x] A status bar with the time, the date and the settings, which you can arrange to your liking
 - [x] Your TV apps as a grid of banners, placed where you want on the screen
 - [x] Reorder your apps
-- [x] Hide the apps you don't use (quickly accessible from the hidden shelf)
+- [x] Hide the apps you don't use, from a tile's menu (a long press of OK), and show them again in the settings
 - [x] Customize the tile shape, from square to pill-shaped
 - [x] Lift the focused tile with a soft shadow instead of a frame, and show its app's name below it
 - [x] Set your own pictures as wallpaper, with dim and blur options

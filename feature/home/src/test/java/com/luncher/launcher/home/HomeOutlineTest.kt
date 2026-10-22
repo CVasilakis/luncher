@@ -23,8 +23,7 @@ import org.robolectric.annotation.GraphicsMode
 /**
  * What the home screen shows straight on the wallpaper has [WallpaperOutline]'s edge, so it reads on a
  * white picture: each item of the top bar, whatever it is (a status indicator added later too),
- * and the message without apps. Each is drawn alone on white, where only an outline is dark. The
- * shelf, drawn by the tiles' view itself, is in the screenshots.
+ * and the message without apps. Each is drawn alone on white, where only an outline is dark.
  */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)   // real drawing; without it a bitmap stays as it was
@@ -41,10 +40,8 @@ class HomeOutlineTest {
 
     @Test
     fun `every item of the top bar has an outline`() {
-        // Arranging, so arrange mode's key hint has its text; the clock keeps its own.
-        home.findViewById<ViewGroup>(R.id.home_apps).getChildAt(0).performLongClick()
         val items = leaves(home.findViewById(R.id.home_top_bar))
-        // The time, the date, arrange mode's title and hint, the settings gear.
+        // The time, the date, the move mode's title and hint, the settings gear.
         assertEquals(5, items.size)
         for (item in items) assertTrue("${name(item)} has no outline", hasOutline(item))
     }
@@ -60,7 +57,7 @@ class HomeOutlineTest {
     private fun name(view: View) = view.resources.getResourceEntryName(view.id)
 
     private fun hasOutline(view: View): Boolean {
-        // A hidden item (arrange mode's, outside it) is laid out alone, at the size it takes.
+        // A hidden item (the move mode's, outside it) is laid out alone, at the size it takes.
         if (view.width == 0) {
             val unspecified = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
             view.measure(unspecified, unspecified)

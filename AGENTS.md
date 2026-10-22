@@ -109,7 +109,7 @@ Each of these fixes a real problem. Read the reason before changing anything.
 | What | Where | Reason |
 |---|---|---|
 | `kotlin-android` (and the other plugins) declared with `apply false` at the root; AGP and KGP `compileOnly` in `build-logic/` | `build.gradle.kts`, `build-logic/build.gradle.kts` | [`gradle/README.md`](gradle/README.md#how-kotlin-is-set-up-agp-9-built-in-kotlin) |
-| `onBackPressed()` without `super`, and an `OnBackInvokedCallback` on API 36+, that only end arrange mode | `feature/home/…/HomeActivity.kt` | its comments |
+| `onBackPressed()` without `super`, and an `OnBackInvokedCallback` on API 36+, that only end moving an app | `feature/home/…/HomeActivity.kt` | its comments |
 | `java`/`jvmTarget` 17 instead of a toolchain | `domain/build.gradle.kts` | its comment |
 | `--add-opens=java.base/jdk.internal.access` for unit tests | `build-logic/…/AndroidConventions.kt` | its comment |
 | A library's `testOptions.targetSdk`, and its device tests disabled | `build-logic/…/AndroidLibraryConventionPlugin.kt` | its KDoc: without the first, Robolectric runs a library's tests on minSdk |

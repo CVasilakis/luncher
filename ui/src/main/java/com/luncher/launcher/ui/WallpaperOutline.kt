@@ -6,7 +6,7 @@ import kotlin.math.ceil
 
 /**
  * The dark edge around what's drawn straight on the wallpaper: on the home screen (the top bar's
- * items, arrange mode's texts, the message without apps) and in the previews of it, so it reads on
+ * items, the move mode's texts, the message without apps) and in the previews of it, so it reads on
  * any picture, a white one too. In the plain background's color, so there it doesn't show.
  *
  * It's [width] wide past the shape's edge: a stroke twice as wide, drawn first, which the shape

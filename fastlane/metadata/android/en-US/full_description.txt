@@ -5,7 +5,7 @@ Features:
 - A status bar with the time, the date and the settings, which you can arrange to your liking
 - Your TV apps as a grid of banners, placed where you want on the screen
 - Reorder your apps
-- Hide the apps you don't use (quickly accessible from the hidden shelf)
+- Hide the apps you don't use, from a tile's menu (a long press of OK), and show them again in the settings
 - Customize the tile shape, from square to pill-shaped
 - Set your own pictures as wallpaper, with dim and blur options (shared from any app or, up to Android 14, copied from a USB drive)
 

@@ -60,18 +60,6 @@ class TileLayoutsTest {
         assertEquals(31, TileLayouts(TileGeometry(gapDp = 23), pixelsPerDp = 1.33125f).gap)   // 30.62
     }
 
-    @Test
-    fun `the shelf's tiles are laid out like the shown ones, below them`() {
-        val layouts = TileLayouts(topLeft, pixelsPerDp = 1f)
-
-        val shelf = layouts.shelf(shownCount = 5, hiddenCount = 2, width, height, labelHeight = 20)
-
-        val shown = layouts.tiles(5, width, height)
-        assertEquals(shown.contentHeight + layouts.gap, shelf.labelTop)
-        assertEquals(layouts.tiles(2, width, height).left(1), shelf.left(6))
-        assertEquals(shown.tileWidth, shelf.tileWidth)
-    }
-
     private fun at(
         vertical: VerticalAlignment = VerticalAlignment.TOP,
         horizontal: HorizontalAlignment = HorizontalAlignment.LEFT,
@@ -147,51 +135,11 @@ class TileLayoutsTest {
     }
 
     @Test
-    fun `at the bottom, the shown tiles, label and shelf end at the bottom of the space together`() {
-        val shelf = at(bottom, left).shelf(shownCount = 5, hiddenCount = 2, width, height, labelHeight = 20)
-
-        assertEquals(height, shelf.contentHeight)
-        assertEquals(height - shelf.tileHeight, shelf.top(6))
-        assertEquals(shelf.labelTop - layouts().gap - shelf.tileHeight, shelf.top(0))
-    }
-
-    @Test
-    fun `centered, the shown tiles, label and shelf are in the middle of the space together`() {
-        val shelf = at(middle).shelf(shownCount = 5, hiddenCount = 2, width, height, labelHeight = 20)
-        val atTop = at(top).shelf(shownCount = 5, hiddenCount = 2, width, height, labelHeight = 20)
-
-        val down = shelf.top(0)
-        assertEquals((height - atTop.contentHeight) / 2, down)
-        assertEquals(atTop.top(6) + down, shelf.top(6))
-    }
-
-    @Test
-    fun `the focus follows the alignment, and crosses to the shelf`() {
+    fun `the focus follows the alignment`() {
         val layouts = at(middle, center)
 
         val focus = layouts.focus(tileCount = 7, width)
         assertEquals(layouts.moves(7, width).indexToward(2, Direction.DOWN), focus.toward(2, Direction.DOWN))
-        val shelf = layouts.shelfFocus(shownCount = 5, hiddenCount = 2, width)
-        assertEquals(5, shelf.toward(2, Direction.DOWN))   // a full row above two centered hidden tiles
-        assertEquals(2, layouts.shelfFocus(shownCount = 5, hiddenCount = 0, width).toward(2, Direction.DOWN))   // stays
-    }
-
-    @Test
-    fun `centered, the shelf's label is centered over it`() {
-        val shelf = at(top, center).shelf(shownCount = 5, hiddenCount = 1, width, height, labelHeight = 20)
-
-        assertEquals((width - 50) / 2, shelf.labelLeft(labelWidth = 50))
-    }
-
-    @Test
-    fun `on the right, the shelf's label and empty slot line up at the right`() {
-        val layouts = at(top, right)
-        val shelf = layouts.shelf(shownCount = 5, hiddenCount = 0, width, height, labelHeight = 20)
-
-        val rightEdge = layouts.tiles(5, width, height).let { it.left(4) + it.tileWidth }
-        assertEquals(rightEdge, shelf.left(5) + shelf.tileWidth)   // the empty slot
-        assertEquals(rightEdge - 50, shelf.labelLeft(labelWidth = 50))
-        assertEquals(layouts.tiles(5, width, height).left(0), at(top, left).shelf(5, 0, width, height, 20).labelLeft(50))
     }
 
     @Test
@@ -206,15 +154,11 @@ class TileLayoutsTest {
         assertEquals(none.tiles(tileCount = 7, width, height).top(5) + 30, tiles.top(5))
     }
 
-    // The name of a tile in the last shown row stays clear of the shelf's label, and the moves
-    // and the focus are those without names.
+    // The room changes where the tiles are, not where a moved tile or the focus goes.
     @Test
-    fun `while names show, arranging leaves them room too, and moves the same`() {
+    fun `while names show, the moves and the focus are those without names`() {
         val names = TileLayouts(TileGeometry(appName = AppName.WHEN_FOCUSED), pixelsPerDp = 1f, nameHeight = 30)
 
-        val shelf = names.shelf(shownCount = 5, hiddenCount = 2, width, height = 0, labelHeight = 20)
-
-        assertEquals(shelf.top(0) + shelf.tileHeight + 30 + names.gap, shelf.labelTop)
         val moves = names.moves(tileCount = 7, width)
         val without = layouts().moves(tileCount = 7, width)
         for (index in 0 until 7) assertEquals(without.indexToward(index, Direction.DOWN), moves.indexToward(index, Direction.DOWN))

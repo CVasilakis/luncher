@@ -1,7 +1,7 @@
 # feature/home/
 
 The home screen, `:feature:home`: the top bar with the time and the settings entry, the app tiles,
-arrange mode, and the wallpaper behind them. What a feature module holds and may use: [`../README.md`](../README.md); the
+their menu and moving an app, and the wallpaper behind them. What a feature module holds and may use: [`../README.md`](../README.md); the
 rules it follows: [`../../docs/ARCHITECTURE.md`](../../docs/ARCHITECTURE.md).
 
 | | |
@@ -25,12 +25,14 @@ feature/home/
     │   │   ├── ClockView.kt      the top bar's time and date, following the Clock port
     │   │   ├── OutlinedTextView.kt  a text on the wallpaper, with :ui's WallpaperOutline around it
     │   │   ├── AppTilesView.kt   places the tiles where the domain's TileLayout says; scrolls
-    │   │   ├── AppTileView.kt    one app: its image, focus frame and zoom, or lift and shadow; its name; held or hidden while arranging
+    │   │   ├── AppTileView.kt    one app: its image, focus frame and zoom, or lift and shadow; its name; held while moved
     │   │   ├── TilePaints.kt     what every tile draws with: frames, dimming, the name, the corners, the focus style, the shadow's outline
     │   │   ├── HomeWallpaper.kt  the wallpaper, the window's background, as the process's Wallpaper says; a window while it's drawn again
-    │   │   └── ArrangeMode.kt    arrange mode: keys to the domain's ArrangeSession, the shelf, the top bar's title and hint
+    │   │   ├── TileMenu.kt       a tile's menu: the domain's AppActions for its app, in a window above or below it
+    │   │   └── MoveMode.kt       moving an app: keys to the domain's MoveSession, the top bar's title and hint
     │   └── res/                  the focused tile's zoom, or zoom and lift (animator/), the settings gear and its focus
-    │                             disc, home_activity.xml, home_* dimensions and strings, and their
+    │                             disc, home_activity.xml, the tile menu's layouts and theme
+    │                             (Theme.Luncher.Home.Menu), home_* dimensions and strings, and their
     │                             translations in values-el/ and values-ar/ (docs/TRANSLATIONS.md)
     └── test/
         ├── java/…/home/          JVM tests; TestHomeGraph.kt: the ports a test gives the screen, and
@@ -76,17 +78,17 @@ one job, so a new arrangement, image source or top bar item changes one of them:
 | `homeApps` (`:domain`) | which apps show, in which order, and which are hidden: the installed apps matched to the stored `AppArrangement` ([Hidden apps](../settings/README.md#hidden-apps)) |
 | `Appearance` (`:domain`) | how the home screen looks, as the user set it in the [appearance editor](../settings/README.md#appearance), in parts: `TileGeometry` (the tiles' width, the gap between them, their vertical and horizontal alignment, whether the focused tile's name shows), `TileStyle` (their corners: a radius, 12 dp by default, or round ends; the focus style: a frame by default, or lifted), `TopBarAppearance` (whether the time and the date show, the clock's side, the time's side of the date), `Background` (the wallpaper: a picture of the picture library, or none, its fit, position, dim and blur). [Below](#appearance): how each part is applied. |
 | `AppearanceSettings` (`:domain`), `PreferencesAppearanceSettings` (`:platform`) | the stored appearance, and when it changes |
-| `TileLayout`, `TileLayouts` (`:domain`) | where each tile goes and how big it is; `TileGrid` is the only one so far, with as many columns as fit tiles of about the geometry's width (`TileGrid.columnsFor`), so tiles keep their size next to the top bar's text on any screen. `TileLayouts` is the only place that picks the arrangement, for the tiles' places and for moves in arrange mode alike. |
+| `TileLayout`, `TileLayouts` (`:domain`) | where each tile goes and how big it is; `TileGrid` is the only one so far, with as many columns as fit tiles of about the geometry's width (`TileGrid.columnsFor`), so tiles keep their size next to the top bar's text on any screen. `TileLayouts` is the only place that picks the arrangement, for the tiles' places and for moving an app alike. |
 | `TileFocus` (`:domain`) | where each arrow takes the focus among the tiles ([below](#focus)) |
 | `AppTilesView` | lays tiles out where the `TileLayout` says, moves the focus where the `TileFocus` says, and scrolls to the focused one; holds the `TilePaints` its tiles share |
 | `bannerFor` (`:domain`) | which image a tile shows |
 | `AppImages` (`:domain`), `CachedBannerImages` and `BannerImages` (`:platform`) | draws that image into a bitmap of the tile's size, or reads the one an earlier start drew |
-| `AppTileView` | draws that bitmap, the focus frame and zoom, or the lift ([below](#appearance)), with the corners `TilePaints` gives, and the focused app's name below it if the geometry says; in arrange mode, a white frame and the largest zoom when held, dimmed when hidden |
+| `AppTileView` | draws that bitmap, the focus frame and zoom, or the lift ([below](#appearance)), with the corners `TilePaints` gives, and the focused app's name below it if the geometry says; while its app is [moved](#moving-an-app), a white frame and the largest zoom |
 | `Clock` (`:domain`) | what time it is, in which time zone and hour format, and when that changes |
 | `AndroidClock` (`:platform`) | reads those from Android, and watches the time broadcasts only while something listens |
 | `ClockView` | formats a reading in the device's language; the time and the date side by side, in the order the top bar gives, either or both hidden |
 | `topBarLayout` (`:domain`), `TopBarView` | which edge of the top bar the clock and the settings entry are at, the time's side of the date, and whether each of the two shows; the view moves its items there |
-| `HomeActivity` | reads the apps and their arrangement in `onResume`; when the shown apps changed, creates tiles for new ones (an updated app is new: its banner may have changed) and drops the others. Without tiles, says why: nothing installed, or everything hidden. Starts the clock and follows the wallpaper, the appearance, the arrangement and the installed apps in `onStart`, and stops all five in `onStop`: an app hidden or shown in the settings shows at once, behind the panel, and so does an app installed, updated or removed; arrange mode's own saves don't read the apps again, and an app changed while arranging shows when the mode ends. Opens the [settings panel](../settings/README.md#the-settings-panel) on OK on the gear or on the Menu key. A long press of OK on a tile starts [arrange mode](#arrange-mode), which gets every key first while it's on. |
+| `HomeActivity` | reads the apps and their arrangement in `onResume`; when the shown apps changed, creates tiles for new ones (an updated app is new: its banner may have changed) and drops the others. Without tiles, says why: nothing installed, or everything hidden. Starts the clock and follows the wallpaper, the appearance, the arrangement and the installed apps in `onStart`, and stops all five in `onStop`: an app hidden or shown in the settings, or hidden from its tile's menu, shows at once, and so does an app installed, updated or removed; moving an app saves without reading the apps again, and an app changed while moving one shows when that ends. When the focused app is gone (hidden, removed), the focus goes to the tile now in its place, or the last one; without tiles, to the settings entry. Opens the [settings panel](../settings/README.md#the-settings-panel) on OK on the gear or on the Menu key. A long press of OK on a tile opens [its menu](#a-tiles-menu); [moving an app](#moving-an-app) gets every key first while it's on. |
 
 ### The top bar
 
@@ -105,8 +107,8 @@ fake in `:domain`'s test fixtures that the test moves
 ([`FakeClock`](../../domain/src/testFixtures/kotlin/com/luncher/domain/clock/FakeClock.kt)), and is
 a view with `start(port)` and `stop()`, called from `HomeActivity`'s `onStart` and `onStop`.
 
-Everything the home screen draws straight on the wallpaper (the bar's items, arrange mode's title,
-hint and shelf, the message without apps) has a thin dark edge (`:ui`'s `WallpaperOutline`, which
+Everything the home screen draws straight on the wallpaper (the bar's items, the title and hint
+while moving an app, the message without apps) has a thin dark edge (`:ui`'s `WallpaperOutline`, which
 the editors' preview of the home screen draws too), so it reads on any picture, a white one too:
 0.75 dp past the shape, in the plain background's color at 80 %, so on the plain background it
 doesn't show. It's drawn under the shape, so it never thins it, and only when the shape is drawn,
@@ -155,7 +157,7 @@ screen reads an equal appearance. What a change costs depends on the part:
 
 | Part | Goes to | A change costs |
 |---|---|---|
-| `TileGeometry` | `AppTilesView.tileGeometry` | a new layout from `TileLayouts` (it's an input of the layout, with the width, the height, the number of tiles and `shownCount`), and a layout pass; new banner bitmaps only for tiles whose size changes, so a new placement, or the name shown, draws none |
+| `TileGeometry` | `AppTilesView.tileGeometry` | a new layout from `TileLayouts` (it's an input of the layout, with the width, the height and the number of tiles), and a layout pass; new banner bitmaps only for tiles whose size changes, so a new placement, or the name shown, draws none |
 | `TileStyle` | `AppTilesView.tileStyle` | the radius and the focus style in the `TilePaints` all tiles share, and a redraw; a new focus style also gives each tile the state animator of that style: no layout pass, no new bitmaps |
 | `TopBarAppearance` | `TopBarView.appearance` | the bar's items moved (focus on the gear stays), and a layout pass of the bar only |
 | `Background` | `HomeWallpaper.show` | the window's background: the picture kept at the screen's size, or drawn again in the background while a window says so ([below](#the-wallpaper)); nothing else is laid out or drawn anew |
@@ -174,8 +176,8 @@ or at its bottom, if they fit it; otherwise they start at the top and scroll. Ce
 bottom, a full bottom row puts the short row first rather than last.
 
 With rounded corners (the default), each tile fills a rounded rectangle with its bitmap through a
-shader made with the bitmap, when its size changes; the focus and held frames, and the shelf's
-empty slot, follow the same corners. The radius in pixels is the domain's (`Corners`): at most
+shader made with the bitmap, when its size changes; the focus and held frames follow the same
+corners. The radius in pixels is the domain's (`Corners`): at most
 half the tile's height, which is what round ends are, so they're half circles on any screen. A new
 radius draws the same bitmaps, so no banner is drawn again. Drawing allocates nothing, with or
 without rounded corners.
@@ -192,7 +194,7 @@ both styles; a lifted one only focused is as big, so there the white frame tells
 With the app name shown (`TileGeometry.appName`, Off by default), the focused tile draws its app's
 name centered below it, in the primary text color, cut with "…" to the tile's width, outlined as
 everything on the wallpaper is ([The top bar](#the-top-bar)), fading in and out with the focus in
-the zoom's time, and dimmed with a hidden app's tile in [arrange mode](#arrange-mode). It's drawn
+the zoom's time. It's drawn
 with the tile, past its bottom edge, so it zooms and lifts with it; its text is cut once per tile
 size, and the fade is an animator made with the tile, so a focus move only starts it. The rows leave
 it room: `TilePaints.nameHeight`, the gap and a line of text at the largest zoom a tile gets,
@@ -255,53 +257,82 @@ anywhere on the screen: past a row's end to a tile of another row, and to the se
 on a 1080p TV ends a pixel right of the last tile, as the tiles' width rounds down. It only takes
 Up out of the tiles, where the gear is the one thing above.
 
-## Arrange mode
+## A tile's menu
 
-A long press of OK on an app's tile starts it, holding that app. The top bar's clock and gear give
-way to the title "Arrange apps" and a hint of what the keys do, and a shelf of the hidden apps
-(dimmed) appears below the others, under a "Hidden" label; with none hidden, a dashed empty slot
-shows where hiding is.
+A long press of OK on an app's tile opens its menu (`TileMenu`), a small panel above the tile, or
+below it where there's no room above, centered on it inside the TV's overscan margin; where
+centered it would leave that margin (a row's first or last tile), its edge lines up with the
+tile's edge on that side. It lists
+what the user can do to that app, the first entry focused; OK on one closes the menu and does it,
+Back closes it. The tile stays focused and zoomed under it, so it's clear which app it's for.
 
-| While… | Arrows | OK | Back |
-|---|---|---|---|
-| holding an app (white frame, the largest zoom) | move it | put it down | put it down, end the mode |
-| not holding one | move the focus | pick up the focused app, shown or hidden | end the mode |
-
-Left and Right move the held app one place along the order, wrapping rows; Up and Down one row, to
-the place nearest across, as the [focus](#focus) goes, and back the way it came. Down out of the
-last row puts it onto the shelf, in its column, which hides it; Up out of the shelf's first row
-brings it back into the last row. Left and Right never cross between the two.
-Home, or anything that stops the home screen (an app starting, the screen going off), ends the
-mode too, with a held app put down where it is.
+| Entry | Does |
+|---|---|
+| Move | [moves the app](#moving-an-app); not offered while it's the only app shown |
+| Hide | hides the app at once, first among the hidden apps; the [Hide apps](../settings/README.md#hidden-apps) list shows it again |
 
 | Part | Job |
 |---|---|
-| `ArrangeSession` (`:domain`) | the held app, where each arrow takes it, and the apps as arranged; it keeps state, the one rule that does ([`domain/README.md`](../../domain/README.md#writing-models-rules-and-ports)) |
-| `TileMoves` (`:domain`), in `TileGrid` | where a moved tile goes in the grid, and where one coming in from above or below lands |
-| `ShelfLayout` (`:domain`) | the positions: the shown tiles, the label, the shelf; the three placed together in the height as the tiles' vertical alignment says, and the label over the shelf as its rows that aren't full are, at the left, centered or at the right |
-| `ArrangeMode` | starts and ends the mode; turns keys into the session's moves and moves the tiles to match; stores the arrangement each time an app that moved is put down |
-| `AppTilesView` | with `shownCount` set, lays the tiles out with a `ShelfLayout` and draws the label and the empty slot, outlined ([The top bar](#the-top-bar)); `moveTile` moves one without it losing focus |
+| `AppAction`, `appActions` (`:domain`) | which actions there are, and which the menu of an app offers, in order |
+| `tileMenuPlacement` (`:domain`) | where the menu goes: above the tile as it's drawn (zoomed, its name below it), below where there's no room; across centered, or in line with the tile's edge where centered would leave the room |
+| `AppTileView.focusedBounds` | where the tile is drawn on the screen while it has focus, for that rule |
+| `TileMenu` | the menu's window: an entry for each action, its label from an exhaustive `when` over `AppAction`, placed where the rule says |
+| `HomeActivity` | opens the menu on a long press, and does what an entry says, in an exhaustive `when` too: Move starts `MoveMode`, Hide stores the arrangement with the app hidden, which shows as any change of it does |
+
+A new action (the app's info in the device's settings, a picture of the user's own for its tile)
+is a type of `AppAction`, offered by `appActions`, which then doesn't compile in `:feature:home`
+until the menu has its label and `HomeActivity` what it does.
+
+The menu is a dialog, a window of its own, so Android keeps the keys and the focus in it while it
+shows, and the tile under it keeps its focus. The home screen behind it isn't paused, so it still
+follows the apps and their arrangement: a change of the shown apps (an app installed meanwhile)
+closes the menu, whose tile may be gone. Home, and anything that stops the home screen, closes it
+too. The long press's release goes to the menu's window, which ignores a release without its
+press.
+
+The menu is made the first time it opens, and kept for the next ones, which only add its entries
+again: nothing is made before the user asks for it.
+
+## Moving an app
+
+Move in a tile's menu holds its app. The top bar's clock and gear give way to the title "Move app"
+and a hint of what the keys do. The hidden apps don't show meanwhile, so every other tile stays where
+it is.
+
+| Key | Does |
+|---|---|
+| Arrows | move the held app (white frame, the largest zoom) |
+| OK | puts it down where it is, and ends the mode |
+| Back | the same |
+
+Left and Right move the held app one place along the order, wrapping rows; Up and Down one row, to
+the place nearest across, as the [focus](#focus) goes, and back the way it came. At the edges it
+stays. Home, or anything that stops the home screen (an app starting, the screen going off), puts it
+down too. The new order is stored once, as the mode ends, if the app moved.
+
+| Part | Job |
+|---|---|
+| `MoveSession` (`:domain`) | the held app, where each arrow takes it among the shown apps, and the apps as arranged; it keeps state, as `TileFocus` does ([`domain/README.md`](../../domain/README.md#writing-models-rules-and-ports)) |
+| `TileMoves` (`:domain`), in `TileGrid` | where a moved tile goes in the grid |
+| `MoveMode` | starts and ends the mode; turns keys into the session's moves and moves the tiles to match; stores the arrangement as it ends |
+| `AppTilesView` | `moveTile` moves one without it losing focus |
 
 The first move fixes the order: from then on the shown apps keep the user's order instead of the
-one by name, and apps installed later come after them.
+one by name, and apps installed later come after them. Hiding an app doesn't fix it.
 
-A long press that starts the mode ends with OK's release, which the mode ignores: it only reacts
-to presses that started while it was on. The mode needs no Menu key, and the Menu key does
-nothing meanwhile. On Android 16 (API 36), Back reaches the app only through
-`OnBackInvokedCallback`, not as a key, so `HomeActivity` passes Back to the mode from there as well
-as from `onBackPressed`.
+The mode only reacts to an OK pressed while it's on: the release of the OK that chose Move went to
+the menu's window. It needs no Menu key, and the Menu key does nothing meanwhile. On Android 16
+(API 36), Back reaches the app only through `OnBackInvokedCallback`, not as a key, so
+`HomeActivity` passes Back to the mode from there as well as from `onBackPressed`.
 
 To try it on an emulator, a long press of OK has to hold the key down, which `adb shell input
 keyevent --longpress` doesn't before API 30 ([`EMULATORS.md`](../../docs/EMULATORS.md#keys)).
 
 What keeps it light:
 
-- **The hidden apps' tiles exist only during the mode.** Their bitmaps are drawn when it starts,
-  and dropped with the tiles when it ends.
 - **A move allocates nothing.** The tile is moved in place (detached and attached again, which
   keeps its focus), and the tiles are laid out again with the layout they had: `AppTilesView`
-  keeps it while the width and height, the number of tiles, `shownCount` and the `TileGeometry`
-  stay the same, each compared with what the layout was made from, and a move changes none of them. Only an app crossing between the shown and the hidden ones creates new ones: the
-  view's `ShelfLayout` and its two `TileGrid`s, and `ArrangeSession`'s `TileMoves`.
-- **Nothing is read while arranging.** The apps are read again when the mode ends if one changed
-  meanwhile, and when the home screen comes back, not while the user's changes are on screen.
+  keeps it while the width and height, the number of tiles and the `TileGeometry` stay the same,
+  each compared with what the layout was made from, and a move changes none of them.
+- **Nothing is read while moving.** The apps are read again when the mode ends if one changed
+  meanwhile, and when the home screen comes back, not while the user's change is on screen.

@@ -127,7 +127,7 @@ The emulator window's keyboard is a remote: arrows, Enter for OK, Ctrl+Backspace
 key for a long press. From the shell, `adb shell input keyevent <KEY>` sends one, and
 `remote.sh` is a remote in the terminal.
 
-A long press (OK held, which starts [arrange mode](../feature/home/README.md#arrange-mode)) has to
+A long press (OK held, which opens a [tile's menu](../feature/home/README.md#a-tiles-menu)) has to
 hold the key down: `remote.sh --long-press DPAD_CENTER` does on every API level
 (android-tv-wsl-dev-tools v1.4.0 on; in the interactive `remote.sh`, `l` then Enter), and so does
 holding Enter in the emulator window. `adb shell input keyevent --longpress` holds the key only

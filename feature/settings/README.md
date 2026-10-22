@@ -111,7 +111,8 @@ again when the panel closes, keeping its tiles when nothing changed.
 
 Hide apps (`HideAppsActivity`) is a panel of its own, opened in the settings panel's place: it
 lists every app by name; OK on one hides it or shows it again, and Back returns to the settings
-panel. The home screen behind shows each change at once: it follows the stored arrangement while
+panel. It's the one place a hidden app is shown again; an app is also hidden from its tile's menu
+on the home screen ([`../home/README.md`](../home/README.md#a-tiles-menu)). The home screen behind shows each change at once: it follows the stored arrangement while
 it's started, as it stays behind the floating panels. The list itself follows the installed apps
 while it shows: an app installed or removed meanwhile appears in it, or leaves it, at once.
 
@@ -218,7 +219,7 @@ from the appearance editor's Background entry, full-screen like it, or from the 
 share, with that picture chosen ([below](#adding-a-picture)). At the end, Luncher's picture
 library as a list: No picture, the pictures by name, as the device's language sorts words, each
 with its thumbnail and name, then Add from folder ([below](#adding-a-picture)); a hint above them
-says a long press of OK renames or deletes a picture, as arrange mode's says what its keys do. While the library is empty, how to add
+says a long press of OK renames or deletes a picture, as the home screen's says what the keys do while moving an app. While the library is empty, how to add
 a picture follows: a share from another app, or the drop folder
 ([`platform/README.md`](../../platform/README.md#the-drop-folders)), with its path. At the start, a
 preview of the home screen with the chosen background, the background's options (Fit, Position,

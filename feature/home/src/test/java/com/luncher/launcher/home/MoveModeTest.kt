@@ -6,8 +6,6 @@ import android.graphics.Canvas
 import android.os.Looper
 import android.view.KeyEvent
 import android.view.View
-import android.view.ViewConfiguration
-import android.widget.TextView
 import com.luncher.domain.apps.AppArrangement
 import com.luncher.domain.apps.FakeAppArrangements
 import com.luncher.domain.apps.FakeInstalledApps
@@ -28,12 +26,11 @@ import org.robolectric.android.controller.ActivityController
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import java.lang.management.ManagementFactory
-import java.time.Duration
 
-/** Arrange mode, through the home screen: five apps a to e (one row of five), and x hidden. */
+/** Moving an app, through the home screen: five apps a to e (one row of five), and x hidden. */
 @RunWith(RobolectricTestRunner::class)
 @Config(qualifiers = "en-rUS-$TV_1080P")
-class ArrangeModeTest {
+class MoveModeTest {
 
     private val installedApps = FakeInstalledApps(listOf("a", "b", "c", "d", "e", "x").map { app(it) })
     private val arrangements = FakeAppArrangements(AppArrangement(order = null, hidden = listOf(app("x").launchable)))
@@ -42,8 +39,8 @@ class ArrangeModeTest {
     fun useFakes() {
         val application = RuntimeEnvironment.getApplication() as HomeTestApplication
         application.graph = object : TestHomeGraph(application) {
-            override val installedApps = this@ArrangeModeTest.installedApps
-            override val appArrangements = this@ArrangeModeTest.arrangements
+            override val installedApps = this@MoveModeTest.installedApps
+            override val appArrangements = this@MoveModeTest.arrangements
         }
     }
 
@@ -54,62 +51,46 @@ class ArrangeModeTest {
         return (0 until tiles.childCount).map { tiles.getChildAt(it) as AppTileView }
     }
 
-    /** The tiles in order, lower case, a hidden app's in brackets and the held one's in capitals. */
+    /** The tiles in order, lower case, the held one's in capitals. */
     private fun HomeActivity.state() = tiles().joinToString("") {
-        val name = if (it.held) it.app.label.uppercase() else it.app.label.lowercase()
-        if (it.hidden) "[$name]" else name
+        if (it.held) it.app.label.uppercase() else it.app.label.lowercase()
     }
 
     private fun HomeActivity.tile(name: String) = tiles().single { it.app.label.equals(name, ignoreCase = true) }
 
-    private fun HomeActivity.hint() = findViewById<TextView>(R.id.home_arrange_hint)
+    private fun HomeActivity.moving() = findViewById<View>(R.id.home_move_title).visibility == View.VISIBLE
 
-    private fun HomeActivity.arranging() = findViewById<View>(R.id.home_arrange_title).visibility == View.VISIBLE
+    private fun HomeActivity.move(name: String) = tile(name).startMoving()
 
     private fun HomeActivity.press(keyCode: Int) {
         dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, keyCode))
         dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_UP, keyCode))
     }
 
-    /** Holds OK on the tile of [name] until it counts as a long press, then lets go. */
-    private fun HomeActivity.longPress(name: String) {
-        tile(name).requestFocus()
-        dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DPAD_CENTER))
-        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(ViewConfiguration.getLongPressTimeout() + 50L))
-        dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_DPAD_CENTER))
-    }
-
     @Test
-    fun `a long press on a tile starts arranging, holding its app, with the hidden apps on a shelf`() {
+    fun `Move in a tile's menu holds its app, without the hidden apps`() {
         val activity = start().get()
 
-        activity.longPress("b")
+        activity.move("b")
 
-        assertTrue(activity.arranging())
-        assertEquals("aBcde[x]", activity.state())
+        assertTrue(activity.moving())
+        assertEquals("aBcde", activity.state())
+        assertTrue(activity.tile("b").isFocused)
         assertEquals(View.GONE, activity.findViewById<View>(R.id.home_settings).visibility)
         assertEquals(View.GONE, activity.findViewById<View>(R.id.home_clock).visibility)
-        assertEquals(activity.getString(R.string.home_arrange_hint_holding), activity.hint().text.toString())
-    }
-
-    @Test
-    fun `the long press opens nothing`() {
-        val activity = start().get()
-
-        activity.longPress("b")
-
-        assertNull(shadowOf(activity).nextStartedActivity)
+        assertEquals(View.VISIBLE, activity.findViewById<View>(R.id.home_move_hint).visibility)
+        assertNull(shownMenu())
     }
 
     @Test
     fun `arrows move the held app`() {
         val activity = start().get()
-        activity.longPress("b")
+        activity.move("b")
 
         activity.press(KeyEvent.KEYCODE_DPAD_RIGHT)
         activity.press(KeyEvent.KEYCODE_DPAD_RIGHT)
 
-        assertEquals("acdBe[x]", activity.state())
+        assertEquals("acdBe", activity.state())
         assertTrue(activity.tile("b").isFocused)
     }
 
@@ -120,80 +101,80 @@ class ArrangeModeTest {
         // 300 dp tiles: three in a row, a b c above d e.
         activity.findViewById<AppTilesView>(R.id.home_apps).tileGeometry = topLeftTiles.copy(tileWidthDp = 300)
         shadowOf(Looper.getMainLooper()).idle()   // the layout pass
-        activity.longPress("a")
+        activity.move("a")
 
         activity.press(KeyEvent.KEYCODE_DPAD_DOWN)
 
-        assertEquals("bcdAe[x]", activity.state())
+        assertEquals("bcdAe", activity.state())
     }
 
     @Test
-    fun `down from the last row hides the held app, and up shows it again`() {
+    fun `down from the last row does nothing`() {
         val activity = start().get()
-        activity.longPress("b")
+        activity.move("b")
 
         activity.press(KeyEvent.KEYCODE_DPAD_DOWN)
-        assertEquals("acde[x][B]", activity.state())   // column 1 of the shelf
 
-        activity.press(KeyEvent.KEYCODE_DPAD_UP)
-        assertEquals("aBcde[x]", activity.state())
+        assertEquals("aBcde", activity.state())
+        assertTrue(activity.moving())
     }
 
     @Test
-    fun `OK puts the app down and stores the arrangement`() {
+    fun `OK puts the app down, stores the order and ends moving`() {
         val activity = start().get()
-        activity.longPress("b")
+        activity.move("b")
         activity.press(KeyEvent.KEYCODE_DPAD_RIGHT)
 
         activity.press(KeyEvent.KEYCODE_DPAD_CENTER)
 
-        assertEquals("acbde[x]", activity.state())
-        assertEquals(activity.getString(R.string.home_arrange_hint_browsing), activity.hint().text.toString())
+        assertFalse(activity.moving())
+        assertEquals("acbde", activity.state())
+        assertTrue(activity.tile("b").isFocused)
+        assertEquals(View.VISIBLE, activity.findViewById<View>(R.id.home_settings).visibility)
         assertEquals(listOf("a", "c", "b", "d", "e").map { app(it).launchable }, arrangements.arrangement.order)
         assertEquals(listOf(app("x").launchable), arrangements.arrangement.hidden)
     }
 
-    // The mode's own saves reach the home screen's listener too; the tiles show them already.
     @Test
-    fun `a save while arranging doesn't read the apps again`() {
+    fun `Back puts the app down where it is, stores the order and ends moving`() {
         val activity = start().get()
-        activity.longPress("b")
+        activity.move("b")
         activity.press(KeyEvent.KEYCODE_DPAD_RIGHT)
-        installedApps.apps += app("f")          // installed meanwhile
 
-        activity.press(KeyEvent.KEYCODE_DPAD_CENTER)   // puts b down, and stores it
+        @Suppress("DEPRECATION")
+        activity.onBackPressed()
 
-        assertEquals("acbde[x]", activity.state())
+        assertFalse(activity.moving())
+        assertEquals("acbde", activity.state())
+        assertEquals(listOf("a", "c", "b", "d", "e").map { app(it).launchable }, arrangements.arrangement.order)
     }
 
     @Test
     fun `putting an app down where it was stores nothing`() {
         val activity = start().get()
-        activity.longPress("b")
+        activity.move("b")
 
         activity.press(KeyEvent.KEYCODE_DPAD_CENTER)
 
+        assertFalse(activity.moving())
         assertNull(arrangements.arrangement.order)
     }
 
+    // The OK that chose Move went to the menu's window; a release without its press here, too.
     @Test
-    fun `OK on the focused app picks it up, hidden ones too`() {
+    fun `only an OK pressed while moving puts the app down`() {
         val activity = start().get()
-        activity.longPress("b")
-        activity.press(KeyEvent.KEYCODE_DPAD_CENTER)
+        activity.move("b")
 
-        activity.tile("x").requestFocus()
-        activity.press(KeyEvent.KEYCODE_DPAD_CENTER)
+        activity.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_DPAD_CENTER))
 
-        assertEquals("abcde[X]", activity.state())
-        assertEquals(activity.getString(R.string.home_arrange_hint_holding), activity.hint().text.toString())
+        assertTrue(activity.moving())
     }
 
     @Test
-    fun `OK opens no app while arranging`() {
+    fun `OK opens no app while moving`() {
         val activity = start().get()
-        activity.longPress("b")
-        activity.press(KeyEvent.KEYCODE_DPAD_CENTER)
+        activity.move("b")
 
         activity.press(KeyEvent.KEYCODE_DPAD_CENTER)
 
@@ -201,9 +182,9 @@ class ArrangeModeTest {
     }
 
     @Test
-    fun `the Menu key opens no settings while arranging`() {
+    fun `the Menu key opens no settings while moving`() {
         val activity = start().get()
-        activity.longPress("b")
+        activity.move("b")
 
         activity.press(KeyEvent.KEYCODE_MENU)
 
@@ -211,103 +192,59 @@ class ArrangeModeTest {
     }
 
     @Test
-    fun `Back puts the app down, stores it and ends arranging`() {
-        val activity = start().get()
-        activity.longPress("b")
-        activity.press(KeyEvent.KEYCODE_DPAD_DOWN)
-
-        @Suppress("DEPRECATION")
-        activity.onBackPressed()
-
-        assertFalse(activity.arranging())
-        assertEquals("acde", activity.state())
-        assertEquals(View.VISIBLE, activity.findViewById<View>(R.id.home_settings).visibility)
-        assertEquals(listOf("x", "b").map { app(it).launchable }, arrangements.arrangement.hidden)
-    }
-
-    @Test
-    fun `focus on a hidden app goes to the last shown one when arranging ends`() {
-        val activity = start().get()
-        activity.longPress("b")
-        activity.press(KeyEvent.KEYCODE_DPAD_DOWN)
-
-        @Suppress("DEPRECATION")
-        activity.onBackPressed()
-
-        assertTrue(activity.tile("e").isFocused)
-    }
-
-    @Test
-    fun `focus goes to the settings entry when arranging ends with every app hidden`() {
-        installedApps.apps = listOf(app("a"), app("x"))
-        val activity = start().get()
-        activity.longPress("a")
-        activity.press(KeyEvent.KEYCODE_DPAD_DOWN)
-
-        @Suppress("DEPRECATION")
-        activity.onBackPressed()
-
-        assertEquals("", activity.state())
-        assertTrue(activity.findViewById<View>(R.id.home_settings).isFocused)
-        assertEquals("All apps are hidden. Open Settings → Hide apps to show them again.", activity.findViewById<TextView>(R.id.home_empty).text.toString())
-    }
-
-    @Test
-    fun `Home ends arranging`() {
+    fun `Home puts the app down and ends moving`() {
         val controller = start()
-        controller.get().longPress("b")
+        controller.get().move("b")
         controller.get().press(KeyEvent.KEYCODE_DPAD_RIGHT)
 
         controller.newIntent(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME))
 
-        assertFalse(controller.get().arranging())
+        assertFalse(controller.get().moving())
         assertEquals("acbde", controller.get().state())
         assertEquals(listOf("a", "c", "b", "d", "e").map { app(it).launchable }, arrangements.arrangement.order)
     }
 
     @Test
-    fun `leaving the home screen ends arranging`() {
+    fun `leaving the home screen ends moving`() {
         val controller = start()
-        controller.get().longPress("b")
+        controller.get().move("b")
 
         controller.pause().stop()
 
-        assertFalse(controller.get().arranging())
+        assertFalse(controller.get().moving())
         assertEquals("abcde", controller.get().state())
     }
 
     @Test
-    fun `apps aren't read again while arranging`() {
+    fun `apps aren't read again while moving`() {
         val controller = start()
-        controller.get().longPress("b")
+        controller.get().move("b")
 
         controller.pause()                      // e.g. a system dialog...
         installedApps.apps += app("f")          // ...while an app was installed
         controller.resume()
 
-        assertEquals("aBcde[x]", controller.get().state())
+        assertEquals("aBcde", controller.get().state())
     }
 
     @Test
-    fun `an app installed while arranging shows once arranging ends`() {
+    fun `an app installed while moving shows once moving ends`() {
         val activity = start().get()
-        activity.longPress("b")
+        activity.move("b")
 
         installedApps.apps += app("f")          // the tiles stay the user's work in progress
-        assertEquals("aBcde[x]", activity.state())
-        @Suppress("DEPRECATION")
-        activity.onBackPressed()
+        assertEquals("aBcde", activity.state())
+        activity.press(KeyEvent.KEYCODE_DPAD_CENTER)
 
         assertEquals("abcdef", activity.state())
     }
 
     @Test
-    fun `the new order stays after arranging`() {
+    fun `the new order stays after moving`() {
         val controller = start()
-        controller.get().longPress("e")
+        controller.get().move("e")
         controller.get().press(KeyEvent.KEYCODE_DPAD_LEFT)
-        @Suppress("DEPRECATION")
-        controller.get().onBackPressed()
+        controller.get().press(KeyEvent.KEYCODE_DPAD_CENTER)
 
         controller.pause().stop()
         installedApps.apps += app("f")          // installed since: after the user's order
@@ -318,52 +255,34 @@ class ArrangeModeTest {
 
     // A TV switched from 1080p to 720p (HDMI), or a new language, recreates the home screen.
     @Test
-    fun `a configuration change while arranging puts the app down, stores it and ends arranging`() {
+    fun `a configuration change while moving puts the app down, stores it and ends moving`() {
         val controller = start()
-        controller.get().longPress("b")
+        controller.get().move("b")
         controller.get().press(KeyEvent.KEYCODE_DPAD_RIGHT)
 
         RuntimeEnvironment.setQualifiers("+tvdpi")
         controller.configurationChange().visible()   // Robolectric shows the new window only when told
 
-        assertFalse(controller.get().arranging())
+        assertFalse(controller.get().moving())
         assertEquals("acbde", controller.get().state())
         assertEquals(listOf("a", "c", "b", "d", "e").map { app(it).launchable }, arrangements.arrangement.order)
     }
 
     @Test
-    fun `with many apps, down from the last row puts the held app on the shelf, scrolled into view`() {
+    fun `with many apps, the held app is scrolled into view as it moves down`() {
         installedApps.apps = (1..150).map { app("app%03d".format(it)) } + app("x")
         val activity = start().get()
-        activity.longPress("app001")
+        activity.move("app001")
 
-        repeat(30) { activity.press(KeyEvent.KEYCODE_DPAD_DOWN) }   // 29 rows down, then onto the shelf
+        repeat(29) { activity.press(KeyEvent.KEYCODE_DPAD_DOWN) }   // to the last row
         shadowOf(Looper.getMainLooper()).idle()                    // the layout pass, which scrolls
 
         val tile = activity.tile("app001")
-        assertTrue(tile.hidden)
-        assertEquals(149, activity.tiles().indexOf(tile))           // after the 149 shown, first of the hidden
+        assertEquals(145, activity.tiles().indexOf(tile))           // the last row's first
         val grid = activity.findViewById<AppTilesView>(R.id.home_apps)
         val top = tile.top - grid.scrollY
         val bottom = tile.bottom - grid.scrollY
         assertTrue("tile at $top to $bottom, view 0 to ${grid.height}", top >= 0 && bottom <= grid.height - grid.paddingBottom)
-    }
-
-    @Test
-    fun `hiding the only app of the last row moves the shelf up a row`() {
-        installedApps.apps = listOf("a", "b", "c", "d", "e", "f", "x").map { app(it) }   // f alone in the second row
-        val activity = start().get()
-        activity.longPress("f")
-        shadowOf(Looper.getMainLooper()).idle()
-        val row = activity.tile("f").top - activity.tile("a").top
-        val shelfTop = activity.tile("x").top
-
-        activity.press(KeyEvent.KEYCODE_DPAD_DOWN)
-        shadowOf(Looper.getMainLooper()).idle()   // the layout pass
-
-        assertEquals("abcde[F][x]", activity.state())
-        assertEquals(shelfTop - row, activity.tile("x").top)
-        assertEquals(activity.tile("x").top, activity.tile("f").top)   // on the shelf, next to x
     }
 
     // Rule 5 (docs/ARCHITECTURE.md): a key press allocates nothing. Counts what this thread allocates
@@ -375,7 +294,7 @@ class ArrangeModeTest {
     @GraphicsMode(GraphicsMode.Mode.NATIVE)
     fun `moving the held app allocates nothing to measure and draw the tiles`() {
         val activity = start().get()
-        activity.longPress("b")
+        activity.move("b")
         val tiles = activity.findViewById<AppTilesView>(R.id.home_apps)
         val width = View.MeasureSpec.makeMeasureSpec(tiles.width, View.MeasureSpec.EXACTLY)
         val height = View.MeasureSpec.makeMeasureSpec(tiles.height, View.MeasureSpec.EXACTLY)
@@ -400,7 +319,7 @@ class ArrangeModeTest {
 
         val perMove = (0 until moves).sumOf { move(it) }.toDouble() / moves
 
-        assertEquals("aBcde[x]", activity.state())   // back where it started
+        assertEquals("aBcde", activity.state())   // back where it started
         // Below the smallest object, so a one-off allocation of the JVM's own doesn't count.
         assertTrue("$perMove bytes per move", perMove < 16)
     }

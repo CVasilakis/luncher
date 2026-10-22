@@ -18,6 +18,7 @@ import com.luncher.domain.appearance.FocusStyle
 import com.luncher.domain.apps.AppImages
 import com.luncher.domain.apps.InstalledApp
 import com.luncher.domain.apps.bannerFor
+import com.luncher.domain.layout.PixelBounds
 
 /**
  * One app on the home screen: its banner, and while it has focus, as [TilePaints.focusStyle] says,
@@ -33,16 +34,15 @@ import com.luncher.domain.apps.bannerFor
  * tile's width, fading in and out with the focus; drawn with the tile, outside its bounds, which
  * [AppTilesView] doesn't clip, so it zooms with it.
  *
- * While the user arranges apps, a [held] tile has a white frame and the largest zoom, apart from
- * one that's only focused (lifted, that one is as big: the frame tells them apart), and a
- * [hidden] app's tile is dimmed, its name too.
+ * While the user moves its app, a [held] tile has a white frame and the largest zoom, apart from
+ * one that's only focused (lifted, that one is as big: the frame tells them apart).
  */
 @SuppressLint("ViewConstructor") // Created in code only, never from XML.
 internal class AppTileView(
     context: Context,
     val app: InstalledApp,
     private val images: AppImages<Bitmap>,
-    /** Shared by every tile: the frames, the dimming, the name's paint, the corners and the focus style. */
+    /** Shared by every tile: the frames, the name's paint, the corners and the focus style. */
     private val paints: TilePaints,
 ) : View(context) {
 
@@ -82,14 +82,6 @@ internal class AppTileView(
                 else -> 1f
             }
             animate().scaleX(zoom).scaleY(zoom)
-            invalidate()
-        }
-
-    /** The app is hidden: its tile is on the shelf while the user arranges apps. */
-    var hidden = false
-        set(value) {
-            if (field == value) return
-            field = value
             invalidate()
         }
 
@@ -137,9 +129,8 @@ internal class AppTileView(
         val image = image
         if (image != null) {
             if (radius == 0f) {
-                canvas.drawBitmap(image, 0f, 0f, if (hidden) paints.dim else null)
+                canvas.drawBitmap(image, 0f, 0f, null)
             } else {
-                imagePaint.alpha = if (hidden) TilePaints.HIDDEN_ALPHA else TilePaints.OPAQUE
                 canvas.drawRoundRect(bounds, radius, radius, imagePaint)
             }
         }
@@ -156,10 +147,7 @@ internal class AppTileView(
         if (paints.showsNames) drawName(canvas)
     }
 
-    /**
-     * The app's name below the tile, as faded in as the focus has it, with its outline; a hidden
-     * app's as dimmed as its tile.
-     */
+    /** The app's name below the tile, as faded in as the focus has it, with its outline. */
     private fun drawName(canvas: Canvas) {
         val shown = when {
             nameFade.isRunning -> nameFade.animatedFraction
@@ -169,7 +157,7 @@ internal class AppTileView(
         if (shown <= 0f) return
         val paint = paints.namePaint
         val outline = paints.nameOutline
-        val alpha = (shown * if (hidden) TilePaints.HIDDEN_ALPHA else TilePaints.OPAQUE).toInt()
+        val alpha = (shown * TilePaints.OPAQUE).toInt()
         val baseline = (height + paints.nameGap - paints.nameAscent).toFloat()
         outline.under(paint) {
             paint.alpha = Color.alpha(outline.color) * alpha / TilePaints.OPAQUE
@@ -187,6 +175,24 @@ internal class AppTileView(
             if (nameFade.isRunning || !gainFocus) nameFade.reverse() else nameFade.start()
         }
         invalidate()
+    }
+
+    /**
+     * Where the tile shows on the screen, in pixels, as it's drawn while it has focus: zoomed, and
+     * with its name below it while names show. Not as it's drawn now, which the zoom's animation
+     * may be changing.
+     */
+    fun focusedBounds(): PixelBounds {
+        val parent = parent as View
+        val location = IntArray(2)
+        parent.getLocationOnScreen(location)
+        val left = location[0] + this.left - parent.scrollX
+        val top = location[1] + this.top - parent.scrollY
+        // Zoomed around its middle, where the state animator's zoom leaves the pivot.
+        val grownX = (width * (focusedZoom() - 1) / 2).toInt()
+        val grownY = (height * (focusedZoom() - 1) / 2).toInt()
+        val bottom = if (paints.showsNames) top + height + paints.nameHeight else top + height + grownY
+        return PixelBounds(left - grownX, top - grownY, left + width + grownX, bottom)
     }
 
     private fun focusedZoom() = when (paints.focusStyle) {

@@ -12,7 +12,7 @@ import com.luncher.domain.layout.topBarLayout
 /**
  * The home screen's top bar: the clock and the settings entry, each at the edge of the bar that
  * the domain's [topBarLayout] gives for the home screen's [appearance], and the time on its side of
- * the date, each of the two only if it shows. Arrange mode's title and key hint stay between them,
+ * the date, each of the two only if it shows. The move mode's title and key hint stay between them,
  * in the order the layout file gives, since they replace both.
  *
  * Left and Right move the focus only among the bar's own items, in the order the layout gives

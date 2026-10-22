@@ -17,12 +17,14 @@
     <!-- The settings entry at the end of the top bar: its size, and the gear's inset within it. -->
     <dimen name="home_settings_size">40dp</dimen>
     <dimen name="home_settings_padding">8dp</dimen>
-    <!-- Arrange mode: the key hint at the end of the top bar; the shelf's label, and its empty
-         slot's dashed outline and caption. -->
-    <dimen name="home_arrange_hint_text">18sp</dimen>
-    <dimen name="home_shelf_label_text">18sp</dimen>
-    <dimen name="home_shelf_slot_line">2dp</dimen>
-    <dimen name="home_shelf_slot_dash">8dp</dimen>
-    <dimen name="home_shelf_caption_text">14sp</dimen>
-    <dimen name="home_shelf_caption_padding">12dp</dimen>
+    <!-- Moving an app: the key hint at the end of the top bar. -->
+    <dimen name="home_move_hint_text">18sp</dimen>
+    <!-- A tile's menu: its least width, its padding around the entries, an entry's height, inner
+         padding and text, and the gap between the menu and the tile, zoomed, and its name. -->
+    <dimen name="home_menu_width">200dp</dimen>
+    <dimen name="home_menu_padding">8dp</dimen>
+    <dimen name="home_menu_entry_height">48dp</dimen>
+    <dimen name="home_menu_entry_padding">16dp</dimen>
+    <dimen name="home_menu_entry_text">18sp</dimen>
+    <dimen name="home_menu_gap">12dp</dimen>
 </resources>
