@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The background editor: at the start, below its label, the preview, the background's options in
-     a 2 x 2 grid of fields, Save and Delete all, which scroll on the smallest screens; at the end,
-     below their label and the hint, the pictures to choose from in their container.
+<!-- The background editor: at the start the preview, with no label above it, so it's larger, the
+     background's options in a 2 x 2 grid of fields, Save and Delete all, which scroll on the
+     smallest screens; at the end, below their label and the hint, the pictures to choose from in
+     their container.
      Mirrored in a right-to-left language, like the other settings screens; the preview's content
      isn't. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
@@ -35,10 +36,6 @@
             android:orientation="vertical"
             android:paddingLeft="@dimen/settings_container_padding"
             android:paddingRight="@dimen/settings_container_padding">
-
-            <com.luncher.launcher.ui.ThemedText
-                style="@style/Widget.Luncher.Settings.Label"
-                android:text="@string/settings_appearance_background" />
 
             <!-- The home screen with the draft's background, its size set by
                  BackgroundStartColumn, its corners rounded. Not focusable. -->
@@ -124,15 +121,15 @@
                 app:colorRole="onSurfaceVariant" />
         </LinearLayout>
 
-        <!-- As tall as the pictures, at most what the column leaves; they scroll there, cut along
-             the container's corners, fading out while there's more below. Down past the last
-             picture stays there, not to Save or Delete all. -->
+        <!-- As tall as the pictures, at most what the column leaves; they scroll there, a row
+             ahead of the focus, cut along the container's corners, fading out where there's more.
+             Down past the last picture stays there, not to Save or Delete all. -->
         <com.luncher.launcher.settings.ListFrame
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:fill="surface">
 
-            <ScrollView
+            <com.luncher.launcher.ui.LookAheadScrollView
                 android:id="@+id/settings_background_list_scroll"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
@@ -149,7 +146,7 @@
                     android:clipToPadding="false"
                     android:orientation="vertical"
                     android:padding="@dimen/settings_container_padding" />
-            </ScrollView>
+            </com.luncher.launcher.ui.LookAheadScrollView>
         </com.luncher.launcher.settings.ListFrame>
     </LinearLayout>
 </LinearLayout>

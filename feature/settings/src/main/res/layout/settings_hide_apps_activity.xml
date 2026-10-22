@@ -33,14 +33,15 @@
         android:textSize="@dimen/text_supporting"
         app:colorRole="onSurfaceVariant" />
 
-    <!-- A settings_app_row per app; HideAppsActivity sets the list's height, which ends on half a
-         row when they don't all fit, fading out. Rows are recycled while scrolling; the selected
-         one is the focused entry. Room inside for its zoom. -->
+    <!-- A settings_app_row per app; HideAppsActivity sets the list's height, down to the sheet's
+         padding when they don't all fit, fading out where there's more. It scrolls a row ahead of
+         the selection. Rows are recycled while scrolling; the selected one is the focused entry.
+         Room inside for its zoom. -->
     <com.luncher.launcher.ui.ScrollFrame
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
-        <ListView
+        <com.luncher.launcher.ui.LookAheadListView
             android:id="@+id/settings_apps"
             android:layout_width="match_parent"
             android:layout_height="0dp"

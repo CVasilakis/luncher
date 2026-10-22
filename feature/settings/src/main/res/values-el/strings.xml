@@ -167,13 +167,6 @@
         <item quantity="one">Πάρα πολλές εικόνες: έως <xliff:g id="most" example="1">%d</xliff:g> εικόνα μπορεί να προστεθεί τη φορά. Μοιραστείτε λιγότερες και μετά δοκιμάστε ξανά.</item>
         <item quantity="other">Πάρα πολλές εικόνες: έως <xliff:g id="most" example="100">%d</xliff:g> εικόνες μπορούν να προστεθούν τη φορά. Μοιραστείτε λιγότερες και μετά δοκιμάστε ξανά.</item>
     </plurals>
-    <string name="settings_hide_apps_none">Καμία κρυφή</string>
-    <plurals name="settings_hide_apps_count">
-        <item quantity="one"><xliff:g id="count" example="1">%d</xliff:g> κρυφή</item>
-        <item quantity="other"><xliff:g id="count" example="2">%d</xliff:g> κρυφές</item>
-    </plurals>
-    <string name="settings_appearance_summary">Πλακίδια, ώρα και ημερομηνία, θέμα, φόντο</string>
-    <string name="settings_system_summary">Οι ρυθμίσεις της τηλεόρασης</string>
     <string name="settings_hide_apps_hint">Το OK κρύβει μια εφαρμογή ή την εμφανίζει ξανά</string>
     <string name="settings_appearance_theme">Θέμα</string>
     <string name="settings_appearance_accent">Χρώμα έμφασης</string>

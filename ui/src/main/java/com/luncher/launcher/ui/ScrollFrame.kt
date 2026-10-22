@@ -12,13 +12,14 @@ import android.widget.FrameLayout
 import com.luncher.domain.appearance.ColorRoles
 
 /**
- * The frame of a list that scrolls (a `ListView` or a `ScrollView`, its one child): what scrolls
- * under its edges is cut along its rounded corners, its outline, by the GPU (no layer, no
- * bitmap), so the list keeps its corners while it scrolls; and while there's more below, the last
- * half row fades into the frame's color: one gradient drawn over it, shown and hidden as the list
- * scrolls, never while its end shows. Its `fill`: the color it has, a list's container on a
- * screen of its own (`surface`) or a field's (`high`); or none, on a panel, whose color the fade
- * goes to.
+ * The frame of a list that scrolls (a [LookAheadListView] or a [LookAheadScrollView], its one
+ * child): what scrolls under its edges is cut along its rounded corners, its outline, by the GPU
+ * (no layer, no bitmap), so the list keeps its corners while it scrolls; and while there's more
+ * below, or above, the list fades into the frame's color at that edge: one gradient drawn over
+ * it, shown and hidden as the list scrolls, never while that end of it shows. The list scrolls
+ * ahead of the focus, so the focused row is never under a fade. Its `fill`: the color it has, a
+ * list's container on a screen of its own (`surface`) or a field's (`high`); or none, on a panel,
+ * whose color the fades go to.
  *
  * The list gives its focused entry room for its zoom inside itself, as padding with
  * `clipToPadding="false"`: a parent that clips cuts each child to the child's own bounds, so room
@@ -30,8 +31,10 @@ open class ScrollFrame @JvmOverloads constructor(context: Context, attrs: Attrib
     private val fill: Int
     private val radius = resources.getDimension(R.dimen.corner_container)
     private val fadeHeight = resources.getDimensionPixelSize(R.dimen.scroll_fade)
-    private val fade = GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, intArrayOf(0, 0))
-    private var fadeShown = false
+    private val fadeBelow = GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, intArrayOf(0, 0))
+    private val fadeAbove = GradientDrawable(GradientDrawable.Orientation.BOTTOM_TOP, intArrayOf(0, 0))
+    private var moreBelow = false
+    private var moreAbove = false
     private var styled: ColorRoles? = null
 
     init {
@@ -51,7 +54,9 @@ open class ScrollFrame @JvmOverloads constructor(context: Context, attrs: Attrib
         styled = roles
         val color = if (fill == FILL_HIGH) roles.surfaceHigh else roles.surface
         background = if (fill == FILL_NONE) null else roundRect(color, radius)
-        fade.colors = intArrayOf(withAlpha(color, 0f), color)
+        val colors = intArrayOf(withAlpha(color, 0f), color)
+        fadeBelow.colors = colors
+        fadeAbove.colors = colors
         invalidate()
     }
 
@@ -67,24 +72,29 @@ open class ScrollFrame @JvmOverloads constructor(context: Context, attrs: Attrib
 
     override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
         super.onLayout(changed, left, top, right, bottom)
-        fade.setBounds(0, height - fadeHeight, width, height)
-        showFade()
+        fadeBelow.setBounds(0, height - fadeHeight, width, height)
+        fadeAbove.setBounds(0, 0, width, fadeHeight)
+        showFades()
     }
 
     // Any view of the window scrolled: this list, maybe.
-    override fun onScrollChanged() = showFade()
+    override fun onScrollChanged() = showFades()
 
-    /** Whether the fade shows: while the list goes on below what shows of it. */
-    private fun showFade() {
-        val shown = getChildAt(0)?.canScrollVertically(1) == true
-        if (shown == fadeShown) return
-        fadeShown = shown
+    /** Which fades show: where the list goes on beyond what shows of it. */
+    private fun showFades() {
+        val list = getChildAt(0)
+        val below = list?.canScrollVertically(1) == true
+        val above = list?.canScrollVertically(-1) == true
+        if (below == moreBelow && above == moreAbove) return
+        moreBelow = below
+        moreAbove = above
         invalidate()
     }
 
     override fun dispatchDraw(canvas: Canvas) {
         super.dispatchDraw(canvas)
-        if (fadeShown) fade.draw(canvas)
+        if (moreBelow) fadeBelow.draw(canvas)
+        if (moreAbove) fadeAbove.draw(canvas)
     }
 
     private companion object {

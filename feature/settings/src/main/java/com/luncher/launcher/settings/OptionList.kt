@@ -1,6 +1,7 @@
 package com.luncher.launcher.settings
 
 import android.annotation.SuppressLint
+import android.graphics.drawable.ColorDrawable
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
@@ -14,6 +15,7 @@ import com.luncher.domain.appearance.ColorRoles
 import com.luncher.domain.appearance.OptionContext
 import com.luncher.launcher.ui.roundRect
 import com.luncher.launcher.ui.styleAll
+import com.luncher.launcher.ui.R as UiR
 
 /**
  * An option's values in a list beside the [options], at their end edge, over the pictures, opened
@@ -23,7 +25,9 @@ import com.luncher.launcher.ui.styleAll
  * Left and Right on the row must move the focus, to the pictures beside it. The values are those
  * [context] offers. Each value the focus comes to goes to [change] at once, so the preview shows
  * it; OK on one keeps it and closes the list, and Back closes it with the value the option had
- * again, as [change] gets it. [closed] is told once it's gone.
+ * again, as [change] gets it. [closed] is told once it's gone. A short line in the accent joins
+ * the list to the gap's side of the options, level with the row, even where the list moved up or
+ * down: the row's own outline shows it open.
  */
 internal class OptionList(
     option: AppearanceOption<*>,
@@ -39,6 +43,8 @@ internal class OptionList(
     private val before = appearance
     private var kept = false
     private val window: PopupWindow
+    private val link: ColorDrawable
+    private val screen = row.rootView
 
     init {
         val activity = row.context
@@ -74,6 +80,7 @@ internal class OptionList(
             animationStyle = 0
             setOnDismissListener(this@OptionList)
         }
+        link = ColorDrawable(roles.primary)
 
         showBeside(row, options, list, width, padding, current)
         list.getChildAt(current)?.requestFocus()
@@ -94,7 +101,14 @@ internal class OptionList(
         options.getLocationInWindow(optionsAt)
         val gap = resources.getDimensionPixelSize(R.dimen.settings_option_list_gap)
         val entryHeight = resources.getDimensionPixelSize(R.dimen.settings_option_list_entry_height)
-        val x = if (row.layoutDirection == View.LAYOUT_DIRECTION_RTL) optionsAt[0] - gap - width else optionsAt[0] + options.width + gap
+        val rtl = row.layoutDirection == View.LAYOUT_DIRECTION_RTL
+        val x = if (rtl) optionsAt[0] - gap - width else optionsAt[0] + options.width + gap
+        // The link across the gap, in the screen's overlay (the window's coordinates), under the list's window.
+        val thickness = resources.getDimensionPixelSize(UiR.dimen.open_field_edge)
+        val middle = rowAt[1] + row.height / 2 - thickness / 2
+        if (rtl) link.setBounds(x + width, middle, optionsAt[0], middle + thickness)
+        else link.setBounds(optionsAt[0] + options.width, middle, x, middle + thickness)
+        screen.overlay.add(link)
         val y = rowAt[1] + (row.height - entryHeight) / 2 - padding - current * entryHeight
         val margin = resources.getDimensionPixelSize(R.dimen.settings_appearance_margin_vertical)
         val lowest = maxOf(margin, row.rootView.height - margin - list.measuredHeight)
@@ -108,6 +122,7 @@ internal class OptionList(
     }
 
     override fun onDismiss() {
+        screen.overlay.remove(link)
         if (!kept) change(before)
         closed()
     }

@@ -18,7 +18,7 @@
             <objectAnimator
                 android:duration="@android:integer/config_shortAnimTime"
                 android:propertyName="translationZ"
-                android:valueTo="@dimen/entry_lift"
+                android:valueTo="@dimen/button_lift"
                 android:valueType="floatType" />
         </set>
     </item>

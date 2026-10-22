@@ -13,6 +13,7 @@ import android.widget.EditText
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.PopupWindow
+import android.widget.ScrollView
 import android.widget.TextView
 import androidx.test.platform.app.InstrumentationRegistry
 import com.luncher.domain.appearance.Appearance
@@ -84,6 +85,11 @@ class BackgroundActivityTest {
     }
 
     private fun idle() = shadowOf(Looper.getMainLooper()).idle()
+
+    private fun Activity.press(keyCode: Int) {
+        dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, keyCode))
+        dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_UP, keyCode))
+    }
 
     /** The background thread's jobs run, and their results shown. */
     private fun drawInTheBackground() {
@@ -283,6 +289,36 @@ class BackgroundActivityTest {
         assertSame(last, last.focusSearch(View.FOCUS_DOWN))
         val left = last.focusSearch(View.FOCUS_LEFT)
         assertTrue("an option, Save or Delete all left of it", left != null && left.parent !== list)
+    }
+
+    // The rows next to the focused one show whole, where there are: the next one shows before the focus gets there.
+    @Test
+    fun `the pictures scroll a row ahead of the focus, both ways, to Add from folder and back to No picture`() {
+        graph(*Array(20) { picture("picture%02d.jpg".format(it), added = it.toLong()) })
+        val activity = start().get()
+        val scroll = activity.findViewById<ScrollView>(R.id.settings_background_list_scroll)
+        val list = activity.findViewById<LinearLayout>(R.id.settings_background_list)
+        val rows = (0 until list.childCount).map(list::getChildAt)
+
+        fun assertAhead(index: Int) {
+            idle()
+            assertSame(rows[index], activity.window.decorView.findFocus())
+            val shown = scroll.scrollY..scroll.scrollY + scroll.height
+            for (i in (index - 1).coerceAtLeast(0)..(index + 1).coerceAtMost(rows.lastIndex)) {
+                assertTrue("${rows[i].name()} cut, with ${rows[index].name()} focused", rows[i].top in shown && rows[i].bottom in shown)
+            }
+        }
+
+        assertTrue("the list scrolls", scroll.canScrollVertically(1))
+        assertAhead(0)
+        for (index in 1..rows.lastIndex) {
+            activity.press(KeyEvent.KEYCODE_DPAD_DOWN)
+            assertAhead(index)
+        }
+        for (index in rows.lastIndex - 1 downTo 0) {
+            activity.press(KeyEvent.KEYCODE_DPAD_UP)
+            assertAhead(index)
+        }
     }
 
     @Test

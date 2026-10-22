@@ -7,6 +7,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:clipChildren="false"
+    android:clipToPadding="false"
     android:orientation="vertical"
     android:paddingLeft="@dimen/settings_pictures_margin_horizontal"
     android:paddingTop="@dimen/settings_pictures_margin_vertical"
@@ -72,7 +73,7 @@
             </LinearLayout>
 
             <!-- Down past the last picture stays there, not to Add all. Cut along its corners,
-                 fading out while there's more below. -->
+                 fading out where there's more; it scrolls a row ahead of the selection. -->
             <com.luncher.launcher.settings.ListFrame
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -80,7 +81,7 @@
 
                 <!-- A pictures_folder_row per picture; the selected one looks focused while the
                      list has the focus. Room inside for its zoom. -->
-                <ListView
+                <com.luncher.launcher.ui.LookAheadListView
                     android:id="@+id/settings_pictures_folder_list"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"

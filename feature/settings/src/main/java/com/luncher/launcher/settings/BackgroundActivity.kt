@@ -162,8 +162,10 @@ class BackgroundActivity : Activity() {
         for (option in appearanceOptions().groups.single { it.editedApart }.options) {
             val line = fields?.takeIf { it.childCount < 2 } ?: EntriesRow(this, null).apply {
                 clipChildren = false
-                if (optionsView.childCount > 0) setPadding(0, gap, 0, 0)
-                optionsView.addView(this)
+                // The gap above as a margin: padding would cut the fields' zoom at the row's sides.
+                val params = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
+                if (optionsView.childCount > 0) params.topMargin = gap
+                optionsView.addView(this, params)
                 fields = this
             }
             val view = layoutInflater.inflate(R.layout.settings_background_option, line, false)

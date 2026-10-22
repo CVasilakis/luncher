@@ -11,7 +11,7 @@ import com.luncher.domain.appearance.ColorRoles
  * color, `fill="high"`, an option of the background editor), the inverse color while it has the
  * focus or is a list's selected row, so it stands out from afar, and a tint of the accent while
  * it's chosen (`activated`); a field, outlined in the accent while it's open (`activated`: its
- * values' list shows). Focused, it grows a little and is lifted ([R.animator.entry_zoom]),
+ * values' list shows). Focused, it grows a little ([R.animator.entry_zoom]), with no shadow,
  * so whatever holds it leaves room around it for that (docs: ui/README.md). Its texts and icons
  * are [ThemedText]s and [ThemedIcon]s that take its state (`duplicateParentState`).
  */

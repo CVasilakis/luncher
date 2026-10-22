@@ -227,17 +227,6 @@
         <item quantity="many">صور كثيرة جدًا: يمكن إضافة حتى <xliff:g id="most" example="11">%d</xliff:g> صورة في المرة الواحدة. شارك عددًا أقل، ثم حاول مرة أخرى.</item>
         <item quantity="other">صور كثيرة جدًا: يمكن إضافة حتى <xliff:g id="most" example="100">%d</xliff:g> صورة في المرة الواحدة. شارك عددًا أقل، ثم حاول مرة أخرى.</item>
     </plurals>
-    <string name="settings_hide_apps_none">لا توجد تطبيقات مخفية</string>
-    <plurals name="settings_hide_apps_count">
-        <item quantity="zero"><xliff:g id="count" example="0">%d</xliff:g> تطبيق مخفي</item>
-        <item quantity="one">تطبيق واحد مخفي</item>
-        <item quantity="two">تطبيقان مخفيان</item>
-        <item quantity="few"><xliff:g id="count" example="3">%d</xliff:g> تطبيقات مخفية</item>
-        <item quantity="many"><xliff:g id="count" example="11">%d</xliff:g> تطبيقًا مخفيًا</item>
-        <item quantity="other"><xliff:g id="count" example="100">%d</xliff:g> تطبيق مخفي</item>
-    </plurals>
-    <string name="settings_appearance_summary">المربعات، الوقت والتاريخ، السمة، الخلفية</string>
-    <string name="settings_system_summary">إعدادات التلفزيون نفسه</string>
     <string name="settings_hide_apps_hint">يُخفي OK تطبيقًا أو يُظهره من جديد</string>
     <string name="settings_appearance_theme">السمة</string>
     <string name="settings_appearance_accent">لون التمييز</string>

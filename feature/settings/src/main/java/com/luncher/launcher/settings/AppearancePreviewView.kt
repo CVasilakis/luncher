@@ -67,7 +67,7 @@ internal class AppearancePreviewView(context: Context, attrs: AttributeSet?) : V
         // Its corners rounded, the drawn screen's: cut along its outline, by the GPU.
         outlineProvider = object : ViewOutlineProvider() {
             override fun getOutline(view: View, outline: Outline) {
-                outline.setRoundRect(screen.left.toInt(), screen.top.toInt(), screen.right.toInt(), screen.bottom.toInt(), cornerRadius)
+                outline.setRoundRect(screen.left.roundToInt(), screen.top.roundToInt(), screen.right.roundToInt(), screen.bottom.roundToInt(), cornerRadius)
             }
         }
         clipToOutline = true
@@ -237,7 +237,8 @@ internal class AppearancePreviewView(context: Context, attrs: AttributeSet?) : V
         scale = minOf(w / SCREEN_WIDTH.toFloat(), h / screenHeight.toFloat())
         val left = (w - SCREEN_WIDTH * scale) / 2
         val top = (h - screenHeight * scale) / 2
-        screen.set(left, top, left + SCREEN_WIDTH * scale, top + screenHeight * scale)
+        // On whole pixels, as the outline that cuts it is.
+        screen.set(left.roundToInt().toFloat(), top.roundToInt().toFloat(), (left + SCREEN_WIDTH * scale).roundToInt().toFloat(), (top + screenHeight * scale).roundToInt().toFloat())
         edge.set(screen)
         edge.inset(edgePaint.strokeWidth / 2, edgePaint.strokeWidth / 2)
         invalidateOutline()
@@ -257,8 +258,11 @@ internal class AppearancePreviewView(context: Context, attrs: AttributeSet?) : V
         if (wallpaper != null) {
             canvas.drawBitmap(wallpaper, null, screen, wallpaperPaint)
         } else {
-            canvas.drawRect(screen, screenPaint)
-            canvas.drawRoundRect(edge, cornerRadius, cornerRadius, edgePaint)
+            // Its corners round the same centers as the outline's, so the line follows the cut; the
+            // dark ends under the line's middle, so none of it shows past the line at the corners.
+            val radius = cornerRadius - edgePaint.strokeWidth / 2
+            canvas.drawRoundRect(edge, radius, radius, screenPaint)
+            canvas.drawRoundRect(edge, radius, radius, edgePaint)
         }
         drawBlock(canvas, time, primaryPaint)
         drawBlock(canvas, date, secondaryPaint)

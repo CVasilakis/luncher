@@ -25,7 +25,7 @@ feature/settings/
     │   │   ├── Sheet.kt          placeAsSheet: a panel's window as a side sheet at the screen's end
     │   │   ├── SettingsActivity.kt   the settings panel: lists the domain's settingsMenu, opens entries
     │   │   ├── HideAppsActivity.kt   the Hide apps list: every app by name; OK hides or shows one
-    │   │   ├── PanelHeight.kt    a sheet's list as tall as the screen leaves room for, ending on half a row
+    │   │   ├── PanelHeight.kt    a sheet's list as tall as its rows, or as the screen leaves room for
     │   │   ├── Chip.kt           Chip (an app's "Hidden"), ChipFrame (a stepped value between its arrows)
     │   │   ├── AppearanceActivity.kt the appearance editor: the options, Left and Right step them
     │   │   ├── AppearancePreviewView.kt  the editor's preview: an illustration of the home screen
@@ -87,7 +87,7 @@ declares how the activities behave, and the build merges the two.
 
 Every screen here is built from `:ui`'s themed components ([`ui/README.md`](../../ui/README.md#the-design-system)):
 entries that turn inverse and zoom while focused, pill buttons, fields, lists in rounded
-containers that fade out at their end. The texts, icons and buttons take their colors from the
+containers that fade out where there's more and scroll a row ahead of the focus. The texts, icons and buttons take their colors from the
 theme the appearance holds (`ThemeAppearance`: an accent and dark or light,
 [`ARCHITECTURE.md`](../../docs/ARCHITECTURE.md#appearance)), through `ScreenTheme`: a screen styles
 its views and its window with its `roles` as it's made, and while it's started, a change of the
@@ -107,11 +107,10 @@ Its entries are Hide apps ([below](#hidden-apps)), Appearance ([below](#appearan
 device's own settings. `SettingsActivity` is a side sheet at the screen's end over the dimmed home
 screen (`placeAsSheet`: at most `settings_sheet_width` wide, as tall as the screen less its
 margin; at the left in a right-to-left language), its theme, `Theme.Luncher.Settings`, a platform
-dialog theme. Each entry has its icon, its name, a line about it (how many apps are hidden, what
-the appearance covers, "The TV's own settings") and at its end where it goes: a chevron to a panel
-of Luncher's, an arrow out of it to another app. On a screen too short for them all, the entries
-scroll, ending on half an entry that fades out, as Hide apps' list does; the three of them fit on
-every TV screen the layout tests check. Back closes it, as any activity, and so does Home: the home
+dialog theme. Each entry is one line: its icon, its name, centered in the entry's height, and at
+its end where it goes: a chevron to a panel of Luncher's, an arrow out of it to another app. On a screen too short for them all, the entries
+would scroll a row ahead of the focus (a `LookAheadScrollView`); the three of them fit on every TV
+screen the layout tests check. Back closes it, as any activity, and so does Home: the home
 screen is `singleTask`, and Android closes what's above it in its task. The home screen's focus is
 where it was.
 
@@ -119,16 +118,15 @@ where it was.
 |---|---|
 | `settingsMenu` (`:domain`) | which entries the panel lists, in order |
 | `SettingsEntry` (`:domain`) | the kinds of entry, one type each |
-| `SettingsActivity` | shows the entries one below the other, all equally far apart; each entry's name (`label`), line (`summary`), icon (`icon`), end mark (`end`) and what OK on it does (`open`) |
+| `SettingsActivity` | shows the entries one below the other, all equally far apart; each entry's name (`label`), icon (`icon`), end mark (`end`) and what OK on it does (`open`) |
 
 An entry with settings of its own
 opens them in a panel of its own ([below](#hidden-apps)) rather than in more of this one. To add
 an entry:
 
 1. A `SettingsEntry` type in `:domain`, placed by `settingsMenu`, with its unit test.
-2. Its name, line, icon, end mark and action in `SettingsActivity`: `label`, `summary`, `icon`,
-   `end` and `open` are exhaustive `when`s, so this module doesn't compile until all handle the
-   new type.
+2. Its name, icon, end mark and action in `SettingsActivity`: `label`, `icon`, `end` and `open`
+   are exhaustive `when`s, so this module doesn't compile until all handle the new type.
 3. A value the entry changes (e.g. whether the date shows) is read and stored through a port with
    an adapter, like any data from the device ([`ARCHITECTURE.md`](../../docs/ARCHITECTURE.md#where-things-go)).
 
@@ -139,8 +137,8 @@ again when the panel closes, keeping its tiles when nothing changed.
 ### Hidden apps
 
 Hide apps (`HideAppsActivity`) is a panel of its own, a side sheet in the settings panel's place:
-below its title, a hint that OK hides an app or shows it again, then every app by name, each with
-a TV icon, or a crossed-out eye and a "Hidden" chip while it's hidden; OK on one hides it or shows
+below its title, a hint that OK hides an app or shows it again, then every app by name, with no
+icon, its name dimmed and a "Hidden" chip at its end while it's hidden; OK on one hides it or shows
 it again, and Back returns to the settings panel. It's the one place a hidden app is shown again; an app is also hidden from its tile's menu
 on the home screen ([`../home/README.md`](../home/README.md#a-tiles-menu)). The home screen behind shows each change at once: it follows the stored arrangement while
 it's started, as it stays behind the floating panels. The list itself follows the installed apps
@@ -161,11 +159,12 @@ nothing itself.
 | `HideAppsActivity` | shows that list, stores each change; reads the apps again when they change while it shows, and when it comes back |
 
 The list is a platform `ListView`: it creates views only for the rows on screen, and reuses them
-while scrolling. It shows at most six and a half rows, so the half row says there's more, and
-fades out there until the last app is in sight (a `ScrollFrame`, no scroll bar); on a small screen
-(e.g. 720p at the 1080p density, 360 dp tall) as many as leave the sheet a margin from the
-screen's edges, still ending on half a row (`listHeight`, measured at the sheet's width, so a
-title on two lines counts).
+while scrolling. When the apps don't all fit, it takes all the height the sheet leaves, on any
+screen (`listHeight`, measured at the sheet's width, so a title on two lines counts), its last row
+cut where the sheet's padding starts and fading out there, and at the top once it has scrolled (a
+`ScrollFrame`, no scroll bar). It scrolls a row ahead of the selection (a `LookAheadListView`): the
+selected app stays a row away from an edge with more beyond it, so the next app shows whole before
+the selection gets there, and the last app comes up whole, no longer faded, before it's selected.
 
 ### Appearance
 
@@ -205,7 +204,7 @@ the left, each value's chip at the left of its name, and Left steps toward the a
 next value. The preview's content doesn't: it shows the home screen, which stays left to right
 ([why](../../app/README.md#manifest-why-each-part-is-there)). The options take at most
 `settings_appearance_options_width`, and half of a narrow screen, so the preview keeps the rest;
-they scroll when they're taller than the screen.
+they scroll when they're taller than the screen, a row ahead of the focus.
 
 | Part | Job |
 |---|---|
@@ -260,18 +259,18 @@ options' rows are views; the preview is one view. Nothing of the home screen run
 The background editor (`BackgroundActivity`) is where the wallpaper is chosen and saved, opened
 from the appearance editor's Background button, full-screen like it. At the end, below their
 label (Pictures), Luncher's picture library as a list in its container (a `ListFrame`: cut along
-its rounded corners, fading out at its end while there's more below): No picture, the pictures by
+its rounded corners, fading out where there's more, scrolling a row ahead of the focus): No picture, the pictures by
 name, as the device's language sorts words, each with its thumbnail and name, then Add from folder
 ([below](#adding-a-picture)); a hint at the label's end says a long press of OK renames or
 deletes a picture, as the home screen's says what the keys do while moving an app. While the library is empty, how to add
 a picture follows: a share from another app, or the drop folder
 ([`platform/README.md`](../../platform/README.md#the-drop-folders)), with its path. At the start,
-below their label (Background), a preview of the home screen with the chosen background, of the
+with no label, a preview of the home screen with the chosen background, of the
 TV's shape with rounded corners, the background's options (Fit, Position, Dim, Blur) as a 2 × 2
 grid of fields, each its name above its value, and Save (filled) with Delete all (outlined, in
 the error color) beside it, half the row each; two fields, or the buttons, go one below the other
 when either doesn't fit its half (`EntriesRow`: a long translation on a narrow screen). There's no
-title: the preview gets that room.
+title, nor a label above the preview: the preview gets that room.
 The preview is as large as the room the others leave (`BackgroundStartColumn`), at most as tall
 as its screen at the column's width, at least a quarter of that, so Save and Delete all show without scrolling on a 1080p screen;
 on the smallest screens the column scrolls. In a right-to-left language it mirrors like the other
@@ -532,8 +531,8 @@ and the note, the preview gets smaller (`PreviewColumn`), down to a quarter of i
 smallest screens the column then scrolls, to its end while Add all has the focus, so the note
 shows too.
 
-Down past the list's last picture leaves the focus there, as in the editor's list (`ListFrame`),
-not on Add all; Right goes to it.
+The list scrolls a row ahead of the selection, as the editor's does. Down past its last picture
+leaves the focus there, as in the editor's list (`ListFrame`), not on Add all; Right goes to it.
 
 **Add all**, below the preview, a tonal button, adds every picture of the list that isn't marked, in the list's
 order, one at a time: a session of `ReceivedPictures` of the screen's own, not the process's,

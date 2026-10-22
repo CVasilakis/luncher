@@ -3,6 +3,7 @@ package com.luncher.launcher.settings
 import android.os.Looper
 import android.view.KeyEvent
 import android.view.View
+import android.view.ViewGroup
 import android.widget.ListView
 import android.widget.TextView
 import com.luncher.domain.apps.AppArrangement
@@ -126,19 +127,33 @@ class HideAppsActivityTest {
 
     private fun HideAppsActivity.listPadding() = list().paddingTop + list().paddingBottom
 
-    // As tall as the side sheet leaves, the last row cut in half and fading out: there's more.
+    private fun View.forceLayoutAll() {
+        forceLayout()
+        if (this is ViewGroup) for (i in 0 until childCount) getChildAt(i).forceLayoutAll()
+    }
+
+    /** The panel's height with the list as tall as it was made, at the sheet's width. */
+    private fun HideAppsActivity.panelHeight(): Int {
+        val panel = findViewById<View>(R.id.settings_hide_apps_panel)
+        panel.forceLayoutAll()   // measured already with the same specs, before the list had its height
+        panel.measure(
+            View.MeasureSpec.makeMeasureSpec(window.attributes.width, View.MeasureSpec.EXACTLY),
+            View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
+        )
+        return panel.measuredHeight
+    }
+
+    // As tall as the side sheet leaves, the last row cut where the sheet's padding starts, fading out: there's more.
     @Test
-    fun `ends on half a row when the apps don't all fit, the sheet as tall as the screen less its margins`() {
+    fun `fills the sheet when the apps don't all fit, the sheet as tall as the screen less its margins`() {
         installedApps.apps = List(30) { app("app%02d".format(it)) }
 
         val activity = start()
 
-        val row = activity.row()
-        val height = activity.list().layoutParams.height - activity.listPadding()
-        assertEquals(row / 2, height % row)
-        assertTrue(height > 6 * row)
         val margin = activity.resources.getDimensionPixelSize(R.dimen.settings_sheet_margin)
         assertEquals(activity.resources.displayMetrics.heightPixels - 2 * margin, activity.window.attributes.height)
+        assertEquals(activity.window.attributes.height, activity.panelHeight())
+        assertTrue(activity.list().layoutParams.height - activity.listPadding() > 6 * activity.row())
     }
 
     @Test
@@ -151,22 +166,48 @@ class HideAppsActivityTest {
     // A 720p screen at the 1080p density: 360 dp tall.
     @Test
     @Config(qualifiers = "en-rUS-w640dp-h360dp-land-television-xhdpi-notouch-dpad")
-    fun `on a small screen the panel stays within it, still ending on half a row`() {
+    fun `on a small screen the panel fills it, within its margins`() {
         installedApps.apps = List(12) { app("app%02d".format(it)) }
 
         val activity = start()
 
-        val row = activity.row()
         val margin = activity.resources.getDimensionPixelSize(R.dimen.settings_sheet_margin)
-        val panel = activity.findViewById<View>(R.id.settings_hide_apps_panel)
-        val unspecified = View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
-        panel.forceLayout()   // measured already with the same specs, before the list had its height
-        activity.list().forceLayout()
-        panel.measure(unspecified, unspecified)
-        assertTrue(panel.measuredHeight <= activity.resources.displayMetrics.heightPixels - 2 * margin)
-        val height = activity.list().layoutParams.height - activity.listPadding()
-        assertEquals(row / 2, height % row)
-        assertTrue(height > row)
+        assertEquals(activity.resources.displayMetrics.heightPixels - 2 * margin, activity.panelHeight())
+        assertTrue(activity.list().layoutParams.height - activity.listPadding() > activity.row())
+    }
+
+    // The rows next to the selected one show whole, where there are: the next one shows before the selection gets there.
+    @Test
+    fun `scrolls a row ahead of the selection, both ways, to the last app and back to the first`() {
+        installedApps.apps = List(30) { app("app%02d".format(it)) }
+        val activity = start()
+        val list = activity.list()
+
+        fun assertAhead(position: Int) {
+            shadowOf(Looper.getMainLooper()).idle()
+            assertEquals(position, list.selectedItemPosition)
+            val index = position - list.firstVisiblePosition
+            if (position > 0) {
+                val previous = list.getChildAt(index - 1)
+                assertTrue("the app before ${position + 1} cut at the top", previous != null && previous.top >= list.paddingTop)
+            }
+            if (position < list.count - 1) {
+                val next = list.getChildAt(index + 1)
+                assertTrue("the app after ${position + 1} cut at the bottom", next != null && next.bottom <= list.height - list.paddingBottom)
+            }
+            val selected = list.selectedView
+            assertTrue("app ${position + 1} cut", selected.top >= list.paddingTop && selected.bottom <= list.height - list.paddingBottom)
+        }
+
+        assertTrue("the list scrolls", list.canScrollVertically(1))
+        for (position in 1 until 30) {
+            activity.press(KeyEvent.KEYCODE_DPAD_DOWN)
+            assertAhead(position)
+        }
+        for (position in 28 downTo 0) {
+            activity.press(KeyEvent.KEYCODE_DPAD_UP)
+            assertAhead(position)
+        }
     }
 
     // Unlike the home screen (HomeActivityTest), which stays left to right.
@@ -178,24 +219,20 @@ class HideAppsActivityTest {
         val row = list.getChildAt(1)   // Music, hidden
         val label = row.findViewById<View>(R.id.settings_app_label)
         val hidden = row.findViewById<View>(R.id.settings_app_hidden)
-        val icon = row.findViewById<View>(R.id.settings_app_icon)
         assertTrue("label at ${label.left}, hidden at ${hidden.right}", hidden.right <= label.left)
-        assertTrue("icon at ${icon.left}, label at ${label.right}", label.right <= icon.left)
         val text = (label as TextView).layout
         assertEquals(text.width.toFloat(), text.getLineRight(0))   // an English name at the right too
     }
 
-    // The crossed eye and "Hidden" say which apps are hidden; the selected row looks focused.
+    // "Hidden" says which apps are hidden; the selected row looks focused.
     @Test
-    fun `a hidden app has a crossed eye and Hidden, a shown one neither`() {
+    fun `a hidden app has Hidden, a shown one doesn't`() {
         val list = start().list()
 
         val shown = list.getChildAt(0)   // Movies
         val hidden = list.getChildAt(1)  // Music
         assertEquals(View.GONE, shown.findViewById<View>(R.id.settings_app_hidden).visibility)
         assertEquals(View.VISIBLE, hidden.findViewById<View>(R.id.settings_app_hidden).visibility)
-        assertEquals(com.luncher.launcher.ui.R.drawable.icon_eye_off, shadowOf((hidden.findViewById<android.widget.ImageView>(R.id.settings_app_icon)).drawable).createdFromResId)
-        assertEquals(com.luncher.launcher.ui.R.drawable.icon_tv, shadowOf((shown.findViewById<android.widget.ImageView>(R.id.settings_app_icon)).drawable).createdFromResId)
     }
 
     @Test

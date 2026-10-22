@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Zooms an entry in a little while it has the focus, or is a list's selected row (ListEntry),
-     and lifts it, so its shadow, the GPU's, sets it off. Made once per entry, so a key press
-     starts animators that exist instead of making new ones. -->
+<!-- Zooms an entry in a little while it has the focus, or is a list's selected row (ListEntry).
+     Not lifted: entries sit close, and a shadow would fall on the next one; the inverse color
+     sets it off. Made once per entry, so a key press starts animators that exist instead of
+     making new ones. -->
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:state_focused="true">
         <set>
@@ -14,11 +15,6 @@
                 android:duration="@android:integer/config_shortAnimTime"
                 android:propertyName="scaleY"
                 android:valueTo="@dimen/entry_zoom"
-                android:valueType="floatType" />
-            <objectAnimator
-                android:duration="@android:integer/config_shortAnimTime"
-                android:propertyName="translationZ"
-                android:valueTo="@dimen/entry_lift"
                 android:valueType="floatType" />
         </set>
     </item>
@@ -34,11 +30,6 @@
                 android:propertyName="scaleY"
                 android:valueTo="@dimen/entry_zoom"
                 android:valueType="floatType" />
-            <objectAnimator
-                android:duration="@android:integer/config_shortAnimTime"
-                android:propertyName="translationZ"
-                android:valueTo="@dimen/entry_lift"
-                android:valueType="floatType" />
         </set>
     </item>
     <item>
@@ -52,11 +43,6 @@
                 android:duration="@android:integer/config_shortAnimTime"
                 android:propertyName="scaleY"
                 android:valueTo="1"
-                android:valueType="floatType" />
-            <objectAnimator
-                android:duration="@android:integer/config_shortAnimTime"
-                android:propertyName="translationZ"
-                android:valueTo="0"
                 android:valueType="floatType" />
         </set>
     </item>

@@ -20,10 +20,11 @@
     <dimen name="corner_container">20dp</dimen>
     <!-- How much a focused entry grows (Material for TV's list items), and a button (less than
          Material for TV's 1.1: Luncher's buttons are wide, two side by side a gap apart), and how
-         high either is lifted, for its shadow. -->
+         high a button is lifted, for its shadow (an entry isn't: entries sit close, and its shadow
+         would fall on the next). -->
     <item name="entry_zoom" format="float" type="dimen">1.05</item>
     <item name="button_zoom" format="float" type="dimen">1.06</item>
-    <dimen name="entry_lift">4dp</dimen>
+    <dimen name="button_lift">4dp</dimen>
     <!-- A button: its height at least, its padding at the sides, the gap after its icon. An
          icon's size; a small one, beside a line of text. -->
     <dimen name="button_height">48dp</dimen>
@@ -34,7 +35,8 @@
     <!-- An outlined button's edge (Delete all, Reset to defaults); an open field's (ListEntry). -->
     <dimen name="outline">1.5dp</dimen>
     <dimen name="open_field_edge">2dp</dimen>
-    <!-- A scrolling list's fade into its container, over its last half row (ScrollFrame). -->
+    <!-- A scrolling list's fade into its container, at an end with more beyond it (ScrollFrame);
+         less than a row, which the focus keeps away from the end. -->
     <dimen name="scroll_fade">40dp</dimen>
     <!-- A panel's corners; the focus frame of an entry in it (entry_background). -->
     <dimen name="panel_corner">12dp</dimen>

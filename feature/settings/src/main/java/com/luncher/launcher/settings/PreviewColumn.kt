@@ -22,7 +22,7 @@ internal class PreviewColumn(context: Context, attrs: AttributeSet?) : ScrollVie
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         val preview = content.getChildAt(0)
-        val width = MeasureSpec.getSize(widthMeasureSpec) - paddingLeft - paddingRight
+        val width = MeasureSpec.getSize(widthMeasureSpec) - paddingLeft - paddingRight - content.paddingLeft - content.paddingRight
         val screen = context.screenSize()
         // What the views below the preview take, with their gaps.
         var below = 0
@@ -45,6 +45,16 @@ internal class PreviewColumn(context: Context, attrs: AttributeSet?) : ScrollVie
         preview.layoutParams.width = screen.widthAt(previewHeight)
         preview.layoutParams.height = previewHeight
         super.onMeasure(widthMeasureSpec, heightMeasureSpec)
+    }
+
+    /**
+     * Leaves [room] at both sides for a focused view's zoom and shadow: a scrolling view cuts what
+     * it holds at the edges of its content, so the content gets it as padding, and the column
+     * reaches out as far, so its views stay in line with what's above it.
+     */
+    fun leaveRoom(room: Int) {
+        content.setPadding(room, content.paddingTop, room, content.paddingBottom)
+        (layoutParams as MarginLayoutParams).setMargins(-room, 0, -room, 0)
     }
 
     /** The preview's size as last laid out: what it's drawn at. 0 x 0 before the first layout. */

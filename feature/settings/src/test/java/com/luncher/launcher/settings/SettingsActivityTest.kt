@@ -6,10 +6,6 @@ import android.view.KeyEvent
 import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
-import com.luncher.domain.apps.AppArrangement
-import com.luncher.domain.apps.FakeAppArrangements
-import com.luncher.domain.apps.FakeInstalledApps
-import com.luncher.domain.apps.FakeInstalledApps.Companion.app
 import com.luncher.launcher.testing.TV_1080P
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -35,8 +31,6 @@ class SettingsActivityTest {
     }
 
     private fun SettingsActivity.titles(): List<TextView> = entries().map { it.findViewById(R.id.settings_entry_title) }
-
-    private fun SettingsActivity.summaries(): List<String> = entries().map { it.findViewById<TextView>(R.id.settings_entry_summary).text.toString() }
 
     private fun SettingsActivity.press(keyCode: Int) {
         dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, keyCode))
@@ -140,41 +134,6 @@ class SettingsActivityTest {
 
         assertEquals("Hide apps", titles.first().text.toString())
         assertEquals(entry.width.toFloat(), entry.getLineRight(0))
-    }
-
-    @Test
-    fun `says below each entry what it's about, how many apps are hidden, what the appearance covers, whose settings`() {
-        assertEquals(listOf("None hidden", "Tiles, time and date, theme, background", "The TV's own settings"), start().summaries())
-    }
-
-    @Test
-    fun `counts the hidden apps that are installed`() {
-        val application = RuntimeEnvironment.getApplication() as SettingsTestApplication
-        application.graph = object : TestSettingsGraph() {
-            override val installedApps = FakeInstalledApps(app("movies"), app("music"), app("news"))
-            override val appArrangements = FakeAppArrangements(
-                AppArrangement(order = null, hidden = listOf(app("music").launchable, app("news").launchable, app("gone").launchable)),
-            )
-        }
-
-        assertEquals("2 hidden", start().summaries().first())
-    }
-
-    // Back from Hide apps, where an app was hidden.
-    @Test
-    fun `counts them again when it shows again`() {
-        val arrangements = FakeAppArrangements()
-        val application = RuntimeEnvironment.getApplication() as SettingsTestApplication
-        application.graph = object : TestSettingsGraph() {
-            override val installedApps = FakeInstalledApps(app("movies"), app("music"))
-            override val appArrangements = arrangements
-        }
-        val controller = Robolectric.buildActivity(SettingsActivity::class.java).setup()
-
-        arrangements.save(AppArrangement(order = null, hidden = listOf(app("music").launchable)))
-        controller.pause().stop().restart().start().resume()
-
-        assertEquals("1 hidden", controller.get().summaries().first())
     }
 
     // A side sheet at the screen's end, the right, a margin from its edges.

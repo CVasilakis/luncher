@@ -88,7 +88,7 @@
             android:layout_height="wrap_content"
             app:fill="surface">
 
-            <ScrollView
+            <com.luncher.launcher.ui.LookAheadScrollView
                 android:id="@+id/settings_appearance_scroll"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -103,7 +103,7 @@
                     android:clipToPadding="false"
                     android:orientation="vertical"
                     android:padding="@dimen/settings_container_padding" />
-            </ScrollView>
+            </com.luncher.launcher.ui.LookAheadScrollView>
         </com.luncher.launcher.ui.ScrollFrame>
     </FrameLayout>
 </com.luncher.launcher.settings.AppearanceEditorLayout>

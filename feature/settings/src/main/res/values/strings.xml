@@ -314,16 +314,6 @@
     <!-- The names of picture formats some TVs can't show, the same in every language. -->
     <string name="settings_pictures_format_heif" translatable="false">HEIF (HEIC)</string>
     <string name="settings_pictures_format_avif" translatable="false">AVIF</string>
-    <!-- Below the settings panel's Hide apps entry: how many apps are hidden, or none. -->
-    <string name="settings_hide_apps_none">None hidden</string>
-    <plurals name="settings_hide_apps_count">
-        <item quantity="one"><xliff:g id="count" example="1">%d</xliff:g> hidden</item>
-        <item quantity="other"><xliff:g id="count" example="2">%d</xliff:g> hidden</item>
-    </plurals>
-    <!-- Below the settings panel's Appearance entry: what it changes, its groups' names in order. -->
-    <string name="settings_appearance_summary">Tiles, time and date, theme, background</string>
-    <!-- Below the settings panel's System settings entry: they're the TV's, another app's. -->
-    <string name="settings_system_summary">The TV\'s own settings</string>
     <!-- Below the Hide apps panel's title: what OK on an app does. -->
     <string name="settings_hide_apps_hint">OK hides an app, or shows it again</string>
     <!-- The appearance editor's group of the theme: the accent color, and dark or light. -->

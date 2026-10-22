@@ -9,26 +9,23 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
-import com.luncher.domain.apps.homeApps
 import com.luncher.domain.settings.SettingsEntry
 import com.luncher.domain.settings.settingsMenu
 import com.luncher.launcher.ui.stylePanel
 import com.luncher.launcher.ui.R as UiR
-import java.util.Locale
 
 /**
  * The settings panel: a side sheet over the home screen ([placeAsSheet]) that lists the entries of
- * [settingsMenu], each with its icon, a line about it, and where it goes. Back closes it, as any
+ * [settingsMenu], each with its icon, its name, and where it goes. Back closes it, as any
  * activity, and the home screen's focus is where it was.
  *
- * What an entry shows and does is decided here, per kind of entry, in [label], [summary], [icon]
- * and [open]; which entries exist and in which order is the domain's decision.
+ * What an entry shows and does is decided here, per kind of entry, in [label], [icon] and [open];
+ * which entries exist and in which order is the domain's decision.
  */
 class SettingsActivity : Activity() {
 
     private lateinit var entries: LinearLayout
     private val theme by lazy { ScreenTheme(graph.appearanceSettings) { checkNotNull(window).stylePanel(it) } }
-    private val shown = mutableListOf<Pair<SettingsEntry, TextView>>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -43,7 +40,6 @@ class SettingsActivity : Activity() {
     override fun onStart() {
         super.onStart()
         theme.start()
-        showSummaries()   // Hide apps' count, changed there
     }
 
     override fun onStop() {
@@ -62,31 +58,15 @@ class SettingsActivity : Activity() {
             view.findViewById<TextView>(R.id.settings_entry_title).setText(label(entry))
             view.findViewById<ImageView>(R.id.settings_entry_icon).setImageResource(icon(entry))
             view.findViewById<ImageView>(R.id.settings_entry_end).setImageResource(end(entry))
-            shown += entry to view.findViewById(R.id.settings_entry_summary)
             view.setOnClickListener { open(entry) }
             entries.addView(view)
         }
-    }
-
-    private fun showSummaries() {
-        for ((entry, view) in shown) view.text = summary(entry)
     }
 
     private fun label(entry: SettingsEntry): Int = when (entry) {
         SettingsEntry.HideApps -> R.string.settings_hide_apps
         SettingsEntry.Appearance -> R.string.settings_appearance
         SettingsEntry.SystemSettings -> R.string.settings_system
-    }
-
-    /** A line about the entry, below its name: how many apps are hidden, what the appearance covers, whose settings. */
-    private fun summary(entry: SettingsEntry): CharSequence = when (entry) {
-        SettingsEntry.HideApps -> {
-            val graph = graph
-            val hidden = homeApps(graph.installedApps.tvApps(), packageName, graph.appArrangements.read(), Locale.getDefault()).hidden.size
-            if (hidden == 0) getString(R.string.settings_hide_apps_none) else resources.getQuantityString(R.plurals.settings_hide_apps_count, hidden, hidden)
-        }
-        SettingsEntry.Appearance -> getString(R.string.settings_appearance_summary)
-        SettingsEntry.SystemSettings -> getString(R.string.settings_system_summary)
     }
 
     private fun icon(entry: SettingsEntry): Int = when (entry) {

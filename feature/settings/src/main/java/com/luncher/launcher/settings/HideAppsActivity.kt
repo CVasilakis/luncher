@@ -5,7 +5,6 @@ import android.os.Bundle
 import android.view.View
 import android.view.ViewGroup
 import android.widget.BaseAdapter
-import android.widget.ImageView
 import android.widget.ListView
 import com.luncher.domain.apps.AppVisibility
 import com.luncher.domain.apps.ArrangedApps
@@ -13,7 +12,6 @@ import com.luncher.domain.apps.homeApps
 import com.luncher.launcher.ui.ThemedText
 import com.luncher.launcher.ui.styleAll
 import com.luncher.launcher.ui.stylePanel
-import com.luncher.launcher.ui.R as UiR
 import java.util.Locale
 
 /**
@@ -107,7 +105,6 @@ class HideAppsActivity : Activity() {
                 text = row.app.label
                 changeRole(if (row.hidden) ThemedText.ON_SURFACE_VARIANT else ThemedText.ON_SURFACE)
             }
-            view.findViewById<ImageView>(R.id.settings_app_icon).setImageResource(if (row.hidden) UiR.drawable.icon_eye_off else UiR.drawable.icon_tv)
             view.findViewById<View>(R.id.settings_app_hidden).visibility = if (row.hidden) View.VISIBLE else View.GONE
             view.styleAll(theme.roles)
             return view

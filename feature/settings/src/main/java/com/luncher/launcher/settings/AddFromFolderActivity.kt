@@ -10,6 +10,7 @@ import android.os.Looper
 import android.text.SpannableStringBuilder
 import android.text.Spanned
 import android.text.style.ForegroundColorSpan
+import android.util.TypedValue
 import android.view.View
 import android.view.ViewGroup
 import android.widget.AdapterView
@@ -34,6 +35,7 @@ import com.luncher.launcher.ui.styleAll
 import com.luncher.launcher.ui.styleScreen
 import com.luncher.launcher.ui.R as UiR
 import java.util.Locale
+import kotlin.math.ceil
 
 /**
  * The pictures in Luncher's drop folders, on the TV and on USB drives ([FolderPictures][graph]):
@@ -159,9 +161,12 @@ class AddFromFolderActivity : Activity() {
     private fun shareTheWidth() {
         val margin = resources.getDimensionPixelSize(R.dimen.settings_pictures_margin_horizontal)
         val gap = resources.getDimensionPixelSize(R.dimen.settings_pictures_side_gap)
-        val side = ((resources.displayMetrics.widthPixels - 2 * margin - gap) * SIDE).toInt()
-        findViewById<View>(R.id.settings_pictures_folder_side_column).layoutParams.width = side
-        (findViewById<View>(R.id.settings_pictures_folder_list_column).layoutParams as ViewGroup.MarginLayoutParams).marginEnd = side + gap
+        val width = ((resources.displayMetrics.widthPixels - 2 * margin - gap) * SIDE).toInt()
+        findViewById<View>(R.id.settings_pictures_folder_side_column).layoutParams.width = width
+        (findViewById<View>(R.id.settings_pictures_folder_list_column).layoutParams as ViewGroup.MarginLayoutParams).marginEnd = width + gap
+        // Room at both sides for Add all's zoom, as wide as the column, and its shadow.
+        val zoom = TypedValue().also { resources.getValue(UiR.dimen.button_zoom, it, true) }.float
+        side.leaveRoom(ceil(width * (zoom - 1) / 2).toInt() + resources.getDimensionPixelSize(UiR.dimen.button_lift))
     }
 
     /** The preview's corners, rounded, and its color while there's none. */

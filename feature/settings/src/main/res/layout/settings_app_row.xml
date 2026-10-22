@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- One app in the Hide apps list: a TV, or a crossed eye while it's hidden, its name, and the
-     "Hidden" chip at the end while it's hidden. Not focusable: the list moves its selection, and
-     OK on the list toggles the selected app; the selected row looks focused. -->
+<!-- One app in the Hide apps list: its name, dimmed while it's hidden, and the "Hidden" chip at
+     the end while it's hidden; no icon, the chip says it. Not focusable: the list moves its
+     selection, and OK on the list toggles the selected app; the selected row looks focused. -->
 <com.luncher.launcher.ui.ListEntry xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="@dimen/settings_row_height"
     android:gravity="center_vertical"
@@ -11,19 +10,10 @@
     android:paddingLeft="@dimen/settings_entry_padding"
     android:paddingRight="@dimen/settings_entry_padding">
 
-    <com.luncher.launcher.ui.ThemedIcon
-        android:id="@+id/settings_app_icon"
-        android:layout_width="@dimen/icon"
-        android:layout_height="@dimen/icon"
-        android:duplicateParentState="true"
-        android:importantForAccessibility="no"
-        app:colorRole="onSurfaceVariant" />
-
     <com.luncher.launcher.ui.ThemedText
         android:id="@+id/settings_app_label"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="@dimen/settings_entry_icon_gap"
         android:layout_weight="1"
         android:duplicateParentState="true"
         android:ellipsize="end"

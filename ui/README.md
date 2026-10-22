@@ -27,7 +27,8 @@ ui/
     │   │   ├── ListEntry.kt      an entry: inverse while focused, tinted while chosen, outlined while open; zoomed
     │   │   ├── EntryText.kt      an entry of one line, its icon before it: a menu's
     │   │   ├── PillButton.kt     a button: filled, tonal or danger, its icon beside its text, giving way
-    │   │   ├── ScrollFrame.kt    a scrolling list's frame: cut along its rounded corners, fading out below
+    │   │   ├── ScrollFrame.kt    a scrolling list's frame: cut along its rounded corners, fading out where there's more
+    │   │   ├── LookAheadListView.kt, LookAheadScrollView.kt  lists that scroll a row ahead of the focus
     │   │   ├── ThemedSpinner.kt  a wait's spinning wheel, in the accent
     │   │   ├── Windows.kt        a panel's window and a screen's own, styled
     │   │   ├── ScreenSize.kt     screenSize(): the screen's size in px, what the wallpaper is drawn at and
@@ -42,7 +43,7 @@ ui/
     │   │                         shown half a second at least: for work the user waits for (the wallpaper drawn,
     │   │                         a picture added); Cancel too, and Back, for work that can be stopped
     │   └── res/
-    │       ├── animator/         entry_zoom, button_zoom: a focused entry's and button's zoom and lift
+    │       ├── animator/         entry_zoom, button_zoom: a focused entry's zoom, a button's zoom and lift
     │       ├── drawable/         icon_…, the line icons (white, tinted where they're used); panel_background,
     │       │                     a floating panel's window before it's styled
     │       ├── layout/           working_dialog: WorkingDialog's wheel and message, and its Cancel
@@ -84,12 +85,14 @@ can, the focused thing stands out from afar, and every color comes from the user
   `stylePanel` and `styleScreen`, which style its window too) as it's made, and again, in place,
   when the theme changes. A themed text's or icon's role is its `colorRole` attribute:
   `onSurface`, `onSurfaceVariant`, `primary`, `error`.
-- **Focus: the inverse color, a little zoom and a lift.** A focused entry (`ListEntry`,
+- **Focus: the inverse color and a little zoom.** A focused entry (`ListEntry`,
   `EntryText`) is filled with `inverseSurface`, light on a dark theme and dark on a light one,
   its texts and icons the inverse too (they take its state, `duplicateParentState`), zoomed by
-  `entry_zoom` (1.05) and lifted, so the GPU casts its shadow; a focused button (`PillButton`)
-  turns to the inverse color (a danger one to the error color), zoomed by `button_zoom`. The zoom
-  and the lift are state animators made with each view, so a key press only starts them. A focused
+  `entry_zoom` (1.05), with no shadow: entries sit close, and one would fall on the next entry,
+  and through a chosen entry's tint as it settled; a focused button (`PillButton`) turns to the
+  inverse color (a danger one to the error color), zoomed by `button_zoom` and lifted by
+  `button_lift`, so the GPU casts its shadow. The zoom and the lift are state animators made
+  with each view, so a key press only starts them. A focused
   view looks focused only while its window has the focus: a dialog or a list over a screen takes
   the keys, and what had the focus under it looks as it is otherwise. A list's selected row
   (`ListView`, which moves a selection, not the focus) looks focused while the list has the focus.
@@ -103,10 +106,16 @@ can, the focused thing stands out from afar, and every color comes from the user
 - **Room for the zoom, inside what clips.** A parent that clips cuts each child to the child's own
   bounds, so a zoomed entry needs its room inside the view that holds it: a list's padding, with
   `clipToPadding` off, and `clipChildren` off on what's between it and what clips.
-- **A list that scrolls keeps its corners, and fades out below.** In a `ScrollFrame`, what scrolls
-  under the frame's edges is cut along its rounded corners (its outline, clipped by the GPU, no
-  layer, no bitmap); while there's more below, the last half row fades into the frame's color, one
-  gradient drawn over it, shown and hidden as the list scrolls, never while its end shows.
+- **A list that scrolls keeps its corners, fades out where there's more, and scrolls ahead of the
+  focus.** In a `ScrollFrame`, what scrolls under the frame's edges is cut along its rounded
+  corners (its outline, clipped by the GPU, no layer, no bitmap); while there's more below, or
+  above, the list fades into the frame's color at that edge, one gradient drawn over it, shown and
+  hidden as the list scrolls, never while that end of it shows. The list in it is a
+  `LookAheadListView` or a `LookAheadScrollView`: while there's more beyond an edge, the focused
+  row stays a row away from it, so the next row shows whole before the focus gets there, and the
+  focus is never on a row under a fade; the first and the last rows go to the edge, the last one
+  whole and not faded. They use the room Android leaves for a list's own fading edges, which stay
+  off (they would draw the list into a layer).
 - **Sizes.** Android TV's 960 x 540 dp canvas, the 48 dp margin at the sides and 27 to 32 dp above
   and below, an 8 dp grid; Material for TV's type, a little larger for the distance (an entry's 18
   sp, a line below it 14 sp, a screen's title 34 sp, smaller below 450 dp tall). Icons are line

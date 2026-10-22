@@ -8,7 +8,7 @@ import com.luncher.domain.appearance.ColorRoles
 /**
  * An entry of one line, a [ListEntry] made of its text alone, its icon before it if it has one
  * (`drawableStart`, taking the text's colors): a menu's entries (a tile's, a picture's actions).
- * The inverse color while it has the focus, and a little zoom and lift ([R.animator.entry_zoom]).
+ * The inverse color while it has the focus, and a little zoom ([R.animator.entry_zoom]).
  */
 open class EntryText @JvmOverloads constructor(context: Context, attrs: AttributeSet? = null) : ThemedText(context, attrs) {
 
