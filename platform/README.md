@@ -40,7 +40,7 @@ platform/
     │   │   │   ├── CachedPictureImages.kt           PictureImages<Bitmap> in front of WorkingCopyImages: each picture's thumbnail kept in a file
     │   │   │   ├── PictureFiles.kt                  reading a picture file: its size, upright, its format, whether it's whole; drawing it framed in ARGB_8888
     │   │   │   ├── JpegOrientation.kt               a JPEG's orientation tag, read without ExifInterface
-    │   │   │   └── WholeFiles.kt                    whether a JPEG, PNG or WebP is whole, by its structure, before it's decoded
+    │   │   │   └── WholeFiles.kt                    whether a JPEG, PNG, WebP or BMP is whole, by its structure, before it's decoded
     │   │   ├── jobs/
     │   │   │   └── BackgroundThreadJobs.kt          Jobs on one thread at background priority, with a priority queue
     │   │   ├── outside/                             asking another app, which may never answer (below)
@@ -214,7 +214,9 @@ last one:
   ones. So `PictureFiles.whole` reads the file's structure first (`isWhole`): a JPEG's segments
   and scans up to its end marker, no marker where its data is, the restart markers in order; a
   PNG's chunks up to its end, with the checksums of those the decoder needs; a WebP's length, as
-  its header says. Other formats are their decoder's to judge. It reads the file once more but
+  its header says; a BMP's pixels up to where its header ends them (a BMP cut short decodes with
+  its bottom rows only, the rest black, found on API 28 on 2026-10-22). Other formats are their
+  decoder's to judge. It reads the file once more but
   decodes nothing, in a fifth to a tenth of the time the photo's decode takes, through the same
   stream as a decode, so it stops as one does. What follows a JPEG's end (a motion photo's video)
   isn't read. Damage that leaves the structure whole (a flipped bit in a JPEG's data) shows as it

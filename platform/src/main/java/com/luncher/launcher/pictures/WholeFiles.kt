@@ -2,11 +2,12 @@ package com.luncher.launcher.pictures
 
 import java.io.InputStream
 import java.util.zip.CRC32
+import kotlin.math.abs
 
 /**
  * Whether the picture file [input] reads is whole, as far as its format tells: not cut short, its
- * structure intact. A JPEG, PNG or WebP cut short or damaged decodes without an error on most
- * Android versions, the missing part black, transparent or gray, so this is read before it's
+ * structure intact. A JPEG, PNG, WebP or BMP cut short or damaged decodes without an error on
+ * most Android versions, the missing part black, transparent or gray, so this is read before it's
  * decoded. Reads at most to the file's end, without decoding anything; any other format is
  * whole here, for its decoder to judge. A read that fails ends it with an `IOException`.
  *
@@ -19,6 +20,9 @@ import java.util.zip.CRC32
  *   or, on API 22 and 23, run forever without reading, which no stop can end. A damaged optional
  *   chunk is skipped by decoders, and here.
  * - **WebP:** as long as its RIFF header says.
+ * - **BMP:** up to the end of its pixels, where its header puts them (rows padded to 4 bytes);
+ *   a compressed one (RLE) as long as its header says, when it says. One cut short decodes with
+ *   its first rows only, the bottom ones as it stores them bottom up, the rest black.
  */
 internal fun isWhole(input: InputStream): Boolean {
     val bytes = Bytes(input)
@@ -28,6 +32,7 @@ internal fun isWhole(input: InputStream): Boolean {
         first == 0xFF && second == SOI -> wholeJpeg(bytes)
         first == 0x89 && second == 'P'.code -> wholePng(bytes)
         first == 'R'.code && second == 'I'.code -> wholeWebp(bytes)
+        first == 'B'.code && second == 'M'.code -> wholeBmp(bytes)
         else -> true
     }
 }
@@ -116,6 +121,42 @@ private fun wholeWebp(bytes: Bytes): Boolean {
     return bytes.skip(size)
 }
 
+private fun wholeBmp(bytes: Bytes): Boolean {
+    val size = bytes.u32le()   // the file's, or 0
+    if (!bytes.skip(4)) return false   // reserved
+    val offset = bytes.u32le()
+    val header = bytes.u32le()
+    if (size < 0 || offset < 0 || header < 0) return false
+    var read = 18L
+    val width: Long
+    val height: Long
+    val bits: Int
+    var compression = 0L
+    if (header == 12L) {   // OS/2's
+        width = bytes.u16le().toLong()
+        height = bytes.u16le().toLong()
+        bytes.u16le()   // planes
+        bits = bytes.u16le()
+        read += 8
+    } else if (header >= 40) {
+        width = bytes.u32le().toInt().toLong()
+        height = bytes.u32le().toInt().toLong()   // negative: stored top down
+        bytes.u16le()   // planes
+        bits = bytes.u16le()
+        compression = bytes.u32le()
+        read += 16
+    } else {
+        return true   // a header this doesn't know: for the decoder to judge
+    }
+    if (bits < 0 || compression < 0) return false
+    val end = when (compression) {
+        // Uncompressed, maybe with masks of its channels.
+        0L, 3L, 6L -> if (width <= 0 || bits == 0) return true else offset + (bits * width + 31) / 32 * 4 * abs(height)
+        else -> if (size == 0L) return true else size
+    }
+    return end <= read || bytes.skip(end - read)
+}
+
 /** [input]'s bytes, one at a time, through a buffer of its own; -1 past the end. */
 private class Bytes(private val input: InputStream) {
     private val buffer = ByteArray(64 * 1024)
@@ -179,6 +220,13 @@ private class Bytes(private val input: InputStream) {
         val high = u16()
         val low = u16()
         return if (high < 0 || low < 0) -1 else (high.toLong() shl 16) or low.toLong()
+    }
+
+    /** Two bytes, least significant first, as BMP's; -1 past the end. */
+    fun u16le(): Int {
+        val low = read()
+        val high = read()
+        return if (high < 0) -1 else (high shl 8) or low
     }
 
     /** Four bytes, least significant first, as RIFF's sizes; -1 past the end. */

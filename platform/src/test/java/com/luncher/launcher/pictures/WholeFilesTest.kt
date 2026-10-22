@@ -88,11 +88,50 @@ class WholeFilesTest {
         assertTrue(whole(png.copyOfRange(0, iend) + note + png.copyOfRange(iend, png.size)))
     }
 
+    // As Windows writes them: 24 bits, bottom up; and top down, 32 bits with channel masks.
+    @Test
+    fun `a BMP is whole up to the end of its pixels, cut short it isn't`() {
+        val bottomUp = bmp(width = 5, height = 3, bits = 24)
+        val topDown = bmp(width = 5, height = -3, bits = 32, compression = 3)
+        assertTrue(whole(bottomUp))
+        assertTrue(whole(topDown))
+        assertTrue("what follows its pixels isn't its own", whole(bottomUp + ByteArray(10)))
+        for (bytes in listOf(bottomUp, topDown)) {
+            for (cut in 2 until bytes.size) assertFalse("cut at $cut of ${bytes.size}", whole(bytes.copyOf(cut)))
+        }
+    }
+
+    @Test
+    fun `a compressed BMP is as long as its header says, when it says`() {
+        val rle = bmp(width = 4, height = 2, bits = 8, compression = 1, pixels = byteArrayOf(4, 1, 0, 0, 4, 2, 0, 1))
+        assertTrue(whole(rle))
+        assertFalse(whole(rle.copyOf(rle.size - 1)))
+        val unsized = rle.copyOf().apply { fill(0, 2, 6) }
+        assertTrue("no size: for the decoder to judge", whole(unsized.copyOf(unsized.size - 1)))
+    }
+
     @Test
     fun `any other file is for its decoder to judge`() {
         assertTrue(whole(TestPictureFiles.heic()))
         assertTrue(whole("not a picture".toByteArray()))
         assertTrue(whole(ByteArray(0)))
+    }
+
+    /**
+     * A BMP of [width] x [height] pixels of [bits] each (rows padded to 4 bytes, a negative height
+     * top down), its [pixels] zeros unless given, with its 40-byte header and its size in it.
+     */
+    private fun bmp(width: Int, height: Int, bits: Int, compression: Int = 0, pixels: ByteArray? = null): ByteArray {
+        val data = pixels ?: ByteArray((bits * width + 31) / 32 * 4 * kotlin.math.abs(height))
+        val masks = if (compression == 3) 12 else 0
+        val offset = 14 + 40 + masks
+        val out = java.nio.ByteBuffer.allocate(offset + data.size).order(java.nio.ByteOrder.LITTLE_ENDIAN)
+        out.put('B'.code.toByte()).put('M'.code.toByte()).putInt(offset + data.size).putInt(0).putInt(offset)
+        out.putInt(40).putInt(width).putInt(height).putShort(1).putShort(bits.toShort()).putInt(compression)
+        out.putInt(data.size).putInt(2835).putInt(2835).putInt(0).putInt(0)
+        if (masks > 0) out.putInt(0xFF0000).putInt(0xFF00).putInt(0xFF)
+        out.put(data)
+        return out.array()
     }
 
     /** A JPEG's start up to its first scan: its frame of [marker] with three components, and a table. */
