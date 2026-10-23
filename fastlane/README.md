@@ -77,11 +77,13 @@ Next Player, RadioDroid and Tailscale. Their banners belong to their owners. The
 are the author's own.
 
 1. The home screen.
-2. Arrange mode, holding an app.
+2. An app's menu (a long press of OK on its tile).
 3. The settings panel.
 4. Appearance, with Tiles open.
 5. Background, the gradient chosen, the photos listed below it.
 6. Add from folder.
+7. The home screen with two options changed, Focus frame Off and App name Always, a tile selected.
+8. Appearance with the theme changed, Mode Light and the Blue accent, Theme open.
 
 `screencap` saves PNGs with an alpha channel, which `convert` (ImageMagick) removes:
 

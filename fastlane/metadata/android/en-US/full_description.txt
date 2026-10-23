@@ -2,21 +2,21 @@ Luncher is made with performance in mind, to run smoothly even on old and weak A
 
 Features:
 
-- A status bar with the time, the date and the settings, which you can arrange to your liking
-- Your TV apps as a grid of banners, placed where you want on the screen
 - Reorder your apps
-- Hide the apps you don't use, from a tile's menu (a long press of OK), and show them again in the settings
+- Hide the apps you don't use
 - Customize the tile shape, from square to pill-shaped
-- Lift the focused tile with a soft shadow instead of a frame, and show the app names below the focused tile or every tile
-- Set your own pictures as wallpaper, with dim and blur options (shared from any app or, up to Android 14, copied from a USB drive)
-- Pick an accent color, and dark or light menus and settings
+- Change the apps' alignment (top / bottom / left / right / center)
+- Show the app names
+- Set your own pictures as wallpaper, with dim and blur options
+- Pick an accent color, and dark or light theme for menus and settings
 
 On the way:
 
 - Your own custom banners for app tiles
-- More appearance settings: tile size and spacing and much more
-- Wi-Fi, VPN and notifications in the status bar, without ever asking for internet access
+- More appearance settings: tile size, spacing and much more
+- Wi-Fi, VPN and notifications in the status bar
 - Folders to group your apps
+- Screensaver options
 
 Application goals:
 

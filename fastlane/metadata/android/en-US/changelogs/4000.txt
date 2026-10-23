@@ -1,0 +1,4 @@
+- A new look for the menus and settings
+- New accent color options and dark or light mode
+- Show the app names below the tiles (customizable)
+- Background pictures listed by name and damaged pictures are detected before importing
