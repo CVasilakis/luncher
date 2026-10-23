@@ -12,6 +12,7 @@ import com.luncher.domain.apps.FakeInstalledApps
 import com.luncher.domain.apps.FakeInstalledApps.Companion.app
 import com.luncher.launcher.testing.TV_1080P
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -21,6 +22,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
+import org.robolectric.shadows.ShadowChoreographer
 import java.time.Duration
 
 @RunWith(RobolectricTestRunner::class)
@@ -122,26 +124,23 @@ class HideAppsActivityTest {
         assertEquals(2, activity.list().selectedItemPosition)
     }
 
-    /** A row and the gap below it, and the list's padding above and below, a margin around the rows. */
+    /** A row and the gap below it. */
     private fun HideAppsActivity.row() = resources.getDimensionPixelSize(R.dimen.settings_row_height) + resources.getDimensionPixelSize(R.dimen.settings_entry_gap)
 
-    private fun HideAppsActivity.listPadding() = list().paddingTop + list().paddingBottom
-
-    private fun View.forceLayoutAll() {
-        forceLayout()
-        if (this is ViewGroup) for (i in 0 until childCount) getChildAt(i).forceLayoutAll()
-    }
-
-    /** The panel's height with the list as tall as it was made, at the sheet's width. */
-    private fun HideAppsActivity.panelHeight(): Int {
-        val panel = findViewById<View>(R.id.settings_hide_apps_panel)
-        panel.forceLayoutAll()   // measured already with the same specs, before the list had its height
+    /** The panel laid out in its side sheet, as Android lays out the sheet's window. */
+    private fun HideAppsActivity.layOutInSheet(): ViewGroup {
+        val panel = findViewById<ViewGroup>(R.id.settings_hide_apps_panel)
+        val sheet = window.attributes
         panel.measure(
-            View.MeasureSpec.makeMeasureSpec(window.attributes.width, View.MeasureSpec.EXACTLY),
-            View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
+            View.MeasureSpec.makeMeasureSpec(sheet.width, View.MeasureSpec.EXACTLY),
+            View.MeasureSpec.makeMeasureSpec(sheet.height, View.MeasureSpec.EXACTLY),
         )
-        return panel.measuredHeight
+        panel.layout(0, 0, sheet.width, sheet.height)
+        return panel
     }
+
+    /** Where the list's frame ends, in the panel. */
+    private fun HideAppsActivity.listBottom() = (list().parent as View).bottom
 
     // As tall as the side sheet leaves, the last row cut where the sheet's padding starts, fading out: there's more.
     @Test
@@ -149,18 +148,23 @@ class HideAppsActivityTest {
         installedApps.apps = List(30) { app("app%02d".format(it)) }
 
         val activity = start()
+        val panel = activity.layOutInSheet()
 
         val margin = activity.resources.getDimensionPixelSize(R.dimen.settings_sheet_margin)
         assertEquals(activity.resources.displayMetrics.heightPixels - 2 * margin, activity.window.attributes.height)
-        assertEquals(activity.window.attributes.height, activity.panelHeight())
-        assertTrue(activity.list().layoutParams.height - activity.listPadding() > 6 * activity.row())
+        assertEquals(panel.height - panel.paddingBottom, activity.listBottom())
+        assertTrue(activity.list().height > 6 * activity.row())
+        assertTrue(activity.list().canScrollVertically(1))
     }
 
     @Test
-    fun `is only as tall as its rows when they fit`() {
+    fun `shows every row when they fit, with nothing to scroll`() {
         val activity = start()
+        activity.layOutInSheet()
 
-        assertEquals(activity.row() * 3 + activity.listPadding(), activity.list().layoutParams.height)
+        assertEquals(3, activity.list().childCount)
+        assertFalse(activity.list().canScrollVertically(1))
+        assertFalse(activity.list().canScrollVertically(-1))
     }
 
     // A 720p screen at the 1080p density: 360 dp tall.
@@ -170,21 +174,27 @@ class HideAppsActivityTest {
         installedApps.apps = List(12) { app("app%02d".format(it)) }
 
         val activity = start()
+        val panel = activity.layOutInSheet()
 
         val margin = activity.resources.getDimensionPixelSize(R.dimen.settings_sheet_margin)
-        assertEquals(activity.resources.displayMetrics.heightPixels - 2 * margin, activity.panelHeight())
-        assertTrue(activity.list().layoutParams.height - activity.listPadding() > activity.row())
+        assertEquals(activity.resources.displayMetrics.heightPixels - 2 * margin, activity.window.attributes.height)
+        assertEquals(panel.height - panel.paddingBottom, activity.listBottom())
+        assertTrue(activity.list().height > activity.row())
     }
 
-    // The rows next to the selected one show whole, where there are: the next one shows before the selection gets there.
+    // The rows next to the selected one show whole, where there are: the next one shows before the
+    // selection gets there. One thing moves at a time: the selection, or the list under it by a
+    // row, the selection staying where it is. The window ends on a whole row.
     @Test
-    fun `scrolls a row ahead of the selection, both ways, to the last app and back to the first`() {
+    fun `scrolls a row ahead of the selection, both ways, moving the selection or the list, never both`() {
         installedApps.apps = List(30) { app("app%02d".format(it)) }
         val activity = start()
         val list = activity.list()
+        val pitch = list.getChildAt(1).top - list.getChildAt(0).top
+
+        fun scrolled() = list.firstVisiblePosition * pitch + list.paddingTop - list.getChildAt(0).top
 
         fun assertAhead(position: Int) {
-            shadowOf(Looper.getMainLooper()).idle()
             assertEquals(position, list.selectedItemPosition)
             val index = position - list.firstVisiblePosition
             if (position > 0) {
@@ -199,14 +209,57 @@ class HideAppsActivityTest {
             assertTrue("app ${position + 1} cut", selected.top >= list.paddingTop && selected.bottom <= list.height - list.paddingBottom)
         }
 
-        assertTrue("the list scrolls", list.canScrollVertically(1))
-        for (position in 1 until 30) {
-            activity.press(KeyEvent.KEYCODE_DPAD_DOWN)
+        fun pressAndCheck(keyCode: Int, position: Int) {
+            val top = list.selectedView.top
+            val before = scrolled()
+            activity.press(keyCode)
+            shadowOf(Looper.getMainLooper()).idle()
+            val moved = list.selectedView.top != top
+            val slid = scrolled() - before
+            assertTrue("to app ${position + 1}: the selection moved ($moved) or the list slid ($slid px), one of them", moved != (slid != 0))
+            if (slid != 0) assertEquals("the list slid by a row", pitch, kotlin.math.abs(slid))
             assertAhead(position)
         }
-        for (position in 28 downTo 0) {
-            activity.press(KeyEvent.KEYCODE_DPAD_UP)
-            assertAhead(position)
+
+        assertTrue("the list scrolls", list.canScrollVertically(1))
+        assertEquals("a window of whole rows", 0, (list.height - list.paddingTop - list.paddingBottom + list.dividerHeight) % pitch)
+        for (position in 1 until 30) pressAndCheck(KeyEvent.KEYCODE_DPAD_DOWN, position)
+        assertFalse("the last app at the edge, no more below", list.canScrollVertically(1))
+        for (position in 28 downTo 0) pressAndCheck(KeyEvent.KEYCODE_DPAD_UP, position)
+    }
+
+    // While the list slides, the list draws the focus where it stays, and the row it goes to looks
+    // at rest: its own look would move with it.
+    @Test
+    fun `while the list slides, the selected app looks at rest until it's under the focus`() {
+        installedApps.apps = List(30) { app("app%02d".format(it)) }
+        val activity = start()
+        val list = activity.list()
+        val looper = shadowOf(Looper.getMainLooper())
+        ShadowChoreographer.setPaused(true)
+        ShadowChoreographer.setFrameDelay(Duration.ofMillis(16))
+        try {
+            // Frame by frame: paused, a frame runs once per idle, however long.
+            fun frames() = repeat(30) { looper.idleFor(Duration.ofMillis(16)) }
+            while (!list.canScrollVertically(-1)) {
+                activity.press(KeyEvent.KEYCODE_DPAD_DOWN)
+                frames()
+            }
+            val focus = list.selectedView.top
+            activity.press(KeyEvent.KEYCODE_DPAD_DOWN)
+            val next = list.selectedView
+            val start = next.top
+            assertTrue("the next app below the focus", start > focus)
+            repeat(30) { if (next.top == start) looper.idleFor(Duration.ofMillis(16)) }
+
+            assertTrue("the list on its way: ${next.top}, from $start to $focus", next.top in focus + 1 until start)
+            assertFalse("the app looks selected before it's under the focus", android.R.attr.state_selected in next.drawableState)
+
+            frames()
+            assertEquals("under the focus, where it stayed", focus, next.top)
+            assertTrue("the app looks selected once there", android.R.attr.state_selected in next.drawableState)
+        } finally {
+            ShadowChoreographer.setPaused(false)
         }
     }
 

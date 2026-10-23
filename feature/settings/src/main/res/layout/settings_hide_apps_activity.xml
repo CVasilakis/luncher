@@ -33,18 +33,19 @@
         android:textSize="@dimen/text_supporting"
         app:colorRole="onSurfaceVariant" />
 
-    <!-- A settings_app_row per app; HideAppsActivity sets the list's height, down to the sheet's
-         padding when they don't all fit, fading out where there's more. It scrolls a row ahead of
-         the selection. Rows are recycled while scrolling; the selected one is the focused entry.
-         A margin inside around them. -->
+    <!-- A settings_app_row per app, filling the sheet down to its padding: it fades out where
+         there's more and scrolls a row ahead of the selection. Rows are recycled while scrolling;
+         the selected one is the focused entry. A margin inside around them. Without apps, a text
+         over the empty list says so. -->
     <com.luncher.launcher.ui.ScrollFrame
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="0dp"
+        android:layout_weight="1">
 
         <com.luncher.launcher.ui.LookAheadListView
             android:id="@+id/settings_apps"
             android:layout_width="match_parent"
-            android:layout_height="0dp"
+            android:layout_height="match_parent"
             android:clipToPadding="false"
             android:divider="@android:color/transparent"
             android:dividerHeight="@dimen/settings_entry_gap"
@@ -54,15 +55,16 @@
             android:paddingRight="@dimen/settings_zoom_room_horizontal"
             android:paddingBottom="@dimen/settings_zoom_room_vertical"
             android:scrollbars="none" />
-    </com.luncher.launcher.ui.ScrollFrame>
 
-    <com.luncher.launcher.ui.ThemedText xmlns:app="http://schemas.android.com/apk/res-auto"
-        android:id="@+id/settings_no_apps"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="@dimen/settings_zoom_room_horizontal"
-        android:text="@string/settings_no_apps"
-        android:textSize="@dimen/text_entry"
-        android:visibility="gone"
-        app:colorRole="onSurfaceVariant" />
+        <com.luncher.launcher.ui.ThemedText xmlns:app="http://schemas.android.com/apk/res-auto"
+            android:id="@+id/settings_no_apps"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/settings_zoom_room_horizontal"
+            android:layout_marginTop="@dimen/settings_hide_apps_empty_top"
+            android:text="@string/settings_no_apps"
+            android:textSize="@dimen/text_entry"
+            android:visibility="gone"
+            app:colorRole="onSurfaceVariant" />
+    </com.luncher.launcher.ui.ScrollFrame>
 </LinearLayout>

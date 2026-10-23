@@ -20,6 +20,7 @@ import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
 import androidx.test.espresso.matcher.ViewMatchers.isRoot
 import androidx.test.espresso.matcher.ViewMatchers.withChild
 import androidx.test.espresso.matcher.ViewMatchers.withId
+import androidx.test.espresso.matcher.ViewMatchers.withParent
 import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.luncher.domain.appearance.Appearance
@@ -166,9 +167,10 @@ class AppearanceActivityTest {
             press(KeyEvent.KEYCODE_DPAD_CENTER)
 
             // The background editor: No picture chosen and focused, then the pictures.
-            waitUntil(withChild(withText(R.string.settings_pictures_no_picture)), hasFocus())
+            // The background editor's rows, the list's children, which take the focus: their names are in a column inside them.
+            waitUntil(allOf(withParent(withId(R.id.settings_background_list)), hasDescendant(withText(R.string.settings_pictures_no_picture))), hasFocus())
             press(KeyEvent.KEYCODE_DPAD_DOWN)
-            waitUntil(withChild(withText("sunset.jpg")), hasFocus())
+            waitUntil(allOf(withParent(withId(R.id.settings_background_list)), hasDescendant(withText("sunset.jpg"))), hasFocus())
             press(KeyEvent.KEYCODE_DPAD_CENTER)
             waitUntil(allOf(withId(R.id.settings_background_chosen), isDisplayed()), isDisplayed())
             // Left, to the fields, down them to the buttons, and Left from Delete all to Save.

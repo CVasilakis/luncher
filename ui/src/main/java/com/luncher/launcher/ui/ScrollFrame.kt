@@ -17,7 +17,10 @@ import com.luncher.domain.appearance.ColorRoles
  * (no layer, no bitmap), so the list keeps its corners while it scrolls; and while there's more
  * below, or above, the list fades into the frame's color at that edge: one gradient drawn over
  * it, shown and hidden as the list scrolls, never while that end of it shows. The list scrolls
- * ahead of the focus, so the focused row is never under a fade. Its `fill`: the color it has, a
+ * ahead of the focus, so the focused row is never under a fade. A list whose window ends on a
+ * whole row ([FittedRows]) has the fade over the whole row at the edge and the margin beyond it,
+ * so that row looks dimmed; the list may end a few pixels above the frame, and the fade with it.
+ * Its `fill`: the color it has, a
  * list's container on a screen of its own (`surface`) or a field's (`high`); or none, on a panel,
  * whose color the fades go to.
  *
@@ -72,8 +75,12 @@ open class ScrollFrame @JvmOverloads constructor(context: Context, attrs: Attrib
 
     override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
         super.onLayout(changed, left, top, right, bottom)
-        fadeBelow.setBounds(0, height - fadeHeight, width, height)
-        fadeAbove.setBounds(0, 0, width, fadeHeight)
+        val list = getChildAt(0)
+        val length = (list as? FittedRows)?.fadeLength?.takeIf { it > 0 } ?: fadeHeight
+        val listTop = list?.top ?: 0
+        val listBottom = list?.bottom ?: height
+        fadeBelow.setBounds(0, listBottom - length, width, listBottom)
+        fadeAbove.setBounds(0, listTop, width, listTop + length)
         showFades()
     }
 

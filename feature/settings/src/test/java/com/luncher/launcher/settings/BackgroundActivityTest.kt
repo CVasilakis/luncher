@@ -44,6 +44,7 @@ import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.android.controller.ActivityController
 import org.robolectric.annotation.Config
+import org.robolectric.shadows.ShadowChoreographer
 import org.robolectric.shadows.ShadowDialog
 import java.time.Duration
 import com.luncher.launcher.ui.R as UiR
@@ -293,16 +294,52 @@ class BackgroundActivityTest {
     }
 
     // The rows next to the focused one show whole, where there are: the next one shows before the focus gets there.
+    // While the list slides, the list draws the focus where it stays, and the row it goes to looks
+    // at rest: its own look would move with it.
     @Test
-    fun `the pictures scroll a row ahead of the focus, both ways, to Add from folder and back to No picture`() {
+    fun `while the pictures slide, the focused one looks at rest until it's under the focus`() {
+        graph(*Array(20) { picture("picture%02d.jpg".format(it), added = it.toLong()) })
+        val activity = start().get()
+        val scroll = activity.findViewById<ScrollView>(R.id.settings_background_list_scroll)
+        val looper = shadowOf(Looper.getMainLooper())
+        idle()
+        ShadowChoreographer.setPaused(true)
+        ShadowChoreographer.setFrameDelay(Duration.ofMillis(16))
+        try {
+            // Frame by frame: paused, a frame runs once per idle, however long.
+            fun frames() = repeat(30) { looper.idleFor(Duration.ofMillis(16)) }
+            while (!scroll.canScrollVertically(-1)) {
+                activity.press(KeyEvent.KEYCODE_DPAD_DOWN)
+                frames()
+            }
+            val focus = activity.window.decorView.findFocus().top - scroll.scrollY
+            activity.press(KeyEvent.KEYCODE_DPAD_DOWN)
+            val next = activity.window.decorView.findFocus()
+            val start = next.top - scroll.scrollY
+            assertTrue("the next picture below the focus", start > focus)
+            repeat(30) { if (next.top - scroll.scrollY == start) looper.idleFor(Duration.ofMillis(16)) }
+
+            assertTrue("the list on its way: ${next.top - scroll.scrollY}, from $start to $focus", next.top - scroll.scrollY in focus + 1 until start)
+            assertFalse("the picture looks focused before it's under the focus", android.R.attr.state_focused in next.drawableState)
+
+            frames()
+            assertEquals("under the focus, where it stayed", focus, next.top - scroll.scrollY)
+            assertTrue("the picture looks focused once there", android.R.attr.state_focused in next.drawableState)
+        } finally {
+            ShadowChoreographer.setPaused(false)
+        }
+    }
+
+    @Test
+    fun `the pictures scroll a row ahead of the focus, both ways, moving the focus or the list, never both`() {
         graph(*Array(20) { picture("picture%02d.jpg".format(it), added = it.toLong()) })
         val activity = start().get()
         val scroll = activity.findViewById<ScrollView>(R.id.settings_background_list_scroll)
         val list = activity.findViewById<LinearLayout>(R.id.settings_background_list)
         val rows = (0 until list.childCount).map(list::getChildAt)
+        val pitch = rows[1].top - rows[0].top
 
         fun assertAhead(index: Int) {
-            idle()
             assertSame(rows[index], activity.window.decorView.findFocus())
             val shown = scroll.scrollY..scroll.scrollY + scroll.height
             for (i in (index - 1).coerceAtLeast(0)..(index + 1).coerceAtMost(rows.lastIndex)) {
@@ -310,16 +347,28 @@ class BackgroundActivityTest {
             }
         }
 
+        // One thing moves: the focus, or the list under it by a row, the focus where it was.
+        fun pressAndCheck(keyCode: Int, index: Int) {
+            val focused = activity.window.decorView.findFocus()
+            val top = focused.top - scroll.scrollY
+            val before = scroll.scrollY
+            activity.press(keyCode)
+            idle()
+            val moved = rows[index].top - scroll.scrollY != top
+            val slid = scroll.scrollY - before
+            assertTrue("to ${rows[index].name()}: the focus moved ($moved) or the list slid ($slid px), one of them", moved != (slid != 0))
+            if (slid != 0) assertEquals("the list slid by a row", pitch, kotlin.math.abs(slid))
+            assertAhead(index)
+        }
+
         assertTrue("the list scrolls", scroll.canScrollVertically(1))
+        assertTrue("rows of one height", rows.all { it.height == rows[0].height })
+        assertEquals("a window of whole rows", 0, (scroll.height - list.paddingTop - list.paddingBottom) % pitch)
+        idle()
         assertAhead(0)
-        for (index in 1..rows.lastIndex) {
-            activity.press(KeyEvent.KEYCODE_DPAD_DOWN)
-            assertAhead(index)
-        }
-        for (index in rows.lastIndex - 1 downTo 0) {
-            activity.press(KeyEvent.KEYCODE_DPAD_UP)
-            assertAhead(index)
-        }
+        for (index in 1..rows.lastIndex) pressAndCheck(KeyEvent.KEYCODE_DPAD_DOWN, index)
+        assertFalse("Add from folder at the edge, no more below", scroll.canScrollVertically(1))
+        for (index in rows.lastIndex - 1 downTo 0) pressAndCheck(KeyEvent.KEYCODE_DPAD_UP, index)
     }
 
     // As Add from folder's rows, without where: every picture here is in Luncher's own storage.

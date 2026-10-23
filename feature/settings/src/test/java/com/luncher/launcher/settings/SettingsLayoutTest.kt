@@ -82,11 +82,6 @@ class SettingsLayoutTest(private val screen: TvScreen) {
      * its content, measured at the sheet's width as large as it is, fits the sheet's height. Last in
      * a test: measuring again changes the views' text layouts, and the list's rows.
      */
-    private fun View.forceLayoutAll() {
-        forceLayout()
-        if (this is ViewGroup) for (i in 0 until childCount) getChildAt(i).forceLayoutAll()
-    }
-
     private fun assertPanelFits(activity: Activity) {
         val window = activity.window.attributes
         val metrics = activity.resources.displayMetrics
@@ -119,20 +114,16 @@ class SettingsLayoutTest(private val screen: TvScreen) {
         val activity = Robolectric.buildActivity(HideAppsActivity::class.java).setup().get()
         val list = activity.findViewById<ListView>(R.id.settings_apps)
         val row = activity.resources.getDimensionPixelSize(R.dimen.settings_row_height) + activity.resources.getDimensionPixelSize(R.dimen.settings_entry_gap)
-        val rowsHeight = list.layoutParams.height - list.paddingTop - list.paddingBottom
-
-        // All of them where they fit (a screen as tall as 1080p at 160 dpi's 1080 dp); else down to the sheet's padding.
-        if (rowsHeight != apps.size * row) {
-            val window = activity.window.attributes
-            val panel = activity.findViewById<ViewGroup>(android.R.id.content).getChildAt(0)
-            panel.forceLayoutAll()   // measured already with the same specs, before the list had its height
-            panel.measure(
-                View.MeasureSpec.makeMeasureSpec(window.width, View.MeasureSpec.EXACTLY),
-                View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
-            )
-            assertEquals("the panel as tall as the sheet on $screen", window.height, panel.measuredHeight)
-        }
-        assertTrue("list shorter than a row on $screen", rowsHeight > row)
+        // Laid out in the sheet, as Android lays out its window: the list fills it down to its padding.
+        val sheet = activity.window.attributes
+        val panel = activity.findViewById<ViewGroup>(R.id.settings_hide_apps_panel)
+        panel.measure(
+            View.MeasureSpec.makeMeasureSpec(sheet.width, View.MeasureSpec.EXACTLY),
+            View.MeasureSpec.makeMeasureSpec(sheet.height, View.MeasureSpec.EXACTLY),
+        )
+        panel.layout(0, 0, sheet.width, sheet.height)
+        assertEquals("list's end on $screen", panel.height - panel.paddingBottom, (list.parent as View).bottom)
+        assertTrue("list shorter than a row on $screen", list.height - list.paddingTop - list.paddingBottom > row)
         val rows = (0 until list.childCount).map { list.getChildAt(it) }
         for (view in rows) assertWhole(screen, view.findViewById(R.id.settings_app_label))
         list.setSelection(apps.lastIndex)   // the hidden app, "Hidden" after its name

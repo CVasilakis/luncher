@@ -71,14 +71,14 @@ class HideAppsActivity : Activity() {
         theme.stop()
     }
 
-    /** The rows for the apps installed now, the list as tall as they need, and why it's empty if it is. */
+    /**
+     * The rows for the apps installed now, and why there are none if there aren't, over the list:
+     * the list stays, with the focus, for an app installed while it shows (an empty view would
+     * take the list away, and its focus with it).
+     */
     private fun readApps() {
         arranged = homeApps(installedApps.tvApps(), packageName, arrangements.read(), Locale.getDefault())
         rows = arranged.byLabel()
-        // As tall as the sheet leaves: a ListView as tall as its content would create a view for every app.
-        list.layoutParams.height = 0
-        list.layoutParams.height = listHeight(findViewById(R.id.settings_hide_apps_panel), list, rows.size, window.attributes.width)
-        list.requestLayout()
         findViewById<View>(R.id.settings_no_apps).visibility = if (rows.isEmpty()) View.VISIBLE else View.GONE
     }
 

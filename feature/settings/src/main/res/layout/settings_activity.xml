@@ -24,25 +24,30 @@
         android:textSize="@dimen/text_title" />
 
     <!-- SettingsActivity adds a settings_entry for each entry of settingsMenu, in order; they
-         scroll a row ahead of the focus, on a screen too short for them. A margin inside around
-         them. -->
-    <com.luncher.launcher.ui.LookAheadScrollView
-        android:id="@+id/settings_entries_scroll"
+         scroll a row ahead of the focus, on a screen too short for them, fading out where there's
+         more. A margin inside around them. -->
+    <com.luncher.launcher.ui.ScrollFrame
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1"
-        android:scrollbars="none">
+        android:layout_weight="1">
 
-        <LinearLayout
-            android:id="@+id/settings_entries"
+        <com.luncher.launcher.ui.LookAheadScrollView
+            android:id="@+id/settings_entries_scroll"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:clipChildren="false"
-            android:clipToPadding="false"
-            android:orientation="vertical"
-            android:paddingLeft="@dimen/settings_zoom_room_horizontal"
-            android:paddingTop="@dimen/settings_zoom_room_vertical"
-            android:paddingRight="@dimen/settings_zoom_room_horizontal"
-            android:paddingBottom="@dimen/settings_zoom_room_vertical" />
-    </com.luncher.launcher.ui.LookAheadScrollView>
+            android:layout_height="match_parent"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:id="@+id/settings_entries"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:clipChildren="false"
+                android:clipToPadding="false"
+                android:orientation="vertical"
+                android:paddingLeft="@dimen/settings_zoom_room_horizontal"
+                android:paddingTop="@dimen/settings_zoom_room_vertical"
+                android:paddingRight="@dimen/settings_zoom_room_horizontal"
+                android:paddingBottom="@dimen/settings_zoom_room_vertical" />
+        </com.luncher.launcher.ui.LookAheadScrollView>
+    </com.luncher.launcher.ui.ScrollFrame>
 </LinearLayout>

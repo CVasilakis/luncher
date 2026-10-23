@@ -20,4 +20,8 @@ dependencies {
     // features' tests have already.
     testFixturesImplementation(libs.robolectric)
     testFixturesImplementation(libs.roborazzi)
+    // The JVM tests of :ui's own rules and views (how a list's rows fill its window): the
+    // libraries the features' tests have already.
+    testImplementation(libs.junit)
+    testImplementation(libs.robolectric)
 }

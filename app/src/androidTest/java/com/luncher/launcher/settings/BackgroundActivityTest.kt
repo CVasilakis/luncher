@@ -25,6 +25,7 @@ import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
 import androidx.test.espresso.matcher.ViewMatchers.isRoot
 import androidx.test.espresso.matcher.ViewMatchers.withChild
 import androidx.test.espresso.matcher.ViewMatchers.withId
+import androidx.test.espresso.matcher.ViewMatchers.withParent
 import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -192,9 +193,10 @@ class BackgroundActivityTest {
     }
 
     /** The list's row named [name]. */
-    private fun row(name: String) = withChild(allOf(withId(R.id.settings_background_name), withText(name)))
+    // The row itself, the list's child, which takes the focus: its name is in a column inside it.
+    private fun row(name: String) = allOf(withParent(withId(R.id.settings_background_list)), hasDescendant(allOf(withId(R.id.settings_background_name), withText(name))))
 
-    private fun row(name: Int) = withChild(allOf(withId(R.id.settings_background_name), withText(name)))
+    private fun row(name: Int) = allOf(withParent(withId(R.id.settings_background_list)), hasDescendant(allOf(withId(R.id.settings_background_name), withText(name))))
 
     /**
      * Checks [condition] on the view [view] matches, in a dialog ([inDialog]) or an option's list

@@ -25,7 +25,6 @@ feature/settings/
     │   │   ├── Sheet.kt          placeAsSheet: a panel's window as a side sheet on the home screen's gear's side
     │   │   ├── SettingsActivity.kt   the settings panel: lists the domain's settingsMenu, opens entries
     │   │   ├── HideAppsActivity.kt   the Hide apps list: every app by name; OK hides or shows one
-    │   │   ├── PanelHeight.kt    a sheet's list as tall as its rows, or as the screen leaves room for
     │   │   ├── Chip.kt           Chip (an app's "Hidden"), ChipFrame (a stepped value between its arrows)
     │   │   ├── AppearanceActivity.kt the appearance editor: the options, Left and Right step them
     │   │   ├── AppearancePreviewView.kt  the editor's preview: an illustration of the home screen
@@ -111,8 +110,9 @@ the left once the clock is moved to the right; the screen's side in any language
 screen doesn't mirror, though the panel's content does), its theme, `Theme.Luncher.Settings`, a platform
 dialog theme. Each entry is one line: its icon, its name, centered in the entry's height, and at
 its end where it goes: a chevron to a panel of Luncher's, an arrow out of it to another app. On a screen too short for them all, the entries
-would scroll a row ahead of the focus (a `LookAheadScrollView`); the three of them fit on every TV
-screen the layout tests check. Back closes it, as any activity, and so does Home: the home
+would scroll a row ahead of the focus in whole rows, fading out where there's more (a
+`LookAheadScrollView` in a `ScrollFrame`); the three of them fit on every TV screen the layout
+tests check. Back closes it, as any activity, and so does Home: the home
 screen is `singleTask`, and Android closes what's above it in its task. The home screen's focus is
 where it was.
 
@@ -161,12 +161,13 @@ nothing itself.
 | `HideAppsActivity` | shows that list, stores each change; reads the apps again when they change while it shows, and when it comes back |
 
 The list is a platform `ListView`: it creates views only for the rows on screen, and reuses them
-while scrolling. When the apps don't all fit, it takes all the height the sheet leaves, on any
-screen (`listHeight`, measured at the sheet's width, so a title on two lines counts), its last row
-cut where the sheet's padding starts and fading out there, and at the top once it has scrolled (a
-`ScrollFrame`, no scroll bar). It scrolls a row ahead of the selection (a `LookAheadListView`): the
-selected app stays a row away from an edge with more beyond it, so the next app shows whole before
-the selection gets there, and the last app comes up whole, no longer faded, before it's selected.
+while scrolling. It fills the sheet below the title and the hint, as the settings panel's entries
+do (`layout_weight`), down to the sheet's padding, or a few pixels above it: when the apps don't
+all fit, the window ends on a whole row, the one at the edge dimmed by the fade, at the top too
+once it has scrolled (a `ScrollFrame`, no scroll bar). Its window is whole rows, and it scrolls a row ahead of the selection, sliding under it
+(a `LookAheadListView`, [`ui/`](../../ui/README.md#the-design-system)): the selected app stays a
+row away from an edge with more beyond it, so the next app shows whole before the selection gets
+there, and the last app comes up whole, no longer faded, before it's selected.
 
 ### Appearance
 
@@ -175,7 +176,10 @@ Appearance (`AppearanceActivity`) is the editor of the home screen's
 large title right above a preview of the home screen at the left, and below the preview two
 buttons, Background and Reset to defaults, the three centered in the height (`EditorStartColumn`:
 the preview as large as the room the others leave, at least a quarter of it); the options at the
-right, in their container, starting level with the title (`AppearanceEditorLayout`). The options
+right, in their container, starting level with the title, measured for the room below it as the
+columns are measured, where the title's place follows from the start column's measures
+(`AppearanceEditorLayout`): measured for more room first, the list would fit its rows to that room
+([`ui/`](../../ui/README.md#the-design-system)) and lose its scroll at each layout. The options
 are in groups (Tiles, Time and date, Theme), each an entry of its own with its icon and a mark
 pointing down, or up while it's open, closed at first: OK on one shows its options below it and
 closes the group that was open, so the list stays short; OK again closes it. Each option shows its

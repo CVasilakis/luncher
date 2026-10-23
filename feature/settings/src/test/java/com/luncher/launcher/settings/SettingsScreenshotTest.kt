@@ -61,14 +61,14 @@ class SettingsScreenshotTest {
         activity.window.decorView.captureFocused("src/test/screenshots/settings/settings_panel_small_screen.png")
     }
 
-    // Nine apps, two of them hidden, and a name too long for its row: six and a half rows show, the rest scroll.
+    // Nine apps, two of them hidden, and a name too long for its row: the list fills the sheet, the rest scroll.
     @Test
     fun hideAppsPanel() {
         hideApps().captureFocused("src/test/screenshots/settings/settings_hide_apps.png")
     }
 
-    // 720p at the 1080p density, 640x360 dp: as many rows as leave the panel its margin, still
-    // ending on half a row.
+    // 720p at the 1080p density, 640x360 dp: the list fills the sheet down to its padding, its last
+    // row cut there and fading out.
     @Test
     @Config(qualifiers = "+w640dp-h360dp")
     fun hideAppsPanelOnASmallScreen() {

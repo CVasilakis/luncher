@@ -21,7 +21,7 @@ internal class StepperRow(context: Context, attrs: AttributeSet?) : ListEntry(co
     private val label: TextView get() = findViewById(R.id.settings_option_label)
     private val chip: View get() = getChildAt(1)
 
-    override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+    override fun measureContent(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         val label = label
         val chip = chip
         val width = MeasureSpec.getSize(widthMeasureSpec)

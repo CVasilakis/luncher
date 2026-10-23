@@ -7,12 +7,14 @@ Features:
 - Reorder your apps
 - Hide the apps you don't use, from a tile's menu (a long press of OK), and show them again in the settings
 - Customize the tile shape, from square to pill-shaped
+- Lift the focused tile with a soft shadow instead of a frame, and show its app's name below it
 - Set your own pictures as wallpaper, with dim and blur options (shared from any app or, up to Android 14, copied from a USB drive)
+- Pick an accent color, and dark or light menus and settings
 
 On the way:
 
 - Your own custom banners for app tiles
-- More appearance settings: tile size and spacing, accent colors and much more
+- More appearance settings: tile size and spacing and much more
 - Wi-Fi, VPN and notifications in the status bar, without ever asking for internet access
 - Folders to group your apps
 

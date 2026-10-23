@@ -13,6 +13,9 @@
     <dimen name="settings_sheet_padding_bottom">16dp</dimen>
     <dimen name="settings_zoom_room_horizontal">10dp</dimen>
     <dimen name="settings_zoom_room_vertical">4dp</dimen>
+    <!-- Hide apps' "No apps" below the hint: below the empty list's margin above and below its
+         rows, where it has always been (2 x settings_zoom_room_vertical). -->
+    <dimen name="settings_hide_apps_empty_top">8dp</dimen>
     <!-- Between a panel's title and its first entry (short). -->
     <dimen name="settings_title_gap">10dp</dimen>
 

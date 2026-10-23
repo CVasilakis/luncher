@@ -15,7 +15,7 @@ and views stay in its module. Why it exists:
 
 ```
 ui/
-├── build.gradle.kts              luncher.android.library, with test fixtures
+├── build.gradle.kts              luncher.android.library, with test fixtures and JVM tests of its own
 └── src/
     ├── main/
     │   ├── java/com/luncher/launcher/ui/
@@ -24,11 +24,16 @@ ui/
     │   │   │                     the state colors and backgrounds its views share
     │   │   ├── ThemedText.kt     a text in a role of the theme, inverse on a focused entry, its icon too
     │   │   ├── ThemedIcon.kt     an icon (icon_…) in a role of the theme
-    │   │   ├── ListEntry.kt      an entry: inverse while focused, tinted while chosen, outlined while open; a field zoomed
+    │   │   ├── ListEntry.kt      an entry: inverse while focused, tinted while chosen, outlined while open; a field zoomed;
+    │   │   │                     in a list, as tall as the list makes its rows, its focused look drawn by the list as it slides
     │   │   ├── EntryText.kt      an entry of one line, its icon before it: a menu's
     │   │   ├── PillButton.kt     a button: filled, tonal or danger, its icon beside its text, giving way
     │   │   ├── ScrollFrame.kt    a scrolling list's frame: cut along its rounded corners, fading out where there's more
-    │   │   ├── LookAheadListView.kt, LookAheadScrollView.kt  lists that scroll a row ahead of the focus
+    │   │   ├── LookAheadListView.kt, LookAheadScrollView.kt  lists that scroll a row ahead of the focus, their
+    │   │   │                     window whole rows, sliding under a focus that stays put
+    │   │   ├── WholeRows.kt      the lists' rules: how many rows a window shows (fitRows), when an arrow slides
+    │   │   │                     the list (slideFor), the rows' usual height; FittedRows, what a row asks its list
+    │   │   ├── FocusSlide.kt     a list's slide under the focus: the bar it draws where the focus stays
     │   │   ├── ThemedSpinner.kt  a wait's spinning wheel, in the accent
     │   │   ├── Windows.kt        a panel's window and a screen's own, styled
     │   │   ├── ScreenSize.kt     screenSize(): the screen's size in px, what the wallpaper is drawn at and
@@ -55,6 +60,9 @@ ui/
     │       │   │                 WorkingDialog's sizes, the wallpaper outline's width, the tile name's text size and gap
     │       │   └── themes.xml    Theme.Luncher, the app's and the home screen's theme; Theme.Luncher.Working
     │       └── values-h450dp/    a screen's title on a screen 450 dp tall or more (smaller on 720p at 1080p density)
+    ├── test/java/com/luncher/launcher/ui/
+    │   ├── WholeRowsTest.kt      the lists' rules, on the JVM alone
+    │   └── LookAheadScrollViewTest.kt  rows of a little different heights made one, a taller one kept (Robolectric)
     └── testFixtures/java/com/luncher/launcher/testing/
         ├── TvDevice.kt           the TV screens the JVM tests run on (TV_1080P, TV_SCREENS)
         ├── LayoutChecks.kt       the layout tests' checks: bounds, inside, apart, whole text, a zoom not cut
@@ -124,8 +132,22 @@ can, the focused thing stands out from afar, and every color comes from the user
   `LookAheadListView` or a `LookAheadScrollView`: while there's more beyond an edge, the focused
   row stays a row away from it, so the next row shows whole before the focus gets there, and the
   focus is never on a row under a fade; the first and the last rows go to the edge, the last one
-  whole and not faded. They use the room Android leaves for a list's own fading edges, which stay
-  off (they would draw the list into a layer).
+  whole and not faded.
+- **A scrolling list's window is whole rows, and one thing moves at a time.** While its rows
+  don't all fit, a list gives them one height, a little taller or shorter than the usual row, so
+  a whole number of them fill its room: as many as fit stretched, or one more squeezed, whichever
+  changes the rows less as a ratio (`fitRows`, `WholeRows.kt`); a row whose content needs more (a
+  name on two lines) is that much taller, and the window is whole rows as long as it doesn't
+  show. The fade covers the row at the edge, so that row looks dimmed, not cut. Up and Down move
+  the focus while the row beyond the next one shows whole; else the focus stays where it is and
+  the list slides a row behind it, in 150 ms (`slideFor`, `FocusSlide`). For that time the list
+  draws the focus itself where it stays, the focused fill and inside it the passing rows' texts
+  and icons as they look focused, drawn once as the slide starts, apart from the rows: recorded
+  (a `Picture`) and played by the GPU as it draws the rows, or before API 23 into two bitmaps
+  (the GPU keeps one drawing of a view a frame, its look at rest, which the rows keep meanwhile); at the end the
+  row looks focused itself, where the bar was. A key during a slide ends it at once. A focus moved
+  any other way (a screen giving a row the focus) shows the row a row ahead at once, the list
+  scrolled by whole rows.
 - **Sizes.** Android TV's 960 x 540 dp canvas, the 48 dp margin at the sides and 27 to 32 dp above
   and below, an 8 dp grid; Material for TV's type, a little larger for the distance (an entry's 18
   sp, a line below it 14 sp, a screen's title 34 sp, smaller below 450 dp tall). Icons are line
@@ -135,6 +157,10 @@ can, the focused thing stands out from afar, and every color comes from the user
 What keeps it light: a view's drawables are made when it's styled (a screen's start, a new
 theme), never while drawing or for a key press; a theme the screen has already is compared and
 skipped. A shadow is the GPU's, cast from a view's outline. A fade is one gradient over the list.
+A list's slide makes nothing for a key press or a frame: its animator and the two focused looks
+are kept for the next slides, and dropped as the list leaves its window. The looks are recorded,
+not drawn into bitmaps, from API 23 on: bitmaps sent to the GPU took a slide's frames from about
+15 to about 90 ms on tv_api28. With animations off, the list moves at once.
 
 ## The theme
 

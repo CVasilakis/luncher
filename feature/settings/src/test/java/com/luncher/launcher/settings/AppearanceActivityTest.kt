@@ -5,6 +5,7 @@ import android.view.KeyEvent
 import android.view.View
 import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.ScrollView
 import android.widget.TextView
 import com.luncher.domain.appearance.AppName
 import com.luncher.domain.appearance.Appearance
@@ -457,6 +458,29 @@ class AppearanceActivityTest {
         val title = bounds(activity.findViewById(R.id.settings_appearance_title))
         val container = bounds(activity.findViewById(R.id.settings_appearance_frame))
         assertEquals(title.top, container.top, 1f)
+    }
+
+    // The options' container fits the room below the title, measured for it in one pass: measured
+    // for more room first, the list would lose its scroll each time the editor lays itself out.
+    @Test
+    fun `the options keep where they scrolled to when the editor lays itself out again`() {
+        val activity = start()
+        val scroll = activity.findViewById<ScrollView>(R.id.settings_appearance_scroll)
+        activity.toggle("Tiles")
+        repeat(activity.children().size) {
+            activity.press(KeyEvent.KEYCODE_DPAD_DOWN)
+            shadowOf(Looper.getMainLooper()).idle()
+        }
+        val scrolled = scroll.scrollY
+        assertTrue("the options scrolled", scrolled > 0)
+        val heights = mutableListOf<Int>()
+        scroll.addOnLayoutChangeListener { view, _, _, _, _, _, _, _, _ -> heights += view.height }
+
+        activity.row("App name").requestLayout()   // as a value that changes its width does
+        shadowOf(Looper.getMainLooper()).idle()
+
+        assertTrue("laid out at its height only, not $heights", heights.all { it == scroll.height })
+        assertEquals(scrolled, scroll.scrollY)
     }
 
     @Test
