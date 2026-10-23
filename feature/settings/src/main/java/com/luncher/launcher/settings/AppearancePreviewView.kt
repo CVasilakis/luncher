@@ -13,6 +13,7 @@ import android.util.AttributeSet
 import android.graphics.Outline
 import android.view.View
 import android.view.ViewOutlineProvider
+import com.luncher.domain.appearance.AppName
 import com.luncher.domain.appearance.Appearance
 import com.luncher.domain.appearance.Background
 import com.luncher.domain.appearance.colorRoles
@@ -43,7 +44,7 @@ import kotlin.math.roundToInt
  * right differ, and the first tile focused, so the focus frame shows: on, the frame inside its
  * edge; off, the tile outlined as the others, lifted with a shadow (a dozen faint round rectangles
  * around it, each a little wider and lower, not a blur); and with the app name shown, a block
- * below it, in the room the rows leave it. The width stays, so a row holds as many tiles on every
+ * below it, or below every tile, in the room the rows leave it. The width stays, so a row holds as many tiles on every
  * shape.
  *
  * It's laid out by the same rules as the home screen, [TileLayouts] and [topBarLayout], at its own
@@ -187,8 +188,8 @@ internal class AppearancePreviewView(context: Context, attrs: AttributeSet?) : V
     private val shadows = Array(SHADOW_LAYERS) { Path().apply { fillType = Path.FillType.EVEN_ODD } }
     private val shadow = RectF()
 
-    /** The app name's block, below the focused tile. */
-    private val name = RectF()
+    /** The app names' blocks, below the tiles: the focused one's, or every one's, as the appearance shows names; empty where none shows. */
+    private val names = Array(TILES) { RectF() }
     private val time = RectF()
     private val date = RectF()
     private val gear = RectF()
@@ -276,7 +277,9 @@ internal class AppearancePreviewView(context: Context, attrs: AttributeSet?) : V
             canvas.drawOval(gear, primaryPaint)
         }
         for (i in tiles.indices) {
-            if (i != FOCUSED) drawTile(canvas, tiles[i])
+            if (i == FOCUSED) continue
+            drawTile(canvas, tiles[i])
+            drawBlock(canvas, names[i], primaryPaint)
         }
         // Zoomed, as the home screen's focused tile, its name with it.
         val focused = tiles[FOCUSED]
@@ -289,7 +292,7 @@ internal class AppearancePreviewView(context: Context, attrs: AttributeSet?) : V
             canvas.drawRoundRect(focused, tileRadius, tileRadius, tileFillPaint)
             canvas.drawRoundRect(frame, frameRadius, frameRadius, focusPaint)
         }
-        drawBlock(canvas, name, primaryPaint)
+        drawBlock(canvas, names[FOCUSED], primaryPaint)
         canvas.restore()
     }
 
@@ -319,13 +322,16 @@ internal class AppearancePreviewView(context: Context, attrs: AttributeSet?) : V
             val y = top + grid.top(i)
             tiles[i].set(x, y, x + grid.tileWidth, y + grid.tileHeight)
         }
-        val focused = tiles[FOCUSED]
-        if (layouts.nameRoom > 0) {
-            val nameLeft = focused.centerX() - NAME_WIDTH * scale / 2
-            val nameTop = focused.bottom + nameGap * scale
-            name.set(nameLeft, nameTop, nameLeft + NAME_WIDTH * scale, nameTop + NAME_HEIGHT * scale)
-        } else {
-            name.setEmpty()
+        val named = appearance.tileGeometry.appName
+        for (i in tiles.indices) {
+            val name = names[i]
+            if (named == AppName.ALWAYS || (named == AppName.WHEN_FOCUSED && i == FOCUSED)) {
+                val nameLeft = tiles[i].centerX() - NAME_WIDTH * scale / 2
+                val nameTop = tiles[i].bottom + nameGap * scale
+                name.set(nameLeft, nameTop, nameLeft + NAME_WIDTH * scale, nameTop + NAME_HEIGHT * scale)
+            } else {
+                name.setEmpty()
+            }
         }
     }
 

@@ -20,6 +20,7 @@
     <string name="settings_appearance_focus_frame">إطار التحديد</string>
     <string name="settings_appearance_app_name">اسم التطبيق</string>
     <string name="settings_appearance_when_focused">عند التحديد</string>
+    <string name="settings_appearance_always">دائمًا</string>
     <string name="settings_appearance_time">الوقت</string>
     <string name="settings_appearance_date">التاريخ</string>
     <string name="settings_appearance_shown">ظاهر</string>
@@ -73,6 +74,9 @@
         <item quantity="many">إحداها مستخدمة كخلفية: لن تعرض الشاشة الرئيسية أي صورة. تُحذف الصور الـ<xliff:g id="count" example="11">%d</xliff:g> من صور Luncher فقط.</item>
         <item quantity="other">إحداها مستخدمة كخلفية: لن تعرض الشاشة الرئيسية أي صورة. تُحذف الصور الـ<xliff:g id="count" example="100">%d</xliff:g> من صور Luncher فقط.</item>
     </plurals>
+    <string name="settings_background_discard_question">تجاهل التغييرات؟</string>
+    <string name="settings_background_discard_text">لم تُحفظ التغييرات على الخلفية.</string>
+    <string name="settings_background_discard">تجاهل</string>
     <string name="settings_background_applying">جارٍ معالجة الخلفية…</string>
     <string name="settings_background_preparing">جارٍ تجهيز الصورة…</string>
     <string name="settings_background_preparing_count">جارٍ تجهيز الصورة <xliff:g id="number" example="3">%1$d</xliff:g> من <xliff:g id="total" example="10">%2$d</xliff:g>…</string>

@@ -103,6 +103,7 @@ internal fun optionSwatch(option: AppearanceOption<*>, appearance: Appearance): 
 private fun appName(name: AppName): Int = when (name) {
     AppName.OFF -> R.string.settings_appearance_off
     AppName.WHEN_FOCUSED -> R.string.settings_appearance_when_focused
+    AppName.ALWAYS -> R.string.settings_appearance_always
 }
 
 private fun fit(fit: Fit): Int = when (fit) {

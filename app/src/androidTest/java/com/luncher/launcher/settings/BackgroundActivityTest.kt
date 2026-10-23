@@ -29,6 +29,8 @@ import androidx.test.espresso.matcher.ViewMatchers.withParent
 import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry
+import androidx.test.runner.lifecycle.Stage
 import com.luncher.domain.appearance.Appearance
 import com.luncher.domain.appearance.Background
 import com.luncher.domain.appearance.FakeAppearanceSettings
@@ -154,7 +156,7 @@ class BackgroundActivityTest {
         onView(isRoot()).inRoot(isPlatformPopup()).perform(pressKey(keyCode))
     }
 
-    /** A file of Add from folder's list: its name, not the selected one's under the preview. */
+    /** A file of Add from folder's list, by its name. */
     private fun fileNamed(name: String) = allOf(withId(R.id.settings_pictures_folder_name), withText(name))
 
     /** The background's option named [label], with [value]: a field of the grid. */
@@ -190,6 +192,28 @@ class BackgroundActivityTest {
         pressInDialog(KeyEvent.KEYCODE_DPAD_RIGHT)
         if (!matchesNow(withText(label), hasFocus(), isDialog())) pressInDialog(KeyEvent.KEYCODE_DPAD_DOWN)
         waitUntil(withText(label), hasFocus(), inDialog = true)
+    }
+
+    /**
+     * Waits until no background editor is left that isn't finishing. Not until it's destroyed: with
+     * nothing of Luncher's under it, Android may destroy it only after its idle timeout, 10 s.
+     */
+    private fun waitUntilFinishing() {
+        val deadline = SystemClock.uptimeMillis() + TIMEOUT_MS
+        while (true) {
+            var open = false
+            InstrumentationRegistry.getInstrumentation().runOnMainSync {
+                val monitor = ActivityLifecycleMonitorRegistry.getInstance()
+                open = Stage.values().filter { it != Stage.DESTROYED }.any { stage ->
+                    monitor.getActivitiesInStage(stage).any { it is BackgroundActivity && !it.isFinishing }
+                }
+            }
+            if (!open) return
+            if (SystemClock.uptimeMillis() > deadline) {
+                throw AssertionError("the editor wasn't closed in ${TIMEOUT_MS / 1000} s").also(FailureCapture::dump)
+            }
+            SystemClock.sleep(POLL_MS)
+        }
     }
 
     /** The list's row named [name]. */
@@ -293,6 +317,59 @@ class BackgroundActivityTest {
             pressInList(KeyEvent.KEYCODE_BACK)
             waitUntil(option(R.string.settings_appearance_position, R.string.settings_appearance_left), hasFocus())
             assertEquals("nothing stored", Background(wide.id), appearance.appearance.background)
+        }
+    }
+
+    // Left points back to the field: it keeps the value, as OK, at the grid's end and its start.
+    @Test
+    fun leftInAnOptionsList_keepsTheValueWithTheFocus() {
+        val wide = picture("wide.jpg", added = 1, width = 6000, height = 1000)
+        launchWith(wide, background = Background(wide.id)).use {
+            waitUntil(row("wide.jpg"), hasFocus())
+            press(KeyEvent.KEYCODE_DPAD_LEFT)
+            waitUntil(option(R.string.settings_appearance_position, R.string.settings_appearance_center), hasFocus())
+            press(KeyEvent.KEYCODE_DPAD_CENTER)
+            waitUntil(listed(R.string.settings_appearance_center), hasFocus(), inList = true)
+            pressInList(KeyEvent.KEYCODE_DPAD_DOWN)
+            waitUntil(listed(R.string.settings_appearance_left), hasFocus(), inList = true)
+            pressInList(KeyEvent.KEYCODE_DPAD_LEFT)
+            waitUntil(option(R.string.settings_appearance_position, R.string.settings_appearance_left), hasFocus())
+
+            press(KeyEvent.KEYCODE_DPAD_LEFT)
+            waitUntil(option(R.string.settings_appearance_blur, R.string.settings_appearance_off), hasFocus())
+            press(KeyEvent.KEYCODE_DPAD_CENTER)
+            waitUntil(listed(R.string.settings_appearance_off), hasFocus(), inList = true)
+            pressInList(KeyEvent.KEYCODE_DPAD_DOWN)
+            waitUntil(listed(R.string.settings_appearance_light), hasFocus(), inList = true)
+            pressInList(KeyEvent.KEYCODE_DPAD_LEFT)
+            waitUntil(option(R.string.settings_appearance_blur, R.string.settings_appearance_light), hasFocus())
+            assertEquals("nothing stored", Background(wide.id), appearance.appearance.background)
+        }
+    }
+
+    // Back reaches the editor as Android 16 sends it too (OnBackInvokedCallback), not only onBackPressed.
+    @Test
+    fun backWithTheDraftChanged_asksFirst_cancelStays_discardCloses() {
+        val beach = picture("beach.png", added = 1)
+        launchWith(beach, picture("sunset.jpg", added = 2), background = Background(beach.id)).use {
+            waitUntil(row("beach.png"), hasFocus())
+            press(KeyEvent.KEYCODE_DPAD_DOWN)
+            waitUntil(row("sunset.jpg"), hasFocus())
+            press(KeyEvent.KEYCODE_DPAD_CENTER)
+            waitUntil(allOf(withId(R.id.settings_background_chosen), isDisplayed(), isDescendantOfA(row("sunset.jpg"))), isDisplayed())
+
+            press(KeyEvent.KEYCODE_BACK)
+            waitUntil(withText(R.string.settings_background_discard_question), isDisplayed(), inDialog = true)
+            waitUntil(withText(R.string.settings_pictures_cancel), hasFocus(), inDialog = true)
+            pressInDialog(KeyEvent.KEYCODE_DPAD_CENTER)
+            waitUntil(row("sunset.jpg"), hasFocus())
+
+            press(KeyEvent.KEYCODE_BACK)
+            waitUntil(withText(R.string.settings_pictures_cancel), hasFocus(), inDialog = true)
+            pressToButton(R.string.settings_background_discard)
+            pressInDialog(KeyEvent.KEYCODE_DPAD_CENTER)
+            waitUntilFinishing()
+            assertEquals("nothing stored", Background(beach.id), appearance.appearance.background)
         }
     }
 
@@ -476,6 +553,7 @@ class BackgroundActivityTest {
 
     private companion object {
         const val TIMEOUT_MS = 10_000L
+        const val POLL_MS = 50L
 
         /** Android's 10 s for a screen to go idle before it stops the one under it anyway, and a margin. */
         const val STOPPED_TIMEOUT_MS = 20_000L

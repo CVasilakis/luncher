@@ -40,7 +40,7 @@ import kotlin.math.ceil
 /**
  * The pictures in Luncher's drop folders, on the TV and on USB drives ([FolderPictures][graph]):
  * a list, in the order of [inListOrder], each with where it is (a USB drive or the TV) and its
- * size below its name, with a preview of the selected one beside it, its name below it. OK on one
+ * size below its name, with a preview of the selected one beside it. OK on one
  * adds it to the library while a window says so, with Cancel, then returns it to
  * [BackgroundActivity] ([EXTRA_ADDED]), which chooses it; or says why it wasn't added, and stays,
  * so the user can choose another. One that its listing and the library already tell can't be
@@ -106,7 +106,6 @@ class AddFromFolderActivity : Activity() {
     private lateinit var preview: ImageView
     private lateinit var loading: View
     private lateinit var noPreview: View
-    private lateinit var selectedName: TextView
     private lateinit var count: TextView
     private var pictures: List<FolderPicture<Uri>> = emptyList()
 
@@ -134,7 +133,6 @@ class AddFromFolderActivity : Activity() {
         preview = findViewById(R.id.settings_pictures_folder_preview)
         loading = findViewById(R.id.settings_pictures_folder_loading)
         noPreview = findViewById(R.id.settings_pictures_folder_no_preview)
-        selectedName = findViewById(R.id.settings_pictures_folder_selected)
         count = findViewById(R.id.settings_pictures_folder_count)
         addAll = findViewById(R.id.settings_pictures_folder_add_all)
         addAll.setOnClickListener { addAll() }
@@ -243,7 +241,6 @@ class AddFromFolderActivity : Activity() {
         preview.setImageDrawable(null)
         loading.visibility = View.GONE
         noPreview.visibility = View.GONE
-        selectedName.text = picture?.name
         // The thread for what the user waits for: what's drawn ahead stops, and goes on after.
         prefetching.stop()
         val shown = pictures.firstOrNull { it.source == picture?.source }

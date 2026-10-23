@@ -69,8 +69,9 @@
     </com.luncher.launcher.settings.EditorStartColumn>
 
     <!-- AppearanceActivity sets the width: settings_appearance_options_width, or half the screen.
-         The groups' container, its top level with the title, which grows with a group opened and
-         scrolls when taller than the room below the title; moving the focus scrolls it. A margin
+         The groups' container, its top level with the title, filling the room below the title
+         (AppearanceEditorLayout measures it), which its groups scroll in when they're taller;
+         moving the focus scrolls them. A margin
          inside around the entries. The overscan margin at the end only (lint's
          RtlSymmetry wants both sides set). -->
     <FrameLayout

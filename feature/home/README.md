@@ -77,14 +77,14 @@ one job, so a new arrangement, image source or top bar item changes one of them:
 | Part | Job |
 |---|---|
 | `homeApps` (`:domain`) | which apps show, in which order, and which are hidden: the installed apps matched to the stored `AppArrangement` ([Hidden apps](../settings/README.md#hidden-apps)) |
-| `Appearance` (`:domain`) | how the home screen looks, as the user set it in the [appearance editor](../settings/README.md#appearance), in parts: `TileGeometry` (the tiles' width, the gap between them, their vertical and horizontal alignment, whether the focused tile's name shows), `TileStyle` (their corners: a radius, 12 dp by default, or round ends; the focus frame: on by default, else the focused tile lifted), `TopBarAppearance` (whether the time and the date show, the clock's side, the time's side of the date), `Background` (the wallpaper: a picture of the picture library, or none, its fit, position, dim and blur). [Below](#appearance): how each part is applied. |
+| `Appearance` (`:domain`) | how the home screen looks, as the user set it in the [appearance editor](../settings/README.md#appearance), in parts: `TileGeometry` (the tiles' width, the gap between them, their vertical and horizontal alignment, whether the app names show: below the focused tile, below every tile, or not at all), `TileStyle` (their corners: a radius, 16 dp by default, or round ends; the focus frame: on by default, else the focused tile lifted), `TopBarAppearance` (whether the time and the date show, the clock's side, the time's side of the date), `Background` (the wallpaper: a picture of the picture library, or none, its fit, position, dim and blur). [Below](#appearance): how each part is applied. |
 | `AppearanceSettings` (`:domain`), `PreferencesAppearanceSettings` (`:platform`) | the stored appearance, and when it changes |
 | `TileLayout`, `TileLayouts` (`:domain`) | where each tile goes and how big it is; `TileGrid` is the only one so far, with as many columns as fit tiles of about the geometry's width (`TileGrid.columnsFor`), so tiles keep their size next to the top bar's text on any screen. `TileLayouts` is the only place that picks the arrangement, for the tiles' places and for moving an app alike. |
 | `TileFocus` (`:domain`) | where each arrow takes the focus among the tiles ([below](#focus)) |
 | `AppTilesView` | lays tiles out where the `TileLayout` says, moves the focus where the `TileFocus` says, and scrolls to the focused one; holds the `TilePaints` its tiles share |
 | `bannerFor` (`:domain`) | which image a tile shows |
 | `AppImages` (`:domain`), `CachedBannerImages` and `BannerImages` (`:platform`) | draws that image into a bitmap of the tile's size, or reads the one an earlier start drew |
-| `AppTileView` | draws that bitmap, the focus zoom with the frame or the lift ([below](#appearance)), with the corners `TilePaints` gives, and the focused app's name below it if the geometry says; while its app is [moved](#moving-an-app), a white frame |
+| `AppTileView` | draws that bitmap, the focus zoom with the frame or the lift ([below](#appearance)), with the corners `TilePaints` gives, and its app's name below it if the geometry says (while focused, or always); while its app is [moved](#moving-an-app), a white frame |
 | `Clock` (`:domain`) | what time it is, in which time zone and hour format, and when that changes |
 | `AndroidClock` (`:platform`) | reads those from Android, and watches the time broadcasts only while something listens |
 | `ClockView` | formats a reading in the device's language; the time and the date side by side, in the order the top bar gives, either or both hidden |
@@ -197,13 +197,14 @@ blurred bitmap, no software layer, nothing drawn per frame in Luncher's code; `A
 clip its tiles, so it shows past the tile. A held tile has a white frame, with the frame on or off,
 and the same zoom: the white frame tells it apart from one only focused.
 
-With the app name shown (`TileGeometry.appName`, Off by default), the focused tile draws its app's
-name centered below it, in the primary text color, cut with "…" to the tile's width, outlined as
-everything on the wallpaper is ([The top bar](#the-top-bar)), fading in and out with the focus in
-the zoom's time. It's drawn
+With the app name shown (`TileGeometry.appName`, Off by default), a tile draws its app's name
+centered below it, in the primary text color, cut with "…" to the tile's width, outlined as
+everything on the wallpaper is ([The top bar](#the-top-bar)): When focused, the focused tile only,
+the name fading in and out with the focus in the zoom's time; Always, every tile, at all times,
+nothing fading. It's drawn
 with the tile, past its bottom edge, so it zooms and lifts with it; its text is cut once per tile
 size, and the fade is an animator made with the tile, so a focus move only starts it. The rows leave
-it room: `TilePaints.nameHeight`, the gap and a line of text at the largest zoom a tile gets,
+it room, the same either way: `TilePaints.nameHeight`, the gap and a line of text at the largest zoom a tile gets,
 measured by `:ui`'s `TileName` (which the [appearance editor's
 preview](../settings/README.md#appearance) measures with too), is the room `TileLayouts` keeps below
 each row, the last one too, so a name never covers the next row, and the rows at the bottom end that

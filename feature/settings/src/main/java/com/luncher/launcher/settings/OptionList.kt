@@ -2,6 +2,7 @@ package com.luncher.launcher.settings
 
 import android.annotation.SuppressLint
 import android.view.Gravity
+import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -16,17 +17,19 @@ import com.luncher.launcher.ui.roundRect
 import com.luncher.launcher.ui.styleAll
 
 /**
- * An option's values in a list beside its [row], at the row's end edge, opened by OK on it: the
- * value it has focused, checked, and level with the row, moved up or down only to stay inside the
- * TV's overscan margin. So the preview isn't covered while the user tries the values, nor the
- * row: a list of a field at the [options]' start reaches their end edge, covering whole what's
- * beside the field there (the other column's fields, Delete all), not a part of them; a field
- * at their end has its list over the pictures. The background editor's way to change an option, where Left and
+ * An option's values in a list beside its [row], at the row's end edge, opened by OK on it, the
+ * value it has checked and focused, moved up or down only to stay inside the TV's overscan margin.
+ * So the preview isn't covered while the user tries the values, nor the row: a list of a field at
+ * the [options]' start reaches their end edge, its first value level with the row, so it covers
+ * whole what's beside and below the field there (the other column's fields, Delete all), never a
+ * part of them, nor the preview above; a field at their end has its list over the pictures, the
+ * value it has level with the row. The background editor's way to change an option, where Left and
  * Right on the row must move the focus, to the pictures or the field beside it. The values are
  * those [context] offers. Each value the focus comes to goes to [change] at once, so the preview
- * shows it; OK on one keeps it and closes the list, and Back closes it with the value the option
- * had again, as [change] gets it. [closed] is told once it's gone. The row's own outline, in the
- * accent, shows it open.
+ * shows it; OK on one keeps it and closes the list, as does the arrow back toward the row (Left,
+ * Right in a right-to-left language), and Back closes it with the value the option had again, as
+ * [change] gets it. [closed] is told once it's gone. The row's own outline, in the accent, shows
+ * it open.
  */
 internal class OptionList(
     option: AppearanceOption<*>,
@@ -56,6 +59,9 @@ internal class OptionList(
             setPadding(padding, padding, padding, padding)
         }
         val inflater = LayoutInflater.from(activity)
+        // The arrow toward the row, which keeps the value as OK does: on its release, as OK's click,
+        // so nothing of the key reaches the editor once the list is gone.
+        val back = if (row.layoutDirection == View.LAYOUT_DIRECTION_RTL) KeyEvent.KEYCODE_DPAD_RIGHT else KeyEvent.KEYCODE_DPAD_LEFT
         for ((index, choice) in choices.withIndex()) {
             val entry = inflater.inflate(R.layout.settings_option_list_entry, list, false)
             entry.findViewById<TextView>(R.id.settings_option_list_value).text = activity.optionValue(option, choice)
@@ -65,11 +71,20 @@ internal class OptionList(
                 kept = true
                 window.dismiss()
             }
+            entry.setOnKeyListener { _, keyCode, event ->
+                if (keyCode != back) return@setOnKeyListener false
+                if (event.action == KeyEvent.ACTION_UP) {
+                    kept = true
+                    window.dismiss()
+                }
+                true
+            }
             list.addView(entry)
         }
         list.styleAll(roles)
         list.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED)
-        val width = maxOf(list.measuredWidth, resources.getDimensionPixelSize(R.dimen.settings_option_list_min_width), reach(row, options))
+        val reach = reach(row, options)
+        val width = maxOf(list.measuredWidth, resources.getDimensionPixelSize(R.dimen.settings_option_list_min_width), reach)
         // Focusable, with a background: it takes the keys, Back closing it, on every API level.
         window = PopupWindow(list, width, ViewGroup.LayoutParams.WRAP_CONTENT, true).apply {
             setBackgroundDrawable(roundRect(roles.surfaceHigh, resources.getDimension(R.dimen.settings_option_list_corner)))
@@ -78,7 +93,8 @@ internal class OptionList(
             setOnDismissListener(this@OptionList)
         }
 
-        showBeside(row, list, width, padding, current)
+        // Across the options, from the first value down; beside them, the value it has level with the row.
+        showBeside(row, list, width, padding, level = if (reach > 0) 0 else current)
         list.getChildAt(current)?.requestFocus()
     }
 
@@ -94,12 +110,12 @@ internal class OptionList(
 
     /**
      * Shows [list], [width] wide, beside [row] at its end edge (the left one in a right-to-left
-     * language), a gap from it, its entry [current] level with [row], inside the TV's overscan
+     * language), a gap from it, its entry [level] level with [row], inside the TV's overscan
      * margin. LEFT, not START: the place is in pixels from the window's left, worked out for
      * either direction.
      */
     @SuppressLint("RtlHardcoded")
-    private fun showBeside(row: View, list: View, width: Int, padding: Int, current: Int) {
+    private fun showBeside(row: View, list: View, width: Int, padding: Int, level: Int) {
         val resources = row.resources
         val rowAt = IntArray(2)
         row.getLocationInWindow(rowAt)
@@ -107,7 +123,7 @@ internal class OptionList(
         val entryHeight = resources.getDimensionPixelSize(R.dimen.settings_option_list_entry_height)
         val rtl = row.layoutDirection == View.LAYOUT_DIRECTION_RTL
         val x = if (rtl) rowAt[0] - gap - width else rowAt[0] + row.width + gap
-        val y = rowAt[1] + (row.height - entryHeight) / 2 - padding - current * entryHeight
+        val y = rowAt[1] + (row.height - entryHeight) / 2 - padding - level * entryHeight
         val margin = resources.getDimensionPixelSize(R.dimen.settings_appearance_margin_vertical)
         val lowest = maxOf(margin, row.rootView.height - margin - list.measuredHeight)
         window.showAtLocation(row, Gravity.LEFT or Gravity.TOP, x, y.coerceIn(margin, lowest))

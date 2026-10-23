@@ -1,15 +1,18 @@
 package com.luncher.launcher.settings
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.Dialog
 import android.content.Intent
 import android.content.res.ColorStateList
 import android.graphics.drawable.ColorDrawable
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.util.TypedValue
 import android.view.View
+import android.window.OnBackInvokedDispatcher
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -53,13 +56,14 @@ import java.util.Locale
  *
  * What the user changes is a draft: OK on a picture chooses it (a check, the accent's tint), and OK
  * on an option opens its values in a list beside its field ([OptionList]),
- * the preview showing the value with the focus, OK keeping it, Back the one before; Left and Right only move the focus, from the options to the pictures
+ * the preview showing the value with the focus, OK or Left (toward the field) keeping it, Back the one before; Left and Right only move the focus, from the options to the pictures
  * beside them. A picture chosen shows as it is, its position in the middle, neither dimmed nor
  * blurred, with the fit kept; the stored one shows again as it's stored. The values are those that move the chosen picture on this screen (an
  * [OptionContext]): the position only along the side filling cuts, and neither it nor
  * the fit for a picture of the screen's shape. The draft never holds a position its picture doesn't
  * offer: it's the middle then. Nothing is stored until Save, so Back, or Home, leaves the
- * background as it was. Save draws the wallpaper while a window says so, through the process's
+ * background as it was; Back with the draft changed asks first, Cancel focused, as the changes
+ * would be lost. Save draws the wallpaper while a window says so, through the process's
  * [Wallpaper][com.luncher.domain.wallpaper.Wallpaper], which stores the background once it's drawn,
  * then closes the editor. The background is the one part of the appearance edited this way:
  * drawing it takes a moment (docs/ARCHITECTURE.md#appearance).
@@ -206,7 +210,44 @@ class BackgroundActivity : Activity() {
         show()
         window.styleScreen(theme.roles)
         styleRows(theme.roles)
+        // Android 16 (API 36) on, for apps targeting it, sends Back here, not to onBackPressed.
+        if (Build.VERSION.SDK_INT >= 36) {
+            onBackInvokedDispatcher.registerOnBackInvokedCallback(OnBackInvokedDispatcher.PRIORITY_DEFAULT) { back() }
+        }
     }
+
+    // Back on Android 15 (API 35) and older; onCreate handles Android 16, which lint doesn't see.
+    // Deprecated, but its replacements need AndroidX (OnBackPressedCallback) or API 33
+    // (OnBackInvokedCallback). Doesn't call super: back() closes the editor when it should.
+    @SuppressLint("GestureBackNavigation")
+    @Deprecated("Deprecated in Java")
+    override fun onBackPressed() = back()
+
+    /** Back: closes the editor, after asking, Cancel focused, while the draft isn't what's stored. */
+    private fun back() {
+        if (!changed()) return finish()
+        show(
+            PicturesDialog(
+                this,
+                theme.roles,
+                getString(R.string.settings_background_discard_question),
+                getString(R.string.settings_background_discard_text),
+                // Cancel first, so a repeated Back or OK loses nothing.
+                listOf(
+                    DialogButton(getString(R.string.settings_pictures_cancel), DialogButton.Kind.TONAL) {},
+                    DialogButton(getString(R.string.settings_background_discard), DialogButton.Kind.DANGER) { finish() },
+                ),
+                Badge.Kind.DANGER to UiR.drawable.icon_warning,
+            ),
+        )
+    }
+
+    /**
+     * Whether the draft differs from the background stored, as the editor shows it: in the
+     * draft's context, so a stored position the draft shows as the middle counts as unchanged, as
+     * it draws the same, and a stored background of another picture differs from it anyway.
+     */
+    private fun changed(): Boolean = draft != settings.read().background.offeredIn(context)
 
     /**
      * What styleScreen can't reach: the rows not in the list now (made, or taken out as the library
@@ -395,11 +436,13 @@ class BackgroundActivity : Activity() {
     }
 
     /**
-     * A new row for [picture]: its thumbnail if it's kept, its name, and below it its size in px
-     * and its file's size; a long press of OK offers to rename or delete it.
+     * A new row for [picture]: its thumbnail if it's kept, its name, on one line, cut with "…" where
+     * it doesn't fit, and below it its size in px and its file's size; a long press of OK offers to
+     * rename or delete it.
      */
     private fun pictureRow(picture: Picture): View {
         val row = row(nameOf(picture)) { choose(picture.id) }
+        row.findViewById<TextView>(R.id.settings_background_name).setSingleLine(true)
         row.findViewById<TextView>(R.id.settings_background_details).apply {
             text = details(picture.width, picture.height, picture.bytes)
             visibility = View.VISIBLE
@@ -484,8 +527,7 @@ class BackgroundActivity : Activity() {
      * stored; no picture is stored at once.
      */
     private fun save() {
-        // In the draft's context: a stored background of another picture differs from it anyway.
-        if (draft == settings.read().background.offeredIn(context)) return finish()
+        if (!changed()) return finish()
         val screen = screenSize()
         if (draft.picture == null) {
             wallpaper.save(draft, screen.width, screen.height) {}

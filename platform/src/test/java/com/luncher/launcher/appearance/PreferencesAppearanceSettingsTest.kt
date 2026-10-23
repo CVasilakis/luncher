@@ -182,7 +182,7 @@ class PreferencesAppearanceSettingsTest {
             Triple("tile_full_bottom_row", "maybe", AppearanceOption.FullBottomRow),
             Triple("tile_corner_radius", "5", AppearanceOption.CornerRadius),
             Triple("tile_focus_frame", "yes", AppearanceOption.FocusFrame),
-            Triple("tile_app_name", "ALWAYS", AppearanceOption.AppName),
+            Triple("tile_app_name", "SOMETIMES", AppearanceOption.AppName),
             Triple("clock_side", "right", AppearanceOption.ClockSide),   // names are exact
             Triple("time_side", "1", AppearanceOption.TimeSide),         // a position, never stored
             Triple("show_date", "hidden", AppearanceOption.ShowDate),
@@ -201,9 +201,9 @@ class PreferencesAppearanceSettingsTest {
 
     @Test
     fun `a value stored as another type reads as that option's default`() {
-        store(stored - "tile_corner_radius" + ("tile_corner_radius" to 16))
+        store(stored - "tile_corner_radius" + ("tile_corner_radius" to 24))
 
-        assertEquals(AppearanceOption.CornerRadius.set(changed, Corners.Radius(12)), PreferencesAppearanceSettings(context).read())
+        assertEquals(AppearanceOption.CornerRadius.set(changed, Corners.Radius(16)), PreferencesAppearanceSettings(context).read())
     }
 
     @Test

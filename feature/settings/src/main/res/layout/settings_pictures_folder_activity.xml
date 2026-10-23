@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Add from folder: the title and where the pictures are, then the list of them below its label,
-     and beside it, below its label, a preview of the selected one, its name, Add all and what OK
-     does. -->
+     and beside it, below its label, a preview of the selected one, Add all and what OK does. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
@@ -109,7 +108,7 @@
 
         <!-- The preview's column: its label, then the preview, smaller on a short screen, so Add
              all and the note fit below it; where it would be smaller than a row of the list, no
-             label, preview nor name; where even then they don't fit, the column scrolls
+             label nor preview; where even then they don't fit, the column scrolls
              (PreviewColumn). -->
         <LinearLayout
             android:id="@+id/settings_pictures_folder_side_column"
@@ -173,16 +172,6 @@
                             android:visibility="gone"
                             app:colorRole="error" />
                     </FrameLayout>
-
-                    <!-- The selected picture's name. -->
-                    <com.luncher.launcher.ui.ThemedText
-                        android:id="@+id/settings_pictures_folder_selected"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/settings_pictures_tile_text_gap"
-                        android:ellipsize="end"
-                        android:singleLine="true"
-                        android:textSize="@dimen/settings_pictures_where_text" />
 
                     <!-- Adds every picture of the list that can be added; dimmed, and passed by, when none can. -->
                     <com.luncher.launcher.ui.PillButton

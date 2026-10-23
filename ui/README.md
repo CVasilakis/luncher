@@ -40,7 +40,7 @@ ui/
     │   │   │                     the previews' shape
     │   │   ├── ShortestShowing.kt  how long a wait has shown, so it shows half a second at least: WorkingDialog's,
     │   │   │                     and the share window's wheel
-    │   │   ├── TileName.kt       the app name below the focused tile: its paint, its gap, the room it takes
+    │   │   ├── TileName.kt       the app name below a tile: its paint, its gap, the room it takes
     │   │   │                     below a tile; the home screen's, and the room the appearance preview leaves
     │   │   ├── WallpaperOutline.kt  the dark edge around what's drawn on the wallpaper, on the home screen
     │   │   │                     and in the previews of it

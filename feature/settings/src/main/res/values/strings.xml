@@ -43,10 +43,11 @@
          Off, it casts a shadow instead, as if lifted off the screen. Its values are On and Off. -->
     <string name="settings_appearance_focus_frame">Focus frame</string>
     <!-- An option: whether the app's name shows below its tile. Its values are Off
-         (settings_appearance_off) and When focused: below the tile the remote's focus is on
-         only. -->
+         (settings_appearance_off), When focused: below the tile the remote's focus is on only,
+         and Always: below every tile, at all times. -->
     <string name="settings_appearance_app_name">App name</string>
     <string name="settings_appearance_when_focused">When focused</string>
+    <string name="settings_appearance_always">Always</string>
     <!-- An option: whether the top bar shows the time of day. -->
     <string name="settings_appearance_time">Time</string>
     <!-- An option: whether the top bar shows the date. -->
@@ -131,6 +132,12 @@
         <item quantity="one">Used as the background: the home screen will have no picture. The picture is deleted from Luncher\'s pictures only.</item>
         <item quantity="other">One is used as the background: the home screen will have no picture. The <xliff:g id="count" example="9">%d</xliff:g> pictures are deleted from Luncher\'s pictures only.</item>
     </plurals>
+    <!-- The question when Back is pressed in the editor with a picture or an option changed and
+         not saved; below it, what leaving does. Its answers: Cancel (settings_pictures_cancel),
+         which stays in the editor, and Discard, in red, which leaves it without saving. -->
+    <string name="settings_background_discard_question">Discard changes?</string>
+    <string name="settings_background_discard_text">The changes to the background aren\'t saved.</string>
+    <string name="settings_background_discard">Discard</string>
     <!-- In a window over the editor while the wallpaper is drawn after Save, which takes a moment. -->
     <string name="settings_background_applying">Processing background…</string>
     <!-- In a window over the background editor as it opens, while its pictures are prepared to be

@@ -7,4 +7,7 @@ enum class AppName {
 
     /** Below the focused tile only, coming and going with the focus. */
     WHEN_FOCUSED,
+
+    /** Below every tile, at all times; the focused one's zoomed with its tile. */
+    ALWAYS,
 }

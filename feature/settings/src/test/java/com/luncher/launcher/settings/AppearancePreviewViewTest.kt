@@ -103,6 +103,15 @@ class AppearancePreviewViewTest {
         assertTrue(draw(Appearance()).sameAs(draw(Appearance(), largerText)))
     }
 
+    // Every tile's name as a block below it, not only the focused one's, in the same room.
+    @Test
+    fun `with every app name shown, draws a name below every tile`() {
+        val focused = draw(Appearance(TileGeometry(appName = AppName.WHEN_FOCUSED)))
+        val every = draw(Appearance(TileGeometry(appName = AppName.ALWAYS)))
+
+        assertFalse("the same as the focused tile's name only", focused.sameAs(every))
+    }
+
     // Rule 5 (docs/ARCHITECTURE.md): drawing allocates nothing.
     @Test
     fun `drawing allocates nothing`() {

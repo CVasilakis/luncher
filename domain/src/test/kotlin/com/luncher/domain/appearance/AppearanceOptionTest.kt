@@ -73,7 +73,7 @@ class AppearanceOptionTest {
         assertEquals(VerticalAlignment.BOTTOM, AppearanceOption.VerticalAlignment.default)
         assertEquals(HorizontalAlignment.CENTER, AppearanceOption.HorizontalAlignment.default)
         assertEquals(true, AppearanceOption.FullBottomRow.default)
-        assertEquals(Corners.Radius(12), AppearanceOption.CornerRadius.default)
+        assertEquals(Corners.Radius(16), AppearanceOption.CornerRadius.default)
         assertEquals(true, AppearanceOption.FocusFrame.default)
         assertEquals(AppName.OFF, AppearanceOption.AppName.default)
         assertEquals(Side.LEFT, AppearanceOption.ClockSide.default)
@@ -105,9 +105,9 @@ class AppearanceOptionTest {
 
     // Off and On, as Full bottom row; a name below is a new look, never the default.
     @Test
-    fun `the focus frame steps as an on-off option, the app name from today's look to the new one`() {
+    fun `the focus frame steps as an on-off option, the app name from today's look to the new ones`() {
         assertEquals(listOf(false, true), AppearanceOption.FocusFrame.values)
-        assertEquals(listOf(AppName.OFF, AppName.WHEN_FOCUSED), AppearanceOption.AppName.values)
+        assertEquals(listOf(AppName.OFF, AppName.WHEN_FOCUSED, AppName.ALWAYS), AppearanceOption.AppName.values)
     }
 
     // The focus frame only redraws the tiles; the name needs room between the rows, a new layout.
@@ -127,8 +127,8 @@ class AppearanceOptionTest {
         val radius = AppearanceOption.CornerRadius
 
         val next = radius.step(Appearance(), forward = true)
-        assertEquals(Corners.Radius(16), radius.get(next))
-        assertEquals(Corners.Radius(12), radius.get(radius.step(next, forward = false)))
+        assertEquals(Corners.Radius(24), radius.get(next))
+        assertEquals(Corners.Radius(16), radius.get(radius.step(next, forward = false)))
     }
 
     @Test
@@ -173,14 +173,14 @@ class AppearanceOptionTest {
     fun `steps from a value it doesn't offer to the default`() {
         val odd = Appearance(tileStyle = TileStyle(Corners.Radius(5)))
 
-        assertEquals(Corners.Radius(12), AppearanceOption.CornerRadius.get(AppearanceOption.CornerRadius.step(odd, forward = true)))
+        assertEquals(Corners.Radius(16), AppearanceOption.CornerRadius.get(AppearanceOption.CornerRadius.step(odd, forward = true)))
     }
 
     @Test
     fun `a value it doesn't offer falls back to its default`() {
-        assertEquals(Corners.Radius(12), AppearanceOption.CornerRadius.valueOrDefault(Corners.Radius(5)))
-        assertEquals(Corners.Radius(12), AppearanceOption.CornerRadius.valueOrDefault(null))
-        assertEquals(Corners.Radius(16), AppearanceOption.CornerRadius.valueOrDefault(Corners.Radius(16)))
+        assertEquals(Corners.Radius(16), AppearanceOption.CornerRadius.valueOrDefault(Corners.Radius(5)))
+        assertEquals(Corners.Radius(16), AppearanceOption.CornerRadius.valueOrDefault(null))
+        assertEquals(Corners.Radius(24), AppearanceOption.CornerRadius.valueOrDefault(Corners.Radius(24)))
         assertEquals(VerticalAlignment.BOTTOM, AppearanceOption.VerticalAlignment.valueOrDefault(null))
         assertEquals(Side.RIGHT, AppearanceOption.ClockSide.valueOrDefault(Side.RIGHT))
     }

@@ -12,7 +12,8 @@ import kotlin.math.roundToInt
  *
  * [nameHeight] is how much room, in pixels, the focused tile's name takes below the tile, zoomed
  * as the tile is: the view that draws the name measures its text, as the domain can't. The rows
- * leave it that room only while the geometry shows the name ([AppName.WHEN_FOCUSED]).
+ * leave it that room only while the geometry shows names ([AppName.WHEN_FOCUSED],
+ * [AppName.ALWAYS]): the same room either way, as a tile's name at rest takes less.
  */
 class TileLayouts(geometry: TileGeometry, pixelsPerDp: Float, nameHeight: Int = 0) {
 
@@ -20,12 +21,12 @@ class TileLayouts(geometry: TileGeometry, pixelsPerDp: Float, nameHeight: Int = 
     val gap: Int = (geometry.gapDp * pixelsPerDp).roundToInt()
 
     /**
-     * Below each row, the last one too, the room for the focused tile's name, in pixels: none
-     * while names don't show. A view scrolling a tile into sight shows this much below it too.
+     * Below each row, the last one too, the room for the tiles' names, the focused one's zoomed,
+     * in pixels: none while names don't show. A view scrolling a tile into sight shows this much below it too.
      */
     val nameRoom: Int = when (geometry.appName) {
         AppName.OFF -> 0
-        AppName.WHEN_FOCUSED -> nameHeight
+        AppName.WHEN_FOCUSED, AppName.ALWAYS -> nameHeight
     }
 
     private val tileWidth: Int = (geometry.tileWidthDp * pixelsPerDp).roundToInt()

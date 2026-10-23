@@ -91,7 +91,7 @@ sealed interface AppearanceOption<T> {
             appearance.copy(tileStyle = appearance.tileStyle.copy(focusFrame = value))
     }
 
-    /** Whether the focused tile's app name shows below it. */
+    /** Whether the app names show below the tiles: never, the focused one's, or every one. */
     data object AppName : AppearanceOption<Name> {
         override val values: List<Name> = Name.entries
         override fun get(appearance: Appearance) = appearance.tileGeometry.appName

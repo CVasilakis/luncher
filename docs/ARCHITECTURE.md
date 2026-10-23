@@ -231,7 +231,7 @@ Adding an aspect, e.g. the focus frame's color:
 | Its effect on the home screen, and on the preview where it shows; an option of the menus and settings only (`showsOnHome` false, the theme's mode) on a settings screen instead | `:feature:home`, `:feature:settings` | a test that sets each option of the catalog to a value other than its default, and fails if the home screen, or the preview, draws the same; for an option the home screen doesn't show, if the appearance editor draws the same (`SettingsThemeTest`) |
 
 Today `Appearance` has five parts: `TileGeometry` (the tiles' size, spacing and alignment, and
-whether the focused tile's name shows below it, which the rows leave room for), `TileStyle` (their
+whether the app names show below the tiles, the focused one's or every one's, which the rows leave room for), `TileStyle` (their
 corners, and whether the focused one is framed or lifted), `TopBarAppearance` (whether the
 time and the date show, the clock's side, and the time's side of the date), `Background` (the
 wallpaper: a picture of the picture library, or none, and how it's drawn) and `ThemeAppearance`

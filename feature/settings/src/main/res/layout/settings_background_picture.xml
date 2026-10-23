@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- A picture to choose in the background editor: its thumbnail, its name, on two lines at most
-     (Add from folder needs both on the smallest screens), below it its size in px and its file's
+<!-- A picture to choose in the background editor: its thumbnail, its name, on one line, cut with
+     "…" (BackgroundActivity sets it), below it its size in px and its file's
      size, as Add from folder shows them (no place: it's in Luncher's own storage), and a check
      while it's the draft's; it's activated then, tinted with the accent. Also No picture (the
      plain background as its thumbnail) and Add from folder (a plus in place of the thumbnail),
-     with no line below. -->
+     with no line below, their names on two lines at most (Add from folder needs both on the
+     smallest screens). -->
 <com.luncher.launcher.ui.ListEntry xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"

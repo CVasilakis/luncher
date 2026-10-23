@@ -164,6 +164,8 @@ class SettingsLayoutTest(private val screen: TvScreen) {
         assertWhole(screen, title)
         val container = bounds(activity.findViewById(R.id.settings_appearance_frame))
         assertEquals("the groups' container's top on $screen", bounds(title).top, container.top, 1f)
+        val end = activity.findViewById<View>(R.id.settings_appearance_end)
+        assertEquals("the groups' container's bottom on $screen", bounds(end).bottom - end.paddingBottom, container.bottom, 1f)
         assertApart(screen, "title and preview", bounds(title), bounds(preview))
         assertApart(screen, "preview and options", bounds(preview), container)
         // Below the preview, inside the overscan margin, their texts whole.

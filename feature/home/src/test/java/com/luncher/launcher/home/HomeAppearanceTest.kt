@@ -175,7 +175,34 @@ class HomeAppearanceTest {
     fun `the tiles show names as their first geometry says, before any change`() {
         val tiles = AppTilesView(RuntimeEnvironment.getApplication(), null)
 
-        assertEquals(tiles.tileGeometry.appName == AppName.WHEN_FOCUSED, tiles.paints.showsNames)
+        assertEquals(tiles.tileGeometry.appName, tiles.paints.names)
+        assertEquals(tiles.tileGeometry.appName != AppName.OFF, tiles.paints.showsNames)
+    }
+
+    // Every name whole, the focused one's too, at once: none fades with the focus.
+    @Test
+    fun `with every app name shown, each tile draws its name whole, focused or not`() {
+        appearance.appearance = Appearance(topLeftTiles.copy(appName = AppName.ALWAYS))
+        val activity = start().get()
+        idle()
+
+        val tiles = activity.tiles()
+        assertTrue(tiles[0].isFocused)
+        for (tile in tiles) assertEquals("${tile.app.label}'s name", TilePaints.OPAQUE, nameAlpha(tile))
+        tiles[1].requestFocus()   // no frame of a fade: the names stay whole
+        for (tile in tiles) assertEquals("${tile.app.label}'s name", TilePaints.OPAQUE, nameAlpha(tile))
+    }
+
+    // Only the focused tile's name shows; the others draw none.
+    @Test
+    fun `with the focused tile's name shown, the others draw none`() {
+        appearance.appearance = Appearance(topLeftTiles.copy(appName = AppName.WHEN_FOCUSED))
+        val activity = start().get()
+        idle()
+
+        val tiles = activity.tiles()
+        assertEquals(TilePaints.OPAQUE, nameAlpha(tiles[0]))
+        assertEquals(-1, nameAlpha(tiles[1]))
     }
 
     /** The alpha [tile] draws its name with: the last text it draws, its outline before it. */
@@ -257,24 +284,26 @@ class HomeAppearanceTest {
         assertEquals(AppTileView.HELD_ZOOM, tile.scaleX)
     }
 
+    // The same room for every name as for the focused one's: the focused one, zoomed, takes the most.
     @Test
     fun `with the app names shown, the rows leave room below each for the focused tile's name`() {
-        val withNames = Appearance(topLeftTiles.copy(appName = AppName.WHEN_FOCUSED))
         appearance.appearance = Appearance(topLeftTiles)
         val activity = start().get()
         idle()
         val tiles = activity.tiles()
         val rowsApart = tiles[5].top - tiles[0].top
 
-        appearance.write(withNames)
-        idle()
+        for (names in listOf(AppName.WHEN_FOCUSED, AppName.ALWAYS)) {
+            appearance.write(Appearance(topLeftTiles.copy(appName = names)))
+            idle()
 
-        val paints = activity.grid().paints
-        assertTrue(paints.showsNames)
-        assertTrue("${paints.nameHeight} px for a name", paints.nameHeight > 0)
-        assertEquals(rowsApart + paints.nameHeight, tiles[5].top - tiles[0].top)
-        assertSame(tiles[0], tiles[0].focusSearch(View.FOCUS_LEFT))   // the moves the same
-        assertSame(tiles[5], tiles[0].focusSearch(View.FOCUS_DOWN))
+            val paints = activity.grid().paints
+            assertTrue(paints.showsNames)
+            assertTrue("${paints.nameHeight} px for a name", paints.nameHeight > 0)
+            assertEquals("$names", rowsApart + paints.nameHeight, tiles[5].top - tiles[0].top)
+            assertSame(tiles[0], tiles[0].focusSearch(View.FOCUS_LEFT))   // the moves the same
+            assertSame(tiles[5], tiles[0].focusSearch(View.FOCUS_DOWN))
+        }
     }
 
     // At the bottom, the last row is the room for a name higher, so the name stays on the screen.
@@ -411,7 +440,7 @@ class HomeAppearanceTest {
         controller.pause().stop()
         assertEquals(0, appearance.listenerCount)
         appearance.write(Appearance(tileStyle = TileStyle(Corners.Radius(4))))
-        assertEquals(Corners.Radius(12), controller.get().grid().paints.corners)   // the default still
+        assertEquals(Corners.Radius(16), controller.get().grid().paints.corners)   // the default still
 
         controller.restart().resume()   // restart() starts it too, as Android does
         assertEquals(1, appearance.listenerCount)
@@ -430,6 +459,13 @@ class HomeAppearanceTest {
     @GraphicsMode(GraphicsMode.Mode.NATIVE)
     fun `drawing the tiles allocates nothing lifted, with the focused tile's name`() {
         drawingTheTilesAllocatesNothing(Appearance(TileGeometry(appName = AppName.WHEN_FOCUSED), TileStyle(Corners.Radius(16), focusFrame = false)))
+    }
+
+    // Every tile's name drawn, and none fading.
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun `drawing the tiles allocates nothing with every tile's name`() {
+        drawingTheTilesAllocatesNothing(Appearance(TileGeometry(appName = AppName.ALWAYS)))
     }
 
     // Rule 5 (docs/ARCHITECTURE.md): drawing allocates nothing, with rounded corners too. Counts

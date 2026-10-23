@@ -143,11 +143,12 @@ class TileLayoutsTest {
     }
 
     @Test
-    fun `leaves room for the focused tile's name only while names show`() {
+    fun `leaves room for the names only while they show`() {
         val names = TileLayouts(topLeft.copy(appName = AppName.WHEN_FOCUSED), pixelsPerDp = 1f, nameHeight = 30)
         val none = TileLayouts(topLeft, pixelsPerDp = 1f, nameHeight = 30)
 
         assertEquals(30, names.nameRoom)
+        assertEquals(30, TileLayouts(topLeft.copy(appName = AppName.ALWAYS), pixelsPerDp = 1f, nameHeight = 30).nameRoom)
         assertEquals(0, none.nameRoom)
         val tiles = names.tiles(tileCount = 7, width, height)
         assertEquals(tiles.tileHeight + 30 + names.gap, tiles.top(5))

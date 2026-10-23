@@ -176,7 +176,8 @@ Appearance (`AppearanceActivity`) is the editor of the home screen's
 large title right above a preview of the home screen at the left, and below the preview two
 buttons, Background and Reset to defaults, the three centered in the height (`EditorStartColumn`:
 the preview as large as the room the others leave, at least a quarter of it); the options at the
-right, in their container, starting level with the title, measured for the room below it as the
+right, in their container, starting level with the title and reaching down to the bottom margin
+from the start, whether a group is open or not, as the side sheets' lists do, measured for the room below it as the
 columns are measured, where the title's place follows from the start column's measures
 (`AppearanceEditorLayout`): measured for more room first, the list would fit its rows to that room
 ([`ui/`](../../ui/README.md#the-design-system)) and lose its scroll at each layout. The options
@@ -228,7 +229,7 @@ size in the background's style, or the plain color), the first one zoomed as foc
 framed as lifted (with the focus frame on, the frame in the accent's vivid tone inside its edge, as
 on the home screen; off, outlined as the other tiles, with a dozen faint rounded rectangles, each a
 little wider and lower, for the shadow), and plain blocks for the time,
-the date, the settings gear and, while the app name shows, the focused tile's name: no images or
+the date, the settings gear and, while the app name shows, the focused tile's name, or every tile's: no images or
 text. It's a made-up sample, not the user's apps: a screen 960 dp wide, of the TV's shape
 (`screenSize`, which the wallpaper is drawn at: 540 dp tall on a 16:9 TV), so a picture is cut as on
 the home screen, with seven tiles, a full row and a short one, so that every option's values look
@@ -268,7 +269,7 @@ The background editor (`BackgroundActivity`) is where the wallpaper is chosen an
 from the appearance editor's Background button, full-screen like it. At the end, below their
 label (Pictures), Luncher's picture library as a list in its container (a `ListFrame`: cut along
 its rounded corners, fading out where there's more, scrolling a row ahead of the focus): No picture, the pictures by
-name, as the device's language sorts words, each with its thumbnail, its name and below it its
+name, as the device's language sorts words, each with its thumbnail, its name on one line, cut with "…" where it doesn't fit, and below it its
 size in px and its file's size (as in Add from folder, without where: it's in Luncher's storage), then Add from folder
 ([below](#adding-a-picture)); a hint at the label's end says a long press of OK renames or
 deletes a picture, as the home screen's says what the keys do while moving an app. While the library is empty, how to add
@@ -301,11 +302,14 @@ chooses it (tinted with the accent, a check beside it), and the preview follows;
 stored. An option's field shows its value with a mark pointing toward its list, not between
 arrows: OK on it opens its values in a list (`OptionList`, a `PopupWindow`) beside the field, at
 its end edge, so neither the field nor the preview is covered: a field of the second column has
-it over the pictures; one of the first reaches the grid's end edge, so it covers the other
-column's fields, and Delete all where it's as low, whole, not a part of them. The value it has focused,
-checked, level with the field, moved up or down only to stay inside the overscan margin; the
-field outlined in the accent meanwhile (activated). In a right-to-left language it opens on the other side. The preview shows each value the focus comes to; OK keeps it, and Back
-closes the list (not the editor) with the value from before. Left and Right on the fields don't
+it over the pictures, the value it has level with the field; one of the first (Blur, Dim) reaches
+the grid's end edge, its first value level with the field whatever the value, so it covers what's
+beside and below the field whole (the other column's fields, Save and Delete all), never a part
+of them, nor the preview above. Either is moved up or down only to stay inside the overscan
+margin. The value it has focused and checked; the field outlined in the accent meanwhile
+(activated). In a right-to-left language it opens on the other side. The preview shows each value
+the focus comes to; OK keeps it, and so does Left, the arrow back toward the field (Right in a
+right-to-left language), while Back closes the list (not the editor) with the value from before. Left and Right on the fields don't
 change anything: they move the focus, as on the other entries, so Right goes from the second
 column to the pictures beside the options. The appearance editor keeps its arrows: nothing is beside
 its options. The options offer only what moves the chosen picture on this screen, by how filling
@@ -322,7 +326,10 @@ options are set for it (a bright picture needs more dimming than a dark one). Th
 it's about the picture's shape, not its look. The stored picture chosen again brings back its
 stored options, as the home screen shows it, and Save then just closes. The draft never holds a
 position its picture doesn't offer either: opening the editor with the stored background, or a
-draft kept, makes such a position Center. Back, or Home, leaves the background as it was. **Save** stores the draft,
+draft kept, makes such a position Center. Back, or Home, leaves the background as it was; Back
+with the draft changed (counted as Save counts it, below) asks first, "Discard changes?", its badge
+beside the title, Cancel focused, so a repeated Back loses nothing: Cancel stays in the editor, the
+draft kept, and Discard closes it. **Save** stores the draft,
 through the process's `Wallpaper` ([`feature/home/README.md`](../home/README.md#the-wallpaper)):
 - unchanged, the editor just closes: a stored position the draft shows as Center counts as
   unchanged, as it draws the same;
@@ -504,7 +511,7 @@ device's language sorts words (`inListOrder`), below their label and how many th
 container like the editor's pictures; each row with an icon of where it is (a TV or a USB drive),
 its name, then where it is ("Local" or "USB drive") and its size. Beside them, below its label, a
 preview of the selected one, rounded, of the TV's shape as the wallpaper fills it, drawn in the
-background, a spinning wheel in its place meanwhile, and the selected picture's name below it. The
+background, a spinning wheel in its place meanwhile; no name below it, as the list's selected row shows it. The
 column takes 41 % of the width (`shareTheWidth`, set in code, as nested weights would measure the
 list twice);
 moving on stops the one being drawn at once
@@ -541,7 +548,7 @@ one. Anything else that isn't a picture isn't listed. The folders are read again
 shows, so a USB drive plugged in meanwhile counts. On a screen too short for the preview, Add all
 and the note, the preview gets smaller (`PreviewColumn`); where it would be shorter than a row of
 the list (64 dp: the smallest screens, large text, a long translation), the preview goes, with
-its label and the picture's name, and none is drawn: Add all and the note are the column. Where
+its label, and none is drawn: Add all and the note are the column. Where
 even they don't fit, the column scrolls, to its end while Add all has the focus, so the note
 shows too. The 64 dp were chosen from the preview's heights measured on screens 360 to 540 dp
 tall in each language, with normal and large text: the room left to it depends as much on the

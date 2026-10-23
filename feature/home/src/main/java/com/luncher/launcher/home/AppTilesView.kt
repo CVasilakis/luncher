@@ -5,7 +5,6 @@ import android.util.AttributeSet
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Scroller
-import com.luncher.domain.appearance.AppName
 import com.luncher.domain.appearance.TileGeometry
 import com.luncher.domain.appearance.TileStyle
 import com.luncher.domain.layout.Direction
@@ -20,8 +19,8 @@ import com.luncher.domain.layout.TileMoves
  * made in :domain, where [TileLayouts] picks it for the [tileGeometry]. How each tile is drawn
  * ([tileStyle]) is in [paints], which all the tiles share.
  *
- * While names show, the focused tile draws its app's name below itself, in the room the layout
- * leaves below each row; this view doesn't clip its tiles (clipChildren, in home_activity.xml),
+ * While names show, the focused tile, or every tile, draws its app's name below itself, in the
+ * room the layout leaves below each row; this view doesn't clip its tiles (clipChildren, in home_activity.xml),
  * so the name and a zoomed or lifted tile's shadow show past a tile's bounds.
  *
  * D-pad focus goes where the layout's [TileFocus] says, a rule of :domain: Android's own search
@@ -40,15 +39,15 @@ internal class AppTilesView(context: Context, attrs: AttributeSet?) : ViewGroup(
 
     /**
      * Where the tiles go and how big they are, from the home screen's appearance. Its default is
-     * the home screen without settings. Whether the focused tile's name shows is part of it: the
-     * rows leave the name room ([TilePaints.nameHeight]), so it changes the layout.
+     * the home screen without settings. Whether the tiles' names show is part of it: the rows
+     * leave the names room ([TilePaints.nameHeight]), so it changes the layout.
      */
     var tileGeometry: TileGeometry = TileGeometry()
         set(value) {
             if (field == value) return
             field = value
             layouts = TileLayouts(value, pixelsPerDp, paints.nameHeight)
-            paints.showsNames = value.appName == AppName.WHEN_FOCUSED
+            paints.names = value.appName
             for (i in 0 until childCount) getChildAt(i).invalidate()
             requestLayout()
         }

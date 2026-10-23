@@ -154,7 +154,7 @@ class AppearanceActivityTest {
         assertEquals(
             listOf(
                 "Tiles open", "Vertical alignment: Bottom", "Horizontal alignment: Center", "Full bottom row: On",
-                "Corner radius: 12 dp", "Focus frame: On", "App name: Off", "Time and date", "Theme",
+                "Corner radius: 16 dp", "Focus frame: On", "App name: Off", "Time and date", "Theme",
             ),
             activity.lines(),
         )
@@ -260,11 +260,11 @@ class AppearanceActivityTest {
         activity.focus("Tiles", "Corner radius")
 
         activity.press(KeyEvent.KEYCODE_DPAD_RIGHT)
-        assertEquals("16 dp", activity.value("Corner radius"))
-        assertEquals(Corners.Radius(16), settings.appearance.tileStyle.corners)
+        assertEquals("24 dp", activity.value("Corner radius"))
+        assertEquals(Corners.Radius(24), settings.appearance.tileStyle.corners)
 
         activity.press(KeyEvent.KEYCODE_DPAD_LEFT)
-        assertEquals("12 dp", activity.value("Corner radius"))
+        assertEquals("16 dp", activity.value("Corner radius"))
         assertEquals(Appearance(), settings.appearance)
         assertTrue(activity.row("Corner radius").isFocused)
     }
@@ -283,6 +283,18 @@ class AppearanceActivityTest {
 
         assertEquals(Appearance(TileGeometry(appName = AppName.WHEN_FOCUSED), TileStyle(focusFrame = false)), settings.appearance)
         assertEquals(settings.appearance, activity.findViewById<AppearancePreviewView>(R.id.settings_appearance_preview).appearance)
+    }
+
+    @Test
+    fun `the app name steps from When focused to Always, below every tile`() {
+        settings.appearance = Appearance(TileGeometry(appName = AppName.WHEN_FOCUSED))
+        val activity = start()
+        activity.focus("Tiles", "App name")
+
+        activity.press(KeyEvent.KEYCODE_DPAD_RIGHT)
+
+        assertEquals("Always", activity.value("App name"))
+        assertEquals(Appearance(TileGeometry(appName = AppName.ALWAYS)), settings.appearance)
     }
 
     @Test
@@ -406,7 +418,7 @@ class AppearanceActivityTest {
         assertNull(question())
         assertEquals(Appearance(), settings.appearance)
         assertEquals("Bottom", activity.value("Vertical alignment"))
-        assertEquals("12 dp", activity.value("Corner radius"))
+        assertEquals("16 dp", activity.value("Corner radius"))
         assertTrue("the focus back on Reset to defaults", activity.findViewById<View>(R.id.settings_appearance_reset).isFocused)
     }
 
@@ -451,13 +463,16 @@ class AppearanceActivityTest {
         assertFalse(preview.isFocusable)
     }
 
+    // Down to the bottom margin from the start, as the side sheets' lists, its groups closed.
     @Test
-    fun `the groups' container starts level with the title`() {
+    fun `the groups' container starts level with the title and reaches the bottom margin`() {
         val activity = start()
 
         val title = bounds(activity.findViewById(R.id.settings_appearance_title))
         val container = bounds(activity.findViewById(R.id.settings_appearance_frame))
+        val end = activity.findViewById<View>(R.id.settings_appearance_end)
         assertEquals(title.top, container.top, 1f)
+        assertEquals(bounds(end).bottom - end.paddingBottom, container.bottom, 1f)
     }
 
     // The options' container fits the room below the title, measured for it in one pass: measured

@@ -26,8 +26,8 @@ domain/src/
 │   │   └── Banner.kt            model and rule: which image a tile shows (the app's banner or its icon)
 │   ├── appearance/
 │   │   ├── Appearance.kt        model: how the home screen looks, as far as the user can change it, and Luncher's theme, in parts (docs/ARCHITECTURE.md#appearance)
-│   │   ├── TileGeometry.kt      model: where tiles go and how big they are, in dp; their alignment; whether the focused tile's name shows below it
-│   │   ├── AppName.kt           model: an app's name below its tile, never or below the focused one
+│   │   ├── TileGeometry.kt      model: where tiles go and how big they are, in dp; their alignment; whether the app names show below the tiles
+│   │   ├── AppName.kt           model: an app's name below its tile, never, below the focused one, or always
 │   │   ├── VerticalAlignment.kt model: the rows at the top, centered or at the bottom of the height
 │   │   ├── HorizontalAlignment.kt model: a row that isn't full at the left, centered or at the right
 │   │   ├── TileStyle.kt         model: how each tile is drawn (its corners, whether the focused one is framed or lifted)
@@ -75,7 +75,7 @@ domain/src/
 │       ├── TileLayout.kt        how an arrangement of tiles reports sizes and positions
 │       ├── TileMoves.kt         how it says where a tile the user moves goes, and which row and place across a tile is at
 │       ├── Direction.kt         model: a D-pad arrow
-│       ├── TileGrid.kt          rule: the grid (rows of tiles as wide as a width; the short row first or last, at the left, centered or at the right; at the top, centered or at the bottom of a height; room below each row for the focused tile's name), and moves in it
+│       ├── TileGrid.kt          rule: the grid (rows of tiles as wide as a width; the short row first or last, at the left, centered or at the right; at the top, centered or at the bottom of a height; room below each row for the tiles' names), and moves in it
 │       ├── TileFocus.kt         rule: where each arrow takes the focus among the tiles: along the row, the nearest tile up or down, and back the way it came
 │       ├── TileLayouts.kt       rule: the layouts for a TileGeometry, in pixels at a density; picks the arrangement and placement
 │       ├── TileMenuPlacement.kt rule: where a tile's menu goes, above or below the tile, inside the screen's room

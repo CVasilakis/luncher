@@ -39,11 +39,15 @@ internal class TilePaints(context: Context) {
     var framed: Boolean = TileStyle().focusFrame
 
     /**
-     * Whether the focused tile shows its app's name below it, from the home screen's geometry. It
-     * starts as the default geometry has it, as [AppTilesView]'s does: the view sets it only when
-     * its geometry changes, so a different start would leave the rows room for names never drawn.
+     * Which tiles show their app's name below them, from the home screen's geometry: none, the
+     * focused one, or every one. It starts as the default geometry has it, as [AppTilesView]'s
+     * does: the view sets it only when its geometry changes, so a different start would leave the
+     * rows room for names never drawn.
      */
-    var showsNames = TileGeometry().appName == AppName.WHEN_FOCUSED
+    var names: AppName = TileGeometry().appName
+
+    /** Whether any tile shows its name ([names]): the rows leave room for it then. */
+    val showsNames: Boolean get() = names != AppName.OFF
 
     /**
      * The app's name below its tile, as :ui's [TileName] has it, so the appearance editor's preview

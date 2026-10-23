@@ -323,15 +323,13 @@ class BackgroundLayoutTest(private val screen: TvScreen) {
         val folder = where.text.indexOf("Android/media/")
         assertTrue("\"${where.text}\" cut past its start on $screen: ${where.layout.getEllipsisCount(0)} letters", where.layout.getEllipsisStart(0) == 0 && where.layout.getEllipsisCount(0) <= folder)
         activity.assertShown("note", activity.findViewById(R.id.settings_pictures_folder_note))
-        // The preview with its label and name, as tall as a row of the list at least; else none of them, and none drawn.
+        // The preview with its label, as tall as a row of the list at least; else none of them, and none drawn.
         val label = activity.findViewById<TextView>(R.id.settings_pictures_folder_preview_label)
-        val name = activity.findViewById<View>(R.id.settings_pictures_folder_selected)
         graph.jobs.runAll()
         idle()
         if (activity.findViewById<View>(R.id.settings_pictures_folder_preview_frame).visibility == View.VISIBLE) {
             activity.assertShown("preview", preview)
             activity.assertShown("its label", label)
-            assertEquals(View.VISIBLE, name.visibility)
             assertApart(screen, "list and preview", bounds(list), bounds(preview))
             val least = activity.resources.getDimension(R.dimen.settings_pictures_preview_least)
             assertTrue("preview ${preview.height} px tall on $screen, $least at least", preview.height >= least - 0.5f)
@@ -344,7 +342,6 @@ class BackgroundLayoutTest(private val screen: TvScreen) {
             assertTrue("holiday.jpg previewed on $screen", (preview as android.widget.ImageView).drawable != null)
         } else {
             assertEquals("the preview's label on $screen", View.GONE, label.visibility)
-            assertEquals("the picture's name on $screen", View.GONE, name.visibility)
             assertEquals("previews drawn on $screen", emptyList<String>(), graph.folderPictures.previewed.map { it.name })
         }
         // On the smallest screens the column scrolls: to its end, the note, as Add all takes the focus.

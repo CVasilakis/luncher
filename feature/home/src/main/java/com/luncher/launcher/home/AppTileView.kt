@@ -14,6 +14,7 @@ import android.graphics.RectF
 import android.graphics.Shader
 import android.text.TextUtils
 import android.view.View
+import com.luncher.domain.appearance.AppName
 import com.luncher.domain.apps.AppImages
 import com.luncher.domain.apps.InstalledApp
 import com.luncher.domain.apps.bannerFor
@@ -29,10 +30,10 @@ import com.luncher.domain.layout.PixelBounds
  * with the image as it is.
  *
  * The shadow is Android's own, cast by the tile's outline as it rises (its translationZ, in the
- * state animator), drawn by the GPU: nothing is blurred or allocated for it. With
- * [TilePaints.showsNames], the focused tile's app name shows centered below it, cut to the
- * tile's width, fading in and out with the focus; drawn with the tile, outside its bounds, which
- * [AppTilesView] doesn't clip, so it zooms with it.
+ * state animator), drawn by the GPU: nothing is blurred or allocated for it. As
+ * [TilePaints.names] says, the app's name shows centered below the tile, cut to the tile's width:
+ * below the focused one only, fading in and out with the focus, or below every one at all times;
+ * drawn with the tile, outside its bounds, which [AppTilesView] doesn't clip, so it zooms with it.
  *
  * While the user moves its app, a [held] tile has a white frame, and the focused one's zoom: the
  * frame tells it apart from one only focused.
@@ -150,9 +151,10 @@ internal class AppTileView(
         if (paints.showsNames) drawName(canvas)
     }
 
-    /** The app's name below the tile, as faded in as the focus has it, with its outline. */
+    /** The app's name below the tile, whole, or as faded in as the focus has it, with its outline. */
     private fun drawName(canvas: Canvas) {
         val shown = when {
+            paints.names == AppName.ALWAYS -> 1f
             nameFade.isRunning -> nameFade.animatedFraction
             isFocused -> 1f
             else -> 0f
@@ -173,7 +175,7 @@ internal class AppTileView(
 
     override fun onFocusChanged(gainFocus: Boolean, direction: Int, previouslyFocusedRect: Rect?) {
         super.onFocusChanged(gainFocus, direction, previouslyFocusedRect)
-        if (paints.showsNames) {
+        if (paints.names == AppName.WHEN_FOCUSED) {
             // Back the way it came if it's still fading, else in from nothing or out from whole.
             if (nameFade.isRunning || !gainFocus) nameFade.reverse() else nameFade.start()
         }

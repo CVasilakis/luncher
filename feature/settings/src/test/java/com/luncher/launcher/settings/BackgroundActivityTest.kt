@@ -44,6 +44,7 @@ import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.android.controller.ActivityController
 import org.robolectric.annotation.Config
+import org.robolectric.annotation.GraphicsMode
 import org.robolectric.shadows.ShadowChoreographer
 import org.robolectric.shadows.ShadowDialog
 import java.time.Duration
@@ -144,6 +145,14 @@ class BackgroundActivityTest {
     private fun PopupWindow.entries(): List<View> {
         val list = contentView as LinearLayout
         return (0 until list.childCount).map { list.getChildAt(it) }
+    }
+
+    /** [keyCode] pressed and released on the focused value of [list]. */
+    private fun press(list: PopupWindow, keyCode: Int) {
+        val window = list.contentView.rootView
+        window.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, keyCode))
+        window.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_UP, keyCode))
+        idle()
     }
 
     /** A value's name, in an option's list. */
@@ -372,6 +381,20 @@ class BackgroundActivityTest {
     }
 
     // As Add from folder's rows, without where: every picture here is in Luncher's own storage.
+    // Native graphics, so the text is measured as on a TV.
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun `a picture's name stays on one line, cut with an ellipsis where it doesn't fit`() {
+        val long = picture("a holiday by the sea, the whole family on the beach at sunset, summer.jpg", added = 6)
+        graph(beach, long)
+        val activity = start().get()
+
+        val name = activity.row(long.name).findViewById<TextView>(R.id.settings_background_name)
+        assertEquals(1, name.layout.lineCount)
+        assertTrue("\"${name.text}\" isn't cut", name.layout.getEllipsisCount(0) > 0)
+        assertEquals(0, activity.row("beach.png").findViewById<TextView>(R.id.settings_background_name).layout.getEllipsisCount(0))
+    }
+
     @Test
     fun `a picture's row says its size in px and its file's, No picture and Add from folder nothing`() {
         graph(portrait, background = Background(portrait.id))
@@ -413,15 +436,22 @@ class BackgroundActivityTest {
     }
 
     // Beside the field, so it covers neither the field nor the preview: a field at the start
-    // (Dim) has its list over the other column, to its end, a field at the end (Position) over the pictures.
+    // (Blur, Dim) has its list over the other column, to its end, from its first value down, so
+    // it covers what's below the field whole, not the preview above; a field at the end
+    // (Position) over the pictures, its value level with it. Either moved up only as far as the
+    // bottom margin needs.
     @Test
-    fun `an option's list opens beside its field, its value level with the field`() {
-        graph(portrait, background = Background(portrait.id, dim = 40))
+    fun `an option's list opens beside its field, a start field's from its first value, an end field's with its value level with the field`() {
+        graph(portrait, background = Background(portrait.id, dim = 40, blur = com.luncher.domain.pictures.Blur.MEDIUM))
         val activity = start().get()
         val options = activity.findViewById<View>(R.id.settings_background_options)
         val optionsEnd = IntArray(2).also(options::getLocationInWindow)[0] + options.width
+        val preview = activity.findViewById<View>(R.id.settings_background_preview)
+        val previewBottom = IntArray(2).also(preview::getLocationInWindow)[1] + preview.height
+        val margin = activity.resources.getDimensionPixelSize(R.dimen.settings_appearance_margin_vertical)
 
-        for ((label, value) in listOf("Dim" to "Medium", "Position" to "Center")) {
+        // Each field, the value it has, and the value level with it.
+        for ((label, value, level) in listOf(Triple("Blur", "Medium", "Off"), Triple("Dim", "Medium", "Off"), Triple("Position", "Center", "Center"))) {
             val list = activity.open(label)
 
             // Where the list's window is, on the editor's.
@@ -430,17 +460,21 @@ class BackgroundActivityTest {
             val fieldAt = IntArray(2).also(field::getLocationInWindow)
             val fieldEnd = fieldAt[0] + field.width
             assertTrue("$label's list at ${window.x}, its field ends at $fieldEnd", window.x >= fieldEnd)
-            if (label == "Dim") {
-                assertTrue("Dim's list at ${window.x}, over Fit (the options end at $optionsEnd)", window.x < optionsEnd)
+            if (label != "Position") {
+                assertTrue("$label's list at ${window.x}, over the other column (the options end at $optionsEnd)", window.x < optionsEnd)
                 // Covering the other column whole, to the options' end.
-                assertTrue("Dim's list ends at ${window.x + list.width}, before the options' end at $optionsEnd", window.x + list.width >= optionsEnd)
+                assertTrue("$label's list ends at ${window.x + list.width}, before the options' end at $optionsEnd", window.x + list.width >= optionsEnd)
+                assertTrue("$label's list at ${window.y}, over the preview, which ends at $previewBottom", window.y >= previewBottom)
             }
             else assertTrue("Position's list at ${window.x}, beside the options (they end at $optionsEnd)", window.x >= optionsEnd)
-            val checked = list.entries().single { it.checked() }
-            assertEquals(value, checked.text.toString())
-            val checkedAt = IntArray(2).also(checked::getLocationInWindow)
+            assertEquals(value, list.entries().single { it.checked() }.text.toString())
+            assertEquals(value, list.focused())
+            val leveled = list.entries().single { it.text.toString() == level }
+            val leveledAt = IntArray(2).also(leveled::getLocationInWindow)
+            val levelY = fieldAt[1] + field.height / 2 - leveledAt[1] - leveled.height / 2
+            val lowest = activity.window.decorView.height - margin - list.contentView.height
             // Within a dp: halves of odd heights round to whole pixels.
-            assertEquals(fieldAt[1] + field.height / 2f, window.y + checkedAt[1] + checked.height / 2f, activity.resources.displayMetrics.density)
+            assertEquals("$label's list", minOf(levelY, lowest).toFloat(), window.y.toFloat(), activity.resources.displayMetrics.density)
             list.dismiss()
             idle()
         }
@@ -484,6 +518,49 @@ class BackgroundActivityTest {
         assertFalse("the editor stays", activity.isFinishing)
         assertEquals("Light", activity.value("Dim"))
         assertEquals(20, activity.findViewById<AppearancePreviewView>(R.id.settings_background_preview).appearance.background.dim)
+    }
+
+    // Left goes back toward the field: it keeps the value, as OK, which Back doesn't.
+    @Test
+    fun `Left closes the list, keeping the value with the focus, as OK`() {
+        graph(panorama, background = Background(panorama.id, dim = 20))
+        val activity = start().get()
+
+        for (label in listOf("Dim", "Position")) {
+            val list = activity.open(label)
+            list.entries().last().requestFocus()
+            idle()
+            val focused = list.focused()
+            press(list, KeyEvent.KEYCODE_DPAD_LEFT)
+
+            assertFalse("$label's list closed", list.isShowing)
+            assertEquals(focused, activity.value(label))
+            assertTrue("the focus back on $label", activity.option(label).isFocused)
+        }
+        assertFalse("the editor stays", activity.isFinishing)
+        assertEquals("nothing stored", Background(panorama.id, dim = 20), stored)
+    }
+
+    // The list is at the field's left there: Right goes back toward it, Left goes nowhere.
+    @Test
+    @Config(qualifiers = "ar-rEG-$TV_1080P")
+    fun `in a right-to-left language, Right closes the list, keeping the value, and Left doesn't`() {
+        graph(beach, background = Background(beach.id))
+        val activity = start().get()
+        val dim = activity.options()[2]
+        assertTrue(dim.requestFocus())
+        dim.performClick()
+        idle()
+        val list = shadowOf(application).latestPopupWindow
+        list.entries()[2].requestFocus()
+        idle()
+
+        press(list, KeyEvent.KEYCODE_DPAD_LEFT)
+        assertTrue("Left leaves the list open", list.isShowing)
+        press(list, KeyEvent.KEYCODE_DPAD_RIGHT)
+
+        assertFalse(list.isShowing)
+        assertEquals(40, activity.findViewById<AppearancePreviewView>(R.id.settings_background_preview).appearance.background.dim)
     }
 
     @Test
@@ -674,8 +751,9 @@ class BackgroundActivityTest {
         assertEquals("Center", activity.value("Position"))
     }
 
+    // The changes would be lost: asked first, Cancel focused, so a repeated Back loses nothing.
     @Test
-    fun `Back leaves the background as it was`() {
+    fun `Back with the draft changed asks first, Cancel first, and Discard leaves the background as it was`() {
         graph(beach, sunset, background = Background(beach.id))
         val activity = start().get()
         activity.ok("sunset.jpg")
@@ -683,10 +761,47 @@ class BackgroundActivityTest {
 
         @Suppress("DEPRECATION")
         activity.onBackPressed()
+        assertFalse("asks first", activity.isFinishing)
+        val (title, text, entries) = dialog()!!
+        assertEquals("Discard changes?", title)
+        assertEquals("The changes to the background aren't saved.", text)
+        assertEquals(listOf("Cancel", "Discard"), entries.map { it.text.toString() })
+        answer("Discard")
 
         assertTrue(activity.isFinishing)
         assertEquals(Background(beach.id), stored)
         assertEquals(0, graph.storedWallpaper.stored.size)
+    }
+
+    @Test
+    fun `Cancel on the question keeps the editor and its draft`() {
+        graph(beach, sunset, background = Background(beach.id))
+        val activity = start().get()
+        activity.ok("sunset.jpg")
+
+        @Suppress("DEPRECATION")
+        activity.onBackPressed()
+        answer("Cancel")
+
+        assertFalse(activity.isFinishing)
+        assertNull(dialog())
+        assertEquals(listOf("No picture", "beach.png", "sunset.jpg ✓", "Add from folder"), activity.list())
+        assertEquals(Background(beach.id), stored)
+    }
+
+    // Changed and changed back is unchanged; so is a stored position the draft shows as the middle.
+    @Test
+    fun `Back with nothing changed closes at once`() {
+        graph(sunset, panorama, background = Background(panorama.id, position = PicturePosition.TOP))
+        val activity = start().get()
+        activity.ok("sunset.jpg")
+        activity.ok(panorama.name)
+
+        @Suppress("DEPRECATION")
+        activity.onBackPressed()
+
+        assertTrue(activity.isFinishing)
+        assertNull(dialog())
     }
 
     @Test
