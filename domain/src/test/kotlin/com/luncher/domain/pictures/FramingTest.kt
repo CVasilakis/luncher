@@ -134,4 +134,26 @@ class FramingTest {
             }
         }
     }
+
+    @Test
+    fun `the positions offered are the middle and the ends of the side filling cuts`() {
+        assertEquals(listOf(PicturePosition.CENTER, PicturePosition.LEFT, PicturePosition.RIGHT), offeredPositions(PictureCut.SIDES))
+        assertEquals(listOf(PicturePosition.CENTER, PicturePosition.TOP, PicturePosition.BOTTOM), offeredPositions(PictureCut.TOP_AND_BOTTOM))
+        assertEquals(listOf(PicturePosition.CENTER), offeredPositions(PictureCut.NONE))
+        assertEquals("unknown: all of them", PicturePosition.entries, offeredPositions(null))
+    }
+
+    // What the editors offer has to be what moves the picture: no position offered that draws as the middle, none left out.
+    @Test
+    fun `each position offered moves the picture, and each one left out draws as the middle`() {
+        val pictures = listOf(6000 to 1000, 4000 to 3000, 3024 to 4032, 1920 to 1080)
+        for ((pictureWidth, pictureHeight) in pictures) {
+            val offered = offeredPositions(pictureCut(pictureWidth, pictureHeight, 1920, 1080))
+            val middle = frame(pictureWidth, pictureHeight, 1920, 1080, fill(PicturePosition.CENTER))
+            for (position in PicturePosition.entries - PicturePosition.CENTER) {
+                val moved = frame(pictureWidth, pictureHeight, 1920, 1080, fill(position)) != middle
+                assertEquals("$pictureWidth x $pictureHeight at $position", position in offered, moved)
+            }
+        }
+    }
 }

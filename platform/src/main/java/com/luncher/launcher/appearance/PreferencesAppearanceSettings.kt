@@ -7,7 +7,7 @@ import com.luncher.domain.appearance.AppearanceSettings
 import com.luncher.domain.appearance.Background
 import com.luncher.domain.appearance.Corners
 import com.luncher.domain.appearance.appearanceOptions
-import com.luncher.domain.appearance.valueOrDefault
+import com.luncher.domain.options.valueOrDefault
 import com.luncher.domain.pictures.PictureId
 
 /**

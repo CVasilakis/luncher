@@ -60,6 +60,22 @@ fun frame(pictureWidth: Int, pictureHeight: Int, width: Int, height: Int, framin
 enum class PictureCut { NONE, SIDES, TOP_AND_BOTTOM }
 
 /**
+ * The positions that move a filling picture [cut] so ([pictureCut]), the middle first: left and
+ * right where its sides are cut, top and bottom where its top and bottom are, only the middle where
+ * nothing is; every position where the cut isn't known (null).
+ */
+fun offeredPositions(cut: PictureCut?): List<PicturePosition> = when (cut) {
+    null -> PicturePosition.entries
+    PictureCut.SIDES -> ACROSS_THE_SIDES
+    PictureCut.TOP_AND_BOTTOM -> ACROSS_THE_TOP
+    PictureCut.NONE -> MIDDLE_ONLY
+}
+
+private val ACROSS_THE_SIDES = listOf(PicturePosition.CENTER, PicturePosition.LEFT, PicturePosition.RIGHT)
+private val ACROSS_THE_TOP = listOf(PicturePosition.CENTER, PicturePosition.TOP, PicturePosition.BOTTOM)
+private val MIDDLE_ONLY = listOf(PicturePosition.CENTER)
+
+/**
  * What filling a [width] x [height] space cuts from a [pictureWidth] x [pictureHeight] picture, the
  * same way as [frame]. A cut of less than 1% of the space along the side cut, in the space's px once
  * the picture is scaled to it (a 16:9 picture on a 1366 x 768 TV: under half a pixel), counts as

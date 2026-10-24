@@ -1,9 +1,13 @@
 package com.luncher.domain.appearance
 
+import com.luncher.domain.options.Option
 import com.luncher.domain.pictures.Blur
 import com.luncher.domain.pictures.Fit
 import com.luncher.domain.pictures.PictureCut
 import com.luncher.domain.pictures.PicturePosition
+import com.luncher.domain.pictures.fitApplies
+import com.luncher.domain.pictures.offeredPositions
+import com.luncher.domain.pictures.positionApplies
 import com.luncher.domain.appearance.AccentColor as Accent
 import com.luncher.domain.appearance.AppName as Name
 import com.luncher.domain.appearance.HorizontalAlignment as Horizontal
@@ -11,38 +15,17 @@ import com.luncher.domain.appearance.ThemeMode as Mode
 import com.luncher.domain.appearance.VerticalAlignment as Vertical
 
 /**
- * Something the user can change about how the home screen looks: the part of [Appearance] it
- * reads and changes, and the values it can take, in the order the editors offer them. A
- * number is a list of steps too, so every option is changed the same way. Each option is a type of
- * its own, so every layer that handles options (storage, labels) does so in an exhaustive `when`,
- * and a new option doesn't compile until each one handles it (docs/ARCHITECTURE.md#appearance).
- * Which options the editor lists, in which groups: [appearanceOptions]. Which of its values change
- * anything may also depend on what isn't in the appearance: an [OptionContext].
+ * Something the user can change about how the home screen looks: the appearance's catalog of
+ * [Option]s, over the [Appearance], each a type of its own, so every layer that handles them
+ * (storage, labels) does so in an exhaustive `when`, and a new option doesn't compile until each
+ * one handles it (docs/ARCHITECTURE.md#appearance). Which options the editor lists, in which
+ * groups: [appearanceOptions]. Which of its values change anything may also depend on what isn't
+ * in the appearance: an [AppearanceContext].
  */
-sealed interface AppearanceOption<T> {
+sealed interface AppearanceOption<T> : Option<Appearance, AppearanceContext, T> {
 
-    /**
-     * Every value, in order; the option's [default] is one of them. What's stored is one of these,
-     * whatever the [OptionContext].
-     */
-    val values: List<T>
-
-    fun get(appearance: Appearance): T
-
-    fun set(appearance: Appearance, value: T): Appearance
-
-    /**
-     * Whether the option changes anything with the rest of [appearance] as it is, and [context]:
-     * one that doesn't is shown but can't be changed.
-     */
-    fun appliesTo(appearance: Appearance, context: OptionContext = OptionContext.UNKNOWN): Boolean = true
-
-    /**
-     * The values offered in [context], in order (stepped through, or listed): those of [values]
-     * that change anything there, the [default] among them. All of them by default, and where it
-     * isn't known.
-     */
-    fun values(context: OptionContext): List<T> = values
+    /** The option's value in the home screen as it looks without settings. */
+    override val default: T get() = get(Appearance())
 
     /**
      * Whether the option changes what the home screen draws, and the editors' preview of it; false
@@ -53,100 +36,100 @@ sealed interface AppearanceOption<T> {
     /** Where the rows of tiles go in the height. */
     data object VerticalAlignment : AppearanceOption<Vertical> {
         override val values: List<Vertical> = Vertical.entries
-        override fun get(appearance: Appearance) = appearance.tileGeometry.verticalAlignment
-        override fun set(appearance: Appearance, value: Vertical) =
-            appearance.copy(tileGeometry = appearance.tileGeometry.copy(verticalAlignment = value))
+        override fun get(model: Appearance) = model.tileGeometry.verticalAlignment
+        override fun set(model: Appearance, value: Vertical) =
+            model.copy(tileGeometry = model.tileGeometry.copy(verticalAlignment = value))
     }
 
     /** Where a row of tiles that isn't full goes in the width. */
     data object HorizontalAlignment : AppearanceOption<Horizontal> {
         override val values: List<Horizontal> = Horizontal.entries
-        override fun get(appearance: Appearance) = appearance.tileGeometry.horizontalAlignment
-        override fun set(appearance: Appearance, value: Horizontal) =
-            appearance.copy(tileGeometry = appearance.tileGeometry.copy(horizontalAlignment = value))
+        override fun get(model: Appearance) = model.tileGeometry.horizontalAlignment
+        override fun set(model: Appearance, value: Horizontal) =
+            model.copy(tileGeometry = model.tileGeometry.copy(horizontalAlignment = value))
     }
 
     /** With the rows centered or at the bottom, whether the bottom row is always full. */
     data object FullBottomRow : AppearanceOption<Boolean> {
         override val values: List<Boolean> = listOf(false, true)
-        override fun get(appearance: Appearance) = appearance.tileGeometry.fullBottomRow
-        override fun set(appearance: Appearance, value: Boolean) =
-            appearance.copy(tileGeometry = appearance.tileGeometry.copy(fullBottomRow = value))
-        override fun appliesTo(appearance: Appearance, context: OptionContext) = appearance.tileGeometry.verticalAlignment != Vertical.TOP
+        override fun get(model: Appearance) = model.tileGeometry.fullBottomRow
+        override fun set(model: Appearance, value: Boolean) =
+            model.copy(tileGeometry = model.tileGeometry.copy(fullBottomRow = value))
+        override fun appliesTo(model: Appearance, context: AppearanceContext) = model.tileGeometry.verticalAlignment != Vertical.TOP
     }
 
     /** How round the tiles' corners are: radii in dp, then round ends. */
     data object CornerRadius : AppearanceOption<Corners> {
         override val values: List<Corners> = listOf(0, 4, 8, 12, 16, 24, 32).map { Corners.Radius(it) } + Corners.Pill
-        override fun get(appearance: Appearance) = appearance.tileStyle.corners
-        override fun set(appearance: Appearance, value: Corners) =
-            appearance.copy(tileStyle = appearance.tileStyle.copy(corners = value))
+        override fun get(model: Appearance) = model.tileStyle.corners
+        override fun set(model: Appearance, value: Corners) =
+            model.copy(tileStyle = model.tileStyle.copy(corners = value))
     }
 
     /** Whether the focused tile is framed; without a frame, it's lifted with a shadow. */
     data object FocusFrame : AppearanceOption<Boolean> {
         override val values: List<Boolean> = listOf(false, true)
-        override fun get(appearance: Appearance) = appearance.tileStyle.focusFrame
-        override fun set(appearance: Appearance, value: Boolean) =
-            appearance.copy(tileStyle = appearance.tileStyle.copy(focusFrame = value))
+        override fun get(model: Appearance) = model.tileStyle.focusFrame
+        override fun set(model: Appearance, value: Boolean) =
+            model.copy(tileStyle = model.tileStyle.copy(focusFrame = value))
     }
 
     /** Whether the app names show below the tiles: never, the focused one's, or every one. */
     data object AppName : AppearanceOption<Name> {
         override val values: List<Name> = Name.entries
-        override fun get(appearance: Appearance) = appearance.tileGeometry.appName
-        override fun set(appearance: Appearance, value: Name) =
-            appearance.copy(tileGeometry = appearance.tileGeometry.copy(appName = value))
+        override fun get(model: Appearance) = model.tileGeometry.appName
+        override fun set(model: Appearance, value: Name) =
+            model.copy(tileGeometry = model.tileGeometry.copy(appName = value))
     }
 
     /** Whether the top bar shows the time. */
     data object ShowTime : AppearanceOption<Boolean> {
         override val values: List<Boolean> = listOf(true, false)
-        override fun get(appearance: Appearance) = appearance.topBar.showTime
-        override fun set(appearance: Appearance, value: Boolean) =
-            appearance.copy(topBar = appearance.topBar.copy(showTime = value))
+        override fun get(model: Appearance) = model.topBar.showTime
+        override fun set(model: Appearance, value: Boolean) =
+            model.copy(topBar = model.topBar.copy(showTime = value))
     }
 
     /** Whether the top bar shows the date. */
     data object ShowDate : AppearanceOption<Boolean> {
         override val values: List<Boolean> = listOf(true, false)
-        override fun get(appearance: Appearance) = appearance.topBar.showDate
-        override fun set(appearance: Appearance, value: Boolean) =
-            appearance.copy(topBar = appearance.topBar.copy(showDate = value))
+        override fun get(model: Appearance) = model.topBar.showDate
+        override fun set(model: Appearance, value: Boolean) =
+            model.copy(topBar = model.topBar.copy(showDate = value))
     }
 
     /** The side of the top bar the time and the date are on, while either shows. */
     data object ClockSide : AppearanceOption<Side> {
         override val values: List<Side> = Side.entries
-        override fun get(appearance: Appearance) = appearance.topBar.clockSide
-        override fun set(appearance: Appearance, value: Side) =
-            appearance.copy(topBar = appearance.topBar.copy(clockSide = value))
-        override fun appliesTo(appearance: Appearance, context: OptionContext) = appearance.topBar.showTime || appearance.topBar.showDate
+        override fun get(model: Appearance) = model.topBar.clockSide
+        override fun set(model: Appearance, value: Side) =
+            model.copy(topBar = model.topBar.copy(clockSide = value))
+        override fun appliesTo(model: Appearance, context: AppearanceContext) = model.topBar.showTime || model.topBar.showDate
     }
 
     /** The side of the date the time is on, while both show. */
     data object TimeSide : AppearanceOption<Side> {
         override val values: List<Side> = Side.entries
-        override fun get(appearance: Appearance) = appearance.topBar.timeSide
-        override fun set(appearance: Appearance, value: Side) =
-            appearance.copy(topBar = appearance.topBar.copy(timeSide = value))
-        override fun appliesTo(appearance: Appearance, context: OptionContext) = appearance.topBar.showTime && appearance.topBar.showDate
+        override fun get(model: Appearance) = model.topBar.timeSide
+        override fun set(model: Appearance, value: Side) =
+            model.copy(topBar = model.topBar.copy(timeSide = value))
+        override fun appliesTo(model: Appearance, context: AppearanceContext) = model.topBar.showTime && model.topBar.showDate
     }
 
     /** The accent color of the menus and settings, and of the home screen's focus frames. */
     data object AccentColor : AppearanceOption<Accent> {
         override val values: List<Accent> = Accent.entries
-        override fun get(appearance: Appearance) = appearance.theme.accent
-        override fun set(appearance: Appearance, value: Accent) =
-            appearance.copy(theme = appearance.theme.copy(accent = value))
+        override fun get(model: Appearance) = model.theme.accent
+        override fun set(model: Appearance, value: Accent) =
+            model.copy(theme = model.theme.copy(accent = value))
     }
 
     /** Whether the menus and settings are dark or light; the home screen stays as it is. */
     data object ThemeMode : AppearanceOption<Mode> {
         override val values: List<Mode> = Mode.entries
-        override fun get(appearance: Appearance) = appearance.theme.mode
-        override fun set(appearance: Appearance, value: Mode) =
-            appearance.copy(theme = appearance.theme.copy(mode = value))
+        override fun get(model: Appearance) = model.theme.mode
+        override fun set(model: Appearance, value: Mode) =
+            model.copy(theme = model.theme.copy(mode = value))
         override val showsOnHome: Boolean get() = false
     }
 
@@ -156,11 +139,10 @@ sealed interface AppearanceOption<T> {
      */
     data object BackgroundFit : AppearanceOption<Fit> {
         override val values: List<Fit> = Fit.entries
-        override fun get(appearance: Appearance) = appearance.background.fit
-        override fun set(appearance: Appearance, value: Fit) =
-            appearance.copy(background = appearance.background.copy(fit = value))
-        override fun appliesTo(appearance: Appearance, context: OptionContext) =
-            appearance.background.picture != null && context.backgroundCut != PictureCut.NONE
+        override fun get(model: Appearance) = model.background.framing.fit
+        override fun set(model: Appearance, value: Fit) =
+            model.copy(background = model.background.copy(framing = model.background.framing.copy(fit = value)))
+        override fun appliesTo(model: Appearance, context: AppearanceContext) = model.background.fitApplies(context.backgroundCut)
     }
 
     /**
@@ -169,77 +151,45 @@ sealed interface AppearanceOption<T> {
      */
     data object BackgroundPosition : AppearanceOption<PicturePosition> {
         override val values: List<PicturePosition> = PicturePosition.entries
-        private val acrossTheSides = listOf(PicturePosition.CENTER, PicturePosition.LEFT, PicturePosition.RIGHT)
-        private val acrossTheTop = listOf(PicturePosition.CENTER, PicturePosition.TOP, PicturePosition.BOTTOM)
-        private val middleOnly = listOf(PicturePosition.CENTER)
-        override fun get(appearance: Appearance) = appearance.background.position
-        override fun set(appearance: Appearance, value: PicturePosition) =
-            appearance.copy(background = appearance.background.copy(position = value))
-        override fun appliesTo(appearance: Appearance, context: OptionContext) =
-            appearance.background.picture != null && appearance.background.fit == Fit.FILL && context.backgroundCut != PictureCut.NONE
-        override fun values(context: OptionContext) = when (context.backgroundCut) {
-            null -> values
-            PictureCut.SIDES -> acrossTheSides
-            PictureCut.TOP_AND_BOTTOM -> acrossTheTop
-            PictureCut.NONE -> middleOnly
-        }
+        override fun get(model: Appearance) = model.background.framing.position
+        override fun set(model: Appearance, value: PicturePosition) =
+            model.copy(background = model.background.copy(framing = model.background.framing.copy(position = value)))
+        override fun appliesTo(model: Appearance, context: AppearanceContext) = model.background.positionApplies(context.backgroundCut)
+        override fun values(context: AppearanceContext) = offeredPositions(context.backgroundCut)
     }
 
     /** How much darker the background's picture is drawn, in percent, while there's one. */
     data object BackgroundDim : AppearanceOption<Int> {
         override val values: List<Int> = listOf(0, 20, 40, 60)
-        override fun get(appearance: Appearance) = appearance.background.dim
-        override fun set(appearance: Appearance, value: Int) =
-            appearance.copy(background = appearance.background.copy(dim = value))
-        override fun appliesTo(appearance: Appearance, context: OptionContext) = appearance.background.picture != null
+        override fun get(model: Appearance) = model.background.dim
+        override fun set(model: Appearance, value: Int) =
+            model.copy(background = model.background.copy(dim = value))
+        override fun appliesTo(model: Appearance, context: AppearanceContext) = model.background.picture != null
     }
 
     /** How blurred the background's picture is drawn, while there's one. */
     data object BackgroundBlur : AppearanceOption<Blur> {
         override val values: List<Blur> = Blur.entries
-        override fun get(appearance: Appearance) = appearance.background.blur
-        override fun set(appearance: Appearance, value: Blur) =
-            appearance.copy(background = appearance.background.copy(blur = value))
-        override fun appliesTo(appearance: Appearance, context: OptionContext) = appearance.background.picture != null
+        override fun get(model: Appearance) = model.background.blur
+        override fun set(model: Appearance, value: Blur) =
+            model.copy(background = model.background.copy(blur = value))
+        override fun appliesTo(model: Appearance, context: AppearanceContext) = model.background.picture != null
     }
 }
 
 /**
- * What decides, besides the [Appearance], which values of the options change anything: facts of the
- * device and the user's things, which no option sets, such as the shape of the background's
+ * What decides, besides the [Appearance], which values of its options change anything: facts of
+ * the device and the user's things, which no option sets, such as the shape of the background's
  * picture on this screen. Each fact is null while it isn't known, which offers every value, as for
  * the options it doesn't concern; a fact added later is one more field, which leaves every place
  * that doesn't know it as it is.
  */
-data class OptionContext(
+data class AppearanceContext(
     /** What filling the screen cuts from the background's picture ([pictureCut][com.luncher.domain.pictures.pictureCut]). */
     val backgroundCut: PictureCut? = null,
 ) {
     companion object {
         /** Nothing known: every value of every option offered. */
-        val UNKNOWN = OptionContext()
+        val UNKNOWN = AppearanceContext()
     }
-}
-
-/** The option's value in the home screen as it looks without settings. */
-val <T> AppearanceOption<T>.default: T get() = get(Appearance())
-
-/**
- * [value] if it's one of the option's values, else the option's default: for a value stored by
- * an older or newer version, which affects this option only.
- */
-fun <T> AppearanceOption<T>.valueOrDefault(value: T?): T =
-    if (value != null && value in values) value else default
-
-/**
- * [appearance] with this option at its next value ([forward]) or its previous one among those
- * [context] offers ([AppearanceOption.values]), around: after the last value comes the first, and
- * before the first the last. From a value not among them, the step is to the option's default.
- */
-fun <T> AppearanceOption<T>.step(appearance: Appearance, forward: Boolean, context: OptionContext = OptionContext.UNKNOWN): Appearance {
-    val values = values(context)
-    val index = values.indexOf(get(appearance))
-    if (index < 0) return set(appearance, default)
-    val next = (index + if (forward) 1 else -1).mod(values.size)
-    return set(appearance, values[next])
 }

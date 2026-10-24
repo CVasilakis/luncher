@@ -193,20 +193,24 @@ a test.
    remembers to drop what was kept. `TileLayouts`, in `:domain`'s `layout/`, is the one place
    that turns a `TileGeometry` into the layouts and moves of the tiles, in pixels at a density.
 3. **What the user can change is a catalog of options in `:domain`:** each option is a type of
-   its own, with an ordered list of values and the part of `Appearance` it reads and changes. A
-   number is a list of steps too, so every option is changed the same way. Every layer that
-   handles options does so in an exhaustive `when`, so a new option doesn't compile until each
-   one handles it. Which values change anything can depend on facts that aren't settings, so
-   aren't in `Appearance`: an `OptionContext`, which a screen builds and passes with the
-   appearance (today what filling the screen cuts from the background's picture, `pictureCut`:
-   left and right move only a wide picture, top and bottom only a tall one, and neither the
-   position nor the fit one of the screen's shape). An option offers only the values that move
-   something there, and doesn't apply where none would; a fact nobody knows (null) offers every
-   value, as do the options a fact doesn't concern, so a fact added later changes no other
-   option, nor a screen that doesn't know it. The full list of values stays what's stored: a
-   stored value reads back whatever the context, and a screen keeps one the context doesn't
-   offer out of its draft (`Background.offeredIn`), so it never shows a value that does
-   nothing.
+   its own, with an ordered list of values and the part of its model (here `Appearance`) it
+   reads and changes. A number is a list of steps too, so every option is changed the same way.
+   An option is an `Option` (`:domain`'s `options/`), the one kind of option of everything the
+   user edits, and each thing edited has a catalog of its own, a sealed type over its own model:
+   the appearance's is `AppearanceOption`. Every layer that handles a catalog does so in an
+   exhaustive `when`, so a new option doesn't compile until each one handles it, and a catalog
+   added touches no other. Which values change anything can depend on facts that aren't
+   settings, so aren't in `Appearance`: a context of the catalog's own, which a screen builds
+   and passes with the model, and no other catalog sees. The appearance's is
+   `AppearanceContext`, today what filling the screen cuts from the background's picture
+   (`backgroundCut`, from `pictureCut`): left and right move only a wide picture, top and bottom
+   only a tall one, and neither the position nor the fit one of the screen's shape. An option
+   offers only the values that move something there, and doesn't apply where none would; a fact
+   nobody knows (null) offers every value, as do the options a fact doesn't concern, so a fact
+   added later changes no other option, nor a screen that doesn't know it. The full list of
+   values stays what's stored: a stored value reads back whatever the context, and a screen
+   keeps one the context doesn't offer out of its draft (`Background.offeredIn`), so it never
+   shows a value that does nothing.
 4. **One port you can watch stores the whole `Appearance`**
    ([above](#background-work-and-changes-while-shown)). Its adapter in `:platform` keeps one value
    per option, under a key it assigns in an exhaustive `when`; a value it doesn't know (stored by
@@ -246,7 +250,10 @@ isn't an option, since its values are the library's pictures, not a list known i
 **The one exception to storing each change at once: the background.** Its group is edited apart
 (`editedApart`), in the background editor
 ([`feature/settings/README.md`](../feature/settings/README.md#background)), where the user
-chooses the picture and its options in a draft, which only Save stores: applying a
+chooses the picture and its options in a draft, which only Save stores (the picture and its
+framing chosen by the rules every picture chosen for something follows, `PictureChoice` in
+`:domain`'s `pictures/`: another picture shows as it is, its fit kept, and the stored one as it's
+stored; the background adds its own dim and blur): applying a
 background decodes a photo and draws the wallpaper at the screen's size, a wait the user sees on
 a TV, too slow for each value the user tries. Save goes through `Wallpaper` in `:domain`'s `wallpaper/`, which draws and
 keeps the picture first, then stores the background, so the setting never names a wallpaper that

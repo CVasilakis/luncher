@@ -22,6 +22,7 @@ import com.luncher.domain.appearance.Background
 import com.luncher.domain.pictures.FakePictures
 import com.luncher.domain.pictures.FakePictures.Companion.picture
 import com.luncher.domain.pictures.Fit
+import com.luncher.domain.pictures.Framing
 import com.luncher.domain.pictures.ImportResult
 import com.luncher.domain.pictures.Picture
 import com.luncher.domain.pictures.PicturePosition
@@ -601,7 +602,7 @@ class BackgroundActivityTest {
 
         activity.ok("tower.jpg")
 
-        assertEquals(Background(tower.id, Fit.STRETCH), activity.findViewById<AppearancePreviewView>(R.id.settings_background_preview).appearance.background)
+        assertEquals(Background(tower.id, Framing(Fit.STRETCH)), activity.findViewById<AppearancePreviewView>(R.id.settings_background_preview).appearance.background)
         assertEquals("Off", activity.value("Dim"))
         assertEquals("Off", activity.value("Blur"))
         assertEquals("Center", activity.value("Position"))
@@ -610,7 +611,7 @@ class BackgroundActivityTest {
 
     @Test
     fun `the stored picture chosen again shows as it's stored, and Save then closes at once`() {
-        val saved = Background(portrait.id, position = PicturePosition.BOTTOM, dim = 40, blur = com.luncher.domain.pictures.Blur.MEDIUM)
+        val saved = Background(portrait.id, framing = Framing(position = PicturePosition.BOTTOM), dim = 40, blur = com.luncher.domain.pictures.Blur.MEDIUM)
         graph(portrait, beach, background = saved)
         val activity = start().get()
 
@@ -639,7 +640,7 @@ class BackgroundActivityTest {
 
     @Test
     fun `stretched, the position is dimmed`() {
-        graph(panorama, background = Background(panorama.id, fit = Fit.STRETCH))
+        graph(panorama, background = Background(panorama.id, framing = Framing(Fit.STRETCH)))
 
         val activity = start().get()
 
@@ -684,7 +685,7 @@ class BackgroundActivityTest {
 
     @Test
     fun `a picture of the screen's shape keeps a stored stretch, dimmed`() {
-        graph(sunset, background = Background(sunset.id, fit = Fit.STRETCH))
+        graph(sunset, background = Background(sunset.id, framing = Framing(Fit.STRETCH)))
         val activity = start().get()
 
         assertEquals("Stretch", activity.value("Fit"))
@@ -711,7 +712,7 @@ class BackgroundActivityTest {
 
     @Test
     fun `opened with a position its picture doesn't offer, shows the middle, and Save without changes closes without drawing`() {
-        graph(panorama, background = Background(panorama.id, position = PicturePosition.TOP, dim = 20))
+        graph(panorama, background = Background(panorama.id, framing = Framing(position = PicturePosition.TOP), dim = 20))
         val activity = start().get()
 
         assertEquals("Center", activity.value("Position"))
@@ -721,7 +722,7 @@ class BackgroundActivityTest {
         assertNull(dialog())
         graph.jobs.runAll()
         assertEquals("no wallpaper drawn", 0, graph.storedWallpaper.stored.size)
-        assertEquals("nothing stored", Background(panorama.id, position = PicturePosition.TOP, dim = 20), stored)
+        assertEquals("nothing stored", Background(panorama.id, framing = Framing(position = PicturePosition.TOP), dim = 20), stored)
     }
 
     @Test
@@ -744,7 +745,7 @@ class BackgroundActivityTest {
     @Test
     fun `a picture added from the folder starts from a position it offers`() {
         val added = picture("holiday.jpg", added = 9, width = 6000, height = 1000)
-        graph(portrait, background = Background(portrait.id, position = PicturePosition.BOTTOM))
+        graph(portrait, background = Background(portrait.id, framing = Framing(position = PicturePosition.BOTTOM)))
         val activity = start().get()
 
         activity.ok("Add from folder")
@@ -801,7 +802,7 @@ class BackgroundActivityTest {
     // Changed and changed back is unchanged; so is a stored position the draft shows as the middle.
     @Test
     fun `Back with nothing changed closes at once`() {
-        graph(sunset, panorama, background = Background(panorama.id, position = PicturePosition.TOP))
+        graph(sunset, panorama, background = Background(panorama.id, framing = Framing(position = PicturePosition.TOP)))
         val activity = start().get()
         activity.ok("sunset.jpg")
         activity.ok(panorama.name)

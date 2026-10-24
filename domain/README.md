@@ -38,14 +38,16 @@ domain/src/
 │   │   ├── TileStyle.kt         model: how each tile is drawn (its corners, whether the focused one is framed or lifted)
 │   │   ├── Corners.kt           model and rule: a corner radius or round ends, in pixels for a tile's height
 │   │   ├── TopBarAppearance.kt  model: whether the time and the date show, the clock's side of the top bar, the time's side of the date
-│   │   ├── Background.kt        model and rule: the wallpaper, a picture of the library or none, and how it's drawn; only values its context offers; another picture chosen as it is
+│   │   ├── Background.kt        model and rule: the wallpaper, a picture of the library or none (a PictureChoice), and how it's drawn; only values its context offers
 │   │   ├── Side.kt              model: left or right, the screen's, in every language
 │   │   ├── ThemeAppearance.kt   model: Luncher's theme, the accent color and the mode (ThemeMode: dark or light)
 │   │   ├── AccentColor.kt       model: the accent colors to choose from, each with its tones, precomputed
 │   │   ├── ColorRoles.kt        model and rule: the colors of the menus and settings by what each is for, and the home screen's accent, for a theme (colorRoles)
-│   │   ├── AppearanceOption.kt  models and rules: each option the user can change, its values, those a context offers (OptionContext), stepping through them, around; whether it shows on the home screen
+│   │   ├── AppearanceOption.kt  models and rules: the appearance's catalog of options, each with its values and those its context offers (AppearanceContext); whether it shows on the home screen
 │   │   ├── AppearanceOptions.kt models and rule: which options the editor lists, in groups; a group edited apart (the background's)
 │   │   └── AppearanceSettings.kt port: the stored appearance, and when it changes
+│   ├── options/
+│   │   └── Option.kt            model and rules: an option of any model, its values, those a context of its catalog's own offers, stepping through them, around; a stored value it doesn't have read as its default
 │   ├── jobs/
 │   │   ├── Jobs.kt              port: the background thread; cancelling (Cancellable) a queued job; every job's priority (JobPriority)
 │   │   └── LatestRequest.kt     helper: one thing a screen loads in the background, only the latest request counting
@@ -58,7 +60,8 @@ domain/src/
 │   │   ├── PictureNames.kt      rules: the name a picture keeps (pictureName), a name the library has already (nameClash: the same file, or another), the name a picture renamed keeps or why it can't (renaming), and what a drop folder's listing, or its preview, already tells can't be added (whyRefused)
 │   │   ├── ReceivedPictures.kt  helper: the pictures other apps shared, added one at a time in sessions the window that took them last holds; how far it got, then how it went (Outcome), stopped on Cancel; also Add all's, an instance of its own
 │   │   ├── PictureFormat.kt     model and rule: the formats a TV may not show (HEIF, AVIF), recognized by a file's header
-│   │   ├── Framing.kt           model and rules: how a picture fills a space of another shape (Fit, PicturePosition), which part of it shows, and what filling cuts from it (PictureCut: nothing under 1%, its sides, or its top and bottom)
+│   │   ├── Framing.kt           model and rules: how a picture fills a space of another shape (Fit, PicturePosition), which part of it shows, what filling cuts from it (PictureCut: nothing under 1%, its sides, or its top and bottom), and which positions move it then (offeredPositions)
+│   │   ├── PictureChoice.kt     model and rules: a picture of the library chosen for something, or none, with its framing; another picture chosen as it is, the stored one as stored, only a framing that changes anything, whether the fit and the position do
 │   │   ├── PictureStyle.kt      model and rule: a picture's framing, dim and blur (Blur: off, then three levels of equal steps), as it's drawn
 │   │   ├── PictureUse.kt        model and rule: what a picture is used for (the wallpaper), and an appearance without deleted pictures
 │   │   ├── PictureImages.kt     port: a picture drawn at a size in a style, in the UI's image type; kept or drawn anew, a screen's drawing stopped when it's dropped

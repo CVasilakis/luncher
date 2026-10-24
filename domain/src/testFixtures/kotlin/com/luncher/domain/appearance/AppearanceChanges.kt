@@ -15,7 +15,7 @@ val SAMPLE_WALLPAPER = PictureId("sample-wallpaper")
  * move only a wide one, top and bottom only a tall one); the drawing tests' fakes draw the sample
  * from its style, whatever its shape.
  */
-val SAMPLE_CONTEXTS = listOf(OptionContext(backgroundCut = PictureCut.SIDES), OptionContext(backgroundCut = PictureCut.TOP_AND_BOTTOM))
+val SAMPLE_CONTEXTS = listOf(AppearanceContext(backgroundCut = PictureCut.SIDES), AppearanceContext(backgroundCut = PictureCut.TOP_AND_BOTTOM))
 
 /**
  * One option of the catalog set to one of its values other than its default, in an appearance
@@ -31,7 +31,7 @@ class AppearanceChange(
     /** [base] with [option] at [value]. */
     val changed: Appearance,
     /** Where [option] offers [value]: one of [SAMPLE_CONTEXTS]. */
-    val context: OptionContext,
+    val context: AppearanceContext,
 ) {
     override fun toString() = "$option $value"
 }
@@ -50,7 +50,7 @@ private fun <T> changes(option: AppearanceOption<T>): List<AppearanceChange> =
  * apply; then the same with [SAMPLE_WALLPAPER] as the background, which isn't an option. In the
  * first of [SAMPLE_CONTEXTS] that offers [value].
  */
-private fun <T> baseFor(option: AppearanceOption<T>, value: T): Pair<Appearance, OptionContext> {
+private fun <T> baseFor(option: AppearanceOption<T>, value: T): Pair<Appearance, AppearanceContext> {
     val defaults = Appearance()
     val withPicture = Appearance(background = Background(picture = SAMPLE_WALLPAPER))
     val context = SAMPLE_CONTEXTS.first { value in option.values(it) }

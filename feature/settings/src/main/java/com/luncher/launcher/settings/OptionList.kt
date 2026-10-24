@@ -9,10 +9,8 @@ import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.PopupWindow
 import android.widget.TextView
-import com.luncher.domain.appearance.Appearance
-import com.luncher.domain.appearance.AppearanceOption
 import com.luncher.domain.appearance.ColorRoles
-import com.luncher.domain.appearance.OptionContext
+import com.luncher.domain.options.Option
 import com.luncher.launcher.ui.roundRect
 import com.luncher.launcher.ui.styleAll
 
@@ -25,32 +23,33 @@ import com.luncher.launcher.ui.styleAll
  * part of them, nor the preview above; a field at their end has its list over the pictures, the
  * value it has level with the row. The background editor's way to change an option, where Left and
  * Right on the row must move the focus, to the pictures or the field beside it. The values are
- * those [context] offers. Each value the focus comes to goes to [change] at once, so the preview
- * shows it; OK on one keeps it and closes the list, as does the arrow back toward the row (Left,
- * Right in a right-to-left language), and Back closes it with the value the option had again, as
- * [change] gets it. [closed] is told once it's gone. The row's own outline, in the accent, shows
- * it open.
+ * those [context] offers, named as its catalog's [labels] say. Each value the focus comes to goes
+ * to [change] at once, so the preview shows it; OK on one keeps it and closes the list, as does the
+ * arrow back toward the row (Left, Right in a right-to-left language), and Back closes it with the
+ * value the option had again, as [change] gets it. [closed] is told once it's gone. The row's own
+ * outline, in the accent, shows it open.
  */
-internal class OptionList(
-    option: AppearanceOption<*>,
+internal class OptionList<M, C, O : Option<M, C, *>>(
+    option: O,
+    labels: OptionLabels<M, O>,
     row: View,
     options: View,
-    appearance: Appearance,
-    context: OptionContext,
+    model: M,
+    context: C,
     roles: ColorRoles,
-    private val change: (Appearance) -> Unit,
+    private val change: (M) -> Unit,
     private val closed: () -> Unit,
 ) : PopupWindow.OnDismissListener {
 
-    private val before = appearance
+    private val before = model
     private var kept = false
     private val window: PopupWindow
 
     init {
         val activity = row.context
         val resources = activity.resources
-        val choices = option.choices(appearance, context)
-        val current = option.indexIn(appearance, context).coerceAtLeast(0)
+        val choices = option.choices(model, context)
+        val current = option.indexIn(model, context).coerceAtLeast(0)
         val padding = resources.getDimensionPixelSize(R.dimen.settings_option_list_padding)
         val list = LinearLayout(activity).apply {
             orientation = LinearLayout.VERTICAL
@@ -64,7 +63,7 @@ internal class OptionList(
         val back = if (row.layoutDirection == View.LAYOUT_DIRECTION_RTL) KeyEvent.KEYCODE_DPAD_RIGHT else KeyEvent.KEYCODE_DPAD_LEFT
         for ((index, choice) in choices.withIndex()) {
             val entry = inflater.inflate(R.layout.settings_option_list_entry, list, false)
-            entry.findViewById<TextView>(R.id.settings_option_list_value).text = activity.optionValue(option, choice)
+            entry.findViewById<TextView>(R.id.settings_option_list_value).text = labels.value(option, choice, activity)
             if (index == current) entry.findViewById<View>(R.id.settings_option_list_check).visibility = View.VISIBLE
             entry.setOnFocusChangeListener { _, focused -> if (focused) change(choice) }
             entry.setOnClickListener {
@@ -141,10 +140,10 @@ internal class OptionList(
     }
 }
 
-/** [appearance] with each value [context] offers, in order. */
-private fun <T> AppearanceOption<T>.choices(appearance: Appearance, context: OptionContext): List<Appearance> =
-    values(context).map { set(appearance, it) }
+/** [model] with each value [context] offers, in order. */
+private fun <M, C, T> Option<M, C, T>.choices(model: M, context: C): List<M> =
+    values(context).map { set(model, it) }
 
-/** Where [appearance]'s value is among those [context] offers; -1 if it isn't. */
-private fun <T> AppearanceOption<T>.indexIn(appearance: Appearance, context: OptionContext): Int =
-    values(context).indexOf(get(appearance))
+/** Where [model]'s value is among those [context] offers; -1 if it isn't. */
+private fun <M, C, T> Option<M, C, T>.indexIn(model: M, context: C): Int =
+    values(context).indexOf(get(model))

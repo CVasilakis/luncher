@@ -33,6 +33,7 @@ import com.luncher.domain.apps.FakeInstalledApps.Companion.app
 import com.luncher.domain.clock.FakeClock
 import com.luncher.domain.pictures.Blur
 import com.luncher.domain.pictures.Fit
+import com.luncher.domain.pictures.Framing
 import com.luncher.domain.pictures.PictureId
 import com.luncher.domain.pictures.PicturePosition
 import com.luncher.domain.wallpaper.FakeStoredWallpaper
@@ -131,7 +132,7 @@ class HomeScreenshotTest {
     // blurred behind the tiles.
     @Test
     fun homeScreenWithAWallpaper() {
-        val background = Background(landscape(), Fit.FILL, PicturePosition.BOTTOM, dim = 20, blur = Blur.LIGHT)
+        val background = Background(landscape(), Framing(Fit.FILL, PicturePosition.BOTTOM), dim = 20, blur = Blur.LIGHT)
 
         start(appearance = Appearance(background = background)).window.decorView
             .captureFocused("src/test/screenshots/home/home_screen_wallpaper.png")
@@ -140,7 +141,7 @@ class HomeScreenshotTest {
     // The same, sharp and not dimmed, stretched: all of the 4:3 picture, wider.
     @Test
     fun homeScreenWithAStretchedWallpaper() {
-        val background = Background(landscape(), Fit.STRETCH)
+        val background = Background(landscape(), Framing(Fit.STRETCH))
 
         start(appearance = Appearance(background = background)).window.decorView
             .captureFocused("src/test/screenshots/home/home_screen_wallpaper_stretched.png")

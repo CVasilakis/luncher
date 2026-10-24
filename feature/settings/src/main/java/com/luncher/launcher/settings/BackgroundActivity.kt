@@ -17,9 +17,9 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import com.luncher.domain.appearance.Appearance
+import com.luncher.domain.appearance.AppearanceContext
 import com.luncher.domain.appearance.Background
 import com.luncher.domain.appearance.ColorRoles
-import com.luncher.domain.appearance.OptionContext
 import com.luncher.domain.appearance.appearanceOptions
 import com.luncher.domain.jobs.JobPriority
 import com.luncher.domain.jobs.LatestRequest
@@ -32,6 +32,7 @@ import com.luncher.domain.pictures.PictureLibrary
 import com.luncher.domain.pictures.PicturePosition
 import com.luncher.domain.pictures.PictureStyle
 import com.luncher.domain.pictures.PictureUse
+import com.luncher.domain.pictures.choosing
 import com.luncher.domain.pictures.Renaming
 import com.luncher.domain.pictures.pictureCut
 import com.luncher.domain.pictures.pictureUses
@@ -66,7 +67,7 @@ import java.util.Locale
  * the preview showing the value with the focus, OK or Left (toward the field) keeping it, Back the one before; Left and Right only move the focus, from the options to the pictures
  * beside them. A picture chosen shows as it is, its position in the middle, neither dimmed nor
  * blurred, with the fit kept; the stored one shows again as it's stored. The values are those that move the chosen picture on this screen (an
- * [OptionContext]): the position only along the side filling cuts, and neither it nor
+ * [AppearanceContext]): the position only along the side filling cuts, and neither it nor
  * the fit for a picture of the screen's shape. The draft never holds a position its picture doesn't
  * offer: it's the middle then. Nothing is stored until Save, so Back, or Home, leaves the
  * background as it was; Back with the draft changed asks first, Cancel focused, as the changes
@@ -113,7 +114,7 @@ class BackgroundActivity : Activity() {
     private lateinit var draft: Background
 
     /** Which of the options' values change anything for the [draft]'s picture on this screen. */
-    private var context = OptionContext.UNKNOWN
+    private var context = AppearanceContext.UNKNOWN
 
     private lateinit var preview: AppearancePreviewView
     private lateinit var list: LinearLayout
@@ -122,7 +123,7 @@ class BackgroundActivity : Activity() {
     private lateinit var howTo: ThemedText
     private lateinit var save: View
     private lateinit var deleteAll: View
-    private val options = mutableListOf<OptionRow>()
+    private val options = mutableListOf<AppearanceRow>()
     private var library = PictureLibrary(emptyList(), Locale.getDefault())
 
     /** Each picture's row, kept while it's in the library, so its thumbnail is read or drawn once. */
@@ -181,8 +182,8 @@ class BackgroundActivity : Activity() {
             }
             val view = layoutInflater.inflate(R.layout.settings_background_option, line, false)
             line.addView(view)
-            options += OptionRow(option, view, ::appearance, { context }, { changed -> setDraft(changed.background) }) { row ->
-                OptionList(option, row.view, optionsView, appearance(), context, theme.roles, { changed -> setDraft(changed.background) }, row::listClosed)
+            options += AppearanceRow(option, AppearanceLabels, view, ::appearance, { context }, { changed -> setDraft(changed.background) }) { row ->
+                OptionList(option, AppearanceLabels, row.view, optionsView, appearance(), context, theme.roles, { changed -> setDraft(changed.background) }, row::listClosed)
             }
         }
         save = findViewById(R.id.settings_background_save)
@@ -308,8 +309,8 @@ class BackgroundActivity : Activity() {
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
         outState.putString(DRAFT_PICTURE, draft.picture?.value)
-        outState.putString(DRAFT_FIT, draft.fit.name)
-        outState.putString(DRAFT_POSITION, draft.position.name)
+        outState.putString(DRAFT_FIT, draft.framing.fit.name)
+        outState.putString(DRAFT_POSITION, draft.framing.position.name)
         outState.putInt(DRAFT_DIM, draft.dim)
         outState.putString(DRAFT_BLUR, draft.blur.name)
     }
@@ -327,7 +328,7 @@ class BackgroundActivity : Activity() {
     private fun appearance(): Appearance = stored.copy(background = draft)
 
     /**
-     * Chooses [picture] in the draft ([Background.choosing]): the stored picture as it's stored,
+     * Chooses [picture] in the draft ([choosing]): the stored picture as it's stored,
      * another one as it is, its position in the middle, neither dimmed nor blurred.
      */
     private fun choose(picture: PictureId?) = setDraft(draft.choosing(picture, stored.background))
@@ -351,10 +352,10 @@ class BackgroundActivity : Activity() {
      * What filling this screen cuts from [picture], drawn at [screenSize] as the wallpaper and the
      * preview are; unknown without a picture, or before the library is read.
      */
-    private fun contextOf(picture: PictureId?): OptionContext {
-        val shown = library.pictures.firstOrNull { it.id == picture } ?: return OptionContext.UNKNOWN
+    private fun contextOf(picture: PictureId?): AppearanceContext {
+        val shown = library.pictures.firstOrNull { it.id == picture } ?: return AppearanceContext.UNKNOWN
         val screen = screenSize()
-        return OptionContext(backgroundCut = pictureCut(shown.width, shown.height, screen.width, screen.height))
+        return AppearanceContext(backgroundCut = pictureCut(shown.width, shown.height, screen.width, screen.height))
     }
 
     /** The draft as the options, the preview and the check beside its picture show it. */
@@ -670,8 +671,10 @@ class BackgroundActivity : Activity() {
         try {
             Background(
                 state.getString(DRAFT_PICTURE)?.let(::PictureId),
-                Fit.valueOf(state.getString(DRAFT_FIT) ?: return null),
-                PicturePosition.valueOf(state.getString(DRAFT_POSITION) ?: return null),
+                Framing(
+                    Fit.valueOf(state.getString(DRAFT_FIT) ?: return null),
+                    PicturePosition.valueOf(state.getString(DRAFT_POSITION) ?: return null),
+                ),
                 state.getInt(DRAFT_DIM),
                 Blur.valueOf(state.getString(DRAFT_BLUR) ?: return null),
             )

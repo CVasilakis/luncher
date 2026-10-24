@@ -9,8 +9,8 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import com.luncher.domain.appearance.Appearance
+import com.luncher.domain.appearance.AppearanceContext
 import com.luncher.domain.appearance.AppearanceTopic
-import com.luncher.domain.appearance.OptionContext
 import com.luncher.domain.appearance.appearanceOptions
 import com.luncher.launcher.ui.Badge
 import com.luncher.launcher.ui.DialogButton
@@ -44,7 +44,7 @@ class AppearanceActivity : Activity() {
 
     private lateinit var appearance: Appearance
     private lateinit var preview: AppearancePreviewView
-    private val rows = mutableListOf<OptionRow>()
+    private val rows = mutableListOf<AppearanceRow>()
     private val groups = mutableListOf<Group>()
 
     /** The group whose options show; at most one, so the list stays short. */
@@ -71,7 +71,7 @@ class AppearanceActivity : Activity() {
                 val view = layoutInflater.inflate(R.layout.settings_appearance_option, options, false)
                 options.addView(view)
                 // Nothing here depends on a context: the background's options are edited apart.
-                OptionRow(option, view, { appearance }, { OptionContext.UNKNOWN }, ::change)
+                AppearanceRow(option, AppearanceLabels, view, { appearance }, { AppearanceContext.UNKNOWN }, ::change)
             }
             this.rows += rows
             groups += Group(header, group.topic, rows.map { it.view })

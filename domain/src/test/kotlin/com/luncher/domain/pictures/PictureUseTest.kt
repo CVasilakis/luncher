@@ -10,7 +10,7 @@ import org.junit.Test
 class PictureUseTest {
 
     private val sunset = PictureId("sunset")
-    private val wallpaper = Appearance(TileGeometry(verticalAlignment = VerticalAlignment.TOP), background = Background(sunset, Fit.STRETCH, dim = 40, blur = Blur.LIGHT))
+    private val wallpaper = Appearance(TileGeometry(verticalAlignment = VerticalAlignment.TOP), background = Background(sunset, Framing(Fit.STRETCH), dim = 40, blur = Blur.LIGHT))
 
     @Test
     fun `the wallpaper's picture is in use as the wallpaper`() {

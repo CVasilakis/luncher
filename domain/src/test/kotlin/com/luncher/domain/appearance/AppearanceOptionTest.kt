@@ -4,8 +4,11 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import com.luncher.domain.options.step
+import com.luncher.domain.options.valueOrDefault
 import com.luncher.domain.pictures.Blur
 import com.luncher.domain.pictures.Fit
+import com.luncher.domain.pictures.Framing
 import com.luncher.domain.pictures.PictureCut
 import com.luncher.domain.pictures.PictureId
 import com.luncher.domain.pictures.PicturePosition
@@ -126,9 +129,9 @@ class AppearanceOptionTest {
     fun `steps to the next and the previous value`() {
         val radius = AppearanceOption.CornerRadius
 
-        val next = radius.step(Appearance(), forward = true)
+        val next = radius.step(Appearance(), forward = true, AppearanceContext.UNKNOWN)
         assertEquals(Corners.Radius(24), radius.get(next))
-        assertEquals(Corners.Radius(16), radius.get(radius.step(next, forward = false)))
+        assertEquals(Corners.Radius(16), radius.get(radius.step(next, forward = false, AppearanceContext.UNKNOWN)))
     }
 
     @Test
@@ -137,14 +140,14 @@ class AppearanceOptionTest {
         val first = radius.set(Appearance(), Corners.Radius(0))
         val last = radius.set(first, Corners.Pill)
 
-        assertEquals(Corners.Pill, radius.get(radius.step(first, forward = false)))
-        assertEquals(Corners.Radius(0), radius.get(radius.step(last, forward = true)))
+        assertEquals(Corners.Pill, radius.get(radius.step(first, forward = false, AppearanceContext.UNKNOWN)))
+        assertEquals(Corners.Radius(0), radius.get(radius.step(last, forward = true, AppearanceContext.UNKNOWN)))
     }
 
     @Test
     fun `steps through every value in order, then back to the first`() {
         val vertical = AppearanceOption.VerticalAlignment
-        val seen = generateSequence(Appearance()) { vertical.step(it, forward = true) }
+        val seen = generateSequence(Appearance()) { vertical.step(it, forward = true, AppearanceContext.UNKNOWN) }
             .take(VerticalAlignment.entries.size + 1)
             .map(vertical::get)
             .toList()
@@ -164,8 +167,8 @@ class AppearanceOptionTest {
     fun `an option of two values toggles either way`() {
         val clock = AppearanceOption.ClockSide
 
-        assertEquals(Side.RIGHT, clock.get(clock.step(Appearance(), forward = true)))
-        assertEquals(Side.RIGHT, clock.get(clock.step(Appearance(), forward = false)))
+        assertEquals(Side.RIGHT, clock.get(clock.step(Appearance(), forward = true, AppearanceContext.UNKNOWN)))
+        assertEquals(Side.RIGHT, clock.get(clock.step(Appearance(), forward = false, AppearanceContext.UNKNOWN)))
     }
 
     // An appearance made in code with a value the option doesn't offer: the next step goes back to the default.
@@ -173,7 +176,7 @@ class AppearanceOptionTest {
     fun `steps from a value it doesn't offer to the default`() {
         val odd = Appearance(tileStyle = TileStyle(Corners.Radius(5)))
 
-        assertEquals(Corners.Radius(16), AppearanceOption.CornerRadius.get(AppearanceOption.CornerRadius.step(odd, forward = true)))
+        assertEquals(Corners.Radius(16), AppearanceOption.CornerRadius.get(AppearanceOption.CornerRadius.step(odd, forward = true, AppearanceContext.UNKNOWN)))
     }
 
     @Test
@@ -192,9 +195,9 @@ class AppearanceOptionTest {
             Appearance(TileGeometry(verticalAlignment = vertical, horizontalAlignment = horizontal))
 
         for (horizontal in HorizontalAlignment.entries) {
-            assertFalse(full.appliesTo(at(VerticalAlignment.TOP, horizontal)))
-            assertTrue(full.appliesTo(at(VerticalAlignment.CENTER, horizontal)))
-            assertTrue(full.appliesTo(at(VerticalAlignment.BOTTOM, horizontal)))
+            assertFalse(full.appliesTo(at(VerticalAlignment.TOP, horizontal), AppearanceContext.UNKNOWN))
+            assertTrue(full.appliesTo(at(VerticalAlignment.CENTER, horizontal), AppearanceContext.UNKNOWN))
+            assertTrue(full.appliesTo(at(VerticalAlignment.BOTTOM, horizontal), AppearanceContext.UNKNOWN))
         }
     }
 
@@ -203,10 +206,10 @@ class AppearanceOptionTest {
         val side = AppearanceOption.ClockSide
         fun showing(time: Boolean, date: Boolean) = Appearance(topBar = TopBarAppearance(showTime = time, showDate = date))
 
-        assertTrue(side.appliesTo(showing(time = true, date = true)))
-        assertTrue(side.appliesTo(showing(time = true, date = false)))
-        assertTrue(side.appliesTo(showing(time = false, date = true)))
-        assertFalse(side.appliesTo(showing(time = false, date = false)))
+        assertTrue(side.appliesTo(showing(time = true, date = true), AppearanceContext.UNKNOWN))
+        assertTrue(side.appliesTo(showing(time = true, date = false), AppearanceContext.UNKNOWN))
+        assertTrue(side.appliesTo(showing(time = false, date = true), AppearanceContext.UNKNOWN))
+        assertFalse(side.appliesTo(showing(time = false, date = false), AppearanceContext.UNKNOWN))
     }
 
     @Test
@@ -214,10 +217,10 @@ class AppearanceOptionTest {
         val side = AppearanceOption.TimeSide
         fun showing(time: Boolean, date: Boolean) = Appearance(topBar = TopBarAppearance(showTime = time, showDate = date))
 
-        assertTrue(side.appliesTo(showing(time = true, date = true)))
-        assertFalse(side.appliesTo(showing(time = true, date = false)))
-        assertFalse(side.appliesTo(showing(time = false, date = true)))
-        assertFalse(side.appliesTo(showing(time = false, date = false)))
+        assertTrue(side.appliesTo(showing(time = true, date = true), AppearanceContext.UNKNOWN))
+        assertFalse(side.appliesTo(showing(time = true, date = false), AppearanceContext.UNKNOWN))
+        assertFalse(side.appliesTo(showing(time = false, date = true), AppearanceContext.UNKNOWN))
+        assertFalse(side.appliesTo(showing(time = false, date = false), AppearanceContext.UNKNOWN))
     }
 
     @Test
@@ -226,17 +229,17 @@ class AppearanceOptionTest {
         val background = listOf(AppearanceOption.BackgroundFit, AppearanceOption.BackgroundPosition, AppearanceOption.BackgroundDim, AppearanceOption.BackgroundBlur)
 
         for (option in background) {
-            assertFalse("$option", option.appliesTo(Appearance()))
-            assertTrue("$option", option.appliesTo(Appearance(background = picture)))
+            assertFalse("$option", option.appliesTo(Appearance(), AppearanceContext.UNKNOWN))
+            assertTrue("$option", option.appliesTo(Appearance(background = picture), AppearanceContext.UNKNOWN))
         }
-        val stretched = Appearance(background = picture.copy(fit = Fit.STRETCH))
-        assertFalse(AppearanceOption.BackgroundPosition.appliesTo(stretched))
-        assertTrue(AppearanceOption.BackgroundDim.appliesTo(stretched))
+        val stretched = Appearance(background = picture.copy(framing = Framing(Fit.STRETCH)))
+        assertFalse(AppearanceOption.BackgroundPosition.appliesTo(stretched, AppearanceContext.UNKNOWN))
+        assertTrue(AppearanceOption.BackgroundDim.appliesTo(stretched, AppearanceContext.UNKNOWN))
     }
 
-    private val wide = OptionContext(backgroundCut = PictureCut.SIDES)
-    private val tall = OptionContext(backgroundCut = PictureCut.TOP_AND_BOTTOM)
-    private val sameShape = OptionContext(backgroundCut = PictureCut.NONE)
+    private val wide = AppearanceContext(backgroundCut = PictureCut.SIDES)
+    private val tall = AppearanceContext(backgroundCut = PictureCut.TOP_AND_BOTTOM)
+    private val sameShape = AppearanceContext(backgroundCut = PictureCut.NONE)
 
     @Test
     fun `the position offers the middle and the ends of the side the picture is cut at`() {
@@ -245,7 +248,7 @@ class AppearanceOptionTest {
         assertEquals(listOf(PicturePosition.CENTER, PicturePosition.LEFT, PicturePosition.RIGHT), position.values(wide))
         assertEquals(listOf(PicturePosition.CENTER, PicturePosition.TOP, PicturePosition.BOTTOM), position.values(tall))
         assertEquals(listOf(PicturePosition.CENTER), position.values(sameShape))
-        assertEquals("unknown: all of them", PicturePosition.entries, position.values(OptionContext.UNKNOWN))
+        assertEquals("unknown: all of them", PicturePosition.entries, position.values(AppearanceContext.UNKNOWN))
     }
 
     // What's stored doesn't depend on the picture: a position stays readable whatever is chosen later.
@@ -261,7 +264,7 @@ class AppearanceOptionTest {
     fun `fit and position don't apply to a picture of the screen's shape, dim and blur do`() {
         val appearance = Appearance(background = Background(picture = PictureId("sunset")))
 
-        for (context in listOf(wide, tall, OptionContext.UNKNOWN)) {
+        for (context in listOf(wide, tall, AppearanceContext.UNKNOWN)) {
             assertTrue("$context", AppearanceOption.BackgroundFit.appliesTo(appearance, context))
             assertTrue("$context", AppearanceOption.BackgroundPosition.appliesTo(appearance, context))
         }
@@ -269,14 +272,14 @@ class AppearanceOptionTest {
         assertFalse(AppearanceOption.BackgroundPosition.appliesTo(appearance, sameShape))
         assertTrue(AppearanceOption.BackgroundDim.appliesTo(appearance, sameShape))
         assertTrue(AppearanceOption.BackgroundBlur.appliesTo(appearance, sameShape))
-        val stretched = Appearance(background = Background(picture = PictureId("sunset"), fit = Fit.STRETCH))
+        val stretched = Appearance(background = Background(picture = PictureId("sunset"), framing = Framing(Fit.STRETCH)))
         assertFalse("stretched", AppearanceOption.BackgroundPosition.appliesTo(stretched, wide))
         assertFalse("no picture", AppearanceOption.BackgroundFit.appliesTo(Appearance(), wide))
     }
 
     @Test
     fun `every option offers its default in every context, and only the position narrows its values`() {
-        val contexts = listOf(OptionContext.UNKNOWN, wide, tall, sameShape)
+        val contexts = listOf(AppearanceContext.UNKNOWN, wide, tall, sameShape)
         for (option in options) {
             for (context in contexts) {
                 assertTrue("$option in $context", option.default in option.values(context))
@@ -295,7 +298,7 @@ class AppearanceOptionTest {
         val background = setOf(AppearanceOption.BackgroundFit, AppearanceOption.BackgroundPosition)
         for (option in options - background) {
             for (appearance in appearances) {
-                for (context in listOf(wide, tall, sameShape)) assertEquals("$option", option.appliesTo(appearance), option.appliesTo(appearance, context))
+                for (context in listOf(wide, tall, sameShape)) assertEquals("$option", option.appliesTo(appearance, AppearanceContext.UNKNOWN), option.appliesTo(appearance, context))
             }
         }
     }
@@ -304,7 +307,7 @@ class AppearanceOptionTest {
     fun `the position steps around the values offered, either way`() {
         val position = AppearanceOption.BackgroundPosition
         val start = Appearance(background = Background(picture = PictureId("sunset")))
-        fun walk(context: OptionContext, forward: Boolean) =
+        fun walk(context: AppearanceContext, forward: Boolean) =
             generateSequence(start) { position.step(it, forward, context) }.take(4).map(position::get).toList()
 
         assertEquals(listOf(PicturePosition.CENTER, PicturePosition.LEFT, PicturePosition.RIGHT, PicturePosition.CENTER), walk(wide, forward = true))
@@ -316,11 +319,11 @@ class AppearanceOptionTest {
     @Test
     fun `the position steps from a value not offered to the middle`() {
         val position = AppearanceOption.BackgroundPosition
-        val top = Appearance(background = Background(picture = PictureId("sunset"), position = PicturePosition.TOP))
+        val top = Appearance(background = Background(picture = PictureId("sunset"), framing = Framing(position = PicturePosition.TOP)))
 
         assertEquals(PicturePosition.CENTER, position.get(position.step(top, forward = true, wide)))
         assertEquals(PicturePosition.CENTER, position.get(position.step(top, forward = false, wide)))
-        assertEquals("unknown: all of them", PicturePosition.BOTTOM, position.get(position.step(top, forward = true)))
+        assertEquals("unknown: all of them", PicturePosition.BOTTOM, position.get(position.step(top, forward = true, AppearanceContext.UNKNOWN)))
     }
 
     @Test
@@ -328,7 +331,7 @@ class AppearanceOptionTest {
         val appearance = Appearance(background = Background(picture = PictureId("sunset")))
 
         assertEquals(
-            Background(PictureId("sunset"), Fit.STRETCH, PicturePosition.TOP, 40, Blur.STRONG),
+            Background(PictureId("sunset"), Framing(Fit.STRETCH, PicturePosition.TOP), 40, Blur.STRONG),
             listOf(
                 { a: Appearance -> AppearanceOption.BackgroundFit.set(a, Fit.STRETCH) },
                 { a: Appearance -> AppearanceOption.BackgroundPosition.set(a, PicturePosition.TOP) },
@@ -354,12 +357,12 @@ class AppearanceOptionTest {
     @Test
     fun `every option but the background's applies to the defaults, and the others always`() {
         val background = setOf(AppearanceOption.BackgroundFit, AppearanceOption.BackgroundPosition, AppearanceOption.BackgroundDim, AppearanceOption.BackgroundBlur)
-        for (option in options - background) assertTrue("$option", option.appliesTo(Appearance()))
+        for (option in options - background) assertTrue("$option", option.appliesTo(Appearance(), AppearanceContext.UNKNOWN))
         val conditional = setOf(AppearanceOption.FullBottomRow, AppearanceOption.ClockSide, AppearanceOption.TimeSide) + background
         val nothingShown = Appearance(
             TileGeometry(verticalAlignment = VerticalAlignment.TOP),
             topBar = TopBarAppearance(showTime = false, showDate = false),
         )
-        for (option in options - conditional) assertTrue("$option", option.appliesTo(nothingShown))
+        for (option in options - conditional) assertTrue("$option", option.appliesTo(nothingShown, AppearanceContext.UNKNOWN))
     }
 }

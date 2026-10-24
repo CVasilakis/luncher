@@ -31,9 +31,9 @@ feature/settings/
     │   │   ├── AppearanceEditorLayout.kt the editor's columns: the options' container level with the title
     │   │   ├── EditorStartColumn.kt  its title, preview and buttons, the preview as large as the room left
     │   │   ├── StepperRow.kt     an option's name, and its value's chip beside it or below it
-    │   │   ├── OptionRow.kt      an option's row: both editors'; Left and Right step it, or OK opens its list
-    │   │   ├── OptionList.kt     an option's values in a list beside its field: the background editor's
-    │   │   ├── OptionLabels.kt   what the options, their values and groups are called, the groups' icons, the accents' swatches
+    │   │   ├── OptionRow.kt      an option's row, of any catalog: both editors'; Left and Right step it, or OK opens its list
+    │   │   ├── OptionList.kt     an option's values in a list beside its field, of any catalog: the background editor's
+    │   │   ├── OptionLabels.kt   what a catalog's options and their values are called (OptionLabels), the appearance's (AppearanceLabels) with the accents' swatches; the groups' names and icons
     │   │   ├── BackgroundActivity.kt the background editor: the pictures, the draft, Save; renames and deletes pictures, prepares them
     │   │   ├── BackgroundStartColumn.kt  its preview, options, Save and Delete all, the preview as large as the room left
     │   │   ├── AddFromFolderActivity.kt  the drop folders' pictures, a preview of the selected one; OK adds it, then returns it; Add all
@@ -219,10 +219,10 @@ they scroll when they're taller than the screen, a row ahead of the focus.
 
 | Part | Job |
 |---|---|
-| `appearanceOptions`, `AppearanceOption` (`:domain`) | which options there are, in which groups; each one's values, in order, the part of `Appearance` it reads and changes, whether it applies, and what a step does, with the values an `OptionContext` offers (all of them here) |
+| `appearanceOptions`, `AppearanceOption` (`:domain`) | which options there are, in which groups; each one's values, in order, the part of `Appearance` it reads and changes, whether it applies, and what a step does, with the values an `AppearanceContext` offers (all of them here) |
 | `AppearanceSettings` (`:domain`) / `PreferencesAppearanceSettings` (`:platform`) | port and adapter: the stored `Appearance`, read once per process; each write is stored at once, in the background, and told to the listeners (the home screen, while it's shown) |
 | `TileLayouts`, `topBarLayout` (`:domain`) | where the preview's tiles and top bar items go, by the home screen's own rules |
-| `AppearanceActivity` | the groups' entries, opening one at a time; a group edited apart as a button; the options' rows (`OptionRow`, `OptionLabels.kt`'s exhaustive `when`s, so a new option doesn't compile until it has its labels, and a group its icon) and the reset button; its restyling when the theme changes (`ScreenTheme`) |
+| `AppearanceActivity` | the groups' entries, opening one at a time; a group edited apart as a button; the options' rows (`OptionRow` with `AppearanceLabels`, whose exhaustive `when`s, as `topicIcon`'s, don't compile until a new option has its labels, and a group its icon) and the reset button; its restyling when the theme changes (`ScreenTheme`) |
 | `ThemeAppearance`, `colorRoles` (`:domain`) | the theme the Theme group changes, and the colors every screen here takes from it |
 | `PictureImages`, `Wallpaper` (`:domain`) | the wallpaper's picture: the home screen's own, shrunk, when it's of the background; else drawn at the preview's size, from its working copy |
 | `AppearancePreviewView` | draws the preview: an illustration, not the real home screen (below) |
@@ -249,7 +249,7 @@ focus frame, as on the home screen. A new shape gets it too: `AppearancePreviewV
 light shape without it. It isn't focusable.
 
 To add an option: [`ARCHITECTURE.md`](../../docs/ARCHITECTURE.md#appearance), "Adding an aspect";
-its labels go in `optionLabel` and `optionValue` (`OptionLabels.kt`), in every translation.
+its labels go in `AppearanceLabels`' `label` and `value` (`OptionLabels.kt`), in every translation.
 
 What keeps it light: the preview draws from shapes it keeps, made anew only when the part of the
 appearance they come from changes (compared with `==`), so a new corner radius lays out nothing,
@@ -323,7 +323,7 @@ Bottom for a taller one. All four are dimmed without a
 picture; the position also with the picture stretched; the fit and the position also with a
 picture of the screen's shape, or so near it that filling would cut less than 1% (a 16:9
 picture on a 1366 × 768 TV), where every choice looks the same. A stretch stored for such a
-picture is kept, dimmed. Another picture chosen (`Background.choosing`), as well as one Add
+picture is kept, dimmed. Another picture chosen (`choosing`), as well as one Add
 from folder added, or No picture, starts as it is: Center, Dim and Blur Off,
 not the options set for the picture before, so the preview shows the picture itself and its
 options are set for it (a bright picture needs more dimming than a dark one). The fit is kept:
@@ -377,9 +377,9 @@ it's dimmed, and the focus passes it by.
 | `PictureImages` (`:domain`) / `CachedPictureImages` (`:platform`) | the thumbnails, drawn from the working copies at the row's size in pixels, and kept |
 | `pictureUses`, `withoutPictures` (`:domain`) | what each picture is used for, which deleting it says, and the background without it |
 | `Wallpaper` (`:domain`) | Save (`save`: drawn, kept, then stored), deleting the wallpaper's picture (`forget`), and the saved background's image, which the preview shows while the draft is that background (`readyFor`) |
-| `pictureCut`, `OptionContext`, `Background.offeredIn` (`:domain`) | what filling the screen cuts from the draft's picture, the options' values that offers, and the draft without a position it doesn't |
-| `Background.choosing` (`:domain`) | the draft with another picture chosen: as it is, or as stored if it's the stored one |
-| `OptionRow`, `OptionList` | the options' rows, OK opening a list of the values the draft's picture offers, which the preview follows as the focus moves; Back in it puts the value from before back |
+| `pictureCut`, `AppearanceContext`, `Background.offeredIn` (`:domain`) | what filling the screen cuts from the draft's picture, the options' values that offers, and the draft without a position it doesn't |
+| `choosing` (`:domain`, `PictureChoice`'s rule) | the draft with another picture chosen: as it is, or as stored if it's the stored one |
+| `OptionRow`, `OptionList`, `AppearanceLabels` | the options' rows, OK opening a list of the values the draft's picture offers, which the preview follows as the focus moves; Back in it puts the value from before back |
 | `MessageDialog`, `MenuDialog`, `NameDialog` (`:ui`) | the dialogs over the list, a badge beside the title and the text below starting under it: the question before deleting; a picture's Rename and Delete; the field for a new name, and why it's refused; this screen gives their texts and what each button does |
 | `BackgroundActivity` | the list, the draft, Save and its window, Delete all, the questions; chooses and focuses the picture Add from folder added (`EXTRA_ADDED`), or focuses the first in the list of those Add all added, choosing none (`EXTRA_ADDED_ALL`) |
 

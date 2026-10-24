@@ -6,17 +6,19 @@ import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
 import com.luncher.domain.appearance.Appearance
+import com.luncher.domain.appearance.AppearanceContext
 import com.luncher.domain.appearance.AppearanceOption
-import com.luncher.domain.appearance.OptionContext
-import com.luncher.domain.appearance.step
+import com.luncher.domain.options.Option
+import com.luncher.domain.options.step
 import com.luncher.launcher.ui.R as UiR
 
 /**
- * An appearance option's row: its name, and its value. It shows [appearance]'s value, and gives
- * [change] the appearance a change makes: the appearance editor stores it at once, the background
- * editor keeps it as its draft. In the appearance editor (settings_appearance_option) the value is
- * in a chip between arrows, which Left and Right step through, toward the arrow on that side,
- * around from the last value to the first; the accent's swatch before it, for the accent color.
+ * An option's row, of any catalog: its name, and its value, as the catalog's [labels] say. It shows
+ * [model]'s value, and gives [change] the model a change makes: the appearance editor stores it at
+ * once, the background editor keeps it as its draft. In the appearance editor
+ * (settings_appearance_option) the value is in a chip between arrows, which Left and Right step
+ * through, toward the arrow on that side, around from the last value to the first; the swatch the
+ * labels give before it, for the accent color.
  * With [opens], in the background editor (settings_background_option, a field), OK opens the
  * values in a list ([OptionList]) instead, beside the field, the field outlined and its mark
  * pointing there while it shows; Left and Right move the focus, as on any other entry: the
@@ -24,13 +26,14 @@ import com.luncher.launcher.ui.R as UiR
  * background's picture's shape, say); an option that changes nothing with the others as they are,
  * or in [context], is dimmed, and the focus passes it by.
  */
-internal class OptionRow(
-    val option: AppearanceOption<*>,
+internal class OptionRow<M, C, O : Option<M, C, *>>(
+    val option: O,
+    private val labels: OptionLabels<M, O>,
     val view: View,
-    private val appearance: () -> Appearance,
-    private val context: () -> OptionContext,
-    private val change: (Appearance) -> Unit,
-    private val opens: ((OptionRow) -> OptionList)? = null,
+    private val model: () -> M,
+    private val context: () -> C,
+    private val change: (M) -> Unit,
+    private val opens: ((OptionRow<M, C, O>) -> OptionList<M, C, O>)? = null,
 ) : View.OnKeyListener {
 
     private val value = view.findViewById<TextView>(R.id.settings_option_value)
@@ -38,10 +41,10 @@ internal class OptionRow(
     private val mark: ImageView? = view.findViewById(R.id.settings_option_mark)
 
     /** The values' list while it shows. */
-    private var list: OptionList? = null
+    private var list: OptionList<M, C, O>? = null
 
     init {
-        view.findViewById<TextView>(R.id.settings_option_label).setText(optionLabel(option))
+        view.findViewById<TextView>(R.id.settings_option_label).setText(labels.label(option))
         if (opens != null) {
             view.setOnClickListener { open(opens) }
         } else {
@@ -49,7 +52,7 @@ internal class OptionRow(
         }
     }
 
-    private fun open(opens: (OptionRow) -> OptionList) {
+    private fun open(opens: (OptionRow<M, C, O>) -> OptionList<M, C, O>) {
         list = opens(this)
         view.isActivated = true
         mark?.setImageResource(UiR.drawable.icon_chevron)
@@ -69,10 +72,10 @@ internal class OptionRow(
     }
 
     fun show() {
-        val appearance = appearance()
-        val applies = option.appliesTo(appearance, context())
-        value.text = view.context.optionValue(option, appearance)
-        val color = optionSwatch(option, appearance)
+        val model = model()
+        val applies = option.appliesTo(model, context())
+        value.text = labels.value(option, model, view.context)
+        val color = labels.swatch(option, model)
         swatch?.visibility = if (color != null) View.VISIBLE else View.GONE
         if (swatch != null && color != null) {
             swatch.background = GradientDrawable().apply {
@@ -94,7 +97,7 @@ internal class OptionRow(
             else -> return false
         }
         val forward = right != (v.layoutDirection == View.LAYOUT_DIRECTION_RTL)
-        if (event.action == KeyEvent.ACTION_DOWN) change(option.step(appearance(), forward, context()))
+        if (event.action == KeyEvent.ACTION_DOWN) change(option.step(model(), forward, context()))
         return true
     }
 
@@ -102,3 +105,6 @@ internal class OptionRow(
         const val DIMMED = 0.4f
     }
 }
+
+/** A row of the appearance's options, in the appearance editor or the background editor. */
+internal typealias AppearanceRow = OptionRow<Appearance, AppearanceContext, AppearanceOption<*>>

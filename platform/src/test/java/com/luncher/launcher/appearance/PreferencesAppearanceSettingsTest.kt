@@ -19,6 +19,7 @@ import com.luncher.domain.appearance.AccentColor
 import com.luncher.domain.appearance.Background
 import com.luncher.domain.pictures.Blur
 import com.luncher.domain.pictures.Fit
+import com.luncher.domain.pictures.Framing
 import com.luncher.domain.pictures.PictureId
 import com.luncher.domain.pictures.PicturePosition
 import org.junit.Assert.assertEquals
@@ -45,7 +46,7 @@ class PreferencesAppearanceSettingsTest {
         ),
         TileStyle(Corners.Radius(16), focusFrame = false),
         TopBarAppearance(clockSide = Side.RIGHT, timeSide = Side.RIGHT, showTime = true, showDate = false),
-        Background(PictureId("0123456789abcdef0123456789abcdef"), Fit.STRETCH, PicturePosition.LEFT, 40, Blur.LIGHT),
+        Background(PictureId("0123456789abcdef0123456789abcdef"), Framing(Fit.STRETCH, PicturePosition.LEFT), 40, Blur.LIGHT),
         ThemeAppearance(AccentColor.TEAL, ThemeMode.LIGHT),
     )
 

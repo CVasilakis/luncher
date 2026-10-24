@@ -17,9 +17,26 @@ import com.luncher.domain.pictures.Fit
 import com.luncher.domain.pictures.PicturePosition
 import com.luncher.launcher.ui.R as UiR
 
-// What the appearance's options, their values and groups are called, in the user's language: one
-// exhaustive `when` each, so a new option doesn't compile until it has its labels. The appearance
-// editor and the background editor both show them.
+// What the options, their values and the appearance's groups are called, in the user's language:
+// one exhaustive `when` each, so a new option doesn't compile until it has its labels. The
+// appearance editor and the background editor both show the appearance's.
+
+/**
+ * What a catalog's options [O], over its model [M], are called, and their values, in the user's
+ * language; the color shown before a value. A catalog's labels answer each in an exhaustive `when`
+ * over its options, so an option added to the catalog doesn't compile until it has its labels.
+ */
+internal interface OptionLabels<M, O> {
+
+    /** [option]'s name, a string resource. */
+    fun label(option: O): Int
+
+    /** What [option]'s value in [model] is called. */
+    fun value(option: O, model: M, context: Context): String
+
+    /** The color shown before [option]'s value; none by default. */
+    fun swatch(option: O, model: M): Int? = null
+}
 
 internal fun topicTitle(topic: AppearanceTopic): Int = when (topic) {
     AppearanceTopic.TILES -> R.string.settings_appearance_tiles
@@ -36,46 +53,55 @@ internal fun topicIcon(topic: AppearanceTopic): Int = when (topic) {
     AppearanceTopic.BACKGROUND -> UiR.drawable.icon_image
 }
 
-internal fun optionLabel(option: AppearanceOption<*>): Int = when (option) {
-    AppearanceOption.VerticalAlignment -> R.string.settings_appearance_vertical_alignment
-    AppearanceOption.HorizontalAlignment -> R.string.settings_appearance_horizontal_alignment
-    AppearanceOption.FullBottomRow -> R.string.settings_appearance_full_bottom_row
-    AppearanceOption.CornerRadius -> R.string.settings_appearance_corner_radius
-    AppearanceOption.FocusFrame -> R.string.settings_appearance_focus_frame
-    AppearanceOption.AppName -> R.string.settings_appearance_app_name
-    AppearanceOption.ShowTime -> R.string.settings_appearance_time
-    AppearanceOption.ShowDate -> R.string.settings_appearance_date
-    AppearanceOption.ClockSide -> R.string.settings_appearance_clock_side
-    AppearanceOption.TimeSide -> R.string.settings_appearance_time_side
-    AppearanceOption.AccentColor -> R.string.settings_appearance_accent
-    AppearanceOption.ThemeMode -> R.string.settings_appearance_mode
-    AppearanceOption.BackgroundFit -> R.string.settings_appearance_fit
-    AppearanceOption.BackgroundPosition -> R.string.settings_appearance_position
-    AppearanceOption.BackgroundDim -> R.string.settings_appearance_dim
-    AppearanceOption.BackgroundBlur -> R.string.settings_appearance_blur
-}
+/** The appearance's options ([AppearanceOption]), one exhaustive `when` each. */
+internal object AppearanceLabels : OptionLabels<Appearance, AppearanceOption<*>> {
 
-/** What [option]'s value in [appearance] is called. */
-internal fun Context.optionValue(option: AppearanceOption<*>, appearance: Appearance): String = when (option) {
-    AppearanceOption.VerticalAlignment -> getString(vertical(AppearanceOption.VerticalAlignment.get(appearance)))
-    AppearanceOption.HorizontalAlignment -> getString(horizontal(AppearanceOption.HorizontalAlignment.get(appearance)))
-    AppearanceOption.FullBottomRow -> getString(onOff(AppearanceOption.FullBottomRow.get(appearance)))
-    AppearanceOption.CornerRadius -> when (val corners = AppearanceOption.CornerRadius.get(appearance)) {
-        is Corners.Radius -> getString(R.string.settings_appearance_radius_dp, corners.dp)
-        Corners.Pill -> getString(R.string.settings_appearance_pill)
+    override fun label(option: AppearanceOption<*>): Int = when (option) {
+        AppearanceOption.VerticalAlignment -> R.string.settings_appearance_vertical_alignment
+        AppearanceOption.HorizontalAlignment -> R.string.settings_appearance_horizontal_alignment
+        AppearanceOption.FullBottomRow -> R.string.settings_appearance_full_bottom_row
+        AppearanceOption.CornerRadius -> R.string.settings_appearance_corner_radius
+        AppearanceOption.FocusFrame -> R.string.settings_appearance_focus_frame
+        AppearanceOption.AppName -> R.string.settings_appearance_app_name
+        AppearanceOption.ShowTime -> R.string.settings_appearance_time
+        AppearanceOption.ShowDate -> R.string.settings_appearance_date
+        AppearanceOption.ClockSide -> R.string.settings_appearance_clock_side
+        AppearanceOption.TimeSide -> R.string.settings_appearance_time_side
+        AppearanceOption.AccentColor -> R.string.settings_appearance_accent
+        AppearanceOption.ThemeMode -> R.string.settings_appearance_mode
+        AppearanceOption.BackgroundFit -> R.string.settings_appearance_fit
+        AppearanceOption.BackgroundPosition -> R.string.settings_appearance_position
+        AppearanceOption.BackgroundDim -> R.string.settings_appearance_dim
+        AppearanceOption.BackgroundBlur -> R.string.settings_appearance_blur
     }
-    AppearanceOption.FocusFrame -> getString(onOff(AppearanceOption.FocusFrame.get(appearance)))
-    AppearanceOption.AppName -> getString(appName(AppearanceOption.AppName.get(appearance)))
-    AppearanceOption.ShowTime -> getString(shown(AppearanceOption.ShowTime.get(appearance)))
-    AppearanceOption.ShowDate -> getString(shown(AppearanceOption.ShowDate.get(appearance)))
-    AppearanceOption.ClockSide -> getString(side(AppearanceOption.ClockSide.get(appearance)))
-    AppearanceOption.TimeSide -> getString(order(AppearanceOption.TimeSide.get(appearance)))
-    AppearanceOption.AccentColor -> getString(accent(AppearanceOption.AccentColor.get(appearance)))
-    AppearanceOption.ThemeMode -> getString(mode(AppearanceOption.ThemeMode.get(appearance)))
-    AppearanceOption.BackgroundFit -> getString(fit(AppearanceOption.BackgroundFit.get(appearance)))
-    AppearanceOption.BackgroundPosition -> getString(position(AppearanceOption.BackgroundPosition.get(appearance)))
-    AppearanceOption.BackgroundDim -> getString(dim(AppearanceOption.BackgroundDim.get(appearance)))
-    AppearanceOption.BackgroundBlur -> getString(blur(AppearanceOption.BackgroundBlur.get(appearance)))
+
+    override fun value(option: AppearanceOption<*>, model: Appearance, context: Context): String = when (option) {
+        AppearanceOption.VerticalAlignment -> context.getString(vertical(AppearanceOption.VerticalAlignment.get(model)))
+        AppearanceOption.HorizontalAlignment -> context.getString(horizontal(AppearanceOption.HorizontalAlignment.get(model)))
+        AppearanceOption.FullBottomRow -> context.getString(onOff(AppearanceOption.FullBottomRow.get(model)))
+        AppearanceOption.CornerRadius -> when (val corners = AppearanceOption.CornerRadius.get(model)) {
+            is Corners.Radius -> context.getString(R.string.settings_appearance_radius_dp, corners.dp)
+            Corners.Pill -> context.getString(R.string.settings_appearance_pill)
+        }
+        AppearanceOption.FocusFrame -> context.getString(onOff(AppearanceOption.FocusFrame.get(model)))
+        AppearanceOption.AppName -> context.getString(appName(AppearanceOption.AppName.get(model)))
+        AppearanceOption.ShowTime -> context.getString(shown(AppearanceOption.ShowTime.get(model)))
+        AppearanceOption.ShowDate -> context.getString(shown(AppearanceOption.ShowDate.get(model)))
+        AppearanceOption.ClockSide -> context.getString(side(AppearanceOption.ClockSide.get(model)))
+        AppearanceOption.TimeSide -> context.getString(order(AppearanceOption.TimeSide.get(model)))
+        AppearanceOption.AccentColor -> context.getString(accent(AppearanceOption.AccentColor.get(model)))
+        AppearanceOption.ThemeMode -> context.getString(mode(AppearanceOption.ThemeMode.get(model)))
+        AppearanceOption.BackgroundFit -> context.getString(fit(AppearanceOption.BackgroundFit.get(model)))
+        AppearanceOption.BackgroundPosition -> context.getString(position(AppearanceOption.BackgroundPosition.get(model)))
+        AppearanceOption.BackgroundDim -> context.getString(dim(AppearanceOption.BackgroundDim.get(model)))
+        AppearanceOption.BackgroundBlur -> context.getString(blur(AppearanceOption.BackgroundBlur.get(model)))
+    }
+
+    /** For the accent: the accent itself, as the menus show it. */
+    override fun swatch(option: AppearanceOption<*>, model: Appearance): Int? = when (option) {
+        AppearanceOption.AccentColor -> colorRoles(model.theme).primary
+        else -> null
+    }
 }
 
 private fun accent(accent: AccentColor): Int = when (accent) {
@@ -92,12 +118,6 @@ private fun accent(accent: AccentColor): Int = when (accent) {
 private fun mode(mode: ThemeMode): Int = when (mode) {
     ThemeMode.DARK -> R.string.settings_appearance_dark
     ThemeMode.LIGHT -> R.string.settings_appearance_light_mode
-}
-
-/** The color shown before [option]'s value, for the accent: the accent itself, as the menus show it. */
-internal fun optionSwatch(option: AppearanceOption<*>, appearance: Appearance): Int? = when (option) {
-    AppearanceOption.AccentColor -> colorRoles(appearance.theme).primary
-    else -> null
 }
 
 private fun appName(name: AppName): Int = when (name) {
