@@ -6,6 +6,8 @@
     <string name="home_settings">Ρυθμίσεις</string>
     <string name="home_menu_move">Μετακίνηση</string>
     <string name="home_menu_hide">Απόκρυψη</string>
+    <string name="home_menu_info">Πληροφορίες εφαρμογής</string>
+    <string name="home_menu_info_unavailable">Οι πληροφορίες εφαρμογής δεν είναι διαθέσιμες σε αυτή τη συσκευή</string>
     <string name="home_move_title">Μετακίνηση εφαρμογής</string>
     <string name="home_move_hint"><xliff:g id="arrows" example="↑↓←→">↑↓←→</xliff:g> Μετακίνηση · OK Τέλος</string>
     <string name="home_wallpaper_screen_changed">Προσαρμογή του φόντου σε αυτή την οθόνη…</string>

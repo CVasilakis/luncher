@@ -26,7 +26,7 @@ ui/
     │   │   ├── ThemedIcon.kt     an icon (icon_…) in a role of the theme
     │   │   ├── ListEntry.kt      an entry: inverse while focused, tinted while chosen, outlined while open; a field zoomed;
     │   │   │                     in a list, as tall as the list makes its rows, its focused look drawn by the list as it slides
-    │   │   ├── EntryText.kt      an entry of one line, its icon before it: a menu's
+    │   │   ├── EntryText.kt      an entry of one line, its icon before it: a picture's actions (Rename, Delete)
     │   │   ├── PillButton.kt     a button: filled, tonal or danger, its icon beside its text, giving way
     │   │   ├── ScrollFrame.kt    a scrolling list's frame: cut along its rounded corners, fading out where there's more
     │   │   ├── LookAheadListView.kt, LookAheadScrollView.kt  lists that scroll a row ahead of the focus, their
@@ -117,7 +117,7 @@ can, the focused thing stands out from afar, and every color comes from the user
   option's values, a tile's menu) has corners concentric with the container's: the container's
   radius less the padding between them (`corner_entry_in_container`, 10 dp in a 20 dp container),
   set with `entryCorner`, so the two curves run side by side. A tile's menu follows the tiles'
-  corners, and its entries with it (`EntryText.corner`,
+  corners, and its entries with it (`ListEntry.corner`, `ScrollFrame.corner`,
   [`feature/home/`](../feature/home/README.md#a-tiles-menu)). An entry far from its container's
   corners (a side sheet's, a dialog's) keeps `corner_entry` (12 dp).
 - **Room for the zoom, inside what clips.** A parent that clips cuts each child to the child's own

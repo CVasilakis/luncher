@@ -12,6 +12,22 @@ fun crashSince(packageName: String, sinceMs: Long): String? =
     crashIn(shell("logcat -b crash -d -v epoch"), packageName, sinceMs)
 
 /**
+ * Runs [check], and if it fails after the device's settings app ([settings]) crashed (since
+ * [since], the device's clock), fails saying so, with the crash's first line: on a starved
+ * tv_api36, Android TV 16's own Settings app crashes as it starts (docs/INSTRUMENTED-TESTS.md),
+ * and a failed wait alone doesn't tell that from Luncher not opening it. Not run again: a retry
+ * would hide a real failure, and this one is the device's bug.
+ */
+inline fun sayingWhetherItCrashed(settings: String, since: Long, check: () -> Unit) {
+    try {
+        check()
+    } catch (e: AssertionError) {
+        val crash = crashSince(settings, since) ?: throw e
+        throw AssertionError("${e.message}: the device's settings app ($settings) crashed (adb logcat -b crash): $crash", e)
+    }
+}
+
+/**
  * [crashSince], from the crash log as `logcat -b crash -v epoch` prints it: a Java crash as
  * "AndroidRuntime: FATAL EXCEPTION: <thread>", "AndroidRuntime: Process: <process>, PID: <pid>",
  * then the exception's lines, each line starting with its time (seconds since the epoch, to the

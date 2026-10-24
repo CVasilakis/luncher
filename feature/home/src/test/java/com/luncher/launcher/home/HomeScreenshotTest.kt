@@ -25,6 +25,7 @@ import com.luncher.domain.appearance.TopBarAppearance
 import com.luncher.domain.appearance.VerticalAlignment
 import com.luncher.domain.apps.AppArrangement
 import com.luncher.domain.apps.FakeAppArrangements
+import com.luncher.domain.apps.FakeAppInfoScreen
 import com.luncher.domain.apps.FakeInstalledApps
 import com.luncher.domain.apps.FakeInstalledApps.Companion.app
 import com.luncher.domain.clock.FakeClock
@@ -63,13 +64,15 @@ class HomeScreenshotTest {
 
     /**
      * The home screen, its wallpaper drawn and shown unless [drawn] is false: then, its window
-     * saying it's being drawn, [kept] being what the last start kept.
+     * saying it's being drawn, [kept] being what the last start kept. [hasAppInfo]: whether the
+     * device has the apps' page in its settings.
      */
     private fun start(
         hidden: List<String> = emptyList(),
         appearance: Appearance = Appearance(),
         drawn: Boolean = true,
         kept: Pair<WallpaperDrawing, Bitmap>? = null,
+        hasAppInfo: Boolean = true,
     ): HomeActivity {
         val application = RuntimeEnvironment.getApplication() as HomeTestApplication
         val graph = object : TestHomeGraph(application) {
@@ -84,6 +87,7 @@ class HomeScreenshotTest {
             // The real drawing, of a picture stored as the library stores it (landscape()).
             override val pictureImages = FilePictureImages(application)
             override val storedWallpaper = FakeStoredWallpaper(kept)
+            override val appInfoScreen = FakeAppInfoScreen(hasAppInfo)
         }
         application.graph = graph
         val activity = Robolectric.buildActivity(HomeActivity::class.java).setup().get()
@@ -282,6 +286,34 @@ class HomeScreenshotTest {
         start(appearance = Appearance(topLeftTiles.copy(appName = AppName.WHEN_FOCUSED))).openMenu("Music")
 
         captureScreenFocused("src/test/screenshots/home/home_menu_below.png")
+    }
+
+    // 720p at 320 dpi, 640x360 dp, the rows at the top: room for the menu of a tile in the second
+    // row neither above nor below it, so beside it, on the side with more room.
+    @Test
+    @Config(qualifiers = "+w640dp-h360dp-xhdpi")
+    fun menuBeside() {
+        start(appearance = Appearance(topLeftTiles)).openMenu("Music")
+
+        captureScreenFocused("src/test/screenshots/home/home_menu_beside.png")
+    }
+
+    // The same screen, the second row's middle tile: room for the whole menu nowhere, so it
+    // scrolls above the tile, below the top bar, two rows showing, the second fading.
+    @Test
+    @Config(qualifiers = "+w640dp-h360dp-xhdpi")
+    fun menuScrolling() {
+        start(appearance = Appearance(topLeftTiles)).openMenu("News")
+
+        captureScreenFocused("src/test/screenshots/home/home_menu_scrolling.png")
+    }
+
+    // On a device without the apps' page in its settings: App info dimmed.
+    @Test
+    fun menuWithAppInfoDimmed() {
+        start(hasAppInfo = false).openMenu("Radio")
+
+        captureScreenFocused("src/test/screenshots/home/home_menu_app_info_dimmed.png")
     }
 
     // The same in Arabic: the menu mirrors, the home screen doesn't.

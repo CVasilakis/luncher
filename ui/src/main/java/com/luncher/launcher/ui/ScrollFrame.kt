@@ -32,7 +32,18 @@ open class ScrollFrame @JvmOverloads constructor(context: Context, attrs: Attrib
     FrameLayout(context, attrs), Themed, ViewTreeObserver.OnScrollChangedListener {
 
     private val fill: Int
-    private val radius = resources.getDimension(R.dimen.corner_container)
+
+    /**
+     * Its corners' radius, in px, which what scrolls under its edges is cut along:
+     * `corner_container`'s; set, from then on (a tile's menu, whose corners follow the tiles').
+     */
+    var corner: Float = resources.getDimension(R.dimen.corner_container)
+        set(value) {
+            if (value == field) return
+            field = value
+            invalidateOutline()
+            styled?.let { styled = null; style(it) }
+        }
     private val fadeHeight = resources.getDimensionPixelSize(R.dimen.scroll_fade)
     private val fadeBelow = GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, intArrayOf(0, 0))
     private val fadeAbove = GradientDrawable(GradientDrawable.Orientation.BOTTOM_TOP, intArrayOf(0, 0))
@@ -46,7 +57,7 @@ open class ScrollFrame @JvmOverloads constructor(context: Context, attrs: Attrib
         a.recycle()
         outlineProvider = object : ViewOutlineProvider() {
             override fun getOutline(view: View, outline: Outline) {
-                outline.setRoundRect(0, 0, view.width, view.height, radius)
+                outline.setRoundRect(0, 0, view.width, view.height, corner)
             }
         }
         clipToOutline = true
@@ -56,7 +67,7 @@ open class ScrollFrame @JvmOverloads constructor(context: Context, attrs: Attrib
         if (roles == styled) return
         styled = roles
         val color = if (fill == FILL_HIGH) roles.surfaceHigh else roles.surface
-        background = if (fill == FILL_NONE) null else roundRect(color, radius)
+        background = if (fill == FILL_NONE) null else roundRect(color, corner)
         val colors = intArrayOf(withAlpha(color, 0f), color)
         fadeBelow.colors = colors
         fadeAbove.colors = colors

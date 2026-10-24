@@ -131,9 +131,12 @@ class HomeActivityTest {
         onView(isRoot()).inRoot(isDialog()).perform(pressKey(keyCode))
     }
 
-    /** Waits until the entry labeled [label] of a tile's menu has the focus: the menu is up and gets the keys. */
+    /**
+     * Waits until the entry labeled [label] of a tile's menu has the focus: the menu is up and gets
+     * the keys. The entry has the focus, not its label.
+     */
     private fun waitUntilMenuEntryFocused(label: Int) =
-        waitUntilMatches(withText(label), hasFocus(), TIMEOUT_MS, root = isDialog())
+        waitUntilMatches(allOf(isAssignableFrom(ListEntry::class.java), hasDescendant(allOf(withId(R.id.home_tile_menu_label), withText(label)))), hasFocus(), TIMEOUT_MS, root = isDialog())
 
     /** Checks [condition] on the tile labeled [label], retrying while an animation settles. */
     private fun waitUntilTile(label: String, condition: Matcher<View>) = waitUntil(withContentDescription(label), condition)

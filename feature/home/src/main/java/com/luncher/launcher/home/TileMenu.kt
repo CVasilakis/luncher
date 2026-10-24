@@ -3,26 +3,34 @@ package com.luncher.launcher.home
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.Dialog
+import android.os.Build
 import android.view.Gravity
 import android.view.View
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import com.luncher.domain.appearance.ColorRoles
 import com.luncher.domain.appearance.Corners
 import com.luncher.domain.apps.AppAction
+import com.luncher.domain.apps.AppMenuEntry
 import com.luncher.domain.apps.InstalledApp
 import com.luncher.domain.layout.PixelBounds
+import com.luncher.domain.layout.tileMenuHeight
 import com.luncher.domain.layout.tileMenuPlacement
-import com.luncher.launcher.ui.EntryText
+import com.luncher.launcher.ui.ListEntry
+import com.luncher.launcher.ui.LookAheadScrollView
+import com.luncher.launcher.ui.ScrollFrame
 import com.luncher.launcher.ui.stylePanel
 import com.luncher.launcher.ui.R as UiR
 
 /**
  * The menu of one app's tile, which a long press of OK on it opens: a small floating panel above
- * the tile, or below it where there's no room above ([tileMenuPlacement]), the app's name, then
- * what the user can do to the app (the domain's [AppAction]s), each with its icon, the first one
- * focused. OK on one closes the menu and does it; Back closes it, as any dialog. In the theme's
- * colors, its corners as round as the tiles' up to a panel's ([style], [menuCorner]).
+ * the tile, below it where there's no room above, or beside it where there's room for it neither
+ * above nor below ([tileMenuPlacement]), listing what the user can do to the app (the domain's
+ * [AppAction]s), each with its icon, the first one focused. No title: the tile under it, focused
+ * and zoomed, says which app it's for. One the device can't do is dimmed, and the focus passes it by. OK on one closes the
+ * menu and does it; Back closes it, as any dialog. In the theme's colors, its corners as round as
+ * the tiles' up to a panel's ([style], [menuCorner]).
  *
  * A window of its own, so Android keeps the keys and the focus in it while it shows, and the tile
  * under it keeps its focus, zoomed as it is. Made once, the first time it's needed, and shown again
@@ -31,7 +39,10 @@ import com.luncher.launcher.ui.R as UiR
 internal class TileMenu(private val activity: Activity) : Dialog(activity, R.style.Theme_Luncher_Home_Menu) {
 
     private val entries: LinearLayout
-    private val title: TextView
+    private val scroll: LookAheadScrollView
+
+    /** The menu's own layout, the window's size: the frame of the list of entries, with a margin around them inside it. */
+    private val panel: ScrollFrame
     private var roles: ColorRoles? = null
     private var corners: Corners? = null
 
@@ -46,7 +57,8 @@ internal class TileMenu(private val activity: Activity) : Dialog(activity, R.sty
     init {
         setContentView(R.layout.home_tile_menu)
         entries = findViewById(R.id.home_tile_menu)
-        title = findViewById(R.id.home_tile_menu_title)
+        scroll = findViewById(R.id.home_tile_menu_scroll)
+        panel = findViewById(R.id.home_tile_menu_frame)
         setOnDismissListener { app = null }
     }
 
@@ -62,36 +74,54 @@ internal class TileMenu(private val activity: Activity) : Dialog(activity, R.sty
         corner = menuCorner(corners, resources.getDimension(UiR.dimen.corner_panel), resources.displayMetrics.density)
         val density = resources.displayMetrics.density
         entryCorner = entryCorner(corner, resources.getDimension(R.dimen.home_menu_padding), resources.getDimension(R.dimen.home_menu_entry_corner_least), density)
-        for (i in 0 until entries.childCount) (entries.getChildAt(i) as EntryText).corner = entryCorner
+        for (i in 0 until entries.childCount) (entries.getChildAt(i) as ListEntry).corner = entryCorner
+        panel.corner = corner
         checkNotNull(window).stylePanel(roles, corner)
     }
 
-    /** Shows the menu of [tile], with its app's [actions], in their order; OK on one gives it to [act]. */
-    fun show(tile: AppTileView, actions: List<AppAction>, act: (AppAction) -> Unit) {
-        entries.removeAllViews()
-        title.text = tile.app.label
-        for (action in actions) {
-            val entry = layoutInflater.inflate(R.layout.home_tile_menu_entry, entries, false) as EntryText
-            if (roles != null) entry.corner = entryCorner
-            entry.setText(label(action))
-            entry.setCompoundDrawablesRelativeWithIntrinsicBounds(icon(action), 0, 0, 0)
-            entry.setOnClickListener {
-                dismiss()
-                act(action)
-            }
-            entries.addView(entry)
-        }
+    /**
+     * Shows the menu of [tile], with its app's [entries], in their order; OK on an available one
+     * gives its action to [act]. The first available one has the focus.
+     */
+    fun show(tile: AppTileView, entries: List<AppMenuEntry>, act: (AppAction) -> Unit) {
+        this.entries.removeAllViews()
+        for (entry in entries) this.entries.addView(entryView(entry, act))
         roles?.let { checkNotNull(window).stylePanel(it, corner) }   // the new entries too
+        scroll.scrollTo(0, 0)   // where the last menu was scrolled to
+        // No title shows; the app's name for screen readers, as the menu appears. Not the window's
+        // title, which would rename it: Android names a dialog's window after its activity.
+        if (Build.VERSION.SDK_INT >= 28) panel.accessibilityPaneTitle = tile.app.label
         placeAt(tile)
         app = tile.app
         show()
-        entries.getChildAt(0)?.requestFocus()
+        for (i in 0 until this.entries.childCount) if (this.entries.getChildAt(i).requestFocus()) break
+    }
+
+    /** The view of [entry]: its icon and label; unavailable, dimmed, out of the focus's way, and OK does nothing. */
+    private fun entryView(entry: AppMenuEntry, act: (AppAction) -> Unit): ListEntry {
+        val view = layoutInflater.inflate(R.layout.home_tile_menu_entry, entries, false) as ListEntry
+        if (roles != null) view.corner = entryCorner
+        view.findViewById<TextView>(R.id.home_tile_menu_label).setText(label(entry.action))
+        view.findViewById<ImageView>(R.id.home_tile_menu_icon).setImageResource(icon(entry.action))
+        if (entry.available) {
+            view.setOnClickListener {
+                dismiss()
+                act(entry.action)
+            }
+        } else {
+            view.alpha = DIMMED
+            view.isFocusable = false
+            view.isFocusableInTouchMode = false
+        }
+        return view
     }
 
     /**
-     * Puts the window above or below [tile], within the TV's overscan margin. At the screen's
-     * left and top, in any language: the home screen doesn't mirror, so neither does where the
-     * tile is.
+     * Puts the window above, below or beside [tile], within the TV's overscan margin and below the
+     * top bar, so the clock, the date and the settings entry show; as tall as its entries, or, where
+     * they fit nowhere whole beside the tile, as tall as the most room there is, the entries
+     * scrolling in it ([tileMenuHeight]). At the screen's left and top, in any language: the home
+     * screen doesn't mirror, so neither does where the tile is.
      */
     @SuppressLint("RtlHardcoded")
     private fun placeAt(tile: AppTileView) {
@@ -100,29 +130,53 @@ internal class TileMenu(private val activity: Activity) : Dialog(activity, R.sty
         val resources = activity.resources
         val marginX = resources.getDimensionPixelSize(R.dimen.home_padding_horizontal)
         val marginY = resources.getDimensionPixelSize(R.dimen.home_padding_vertical)
-        val room = PixelBounds(marginX, marginY, screen.width - marginX, screen.height - marginY)
-        val menu = window.decorView
-        menu.measure(
-            View.MeasureSpec.makeMeasureSpec(room.right - room.left, View.MeasureSpec.AT_MOST),
-            View.MeasureSpec.makeMeasureSpec(room.bottom - room.top, View.MeasureSpec.AT_MOST),
-        )
+        val topBar = activity.findViewById<View>(R.id.home_top_bar)
+        topBar.getLocationOnScreen(location)
+        val room = PixelBounds(marginX, maxOf(marginY, location[1] + topBar.height), screen.width - marginX, screen.height - marginY)
+        val bounds = tile.focusedBounds()
         val gap = resources.getDimensionPixelSize(R.dimen.home_menu_gap)
-        val placement = tileMenuPlacement(tile.focusedBounds(), menu.measuredWidth, menu.measuredHeight, room, gap)
+        // The panel, not the window's decor, which adds nothing around it: under Robolectric the
+        // decor of a dialog shown before measures it shorter, by where its window was last.
+        measurePanel(room.right - room.left, room.bottom - room.top)
+        // Two rows, squeezed by a fifth at most, as the list fits whole rows: the focused one and the next.
+        val least = 2 * resources.getDimensionPixelSize(R.dimen.home_menu_entry_height) * 4 / 5 + 2 * resources.getDimensionPixelSize(R.dimen.home_menu_padding)
+        val height = tileMenuHeight(bounds, panel.measuredWidth, panel.measuredHeight, room, gap, least)
+        if (height < panel.measuredHeight) measurePanel(room.right - room.left, height)   // whole rows that fit, scrolling
+        val placement = tileMenuPlacement(bounds, panel.measuredWidth, panel.measuredHeight, room, gap)
         window.attributes = window.attributes.apply {
             gravity = Gravity.TOP or Gravity.LEFT
             x = placement.left
             y = placement.top
+            // As measured, so the window's own layout gives the list the same room.
+            width = panel.measuredWidth
+            this.height = panel.measuredHeight
         }
+    }
+
+    private fun measurePanel(width: Int, height: Int) {
+        panel.measure(
+            View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.AT_MOST),
+            View.MeasureSpec.makeMeasureSpec(height, View.MeasureSpec.AT_MOST),
+        )
     }
 
     private fun label(action: AppAction): Int = when (action) {
         AppAction.Move -> R.string.home_menu_move
         AppAction.Hide -> R.string.home_menu_hide
+        AppAction.Info -> R.string.home_menu_info
     }
 
     private fun icon(action: AppAction): Int = when (action) {
         AppAction.Move -> UiR.drawable.icon_move
         AppAction.Hide -> UiR.drawable.icon_eye_off
+        AppAction.Info -> UiR.drawable.icon_info
+    }
+
+    private val location = IntArray(2)
+
+    private companion object {
+        /** An entry the device can't do: as the settings' dimmed entries (Delete all with no pictures). */
+        const val DIMMED = 0.4f
     }
 }
 

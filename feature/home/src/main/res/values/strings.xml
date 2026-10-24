@@ -13,6 +13,11 @@
     <string name="home_menu_move">Move</string>
     <!-- Hide: take the app off the home screen at once (Settings → Hide apps shows it again). -->
     <string name="home_menu_hide">Hide</string>
+    <!-- App info: open the app's page in the device's settings (its storage, permissions, force
+         stop, uninstall), as Android's own "App info". Dimmed where the device has no such page. -->
+    <string name="home_menu_info">App info</string>
+    <!-- A message, when App info was chosen but the device's settings no longer open the app's page. -->
+    <string name="home_menu_info_unavailable">App info isn\'t available on this device</string>
     <!-- While the user moves an app chosen in that menu: the top bar's title, and which keys do
          what. OK and Back are the remote's buttons; the arrows are its D-pad, and stay as they
          are. The D-pad moves the app; OK, or Back, puts it down where it is. -->

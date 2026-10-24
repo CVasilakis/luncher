@@ -28,8 +28,8 @@ feature/home/
     │   │   ├── AppTileView.kt    one app: its image, focus zoom with a frame or a lift and shadow; its name; held while moved
     │   │   ├── TilePaints.kt     what every tile draws with: frames, dimming, the name, the corners, the focus frame on or off, the shadow's outline
     │   │   ├── HomeWallpaper.kt  the wallpaper, the window's background, as the process's Wallpaper says; a window while it's drawn again
-    │   │   ├── TileMenu.kt       a tile's menu: the domain's AppActions for its app, in a window above or below it,
-    │   │   │                     its corners following the tiles'
+    │   │   ├── TileMenu.kt       a tile's menu: the domain's AppActions for its app, those the device can't do
+    │   │   │                     dimmed, in a window above, below or beside it, its corners following the tiles'
     │   │   └── MoveMode.kt       moving an app: keys to the domain's MoveSession, the top bar's title and hint
     │   └── res/                  the focused tile's zoom, or zoom and lift (animator/), the settings gear (its focus
     │                             disc is set in code, in the accent), home_activity.xml, the tile menu's layouts and theme
@@ -267,11 +267,24 @@ Up out of the tiles, where the gear is the one thing above.
 ## A tile's menu
 
 A long press of OK on an app's tile opens its menu (`TileMenu`), a small panel above the tile, or
-below it where there's no room above, centered on it inside the TV's overscan margin; where
-centered it would leave that margin (a row's first or last tile), its edge lines up with the
-tile's edge on that side. It lists
-what the user can do to that app, the first entry focused; OK on one closes the menu and does it,
-Back closes it. The tile stays focused and zoomed under it, so it's clear which app it's for.
+below it where there's no room above, centered on it inside the TV's overscan margin and below
+the top bar, so the clock, the date and the settings entry always show; where centered it would
+leave that margin (a row's first or last tile), its edge lines up with the tile's edge on that
+side. Where it fits neither above nor below (a longer menu, a short screen such as 720p at 320
+dpi), it goes beside the tile, on the side with more room, level with it. Where it fits whole
+nowhere (a middle column's tile on that screen, or more entries than the screen is tall), it
+takes the most room there is beside, above or below the tile, and its entries scroll in it as the
+settings panel's do (`LookAheadScrollView` in a `ScrollFrame`, [`ui/README.md`](../../ui/README.md#the-design-system)):
+whole rows, a row ahead of the focus, the list sliding under a focus that stays put, fading out
+where there's more. So it never covers its tile, but where not even two rows have room anywhere
+(a row's middle tile in the middle of that screen): there two rows, scrolling, on the roomier
+side, over the tile's edge by as little as they can. It lists
+what the user can do to that app, with no title, the first entry focused; OK on one closes the menu and does it,
+Back closes it. An entry the device can't do is listed all the same, dimmed as the settings'
+unavailable entries are, so the menu reads the same on every TV: the focus passes it by, and OK
+can't reach it. The tile stays focused and zoomed next to it, so it's clear which app it's for
+without a title; the app's name is for screen readers only, the menu's pane title (from API 28
+on), not the window's title, which would rename the window Android names after its activity.
 Its corners are as round as the tiles' (the appearance's corner radius), so it looks of a piece
 with them, up to a panel's 28 dp: a pill, or 32 dp, gets 28 dp, as rounder would make a small
 menu look like a pill; its entries' corners are concentric with its own where that's round
@@ -283,21 +296,26 @@ panel follows the tiles.
 |---|---|
 | Move | [moves the app](#moving-an-app); not offered while it's the only app shown |
 | Hide | hides the app at once, first among the hidden apps; the [Hide apps](../settings/README.md#hidden-apps) list shows it again |
+| App info | opens the app's page in the device's settings (its storage, permissions, force stop, uninstall), in a task of its own, as another app; Back returns to the home screen, which shows what changed there (an app uninstalled or disabled) as any change of the apps. Dimmed where the device has no such page, as on the Android TV 5.1 (API 22) emulator, whose settings have only the list of all apps. A settings app gone since the menu opened gets a message instead |
 
 | Part | Job |
 |---|---|
-| `AppAction`, `appActions` (`:domain`) | which actions there are, and which the menu of an app offers, in order |
-| `tileMenuPlacement` (`:domain`) | where the menu goes: above the tile as it's drawn (zoomed, its name below it), below where there's no room; across centered, or in line with the tile's edge where centered would leave the room |
+| `AppAction`, `appActions` (`:domain`) | which actions there are, and which the menu of an app lists, in order, each with whether it can be chosen (`AppMenuEntry.available`), from facts of the device it's given |
+| `AppInfoScreen` (`:domain`), `PackageManagerAppInfoScreen` (`:platform`) | whether the device has the page App info opens, asked as each menu opens, since a settings app can be disabled meanwhile |
+| `tileMenuPlacement` (`:domain`) | where the menu goes: above the tile as it's drawn (zoomed, its name below it), below where there's no room, across centered, or in line with the tile's edge where centered would leave the room; beside it, level with it, where it fits neither above nor below; `tileMenuHeight`: how tall it may be, the most room there is where it fits whole nowhere |
 | `AppTileView.focusedBounds` | where the tile is drawn on the screen while it has focus, for that rule |
-| `TileMenu` | the menu's window: the app's name as its title, an entry for each action with its icon and label from exhaustive `when`s over `AppAction`, placed where the rule says; in the theme's colors, its corners following the tiles' (`style`, `menuCorner`) |
-| `HomeActivity` | opens the menu on a long press, and does what an entry says, in an exhaustive `when` too: Move starts `MoveMode`, Hide stores the arrangement with the app hidden, which shows as any change of it does |
+| `TileMenu` | the menu's window: an entry for each action with its icon and label from exhaustive `when`s over `AppAction`, dimmed and out of the focus's way where it isn't available, placed where the rule says; in the theme's colors, its corners following the tiles' (`style`, `menuCorner`) |
+| `HomeActivity` | opens the menu on a long press, and does what an entry says, in an exhaustive `when` too: Move starts `MoveMode`, Hide stores the arrangement with the app hidden, which shows as any change of it does, App info starts the device's page for the app |
 
-A new action (the app's info in the device's settings, a picture of the user's own for its tile)
-is a type of `AppAction`, offered by `appActions`, which then doesn't compile in `:feature:home`
-until the menu has its label and icon, and `HomeActivity` what it does.
+A new action (a picture of the user's own for its tile) is a type of `AppAction`, listed by
+`appActions`, which then doesn't compile in `:feature:home` until the menu has its label and icon,
+and `HomeActivity` what it does. One the device may not be able to do is listed with
+`available` false rather than left out, from a fact `appActions` takes as a parameter, which
+`HomeActivity` reads from a port as the menu opens (App info: `AppInfoScreen`); one that only
+changes nothing in some state (Move, with one app shown) is left out.
 
 The menu is styled like the settings ([`ui/README.md`](../../ui/README.md#the-design-system)):
-its entries (`EntryText`) turn inverse while focused, keeping their size as a list's rows do,
+its entries (`ListEntry`, rows of a list) turn inverse while focused, keeping their size as a list's rows do,
 and it takes the theme's colors,
 light or dark, as the settings panel does. The home screen applies the theme as it follows the
 appearance (`showTheme`, only when the theme part changed): the accent on the tiles' focus frame

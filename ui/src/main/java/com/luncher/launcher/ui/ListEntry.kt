@@ -34,8 +34,18 @@ import com.luncher.domain.appearance.ColorRoles
 open class ListEntry @JvmOverloads constructor(context: Context, attrs: AttributeSet? = null) : LinearLayout(context, attrs), Themed {
 
     private val fill: Int
-    private val radius: Float
     private var styled: ColorRoles? = null
+
+    /**
+     * Its corners' radius, in px: `entryCorner`'s, or `corner_entry`'s; set, it's drawn with it
+     * from then on (a tile's menu, whose corners follow the tiles').
+     */
+    var corner: Float = 0f
+        set(value) {
+            if (value == field) return
+            field = value
+            styled?.let { styled = null; style(it) }
+        }
 
     /** The focused fill alone, drawn by its list where the focus is while the list slides. */
     private var focusFill: Drawable? = null
@@ -58,7 +68,7 @@ open class ListEntry @JvmOverloads constructor(context: Context, attrs: Attribut
     init {
         val a = context.obtainStyledAttributes(attrs, R.styleable.ListEntry)
         fill = a.getInt(R.styleable.ListEntry_fill, FILL_NONE)
-        radius = a.getDimension(R.styleable.ListEntry_entryCorner, resources.getDimension(R.dimen.corner_entry))
+        corner = a.getDimension(R.styleable.ListEntry_entryCorner, resources.getDimension(R.dimen.corner_entry))
         if (a.getBoolean(R.styleable.ListEntry_zooms, false)) {
             stateListAnimator = AnimatorInflater.loadStateListAnimator(context, R.animator.entry_zoom)
         }
@@ -68,6 +78,7 @@ open class ListEntry @JvmOverloads constructor(context: Context, attrs: Attribut
     override fun style(roles: ColorRoles) {
         if (roles == styled) return
         styled = roles
+        val radius = corner
         focusFill = roundRect(roles.inverseSurface, radius)
         background = stateBackground(
             focused = roundRect(roles.inverseSurface, radius),
@@ -87,7 +98,9 @@ open class ListEntry @JvmOverloads constructor(context: Context, attrs: Attribut
     // leave the list's height out.
     final override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         measureContent(widthMeasureSpec, heightMeasureSpec)
-        naturalHeight = measuredHeight
+        // A height its parent forces (a column as wide as its widest row measures them all again,
+        // each as tall as it was) isn't its own: only the first, for a row of a fixed height.
+        if (MeasureSpec.getMode(heightMeasureSpec) != MeasureSpec.EXACTLY || naturalHeight == 0) naturalHeight = measuredHeight
         val list = parent as? FittedRows ?: parent?.parent as? FittedRows ?: return
         if (list.rowHeight > 0) setMeasuredDimension(measuredWidth, maxOf(list.rowHeight, naturalHeight + list.rowExtra))
     }

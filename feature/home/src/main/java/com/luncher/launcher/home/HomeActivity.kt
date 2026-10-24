@@ -4,13 +4,16 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.ActivityNotFoundException
 import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.StateListDrawable
 import android.os.Bundle
+import android.provider.Settings
 import android.view.KeyEvent
 import android.view.View
 import android.widget.TextView
+import android.widget.Toast
 import android.window.OnBackInvokedDispatcher
 import com.luncher.domain.appearance.Appearance
 import com.luncher.domain.appearance.ThemeAppearance
@@ -30,7 +33,7 @@ import java.util.Locale
  * The home screen: the time, the date and a settings entry above the TV apps the user didn't hide,
  * as tiles; OK on a tile opens its app, OK on the settings entry (or the Menu key) opens the
  * settings panel. A long press of OK on a tile opens its [TileMenu], to move its app ([MoveMode],
- * which gets every key first while it's on) or hide it.
+ * which gets every key first while it's on), hide it, or open its info in the device's settings.
  *
  * How it looks follows the user's [Appearance] while it's shown: each part goes to the view that
  * draws it (the background to the window, [HomeWallpaper]), which compares it with what it has, so
@@ -41,6 +44,7 @@ class HomeActivity : Activity() {
     private val installedApps by lazy { graph.installedApps }
     private val arrangements by lazy { graph.appArrangements }
     private val images by lazy { graph.appImages }
+    private val appInfoScreen by lazy { graph.appInfoScreen }
     private val clock by lazy { graph.clock }
     private val appearanceSettings by lazy { graph.appearanceSettings }
     private lateinit var topBar: TopBarView
@@ -85,7 +89,7 @@ class HomeActivity : Activity() {
         val tile = it as AppTileView
         val menu = menu ?: TileMenu(this).also { menu = it }
         menu.style(colorRoles(shownTheme ?: appearanceSettings.read().theme), tiles.tileStyle.corners)
-        menu.show(tile, appActions(arranged, tile.app)) { action -> act(action, tile) }
+        menu.show(tile, appActions(arranged, tile.app, appInfoScreen.exists())) { action -> act(action, tile) }
         true
     }
 
@@ -218,6 +222,22 @@ class HomeActivity : Activity() {
             AppAction.Move -> move.start(arranged, tile)
             // Stored, and shown as any change of the arrangement is (showArrangement).
             AppAction.Hide -> arrangements.save(arranged.hide(tile.app).arrangement)
+            AppAction.Info -> openAppInfo(tile.app)
+        }
+    }
+
+    /**
+     * The app's page in the device's settings, in a task of its own, as any other app; Back from it
+     * returns here. The menu offered it only if the page exists (AppInfoScreen), which the
+     * intent's action and Uri must match; a settings app disabled since gets a message.
+     */
+    private fun openAppInfo(app: InstalledApp) {
+        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", app.launchable.packageName, null))
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        try {
+            startActivity(intent)
+        } catch (e: ActivityNotFoundException) {
+            Toast.makeText(this, R.string.home_menu_info_unavailable, Toast.LENGTH_SHORT).show()
         }
     }
 

@@ -25,6 +25,7 @@ platform/
     │   │   ├── apps/
     │   │   │   ├── PackageManagerInstalledApps.kt   InstalledApps on PackageManager, and LauncherApps for when apps change
     │   │   │   ├── PreferencesAppArrangements.kt    AppArrangements on SharedPreferences: the file and its format
+    │   │   │   ├── PackageManagerAppInfoScreen.kt   AppInfoScreen on PackageManager: whether an activity takes the intent App info starts
     │   │   │   ├── BannerImages.kt                  AppImages<Bitmap>: draws an app's Banner into a bitmap of the tile's size
     │   │   │   └── CachedBannerImages.kt            AppImages<Bitmap> in front of BannerImages: each tile's image kept in a file for the next start
     │   │   ├── clock/
@@ -237,3 +238,4 @@ it can read, so there a picture comes in through a share.
 | Element | Reason (don't remove without replacing it) |
 |---|---|
 | `<queries>` for `MAIN`+`LEANBACK_LAUNCHER` | Package visibility (targetSdk 30+): without it `PackageManagerInstalledApps` can't see other apps. Only TV apps: Luncher lists and draws nothing else, and starting an app needs no visibility, so a query for phone apps (`MAIN`+`LAUNCHER`) would only widen what it can see. |
+| `<queries>` for `APPLICATION_DETAILS_SETTINGS` with a `package:` Uri | Package visibility (targetSdk 30+): `PackageManagerAppInfoScreen` must see the settings app that shows an app's page, else App info would be dimmed though the page exists. On the emulators that app runs as the system, which every app can see anyway, but a TV's own settings app needn't; starting the page needs no visibility. |

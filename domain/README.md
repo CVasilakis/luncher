@@ -22,7 +22,8 @@ domain/src/
 │   │   ├── AppArrangements.kt   port: where the arrangement is kept, and when it changes
 │   │   ├── HomeApps.kt          rule: which apps the home screen shows, in which order, and which are hidden
 │   │   ├── ArrangedApps.kt      model and rules: the shown and hidden apps; hiding or showing one, and what to store
-│   │   ├── AppAction.kt         model and rule: what the user can do to an app from its tile's menu, one type each, and which the menu offers
+│   │   ├── AppAction.kt         model and rule: what the user can do to an app from its tile's menu, one type each, and which the menu lists, each available or not (AppMenuEntry)
+│   │   ├── AppInfoScreen.kt     port: whether the device has the page about an app in its settings, which App info opens
 │   │   └── Banner.kt            model and rule: which image a tile shows (the app's banner or its icon)
 │   ├── appearance/
 │   │   ├── Appearance.kt        model: how the home screen looks, as far as the user can change it, and Luncher's theme, in parts (docs/ARCHITECTURE.md#appearance)
@@ -78,12 +79,13 @@ domain/src/
 │       ├── TileGrid.kt          rule: the grid (rows of tiles as wide as a width; the short row first or last, at the left, centered or at the right; at the top, centered or at the bottom of a height; room below each row for the tiles' names), and moves in it
 │       ├── TileFocus.kt         rule: where each arrow takes the focus among the tiles: along the row, the nearest tile up or down, and back the way it came
 │       ├── TileLayouts.kt       rule: the layouts for a TileGeometry, in pixels at a density; picks the arrangement and placement
-│       ├── TileMenuPlacement.kt rule: where a tile's menu goes, above or below the tile, inside the screen's room
+│       ├── TileMenuPlacement.kt rule: where a tile's menu goes, above, below or beside the tile, inside the screen's room, clear of the tile; how tall it may be, scrolling where it fits whole nowhere
 │       └── TopBarLayout.kt      rule: which edge of the top bar each of its items is at, for a TopBarAppearance
 ├── test/kotlin/…/               unit tests (docs/TESTING.md), same packages as the code
 └── testFixtures/kotlin/…/       fakes of the ports, used by the tests of every module
     ├── apps/FakeInstalledApps.kt   fake of the InstalledApps port
     ├── apps/FakeAppArrangements.kt fake of the AppArrangements port: the arrangement in memory
+    ├── apps/FakeAppInfoScreen.kt   fake of the AppInfoScreen port: whether the page exists, as the test sets it
     ├── appearance/FakeAppearanceSettings.kt  fake of the AppearanceSettings port: the appearance in memory
     ├── appearance/AppearanceChanges.kt       each option at each value but its default, in a context that offers it: what the catalog-wide tests draw (SAMPLE_WALLPAPER for the background's, wide or tall)
     ├── clock/FakeClock.kt          fake of the Clock port: a fixed time the test moves

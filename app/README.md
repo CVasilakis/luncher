@@ -67,7 +67,7 @@ The intent filters are the app's to declare, as its entry points; how the home s
 behaves is declared with it, in [`:feature:home`](../feature/home/README.md#manifest), and the
 build merges the two; the share's, and the settings panels' entries, in
 [`:feature:settings`](../feature/settings/README.md#manifest); package visibility:
-[`:platform`](../platform/README.md#manifest) for the TV apps, `:feature:settings` for the home apps.
+[`:platform`](../platform/README.md#manifest) for the TV apps and the settings app's page about an app, `:feature:settings` for the home apps.
 
 ## Builds
 

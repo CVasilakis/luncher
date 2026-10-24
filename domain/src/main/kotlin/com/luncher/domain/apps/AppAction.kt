@@ -12,13 +12,29 @@ sealed interface AppAction {
 
     /** Hides the app from the home screen; the settings' Hide apps list shows it again. */
     data object Hide : AppAction
+
+    /** Opens the app's page in the device's settings ([AppInfoScreen]). */
+    data object Info : AppAction
 }
 
 /**
- * The actions the menu of [app], one of [arranged]'s shown apps, offers, in its order. Only those
- * that change something: with no other app shown, there's nowhere to move it.
+ * An entry of a tile's menu: its [action], and whether the user can choose it. One the device
+ * can't do ([available] false) is still listed, dimmed, so the menu looks the same on every
+ * device and says what's missing; the focus passes it by.
  */
-fun appActions(arranged: ArrangedApps, app: InstalledApp): List<AppAction> {
+data class AppMenuEntry(val action: AppAction, val available: Boolean = true)
+
+/**
+ * The entries the menu of [app], one of [arranged]'s shown apps, lists, in its order: Move, Hide,
+ * App info. Move only where it changes something: with no other app shown, there's nowhere to move
+ * it, so it isn't listed. App info is listed always, available where the device has the app's
+ * page in its settings ([hasAppInfo], [AppInfoScreen.exists]).
+ */
+fun appActions(arranged: ArrangedApps, app: InstalledApp, hasAppInfo: Boolean): List<AppMenuEntry> {
     require(app in arranged.shown) { "not shown: ${app.launchable}" }
-    return if (arranged.shown.size > 1) listOf(AppAction.Move, AppAction.Hide) else listOf(AppAction.Hide)
+    return listOfNotNull(
+        AppMenuEntry(AppAction.Move).takeIf { arranged.shown.size > 1 },
+        AppMenuEntry(AppAction.Hide),
+        AppMenuEntry(AppAction.Info, available = hasAppInfo),
+    )
 }

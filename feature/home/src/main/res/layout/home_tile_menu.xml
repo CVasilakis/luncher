@@ -1,35 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- A tile's menu: the app's name, then its entries, one below the other, which TileMenu adds. As
-     wide as the longest entry, and at least home_menu_width. A margin around the entries, which
-     their corners follow (TileMenu). -->
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<!-- A tile's menu: its entries, one below the other, which TileMenu adds; no title, as the tile
+     beside it, focused, says which app it's for. As wide as the longest entry, and at least
+     home_menu_width. A margin around the entries, inside the list, which their corners follow
+     (TileMenu). Where the screen has no room for them all beside the tile, they scroll a row ahead
+     of the focus, fading out where there's more, as the settings panel's do; the frame's corners
+     are the menu's (TileMenu). -->
+<com.luncher.launcher.ui.ScrollFrame xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/home_tile_menu_frame"
     android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:clipChildren="false"
-    android:clipToPadding="false"
-    android:minWidth="@dimen/home_menu_width"
-    android:orientation="vertical"
-    android:padding="@dimen/home_menu_padding">
+    android:layout_height="wrap_content">
 
-    <com.luncher.launcher.ui.ThemedText
-        android:id="@+id/home_tile_menu_title"
-        android:layout_width="match_parent"
+    <com.luncher.launcher.ui.LookAheadScrollView
+        android:id="@+id/home_tile_menu_scroll"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:ellipsize="end"
-        android:fontFamily="sans-serif-medium"
-        android:paddingLeft="@dimen/home_menu_entry_padding"
-        android:paddingTop="@dimen/home_menu_title_padding_top"
-        android:paddingRight="@dimen/home_menu_entry_padding"
-        android:paddingBottom="@dimen/home_menu_title_padding_bottom"
-        android:singleLine="true"
-        android:textSize="@dimen/text_label"
-        app:colorRole="onSurfaceVariant" />
+        android:scrollbars="none">
 
-    <LinearLayout
-        android:id="@+id/home_tile_menu"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:clipChildren="false"
-        android:orientation="vertical" />
-</LinearLayout>
+        <LinearLayout
+            android:id="@+id/home_tile_menu"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:clipChildren="false"
+            android:clipToPadding="false"
+            android:minWidth="@dimen/home_menu_width"
+            android:orientation="vertical"
+            android:padding="@dimen/home_menu_padding" />
+    </com.luncher.launcher.ui.LookAheadScrollView>
+</com.luncher.launcher.ui.ScrollFrame>

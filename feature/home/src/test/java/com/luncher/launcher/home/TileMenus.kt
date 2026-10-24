@@ -2,24 +2,28 @@ package com.luncher.launcher.home
 
 import android.widget.LinearLayout
 import android.widget.TextView
+import com.luncher.launcher.ui.ListEntry
 import org.robolectric.shadows.ShadowDialog
 
 /** The tile menu that shows now, or null. */
 internal fun shownMenu(): TileMenu? = (ShadowDialog.getLatestDialog() as? TileMenu)?.takeIf { it.isShowing }
 
 /** The menu's entries, in order. */
-internal fun TileMenu.entries(): List<TextView> {
+internal fun TileMenu.entries(): List<ListEntry> {
     val list = findViewById<LinearLayout>(R.id.home_tile_menu)
-    return (0 until list.childCount).map { list.getChildAt(it) as TextView }
+    return (0 until list.childCount).map { list.getChildAt(it) as ListEntry }
 }
 
+/** An entry's label, the text in it. */
+internal val ListEntry.label: TextView get() = findViewById(R.id.home_tile_menu_label)
+
 /** The menu's entries' labels, in order. */
-internal fun TileMenu.labels(): List<String> = entries().map { it.text.toString() }
+internal fun TileMenu.labels(): List<String> = entries().map { it.label.text.toString() }
 
 /** Starts moving this tile's app, as a long press of OK on it and then Move in its menu would. */
 internal fun AppTileView.startMoving() {
     requestFocus()
     performLongClick()
     val menu = checkNotNull(shownMenu()) { "no menu" }
-    menu.entries().single { it.text == context.getString(R.string.home_menu_move) }.performClick()
+    menu.entries().single { it.label.text == context.getString(R.string.home_menu_move) }.performClick()
 }

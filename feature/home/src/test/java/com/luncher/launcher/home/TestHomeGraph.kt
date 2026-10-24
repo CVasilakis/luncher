@@ -18,7 +18,9 @@ import com.luncher.domain.appearance.TileGeometry
 import com.luncher.domain.appearance.VerticalAlignment
 import com.luncher.domain.apps.AppArrangements
 import com.luncher.domain.apps.AppImages
+import com.luncher.domain.apps.AppInfoScreen
 import com.luncher.domain.apps.FakeAppArrangements
+import com.luncher.domain.apps.FakeAppInfoScreen
 import com.luncher.domain.apps.FakeInstalledApps
 import com.luncher.domain.apps.InstalledApps
 import com.luncher.domain.clock.Clock
@@ -54,6 +56,7 @@ open class TestHomeGraph(context: Context) : HomeGraph {
     override val installedApps: InstalledApps = FakeInstalledApps()
     override val appArrangements: AppArrangements = FakeAppArrangements()
     override val appImages: AppImages<Bitmap> = BannerImages(context)
+    override val appInfoScreen: AppInfoScreen = FakeAppInfoScreen()
     override val clock: Clock = FakeClock()
     override val appearanceSettings: AppearanceSettings = FakeAppearanceSettings(Appearance(topLeftTiles))
 

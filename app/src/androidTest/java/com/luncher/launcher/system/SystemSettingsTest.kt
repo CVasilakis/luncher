@@ -13,9 +13,9 @@ import com.luncher.launcher.LuncherApplication
 import com.luncher.launcher.settings.R
 import com.luncher.launcher.settings.SettingsActivity
 import com.luncher.launcher.testing.RetryWhenCovered
-import com.luncher.launcher.testing.crashSince
 import com.luncher.launcher.testing.focus
 import com.luncher.launcher.testing.resolvedActivity
+import com.luncher.launcher.testing.sayingWhetherItCrashed
 import com.luncher.launcher.testing.waitForFocus
 import com.luncher.launcher.testing.waitForHomeScreen
 import org.junit.After
@@ -73,22 +73,6 @@ class SystemSettingsTest {
         device.pressBack()
 
         assertTrue("Back didn't return to the panel", device.wait(Until.hasObject(systemSettingsEntry), TIMEOUT_MS))
-    }
-
-    /**
-     * Runs [check], and if it fails after the device's settings app ([settings]) crashed (since
-     * [since], the device's clock), fails saying so, with the crash's first line: on a starved
-     * tv_api36, Android TV 16's own Settings app crashes as it starts (docs/INSTRUMENTED-TESTS.md),
-     * and a failed wait alone doesn't tell that from Luncher not opening it. Not run again: a retry
-     * would hide a real failure, and this one is the device's bug.
-     */
-    private inline fun sayingWhetherItCrashed(settings: String, since: Long, check: () -> Unit) {
-        try {
-            check()
-        } catch (e: AssertionError) {
-            val crash = crashSince(settings, since) ?: throw e
-            throw AssertionError("${e.message}: the device's settings app ($settings) crashed (adb logcat -b crash): $crash", e)
-        }
     }
 
     private companion object {

@@ -13,19 +13,30 @@ class LookAheadScrollViewTest {
 
     private val context = RuntimeEnvironment.getApplication()
 
-    /** A column of rows [heights] px tall, in a margin of [margin] px, measured [width] px wide in at most [room] px. */
-    private fun measured(heights: List<Int>, margin: Int = 8, room: Int, width: Int = 400): LookAheadScrollView {
+    /**
+     * A column of rows [heights] px tall, in a margin of [margin] px, measured [width] px wide in at
+     * most [room] px, twice; with [asWideAsItsRows], the column and the list as wide as the widest row
+     * (a tile's menu), at most [width].
+     */
+    private fun measured(heights: List<Int>, margin: Int = 8, room: Int, width: Int = 400, asWideAsItsRows: Boolean = false): LookAheadScrollView {
         val column = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(0, margin, 0, margin)
+            minimumWidth = 200
         }
-        for (height in heights) column.addView(ListEntry(context).apply { minimumHeight = height })
+        for (height in heights) {
+            column.addView(ListEntry(context).apply { minimumHeight = height }, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT))
+        }
         val scroll = LookAheadScrollView(context)
-        scroll.addView(column)
-        scroll.measure(
-            View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
-            View.MeasureSpec.makeMeasureSpec(room, View.MeasureSpec.AT_MOST),
-        )
+        val wrap = android.view.ViewGroup.LayoutParams.WRAP_CONTENT
+        scroll.addView(column, android.widget.FrameLayout.LayoutParams(if (asWideAsItsRows) wrap else LinearLayout.LayoutParams.MATCH_PARENT, wrap))
+        // Twice, as Android often does (a window's layout after a measure of its own): the same.
+        repeat(2) {
+            scroll.measure(
+                View.MeasureSpec.makeMeasureSpec(width, if (asWideAsItsRows) View.MeasureSpec.AT_MOST else View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(room, View.MeasureSpec.AT_MOST),
+            )
+        }
         return scroll
     }
 
@@ -56,5 +67,17 @@ class LookAheadScrollViewTest {
 
         assertEquals(listOf(100, 104, 104), scroll.rows)
         assertEquals(308 + 16, scroll.measuredHeight)
+    }
+
+    // Such a column measures its rows a second time, each as tall as it was: that height isn't the
+    // row's own, else the list takes the fitted height for the usual row, and leaves the rows as
+    // they were.
+    @Test
+    fun `rows of a column as wide as its widest row fill the window whole too`() {
+        val scroll = measured(listOf(104, 104, 104), room = 244 + 16 - 40, asWideAsItsRows = true)
+
+        assertEquals(listOf(scroll.rows[0]), scroll.rows.distinct())
+        assertEquals(0, (scroll.measuredHeight - 16) % scroll.rows[0])
+        assertEquals(true, scroll.rows[0] < 104)
     }
 }

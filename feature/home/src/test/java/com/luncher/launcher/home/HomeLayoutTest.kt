@@ -17,8 +17,11 @@ import com.luncher.domain.appearance.TileGeometry
 import com.luncher.domain.appearance.TileStyle
 import com.luncher.domain.appearance.TopBarAppearance
 import com.luncher.domain.appearance.VerticalAlignment
+import com.luncher.domain.apps.AppAction
 import com.luncher.domain.apps.AppArrangement
+import com.luncher.domain.apps.AppMenuEntry
 import com.luncher.domain.apps.FakeAppArrangements
+import com.luncher.domain.apps.FakeAppInfoScreen
 import com.luncher.domain.apps.FakeInstalledApps
 import com.luncher.domain.apps.FakeInstalledApps.Companion.app
 import com.luncher.domain.clock.FakeClock
@@ -57,7 +60,8 @@ import com.luncher.launcher.ui.R as UiR
 /**
  * The home screen's layout on every screen of [TV_SCREENS], in every language: everything inside
  * the TV's overscan margin, nothing overlapping, no text cut, and tiles of about the size they're
- * meant to be. With the longest time and date the language has, 12 apps shown and 3 hidden.
+ * meant to be; a tile's menu too. With the longest time and date the language has, 12 apps shown
+ * and 3 hidden.
  */
 @RunWith(ParameterizedRobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)   // real text widths; without it a character is 1 px wide
@@ -80,6 +84,7 @@ class HomeLayoutTest(private val screen: TvScreen) {
 
     private val appearance = FakeAppearanceSettings()
     private val stored = FakeStoredWallpaper<Bitmap>()
+    private val appInfo = FakeAppInfoScreen()
 
     @After
     fun restoreLocale() = Locale.setDefault(defaultLocale)
@@ -98,6 +103,7 @@ class HomeLayoutTest(private val screen: TvScreen) {
             override val clock = longestDate().let { FakeClock(FakeClock.at(it.year, it.monthValue, it.dayOfMonth, 23, 55, uses24Hour = false)) }   // "11:55 PM"
             override val appearanceSettings = this@HomeLayoutTest.appearance
             override val storedWallpaper = this@HomeLayoutTest.stored
+            override val appInfoScreen = this@HomeLayoutTest.appInfo
         }
     }
 
@@ -218,6 +224,78 @@ class HomeLayoutTest(private val screen: TvScreen) {
         // The title may end in "…" where a language's title and hint don't both fit, never the hint.
         assertWhole(screen, hint)
         activity.checkTiles()
+    }
+
+    /**
+     * The menu of [tile], opened as a long press of OK would, the tile's zoom done, with its
+     * entries, or [entries] instead: inside the overscan margin (across, or in line with the zoomed
+     * tile's edge) and below the top bar, clear of the tile as it's drawn (above, below or beside
+     * it), its entries' labels whole, and the entries it doesn't show whole reached by scrolling.
+     */
+    private fun HomeActivity.checkMenu(tile: AppTileView, entries: List<AppMenuEntry>? = null) {
+        tile.requestFocus()
+        tile.performLongClick()
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofSeconds(1))
+        val menu = checkNotNull(shownMenu()) { "no menu for ${tile.app.label} on $screen" }
+        if (entries != null) {
+            menu.show(tile, entries) {}
+            shadowOf(Looper.getMainLooper()).idle()
+        }
+        val window = checkNotNull(menu.window)
+        // A window of its own, which Robolectric doesn't place: where and as big as TileMenu made it.
+        val x = window.attributes.x.toFloat()
+        val y = window.attributes.y.toFloat()
+        val bounds = RectF(x, y, x + window.attributes.width, y + window.attributes.height)
+        val area = safeArea()
+        val topBar = bounds(findViewById(R.id.home_top_bar))
+        val what = "the menu of ${tile.app.label}, ${menu.entries().size} entries"
+        val drawn = tile.focusedBounds().let { RectF(it.left.toFloat(), it.top.toFloat(), it.right.toFloat(), it.bottom.toFloat()) }
+
+        // Across, a row's first or last tile's menu is in line with its edge, as far past the
+        // margin as the tile's zoom.
+        assertInside(screen, RectF(minOf(area.left, drawn.left), maxOf(area.top, topBar.bottom), maxOf(area.right, drawn.right), area.bottom), what, bounds)
+        assertApart(screen, "$what and its tile", bounds, drawn)
+        for (entry in menu.entries()) assertWhole(screen, entry.label)
+        // What doesn't show scrolls: the list's window and the rows it holds.
+        val scroll = menu.findViewById<View>(R.id.home_tile_menu_scroll)
+        val column = menu.findViewById<View>(R.id.home_tile_menu)
+        assertTrue("$what: the list ${scroll.height} px of ${column.height} px, doesn't scroll on $screen", scroll.height >= column.height || scroll.canScrollVertically(1))
+        menu.dismiss()
+    }
+
+    /** The tiles whose menus are checked: a row's first, middle and last, the next row's middle, and the last one. */
+    private fun HomeActivity.menuTiles(): List<AppTileView> {
+        val tiles = visibleTiles()
+        val rows = tiles.groupBy { bounds(it).top }.values.toList()
+        val second = rows.getOrNull(1)
+        return listOfNotNull(rows[0].first(), rows[0][rows[0].size / 2], rows[0].last(), second?.get(second.size / 2), tiles.last()).distinct()
+    }
+
+    // Above a tile where there's room, below it in the first row, beside it on a short screen, or
+    // scrolling where the whole menu fits nowhere.
+    @Test
+    fun `a tile's menu fits`() {
+        val activity = start()
+
+        for (tile in activity.menuTiles()) activity.checkMenu(tile)
+    }
+
+    // App info dimmed: as wide and tall, so it fits alike.
+    @Test
+    fun `a tile's menu fits with App info dimmed`() {
+        appInfo.exists = false
+
+        `a tile's menu fits`()
+    }
+
+    // More entries than the menu has today (later actions): taller than some screens' room, so
+    // beside the tile or scrolling.
+    @Test
+    fun `a tile's menu of six entries fits`() {
+        val activity = start()
+        val six = listOf(AppAction.Move, AppAction.Hide, AppAction.Info, AppAction.Move, AppAction.Hide, AppAction.Info).map { AppMenuEntry(it) }
+
+        for (tile in activity.menuTiles()) activity.checkMenu(tile, six)
     }
 
     // A wallpaper drawn again, for either reason: its window's message whole, inside the screen.

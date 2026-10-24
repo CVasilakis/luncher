@@ -117,12 +117,12 @@ fun waitForHomeScreen(timeoutMs: Long = HOME_TIMEOUT_MS, otherAppTimeoutMs: Long
 private fun resolvedHomeActivity(): String? = resolvedActivity(Intent.ACTION_MAIN, Intent.CATEGORY_HOME)
 
 /**
- * The activity an intent with [action] (and [category]) resolves to, from API 24 on, e.g.
- * com.android.tv.settings/.MainSettings for android.settings.SETTINGS.
+ * The activity an intent with [action] (and [category], and [data], a Uri) resolves to, from API
+ * 24 on, e.g. com.android.tv.settings/.MainSettings for android.settings.SETTINGS.
  */
-fun resolvedActivity(action: String, category: String? = null): String? =
+fun resolvedActivity(action: String, category: String? = null, data: String? = null): String? =
     // The last line is the activity.
-    shell("cmd package resolve-activity --brief -a $action" + (category?.let { " -c $it" } ?: ""))
+    shell("cmd package resolve-activity --brief -a $action" + (category?.let { " -c $it" } ?: "") + (data?.let { " -d $it" } ?: ""))
         .lines().lastOrNull { it.isNotBlank() }?.trim()?.takeIf { '/' in it }
 
 /**

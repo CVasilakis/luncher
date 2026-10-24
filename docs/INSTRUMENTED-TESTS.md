@@ -294,9 +294,10 @@ as the home screen on API 22 and 23 is checked by hand
   and press Home.
 - **Android TV 16's Settings crashing on `tv_api36` starved of CPU,** as it opens (a
   `NullPointerException` in `MainFragment.onSuggestionReady`, on a launch after the first, from
-  its cached process), also without Luncher, opened from the shell. `SystemSettingsTest` then
-  fails, saying that the device's settings app crashed, with the crash's first line from
-  `adb logcat -b crash`. It doesn't run the test again: a retry would hide a real failure too. Run
+  its cached process), also without Luncher, opened from the shell. `SystemSettingsTest`, or
+  `AppInfoTest` (an app's page there), then fails, saying that the device's settings app crashed,
+  with the crash's first line from `adb logcat -b crash` (`sayingWhetherItCrashed`, `Crashes.kt`).
+  It doesn't run the test again: a retry would hide a real failure too. Run
   the test again, or on an emulator with CPU to spare.
 
 ## In CI
