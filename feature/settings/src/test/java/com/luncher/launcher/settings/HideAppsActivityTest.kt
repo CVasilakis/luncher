@@ -24,6 +24,7 @@ import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 import org.robolectric.shadows.ShadowChoreographer
 import java.time.Duration
+import com.luncher.launcher.ui.R as UiR
 
 @RunWith(RobolectricTestRunner::class)
 @Config(qualifiers = "en-rUS-$TV_1080P")
@@ -125,7 +126,7 @@ class HideAppsActivityTest {
     }
 
     /** A row and the gap below it. */
-    private fun HideAppsActivity.row() = resources.getDimensionPixelSize(R.dimen.settings_row_height) + resources.getDimensionPixelSize(R.dimen.settings_entry_gap)
+    private fun HideAppsActivity.row() = resources.getDimensionPixelSize(UiR.dimen.row_height) + resources.getDimensionPixelSize(UiR.dimen.entry_gap)
 
     /** The panel laid out in its side sheet, as Android lays out the sheet's window. */
     private fun HideAppsActivity.layOutInSheet(): ViewGroup {

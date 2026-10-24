@@ -18,7 +18,7 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="@dimen/settings_zoom_room_horizontal"
         android:layout_marginEnd="@dimen/settings_zoom_room_horizontal"
-        android:layout_marginBottom="@dimen/settings_title_gap"
+        android:layout_marginBottom="@dimen/title_gap"
         android:includeFontPadding="false"
         android:text="@string/settings_title"
         android:textSize="@dimen/text_title" />

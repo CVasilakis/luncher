@@ -10,6 +10,7 @@ import com.luncher.domain.pictures.PictureUse
 import com.luncher.domain.pictures.ReceivedPictures.Outcome
 import com.luncher.domain.pictures.SizeLimit
 import com.luncher.domain.pictures.wasInLibrary
+import com.luncher.launcher.ui.Badge
 import com.luncher.launcher.ui.R as UiR
 
 // What the pictures' screens call things, in the user's language.

@@ -41,6 +41,32 @@
     <!-- An outlined button's edge (Delete all, Reset to defaults); an open field's (ListEntry). -->
     <dimen name="outline">1.5dp</dimen>
     <dimen name="open_field_edge">2dp</dimen>
+    <!-- An entry of the menus and settings: its padding at the sides, the gap after its icon; a
+         row of a list or a menu (Hide apps, a picture's actions), as tall as an entry at least;
+         the gap between entries one below the other; between buttons side by side (EntriesRow).
+         Between a panel's title and its first entry (smaller on a screen less than 450 dp tall,
+         720p at the 1080p density; values-h450dp has every other screen's). -->
+    <dimen name="entry_padding">16dp</dimen>
+    <dimen name="entry_icon_gap">16dp</dimen>
+    <dimen name="row_height">52dp</dimen>
+    <dimen name="entry_gap">4dp</dimen>
+    <dimen name="buttons_gap">16dp</dimen>
+    <dimen name="title_gap">10dp</dimen>
+    <!-- A dialog (Dialogs.kt, and the window after a share, which looks like one): its width at
+         most, its padding, its margin from the screen's edges at least; its mark (Badge), the
+         icon's padding in it, the gap to the title; the gap below the title, its text's size, the
+         gap above the buttons; the name field's padding above and below its text, its edge. -->
+    <dimen name="dialog_width">460dp</dimen>
+    <dimen name="dialog_padding">28dp</dimen>
+    <dimen name="dialog_margin">32dp</dimen>
+    <dimen name="badge">40dp</dimen>
+    <dimen name="badge_padding">9dp</dimen>
+    <dimen name="badge_gap">16dp</dimen>
+    <dimen name="dialog_text_gap">12dp</dimen>
+    <dimen name="dialog_text">16sp</dimen>
+    <dimen name="dialog_buttons_gap">28dp</dimen>
+    <dimen name="name_field_padding_vertical">12dp</dimen>
+    <dimen name="name_field_edge">2dp</dimen>
     <!-- A scrolling list's fade into its container, at an end with more beyond it (ScrollFrame);
          less than a row, which the focus keeps away from the end. -->
     <dimen name="scroll_fade">40dp</dimen>

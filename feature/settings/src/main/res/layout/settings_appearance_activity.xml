@@ -43,7 +43,7 @@
             android:layout_height="wrap_content" />
 
         <!-- Side by side, half the row each; one below the other when either doesn't fit its half (EntriesRow). -->
-        <com.luncher.launcher.settings.EntriesRow
+        <com.luncher.launcher.ui.EntriesRow
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/settings_screen_gap"
@@ -54,18 +54,18 @@
             <!-- Opens the background editor, where the picture and its options are saved together. -->
             <com.luncher.launcher.ui.PillButton
                 android:id="@+id/settings_appearance_background"
-                style="@style/Widget.Luncher.Settings.Button"
+                style="@style/Widget.Luncher.Button"
                 android:drawableStart="@drawable/icon_image"
                 android:text="@string/settings_appearance_background"
                 app:kind="tonal" />
 
             <com.luncher.launcher.ui.PillButton
                 android:id="@+id/settings_appearance_reset"
-                style="@style/Widget.Luncher.Settings.Button"
+                style="@style/Widget.Luncher.Button"
                 android:drawableStart="@drawable/icon_reset"
                 android:text="@string/settings_appearance_reset"
                 app:kind="danger" />
-        </com.luncher.launcher.settings.EntriesRow>
+        </com.luncher.launcher.ui.EntriesRow>
     </com.luncher.launcher.settings.EditorStartColumn>
 
     <!-- AppearanceActivity sets the width: settings_appearance_options_width, or half the screen.

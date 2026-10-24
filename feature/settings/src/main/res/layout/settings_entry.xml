@@ -10,9 +10,9 @@
     android:gravity="center_vertical"
     android:minHeight="@dimen/settings_entry_min_height"
     android:orientation="horizontal"
-    android:paddingLeft="@dimen/settings_entry_padding"
+    android:paddingLeft="@dimen/entry_padding"
     android:paddingTop="@dimen/settings_entry_padding_vertical"
-    android:paddingRight="@dimen/settings_entry_padding"
+    android:paddingRight="@dimen/entry_padding"
     android:paddingBottom="@dimen/settings_entry_padding_vertical">
 
     <com.luncher.launcher.ui.ThemedIcon
@@ -27,8 +27,8 @@
         android:id="@+id/settings_entry_title"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="@dimen/settings_entry_icon_gap"
-        android:layout_marginEnd="@dimen/settings_entry_icon_gap"
+        android:layout_marginStart="@dimen/entry_icon_gap"
+        android:layout_marginEnd="@dimen/entry_icon_gap"
         android:layout_weight="1"
         android:duplicateParentState="true"
         android:ellipsize="end"

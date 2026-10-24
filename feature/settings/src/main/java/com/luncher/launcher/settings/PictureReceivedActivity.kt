@@ -14,6 +14,7 @@ import android.widget.TextView
 import android.window.OnBackInvokedDispatcher
 import com.luncher.domain.pictures.ImportResult
 import com.luncher.domain.pictures.ReceivedPictures.Outcome
+import com.luncher.launcher.ui.Badge
 import com.luncher.launcher.ui.PillButton
 import com.luncher.launcher.ui.ShortestShowing
 import com.luncher.launcher.ui.styleAll
@@ -319,7 +320,7 @@ class PictureReceivedActivity : Activity() {
     }
 
     private fun button(label: String, kind: Int, ok: () -> Unit) {
-        val view = layoutInflater.inflate(R.layout.settings_pictures_button, entries, false) as PillButton
+        val view = layoutInflater.inflate(UiR.layout.dialog_button, entries, false) as PillButton
         view.text = label
         view.kind = kind
         view.setOnClickListener { ok() }

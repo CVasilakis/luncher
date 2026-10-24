@@ -6,7 +6,6 @@
     <dimen name="settings_sheet_margin">24dp</dimen>
     <dimen name="settings_sheet_padding_top">32dp</dimen>
     <dimen name="settings_sheet_padding_bottom">24dp</dimen>
-    <dimen name="settings_title_gap">16dp</dimen>
     <dimen name="settings_entry_padding_vertical">8dp</dimen>
     <dimen name="settings_pictures_margin_vertical">32dp</dimen>
     <dimen name="settings_pictures_title_gap">24dp</dimen>

@@ -179,8 +179,8 @@ class AddFromFolderActivityTest {
         shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(WorkingDialog.SHORTEST))
 
         assertFalse(activity.isFinishing)
-        assertEquals("Picture not added", ShadowDialog.getLatestDialog().findViewById<TextView>(R.id.settings_pictures_dialog_title).text.toString())
-        assertEquals("The file isn't a picture, or it's damaged.", ShadowDialog.getLatestDialog().findViewById<TextView>(R.id.settings_pictures_dialog_text).text.toString())
+        assertEquals("Picture not added", ShadowDialog.getLatestDialog().findViewById<TextView>(UiR.id.dialog_title).text.toString())
+        assertEquals("The file isn't a picture, or it's damaged.", ShadowDialog.getLatestDialog().findViewById<TextView>(UiR.id.dialog_text).text.toString())
     }
 
     @Test
@@ -252,9 +252,9 @@ class AddFromFolderActivityTest {
         assertTrue(dialog.isShowing)
         assertEquals(
             "This TV can't show this HEIF (HEIC) picture. Save it as JPEG or PNG, then add it again.",
-            dialog.findViewById<TextView>(R.id.settings_pictures_dialog_text).text.toString(),
+            dialog.findViewById<TextView>(UiR.id.dialog_text).text.toString(),
         )
-        assertEquals(1, dialog.findViewById<LinearLayout>(R.id.settings_pictures_dialog_entries).childCount)
+        assertEquals(1, dialog.findViewById<LinearLayout>(UiR.id.dialog_entries).childCount)
     }
 
     @Test
@@ -367,8 +367,8 @@ class AddFromFolderActivityTest {
         activity.list().performItemClick(null, 0, 0)
         shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(WorkingDialog.SHORTEST))
 
-        assertEquals("Picture not added", ShadowDialog.getLatestDialog().findViewById<TextView>(R.id.settings_pictures_dialog_title).text.toString())
-        assertEquals("Not enough free storage on this TV. Free up space, then try again.", ShadowDialog.getLatestDialog().findViewById<TextView>(R.id.settings_pictures_dialog_text).text.toString())
+        assertEquals("Picture not added", ShadowDialog.getLatestDialog().findViewById<TextView>(UiR.id.dialog_title).text.toString())
+        assertEquals("Not enough free storage on this TV. Free up space, then try again.", ShadowDialog.getLatestDialog().findViewById<TextView>(UiR.id.dialog_text).text.toString())
         assertEquals(listOf("holiday.jpg | USB drive · 4000 × 3000 · 2.4 MB"), activity.rows())
         assertTrue(activity.addAll().isFocusable)
     }
@@ -404,10 +404,10 @@ class AddFromFolderActivityTest {
     /** The message showing: its title, text and entries. */
     private fun message(): Triple<String, String, List<TextView>> {
         val dialog = ShadowDialog.getLatestDialog().also { assertTrue(it.isShowing) }
-        val entries = dialog.findViewById<LinearLayout>(R.id.settings_pictures_dialog_entries)
+        val entries = dialog.findViewById<LinearLayout>(UiR.id.dialog_entries)
         return Triple(
-            dialog.findViewById<TextView>(R.id.settings_pictures_dialog_title).text.toString(),
-            dialog.findViewById<TextView>(R.id.settings_pictures_dialog_text).text.toString(),
+            dialog.findViewById<TextView>(UiR.id.dialog_title).text.toString(),
+            dialog.findViewById<TextView>(UiR.id.dialog_text).text.toString(),
             (0 until entries.childCount).map { entries.getChildAt(it) as TextView },
         )
     }
@@ -649,7 +649,7 @@ class AddFromFolderActivityTest {
 
             assertFalse(activity.isFinishing)
             val dialog = ShadowDialog.getLatestDialog()
-            assertEquals(message, dialog.findViewById<TextView>(R.id.settings_pictures_dialog_title).text.toString() to dialog.findViewById<TextView>(R.id.settings_pictures_dialog_text).text.toString())
+            assertEquals(message, dialog.findViewById<TextView>(UiR.id.dialog_title).text.toString() to dialog.findViewById<TextView>(UiR.id.dialog_text).text.toString())
         }
         assertEquals(emptyList<Any>(), known.added)
         graph.jobs.runAll()

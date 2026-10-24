@@ -12,6 +12,9 @@ import com.luncher.domain.appearance.Appearance
 import com.luncher.domain.appearance.AppearanceTopic
 import com.luncher.domain.appearance.OptionContext
 import com.luncher.domain.appearance.appearanceOptions
+import com.luncher.launcher.ui.Badge
+import com.luncher.launcher.ui.DialogButton
+import com.luncher.launcher.ui.MessageDialog
 import com.luncher.launcher.ui.styleScreen
 import com.luncher.launcher.ui.R as UiR
 
@@ -131,7 +134,7 @@ class AppearanceActivity : Activity() {
         if (appearance == Appearance()) return
         val text = if (appearance.background.picture != null) R.string.settings_appearance_reset_text_background else R.string.settings_appearance_reset_text
         dialog?.dismiss()
-        dialog = PicturesDialog(
+        dialog = MessageDialog(
             this,
             theme.roles,
             getString(R.string.settings_appearance_reset_question),

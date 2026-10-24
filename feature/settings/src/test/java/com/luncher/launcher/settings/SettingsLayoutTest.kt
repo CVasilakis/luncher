@@ -20,6 +20,7 @@ import com.luncher.domain.apps.FakeInstalledApps.Companion.app
 import com.luncher.launcher.testing.TV_SCREENS
 import com.luncher.launcher.testing.TV_SCREENS_IN_EVERY_LANGUAGE
 import com.luncher.launcher.testing.TvScreen
+import com.luncher.launcher.testing.assertDialogFits
 import com.luncher.launcher.testing.assertApart
 import com.luncher.launcher.testing.assertWhole
 import com.luncher.launcher.testing.bounds
@@ -36,6 +37,7 @@ import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
+import com.luncher.launcher.ui.R as UiR
 
 /**
  * The settings panels' layout on every screen of [TV_SCREENS], in every language: each panel
@@ -113,7 +115,7 @@ class SettingsLayoutTest(private val screen: TvScreen) {
     fun `Hide apps fits, its list filling the sheet when the apps don't all fit`() {
         val activity = Robolectric.buildActivity(HideAppsActivity::class.java).setup().get()
         val list = activity.findViewById<ListView>(R.id.settings_apps)
-        val row = activity.resources.getDimensionPixelSize(R.dimen.settings_row_height) + activity.resources.getDimensionPixelSize(R.dimen.settings_entry_gap)
+        val row = activity.resources.getDimensionPixelSize(UiR.dimen.row_height) + activity.resources.getDimensionPixelSize(UiR.dimen.entry_gap)
         // Laid out in the sheet, as Android lays out its window: the list fills it down to its padding.
         val sheet = activity.window.attributes
         val panel = activity.findViewById<ViewGroup>(R.id.settings_hide_apps_panel)

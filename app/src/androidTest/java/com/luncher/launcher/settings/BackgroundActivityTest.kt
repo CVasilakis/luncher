@@ -68,6 +68,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import com.luncher.launcher.ui.R as UiR
 
 /** The background editor and Add from folder on a real device, driven by real key events. */
 @RunWith(AndroidJUnit4::class)
@@ -266,21 +267,21 @@ class BackgroundActivityTest {
 
             waitUntil(withText(R.string.settings_pictures_rename), hasFocus(), inDialog = true)
             pressInDialog(KeyEvent.KEYCODE_DPAD_CENTER)
-            waitUntil(withId(R.id.settings_pictures_dialog_field), hasFocus(), inDialog = true)
+            waitUntil(withId(UiR.id.dialog_field), hasFocus(), inDialog = true)
             // Typed without the keyboard, which then goes, so the arrows reach the dialog. The
             // cursor put at the end, as after typing: on API 22 and 24 setting the text leaves it
             // before the end, and Down there only moves it to the end.
-            onView(withId(R.id.settings_pictures_dialog_field)).inRoot(isDialog()).perform(replaceText("sunset.jpg"), closeSoftKeyboard())
+            onView(withId(UiR.id.dialog_field)).inRoot(isDialog()).perform(replaceText("sunset.jpg"), closeSoftKeyboard())
             pressInDialog(KeyEvent.KEYCODE_MOVE_END)
             pressInDialog(KeyEvent.KEYCODE_DPAD_DOWN)
             // Below the field, Cancel, then Rename beside it.
             if (!matchesNow(withText(R.string.settings_pictures_rename), hasFocus(), isDialog())) pressToButton(R.string.settings_pictures_rename)
             waitUntil(withText(R.string.settings_pictures_rename), hasFocus(), inDialog = true)
             pressInDialog(KeyEvent.KEYCODE_DPAD_CENTER)
-            waitUntil(withId(R.id.settings_pictures_dialog_text), withText(R.string.settings_pictures_folder_name_taken), inDialog = true)
+            waitUntil(withId(UiR.id.dialog_text), withText(R.string.settings_pictures_folder_name_taken), inDialog = true)
 
             // Its new name moves it after sunset.jpg, the focus with it.
-            onView(withId(R.id.settings_pictures_dialog_field)).inRoot(isDialog()).perform(replaceText("waves.png"), pressImeActionButton())
+            onView(withId(UiR.id.dialog_field)).inRoot(isDialog()).perform(replaceText("waves.png"), pressImeActionButton())
             waitUntil(row("waves.png"), hasFocus())
             assertEquals(listOf("sunset.jpg", "waves.png"), fake.pictures.map { it.name }.sorted())
         }

@@ -1,4 +1,4 @@
-package com.luncher.launcher.settings
+package com.luncher.launcher.ui
 
 import android.content.Context
 import android.content.res.ColorStateList
@@ -6,14 +6,13 @@ import android.graphics.drawable.GradientDrawable
 import android.util.AttributeSet
 import android.widget.ImageView
 import com.luncher.domain.appearance.ColorRoles
-import com.luncher.launcher.ui.Themed
 
 /**
  * A dialog's mark, beside its title: an icon in a tinted circle, which says at a glance how it
  * went or what's asked. [Kind.DONE] in the accent's container (a picture added), [Kind.DANGER] in
  * the error's (deleting, a picture not added), [Kind.INFO] neutral (already there, nothing to add).
  */
-internal class Badge @JvmOverloads constructor(context: Context, attrs: AttributeSet? = null) : ImageView(context, attrs), Themed {
+class Badge @JvmOverloads constructor(context: Context, attrs: AttributeSet? = null) : ImageView(context, attrs), Themed {
 
     enum class Kind { DONE, DANGER, INFO }
 

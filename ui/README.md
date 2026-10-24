@@ -35,6 +35,12 @@ ui/
     │   │   │                     the list (slideFor), the rows' usual height; FittedRows, what a row asks its list
     │   │   ├── FocusSlide.kt     a list's slide under the focus: the bar it draws where the focus stays
     │   │   ├── ThemedSpinner.kt  a wait's spinning wheel, in the accent
+    │   │   ├── Dialogs.kt        the dialogs over the menus and settings, floating panels: a question or a message
+    │   │   │                     (MessageDialog), a menu of actions on one thing (MenuDialog), a new name (NameDialog);
+    │   │   │                     the features give their texts and what each button does
+    │   │   ├── NameField.kt      a new name's field, outlined in the accent while focused, in the error color once refused
+    │   │   ├── Badge.kt          a dialog's mark beside its title: done, danger or info
+    │   │   ├── EntriesRow.kt     buttons (or fields) side by side, or one below the other when one doesn't fit
     │   │   ├── Windows.kt        a panel's window and a screen's own, styled
     │   │   ├── ScreenSize.kt     screenSize(): the screen's size in px, what the wallpaper is drawn at and
     │   │   │                     the previews' shape
@@ -51,21 +57,26 @@ ui/
     │       ├── animator/         entry_zoom, button_zoom: a focused field's zoom, a button's zoom and lift
     │       ├── drawable/         icon_…, the line icons (white, tinted where they're used); panel_background,
     │       │                     a floating panel's window before it's styled
-    │       ├── layout/           working_dialog: WorkingDialog's wheel and message, and its Cancel
+    │       ├── layout/           working_dialog: WorkingDialog's wheel and message, and its Cancel; dialog: the
+    │       │                     dialogs' panel, with dialog_button and dialog_entry, a button and a menu's entry
     │       ├── values/
     │       │   ├── attrs.xml     the themed views' attributes: colorRole, fill, zooms, entryCorner, kind
     │       │   ├── colors.xml    the home screen's: background, accent, primary and secondary text (opaque over
     │       │   │                 a picture), the wallpaper outline; a panel, as a window is before it's styled
-    │       │   ├── dimens.xml    the design system's type, corners, zoom, buttons, icons and fade; a panel's corners,
-    │       │   │                 WorkingDialog's sizes, the wallpaper outline's width, the tile name's text size and gap
-    │       │   └── themes.xml    Theme.Luncher, the app's and the home screen's theme; Theme.Luncher.Working
-    │       └── values-h450dp/    a screen's title on a screen 450 dp tall or more (smaller on 720p at 1080p density)
+    │       │   ├── dimens.xml    the design system's type, corners, zoom, buttons, icons, entries and fade; a panel's
+    │       │   │                 corners, the dialogs' and WorkingDialog's sizes, the wallpaper outline's width, the
+    │       │   │                 tile name's text size and gap
+    │       │   └── themes.xml    Theme.Luncher, the app's and the home screen's theme; Theme.Luncher.Dialog, the
+    │       │                     dialogs', and Theme.Luncher.Working; Widget.Luncher.Button, a button's
+    │       └── values-h450dp/    a screen's title, and the gap below a panel's, on a screen 450 dp tall or more
+    │                             (smaller on 720p at 1080p density)
     ├── test/java/com/luncher/launcher/ui/
     │   ├── WholeRowsTest.kt      the lists' rules, on the JVM alone
     │   └── LookAheadScrollViewTest.kt  rows of a little different heights made one, a taller one kept (Robolectric)
     └── testFixtures/java/com/luncher/launcher/testing/
         ├── TvDevice.kt           the TV screens the JVM tests run on (TV_1080P, TV_SCREENS)
         ├── LayoutChecks.kt       the layout tests' checks: bounds, inside, apart, whole text, a zoom not cut
+        ├── DialogFits.kt         a dialog's check: a margin from the screen's edges, its texts whole
         └── Captures.kt           the screenshots' captures, the window in front given the focus first
 ```
 
@@ -164,11 +175,12 @@ not drawn into bitmaps, from API 23 on: bitmaps sent to the GPU took a slide's f
 
 ## The theme
 
-`Theme.Luncher` is the application's theme and the home screen's; `Theme.Luncher.Working` is
-`WorkingDialog`'s, a floating panel like the settings panel, which two features show. A feature
-whose screens look different has its own (the settings panels' dialog theme,
-[`feature/settings/`](../feature/settings/README.md#the-settings-panel), with the picture dialogs and
-the share entry point without a window, [its manifest](../feature/settings/README.md#manifest)). They're all platform
+`Theme.Luncher` is the application's theme and the home screen's; `Theme.Luncher.Dialog` is the
+dialogs' (`Dialogs.kt`), and `Theme.Luncher.Working`, the same, `WorkingDialog`'s: floating panels
+like the settings panel, over the dimmed screen, which any feature can show. A feature whose screens
+look different has its own (the settings panels' dialog theme,
+[`feature/settings/`](../feature/settings/README.md#the-settings-panel), with the share entry point
+without a window, [its manifest](../feature/settings/README.md#manifest)). They're all platform
 themes (`Theme.DeviceDefault…`), not AppCompat, like every activity's `android.app.Activity`
 ([`ARCHITECTURE.md`](../docs/ARCHITECTURE.md#rules), rule 5).
 

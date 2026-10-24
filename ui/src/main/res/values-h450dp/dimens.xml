@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- On a screen 450 dp tall or more (every TV screen but 720p at the 1080p density): a screen's
-     title, smaller on a shorter one (values/dimens.xml). -->
+     title, and the gap below a panel's, smaller on a shorter one (values/dimens.xml). -->
 <resources>
     <dimen name="text_display">34sp</dimen>
+    <dimen name="title_gap">16dp</dimen>
 </resources>

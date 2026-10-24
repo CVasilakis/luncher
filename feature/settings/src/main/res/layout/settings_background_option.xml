@@ -13,7 +13,7 @@
     android:minHeight="@dimen/settings_field_height"
     android:orientation="horizontal"
     app:zooms="true"
-    android:paddingStart="@dimen/settings_entry_padding"
+    android:paddingStart="@dimen/entry_padding"
     android:paddingTop="@dimen/settings_entry_padding_vertical"
     android:paddingEnd="@dimen/settings_field_padding_end"
     android:paddingBottom="@dimen/settings_entry_padding_vertical"

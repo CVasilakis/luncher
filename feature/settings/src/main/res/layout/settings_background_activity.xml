@@ -59,7 +59,7 @@
 
             <!-- Save at the start, Delete all at the end, half the row each; one below the other
                  when either doesn't fit its half (EntriesRow). -->
-            <com.luncher.launcher.settings.EntriesRow
+            <com.luncher.launcher.ui.EntriesRow
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/settings_screen_gap"
@@ -69,18 +69,18 @@
 
                 <com.luncher.launcher.ui.PillButton
                     android:id="@+id/settings_background_save"
-                    style="@style/Widget.Luncher.Settings.Button"
+                    style="@style/Widget.Luncher.Button"
                     android:drawableStart="@drawable/icon_check"
                     android:text="@string/settings_background_save" />
 
                 <!-- In the error color: it deletes every picture. Dimmed, and passed by, while there's none. -->
                 <com.luncher.launcher.ui.PillButton
                     android:id="@+id/settings_background_delete_all"
-                    style="@style/Widget.Luncher.Settings.Button"
+                    style="@style/Widget.Luncher.Button"
                     android:drawableStart="@drawable/icon_trash"
                     android:text="@string/settings_background_delete_all"
                     app:kind="danger" />
-            </com.luncher.launcher.settings.EntriesRow>
+            </com.luncher.launcher.ui.EntriesRow>
         </LinearLayout>
     </com.luncher.launcher.settings.BackgroundStartColumn>
 

@@ -3,6 +3,7 @@ package com.luncher.launcher.settings
 import android.content.Intent
 import android.net.Uri
 import android.os.Looper
+import com.luncher.launcher.ui.Badge
 import java.time.Duration
 import com.luncher.launcher.ui.ShortestShowing
 import android.view.View

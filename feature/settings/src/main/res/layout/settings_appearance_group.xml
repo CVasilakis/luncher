@@ -9,11 +9,11 @@
     android:focusable="true"
     android:focusableInTouchMode="true"
     android:gravity="center_vertical"
-    android:minHeight="@dimen/settings_row_height"
+    android:minHeight="@dimen/row_height"
     android:orientation="horizontal"
-    android:paddingLeft="@dimen/settings_entry_padding"
+    android:paddingLeft="@dimen/entry_padding"
     android:paddingTop="@dimen/settings_entry_padding_vertical"
-    android:paddingRight="@dimen/settings_entry_padding"
+    android:paddingRight="@dimen/entry_padding"
     android:paddingBottom="@dimen/settings_entry_padding_vertical"
     app:entryCorner="@dimen/corner_entry_in_container">
 
@@ -29,7 +29,7 @@
         android:id="@+id/settings_group_title"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="@dimen/settings_entry_icon_gap"
+        android:layout_marginStart="@dimen/entry_icon_gap"
         android:layout_weight="1"
         android:duplicateParentState="true"
         android:ellipsize="end"

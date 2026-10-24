@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A dialog's button: OK on it does what it says, and closes the dialog. Dialogs.kt sets its
+     kind, filled, tonal or danger (PillButton). -->
+<com.luncher.launcher.ui.PillButton xmlns:android="http://schemas.android.com/apk/res/android"
+    style="@style/Widget.Luncher.Button" />

@@ -9,8 +9,8 @@
     android:focusableInTouchMode="true"
     android:gravity="center_vertical"
     android:orientation="horizontal"
-    android:paddingLeft="@dimen/settings_entry_padding"
-    android:paddingRight="@dimen/settings_entry_padding"
+    android:paddingLeft="@dimen/entry_padding"
+    android:paddingRight="@dimen/entry_padding"
     app:entryCorner="@dimen/corner_entry_in_container">
 
     <com.luncher.launcher.ui.ThemedText
@@ -26,7 +26,7 @@
         android:id="@+id/settings_option_list_check"
         android:layout_width="@dimen/icon"
         android:layout_height="@dimen/icon"
-        android:layout_marginStart="@dimen/settings_entry_icon_gap"
+        android:layout_marginStart="@dimen/entry_icon_gap"
         android:duplicateParentState="true"
         android:importantForAccessibility="no"
         android:src="@drawable/icon_check"

@@ -196,10 +196,10 @@ class BackgroundActivityTest {
     private fun dialog(): Triple<String, String, List<TextView>>? {
         val dialog = ShadowDialog.getLatestDialog()?.takeIf { it.isShowing } ?: return null
         dialog.findViewById<TextView>(UiR.id.working_message)?.let { return Triple(it.text.toString(), "", emptyList()) }
-        val entries = dialog.findViewById<LinearLayout>(R.id.settings_pictures_dialog_entries)
+        val entries = dialog.findViewById<LinearLayout>(UiR.id.dialog_entries)
         return Triple(
-            dialog.findViewById<TextView>(R.id.settings_pictures_dialog_title).text.toString(),
-            dialog.findViewById<TextView>(R.id.settings_pictures_dialog_text).text.toString(),
+            dialog.findViewById<TextView>(UiR.id.dialog_title).text.toString(),
+            dialog.findViewById<TextView>(UiR.id.dialog_text).text.toString(),
             (0 until entries.childCount).map { entries.getChildAt(it) as TextView },
         )
     }
@@ -217,7 +217,7 @@ class BackgroundActivityTest {
     }
 
     /** The rename dialog's field. */
-    private fun field() = ShadowDialog.getLatestDialog().findViewById<EditText>(R.id.settings_pictures_dialog_field)
+    private fun field() = ShadowDialog.getLatestDialog().findViewById<EditText>(UiR.id.dialog_field)
 
     /** [name] typed in the rename dialog, then Rename. */
     private fun rename(name: String) {

@@ -28,7 +28,7 @@
         android:layout_marginStart="@dimen/settings_zoom_room_horizontal"
         android:layout_marginTop="@dimen/settings_entry_line_gap"
         android:layout_marginEnd="@dimen/settings_zoom_room_horizontal"
-        android:layout_marginBottom="@dimen/settings_title_gap"
+        android:layout_marginBottom="@dimen/title_gap"
         android:text="@string/settings_hide_apps_hint"
         android:textSize="@dimen/text_supporting"
         app:colorRole="onSurfaceVariant" />
@@ -48,7 +48,7 @@
             android:layout_height="match_parent"
             android:clipToPadding="false"
             android:divider="@android:color/transparent"
-            android:dividerHeight="@dimen/settings_entry_gap"
+            android:dividerHeight="@dimen/entry_gap"
             android:listSelector="@android:color/transparent"
             android:paddingLeft="@dimen/settings_zoom_room_horizontal"
             android:paddingTop="@dimen/settings_zoom_room_vertical"

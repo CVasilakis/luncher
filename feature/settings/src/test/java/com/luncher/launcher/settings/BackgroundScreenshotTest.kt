@@ -30,6 +30,7 @@ import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import org.robolectric.shadows.ShadowDialog
+import com.luncher.launcher.ui.R as UiR
 
 /**
  * The background editor, the window after a share and Add from folder, in US English, with sample pictures drawn as
@@ -128,7 +129,7 @@ class BackgroundScreenshotTest {
     private fun BackgroundActivity.longPress(name: String, index: Int) {
         row(name).performLongClick()
         idle()
-        ShadowDialog.getLatestDialog().findViewById<ViewGroup>(R.id.settings_pictures_dialog_entries).getChildAt(index).performClick()
+        ShadowDialog.getLatestDialog().findViewById<ViewGroup>(UiR.id.dialog_entries).getChildAt(index).performClick()
         idle()
     }
 
@@ -160,8 +161,8 @@ class BackgroundScreenshotTest {
     fun renameDialog() {
         editor(*library).longPress("sunset.jpg", 0)
         val dialog = ShadowDialog.getLatestDialog()
-        dialog.findViewById<EditText>(R.id.settings_pictures_dialog_field).setText("beach.png")
-        dialog.findViewById<ViewGroup>(R.id.settings_pictures_dialog_entries).getChildAt(0).performClick()
+        dialog.findViewById<EditText>(UiR.id.dialog_field).setText("beach.png")
+        dialog.findViewById<ViewGroup>(UiR.id.dialog_entries).getChildAt(0).performClick()
         idle()
         captureScreenFocused("src/test/screenshots/settings/settings_background_rename.png")
     }

@@ -117,10 +117,10 @@ class AppearanceActivityTest {
     /** The question showing: its title, its text and its answers; null if none shows. */
     private fun question(): Triple<String, String, List<TextView>>? {
         val dialog = ShadowDialog.getLatestDialog()?.takeIf { it.isShowing } ?: return null
-        val entries = dialog.findViewById<LinearLayout>(R.id.settings_pictures_dialog_entries)
+        val entries = dialog.findViewById<LinearLayout>(UiR.id.dialog_entries)
         return Triple(
-            dialog.findViewById<TextView>(R.id.settings_pictures_dialog_title).text.toString(),
-            dialog.findViewById<TextView>(R.id.settings_pictures_dialog_text).text.toString(),
+            dialog.findViewById<TextView>(UiR.id.dialog_title).text.toString(),
+            dialog.findViewById<TextView>(UiR.id.dialog_text).text.toString(),
             (0 until entries.childCount).map { entries.getChildAt(it) as TextView },
         )
     }

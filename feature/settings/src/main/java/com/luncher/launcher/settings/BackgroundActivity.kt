@@ -36,6 +36,13 @@ import com.luncher.domain.pictures.Renaming
 import com.luncher.domain.pictures.pictureCut
 import com.luncher.domain.pictures.pictureUses
 import com.luncher.domain.pictures.renaming
+import com.luncher.launcher.ui.Badge
+import com.luncher.launcher.ui.DialogButton
+import com.luncher.launcher.ui.EntriesRow
+import com.luncher.launcher.ui.MenuAction
+import com.luncher.launcher.ui.MenuDialog
+import com.luncher.launcher.ui.MessageDialog
+import com.luncher.launcher.ui.NameDialog
 import com.luncher.launcher.ui.ThemedText
 import com.luncher.launcher.ui.WorkingDialog
 import com.luncher.launcher.ui.color
@@ -196,7 +203,7 @@ class BackgroundActivity : Activity() {
         howTo = ThemedText(this).apply {
             role = ThemedText.ON_SURFACE_VARIANT
             setTextSize(TypedValue.COMPLEX_UNIT_PX, resources.getDimension(UiR.dimen.text_supporting))
-            val padding = resources.getDimensionPixelSize(R.dimen.settings_entry_padding)
+            val padding = resources.getDimensionPixelSize(UiR.dimen.entry_padding)
             setPadding(padding, padding, padding, 0)
             text = listOf(
                 getString(R.string.settings_pictures_how),
@@ -227,7 +234,7 @@ class BackgroundActivity : Activity() {
     private fun back() {
         if (!changed()) return finish()
         show(
-            PicturesDialog(
+            MessageDialog(
                 this,
                 theme.roles,
                 getString(R.string.settings_background_discard_question),
@@ -561,7 +568,7 @@ class BackgroundActivity : Activity() {
     /** What can be done to [picture]: rename it or delete it, under its name and size. */
     private fun offerActions(picture: Picture) {
         show(
-            ActionsDialog(
+            MenuDialog(
                 this,
                 theme.roles,
                 nameOf(picture),
@@ -577,7 +584,14 @@ class BackgroundActivity : Activity() {
     /** Asks for [picture]'s new name, and keeps the dialog, saying why, while it can't be that. */
     private fun askName(picture: Picture) {
         show(
-            RenameDialog(this, theme.roles, picture.name) { typed ->
+            NameDialog(
+                this,
+                theme.roles,
+                getString(R.string.settings_pictures_rename_title),
+                picture.name,
+                getString(R.string.settings_pictures_cancel),
+                getString(R.string.settings_pictures_rename),
+            ) { typed ->
                 when (val renamed = renaming(picture, typed, library.pictures)) {
                     is Renaming.To -> {
                         pictures.rename(picture.id, renamed.name)
@@ -592,7 +606,7 @@ class BackgroundActivity : Activity() {
 
     private fun confirmDelete(picture: Picture) {
         show(
-            PicturesDialog(
+            MessageDialog(
                 this,
                 theme.roles,
                 getString(R.string.settings_pictures_delete_question, nameOf(picture)),
@@ -614,7 +628,7 @@ class BackgroundActivity : Activity() {
         val wallpaperToo = library.pictures.any { PictureUse.Wallpaper in library.usesOf(it.id) }
         val text = if (wallpaperToo) R.plurals.settings_background_delete_all_text_background else R.plurals.settings_background_delete_all_text
         show(
-            PicturesDialog(
+            MessageDialog(
                 this,
                 theme.roles,
                 getString(R.string.settings_background_delete_all_question),

@@ -36,19 +36,16 @@ feature/settings/
     │   │   ├── OptionLabels.kt   what the options, their values and groups are called, the groups' icons, the accents' swatches
     │   │   ├── BackgroundActivity.kt the background editor: the pictures, the draft, Save; renames and deletes pictures, prepares them
     │   │   ├── BackgroundStartColumn.kt  its preview, options, Save and Delete all, the preview as large as the room left
-    │   │   ├── EntriesRow.kt     buttons (or fields) side by side, or one below the other when one doesn't fit
     │   │   ├── AddFromFolderActivity.kt  the drop folders' pictures, a preview of the selected one; OK adds it, then returns it; Add all
     │   │   ├── SharePictureActivity.kt   where another app's share arrives: opens the home screen and the window, no screen
     │   │   ├── PictureReceivedActivity.kt the window over the home screen after a share: shows the pictures being added, then their uses, or how many were saved and why the others weren't
-    │   │   ├── PicturesDialog.kt the dialogs over the picture screens: a picture's actions (ActionsDialog), a question, a message; renaming one (NameField)
-    │   │   ├── Badge.kt          a dialog's mark beside its title: done, danger or info
     │   │   ├── PreviewColumn.kt  Add from folder's preview, Add all and note, the preview smaller on a short screen, gone below a row's height
     │   │   ├── ListFrame.kt      a list's frame (a :ui ScrollFrame): Down past its last row stays there, not on the column beside it
     │   │   └── PictureTexts.kt   what the picture screens call things: sizes, names, why a picture wasn't added
-    │   └── res/                  the themes (Theme.Luncher.Settings, .Panel, .FullScreen, .Pictures, .Pictures.Dialog,
-    │                             .Pictures.NoDisplay) and the label and button styles, layouts, the thumbnails' frame,
+    │   └── res/                  the themes (Theme.Luncher.Settings, .Panel, .FullScreen, .Pictures,
+    │                             .Pictures.NoDisplay) and the label style, layouts, the thumbnails' frame,
     │                             settings_* dimensions (compact ones in values/, the rest in values-h450dp/), colors
-    │                             and strings (the components, icons and colors of the theme are :ui's), their
+    │                             and strings (the components, dialogs, icons and colors of the theme are :ui's), their
     │                             translations in values-el/ and values-ar/ (docs/TRANSLATIONS.md)
     └── test/
         ├── java/…/settings/      JVM tests; TestSettingsGraph.kt: the ports a test gives the screens,
@@ -279,7 +276,7 @@ with no label, a preview of the home screen with the chosen background, of the
 TV's shape with rounded corners, the background's options (Blur and Position, then Dim and Fit) as a 2 × 2
 grid of fields, each its name above its value, and Save (filled) with Delete all (outlined, in
 the error color) beside it, half the row each; two fields, or the buttons, go one below the other
-when either doesn't fit its half (`EntriesRow`: a long translation on a narrow screen). There's no
+when either doesn't fit its half (`:ui`'s `EntriesRow`: a long translation on a narrow screen). There's no
 title, nor a label above the preview: the preview gets that room.
 The preview is as large as the room the others leave (`BackgroundStartColumn`), at most as tall
 as its screen at the column's width, at least a quarter of that, so Save and Delete all show without scrolling on a 1080p screen;
@@ -340,10 +337,10 @@ through the process's `Wallpaper` ([`feature/home/README.md`](../home/README.md#
   it. If the user goes home meanwhile, the drawing goes on, and the home screen says so instead.
 
 A **long press of OK** on a picture offers Rename and Delete (in the error color), each with its
-icon, under its name and size (`ActionsDialog`).
+icon, under its name and size (`:ui`'s `MenuDialog`).
 
 **Rename** asks for the new name in a field holding the old one, the TV's keyboard up, the cursor
-at the end (where the keyboard puts it anyway; `NameField`, outlined in the accent while it has
+at the end (where the keyboard puts it anyway; `:ui`'s `NameDialog` and `NameField`, outlined in the accent while it has
 the focus). Cancel and Rename below it, or the keyboard's Done, keeps the
 name as a picture's is kept (`pictureName`: no control characters, trimmed, cut in the middle past
 255 units); a name another picture has, or nothing typed, is refused below the field in the error
@@ -353,7 +350,7 @@ stored wallpaper and the background setting go by its id, from its content, so n
 decoded or drawn again; the row keeps its thumbnail, and moves to its new place by name, the
 focus with it.
 
-**Delete** asks first, its badge beside the title (`Badge`, as every dialog's mark), Cancel focused, so a repeated OK deletes nothing, saying what deleting it
+**Delete** asks first, its badge beside the title (`:ui`'s `Badge`, as every dialog's mark), Cancel focused, so a repeated OK deletes nothing, saying what deleting it
 does, in one text for any picture and another for the background's: the picture goes from
 Luncher's pictures only, and the background's picture leaves the home screen with no picture.
 That happens at once (`Wallpaper.forget`): the background stored without a picture, then the kept
@@ -376,7 +373,7 @@ it's dimmed, and the focus passes it by.
 | `pictureCut`, `OptionContext`, `Background.offeredIn` (`:domain`) | what filling the screen cuts from the draft's picture, the options' values that offers, and the draft without a position it doesn't |
 | `Background.choosing` (`:domain`) | the draft with another picture chosen: as it is, or as stored if it's the stored one |
 | `OptionRow`, `OptionList` | the options' rows, OK opening a list of the values the draft's picture offers, which the preview follows as the focus moves; Back in it puts the value from before back |
-| `PicturesDialog`, `ActionsDialog`, `RenameDialog` | the dialogs over the list, a badge beside the title and the text below starting under it: the question before deleting; a picture's Rename and Delete; the field for a new name, and why it's refused |
+| `MessageDialog`, `MenuDialog`, `NameDialog` (`:ui`) | the dialogs over the list, a badge beside the title and the text below starting under it: the question before deleting; a picture's Rename and Delete; the field for a new name, and why it's refused; this screen gives their texts and what each button does |
 | `BackgroundActivity` | the list, the draft, Save and its window, Delete all, the questions; chooses and focuses the picture Add from folder added (`EXTRA_ADDED`), or focuses the first in the list of those Add all added, choosing none (`EXTRA_ADDED_ALL`) |
 
 **Prepared once, then at once.** Each picture of the library has a working copy

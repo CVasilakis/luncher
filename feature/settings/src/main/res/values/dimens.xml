@@ -16,20 +16,13 @@
     <!-- Hide apps' "No apps" below the hint: below the empty list's margin above and below its
          rows, where it has always been (2 x settings_zoom_room_vertical). -->
     <dimen name="settings_hide_apps_empty_top">8dp</dimen>
-    <!-- Between a panel's title and its first entry (short). -->
-    <dimen name="settings_title_gap">10dp</dimen>
-
-    <!-- An entry: its height at least, its padding at the sides, above and below (short), the gap
-         after its icon, between its title and its line below; the gap between entries. A row of
-         Hide apps, of an option's list, of a picture's actions, as tall as an entry at least; the
-         gap between an app's name and its "Hidden". -->
+    <!-- An entry (its padding at the sides, the gap after its icon, a row's height and the gap
+         between entries are ui's): its height at least, its padding above and below (short),
+         between its title and its line below; the gap between an app's name and its
+         "Hidden". -->
     <dimen name="settings_entry_min_height">56dp</dimen>
-    <dimen name="settings_entry_padding">16dp</dimen>
     <dimen name="settings_entry_padding_vertical">6dp</dimen>
-    <dimen name="settings_entry_icon_gap">16dp</dimen>
     <dimen name="settings_entry_line_gap">2dp</dimen>
-    <dimen name="settings_entry_gap">4dp</dimen>
-    <dimen name="settings_row_height">52dp</dimen>
     <dimen name="settings_app_state_gap">16dp</dimen>
 
     <!-- A chip (Chip.kt): its height at least (more with large text), its padding at the sides. A
@@ -44,15 +37,14 @@
     <dimen name="settings_entry_padding_end_chip">8dp</dimen>
 
     <!-- A screen of its own (the editors, Add from folder): its content inside the TV's overscan
-         margin; between its columns, and below the preview; below its title; between buttons side
-         by side; a list's container's padding, room for its focused entry's zoom too; the margin
-         and the gap between the columns, less that room, which a column's content keeps inside
-         it; a section's label above its content, the gap between them; the preview's corners. -->
+         margin; between its columns, and below the preview; below its title; a list's
+         container's padding, room for its focused entry's zoom too; the margin and the gap
+         between the columns, less that room, which a column's content keeps inside it; a
+         section's label above its content, the gap between them; the preview's corners. -->
     <dimen name="settings_appearance_margin_horizontal">48dp</dimen>
     <dimen name="settings_appearance_margin_vertical">32dp</dimen>
     <dimen name="settings_screen_gap">20dp</dimen>
     <dimen name="settings_screen_title_gap">20dp</dimen>
-    <dimen name="settings_buttons_gap">16dp</dimen>
     <dimen name="settings_container_padding">10dp</dimen>
     <dimen name="settings_screen_margin_less_room">38dp</dimen>
     <dimen name="settings_screen_gap_less_room">10dp</dimen>
@@ -107,20 +99,7 @@
     <dimen name="settings_pictures_side_gap">32dp</dimen>
     <dimen name="settings_pictures_warning">48dp</dimen>
 
-    <!-- A dialog: its width at most, its padding, its margin from the screen's edges at least; its
-         mark (Badge.kt), the icon's padding in it, the gap to the title; the gap below the title,
-         its text's size, the gap above the buttons; the rename field's padding above and below its
-         text, its edge. The window after a share: its spinning wheel while the picture is added. -->
-    <dimen name="settings_pictures_dialog_width">460dp</dimen>
-    <dimen name="settings_pictures_dialog_padding">28dp</dimen>
-    <dimen name="settings_pictures_dialog_margin">32dp</dimen>
-    <dimen name="settings_badge">40dp</dimen>
-    <dimen name="settings_badge_padding">9dp</dimen>
-    <dimen name="settings_badge_gap">16dp</dimen>
-    <dimen name="settings_dialog_text_gap">12dp</dimen>
-    <dimen name="settings_dialog_text">16sp</dimen>
-    <dimen name="settings_dialog_buttons_gap">28dp</dimen>
-    <dimen name="settings_field_padding_vertical">12dp</dimen>
-    <dimen name="settings_field_edge">2dp</dimen>
+    <!-- The window after a share (its other sizes are ui's dialog_…): its spinning wheel while the
+         picture is added. -->
     <dimen name="settings_received_spinner">32dp</dimen>
 </resources>

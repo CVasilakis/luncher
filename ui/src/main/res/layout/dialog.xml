@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A dialog over a screen of the menus and settings (Dialogs.kt): its mark beside its title
+     (gone without one), a text starting below the mark, and its buttons side by side, or one below
+     the other when either doesn't fit (a menu's actions are entries one below the other).
+     MessageDialog adds the buttons. NameDialog shows the field, and the line below it says why a
+     name can't be. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/dialog_panel"
+    android:layout_width="@dimen/dialog_width"
+    android:layout_height="wrap_content"
+    android:clipChildren="false"
+    android:clipToPadding="false"
+    android:orientation="vertical"
+    android:padding="@dimen/dialog_padding">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <com.luncher.launcher.ui.Badge
+            android:id="@+id/dialog_mark"
+            android:layout_width="@dimen/badge"
+            android:layout_height="@dimen/badge"
+            android:layout_marginEnd="@dimen/badge_gap"
+            android:importantForAccessibility="no"
+            android:padding="@dimen/badge_padding"
+            android:visibility="gone" />
+
+        <com.luncher.launcher.ui.ThemedText
+            android:id="@+id/dialog_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:includeFontPadding="false"
+            android:textSize="@dimen/text_dialog_title" />
+    </LinearLayout>
+
+    <!-- Labelled by the title, which NameDialog sets, as lint can't see. No hint: in a script
+         of taller lines, it makes the field taller than the smallest screens leave room for. -->
+    <com.luncher.launcher.ui.NameField
+        android:id="@+id/dialog_field"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/dialog_text_gap"
+        android:imeOptions="actionDone|flagNoExtractUi"
+        android:importantForAutofill="no"
+        android:inputType="text|textNoSuggestions"
+        android:paddingLeft="@dimen/entry_padding"
+        android:paddingTop="@dimen/name_field_padding_vertical"
+        android:paddingRight="@dimen/entry_padding"
+        android:paddingBottom="@dimen/name_field_padding_vertical"
+        android:singleLine="true"
+        android:textSize="@dimen/text_entry"
+        android:visibility="gone"
+        tools:ignore="LabelFor" />
+
+    <com.luncher.launcher.ui.ThemedText
+        android:id="@+id/dialog_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/dialog_text_gap"
+        android:lineSpacingMultiplier="1.15"
+        android:textSize="@dimen/dialog_text"
+        app:colorRole="onSurfaceVariant" />
+
+    <com.luncher.launcher.ui.EntriesRow
+        android:id="@+id/dialog_entries"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/dialog_buttons_gap"
+        android:baselineAligned="false"
+        android:clipChildren="false"
+        android:orientation="horizontal" />
+</LinearLayout>

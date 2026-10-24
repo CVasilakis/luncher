@@ -90,7 +90,7 @@
                     android:layout_height="wrap_content"
                     android:clipToPadding="false"
                     android:divider="@android:color/transparent"
-                    android:dividerHeight="@dimen/settings_entry_gap"
+                    android:dividerHeight="@dimen/entry_gap"
                     android:listSelector="@android:color/transparent"
                     android:padding="@dimen/settings_container_padding"
                     android:scrollbars="none" />
@@ -100,7 +100,7 @@
                     android:id="@+id/settings_pictures_folder_state"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:padding="@dimen/settings_entry_padding"
+                    android:padding="@dimen/entry_padding"
                     android:textSize="@dimen/text_entry"
                     app:colorRole="onSurfaceVariant" />
             </com.luncher.launcher.settings.ListFrame>
@@ -176,7 +176,7 @@
                     <!-- Adds every picture of the list that can be added; dimmed, and passed by, when none can. -->
                     <com.luncher.launcher.ui.PillButton
                         android:id="@+id/settings_pictures_folder_add_all"
-                        style="@style/Widget.Luncher.Settings.Button"
+                        style="@style/Widget.Luncher.Button"
                         android:layout_width="match_parent"
                         android:layout_marginTop="@dimen/settings_screen_gap"
                         android:drawableStart="@drawable/icon_plus"

@@ -6,12 +6,12 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/settings_received_panel"
-    android:layout_width="@dimen/settings_pictures_dialog_width"
+    android:layout_width="@dimen/dialog_width"
     android:layout_height="wrap_content"
     android:clipChildren="false"
     android:clipToPadding="false"
     android:orientation="vertical"
-    android:padding="@dimen/settings_pictures_dialog_padding">
+    android:padding="@dimen/dialog_padding">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -22,9 +22,9 @@
         <!-- The mark, or the wheel in its place; gone when neither shows. -->
         <FrameLayout
             android:id="@+id/settings_received_mark_place"
-            android:layout_width="@dimen/settings_badge"
-            android:layout_height="@dimen/settings_badge"
-            android:layout_marginEnd="@dimen/settings_badge_gap">
+            android:layout_width="@dimen/badge"
+            android:layout_height="@dimen/badge"
+            android:layout_marginEnd="@dimen/badge_gap">
 
             <com.luncher.launcher.ui.ThemedSpinner
                 android:id="@+id/settings_received_spinner"
@@ -33,12 +33,12 @@
                 android:layout_gravity="center"
                 android:indeterminate="true" />
 
-            <com.luncher.launcher.settings.Badge
+            <com.luncher.launcher.ui.Badge
                 android:id="@+id/settings_received_mark"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:importantForAccessibility="no"
-                android:padding="@dimen/settings_badge_padding"
+                android:padding="@dimen/badge_padding"
                 android:visibility="gone" />
         </FrameLayout>
 
@@ -58,19 +58,19 @@
         android:id="@+id/settings_received_text"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/settings_dialog_text_gap"
+        android:layout_marginTop="@dimen/dialog_text_gap"
         android:ellipsize="end"
         android:lineSpacingMultiplier="1.15"
         android:maxLines="8"
-        android:textSize="@dimen/settings_dialog_text"
+        android:textSize="@dimen/dialog_text"
         app:colorRole="onSurfaceVariant" />
 
     <!-- PictureReceivedActivity adds the button: Cancel while the pictures are added; then OK. -->
-    <com.luncher.launcher.settings.EntriesRow
+    <com.luncher.launcher.ui.EntriesRow
         android:id="@+id/settings_received_entries"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/settings_dialog_buttons_gap"
+        android:layout_marginTop="@dimen/dialog_buttons_gap"
         android:baselineAligned="false"
         android:clipChildren="false"
         android:orientation="horizontal" />

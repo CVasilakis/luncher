@@ -20,8 +20,9 @@
         <item name="android:textAlignment">viewStart</item>
     </style>
 
-    <!-- WorkingDialog: a floating panel like the settings panel, over the dimmed screen. -->
-    <style name="Theme.Luncher.Working" parent="@android:style/Theme.DeviceDefault.Dialog.NoActionBar">
+    <!-- A dialog over a screen of the menus and settings (Dialogs.kt: a question, a message, a
+         menu, a new name): a floating panel like the settings panel, over the dimmed screen. -->
+    <style name="Theme.Luncher.Dialog" parent="@android:style/Theme.DeviceDefault.Dialog.NoActionBar">
         <item name="android:windowBackground">@drawable/panel_background</item>
         <item name="android:colorBackground">@color/panel</item>
         <item name="android:colorAccent">@color/accent</item>
@@ -30,5 +31,25 @@
         <!-- The dialog theme's minimum width is a share of the screen; the layout sets the width. -->
         <item name="android:windowMinWidthMajor">0dp</item>
         <item name="android:windowMinWidthMinor">0dp</item>
+    </style>
+
+    <!-- WorkingDialog: a floating panel as the dialogs are. -->
+    <style name="Theme.Luncher.Working" parent="@style/Theme.Luncher.Dialog" />
+
+    <!-- A button of the menus and settings (PillButton): as wide as EntriesRow gives it, or its
+         layout, its text on one line, its icon before it. -->
+    <style name="Widget.Luncher.Button" parent="">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:minHeight">@dimen/button_height</item>
+        <item name="android:paddingLeft">@dimen/button_padding</item>
+        <item name="android:paddingRight">@dimen/button_padding</item>
+        <item name="android:drawablePadding">@dimen/icon_gap</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:singleLine">true</item>
+        <item name="android:focusable">true</item>
+        <item name="android:focusableInTouchMode">true</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:textSize">@dimen/text_button</item>
     </style>
 </resources>

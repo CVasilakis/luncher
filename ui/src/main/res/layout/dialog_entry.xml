@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- An entry of a picture's actions, a menu: its icon, its name; OK on it does what it says. -->
+<!-- An entry of a menu dialog (a picture's actions): its icon, its name; OK on it does what it says. -->
 <com.luncher.launcher.ui.EntryText xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="@dimen/settings_row_height"
-    android:drawablePadding="@dimen/settings_entry_icon_gap"
+    android:layout_height="@dimen/row_height"
+    android:drawablePadding="@dimen/entry_icon_gap"
     android:ellipsize="end"
     android:focusable="true"
     android:focusableInTouchMode="true"
     android:gravity="center_vertical"
-    android:paddingLeft="@dimen/settings_entry_padding"
-    android:paddingRight="@dimen/settings_entry_padding"
+    android:paddingLeft="@dimen/entry_padding"
+    android:paddingRight="@dimen/entry_padding"
     android:singleLine="true"
     android:textSize="@dimen/text_entry" />

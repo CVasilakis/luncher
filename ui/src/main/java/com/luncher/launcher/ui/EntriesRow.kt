@@ -1,4 +1,4 @@
-package com.luncher.launcher.settings
+package com.luncher.launcher.ui
 
 import android.content.Context
 import android.util.AttributeSet
@@ -8,12 +8,12 @@ import android.widget.LinearLayout
  * Buttons side by side, each half the row (a third, for three, …), a gap between them, as long as
  * each one's text fits its share; else one below the other, each the whole row, so no text is cut
  * (a long translation, a narrow column). The editors' Save and Delete all, Background and Reset to
- * defaults.
+ * defaults; a dialog's buttons, and a menu dialog's entries, one below the other.
  */
-internal class EntriesRow(context: Context, attrs: AttributeSet?) : LinearLayout(context, attrs) {
+class EntriesRow(context: Context, attrs: AttributeSet?) : LinearLayout(context, attrs) {
 
-    private val gap = resources.getDimensionPixelSize(R.dimen.settings_buttons_gap)
-    private val entryGap = resources.getDimensionPixelSize(R.dimen.settings_entry_gap)
+    private val gap = resources.getDimensionPixelSize(R.dimen.buttons_gap)
+    private val entryGap = resources.getDimensionPixelSize(R.dimen.entry_gap)
 
     /** One below the other whatever they take, as a menu's entries are. */
     var stacked = false
@@ -27,7 +27,7 @@ internal class EntriesRow(context: Context, attrs: AttributeSet?) : LinearLayout
             val child = getChildAt(i)
             child.measure(unspecified, unspecified)
             // A button fits with its text whole: its icon gives way where it must.
-            val needs = (child as? com.luncher.launcher.ui.PillButton)?.widthWithoutIcon() ?: child.measuredWidth
+            val needs = (child as? PillButton)?.widthWithoutIcon() ?: child.measuredWidth
             if (needs > share) fits = false
         }
         // Set only when it changes: a change asks for a layout.

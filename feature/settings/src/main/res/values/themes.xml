@@ -32,20 +32,6 @@
     <!-- Pictures and Add from folder: full-screen, on the home screen's background. -->
     <style name="Theme.Luncher.Settings.Pictures" parent="@style/Theme.Luncher" />
 
-    <!-- A dialog over Pictures (a picture's actions, a confirmation, a message) or the appearance
-         editor (the reset question): a floating panel like the settings panel, over the dimmed
-         screen. -->
-    <style name="Theme.Luncher.Settings.Pictures.Dialog" parent="@android:style/Theme.DeviceDefault.Dialog.NoActionBar">
-        <item name="android:windowBackground">@drawable/panel_background</item>
-        <item name="android:colorBackground">@color/panel</item>
-        <item name="android:colorAccent">@color/accent</item>
-        <item name="android:backgroundDimAmount">0.6</item>
-        <item name="android:textAlignment">viewStart</item>
-        <!-- The dialog theme's minimum width is a share of the screen; the layout sets the width. -->
-        <item name="android:windowMinWidthMajor">0dp</item>
-        <item name="android:windowMinWidthMinor">0dp</item>
-    </style>
-
     <!-- SharePictureActivity: no window, as Theme.NoDisplay, but the home screen's dark
          backgrounds, in case a device shows one anyway (never a white screen, ThemesTest). It
          finishes before onResume, as a windowNoDisplay activity must. -->
@@ -67,22 +53,5 @@
         <item name="android:textAllCaps">true</item>
         <item name="android:textSize">@dimen/text_label</item>
         <item name="colorRole">onSurfaceVariant</item>
-    </style>
-
-    <!-- A button of the settings screens (ui's PillButton): as wide as EntriesRow gives it, or
-         its layout, its text on one line, its icon before it. -->
-    <style name="Widget.Luncher.Settings.Button" parent="">
-        <item name="android:layout_width">wrap_content</item>
-        <item name="android:layout_height">wrap_content</item>
-        <item name="android:minHeight">@dimen/button_height</item>
-        <item name="android:paddingLeft">@dimen/button_padding</item>
-        <item name="android:paddingRight">@dimen/button_padding</item>
-        <item name="android:drawablePadding">@dimen/icon_gap</item>
-        <item name="android:ellipsize">end</item>
-        <item name="android:singleLine">true</item>
-        <item name="android:focusable">true</item>
-        <item name="android:focusableInTouchMode">true</item>
-        <item name="android:fontFamily">sans-serif-medium</item>
-        <item name="android:textSize">@dimen/text_button</item>
     </style>
 </resources>

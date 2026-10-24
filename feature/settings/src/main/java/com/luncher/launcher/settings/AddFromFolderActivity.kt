@@ -29,6 +29,9 @@ import com.luncher.domain.pictures.ReceivedPictures.Outcome
 import com.luncher.domain.pictures.inListOrder
 import com.luncher.domain.pictures.whyRefused
 import com.luncher.domain.appearance.ColorRoles
+import com.luncher.launcher.ui.Badge
+import com.luncher.launcher.ui.DialogButton
+import com.luncher.launcher.ui.MessageDialog
 import com.luncher.launcher.ui.WorkingDialog
 import com.luncher.launcher.ui.roundRect
 import com.luncher.launcher.ui.styleAll
@@ -404,7 +407,7 @@ class AddFromFolderActivity : Activity() {
             }
         }
         dialog?.dismiss()
-        dialog = PicturesDialog(
+        dialog = MessageDialog(
             this,
             theme.roles,
             title,
@@ -424,7 +427,7 @@ class AddFromFolderActivity : Activity() {
 
     private fun notAdded(why: ImportResult) {
         dialog?.dismiss()
-        dialog = PicturesDialog(
+        dialog = MessageDialog(
             this,
             theme.roles,
             notAddedTitle(why),

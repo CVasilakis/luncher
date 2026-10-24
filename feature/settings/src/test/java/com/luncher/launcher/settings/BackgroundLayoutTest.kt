@@ -23,6 +23,7 @@ import com.luncher.launcher.testing.TV_SCREENS
 import com.luncher.launcher.ui.screenSize
 import com.luncher.launcher.testing.TV_SCREENS_IN_EVERY_LANGUAGE
 import com.luncher.launcher.testing.TvScreen
+import com.luncher.launcher.testing.assertDialogFits
 import com.luncher.launcher.testing.assertApart
 import com.luncher.launcher.testing.assertInside
 import com.luncher.launcher.testing.assertWhole
@@ -217,7 +218,7 @@ class BackgroundLayoutTest(private val screen: TvScreen) {
         fun offered(): ViewGroup {
             row.performLongClick()
             idle()
-            return ShadowDialog.getLatestDialog().findViewById(R.id.settings_pictures_dialog_entries)
+            return ShadowDialog.getLatestDialog().findViewById(UiR.id.dialog_entries)
         }
         offered()
         assertDialogFits(screen, activity)
@@ -227,8 +228,8 @@ class BackgroundLayoutTest(private val screen: TvScreen) {
         offered().getChildAt(0).performClick()   // Rename
         idle()
         val rename = ShadowDialog.getLatestDialog()
-        rename.findViewById<EditText>(R.id.settings_pictures_dialog_field).setText(library.first().name)
-        rename.findViewById<ViewGroup>(R.id.settings_pictures_dialog_entries).getChildAt(0).performClick()
+        rename.findViewById<EditText>(UiR.id.dialog_field).setText(library.first().name)
+        rename.findViewById<ViewGroup>(UiR.id.dialog_entries).getChildAt(0).performClick()
         idle()
         assertDialogFits(screen, activity)
     }
@@ -286,7 +287,7 @@ class BackgroundLayoutTest(private val screen: TvScreen) {
     private fun assertWindowFits(activity: Activity, text: Boolean) {
         val panel = activity.findViewById<View>(R.id.settings_received_panel)
         val metrics = activity.resources.displayMetrics
-        val margin = activity.resources.getDimensionPixelSize(R.dimen.settings_pictures_dialog_margin)
+        val margin = activity.resources.getDimensionPixelSize(UiR.dimen.dialog_margin)
         assertTrue(
             "window ${panel.width} x ${panel.height} on $screen, ${metrics.widthPixels} x ${metrics.heightPixels} less $margin around",
             panel.width <= metrics.widthPixels - 2 * margin && panel.height <= metrics.heightPixels - 2 * margin,
