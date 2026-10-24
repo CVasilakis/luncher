@@ -17,8 +17,9 @@ import com.luncher.launcher.ui.R as UiR
  * ([WorkingCopies]), and [PreparedPictures] on them: a thumbnail, or a preview at each step of an
  * option, is framed, blurred and dimmed from a picture covering half the [screen] in
  * milliseconds, where drawing it from the original decodes a photo every time. A picture without
- * a working copy for the screen as it is gets one first; one whose copy can't be written (a full
- * disk) is drawn from its original in [originals] instead. Keeps nothing else: [CachedPictureImages]
+ * a working copy for the screen as it is gets one first (every picture has one as it's added, but
+ * the screen may have changed since); one whose copy can't be written then (a full disk) is drawn
+ * from its original in [originals] instead. Keeps nothing else: [CachedPictureImages]
  * keeps the thumbnails, in front of it.
  */
 class WorkingCopyImages(

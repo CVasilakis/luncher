@@ -43,7 +43,8 @@ import com.luncher.launcher.ui.R as UiR
  * then replaces the old one at once. A name is the index's only, so renaming a picture writes
  * the index and nothing else. Its working copy, from which the screens draw it, is made
  * as it's added, kept in [copies]/<id> ([WorkingCopies]), and deleted with it, as is its
- * thumbnail, kept in [images]/<id> ([CachedPictureImages]).
+ * thumbnail, kept in [images]/<id> ([CachedPictureImages]). A picture whose working copy can't be
+ * written or put in place isn't added: every picture added has one.
  *
  * The index is read once per process, on the main thread, then kept there. Everything slow is a
  * job of [JobPriority.PICTURE_LIBRARY], one priority so they keep their order: adding a picture
@@ -81,15 +82,15 @@ class FilesPictures(
 
     /**
      * What adding found, in a job: the result, or the picture copied to [file], not in the library
-     * yet, and its working copy made in [copy], unless it couldn't be written.
+     * yet, and its working copy made in [copy].
      */
     private sealed interface Copied {
         class Failed(val result: ImportResult) : Copied
-        class Copy(val file: File, val copy: File?, val id: PictureId, val name: String, val bytes: Long, val width: Int, val height: Int) : Copied {
+        class Copy(val file: File, val copy: File, val id: PictureId, val name: String, val bytes: Long, val width: Int, val height: Int) : Copied {
             /** Deletes what was made, for a picture that isn't added. */
             fun delete() {
                 file.delete()
-                copy?.delete()
+                copy.delete()
             }
         }
     }
@@ -220,23 +221,27 @@ class FilesPictures(
         // Into place before the library names it, so whatever then draws it finds its files.
         jobs.run(JobPriority.PICTURE_LIBRARY) {
             val target = File(folder, copied.id.value)
-            // There already: a file a killed process left, or the same picture added meanwhile.
-            val placed = if (target.exists()) {
+            // There already: a file a killed process left, or the same picture added meanwhile, which stays.
+            val there = target.exists()
+            val moved = if (there) {
                 copied.file.delete()
                 true
             } else {
                 copied.file.renameTo(target)
             }
-            // Its working copy replaces any there (made for another screen, say); without one, the editor makes it.
-            if (!placed || copied.copy?.renameTo(workingCopies.fileOf(copied.id.value)) == false) copied.copy?.delete()
-            if (!placed) copied.file.delete()
+            // Its working copy replaces any there (made for another screen, say); without one, it isn't added.
+            val placed = moved && copied.copy.renameTo(workingCopies.fileOf(copied.id.value))
+            if (!placed) {
+                copied.delete()
+                if (moved && !there) target.delete()
+            }
             main.post { placed(copied, placed, import) }
         }
     }
 
     private fun placed(copied: Copied.Copy, placed: Boolean, import: Import) {
         if (import.cancelled) return   // a file moved into place stays unnamed, for the next start's cleanup
-        if (!placed) return import.answer(ImportResult.Unreadable)
+        if (!placed) return import.answer(ImportResult.Unreadable)   // its file, or its working copy, not put in place
         val index = index()
         index[copied.id]?.let { return import.answer(ImportResult.AlreadyThere(it)) }   // the same picture, added meanwhile
         nameClash(copied.name, copied.bytes, index.values)?.let { return import.answer(it) }   // one of its name, added meanwhile
@@ -258,7 +263,8 @@ class FilesPictures(
      * short or damaged is [ImportResult.NotAPicture], as a decoder would draw it without an error),
      * and decoded whole, once, into its working copy ([WorkingCopies]): a size alone can decode
      * where the picture can't (AVIF on API 31), and the screens then show it without decoding it
-     * again.
+     * again. A copy that can't be written refuses it as [ImportResult.NoSpace]: in Luncher's own
+     * folder, a full disk, as far as can be told (`Bitmap.compress` loses the stream's error).
      */
     private fun copy(source: Uri, stop: Stop, library: List<Picture>, copying: () -> Unit): Copied {
         val reader = OutsideReader(resolver, outsideCalls, stop)
@@ -325,7 +331,8 @@ class FilesPictures(
             // Stopped, it's whole here, and the decode below stops at once.
             !PictureFiles.whole(file) { stop.isStopped } -> ImportResult.NotAPicture
             else -> when (workingCopies.make(file, shape, copy) { stop.isStopped }) {
-                WorkingCopies.Made.MADE, WorkingCopies.Made.NOT_WRITTEN -> null
+                WorkingCopies.Made.MADE -> null
+                WorkingCopies.Made.NOT_WRITTEN -> ImportResult.NoSpace
                 WorkingCopies.Made.NOT_DECODED -> if (stop.isStopped) ImportResult.Unreadable else unsupportedOrNot(file)
             }
         }
@@ -334,7 +341,7 @@ class FilesPictures(
             copy.delete()
             return Copied.Failed(unfit ?: ImportResult.NotAPicture)
         }
-        return Copied.Copy(file, copy.takeIf { it.isFile }, id, described.name, bytes, shape.width, shape.height)
+        return Copied.Copy(file, copy, id, described.name, bytes, shape.width, shape.height)
     }
 
     /** A file BitmapFactory can't decode: in a format this TV can't show, which is said, or not a picture at all. */

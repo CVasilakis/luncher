@@ -28,6 +28,7 @@ import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.GraphicsMode
 import java.io.File
 import java.io.RandomAccessFile
+import java.security.MessageDigest
 
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)   // to make and decode pictures
@@ -328,6 +329,48 @@ class FilesPicturesTest {
     }
 
     @Test
+    fun `refuses a picture whose working copy can't be written, as for a full disk, leaving nothing behind`() {
+        val first = (add(dropped("a.png", red)) as ImportResult.Added).picture
+        val index = File(folder, "index.json").readText()
+        // EACCES, not ENOSPC, which Robolectric can't make: the copy's writing fails alike.
+        copies.setWritable(false)
+        val result = try {
+            add(shared("b.png", blue))
+        } finally {
+            copies.setWritable(true)
+        }
+
+        assertEquals(ImportResult.NoSpace, result)
+        assertEquals(listOf(first), library.read())
+        assertEquals(index, File(folder, "index.json").readText())
+        assertEquals(listOf(first.id.value, "index.json"), folder.list()!!.sorted())
+        assertEquals(listOf(first.id.value), copies.list()!!.toList())
+    }
+
+    @Test
+    fun `refuses a picture whose working copy can't be put in place, leaving nothing behind`() {
+        val obstacle = obstructCopy(blue)
+
+        assertEquals(ImportResult.Unreadable, add(shared("b.png", blue)))
+        assertEquals(emptyList<Picture>(), library.read())
+        assertEquals(emptyList<String>(), folder.list().orEmpty().filter { it != "index.json" })
+        assertEquals(listOf(obstacle.name), copies.list()!!.toList())
+    }
+
+    @Test
+    fun `a picture whose working copy can't be put in place leaves its file if it was there before`() {
+        library.read()
+        settle()   // the start's cleanup done
+        val id = idOf(blue)
+        File(folder, id).apply { parentFile!!.mkdirs() }.writeBytes(blue)   // as the same picture added meanwhile
+        obstructCopy(blue)
+
+        assertEquals(ImportResult.Unreadable, add(shared("b.png", blue)))
+        assertEquals(emptyList<Picture>(), library.read())
+        assertEquals(listOf(id), folder.list().orEmpty().filter { it != "index.json" })
+    }
+
+    @Test
     fun `deletes pictures, their files and their drawn images, telling the listeners`() {
         val a = (add(shared("a.png", red)) as ImportResult.Added).picture
         val b = (add(shared("b.png", blue)) as ImportResult.Added).picture
@@ -563,6 +606,14 @@ class FilesPicturesTest {
 
         assertEquals(listOf((result as ImportResult.Added).picture), library.read())
     }
+
+    /** A picture's id: its content's hash, as the library names its files. */
+    private fun idOf(bytes: ByteArray): String =
+        MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }.take(32)
+
+    /** A folder, not empty, where [bytes]' working copy goes, so that moving the copy into place fails. */
+    private fun obstructCopy(bytes: ByteArray): File =
+        File(copies, idOf(bytes)).apply { mkdirs(); File(this, "x").createNewFile() }
 
     /** The unfinished copies in the library's folder. */
     private fun copiesLeft(): List<String> = folder.list().orEmpty().filter { it.endsWith(".new") }

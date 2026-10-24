@@ -41,7 +41,11 @@ internal class WorkingCopies(
         /** Made and written. */
         MADE,
 
-        /** Decoded, but not written (a full disk): the picture is fine, its copy is made later. */
+        /**
+         * Decoded, but not written (a full disk): the picture is fine. As it's added, it's refused
+         * ([FilesPictures]); a copy made again later (for another screen) is made once it can be,
+         * the picture drawn from its original meanwhile ([WorkingCopyImages]).
+         */
         NOT_WRITTEN,
 
         /** Not decoded: not a picture this TV can show, or stopped. */

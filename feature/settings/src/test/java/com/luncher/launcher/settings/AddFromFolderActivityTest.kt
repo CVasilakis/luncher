@@ -360,6 +360,35 @@ class AddFromFolderActivityTest {
     }
 
     @Test
+    fun `a picture refused for want of storage says so, its row left unmarked for another try`() {
+        graph(holiday, library = FakePictures<android.net.Uri>().apply { results[holiday.source] = ImportResult.NoSpace })
+        val activity = start()
+
+        activity.list().performItemClick(null, 0, 0)
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(WorkingDialog.SHORTEST))
+
+        assertEquals("Picture not added", ShadowDialog.getLatestDialog().findViewById<TextView>(R.id.settings_pictures_dialog_title).text.toString())
+        assertEquals("Not enough free storage on this TV. Free up space, then try again.", ShadowDialog.getLatestDialog().findViewById<TextView>(R.id.settings_pictures_dialog_text).text.toString())
+        assertEquals(listOf("holiday.jpg | USB drive · 4000 × 3000 · 2.4 MB"), activity.rows())
+        assertTrue(activity.addAll().isFocusable)
+    }
+
+    @Test
+    fun `Add all goes on after the storage fills, saying how many it couldn't store`() {
+        graph(holiday, logo, wallpaper, library = FakePictures<android.net.Uri>().apply {
+            results[holiday.source] = ImportResult.Added(FakePictures.picture("holiday.jpg"))
+            results[logo.source] = ImportResult.NoSpace
+            results[wallpaper.source] = ImportResult.NoSpace
+        })
+        val activity = start()
+
+        activity.addAll().performClick()
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(WorkingDialog.SHORTEST))
+
+        assertEquals("1 picture added" to "2 not added: not enough free storage", message().let { it.first to it.second })
+    }
+
+    @Test
     fun `stops previewing when it's hidden`() {
         val graph = graph(wallpaper)
         val controller = Robolectric.buildActivity(AddFromFolderActivity::class.java).setup()
