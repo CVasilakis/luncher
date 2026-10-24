@@ -137,7 +137,12 @@ again when the panel closes, keeping its tiles when nothing changed.
 
 Hide apps (`HideAppsActivity`) is a panel of its own, a side sheet in the settings panel's place:
 below its title, a hint that OK hides an app or shows it again, then every app by name, with no
-icon, its name dimmed and a "Hidden" chip at its end while it's hidden; OK on one hides it or shows
+icon, its name dimmed and a "Hidden" chip at its end while it's hidden. Each app is listed by its
+real name, the device's, and in that order, so it's found where it's expected whatever it was
+called on the home screen; an app the user renamed there has "Renamed: " and that name below it,
+in smaller text. Every row is as tall as two names with a margin above and below, at least a
+list's usual row, renamed or not, as the list gives its rows one height; the two names are
+centered in it together, the chip at their middle. OK on one hides it or shows
 it again, and Back returns to the settings panel. It's the one place a hidden app is shown again; an app is also hidden from its tile's menu
 on the home screen ([`../home/README.md`](../home/README.md#a-tiles-menu)). The home screen behind shows each change at once: it follows the stored arrangement while
 it's started, as it stays behind the floating panels. The list itself follows the installed apps
@@ -153,9 +158,10 @@ nothing itself.
 |---|---|
 | `AppArrangement` (`:domain`) | what's stored: the order of the shown apps (none until the user reorders, which means by name) and the hidden apps in their order |
 | `AppArrangements` (`:domain`) / `PreferencesAppArrangements` (`:platform`) | port and adapter: reads the arrangement once per process, and saves each change at once, in the background, telling the listeners (the home screen behind) |
-| `homeApps` (`:domain`) | matches the stored apps to the installed ones: an update that renamed an app's activity keeps its place and hidden state, and apps that aren't installed right now keep theirs for when they come back |
-| `ArrangedApps` (`:domain`) | the shown and hidden apps: hiding one puts it first among the hidden apps, showing one puts it last in the user's order (or in its place by name while there's none), and `byLabel` is the list's content |
-| `HideAppsActivity` | shows that list, stores each change; reads the apps again when they change while it shows, and when it comes back |
+| `AppCustomizations` (`:domain`) / `PreferencesAppCustomizations` (`:platform`) | what the user set for each app on the home screen: the name shown below the real one |
+| `homeApps` (`:domain`) | matches the stored apps to the installed ones: an update that renamed an app's activity keeps its place, hidden state and name, and apps that aren't installed right now keep theirs for when they come back |
+| `ArrangedApps` (`:domain`) | the shown and hidden apps: hiding one puts it first among the hidden apps, showing one puts it last in the user's order (or in its place by the home screen's name while there's none), and `byLabel` is the list's content, by the device's label |
+| `HideAppsActivity` | shows that list, stores each change; reads the apps again when they change while it shows, and when it comes back (the names too, which only the home screen changes, so it doesn't follow them while it shows) |
 
 The list is a platform `ListView`: it creates views only for the rows on screen, and reuses them
 while scrolling. It fills the sheet below the title and the hint, as the settings panel's entries

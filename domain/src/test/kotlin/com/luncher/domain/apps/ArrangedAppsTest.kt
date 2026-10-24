@@ -1,6 +1,7 @@
 package com.luncher.domain.apps
 
 import com.luncher.domain.apps.FakeInstalledApps.Companion.app
+import com.luncher.domain.apps.FakeInstalledApps.Companion.homeApp
 import java.util.Locale
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -11,15 +12,15 @@ class ArrangedAppsTest {
     private val installed = listOf(app("games"), app("movies"), app("music"), app("news"))
 
     private fun arranged(arrangement: AppArrangement = AppArrangement.NONE) =
-        homeApps(installed, "com.luncher.launcher", arrangement, Locale.ENGLISH)
+        homeApps(installed, "com.luncher.launcher", arrangement, emptyMap(), Locale.ENGLISH)
 
-    private fun labels(apps: List<InstalledApp>) = apps.map { it.label }
+    private fun labels(apps: List<HomeApp>) = apps.map { it.name }
 
     private fun id(name: String) = app(name).launchable
 
     @Test
     fun `hiding an app puts it first among the hidden apps`() {
-        val result = arranged().hide(app("music")).hide(app("games"))
+        val result = arranged().hide(homeApp("music")).hide(homeApp("games"))
 
         assertEquals(listOf("Movies", "News"), labels(result.shown))
         assertEquals(listOf("Games", "Music"), labels(result.hidden))
@@ -29,31 +30,31 @@ class ArrangedAppsTest {
     fun `hiding keeps the order of the shown apps`() {
         val order = listOf(id("news"), id("games"), id("music"), id("movies"))
 
-        val result = arranged(AppArrangement(order, hidden = emptyList())).hide(app("games"))
+        val result = arranged(AppArrangement(order, hidden = emptyList())).hide(homeApp("games"))
 
         assertEquals(listOf("News", "Music", "Movies"), labels(result.shown))
     }
 
     @Test
     fun `showing an app puts it in its place by label while there's no order`() {
-        val result = arranged(AppArrangement(order = null, hidden = listOf(id("games")))).show(app("games"))
+        val result = arranged(AppArrangement(order = null, hidden = listOf(id("games")))).show(homeApp("games"))
 
         assertEquals(listOf("Games", "Movies", "Music", "News"), labels(result.shown))
-        assertEquals(emptyList<InstalledApp>(), result.hidden)
+        assertEquals(emptyList<HomeApp>(), result.hidden)
     }
 
     @Test
     fun `showing an app puts it last in the user's order`() {
         val arrangement = AppArrangement(order = listOf(id("news"), id("movies"), id("music")), hidden = listOf(id("games")))
 
-        val result = arranged(arrangement).show(app("games"))
+        val result = arranged(arrangement).show(homeApp("games"))
 
         assertEquals(listOf("News", "Movies", "Music", "Games"), labels(result.shown))
     }
 
     @Test
     fun `hiding and showing doesn't fix the order`() {
-        val result = arranged().hide(app("music")).show(app("music"))
+        val result = arranged().hide(homeApp("music")).show(homeApp("music"))
 
         assertNull(result.arrangement.order)
         assertEquals(emptyList<LaunchableApp>(), result.arrangement.hidden)
@@ -61,7 +62,7 @@ class ArrangedAppsTest {
 
     @Test
     fun `stores the hidden apps in their order`() {
-        val result = arranged().hide(app("music")).hide(app("games"))
+        val result = arranged().hide(homeApp("music")).hide(homeApp("games"))
 
         assertEquals(AppArrangement(order = null, hidden = listOf(id("games"), id("music"))), result.arrangement)
     }
@@ -70,7 +71,7 @@ class ArrangedAppsTest {
     fun `stores the shown apps in their order, including apps installed since it was stored`() {
         val arrangement = AppArrangement(order = listOf(id("news"), id("movies")), hidden = emptyList())
 
-        val result = arranged(arrangement).hide(app("movies"))
+        val result = arranged(arrangement).hide(homeApp("movies"))
 
         assertEquals(listOf(id("news"), id("games"), id("music")), result.arrangement.order)
     }
@@ -80,7 +81,7 @@ class ArrangedAppsTest {
         val away = LaunchableApp("com.example.away", "com.example.away.MainActivity")
         val arrangement = AppArrangement(order = listOf(id("news"), away, id("movies")), hidden = emptyList())
 
-        val result = arranged(arrangement).hide(app("games"))
+        val result = arranged(arrangement).hide(homeApp("games"))
 
         assertEquals(listOf(id("news"), away, id("movies"), id("music")), result.arrangement.order)
     }
@@ -90,7 +91,7 @@ class ArrangedAppsTest {
         val away = LaunchableApp("com.example.away", "com.example.away.MainActivity")
         val arrangement = AppArrangement(order = listOf(id("news"), id("movies"), away), hidden = emptyList())
 
-        val result = arranged(arrangement).hide(app("movies"))
+        val result = arranged(arrangement).hide(homeApp("movies"))
 
         assertEquals(listOf(id("news"), away, id("games"), id("music")), result.arrangement.order)
     }
@@ -100,7 +101,7 @@ class ArrangedAppsTest {
         val away = LaunchableApp("com.example.away", "com.example.away.MainActivity")
         val arrangement = AppArrangement(order = null, hidden = listOf(away, id("news")))
 
-        val result = arranged(arrangement).hide(app("games"))
+        val result = arranged(arrangement).hide(homeApp("games"))
 
         assertEquals(listOf(away, id("games"), id("news")), result.arrangement.hidden)
     }
@@ -113,17 +114,39 @@ class ArrangedAppsTest {
 
         assertEquals(
             listOf("Games" to false, "Movies" to false, "Music" to true, "News" to false),
-            list.map { it.app.label to it.hidden },
+            list.map { it.app.installed.label to it.hidden },
         )
     }
 
     @Test(expected = IllegalArgumentException::class)
     fun `can't hide an app that isn't shown`() {
-        arranged().hide(app("music")).hide(app("music"))
+        arranged().hide(homeApp("music")).hide(homeApp("music"))
     }
 
     @Test(expected = IllegalArgumentException::class)
     fun `can't show an app that isn't hidden`() {
-        arranged().show(app("music"))
+        arranged().show(homeApp("music"))
+    }
+
+    // What the user named an app: the home screen's order follows it, the Hide apps list the label.
+
+    private fun named(app: String, name: String) = mapOf(id(app) to AppCustomization(name = name))
+
+    @Test
+    fun `showing an app puts it in its place by the name the user gave`() {
+        val arrangement = AppArrangement(order = null, hidden = listOf(id("news")))
+        val arranged = homeApps(installed, "com.luncher.launcher", arrangement, named("news", "Arts"), Locale.ENGLISH)
+
+        val result = arranged.show(arranged.hidden.single())
+
+        assertEquals(listOf("Arts", "Games", "Movies", "Music"), labels(result.shown))
+    }
+
+    @Test
+    fun `lists all apps by the device's label, whatever the user named them`() {
+        val arranged = homeApps(installed, "com.luncher.launcher", AppArrangement.NONE, named("news", "Arts"), Locale.ENGLISH)
+
+        assertEquals(listOf("Arts", "Games", "Movies", "Music"), labels(arranged.shown))
+        assertEquals(listOf("Games", "Movies", "Music", "News"), arranged.byLabel().map { it.app.installed.label })
     }
 }

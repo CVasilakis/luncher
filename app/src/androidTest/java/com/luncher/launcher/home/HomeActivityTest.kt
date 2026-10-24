@@ -311,7 +311,7 @@ class HomeActivityTest {
             waitUntil(withId(SettingsR.id.settings_apps), isDisplayed())
             press(KeyEvent.KEYCODE_DPAD_DOWN)
             press(KeyEvent.KEYCODE_DPAD_CENTER)             // hides Movies
-            waitUntil(allOf(withId(SettingsR.id.settings_app_hidden), hasSibling(withText("Movies"))), isDisplayed())
+            waitUntil(allOf(withId(SettingsR.id.settings_app_hidden), hasSibling(hasDescendant(withText("Movies")))), isDisplayed())
             pressBack()                                     // closes Hide apps
             waitUntilDestroyed(HideAppsActivity::class.java)
             waitForTheSettingsPanel()                       // so the next Back goes there

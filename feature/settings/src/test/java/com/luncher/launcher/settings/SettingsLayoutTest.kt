@@ -15,6 +15,8 @@ import com.luncher.domain.appearance.SAMPLE_WALLPAPER
 import com.luncher.domain.appearance.appearanceOptions
 import com.luncher.domain.apps.AppArrangement
 import com.luncher.domain.apps.FakeAppArrangements
+import com.luncher.domain.apps.FakeAppCustomizations
+import com.luncher.domain.apps.FakeAppCustomizations.Companion.named
 import com.luncher.domain.apps.FakeInstalledApps
 import com.luncher.domain.apps.FakeInstalledApps.Companion.app
 import com.luncher.launcher.testing.TV_SCREENS
@@ -42,7 +44,7 @@ import com.luncher.launcher.ui.R as UiR
 /**
  * The settings panels' layout on every screen of [TV_SCREENS], in every language: each panel
  * within the screen, a margin from its edges, and no text cut. Hide apps lists 12 apps, more than
- * fit, the last one hidden. The appearance editor shows every value of every option, and its
+ * fit, the last one hidden, two of them renamed, the hidden one among them. The appearance editor shows every value of every option, and its
  * reset question fits.
  */
 @RunWith(ParameterizedRobolectricTestRunner::class)
@@ -74,6 +76,7 @@ class SettingsLayoutTest(private val screen: TvScreen) {
         application.graph = object : TestSettingsGraph() {
             override val installedApps = FakeInstalledApps(apps.map(::app))
             override val appArrangements = FakeAppArrangements(AppArrangement(order = null, hidden = listOf(app("zz last app").launchable)))
+            override val appCustomizations = FakeAppCustomizations(mapOf(named(app("app01"), "Headlines"), named(app("zz last app"), "Mine")))
             // A wallpaper, so the Background entry names a picture, not None.
             override val appearanceSettings = FakeAppearanceSettings(Appearance(background = Background(picture = SAMPLE_WALLPAPER)))
         }
@@ -127,7 +130,8 @@ class SettingsLayoutTest(private val screen: TvScreen) {
         assertEquals("list's end on $screen", panel.height - panel.paddingBottom, (list.parent as View).bottom)
         assertTrue("list shorter than a row on $screen", list.height - list.paddingTop - list.paddingBottom > row)
         val rows = (0 until list.childCount).map { list.getChildAt(it) }
-        for (view in rows) assertWhole(screen, view.findViewById(R.id.settings_app_label))
+        for (view in rows) assertNamesFit(view)
+        assertEquals("rows' heights on $screen", setOf(rows[0].height), rows.map { it.height }.toSet())
         list.setSelection(apps.lastIndex)   // the hidden app, "Hidden" after its name
         list.measure(
             View.MeasureSpec.makeMeasureSpec(list.width, View.MeasureSpec.EXACTLY),
@@ -136,9 +140,19 @@ class SettingsLayoutTest(private val screen: TvScreen) {
         list.layout(list.left, list.top, list.right, list.bottom)
         val last = (0 until list.childCount).map { list.getChildAt(it) }.last()
         assertEquals("Zz last app", last.findViewById<TextView>(R.id.settings_app_label).text.toString())
-        assertWhole(screen, last.findViewById(R.id.settings_app_label))
+        assertNamesFit(last)
         assertWhole(screen, last.findViewById(R.id.settings_app_hidden))
         assertPanelFits(activity)
+    }
+
+    /** [row]'s names whole, the one the user gave too where it shows, and both inside the row. */
+    private fun assertNamesFit(row: View) {
+        val label = row.findViewById<TextView>(R.id.settings_app_label)
+        assertWhole(screen, label)
+        val names = label.parent as View
+        assertTrue("${label.text}'s names at ${names.top}..${names.bottom} in a row ${row.height} px tall on $screen", names.top >= 0 && names.bottom <= row.height)
+        val name = row.findViewById<TextView>(R.id.settings_app_name)
+        if (name.visibility == View.VISIBLE) assertWhole(screen, name)
     }
 
     // With a picture, the longer of its texts.

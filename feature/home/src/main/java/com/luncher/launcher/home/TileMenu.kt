@@ -13,7 +13,7 @@ import com.luncher.domain.appearance.ColorRoles
 import com.luncher.domain.appearance.Corners
 import com.luncher.domain.apps.AppAction
 import com.luncher.domain.apps.AppMenuEntry
-import com.luncher.domain.apps.InstalledApp
+import com.luncher.domain.apps.HomeApp
 import com.luncher.domain.layout.PixelBounds
 import com.luncher.domain.layout.tileMenuHeight
 import com.luncher.domain.layout.tileMenuPlacement
@@ -51,7 +51,7 @@ internal class TileMenu(private val activity: Activity) : Dialog(activity, R.sty
     private var entryCorner = 0f
 
     /** The app whose menu shows; null while it doesn't. */
-    var app: InstalledApp? = null
+    var app: HomeApp? = null
         private set
 
     init {
@@ -90,7 +90,7 @@ internal class TileMenu(private val activity: Activity) : Dialog(activity, R.sty
         scroll.scrollTo(0, 0)   // where the last menu was scrolled to
         // No title shows; the app's name for screen readers, as the menu appears. Not the window's
         // title, which would rename it: Android names a dialog's window after its activity.
-        if (Build.VERSION.SDK_INT >= 28) panel.accessibilityPaneTitle = tile.app.label
+        if (Build.VERSION.SDK_INT >= 28) panel.accessibilityPaneTitle = tile.app.name
         placeAt(tile)
         app = tile.app
         show()

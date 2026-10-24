@@ -9,8 +9,10 @@ import android.os.Handler
 import android.os.Looper
 import com.luncher.domain.apps.AppImages
 import com.luncher.domain.apps.Banner
+import com.luncher.domain.apps.AppCustomization
 import com.luncher.domain.apps.FakeInstalledApps.Companion.app
-import com.luncher.domain.apps.InstalledApp
+import com.luncher.domain.apps.FakeInstalledApps.Companion.homeApp
+import com.luncher.domain.apps.HomeApp
 import com.luncher.domain.jobs.ManualJobs
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -34,7 +36,7 @@ class CachedBannerImagesTest {
     private class CountingImages : AppImages<Bitmap> {
         var drawn = 0
 
-        override fun render(app: InstalledApp, banner: Banner, width: Int, height: Int): Bitmap {
+        override fun render(app: HomeApp, banner: Banner, width: Int, height: Int): Bitmap {
             drawn++
             val image = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
             image.eraseColor(Color.argb(128, drawn * 40 % 256, 200, if (banner == Banner.AppBanner) 50 else 150))
@@ -67,9 +69,10 @@ class CachedBannerImagesTest {
         jobs.runAll()
     }
 
-    /** [appName], installed, so that the cache keeps its file. */
-    private fun installed(appName: String, updated: Long = 0, label: String? = null): InstalledApp {
-        val app = app(appName, hasBanner = true, updated = updated).let { if (label == null) it else it.copy(label = label) }
+    /** [appName], installed, so that the cache keeps its file; [given] the name the user gave it, if any. */
+    private fun installed(appName: String, updated: Long = 0, label: String? = null, given: String? = null): HomeApp {
+        val installed = app(appName, hasBanner = true, updated = updated).let { if (label == null) it else it.copy(label = label) }
+        val app = HomeApp(installed, AppCustomization(name = given))
         val application = ApplicationInfo().apply { packageName = app.launchable.packageName }
         val shadow = shadowOf(context.packageManager)
         shadow.installPackage(PackageInfo().apply { packageName = app.launchable.packageName; applicationInfo = application })
@@ -83,7 +86,7 @@ class CachedBannerImagesTest {
         return app
     }
 
-    private fun fileOf(app: InstalledApp) =
+    private fun fileOf(app: HomeApp) =
         File(context.cacheDir, "banners/${app.launchable.packageName}/${app.launchable.activityName}")
 
     @Test
@@ -124,7 +127,7 @@ class CachedBannerImagesTest {
     }
 
     @Test
-    fun `draws again when the size, the kind of image, the app's install or its label isn't the one written`() {
+    fun `draws again when the size, the kind of image, the app's install or its name isn't the one written`() {
         val movies = installed("movies", updated = 1)
         cache.render(movies, Banner.AppBanner, 300, 169)
         writeEverything()
@@ -133,6 +136,7 @@ class CachedBannerImagesTest {
             Triple(movies, Banner.AppIcon, 300),
             Triple(installed("movies", updated = 2), Banner.AppBanner, 300),
             Triple(installed("movies", updated = 1, label = "Films"), Banner.AppBanner, 300),
+            Triple(installed("movies", updated = 1, given = "Cinema"), Banner.AppBanner, 300),
         )
 
         for ((app, banner, width) in others) {
@@ -177,7 +181,7 @@ class CachedBannerImagesTest {
     @Test
     fun `deletes the files of apps no longer installed`() {
         val movies = installed("movies")
-        val gone = app("gone", hasBanner = true)
+        val gone = homeApp("gone", hasBanner = true)
         cache.render(movies, Banner.AppBanner, 300, 169)
         cache.render(gone, Banner.AppBanner, 300, 169)
 

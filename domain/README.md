@@ -15,16 +15,19 @@ domain/src/
 ├── main/kotlin/com/luncher/domain/
 │   ├── apps/
 │   │   ├── LaunchableApp.kt     model: an app's TV launcher activity (package + activity), its identity
-│   │   ├── InstalledApp.kt      model: a launchable app with its label, whether it has a banner, and when it was installed or updated
+│   │   ├── InstalledApp.kt      model: a launchable app with its label, whether it has a banner, and when it was installed or updated, as the device reports it
+│   │   ├── AppCustomization.kt  model: what the user set for one app, as stored: its name (later its own picture)
+│   │   ├── AppCustomizations.kt port: where what the user set for each app is kept, and when it changes
+│   │   ├── HomeApp.kt           model: an app as the user set it up, the installed app with its AppCustomization; its name, the user's or the label
 │   │   ├── InstalledApps.kt     port: the TV apps installed on the device, and when apps change
 │   │   ├── AppImages.kt         port: an app's image drawn at a size, in the UI's image type
 │   │   ├── AppArrangement.kt    model: the user's order of the shown apps, and the hidden apps, as stored
 │   │   ├── AppArrangements.kt   port: where the arrangement is kept, and when it changes
-│   │   ├── HomeApps.kt          rule: which apps the home screen shows, in which order, and which are hidden
-│   │   ├── ArrangedApps.kt      model and rules: the shown and hidden apps; hiding or showing one, and what to store
+│   │   ├── HomeApps.kt          rule: which apps the home screen shows, in which order, and which are hidden, each with what the user set for it, matched to the installed apps (StoredMatch); the orders by name (NameOrder)
+│   │   ├── ArrangedApps.kt      model and rules: the shown and hidden apps (HomeApps); hiding or showing one, and what to store; all of them by the device's label, for Hide apps
 │   │   ├── AppAction.kt         model and rule: what the user can do to an app from its tile's menu, one type each, and which the menu lists, each available or not (AppMenuEntry)
 │   │   ├── AppInfoScreen.kt     port: whether the device has the page about an app in its settings, which App info opens
-│   │   └── Banner.kt            model and rule: which image a tile shows (the app's banner or its icon)
+│   │   └── Banner.kt            model and rule: which image a tile shows (the app's banner, or its icon and name)
 │   ├── appearance/
 │   │   ├── Appearance.kt        model: how the home screen looks, as far as the user can change it, and Luncher's theme, in parts (docs/ARCHITECTURE.md#appearance)
 │   │   ├── TileGeometry.kt      model: where tiles go and how big they are, in dp; their alignment; whether the app names show below the tiles
@@ -85,6 +88,7 @@ domain/src/
 └── testFixtures/kotlin/…/       fakes of the ports, used by the tests of every module
     ├── apps/FakeInstalledApps.kt   fake of the InstalledApps port
     ├── apps/FakeAppArrangements.kt fake of the AppArrangements port: the arrangement in memory
+    ├── apps/FakeAppCustomizations.kt fake of the AppCustomizations port: what the user set in memory; named(app, name)
     ├── apps/FakeAppInfoScreen.kt   fake of the AppInfoScreen port: whether the page exists, as the test sets it
     ├── appearance/FakeAppearanceSettings.kt  fake of the AppearanceSettings port: the appearance in memory
     ├── appearance/AppearanceChanges.kt       each option at each value but its default, in a context that offers it: what the catalog-wide tests draw (SAMPLE_WALLPAPER for the background's, wide or tall)
@@ -125,5 +129,5 @@ Packages are by topic (`appearance/`, `apps/`, `arrange/`, `clock/`, `jobs/`, `l
   `Cancellable`, whose KDoc says what cancelling stops (`PictureImport.add`: no answer, nothing
   added).
 - A port for state that changes while it's shown (`Clock`, `AppearanceSettings`, `AppArrangements`,
-  `InstalledApps`, `Pictures`) is a port you can watch
+  `AppCustomizations`, `InstalledApps`, `Pictures`) is a port you can watch
   ([`ARCHITECTURE.md`](../docs/ARCHITECTURE.md#background-work-and-changes-while-shown)).

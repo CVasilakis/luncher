@@ -8,6 +8,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.action.ViewActions.pressKey
 import androidx.test.espresso.assertion.ViewAssertions.matches
+import androidx.test.espresso.matcher.ViewMatchers.hasDescendant
 import androidx.test.espresso.matcher.ViewMatchers.hasSibling
 import androidx.test.espresso.matcher.ViewMatchers.isCompletelyDisplayed
 import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
@@ -71,7 +72,7 @@ class HideAppsActivityTest {
     }
 
     /** The "Hidden" mark in the row of the app labeled [label]. */
-    private fun hiddenMark(label: String) = allOf(withId(R.id.settings_app_hidden), hasSibling(withText(label)))
+    private fun hiddenMark(label: String) = allOf(withId(R.id.settings_app_hidden), hasSibling(hasDescendant(withText(label))))
 
     /** Checks [condition] on the view [view] matches, retrying while the list settles. */
     private fun waitUntil(view: Matcher<View>, condition: Matcher<View>) = waitUntilMatches(view, condition, TIMEOUT_MS)

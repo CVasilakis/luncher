@@ -15,7 +15,7 @@ import android.text.TextUtils
 import android.util.TypedValue
 import com.luncher.domain.apps.AppImages
 import com.luncher.domain.apps.Banner
-import com.luncher.domain.apps.InstalledApp
+import com.luncher.domain.apps.HomeApp
 import com.luncher.launcher.platform.R
 import com.luncher.launcher.ui.color
 import com.luncher.launcher.ui.R as UiR
@@ -56,7 +56,7 @@ class BannerImages(context: Context) : AppImages<Bitmap> {
     }
 
     /** [app]'s [banner], drawn [width] x [height] px. Falls back to the icon card if the banner can't be loaded. */
-    override fun render(app: InstalledApp, banner: Banner, width: Int, height: Int): Bitmap {
+    override fun render(app: HomeApp, banner: Banner, width: Int, height: Int): Bitmap {
         val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
         val component = ComponentName(app.launchable.packageName, app.launchable.activityName)
@@ -64,7 +64,7 @@ class BannerImages(context: Context) : AppImages<Bitmap> {
             Banner.AppBanner -> load { drawBanner(component, canvas, width, height) } ?: false
             Banner.AppIcon -> false
         }
-        if (!drawn) drawCard(canvas, component, app.label, width, height)
+        if (!drawn) drawCard(canvas, component, app.name, width, height)
         return bitmap
     }
 
@@ -104,8 +104,8 @@ class BannerImages(context: Context) : AppImages<Bitmap> {
         return bitmap
     }
 
-    /** The app's icon above its label, on a plain card. */
-    private fun drawCard(canvas: Canvas, component: ComponentName, label: String, width: Int, height: Int) {
+    /** The app's icon above its name, the one the home screen shows, on a plain card. */
+    private fun drawCard(canvas: Canvas, component: ComponentName, name: String, width: Int, height: Int) {
         canvas.drawColor(cardColor)
         val icon = load { packageManager.getActivityIcon(component) } ?: packageManager.defaultActivityIcon
         val iconSize = height / 2
@@ -115,7 +115,7 @@ class BannerImages(context: Context) : AppImages<Bitmap> {
 
         labelPaint.textSize = height * LABEL_SIZE
         val padding = height / 10f
-        val text = TextUtils.ellipsize(label, labelPaint, width - 2 * padding, TextUtils.TruncateAt.END)
+        val text = TextUtils.ellipsize(name, labelPaint, width - 2 * padding, TextUtils.TruncateAt.END)
         canvas.drawText(text, 0, text.length, width / 2f, height - padding, labelPaint)
     }
 

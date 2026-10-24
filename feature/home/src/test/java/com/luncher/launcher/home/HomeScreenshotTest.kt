@@ -25,6 +25,8 @@ import com.luncher.domain.appearance.TopBarAppearance
 import com.luncher.domain.appearance.VerticalAlignment
 import com.luncher.domain.apps.AppArrangement
 import com.luncher.domain.apps.FakeAppArrangements
+import com.luncher.domain.apps.FakeAppCustomizations
+import com.luncher.domain.apps.FakeAppCustomizations.Companion.named
 import com.luncher.domain.apps.FakeAppInfoScreen
 import com.luncher.domain.apps.FakeInstalledApps
 import com.luncher.domain.apps.FakeInstalledApps.Companion.app
@@ -65,7 +67,7 @@ class HomeScreenshotTest {
     /**
      * The home screen, its wallpaper drawn and shown unless [drawn] is false: then, its window
      * saying it's being drawn, [kept] being what the last start kept. [hasAppInfo]: whether the
-     * device has the apps' page in its settings.
+     * device has the apps' page in its settings. [named]: the names the user gave apps.
      */
     private fun start(
         hidden: List<String> = emptyList(),
@@ -73,6 +75,7 @@ class HomeScreenshotTest {
         drawn: Boolean = true,
         kept: Pair<WallpaperDrawing, Bitmap>? = null,
         hasAppInfo: Boolean = true,
+        named: Map<String, String> = emptyMap(),
     ): HomeActivity {
         val application = RuntimeEnvironment.getApplication() as HomeTestApplication
         val graph = object : TestHomeGraph(application) {
@@ -88,6 +91,7 @@ class HomeScreenshotTest {
             override val pictureImages = FilePictureImages(application)
             override val storedWallpaper = FakeStoredWallpaper(kept)
             override val appInfoScreen = FakeAppInfoScreen(hasAppInfo)
+            override val appCustomizations = FakeAppCustomizations(named.entries.associate { (app, name) -> named(app(app), name) })
         }
         application.graph = graph
         val activity = Robolectric.buildActivity(HomeActivity::class.java).setup().get()
@@ -167,7 +171,7 @@ class HomeScreenshotTest {
 
     private fun HomeActivity.tile(label: String): AppTileView {
         val tiles = findViewById<AppTilesView>(R.id.home_apps)
-        return (0 until tiles.childCount).map { tiles.getChildAt(it) as AppTileView }.single { it.app.label == label }
+        return (0 until tiles.childCount).map { tiles.getChildAt(it) as AppTileView }.single { it.app.name == label }
     }
 
     /** Opens the menu of the tile of [label], as a long press of OK on it would, its zoom done. */
@@ -236,6 +240,16 @@ class HomeScreenshotTest {
         shadowOf(Looper.getMainLooper()).idleFor(Duration.ofSeconds(1))   // the zoom and the name's fade
 
         activity.window.decorView.captureFocused("src/test/screenshots/home/home_screen_long_name.png")
+    }
+
+    // Two apps renamed, every name shown: the names given below the tiles and on the cards, and the
+    // apps sorted by them.
+    @Test
+    fun homeScreenWithRenamedApps() {
+        val appearance = Appearance(TileGeometry(appName = AppName.ALWAYS))
+
+        start(appearance = appearance, named = mapOf("news" to "Headlines", "an app name too long for its tile" to "TV"))
+            .window.decorView.captureFocused("src/test/screenshots/home/home_screen_renamed.png")
     }
 
     // Moving Music, lifted: the held tile's white frame tells it from one only focused.

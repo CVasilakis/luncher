@@ -4,6 +4,7 @@
     <string name="settings_title">Ρυθμίσεις</string>
     <string name="settings_hide_apps">Απόκρυψη εφαρμογών</string>
     <string name="settings_hidden">Κρυφή</string>
+    <string name="settings_app_renamed">Νέο όνομα: \u2068%1$s\u2069</string>
     <string name="settings_no_apps">Δεν υπάρχουν εγκατεστημένες εφαρμογές TV</string>
     <string name="settings_appearance">Εμφάνιση</string>
     <string name="settings_appearance_tiles">Πλακίδια</string>

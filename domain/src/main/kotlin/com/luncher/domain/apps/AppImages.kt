@@ -8,5 +8,5 @@ package com.luncher.domain.apps
 interface AppImages<Image> {
 
     /** [app]'s [banner], drawn [width] x [height] px. */
-    fun render(app: InstalledApp, banner: Banner, width: Int, height: Int): Image
+    fun render(app: HomeApp, banner: Banner, width: Int, height: Int): Image
 }

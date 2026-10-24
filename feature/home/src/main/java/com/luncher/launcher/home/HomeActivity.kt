@@ -20,7 +20,7 @@ import com.luncher.domain.appearance.ThemeAppearance
 import com.luncher.domain.appearance.colorRoles
 import com.luncher.domain.apps.AppAction
 import com.luncher.domain.apps.ArrangedApps
-import com.luncher.domain.apps.InstalledApp
+import com.luncher.domain.apps.HomeApp
 import com.luncher.domain.apps.appActions
 import com.luncher.domain.apps.homeApps
 import com.luncher.launcher.settings.R as SettingsR
@@ -43,6 +43,7 @@ class HomeActivity : Activity() {
 
     private val installedApps by lazy { graph.installedApps }
     private val arrangements by lazy { graph.appArrangements }
+    private val customizations by lazy { graph.appCustomizations }
     private val images by lazy { graph.appImages }
     private val appInfoScreen by lazy { graph.appInfoScreen }
     private val clock by lazy { graph.clock }
@@ -59,7 +60,7 @@ class HomeActivity : Activity() {
     private var menu: TileMenu? = null
 
     /** What the tiles show; null until the first [onResume]. */
-    private var shown: List<InstalledApp>? = null
+    private var shown: List<HomeApp>? = null
 
     /** The apps as last read, shown and hidden: what the tiles' menu acts on. */
     private var arranged: ArrangedApps? = null
@@ -76,8 +77,8 @@ class HomeActivity : Activity() {
     /** Apps installed, updated or removed while the user moves an app, read when the mode ends. */
     private var appsChangedWhileMoving = false
 
-    // Installed, updated or removed while shown: shown at once, or, while moving an app, whose
-    // tiles are the user's work in progress, once it ends.
+    // Installed, updated or removed, or renamed, while shown: shown at once, or, while moving an
+    // app, whose tiles are the user's work in progress, once it ends.
     private val showAppChanges: () -> Unit = {
         if (move.active) appsChangedWhileMoving = true else refresh()
     }
@@ -123,9 +124,9 @@ class HomeActivity : Activity() {
     }
 
     // Visible from onStart to onStop; paused only, e.g. behind a dialog, it still shows.
-    // The appearance, the arrangement and the installed apps, as the clock, only while visible: a
-    // change made meanwhile (in the appearance editor, which covers the home screen whole) is
-    // applied once, when it comes back. The apps are read again in onResume.
+    // The appearance, the arrangement, the names and the installed apps, as the clock, only while
+    // visible: a change made meanwhile (in the appearance editor, which covers the home screen
+    // whole) is applied once, when it comes back. The apps are read again in onResume.
     override fun onStart() {
         super.onStart()
         clockView.start(clock)
@@ -133,6 +134,7 @@ class HomeActivity : Activity() {
         appearanceSettings.addListener(showAppearance)
         showAppearance()
         arrangements.addListener(showArrangement)
+        customizations.addListener(showAppChanges)
         installedApps.addListener(showAppChanges)
     }
 
@@ -145,6 +147,7 @@ class HomeActivity : Activity() {
         wallpaper.stop()
         appearanceSettings.removeListener(showAppearance)
         arrangements.removeListener(showArrangement)
+        customizations.removeListener(showAppChanges)
         installedApps.removeListener(showAppChanges)
     }
 
@@ -166,11 +169,11 @@ class HomeActivity : Activity() {
         move.dispatchKeyEvent(event) || super.dispatchKeyEvent(event)
 
     /**
-     * Reads the apps again: apps may have been installed or removed, or hidden or shown in the
-     * settings, since the home screen was last shown.
+     * Reads the apps again: apps may have been installed or removed, hidden or shown in the
+     * settings, or renamed, since the home screen was last shown.
      */
     private fun refresh() {
-        val arranged = homeApps(installedApps.tvApps(), packageName, arrangements.read(), Locale.getDefault())
+        val arranged = homeApps(installedApps.tvApps(), packageName, arrangements.read(), customizations.read(), Locale.getDefault())
         this.arranged = arranged
         // Unchanged, as on most returns to the home screen: keep the tiles, their images and focus.
         if (arranged.shown != shown) show(arranged.shown)
@@ -231,7 +234,7 @@ class HomeActivity : Activity() {
      * returns here. The menu offered it only if the page exists (AppInfoScreen), which the
      * intent's action and Uri must match; a settings app disabled since gets a message.
      */
-    private fun openAppInfo(app: InstalledApp) {
+    private fun openAppInfo(app: HomeApp) {
         val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", app.launchable.packageName, null))
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         try {
@@ -251,7 +254,7 @@ class HomeActivity : Activity() {
         }
     }
 
-    private fun show(apps: List<InstalledApp>) {
+    private fun show(apps: List<HomeApp>) {
         // The menu is of a tile that may be gone, or of an app that changed.
         menu?.dismiss()
         val focusedTile = tiles.focusedChild as? AppTileView
@@ -259,7 +262,8 @@ class HomeActivity : Activity() {
         val focusedIndex = focusedTile?.let { tiles.indexOfChild(it) } ?: 0
         // Focus in the top bar (on the settings entry) stays there; the tiles don't take it.
         val topBarFocused = topBar.hasFocus()
-        // Apps still there keep their tile and its image: installing one app draws one banner.
+        // Apps still there keep their tile and its image: installing one app draws one banner. A
+        // renamed app is another HomeApp, so its tile is made again, with its new name.
         val kept = (0 until tiles.childCount).map { tiles.getChildAt(it) as AppTileView }.associateBy { it.app }
         tiles.removeAllViews()
         for (app in apps) {
@@ -291,7 +295,7 @@ class HomeActivity : Activity() {
         empty.visibility = View.VISIBLE
     }
 
-    private fun open(app: InstalledApp) {
+    private fun open(app: HomeApp) {
         val intent = Intent(Intent.ACTION_MAIN)
             .addCategory(Intent.CATEGORY_LEANBACK_LAUNCHER)
             .setClassName(app.launchable.packageName, app.launchable.activityName)

@@ -37,5 +37,8 @@ class FakeInstalledApps(apps: List<InstalledApp> = emptyList()) : InstalledApps 
             hasBanner = hasBanner,
             updated = updated,
         )
+
+        /** [app] as [homeApps] gives it while the user set nothing for it. */
+        fun homeApp(name: String, hasBanner: Boolean = false, updated: Long = 0) = HomeApp(app(name, hasBanner, updated))
     }
 }

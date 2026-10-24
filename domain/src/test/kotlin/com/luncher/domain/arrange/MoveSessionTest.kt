@@ -3,7 +3,8 @@ package com.luncher.domain.arrange
 import com.luncher.domain.appearance.HorizontalAlignment
 import com.luncher.domain.apps.AppArrangement
 import com.luncher.domain.apps.FakeInstalledApps.Companion.app
-import com.luncher.domain.apps.InstalledApp
+import com.luncher.domain.apps.FakeInstalledApps.Companion.homeApp
+import com.luncher.domain.apps.HomeApp
 import com.luncher.domain.apps.homeApps
 import com.luncher.domain.layout.Direction.DOWN
 import com.luncher.domain.layout.Direction.LEFT
@@ -31,17 +32,17 @@ class MoveSessionTest {
             order = shown.map { app(it.toString()).launchable },
             hidden = hidden.map { app(it.toString()).launchable },
         )
-        val arranged = homeApps(names.map { app(it) }, "com.luncher.launcher", arrangement, Locale.ENGLISH)
-        return MoveSession(arranged, app(name), TileGrid(arranged.shown.size, columns = 3, width = 300, gap = 0, rows))
+        val arranged = homeApps(names.map { app(it) }, "com.luncher.launcher", arrangement, emptyMap(), Locale.ENGLISH)
+        return MoveSession(arranged, homeApp(name), TileGrid(arranged.shown.size, columns = 3, width = 300, gap = 0, rows))
     }
 
-    private fun names(apps: List<InstalledApp>) = apps.joinToString("") { it.label.lowercase() }
+    private fun names(apps: List<HomeApp>) = apps.joinToString("") { it.name.lowercase() }
 
     @Test
     fun `holds the app where it is`() {
         val session = moving("c")
 
-        assertEquals(app("c"), session.held)
+        assertEquals(homeApp("c"), session.held)
         assertEquals(2, session.heldIndex)
         assertFalse(session.moved)
     }
@@ -131,8 +132,8 @@ class MoveSessionTest {
 
     @Test
     fun `fixes the order by label once the app moved`() {
-        val start = homeApps(listOf(app("b"), app("a"), app("c")), "com.luncher.launcher", AppArrangement.NONE, Locale.ENGLISH)
-        val session = MoveSession(start, app("c"), TileGrid(3, columns = 3, width = 300, gap = 0))
+        val start = homeApps(listOf(app("b"), app("a"), app("c")), "com.luncher.launcher", AppArrangement.NONE, emptyMap(), Locale.ENGLISH)
+        val session = MoveSession(start, homeApp("c"), TileGrid(3, columns = 3, width = 300, gap = 0))
         assertSame(start, session.arranged())      // nothing moved: the order stays by label
 
         session.move(LEFT)

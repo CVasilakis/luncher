@@ -30,7 +30,7 @@ data class AppMenuEntry(val action: AppAction, val available: Boolean = true)
  * it, so it isn't listed. App info is listed always, available where the device has the app's
  * page in its settings ([hasAppInfo], [AppInfoScreen.exists]).
  */
-fun appActions(arranged: ArrangedApps, app: InstalledApp, hasAppInfo: Boolean): List<AppMenuEntry> {
+fun appActions(arranged: ArrangedApps, app: HomeApp, hasAppInfo: Boolean): List<AppMenuEntry> {
     require(app in arranged.shown) { "not shown: ${app.launchable}" }
     return listOfNotNull(
         AppMenuEntry(AppAction.Move).takeIf { arranged.shown.size > 1 },

@@ -1,7 +1,7 @@
 package com.luncher.domain.arrange
 
 import com.luncher.domain.apps.ArrangedApps
-import com.luncher.domain.apps.InstalledApp
+import com.luncher.domain.apps.HomeApp
 import com.luncher.domain.layout.Direction
 import com.luncher.domain.layout.TileMoves
 import com.luncher.domain.layout.opposite
@@ -19,7 +19,7 @@ import com.luncher.domain.layout.opposite
 class MoveSession(
     private val start: ArrangedApps,
     /** The app the user moves: one of [start]'s shown apps. */
-    val held: InstalledApp,
+    val held: HomeApp,
     /** How tiles move among the shown apps: as many as there are of them. */
     private val moves: TileMoves,
 ) {
@@ -27,7 +27,7 @@ class MoveSession(
     private val shownApps = ArrayList(start.shown)
 
     /** The shown apps, in their current order. */
-    val shown: List<InstalledApp> get() = shownApps
+    val shown: List<HomeApp> get() = shownApps
 
     /** The held app's place among the shown apps. */
     var heldIndex: Int = shownApps.indexOf(held)
@@ -63,7 +63,7 @@ class MoveSession(
 
     /**
      * The apps as arranged now, to store and show. Once the app moved, the shown apps keep the
-     * order the user gave them from then on, instead of the one by label.
+     * order the user gave them from then on, instead of the one by name.
      */
     fun arranged(): ArrangedApps = if (moved) start.rearranged(shownApps.toList(), start.hidden) else start
 }

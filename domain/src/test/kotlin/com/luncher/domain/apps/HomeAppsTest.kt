@@ -9,19 +9,19 @@ class HomeAppsTest {
 
     private val launcher = "com.luncher.launcher"
 
-    private fun labels(apps: List<InstalledApp>) = apps.map { it.label }
+    private fun labels(apps: List<HomeApp>) = apps.map { it.name }
 
     private fun shown(
         installed: List<InstalledApp>,
         arrangement: AppArrangement = AppArrangement.NONE,
         locale: Locale = Locale.ENGLISH,
-    ) = labels(homeApps(installed, launcher, arrangement, locale).shown)
+    ) = labels(homeApps(installed, launcher, arrangement, emptyMap(), locale).shown)
 
     /** An app for each of [labels], in that order. */
     private fun labeled(vararg labels: String) = labels.mapIndexed { i, label -> app("app$i").copy(label = label) }
 
     private fun hidden(installed: List<InstalledApp>, arrangement: AppArrangement) =
-        labels(homeApps(installed, launcher, arrangement, Locale.ENGLISH).hidden)
+        labels(homeApps(installed, launcher, arrangement, emptyMap(), Locale.ENGLISH).hidden)
 
     private fun id(name: String) = app(name).launchable
 
@@ -88,8 +88,8 @@ class HomeAppsTest {
         val second = app("b").copy(label = "Same")
 
         assertEquals(
-            homeApps(listOf(first, second), launcher, AppArrangement.NONE, Locale.ENGLISH).shown,
-            homeApps(listOf(second, first), launcher, AppArrangement.NONE, Locale.ENGLISH).shown,
+            homeApps(listOf(first, second), launcher, AppArrangement.NONE, emptyMap(), Locale.ENGLISH).shown,
+            homeApps(listOf(second, first), launcher, AppArrangement.NONE, emptyMap(), Locale.ENGLISH).shown,
         )
     }
 
@@ -137,7 +137,7 @@ class HomeAppsTest {
         val installed = listOf(app("movies"), renamed("news"))
         val arrangement = AppArrangement(order = null, hidden = listOf(id("news")))
 
-        val arranged = homeApps(installed, launcher, arrangement, Locale.ENGLISH)
+        val arranged = homeApps(installed, launcher, arrangement, emptyMap(), Locale.ENGLISH)
 
         assertEquals(listOf("News"), labels(arranged.hidden))
         assertEquals(listOf(renamed("news").launchable), arranged.arrangement.hidden)
@@ -157,9 +157,9 @@ class HomeAppsTest {
         val installed = listOf(renamed("news"), second)
         val arrangement = AppArrangement(order = null, hidden = listOf(id("news")))
 
-        val arranged = homeApps(installed, launcher, arrangement, Locale.ENGLISH)
+        val arranged = homeApps(installed, launcher, arrangement, emptyMap(), Locale.ENGLISH)
 
-        assertEquals(emptyList<InstalledApp>(), arranged.hidden)
+        assertEquals(emptyList<HomeApp>(), arranged.hidden)
         assertEquals(emptyList<LaunchableApp>(), arranged.arrangement.hidden)
     }
 
@@ -170,24 +170,24 @@ class HomeAppsTest {
         val gone = LaunchableApp("com.example.news", "com.example.news.OldActivity")
         val arrangement = AppArrangement(order = listOf(gone, id("news")), hidden = emptyList())
 
-        assertEquals(listOf(id("news")), homeApps(installed, launcher, arrangement, Locale.ENGLISH).arrangement.order)
+        assertEquals(listOf(id("news")), homeApps(installed, launcher, arrangement, emptyMap(), Locale.ENGLISH).arrangement.order)
     }
 
     @Test
     fun `keeps the entries of apps that aren't installed`() {
         val arrangement = AppArrangement(order = listOf(id("games"), id("news")), hidden = listOf(id("music")))
 
-        val arranged = homeApps(listOf(app("news")), launcher, arrangement, Locale.ENGLISH)
+        val arranged = homeApps(listOf(app("news")), launcher, arrangement, emptyMap(), Locale.ENGLISH)
 
         assertEquals(listOf("News"), labels(arranged.shown))
-        assertEquals(emptyList<InstalledApp>(), arranged.hidden)
+        assertEquals(emptyList<HomeApp>(), arranged.hidden)
         assertEquals(arrangement, arranged.arrangement)
     }
 
     @Test
     fun `an app that comes back gets its place back`() {
         val arrangement = AppArrangement(order = listOf(id("news"), id("games"), id("movies")), hidden = emptyList())
-        val withoutGames = homeApps(listOf(app("movies"), app("news")), launcher, arrangement, Locale.ENGLISH).arrangement
+        val withoutGames = homeApps(listOf(app("movies"), app("news")), launcher, arrangement, emptyMap(), Locale.ENGLISH).arrangement
 
         assertEquals(listOf("News", "Games", "Movies"), shown(listOf(app("games"), app("movies"), app("news")), withoutGames))
     }
@@ -195,8 +195,107 @@ class HomeAppsTest {
     @Test
     fun `a hidden app that comes back is still hidden`() {
         val arrangement = AppArrangement(order = null, hidden = listOf(id("games")))
-        val withoutGames = homeApps(listOf(app("movies")), launcher, arrangement, Locale.ENGLISH).arrangement
+        val withoutGames = homeApps(listOf(app("movies")), launcher, arrangement, emptyMap(), Locale.ENGLISH).arrangement
 
         assertEquals(listOf("Games"), hidden(listOf(app("games"), app("movies")), withoutGames))
+    }
+
+    // What the user set for each app: today its name.
+
+    private fun named(vararg names: Pair<String, String>) =
+        names.associate { (app, name) -> id(app) to AppCustomization(name = name) }
+
+    private fun arranged(
+        installed: List<InstalledApp>,
+        customizations: Map<LaunchableApp, AppCustomization>,
+        arrangement: AppArrangement = AppArrangement.NONE,
+    ) = homeApps(installed, launcher, arrangement, customizations, Locale.ENGLISH)
+
+    @Test
+    fun `an app the user named has that name, and keeps the device's label`() {
+        val arranged = arranged(listOf(app("movies"), app("news")), named("news" to "Headlines"))
+
+        val news = arranged.shown.single { it.launchable == id("news") }
+        assertEquals("Headlines", news.name)
+        assertEquals("News", news.installed.label)
+        assertEquals(AppCustomization(name = "Headlines"), news.customization)
+    }
+
+    @Test
+    fun `an app the user didn't name has its label`() {
+        val movies = arranged(listOf(app("movies"), app("news")), named("news" to "Headlines")).shown.single { it.launchable == id("movies") }
+
+        assertEquals("Movies", movies.name)
+        assertEquals(AppCustomization.NONE, movies.customization)
+    }
+
+    @Test
+    fun `a name is the app's whether it's shown or hidden`() {
+        val arrangement = AppArrangement(order = null, hidden = listOf(id("news")))
+
+        val arranged = arranged(listOf(app("movies"), app("news")), named("news" to "Headlines"), arrangement)
+
+        assertEquals(listOf("Headlines"), labels(arranged.hidden))
+    }
+
+    @Test
+    fun `a name belongs to its activity, not to the other TV apps of its package`() {
+        val kids = app("news").copy(launchable = LaunchableApp("com.example.news", "com.example.news.Kids"), label = "News Kids")
+
+        val arranged = arranged(listOf(app("news"), kids), named("news" to "Headlines"))
+
+        assertEquals(listOf("Headlines", "News Kids"), labels(arranged.shown))
+    }
+
+    @Test
+    fun `an app whose update renamed its activity keeps its name`() {
+        val arranged = arranged(listOf(app("movies"), renamed("news")), named("news" to "Headlines"))
+
+        assertEquals(listOf("Headlines", "Movies"), labels(arranged.shown))
+    }
+
+    @Test
+    fun `a renamed activity keeps its name and its place, matched apart`() {
+        // The arrangement names the activity as it's now, the name the one before: each store is
+        // matched on its own, so what one names doesn't keep the other from recognizing the app.
+        val arrangement = AppArrangement(order = listOf(renamed("news").launchable, id("movies")), hidden = emptyList())
+
+        val arranged = arranged(listOf(app("movies"), renamed("news")), named("news" to "Headlines"), arrangement)
+
+        assertEquals(listOf("Headlines", "Movies"), labels(arranged.shown))
+    }
+
+    @Test
+    fun `doesn't guess whose name it is when the package has several apps it doesn't name`() {
+        val second = app("news").copy(launchable = LaunchableApp("com.example.news", "com.example.news.Kids"))
+
+        val arranged = arranged(listOf(renamed("news"), second), named("news" to "Headlines"))
+
+        assertEquals(listOf("News", "News"), labels(arranged.shown))
+    }
+
+    @Test
+    fun `an app that comes back has its name back`() {
+        val customizations = named("games" to "Play")
+        assertEquals(listOf("Movies"), labels(arranged(listOf(app("movies")), customizations).shown))
+
+        assertEquals(listOf("Movies", "Play"), labels(arranged(listOf(app("games"), app("movies")), customizations).shown))
+    }
+
+    @Test
+    fun `sorts by the name the user gave`() {
+        val installed = listOf(app("games"), app("movies"), app("news"))
+
+        assertEquals(listOf("Games", "Headlines", "Movies"), labels(arranged(installed, named("news" to "Headlines")).shown))
+    }
+
+    @Test
+    fun `sorts what the order doesn't name by the name the user gave`() {
+        val installed = listOf(app("games"), app("movies"), app("news"), app("zoo"))
+        val arrangement = AppArrangement(order = listOf(id("zoo")), hidden = emptyList())
+
+        val arranged = arranged(installed, named("news" to "Arts"), arrangement)
+
+        assertEquals(listOf("Zoo", "Arts", "Games", "Movies"), labels(arranged.shown))
     }
 }

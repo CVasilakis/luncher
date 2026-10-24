@@ -4,6 +4,7 @@ import android.app.Activity
 import android.graphics.Bitmap
 import com.luncher.domain.appearance.AppearanceSettings
 import com.luncher.domain.apps.AppArrangements
+import com.luncher.domain.apps.AppCustomizations
 import com.luncher.domain.apps.AppImages
 import com.luncher.domain.apps.AppInfoScreen
 import com.luncher.domain.apps.InstalledApps
@@ -17,6 +18,10 @@ import com.luncher.domain.wallpaper.Wallpaper
 interface HomeGraph {
     val installedApps: InstalledApps
     val appArrangements: AppArrangements
+
+    /** What the user set for each app: the name the home screen shows it by. */
+    val appCustomizations: AppCustomizations
+
     val appImages: AppImages<Bitmap>
 
     /** Whether a tile's menu can open the app's page in the device's settings. */

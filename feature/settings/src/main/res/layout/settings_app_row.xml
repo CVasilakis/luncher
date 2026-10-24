@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- One app in the Hide apps list: its name, dimmed while it's hidden, and the "Hidden" chip at
-     the end while it's hidden; no icon, the chip says it. Not focusable: the list moves its
+<!-- One app in the Hide apps list: its real name, dimmed while it's hidden, the name the user
+     gave it below it in smaller text if any, both centered in the row together, and the "Hidden"
+     chip at the end while it's hidden; no icon, the chip says it. HideAppsActivity makes every row
+     as tall as both names, renamed or not, at least row_height. Not focusable: the list moves its
      selection, and OK on the list toggles the selected app; the selected row looks focused. -->
 <com.luncher.launcher.ui.ListEntry xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
@@ -10,15 +12,33 @@
     android:paddingLeft="@dimen/entry_padding"
     android:paddingRight="@dimen/entry_padding">
 
-    <com.luncher.launcher.ui.ThemedText
-        android:id="@+id/settings_app_label"
+    <LinearLayout
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
         android:duplicateParentState="true"
-        android:ellipsize="end"
-        android:singleLine="true"
-        android:textSize="@dimen/text_entry" />
+        android:orientation="vertical">
+
+        <com.luncher.launcher.ui.ThemedText
+            android:id="@+id/settings_app_label"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:duplicateParentState="true"
+            android:ellipsize="end"
+            android:singleLine="true"
+            android:textSize="@dimen/text_entry" />
+
+        <com.luncher.launcher.ui.ThemedText xmlns:app="http://schemas.android.com/apk/res-auto"
+            android:id="@+id/settings_app_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:duplicateParentState="true"
+            android:ellipsize="end"
+            android:singleLine="true"
+            android:textSize="@dimen/text_supporting"
+            android:visibility="gone"
+            app:colorRole="onSurfaceVariant" />
+    </LinearLayout>
 
     <com.luncher.launcher.settings.Chip
         android:id="@+id/settings_app_hidden"

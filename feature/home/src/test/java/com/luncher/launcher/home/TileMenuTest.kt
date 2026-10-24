@@ -13,6 +13,8 @@ import com.luncher.domain.appearance.FakeAppearanceSettings
 import com.luncher.domain.appearance.TileStyle
 import com.luncher.domain.apps.AppArrangement
 import com.luncher.domain.apps.FakeAppArrangements
+import com.luncher.domain.apps.FakeAppCustomizations
+import com.luncher.domain.apps.FakeAppCustomizations.Companion.named
 import com.luncher.domain.apps.FakeAppInfoScreen
 import com.luncher.domain.apps.FakeInstalledApps
 import com.luncher.domain.apps.FakeInstalledApps.Companion.app
@@ -42,6 +44,7 @@ class TileMenuTest {
     private val installedApps = FakeInstalledApps(listOf("a", "b", "c", "d", "e", "f", "g", "x").map { app(it) })
     private val arrangements = FakeAppArrangements(AppArrangement(order = null, hidden = listOf(app("x").launchable)))
     private val appInfoScreen = FakeAppInfoScreen()
+    private val customizations = FakeAppCustomizations()
 
     @Before
     fun useFakes() {
@@ -50,6 +53,7 @@ class TileMenuTest {
             override val installedApps = this@TileMenuTest.installedApps
             override val appArrangements = this@TileMenuTest.arrangements
             override val appInfoScreen = this@TileMenuTest.appInfoScreen
+            override val appCustomizations = this@TileMenuTest.customizations
         }
     }
 
@@ -60,9 +64,9 @@ class TileMenuTest {
         return (0 until tiles.childCount).map { tiles.getChildAt(it) as AppTileView }
     }
 
-    private fun HomeActivity.labels() = tiles().joinToString("") { it.app.label.lowercase() }
+    private fun HomeActivity.labels() = tiles().joinToString("") { it.app.name.lowercase() }
 
-    private fun HomeActivity.tile(name: String) = tiles().single { it.app.label.equals(name, ignoreCase = true) }
+    private fun HomeActivity.tile(name: String) = tiles().single { it.app.name.equals(name, ignoreCase = true) }
 
     /** Holds OK on the tile of [name] until it counts as a long press, then lets go: the menu has the release. */
     private fun HomeActivity.longPress(name: String): TileMenu {
@@ -97,6 +101,17 @@ class TileMenuTest {
         assertTrue(menu.entries().first().isFocused)
         assertTrue("the tile keeps its focus", activity.tile("b").isFocused)
         assertFalse(activity.moving())
+    }
+
+    // No title shows: the tile, focused beside the menu, says which app it's for.
+    @Test
+    fun `the menu tells a screen reader the name the app was given`() {
+        customizations.customizations = mapOf(named(app("b"), "Bravo"))
+        val activity = start().get()
+
+        val menu = activity.longPress("bravo")
+
+        assertEquals("Bravo", menu.findViewById<View>(R.id.home_tile_menu_frame).accessibilityPaneTitle)
     }
 
     @Test
@@ -344,7 +359,7 @@ class TileMenuTest {
     fun `with room neither above nor below, the menu is beside its tile, clear of it`() {
         val activity = start().get()
         val tile = activity.tiles().first { it.top > activity.tiles().first().top }   // the second row's first
-        val menu = activity.longPress(tile.app.label.lowercase())
+        val menu = activity.longPress(tile.app.name.lowercase())
 
         val window = checkNotNull(menu.window)
         val x = window.attributes.x
@@ -364,7 +379,7 @@ class TileMenuTest {
         val activity = start().get()
         val secondRow = activity.tiles().filter { it.top > activity.tiles().first().top }
         val tile = secondRow[1]
-        val menu = activity.longPress(tile.app.label.lowercase())
+        val menu = activity.longPress(tile.app.name.lowercase())
         shadowOf(Looper.getMainLooper()).idle()   // the window's layout
         val window = checkNotNull(menu.window)
         val scroll = menu.findViewById<View>(R.id.home_tile_menu_scroll)
@@ -387,7 +402,7 @@ class TileMenuTest {
     fun `Down scrolls the menu to its last entry`() {
         val activity = start().get()
         val tile = activity.tiles().filter { it.top > activity.tiles().first().top }[1]
-        val menu = activity.longPress(tile.app.label.lowercase())
+        val menu = activity.longPress(tile.app.name.lowercase())
         val scroll = menu.findViewById<View>(R.id.home_tile_menu_scroll)
 
         repeat(2) {
@@ -405,14 +420,14 @@ class TileMenuTest {
     fun `a menu opened again starts at its first entry`() {
         val activity = start().get()
         val tile = activity.tiles().filter { it.top > activity.tiles().first().top }[1]
-        val first = activity.longPress(tile.app.label.lowercase())
+        val first = activity.longPress(tile.app.name.lowercase())
         repeat(2) {
             first.press(KeyEvent.KEYCODE_DPAD_DOWN)
             shadowOf(Looper.getMainLooper()).idleFor(Duration.ofSeconds(1))
         }
         first.press(KeyEvent.KEYCODE_BACK)
 
-        val menu = activity.longPress(tile.app.label.lowercase())
+        val menu = activity.longPress(tile.app.name.lowercase())
 
         assertEquals(0, menu.findViewById<View>(R.id.home_tile_menu_scroll).scrollY)
         assertTrue(menu.entries().first().isFocused)

@@ -4,6 +4,7 @@
     <string name="settings_title">الإعدادات</string>
     <string name="settings_hide_apps">إخفاء التطبيقات</string>
     <string name="settings_hidden">مخفي</string>
+    <string name="settings_app_renamed">الاسم الجديد: \u2068%1$s\u2069</string>
     <string name="settings_no_apps">لا توجد تطبيقات تلفزيون مثبّتة</string>
     <string name="settings_appearance">المظهر</string>
     <string name="settings_appearance_tiles">المربعات</string>

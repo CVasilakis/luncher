@@ -8,6 +8,8 @@ import android.widget.ListView
 import android.widget.TextView
 import com.luncher.domain.apps.AppArrangement
 import com.luncher.domain.apps.FakeAppArrangements
+import com.luncher.domain.apps.FakeAppCustomizations
+import com.luncher.domain.apps.FakeAppCustomizations.Companion.named
 import com.luncher.domain.apps.FakeInstalledApps
 import com.luncher.domain.apps.FakeInstalledApps.Companion.app
 import com.luncher.launcher.testing.TV_1080P
@@ -34,6 +36,7 @@ class HideAppsActivityTest {
     private val arrangements = FakeAppArrangements(
         AppArrangement(order = null, hidden = listOf(app("music").launchable)),
     )
+    private val customizations = FakeAppCustomizations()
 
     @Before
     fun useFakes() {
@@ -41,6 +44,7 @@ class HideAppsActivityTest {
         application.graph = object : TestSettingsGraph() {
             override val installedApps = this@HideAppsActivityTest.installedApps
             override val appArrangements = this@HideAppsActivityTest.arrangements
+            override val appCustomizations = this@HideAppsActivityTest.customizations
         }
     }
 
@@ -272,8 +276,9 @@ class HideAppsActivityTest {
 
         val row = list.getChildAt(1)   // Music, hidden
         val label = row.findViewById<View>(R.id.settings_app_label)
+        val names = label.parent as View   // the column of the app's names, in the row
         val hidden = row.findViewById<View>(R.id.settings_app_hidden)
-        assertTrue("label at ${label.left}, hidden at ${hidden.right}", hidden.right <= label.left)
+        assertTrue("names at ${names.left}, hidden at ${hidden.right}", hidden.right <= names.left)
         val text = (label as TextView).layout
         assertEquals(text.width.toFloat(), text.getLineRight(0))   // an English name at the right too
     }
@@ -318,5 +323,52 @@ class HideAppsActivityTest {
         shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(100))
 
         assertEquals(listOf("Games", "Movies", "Music (hidden)", "News"), controller.get().rows())
+    }
+
+    // An app the user renamed on the home screen: listed by its real name, the new one below it.
+
+    /** Each row's second line, the name the user gave it, or null where it shows none. */
+    private fun HideAppsActivity.givenNames(): List<String?> {
+        val list = list()
+        return (0 until list.childCount).map { list.getChildAt(it).findViewById<TextView>(R.id.settings_app_name) }
+            .map { if (it.visibility == View.VISIBLE) it.text.toString() else null }
+    }
+
+    @Test
+    fun `lists a renamed app by its real name, in its place by it, with the name given below`() {
+        customizations.customizations = mapOf(named(app("news"), "Arts"), named(app("music"), "My songs"))
+
+        val activity = start()
+
+        assertEquals(listOf("Movies", "Music (hidden)", "News"), activity.rows())
+        assertEquals(listOf(null, "Renamed: \u2068My songs\u2069", "Renamed: \u2068Arts\u2069"), activity.givenNames())
+    }
+
+    @Test
+    fun `shows a name given meanwhile when it comes back`() {
+        val controller = Robolectric.buildActivity(HideAppsActivity::class.java).setup()
+
+        controller.pause().stop()
+        customizations.customizations = mapOf(named(app("movies"), "Cinema"))
+        controller.restart().start().resume()
+        shadowOf(Looper.getMainLooper()).idle()
+
+        assertEquals(listOf("Renamed: \u2068Cinema\u2069", null, null), controller.get().givenNames())
+    }
+
+    // At the largest text size, on API 33, which grows it more than 34 on: two names need more than
+    // a list's usual row there.
+    @Test
+    @Config(sdk = [33], fontScale = 1.3f)
+    fun `every row is as tall as two names and a margin, renamed or not`() {
+        customizations.customizations = mapOf(named(app("news"), "Arts"))
+        val list = start().list()
+
+        val row = list.getChildAt(2)   // News, renamed
+        val names = row.findViewById<View>(R.id.settings_app_label).parent as View
+        assertEquals(setOf(row.height), (0 until list.childCount).map { list.getChildAt(it).height }.toSet())
+        val margin = RuntimeEnvironment.getApplication().resources.getDimensionPixelSize(R.dimen.settings_app_names_margin)
+        // Centered, the odd pixel below.
+        assertTrue("names at ${names.top}..${names.bottom} in a row ${row.height} px tall", names.top >= margin && row.height - names.bottom >= margin)
     }
 }

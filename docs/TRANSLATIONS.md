@@ -22,8 +22,8 @@ each module's translation is complete on its own.
 
 `:domain` has no text: it returns data (`SettingsEntry.HideApps`, whether every app is hidden),
 and the screens turn it into strings. Texts that aren't Luncher's come in the device's language
-already: the apps' names, from Android, which `:domain` sorts as that language sorts words
-(`LabelOrder`: "Άρης" after "Αθήνα" in Greek), the time and date, which `ClockView` formats
+already: the apps' names, from Android, or the names the user gave them, which `:domain` sorts
+as that language sorts words (`NameOrder`: "Άρης" after "Αθήνα" in Greek), the time and date, which `ClockView` formats
 with the language's own patterns, a file's size, which Android formats (`Formatter`), and the
 pictures' names, which are their files'.
 

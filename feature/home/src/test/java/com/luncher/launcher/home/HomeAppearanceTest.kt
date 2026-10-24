@@ -188,9 +188,9 @@ class HomeAppearanceTest {
 
         val tiles = activity.tiles()
         assertTrue(tiles[0].isFocused)
-        for (tile in tiles) assertEquals("${tile.app.label}'s name", TilePaints.OPAQUE, nameAlpha(tile))
+        for (tile in tiles) assertEquals("${tile.app.name}'s name", TilePaints.OPAQUE, nameAlpha(tile))
         tiles[1].requestFocus()   // no frame of a fade: the names stay whole
-        for (tile in tiles) assertEquals("${tile.app.label}'s name", TilePaints.OPAQUE, nameAlpha(tile))
+        for (tile in tiles) assertEquals("${tile.app.name}'s name", TilePaints.OPAQUE, nameAlpha(tile))
     }
 
     // Only the focused tile's name shows; the others draw none.

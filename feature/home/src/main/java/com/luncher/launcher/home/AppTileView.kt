@@ -16,7 +16,7 @@ import android.text.TextUtils
 import android.view.View
 import com.luncher.domain.appearance.AppName
 import com.luncher.domain.apps.AppImages
-import com.luncher.domain.apps.InstalledApp
+import com.luncher.domain.apps.HomeApp
 import com.luncher.domain.apps.bannerFor
 import com.luncher.domain.layout.PixelBounds
 
@@ -41,7 +41,7 @@ import com.luncher.domain.layout.PixelBounds
 @SuppressLint("ViewConstructor") // Created in code only, never from XML.
 internal class AppTileView(
     context: Context,
-    val app: InstalledApp,
+    val app: HomeApp,
     private val images: AppImages<Bitmap>,
     /** Shared by every tile: the frames, the name's paint, the corners and whether the focused tile is framed. */
     private val paints: TilePaints,
@@ -91,7 +91,7 @@ internal class AppTileView(
         // The OK key opens the app, whether or not Android thinks it's in touch mode.
         isFocusableInTouchMode = true
         isClickable = true
-        contentDescription = app.label
+        contentDescription = app.name
         outlineProvider = paints.tileOutline
         restyle()
     }
@@ -123,7 +123,7 @@ internal class AppTileView(
         bounds.set(0f, 0f, w.toFloat(), h.toFloat())
         val inset = paints.focusFrame.strokeWidth / 2
         frameBounds.set(inset, inset, w - inset, h - inset)
-        name = TextUtils.ellipsize(app.label, paints.namePaint, w.toFloat(), TextUtils.TruncateAt.END).toString()
+        name = TextUtils.ellipsize(app.name, paints.namePaint, w.toFloat(), TextUtils.TruncateAt.END).toString()
         nameLeft = (w - paints.namePaint.measureText(name)) / 2
         invalidateOutline()
     }

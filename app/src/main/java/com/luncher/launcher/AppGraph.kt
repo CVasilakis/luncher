@@ -7,6 +7,7 @@ import android.os.Handler
 import android.os.Looper
 import com.luncher.domain.appearance.AppearanceSettings
 import com.luncher.domain.apps.AppArrangements
+import com.luncher.domain.apps.AppCustomizations
 import com.luncher.domain.apps.AppInfoScreen
 import com.luncher.domain.apps.AppImages
 import com.luncher.domain.apps.InstalledApps
@@ -25,6 +26,7 @@ import com.luncher.launcher.apps.CachedBannerImages
 import com.luncher.launcher.apps.PackageManagerAppInfoScreen
 import com.luncher.launcher.apps.PackageManagerInstalledApps
 import com.luncher.launcher.apps.PreferencesAppArrangements
+import com.luncher.launcher.apps.PreferencesAppCustomizations
 import com.luncher.launcher.clock.AndroidClock
 import com.luncher.launcher.home.HomeGraph
 import com.luncher.launcher.jobs.BackgroundThreadJobs
@@ -53,6 +55,8 @@ open class AppGraph(context: Context) : HomeGraph, SettingsGraph {
     override val installedApps: InstalledApps by lazy { PackageManagerInstalledApps(appContext) }
 
     override val appArrangements: AppArrangements by lazy { PreferencesAppArrangements(appContext) }
+
+    override val appCustomizations: AppCustomizations by lazy { PreferencesAppCustomizations(appContext) }
 
     override val appInfoScreen: AppInfoScreen by lazy { PackageManagerAppInfoScreen(appContext) }
 

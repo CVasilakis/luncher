@@ -23,7 +23,11 @@ import com.luncher.domain.appearance.Background
 import com.luncher.domain.appearance.SAMPLE_WALLPAPER
 import com.luncher.domain.pictures.Blur
 import com.luncher.domain.apps.AppArrangement
+import com.luncher.domain.apps.AppCustomization
 import com.luncher.domain.apps.FakeAppArrangements
+import com.luncher.domain.apps.FakeAppCustomizations
+import com.luncher.domain.apps.FakeAppCustomizations.Companion.named
+import com.luncher.domain.apps.LaunchableApp
 import com.luncher.domain.apps.FakeInstalledApps
 import com.luncher.domain.apps.FakeInstalledApps.Companion.app
 import com.luncher.launcher.testing.TV_1080P
@@ -74,6 +78,27 @@ class SettingsScreenshotTest {
     fun hideAppsPanelOnASmallScreen() {
         hideApps().captureFocused("src/test/screenshots/settings/settings_hide_apps_small_screen.png")
     }
+
+    // Three apps renamed on the home screen, one of them hidden: each by its real name, the name
+    // given below it, every row as tall as two names.
+    @Test
+    fun hideAppsPanelWithRenamedApps() {
+        hideApps(renamed).captureFocused("src/test/screenshots/settings/settings_hide_apps_renamed.png")
+    }
+
+    // In Arabic, mirrored: an Arabic name given to an app with a Latin name, and the other way round.
+    @Test
+    @Config(qualifiers = "ar-rEG-$TV_1080P")
+    fun hideAppsPanelWithRenamedAppsInArabic() {
+        hideApps(mapOf(named(app("games"), "ألعابي"), named(app("weather"), "Weather"), named(app("music"), "أغانيّ")))
+            .captureFocused("src/test/screenshots/settings/settings_hide_apps_renamed_arabic.png")
+    }
+
+    private val renamed = mapOf(
+        named(app("games"), "Play"),
+        named(app("music"), "My songs"),
+        named(app("an app name far too long for its row"), "And a name of my own far too long for it too"),
+    )
 
     @Test
     fun appearanceEditor() {
@@ -194,7 +219,7 @@ class SettingsScreenshotTest {
     }
 
     /** Hide apps with the apps of [hideAppsPanel], the first one selected: its window. */
-    private fun hideApps(): View {
+    private fun hideApps(customizations: Map<LaunchableApp, AppCustomization> = emptyMap()): View {
         val application = RuntimeEnvironment.getApplication() as SettingsTestApplication
         val names = listOf("games", "movies", "music", "news", "photos", "radio", "sports", "weather", "an app name far too long for its row")
         application.graph = object : TestSettingsGraph() {
@@ -202,6 +227,7 @@ class SettingsScreenshotTest {
             override val appArrangements = FakeAppArrangements(
                 AppArrangement(order = null, hidden = listOf(app("an app name far too long for its row"), app("music")).map { it.launchable }),
             )
+            override val appCustomizations = FakeAppCustomizations(customizations)
         }
         val activity = Robolectric.buildActivity(HideAppsActivity::class.java).setup().get()
         // Robolectric starts in touch mode, where a list selects nothing; a D-pad press leaves it.

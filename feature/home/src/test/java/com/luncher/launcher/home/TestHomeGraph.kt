@@ -17,9 +17,11 @@ import com.luncher.domain.appearance.HorizontalAlignment
 import com.luncher.domain.appearance.TileGeometry
 import com.luncher.domain.appearance.VerticalAlignment
 import com.luncher.domain.apps.AppArrangements
+import com.luncher.domain.apps.AppCustomizations
 import com.luncher.domain.apps.AppImages
 import com.luncher.domain.apps.AppInfoScreen
 import com.luncher.domain.apps.FakeAppArrangements
+import com.luncher.domain.apps.FakeAppCustomizations
 import com.luncher.domain.apps.FakeAppInfoScreen
 import com.luncher.domain.apps.FakeInstalledApps
 import com.luncher.domain.apps.InstalledApps
@@ -55,6 +57,7 @@ val topLeftTiles = TileGeometry(
 open class TestHomeGraph(context: Context) : HomeGraph {
     override val installedApps: InstalledApps = FakeInstalledApps()
     override val appArrangements: AppArrangements = FakeAppArrangements()
+    override val appCustomizations: AppCustomizations = FakeAppCustomizations()
     override val appImages: AppImages<Bitmap> = BannerImages(context)
     override val appInfoScreen: AppInfoScreen = FakeAppInfoScreen()
     override val clock: Clock = FakeClock()

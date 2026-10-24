@@ -8,6 +8,10 @@
     <string name="settings_hide_apps">Hide apps</string>
     <!-- After an app's name in that list, while the app is hidden. -->
     <string name="settings_hidden">Hidden</string>
+    <!-- In that list, below the real name of an app the user renamed on the home screen, in
+         smaller text: the name the user gave it (1), between U+2068 and U+2069, as it may be in
+         either direction. -->
+    <string name="settings_app_renamed">Renamed: \u2068%1$s\u2069</string>
     <!-- Shown in that list when the device has no TV apps. -->
     <string name="settings_no_apps">No TV apps installed</string>
     <!-- The entry that opens the editor of the home screen's look, and that editor's title. -->

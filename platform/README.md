@@ -25,6 +25,7 @@ platform/
     │   │   ├── apps/
     │   │   │   ├── PackageManagerInstalledApps.kt   InstalledApps on PackageManager, and LauncherApps for when apps change
     │   │   │   ├── PreferencesAppArrangements.kt    AppArrangements on SharedPreferences: the file and its format
+    │   │   │   ├── PreferencesAppCustomizations.kt  AppCustomizations on SharedPreferences: a file of its own, a JSON object per app
     │   │   │   ├── PackageManagerAppInfoScreen.kt   AppInfoScreen on PackageManager: whether an activity takes the intent App info starts
     │   │   │   ├── BannerImages.kt                  AppImages<Bitmap>: draws an app's Banner into a bitmap of the tile's size
     │   │   │   └── CachedBannerImages.kt            AppImages<Bitmap> in front of BannerImages: each tile's image kept in a file for the next start
@@ -69,7 +70,9 @@ is in a package of its own (`images/`: the caches' file format; `outside/`: aski
   format out, so a change that breaks what a TV already stored fails
   (`PreferencesAppArrangementsTest`). A value stored by another version that the adapter doesn't
   know reads as a default rather than failing (`PreferencesAppearanceSettings`: that option's
-  default, the others as stored).
+  default, the others as stored). Text the user typed is encoded so that any character survives,
+  a line break or a `/` (`PreferencesAppCustomizations`: a JSON object per app, its fields what
+  the user set, a field it doesn't know skipped).
 - **Device state that changes** (the time, later the network) is watched only while a listener is
   registered ([`ARCHITECTURE.md`](../docs/ARCHITECTURE.md#background-work-and-changes-while-shown)):
   `AndroidClock` registers its broadcast receiver with the first listener and unregisters it with
@@ -85,9 +88,11 @@ is in a package of its own (`images/`: the caches' file format; `outside/`: aski
 - **A cache's format can change freely.** `CachedBannerImages` keeps each tile's image in
   `cacheDir`, one file per app, so a cold start reads it rather than drawing it, which takes a
   large part of a start with many apps. A file that doesn't match (another format version, size,
-  install of the app or of Luncher, label) is drawn and written again, so unlike a stored setting
-  it needs no test of its format and no migration, and Android may delete it. Writing waits until
-  the main thread is idle, so it doesn't slow the start that draws, and is then a job per image.
+  install of the app or of Luncher, the app's name as the home screen shows it, which a card
+  draws) is drawn and written again, so unlike a stored setting it needs no test of its format
+  and no migration, and Android may delete it; renaming an app draws its tile only again.
+  Writing waits until the main thread is idle, so it doesn't slow the start that draws, and is
+  then a job per image.
   `CachedPictureImages` keeps the pictures' thumbnails the same way, one file per picture, in the
   same file format (`PixelFiles`), but draws them in jobs, so it writes each in the job that drew it.
 - **Public,** since `AppGraph` in `:app` creates them; no other module depends on this one.

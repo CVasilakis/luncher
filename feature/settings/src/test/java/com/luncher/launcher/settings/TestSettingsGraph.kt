@@ -12,7 +12,9 @@ import android.os.Handler
 import android.os.Looper
 import com.luncher.domain.appearance.FakeAppearanceSettings
 import com.luncher.domain.apps.AppArrangements
+import com.luncher.domain.apps.AppCustomizations
 import com.luncher.domain.apps.FakeAppArrangements
+import com.luncher.domain.apps.FakeAppCustomizations
 import com.luncher.domain.apps.FakeInstalledApps
 import com.luncher.domain.apps.InstalledApps
 import com.luncher.domain.appearance.SAMPLE_WALLPAPER
@@ -39,6 +41,7 @@ open class TestSettingsGraph(
 ) : SettingsGraph {
     override val installedApps: InstalledApps = FakeInstalledApps()
     override val appArrangements: AppArrangements = FakeAppArrangements()
+    override val appCustomizations: AppCustomizations = FakeAppCustomizations()
     override val appearanceSettings = FakeAppearanceSettings()
     override val pictures get() = library
     override val pictureImport get() = library

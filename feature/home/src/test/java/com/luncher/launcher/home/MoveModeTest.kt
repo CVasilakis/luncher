@@ -53,10 +53,10 @@ class MoveModeTest {
 
     /** The tiles in order, lower case, the held one's in capitals. */
     private fun HomeActivity.state() = tiles().joinToString("") {
-        if (it.held) it.app.label.uppercase() else it.app.label.lowercase()
+        if (it.held) it.app.name.uppercase() else it.app.name.lowercase()
     }
 
-    private fun HomeActivity.tile(name: String) = tiles().single { it.app.label.equals(name, ignoreCase = true) }
+    private fun HomeActivity.tile(name: String) = tiles().single { it.app.name.equals(name, ignoreCase = true) }
 
     private fun HomeActivity.moving() = findViewById<View>(R.id.home_move_title).visibility == View.VISIBLE
 

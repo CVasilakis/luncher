@@ -151,13 +151,13 @@ class HomeLayoutTest(private val screen: TvScreen) {
         assertTrue("tiles $width px wide on $screen, meant $meant", width in (meant * 0.8f).toInt()..(meant * 1.25f).toInt())
         for (tile in tiles) {
             val zoomed = bounds(tile, HELD_ZOOM)
-            assertTrue("${tile.app.label} zoomed at $zoomed, under the top bar at $topBar on $screen", zoomed.top >= topBar.bottom)
+            assertTrue("${tile.app.name} zoomed at $zoomed, under the top bar at $topBar on $screen", zoomed.top >= topBar.bottom)
             val area = safeArea()
-            assertTrue("${tile.app.label} at ${bounds(tile)}, outside $area on $screen", bounds(tile).left >= area.left && bounds(tile).right <= area.right)
+            assertTrue("${tile.app.name} at ${bounds(tile)}, outside $area on $screen", bounds(tile).left >= area.left && bounds(tile).right <= area.right)
         }
         // Zoomed (one at a time), each still clear of the others.
         for (a in tiles) for (b in tiles - a) {
-            assertApart(screen, "${a.app.label} zoomed and ${b.app.label}", bounds(a, HELD_ZOOM), bounds(b))
+            assertApart(screen, "${a.app.name} zoomed and ${b.app.name}", bounds(a, HELD_ZOOM), bounds(b))
         }
         // Its name below it, as far as it can reach zoomed, clear of the others too.
         val paints = findViewById<AppTilesView>(R.id.home_apps).paints
@@ -165,7 +165,7 @@ class HomeLayoutTest(private val screen: TvScreen) {
         for (a in tiles) {
             val zoomed = bounds(a, HELD_ZOOM)
             val name = RectF(zoomed.left, zoomed.bottom, zoomed.right, zoomed.bottom + paints.nameHeight)
-            for (b in tiles - a) assertApart(screen, "${a.app.label}'s name and ${b.app.label}", name, bounds(b))
+            for (b in tiles - a) assertApart(screen, "${a.app.name}'s name and ${b.app.name}", name, bounds(b))
         }
     }
 
@@ -236,7 +236,7 @@ class HomeLayoutTest(private val screen: TvScreen) {
         tile.requestFocus()
         tile.performLongClick()
         shadowOf(Looper.getMainLooper()).idleFor(Duration.ofSeconds(1))
-        val menu = checkNotNull(shownMenu()) { "no menu for ${tile.app.label} on $screen" }
+        val menu = checkNotNull(shownMenu()) { "no menu for ${tile.app.name} on $screen" }
         if (entries != null) {
             menu.show(tile, entries) {}
             shadowOf(Looper.getMainLooper()).idle()
@@ -248,7 +248,7 @@ class HomeLayoutTest(private val screen: TvScreen) {
         val bounds = RectF(x, y, x + window.attributes.width, y + window.attributes.height)
         val area = safeArea()
         val topBar = bounds(findViewById(R.id.home_top_bar))
-        val what = "the menu of ${tile.app.label}, ${menu.entries().size} entries"
+        val what = "the menu of ${tile.app.name}, ${menu.entries().size} entries"
         val drawn = tile.focusedBounds().let { RectF(it.left.toFloat(), it.top.toFloat(), it.right.toFloat(), it.bottom.toFloat()) }
 
         // Across, a row's first or last tile's menu is in line with its edge, as far past the

@@ -11,12 +11,15 @@ import android.graphics.Paint
 import android.graphics.Rect
 import android.graphics.drawable.Drawable
 import com.luncher.domain.apps.Banner
-import com.luncher.domain.apps.FakeInstalledApps.Companion.app
+import com.luncher.domain.apps.AppCustomization
+import com.luncher.domain.apps.FakeInstalledApps.Companion.homeApp
+import com.luncher.domain.apps.HomeApp
 import com.luncher.domain.apps.InstalledApp
 import com.luncher.domain.apps.LaunchableApp
 import com.luncher.launcher.platform.R
 import com.luncher.launcher.testing.TV_1080P
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -45,7 +48,7 @@ class BannerImagesTest {
      * An installed app with the banners given, the framework's resources that any app can load:
      * [activityBanner] on its launcher activity, [applicationBanner] on its application.
      */
-    private fun install(appName: String, activityBanner: Int = 0, applicationBanner: Int = 0): InstalledApp {
+    private fun install(appName: String, activityBanner: Int = 0, applicationBanner: Int = 0): HomeApp {
         val app = LaunchableApp("com.example.$appName", "com.example.$appName.Main")
         val application = ApplicationInfo().apply { packageName = app.packageName; banner = applicationBanner }
         val shadow = shadowOf(context.packageManager)
@@ -60,7 +63,7 @@ class BannerImagesTest {
                 banner = activityBanner
             },
         )
-        return InstalledApp(app, label = appName, hasBanner = true, updated = 0)
+        return HomeApp(InstalledApp(app, label = appName, hasBanner = true, updated = 0))
     }
 
     /** [drawable] drawn [width] x [height] px, as Android's own `Drawable` draws it. */
@@ -94,8 +97,16 @@ class BannerImagesTest {
     }
 
     @Test
+    fun `draws the name the user gave on the card`() {
+        val named = banners.render(movies.copy(customization = AppCustomization(name = "Cinema")), Banner.AppIcon, 300, 169)
+
+        assertFalse(named.sameAs(banners.render(movies, Banner.AppIcon, 300, 169)))
+        assertTrue(named.sameAs(banners.render(HomeApp(movies.installed.copy(label = "Cinema")), Banner.AppIcon, 300, 169)))
+    }
+
+    @Test
     fun `draws a card instead of failing when the app is gone`() {
-        val image = banners.render(app("uninstalled", hasBanner = true), Banner.AppBanner, 300, 169)
+        val image = banners.render(homeApp("uninstalled", hasBanner = true), Banner.AppBanner, 300, 169)
 
         assertEquals(cardColor, image.getPixel(1, 1))
     }

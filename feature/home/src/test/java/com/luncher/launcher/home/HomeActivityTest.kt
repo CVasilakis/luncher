@@ -6,7 +6,16 @@ import android.view.KeyEvent
 import android.view.View
 import android.widget.TextView
 import com.luncher.domain.apps.AppArrangement
+import com.luncher.domain.apps.AppCustomization
+import com.luncher.domain.apps.AppImages
+import com.luncher.domain.apps.Banner
 import com.luncher.domain.apps.FakeAppArrangements
+import com.luncher.domain.apps.FakeAppCustomizations
+import com.luncher.domain.apps.FakeAppCustomizations.Companion.named
+import com.luncher.domain.apps.HomeApp
+import com.luncher.domain.apps.bannerFor
+import com.luncher.launcher.apps.BannerImages
+import android.graphics.Bitmap
 import com.luncher.domain.apps.FakeInstalledApps
 import com.luncher.domain.apps.FakeInstalledApps.Companion.app
 import com.luncher.domain.apps.InstalledApp
@@ -36,6 +45,10 @@ class HomeActivityTest {
 
     private val installedApps = FakeInstalledApps(app("news"), app("movies"), app("music"))
     private val arrangements = FakeAppArrangements()
+    private val customizations = FakeAppCustomizations()
+
+    /** Every app the home screen had drawn, in order: what each tile's image was drawn for. */
+    private val drawnFor = ArrayList<HomeApp>()
     private val clock = FakeClock()
 
     @Before
@@ -45,7 +58,16 @@ class HomeActivityTest {
         application.graph = object : TestHomeGraph(application) {
             override val installedApps = this@HomeActivityTest.installedApps
             override val appArrangements = this@HomeActivityTest.arrangements
+            override val appCustomizations = this@HomeActivityTest.customizations
             override val clock = this@HomeActivityTest.clock
+            override val appImages = object : AppImages<Bitmap> {
+                private val images = BannerImages(application)
+
+                override fun render(app: HomeApp, banner: Banner, width: Int, height: Int): Bitmap {
+                    drawnFor += app
+                    return images.render(app, banner, width, height)
+                }
+            }
         }
     }
 
@@ -56,10 +78,10 @@ class HomeActivityTest {
         return (0 until tiles.childCount).map { tiles.getChildAt(it) as AppTileView }
     }
 
-    private fun HomeActivity.labels() = tiles().map { it.app.label }
+    private fun HomeActivity.labels() = tiles().map { it.app.name }
 
     // Not currentFocus: under Robolectric the window never gets focus, so that stays null.
-    private fun HomeActivity.focusedLabel() = tiles().single { it.isFocused }.app.label
+    private fun HomeActivity.focusedLabel() = tiles().single { it.isFocused }.app.name
 
     private fun HomeActivity.settingsEntry() = findViewById<View>(R.id.home_settings)
 
@@ -114,7 +136,7 @@ class HomeActivityTest {
         assertEquals(View.LAYOUT_DIRECTION_RTL, activity.window.decorView.layoutDirection)   // the window is mirrored
         val clock = activity.findViewById<View>(R.id.home_clock)
         assertTrue("clock at ${clock.left}, settings at ${activity.settingsEntry().left}", clock.left < activity.settingsEntry().left)
-        assertEquals(listOf("Movies", "Music", "News"), activity.tiles().sortedBy { it.left }.map { it.app.label })
+        assertEquals(listOf("Movies", "Music", "News"), activity.tiles().sortedBy { it.left }.map { it.app.name })
     }
 
     // Text keeps its own direction, which would put the Arabic title at the right of its view,
@@ -186,7 +208,7 @@ class HomeActivityTest {
     @Test
     fun `keeps focus on the same app when the apps change`() {
         val controller = start()
-        controller.get().tiles().single { it.app.label == "News" }.requestFocus()
+        controller.get().tiles().single { it.app.name == "News" }.requestFocus()
 
         controller.pause().stop()
         installedApps.apps += app("games")
@@ -221,13 +243,13 @@ class HomeActivityTest {
     @Test
     fun `keeps the tiles of apps that are still installed`() {
         val controller = start()
-        val movies = controller.get().tiles().single { it.app.label == "Movies" }
+        val movies = controller.get().tiles().single { it.app.name == "Movies" }
 
         controller.pause().stop()
         installedApps.apps += app("games")
         controller.restart().start().resume()
 
-        assertSame(movies, controller.get().tiles().single { it.app.label == "Movies" })
+        assertSame(movies, controller.get().tiles().single { it.app.name == "Movies" })
     }
 
     @Test
@@ -254,13 +276,13 @@ class HomeActivityTest {
     @Test
     fun `makes a new tile for an app updated since, as its banner may have changed`() {
         val controller = start()
-        val movies = controller.get().tiles().single { it.app.label == "Movies" }
+        val movies = controller.get().tiles().single { it.app.name == "Movies" }
 
         controller.pause().stop()
         installedApps.apps = installedApps.apps.map { if (it.label == "Movies") it.copy(updated = 1) else it }
         controller.restart().start().resume()
 
-        assertNotSame(movies, controller.get().tiles().single { it.app.label == "Movies" })
+        assertNotSame(movies, controller.get().tiles().single { it.app.name == "Movies" })
     }
 
     @Test
@@ -510,4 +532,73 @@ class HomeActivityTest {
     }
 
     private fun HomeActivity.emptyText() = findViewById<TextView>(R.id.home_empty).text.toString()
+
+    // The names the user gave apps: each the app's name on the home screen.
+
+    @Test
+    fun `a renamed app has the name given, below its tile and for a screen reader`() {
+        customizations.customizations = mapOf(named(app("news"), "Headlines"))
+
+        val tile = start().get().tiles().single { it.app.launchable == app("news").launchable }
+
+        assertEquals("Headlines", tile.app.name)
+        assertEquals("Headlines", tile.contentDescription)
+    }
+
+    @Test
+    fun `an app without a banner gets a card drawn with the name given`() {
+        customizations.customizations = mapOf(named(app("news"), "Headlines"))
+
+        start()
+
+        val news = drawnFor.single { it.launchable == app("news").launchable }
+        assertEquals(Banner.AppIcon, bannerFor(news))
+        assertEquals("Headlines", news.name)
+    }
+
+    @Test
+    fun `sorts the apps by the names given`() {
+        customizations.customizations = mapOf(named(app("news"), "Arts"), named(app("movies"), "Video"))
+
+        assertEquals(listOf("Arts", "Music", "Video"), start().get().labels())
+    }
+
+    @Test
+    fun `shows a name given while it's shown at once, drawing that tile only again`() {
+        val controller = start()
+        val music = controller.get().tiles().single { it.app.name == "Music" }
+        drawnFor.clear()
+
+        customizations.save(mapOf(named(app("news"), "Arts")))
+        shadowOf(Looper.getMainLooper()).idle()   // the next frame, which lays the new tile out and draws it
+
+        assertEquals(listOf("Arts", "Movies", "Music"), controller.get().labels())
+        assertSame(music, controller.get().tiles().single { it.app.name == "Music" })
+        assertEquals(listOf("Arts"), drawnFor.map { it.name })
+    }
+
+    @Test
+    fun `follows the names from start to stop`() {
+        val controller = start()
+        assertEquals(1, customizations.listenerCount)
+
+        controller.pause().stop()
+        assertEquals(0, customizations.listenerCount)
+        customizations.save(mapOf(named(app("movies"), "Cinema")))
+        assertEquals(listOf("Movies", "Music", "News"), controller.get().labels())   // not while hidden
+
+        controller.restart().resume()
+        assertEquals(1, customizations.listenerCount)
+        assertEquals(listOf("Cinema", "Music", "News"), controller.get().labels())
+    }
+
+    @Test
+    fun `a name put back shows the app's own again`() {
+        customizations.customizations = mapOf(named(app("news"), "Arts"))
+        val controller = start()
+
+        customizations.save(mapOf(app("news").launchable to AppCustomization.NONE))
+
+        assertEquals(listOf("Movies", "Music", "News"), controller.get().labels())
+    }
 }

@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 import android.net.Uri
 import com.luncher.domain.appearance.AppearanceSettings
 import com.luncher.domain.apps.AppArrangements
+import com.luncher.domain.apps.AppCustomizations
 import com.luncher.domain.apps.InstalledApps
 import com.luncher.domain.jobs.Jobs
 import com.luncher.domain.pictures.FolderPictures
@@ -22,6 +23,9 @@ import com.luncher.domain.wallpaper.Wallpaper
 interface SettingsGraph {
     val installedApps: InstalledApps
     val appArrangements: AppArrangements
+
+    /** What the user set for each app: Hide apps shows the name given beside the real one. */
+    val appCustomizations: AppCustomizations
 
     /** The home screen's appearance; also the wallpaper, which a picture of the library is made or stops being. */
     val appearanceSettings: AppearanceSettings
