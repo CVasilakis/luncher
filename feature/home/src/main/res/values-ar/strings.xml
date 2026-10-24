@@ -7,8 +7,14 @@
     <string name="home_settings">الإعدادات</string>
     <string name="home_menu_move">نقل</string>
     <string name="home_menu_hide">إخفاء</string>
+    <string name="home_menu_rename">إعادة تسمية</string>
     <string name="home_menu_info">معلومات التطبيق</string>
     <string name="home_menu_info_unavailable">معلومات التطبيق غير متاحة على هذا الجهاز</string>
+    <string name="home_rename_title">إعادة تسمية التطبيق</string>
+    <string name="home_rename_original">الاسم الأصلي: \u2068<xliff:g id="name" example="YouTube">%1$s</xliff:g>\u2069</string>
+    <string name="home_rename_cancel">إلغاء</string>
+    <string name="home_rename_reset">استعادة</string>
+    <string name="home_rename_confirm">إعادة تسمية</string>
     <string name="home_move_title">نقل التطبيق</string>
     <string name="home_move_hint"><xliff:g id="arrows" example="↑↓←→">⁦↑↓←→⁩</xliff:g> نقل · OK إنهاء</string>
     <string name="home_wallpaper_screen_changed">جارٍ ملاءمة الخلفية لهذه الشاشة…</string>

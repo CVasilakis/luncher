@@ -13,6 +13,9 @@ sealed interface AppAction {
     /** Hides the app from the home screen; the settings' Hide apps list shows it again. */
     data object Hide : AppAction
 
+    /** Gives the app a name of the user's own, or its own label back ([appName], [ArrangedApps.renamed]). */
+    data object Rename : AppAction
+
     /** Opens the app's page in the device's settings ([AppInfoScreen]). */
     data object Info : AppAction
 }
@@ -26,7 +29,7 @@ data class AppMenuEntry(val action: AppAction, val available: Boolean = true)
 
 /**
  * The entries the menu of [app], one of [arranged]'s shown apps, lists, in its order: Move, Hide,
- * App info. Move only where it changes something: with no other app shown, there's nowhere to move
+ * Rename, App info. Move only where it changes something: with no other app shown, there's nowhere to move
  * it, so it isn't listed. App info is listed always, available where the device has the app's
  * page in its settings ([hasAppInfo], [AppInfoScreen.exists]).
  */
@@ -35,6 +38,7 @@ fun appActions(arranged: ArrangedApps, app: HomeApp, hasAppInfo: Boolean): List<
     return listOfNotNull(
         AppMenuEntry(AppAction.Move).takeIf { arranged.shown.size > 1 },
         AppMenuEntry(AppAction.Hide),
+        AppMenuEntry(AppAction.Rename),
         AppMenuEntry(AppAction.Info, available = hasAppInfo),
     )
 }

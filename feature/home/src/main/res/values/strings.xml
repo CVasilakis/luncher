@@ -13,11 +13,26 @@
     <string name="home_menu_move">Move</string>
     <!-- Hide: take the app off the home screen at once (Settings → Hide apps shows it again). -->
     <string name="home_menu_hide">Hide</string>
+    <!-- Rename: give the app a name of the user's own, shown on the home screen in place of its own. -->
+    <string name="home_menu_rename">Rename</string>
     <!-- App info: open the app's page in the device's settings (its storage, permissions, force
          stop, uninstall), as Android's own "App info". Dimmed where the device has no such page. -->
     <string name="home_menu_info">App info</string>
     <!-- A message, when App info was chosen but the device's settings no longer open the app's page. -->
     <string name="home_menu_info_unavailable">App info isn\'t available on this device</string>
+    <!-- The dialog Rename in that menu opens, over the home screen: its title, then a field with
+         the app's name; an empty field gives the app its original name back. -->
+    <string name="home_rename_title">Rename app</string>
+    <!-- Below the field, for an app the user renamed: the name the device gives it, which Reset
+         (home_rename_reset) puts back. -->
+    <string name="home_rename_original">Original name: \u2068<xliff:g id="name" example="YouTube">%1$s</xliff:g>\u2069</string>
+    <!-- The dialog's buttons, side by side, each a third of the dialog: close it, changing
+         nothing; give the app its original name back (dimmed while it has it); keep the name
+         typed. Short, so the three fit in a row on a small screen ("Reset" and "Rename" can be
+         another word of the same sense, the Greek "Original" and "Change"). -->
+    <string name="home_rename_cancel">Cancel</string>
+    <string name="home_rename_reset">Reset</string>
+    <string name="home_rename_confirm">Rename</string>
     <!-- While the user moves an app chosen in that menu: the top bar's title, and which keys do
          what. OK and Back are the remote's buttons; the arrows are its D-pad, and stay as they
          are. The D-pad moves the app; OK, or Back, puts it down where it is. -->

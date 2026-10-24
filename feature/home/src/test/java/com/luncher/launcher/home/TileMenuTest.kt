@@ -97,7 +97,7 @@ class TileMenuTest {
         val menu = activity.longPress("b")
 
         assertTrue(menu.isShowing)
-        assertEquals(listOf("Move", "Hide", "App info"), menu.labels())
+        assertEquals(listOf("Move", "Hide", "Rename", "App info"), menu.labels())
         assertTrue(menu.entries().first().isFocused)
         assertTrue("the tile keeps its focus", activity.tile("b").isFocused)
         assertFalse(activity.moving())
@@ -129,7 +129,7 @@ class TileMenuTest {
         installedApps.apps = listOf(app("a"), app("x"))
         val activity = start().get()
 
-        assertEquals(listOf("Hide", "App info"), activity.longPress("a").labels())
+        assertEquals(listOf("Hide", "Rename", "App info"), activity.longPress("a").labels())
     }
 
     @Test
@@ -164,16 +164,16 @@ class TileMenuTest {
         appInfoScreen.exists = false
         val activity = start().get()
         val menu = activity.longPress("b")
-        val (move, hide, info) = menu.entries()
+        val (move, _, rename, info) = menu.entries()
 
-        assertEquals(listOf("Move", "Hide", "App info"), menu.labels())
+        assertEquals(listOf("Move", "Hide", "Rename", "App info"), menu.labels())
         assertTrue(info.alpha < 1f)
-        assertEquals(1f, hide.alpha)
+        assertEquals(1f, rename.alpha)
         assertFalse(info.isFocusable)
         assertTrue(move.isFocused)
         // Down from the entry above it goes nowhere: Android's search finds no focusable view.
-        hide.requestFocus()
-        assertNull(hide.focusSearch(View.FOCUS_DOWN))
+        rename.requestFocus()
+        assertNull(rename.focusSearch(View.FOCUS_DOWN))
     }
 
     @Test
@@ -339,18 +339,18 @@ class TileMenuTest {
 
     // Placed by the domain's tileMenuPlacement: these check it gets the tile where it's drawn.
 
-    // A third row, k and l: the second's tiles have room neither above nor below for the menu.
+    // A fourth row, p and q: the second's and third's tiles have room neither above nor below for the menu.
     @Test
-    fun `the menu of a tile in the third row is above it, clear of its zoom`() {
-        installedApps.apps = listOf("a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "x").map { app(it) }
+    fun `the menu of a tile in the fourth row is above it, clear of its zoom`() {
+        installedApps.apps = ('a'..'q').map { app(it.toString()) } + app("x")
         val activity = start().get()
-        val menu = activity.longPress("k")
+        val menu = activity.longPress("p")
 
         val attributes = checkNotNull(menu.window).attributes
-        val tile = activity.tile("k").focusedBounds()
+        val tile = activity.tile("p").focusedBounds()
         assertTrue("menu at ${attributes.y}, tile at ${tile.top}", attributes.y + menu.window!!.decorView.measuredHeight < tile.top)
-        val tileOnScreen = IntArray(2).also { activity.tile("k").getLocationOnScreen(it) }
-        assertTrue(tile.top < tileOnScreen[1] + activity.tile("k").height)
+        val tileOnScreen = IntArray(2).also { activity.tile("p").getLocationOnScreen(it) }
+        assertTrue(tile.top < tileOnScreen[1] + activity.tile("p").height)
     }
 
     // 720p at 320 dpi, 640x360 dp: a second-row tile has room neither above nor below for it.
@@ -405,7 +405,7 @@ class TileMenuTest {
         val menu = activity.longPress(tile.app.name.lowercase())
         val scroll = menu.findViewById<View>(R.id.home_tile_menu_scroll)
 
-        repeat(2) {
+        repeat(menu.entries().size - 1) {
             menu.press(KeyEvent.KEYCODE_DPAD_DOWN)
             shadowOf(Looper.getMainLooper()).idleFor(Duration.ofSeconds(1))   // the slide
         }

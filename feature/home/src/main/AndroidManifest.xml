@@ -7,7 +7,9 @@
 
         <!-- How the home screen behaves; what makes it the device's home screen and a TV app (its
              intent filters) is the app's to declare, in its manifest, which the build merges with
-             this one. -->
+             this one. adjustNothing: the keyboard the rename dialog opens doesn't slide the home
+             screen up behind it to keep the focused tile in sight; the dialog moves instead
+             (NameDialog). -->
         <activity
             android:name=".HomeActivity"
             android:clearTaskOnLaunch="true"
@@ -16,7 +18,8 @@
             android:launchMode="singleTask"
             android:screenOrientation="landscape"
             android:stateNotNeeded="true"
-            android:theme="@style/Theme.Luncher" />
+            android:theme="@style/Theme.Luncher"
+            android:windowSoftInputMode="adjustNothing" />
     </application>
 
 </manifest>

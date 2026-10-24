@@ -2,15 +2,23 @@ package com.luncher.launcher.ui
 
 import android.app.Activity
 import android.app.Dialog
+import android.os.Build
+import android.text.InputFilter
+import android.view.Gravity
+import android.view.KeyEvent
 import android.view.View
 import android.view.ViewGroup
+import android.view.WindowInsets
 import android.view.WindowManager
 import android.view.inputmethod.EditorInfo
 import android.widget.TextView
 import com.luncher.domain.appearance.ColorRoles
 
-/** A dialog's button: its [label], its [kind], an [icon] before it (0: none), and what OK on it does. */
-class DialogButton(val label: CharSequence, val kind: Kind, val icon: Int = 0, val action: () -> Unit) {
+/**
+ * A dialog's button: its [label], its [kind], an [icon] before it (0: none), whether it can be
+ * chosen now ([available]; dimmed, and passed by, where it can't), and what OK on it does.
+ */
+class DialogButton(val label: CharSequence, val kind: Kind, val icon: Int = 0, val available: Boolean = true, val action: () -> Unit) {
     enum class Kind { FILLED, TONAL, DANGER }
 }
 
@@ -48,7 +56,7 @@ class MessageDialog(
             }
         }
         for (button in buttons) {
-            addButton(button.label, button.kind, button.icon) {
+            addButton(button.label, button.kind, button.icon, button.available) {
                 dismiss()
                 button.action()
             }
@@ -103,10 +111,14 @@ class MenuDialog(
 
 /**
  * A dialog that asks for a new name: its [title], a field with the [name], focused, the cursor at
- * its end (where a TV's keyboard puts it anyway as it starts), the keyboard up; then [cancel] and
- * [confirm]. [confirm], or the keyboard's Done, gives what's typed to [rename], which keeps the
+ * its end (where a TV's keyboard puts it anyway as it starts), the keyboard up, taking at most
+ * [maxLength] units (0: any); a [note] below it (null: none); then [cancel], an [extra] button
+ * (none for null; one not [DialogButton.available] is dimmed, and the focus passes it by) and
+ * [confirm]. [confirm], or the keyboard's Done (or Enter), gives what's typed to [rename], which keeps the
  * name and answers null, closing the dialog, or answers why it can't, shown below the field in
- * the error color, the field outlined in it. [cancel], or Back, closes it.
+ * place of the note, in the error color, the field outlined in it. [cancel], or Back, closes it;
+ * OK on [extra] closes it and does its action. Centered; near the top while the keyboard shows,
+ * over a screen that doesn't move for it (`adjustNothing`), so the keyboard covers none of it.
  */
 class NameDialog(
     activity: Activity,
@@ -115,6 +127,9 @@ class NameDialog(
     name: String,
     cancel: CharSequence,
     confirm: CharSequence,
+    note: CharSequence? = null,
+    extra: DialogButton? = null,
+    maxLength: Int = 0,
     rename: (String) -> CharSequence?,
 ) : Dialog(activity, R.style.Theme_Luncher_Dialog) {
 
@@ -125,39 +140,78 @@ class NameDialog(
             text = title
             labelFor = field.id
         }
-        val why = findViewById<ThemedText>(R.id.dialog_text)
-        why.visibility = View.GONE
-        why.changeRole(ThemedText.ERROR)
-        why.setCompoundDrawablesRelativeWithIntrinsicBounds(R.drawable.icon_warning, 0, 0, 0)
-        why.compoundDrawablePadding = context.resources.getDimensionPixelSize(R.dimen.icon_gap)
+        val line = findViewById<ThemedText>(R.id.dialog_text)
+        line.text = note
+        line.visibility = if (note == null) View.GONE else View.VISIBLE
         val done = {
             val refused = rename(field.text.toString())
             if (refused == null) {
                 dismiss()
             } else {
-                why.text = refused
-                why.visibility = View.VISIBLE
+                line.text = refused
+                line.visibility = View.VISIBLE
+                line.setCompoundDrawablesRelativeWithIntrinsicBounds(R.drawable.icon_warning, 0, 0, 0)
+                line.compoundDrawablePadding = context.resources.getDimensionPixelSize(R.dimen.icon_gap)
+                line.changeRole(ThemedText.ERROR)
                 field.refused = true
             }
         }
         field.visibility = View.VISIBLE
         field.setText(name)
         field.setSelection(name.length)
-        field.setOnEditorActionListener { _, action, _ ->
-            if (action == EditorInfo.IME_ACTION_DONE) done()
-            action == EditorInfo.IME_ACTION_DONE
+        // After the name is in: a longer one the field holds already stays whole, to be shortened.
+        if (maxLength > 0) field.filters = arrayOf(InputFilter.LengthFilter(maxLength))
+        field.setOnEditorActionListener { _, action, event ->
+            // Done from the keyboard on screen; or Enter as a key (a USB or Bluetooth keyboard's, or
+            // passed on by the Leanback IME), which before Android 11 moves the focus on instead:
+            // its press and release are both taken, and the release acts, so nothing comes after.
+            val enter = action == EditorInfo.IME_NULL &&
+                (event?.keyCode == KeyEvent.KEYCODE_ENTER || event?.keyCode == KeyEvent.KEYCODE_NUMPAD_ENTER)
+            if (action == EditorInfo.IME_ACTION_DONE || (enter && event.action == KeyEvent.ACTION_UP)) done()
+            action == EditorInfo.IME_ACTION_DONE || enter
         }
         addButton(cancel, DialogButton.Kind.TONAL) { dismiss() }
-        addButton(confirm, DialogButton.Kind.FILLED, R.drawable.icon_check, done)
+        if (extra != null) {
+            addButton(extra.label, extra.kind, extra.icon, extra.available) {
+                dismiss()
+                extra.action()
+            }
+        }
+        addButton(confirm, DialogButton.Kind.FILLED, R.drawable.icon_check, action = done)
         fitToScreen()
         checkNotNull(window).stylePanel(roles)
         window?.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE)
+        // Centered while the keyboard is closed; while it shows, near the top, so it covers none of
+        // it. The screen behind doesn't move (its activity's adjustNothing), so neither does the
+        // dialog of itself from API 30 on, when Android says whether the keyboard shows (how tall
+        // it is reads 0 on some versions). Before API 30 Android moves the dialog above the
+        // keyboard and back itself. The window changes only when the keyboard comes or goes:
+        // changed before it's up, it would keep it down.
+        if (Build.VERSION.SDK_INT >= 30) {
+            val window = checkNotNull(window)
+            val margin = context.resources.getDimensionPixelSize(R.dimen.dialog_margin)
+            var raised = false
+            window.decorView.setOnApplyWindowInsetsListener { view, insets ->
+                val keyboard = insets.isVisible(WindowInsets.Type.ime())
+                if (keyboard != raised) {
+                    raised = keyboard
+                    window.attributes = window.attributes.apply {
+                        gravity = if (keyboard) Gravity.TOP or Gravity.CENTER_HORIZONTAL else Gravity.CENTER
+                        y = if (keyboard) margin else 0
+                    }
+                }
+                view.onApplyWindowInsets(insets)
+            }
+        }
         field.requestFocus()
     }
 }
 
-/** Adds a button labelled [label], of [kind], [icon] before it, to the dialog's buttons; OK on it does [action]. */
-private fun Dialog.addButton(label: CharSequence, kind: DialogButton.Kind, icon: Int = 0, action: () -> Unit) {
+/**
+ * Adds a button labelled [label], of [kind], [icon] before it, to the dialog's buttons; OK on it
+ * does [action]. Not [available]: dimmed, out of the focus's way, and OK does nothing.
+ */
+private fun Dialog.addButton(label: CharSequence, kind: DialogButton.Kind, icon: Int = 0, available: Boolean = true, action: () -> Unit) {
     val list = findViewById<EntriesRow>(R.id.dialog_entries)
     val button = layoutInflater.inflate(R.layout.dialog_button, list, false) as PillButton
     button.text = label
@@ -167,7 +221,13 @@ private fun Dialog.addButton(label: CharSequence, kind: DialogButton.Kind, icon:
         DialogButton.Kind.DANGER -> PillButton.DANGER
     }
     button.setIcon(icon)
-    button.setOnClickListener { action() }
+    if (available) {
+        button.setOnClickListener { action() }
+    } else {
+        button.alpha = DIMMED
+        button.isFocusable = false
+        button.isFocusableInTouchMode = false
+    }
     list.addView(button)
 }
 
@@ -180,3 +240,6 @@ private fun Dialog.fitToScreen() {
         context.resources.displayMetrics.widthPixels - 2 * margin,
     )
 }
+
+/** A button that can't be chosen now: as the settings' dimmed entries (Delete all with no pictures). */
+private const val DIMMED = 0.4f

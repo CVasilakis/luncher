@@ -66,6 +66,7 @@ Everything but the activities and `SettingsGraph` is `internal`.
 | `AppearanceActivity`: `Theme.Luncher.Settings.FullScreen` | Full-screen and opaque: it covers the home screen whole, so the home screen is stopped meanwhile and applies the changes once, when it comes back ([`ARCHITECTURE.md`](../../docs/ARCHITECTURE.md#appearance), point 5). |
 | No `screenOrientation` | Android 8.0 (API 26) refuses one on a floating activity; it shows over the landscape home screen anyway, as the editor does. |
 | `BackgroundActivity`: `Theme.Luncher.Settings.FullScreen` | Full-screen and opaque, as the appearance editor, which opens it. |
+| `BackgroundActivity`: `windowSoftInputMode="adjustNothing"` | The keyboard a picture's Rename opens doesn't slide the editor up behind the dialog to keep a low picture in sight, with a black band below; the dialog moves instead (`:ui`'s `NameDialog`, [`ui/README.md`](../../ui/README.md#the-design-system)). |
 | `AddFromFolderActivity`: `Theme.Luncher.Settings.Pictures` | Full-screen and opaque, on the home screen's background. |
 | `SharePictureActivity`: `exported="true"` | Other apps' shares arrive there. |
 | `<queries>` for `MAIN`+`HOME` | Package visibility (targetSdk 30+): `SharePictureActivity` tells whether Luncher is the device's home app by what a `HOME` intent resolves to ([below](#adding-a-picture)), which needs every home app visible. Without it, Android hides the stock launcher, and Luncher, the only home app left, seems the default: a share then opened a second home screen beside the stock launcher's (measured on API 30). |
@@ -347,7 +348,7 @@ icon, under its name and size (`:ui`'s `MenuDialog`).
 
 **Rename** asks for the new name in a field holding the old one, the TV's keyboard up, the cursor
 at the end (where the keyboard puts it anyway; `:ui`'s `NameDialog` and `NameField`, outlined in the accent while it has
-the focus). Cancel and Rename below it, or the keyboard's Done, keeps the
+the focus), the dialog above the keyboard while it shows and the editor behind it still. Cancel and Rename below it, or the keyboard's Done (or Enter), keeps the
 name as a picture's is kept (`pictureName`: no control characters, trimmed, cut in the middle past
 255 units); a name another picture has, or nothing typed, is refused below the field in the error
 color, the field outlined in it, the dialog staying open (`renaming`), as two pictures of one name would be told apart by

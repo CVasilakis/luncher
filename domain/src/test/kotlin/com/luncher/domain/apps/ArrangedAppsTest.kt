@@ -149,4 +149,59 @@ class ArrangedAppsTest {
         assertEquals(listOf("Arts", "Games", "Movies", "Music"), labels(arranged.shown))
         assertEquals(listOf("Games", "Movies", "Music", "News"), arranged.byLabel().map { it.app.installed.label })
     }
+
+    // Renaming: what to store.
+
+    @Test
+    fun `renaming an app stores its name with what was stored for the others`() {
+        val arranged = homeApps(installed, "com.luncher.launcher", AppArrangement.NONE, named("news", "Arts"), Locale.ENGLISH)
+
+        val stored = arranged.renamed(arranged.shown.first { it.installed.label == "Games" }, "Play")
+
+        assertEquals(named("news", "Arts") + named("games", "Play"), stored)
+    }
+
+    @Test
+    fun `renaming an app again replaces its name`() {
+        val arranged = homeApps(installed, "com.luncher.launcher", AppArrangement.NONE, named("news", "Arts"), Locale.ENGLISH)
+
+        assertEquals(named("news", "Daily"), arranged.renamed(arranged.shown.first { it.name == "Arts" }, "Daily"))
+    }
+
+    @Test
+    fun `an app named by its own label again leaves nothing stored for it`() {
+        val arranged = homeApps(installed, "com.luncher.launcher", AppArrangement.NONE, named("news", "Arts") + named("games", "Play"), Locale.ENGLISH)
+
+        assertEquals(named("games", "Play"), arranged.renamed(arranged.shown.first { it.name == "Arts" }, null))
+    }
+
+    @Test
+    fun `renaming keeps the names of apps that aren't installed`() {
+        val away = LaunchableApp("com.example.away", "com.example.away.MainActivity")
+        val stored = mapOf(away to AppCustomization(name = "Away"))
+        val arranged = homeApps(installed, "com.luncher.launcher", AppArrangement.NONE, stored, Locale.ENGLISH)
+
+        assertEquals(stored + named("music", "Songs"), arranged.renamed(homeApp("music"), "Songs"))
+    }
+
+    // An update renamed the activity: its name is stored under the activity as it is now.
+    @Test
+    fun `renaming stores an app whose activity an update renamed under its new activity`() {
+        val old = LaunchableApp("com.example.news", "com.example.news.OldActivity")
+        val arranged = homeApps(installed, "com.luncher.launcher", AppArrangement.NONE, mapOf(old to AppCustomization(name = "Arts")), Locale.ENGLISH)
+
+        assertEquals(named("news", "Daily"), arranged.renamed(arranged.shown.first { it.name == "Arts" }, "Daily"))
+    }
+
+    @Test
+    fun `a hidden app can be renamed`() {
+        val arranged = arranged(AppArrangement(order = null, hidden = listOf(id("news"))))
+
+        assertEquals(named("news", "Arts"), arranged.renamed(homeApp("news"), "Arts"))
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun `can't rename an app that isn't installed`() {
+        arranged().renamed(homeApp("away"), "Away")
+    }
 }

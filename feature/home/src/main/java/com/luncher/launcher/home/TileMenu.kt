@@ -163,12 +163,14 @@ internal class TileMenu(private val activity: Activity) : Dialog(activity, R.sty
     private fun label(action: AppAction): Int = when (action) {
         AppAction.Move -> R.string.home_menu_move
         AppAction.Hide -> R.string.home_menu_hide
+        AppAction.Rename -> R.string.home_menu_rename
         AppAction.Info -> R.string.home_menu_info
     }
 
     private fun icon(action: AppAction): Int = when (action) {
         AppAction.Move -> UiR.drawable.icon_move
         AppAction.Hide -> UiR.drawable.icon_eye_off
+        AppAction.Rename -> UiR.drawable.icon_pencil
         AppAction.Info -> UiR.drawable.icon_info
     }
 

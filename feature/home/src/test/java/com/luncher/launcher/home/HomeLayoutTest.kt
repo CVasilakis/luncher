@@ -21,6 +21,8 @@ import com.luncher.domain.apps.AppAction
 import com.luncher.domain.apps.AppArrangement
 import com.luncher.domain.apps.AppMenuEntry
 import com.luncher.domain.apps.FakeAppArrangements
+import com.luncher.domain.apps.FakeAppCustomizations
+import com.luncher.domain.apps.FakeAppCustomizations.Companion.named
 import com.luncher.domain.apps.FakeAppInfoScreen
 import com.luncher.domain.apps.FakeInstalledApps
 import com.luncher.domain.apps.FakeInstalledApps.Companion.app
@@ -33,6 +35,7 @@ import com.luncher.launcher.testing.TV_SCREENS
 import com.luncher.launcher.testing.TV_SCREENS_IN_EVERY_LANGUAGE
 import com.luncher.launcher.testing.TvScreen
 import com.luncher.launcher.testing.assertApart
+import com.luncher.launcher.testing.assertDialogFits
 import com.luncher.launcher.testing.assertInside
 import com.luncher.launcher.testing.assertWhole
 import com.luncher.launcher.testing.bounds
@@ -85,6 +88,7 @@ class HomeLayoutTest(private val screen: TvScreen) {
     private val appearance = FakeAppearanceSettings()
     private val stored = FakeStoredWallpaper<Bitmap>()
     private val appInfo = FakeAppInfoScreen()
+    private val customizations = FakeAppCustomizations()
 
     @After
     fun restoreLocale() = Locale.setDefault(defaultLocale)
@@ -104,6 +108,7 @@ class HomeLayoutTest(private val screen: TvScreen) {
             override val appearanceSettings = this@HomeLayoutTest.appearance
             override val storedWallpaper = this@HomeLayoutTest.stored
             override val appInfoScreen = this@HomeLayoutTest.appInfo
+            override val appCustomizations = this@HomeLayoutTest.customizations
         }
     }
 
@@ -293,12 +298,28 @@ class HomeLayoutTest(private val screen: TvScreen) {
     @Test
     fun `a tile's menu of six entries fits`() {
         val activity = start()
-        val six = listOf(AppAction.Move, AppAction.Hide, AppAction.Info, AppAction.Move, AppAction.Hide, AppAction.Info).map { AppMenuEntry(it) }
+        val six = listOf(AppAction.Move, AppAction.Hide, AppAction.Rename, AppAction.Info, AppAction.Move, AppAction.Hide).map { AppMenuEntry(it) }
 
         for (tile in activity.menuTiles()) activity.checkMenu(tile, six)
     }
 
     // A wallpaper drawn again, for either reason: its window's message whole, inside the screen.
+    // For a renamed app, the longer: its original name below the field (the longest name of the
+    // apps), and Reset available.
+    @Test
+    fun `the rename dialog fits`() {
+        customizations.customizations = mapOf(named(app(shown[0]), "Renamed"))
+        val activity = start()
+        val tiles = activity.findViewById<AppTilesView>(R.id.home_apps)
+        val tile = (0 until tiles.childCount).map { tiles.getChildAt(it) as AppTileView }.first { it.app.customization.name != null }
+        tile.requestFocus()
+        tile.performLongClick()
+        checkNotNull(shownMenu()).entries().single { it.label.text == activity.getString(R.string.home_menu_rename) }.performClick()
+        shadowOf(Looper.getMainLooper()).idle()
+
+        assertDialogFits(screen, activity)
+    }
+
     @Test
     fun `the window saying the wallpaper is drawn again fits`() {
         val sunset = PictureId("sunset")

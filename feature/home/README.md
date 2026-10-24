@@ -59,6 +59,7 @@ The build merges the two.
 | `screenOrientation="landscape"` | TVs are landscape. |
 | `exported="true"` | Android starts it for Home and from the TV's app list; a shared picture opens it one of those two ways ([`settings/README.md`](../settings/README.md#adding-a-picture)). |
 | `theme="@style/Theme.Luncher"` | Set on the activity rather than only on the app, so the JVM tests, which have no app manifest, show it as the app does. |
+| `windowSoftInputMode="adjustNothing"` | The keyboard the [rename dialog](#renaming-an-app) opens doesn't slide the home screen up behind it to keep a low tile in sight (wallpaper, clock and all, a black band below); the dialog moves instead. |
 | `supportsRtl="true"` | As the app declares it ([why](../../app/README.md#manifest-why-each-part-is-there)), so the JVM tests follow a right-to-left language as the app does: there the home screen still stays left to right. |
 
 A home screen must not close on Back; how `HomeActivity` ignores it on every Android version is
@@ -299,16 +300,18 @@ panel follows the tiles.
 |---|---|
 | Move | [moves the app](#moving-an-app); not offered while it's the only app shown |
 | Hide | hides the app at once, first among the hidden apps; the [Hide apps](../settings/README.md#hidden-apps) list shows it again |
+| Rename | asks for a name of the user's own for the app, which the home screen shows wherever it names the app ([below](#renaming-an-app)) |
 | App info | opens the app's page in the device's settings (its storage, permissions, force stop, uninstall), in a task of its own, as another app; Back returns to the home screen, which shows what changed there (an app uninstalled or disabled) as any change of the apps. Dimmed where the device has no such page, as on the Android TV 5.1 (API 22) emulator, whose settings have only the list of all apps. A settings app gone since the menu opened gets a message instead |
 
 | Part | Job |
 |---|---|
 | `AppAction`, `appActions` (`:domain`) | which actions there are, and which the menu of an app lists, in order, each with whether it can be chosen (`AppMenuEntry.available`), from facts of the device it's given |
+| `appName`, `ArrangedApps.renamed` (`:domain`) | the name a renamed app keeps, or none; what to store of what the user set for the apps with it |
 | `AppInfoScreen` (`:domain`), `PackageManagerAppInfoScreen` (`:platform`) | whether the device has the page App info opens, asked as each menu opens, since a settings app can be disabled meanwhile |
 | `tileMenuPlacement` (`:domain`) | where the menu goes: above the tile as it's drawn (zoomed, its name below it), below where there's no room, across centered, or in line with the tile's edge where centered would leave the room; beside it, level with it, where it fits neither above nor below; `tileMenuHeight`: how tall it may be, the most room there is where it fits whole nowhere |
 | `AppTileView.focusedBounds` | where the tile is drawn on the screen while it has focus, for that rule |
 | `TileMenu` | the menu's window: an entry for each action with its icon and label from exhaustive `when`s over `AppAction`, dimmed and out of the focus's way where it isn't available, placed where the rule says; in the theme's colors, its corners following the tiles' (`style`, `menuCorner`) |
-| `HomeActivity` | opens the menu on a long press, and does what an entry says, in an exhaustive `when` too: Move starts `MoveMode`, Hide stores the arrangement with the app hidden, which shows as any change of it does, App info starts the device's page for the app |
+| `HomeActivity` | opens the menu on a long press, and does what an entry says, in an exhaustive `when` too: Move starts `MoveMode`, Hide stores the arrangement with the app hidden, which shows as any change of it does, Rename asks for the name (`:ui`'s `NameDialog`) and stores it, App info starts the device's page for the app |
 
 A new action (a picture of the user's own for its tile) is a type of `AppAction`, listed by
 `appActions`, which then doesn't compile in `:feature:home` until the menu has its label and icon,
@@ -335,6 +338,31 @@ press.
 
 The menu is made the first time it opens, and kept for the next ones, which only add its entries
 again: nothing is made before the user asks for it.
+
+### Renaming an app
+
+Rename asks for the app's new name in a dialog in the middle of the screen, over the home screen
+dimmed, as the picture library's dialogs are: `:ui`'s `NameDialog`, the same one the background
+editor renames a picture with ([`settings/README.md`](../settings/README.md#background)). Its
+title is "Rename app", its field holds the name the app shows now, the TV's keyboard up and the
+cursor at the end; for an app the user renamed, its original name, the device's label, is below
+the field ("Original name: YouTube"), so it's clear what Reset gives back. Below them, Cancel,
+Reset and Rename. While the keyboard shows, the dialog is above it, and the home screen behind
+stays where it is (`adjustNothing`, [Manifest](#manifest)). Rename, the keyboard's Done, or Enter,
+keeps what's typed as `appName` says: no control
+characters, trimmed, at most 50 UTF-16 units (`MAX_APP_NAME`: a tile shows about 20 characters,
+Hide apps about 40), which is also all the field takes. An empty field, or the original name,
+puts the app's own name back, and so does Reset, dimmed and passed by the focus while the app has
+its own name. Nothing is refused: two apps may have one name. Cancel, or Back, changes nothing.
+Like the settings' dialogs, it mirrors in a right-to-left language, while the home screen under it
+doesn't.
+
+The name is stored at once through `AppCustomizations` (`ArrangedApps.renamed`: what was set for
+every app, the apps not installed now too, with this one's name; an app left with nothing set
+isn't stored), which the home screen follows as any change of the names: the renamed app's tile
+alone is made and drawn again, in its place by name while there's no order of the user's, the
+focus on it. Like the menu, the dialog closes when the home screen stops (Home, another app, the
+screen off) and when the shown apps change while it shows, as its app may be gone.
 
 ## Moving an app
 

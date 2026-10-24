@@ -21,10 +21,14 @@ import com.luncher.domain.appearance.colorRoles
 import com.luncher.domain.apps.AppAction
 import com.luncher.domain.apps.ArrangedApps
 import com.luncher.domain.apps.HomeApp
+import com.luncher.domain.apps.MAX_APP_NAME
 import com.luncher.domain.apps.appActions
+import com.luncher.domain.apps.appName
 import com.luncher.domain.apps.homeApps
 import com.luncher.launcher.settings.R as SettingsR
 import com.luncher.launcher.settings.SettingsActivity
+import com.luncher.launcher.ui.DialogButton
+import com.luncher.launcher.ui.NameDialog
 import com.luncher.launcher.ui.color
 import com.luncher.launcher.ui.R as UiR
 import java.util.Locale
@@ -33,7 +37,8 @@ import java.util.Locale
  * The home screen: the time, the date and a settings entry above the TV apps the user didn't hide,
  * as tiles; OK on a tile opens its app, OK on the settings entry (or the Menu key) opens the
  * settings panel. A long press of OK on a tile opens its [TileMenu], to move its app ([MoveMode],
- * which gets every key first while it's on), hide it, or open its info in the device's settings.
+ * which gets every key first while it's on), hide it, rename it, or open its info in the device's
+ * settings.
  *
  * How it looks follows the user's [Appearance] while it's shown: each part goes to the view that
  * draws it (the background to the window, [HomeWallpaper]), which compares it with what it has, so
@@ -58,6 +63,9 @@ class HomeActivity : Activity() {
 
     /** The tiles' menu: made the first time a long press opens it. */
     private var menu: TileMenu? = null
+
+    /** The dialog Rename in a tile's menu opened; null when none was. */
+    private var renameDialog: NameDialog? = null
 
     /** What the tiles show; null until the first [onResume]. */
     private var shown: List<HomeApp>? = null
@@ -140,8 +148,10 @@ class HomeActivity : Activity() {
 
     override fun onStop() {
         super.onStop()
-        // Leaving the home screen (another app, the screen off) closes the menu and ends moving.
+        // Leaving the home screen (another app, the screen off) closes the menu, or the rename
+        // dialog, and ends moving.
         menu?.dismiss()
+        renameDialog?.dismiss()
         move.end()
         clockView.stop()
         wallpaper.stop()
@@ -162,6 +172,7 @@ class HomeActivity : Activity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         menu?.dismiss()
+        renameDialog?.dismiss()
         move.end()
     }
 
@@ -225,8 +236,44 @@ class HomeActivity : Activity() {
             AppAction.Move -> move.start(arranged, tile)
             // Stored, and shown as any change of the arrangement is (showArrangement).
             AppAction.Hide -> arrangements.save(arranged.hide(tile.app).arrangement)
+            AppAction.Rename -> askName(tile.app)
             AppAction.Info -> openAppInfo(tile.app)
         }
+    }
+
+    /**
+     * Asks for [app]'s new name in a dialog, the field holding the name it shows; for an app the
+     * user renamed, its original name below it, which Reset puts back (dimmed for one that has
+     * it). Rename, or the keyboard's Done, stores the name typed ([appName]: an empty field, or
+     * the original name, is the original name again), which shows as any change of the names does
+     * (showAppChanges); nothing is refused.
+     */
+    private fun askName(app: HomeApp) {
+        val renamed = app.customization.name != null
+        val dialog = NameDialog(
+            this,
+            colorRoles(shownTheme ?: appearanceSettings.read().theme),
+            getString(R.string.home_rename_title),
+            app.name,
+            getString(R.string.home_rename_cancel),
+            getString(R.string.home_rename_confirm),
+            note = if (renamed) getString(R.string.home_rename_original, app.installed.label) else null,
+            extra = DialogButton(getString(R.string.home_rename_reset), DialogButton.Kind.TONAL, UiR.drawable.icon_reset, available = renamed) {
+                rename(app, null)
+            },
+            maxLength = MAX_APP_NAME,
+        ) { typed ->
+            rename(app, appName(typed, app.installed.label))
+            null
+        }
+        renameDialog = dialog
+        dialog.show()
+    }
+
+    /** Stores [app] named [name], or by its own label for null, as the apps are now. */
+    private fun rename(app: HomeApp, name: String?) {
+        val arranged = arranged ?: return
+        customizations.save(arranged.renamed(app, name))
     }
 
     /**
@@ -255,8 +302,9 @@ class HomeActivity : Activity() {
     }
 
     private fun show(apps: List<HomeApp>) {
-        // The menu is of a tile that may be gone, or of an app that changed.
+        // The menu, or the rename dialog, is of a tile that may be gone, or of an app that changed.
         menu?.dismiss()
+        renameDialog?.dismiss()
         val focusedTile = tiles.focusedChild as? AppTileView
         val focused = focusedTile?.app?.launchable
         val focusedIndex = focusedTile?.let { tiles.indexOfChild(it) } ?: 0

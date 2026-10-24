@@ -45,7 +45,7 @@ fun homeApps(
             order.mapNotNull { byId[it] } + unordered.filter { it.launchable !in orderIds }.sortedWith(byName)
         }
     }
-    return ArrangedApps(shown, hidden, stored, byName, byLabel)
+    return ArrangedApps(shown, hidden, stored, customized, byName, byLabel)
 }
 
 /**

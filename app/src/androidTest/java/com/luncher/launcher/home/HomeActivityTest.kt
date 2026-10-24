@@ -14,7 +14,10 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.Espresso.pressBack
 import androidx.test.espresso.Espresso.pressBackUnconditionally
+import androidx.test.espresso.action.ViewActions.closeSoftKeyboard
+import androidx.test.espresso.action.ViewActions.pressImeActionButton
 import androidx.test.espresso.action.ViewActions.pressKey
+import androidx.test.espresso.action.ViewActions.replaceText
 import androidx.test.espresso.assertion.ViewAssertions.doesNotExist
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.matcher.RootMatchers.isDialog
@@ -36,6 +39,8 @@ import com.luncher.domain.appearance.HorizontalAlignment
 import com.luncher.domain.appearance.TileGeometry
 import com.luncher.domain.appearance.VerticalAlignment
 import com.luncher.domain.apps.FakeAppArrangements
+import com.luncher.domain.apps.FakeAppCustomizations
+import com.luncher.domain.apps.FakeAppCustomizations.Companion.named
 import com.luncher.domain.apps.FakeInstalledApps
 import com.luncher.domain.apps.FakeInstalledApps.Companion.app
 import com.luncher.domain.pictures.FakePictureImages
@@ -50,11 +55,13 @@ import com.luncher.launcher.settings.SettingsActivity
 import com.luncher.launcher.testing.RetryWhenCovered
 import com.luncher.launcher.testing.focus
 import com.luncher.launcher.testing.longPressOk
+import com.luncher.launcher.testing.matchesNow
 import com.luncher.launcher.testing.resolvedHome
 import com.luncher.launcher.testing.waitForHomeScreen
 import com.luncher.launcher.testing.waitUntilDestroyed
 import com.luncher.launcher.testing.waitUntilMatches
 import com.luncher.launcher.ui.ListEntry
+import com.luncher.launcher.ui.R as UiR
 import org.hamcrest.Matcher
 import org.hamcrest.Matchers.allOf
 import org.hamcrest.Matchers.not
@@ -75,12 +82,16 @@ class HomeActivityTest {
 
     private val application = ApplicationProvider.getApplicationContext<LuncherApplication>()
 
+    /** What the user named the apps in the test: not the device's, which a rename would change for the tests after it. */
+    private var customizations = FakeAppCustomizations()
+
     private fun launchWith(vararg names: String, appearance: Appearance = Appearance(topLeftTiles)): ActivityScenario<HomeActivity> {
         application.graph = object : AppGraph(application) {
             override val installedApps = FakeInstalledApps(names.map { app(it) })
-            // Not the device's stored arrangement and appearance: every test starts with all apps
-            // shown, by name, where the test says.
+            // Not the device's stored arrangement, names and appearance: every test starts with
+            // all apps shown, by name, where the test says.
             override val appArrangements = FakeAppArrangements()
+            override val appCustomizations = this@HomeActivityTest.customizations
             override val appearanceSettings = FakeAppearanceSettings(appearance)
             // Not the device's library and kept wallpaper either: a wallpaper is drawn as a plain
             // color, and kept in memory.
@@ -126,7 +137,7 @@ class HomeActivityTest {
         onView(isRoot()).perform(pressKey(keyCode))
     }
 
-    /** Sends a key to a tile's menu, a window of its own over the home screen. */
+    /** Sends a key to a tile's menu, or the dialog it opened, a window of its own over the home screen. */
     private fun pressInMenu(keyCode: Int) {
         onView(isRoot()).inRoot(isDialog()).perform(pressKey(keyCode))
     }
@@ -427,6 +438,92 @@ class HomeActivityTest {
 
             waitUntilTile("Movies", hasFocus())   // the tile now in its place
             assertEquals(listOf("Movies", "Music"), scenario.labels())
+        }
+    }
+
+    /** Rename in the menu of the focused tile, Move first in it: waits until the dialog's field has the focus. */
+    private fun openRename() {
+        longPressOk()
+        waitUntilMenuEntryFocused(R.string.home_menu_move)
+        pressInMenu(KeyEvent.KEYCODE_DPAD_DOWN)
+        waitUntilMenuEntryFocused(R.string.home_menu_hide)
+        pressInMenu(KeyEvent.KEYCODE_DPAD_DOWN)
+        waitUntilMenuEntryFocused(R.string.home_menu_rename)
+        pressInMenu(KeyEvent.KEYCODE_DPAD_CENTER)
+        waitUntilMatches(withId(UiR.id.dialog_field), hasFocus(), TIMEOUT_MS, root = isDialog())
+    }
+
+    @Test
+    fun renameInTheTilesMenu_typedAndDone_namesTheTile() {
+        launchWith("games", "movies", "music").use { scenario ->
+            waitUntilTile("Games", hasFocus())
+            openRename()
+
+            // Typed as the keyboard would, and its Done.
+            onView(withId(UiR.id.dialog_field)).inRoot(isDialog()).perform(replaceText("Zulu"), pressImeActionButton())
+
+            waitUntilTile("Zulu", hasFocus())   // moved to its place by name, the focus with it
+            assertEquals(listOf("Movies", "Music", "Zulu"), scenario.labels())
+            assertEquals(mapOf(named(app("games"), "Zulu")), customizations.customizations)
+        }
+    }
+
+    // As a USB or Bluetooth keyboard sends it: before Android 11 the field moved the focus on.
+    @Test
+    fun enterKey_inTheRenameDialog_namesTheTile() {
+        launchWith("games", "movies", "music").use { scenario ->
+            waitUntilTile("Games", hasFocus())
+            openRename()
+            onView(withId(UiR.id.dialog_field)).inRoot(isDialog()).perform(replaceText("Zulu"), closeSoftKeyboard())
+            pressInMenu(KeyEvent.KEYCODE_MOVE_END)
+
+            pressInMenu(KeyEvent.KEYCODE_ENTER)
+
+            waitUntilTile("Zulu", hasFocus())
+            assertEquals(listOf("Movies", "Music", "Zulu"), scenario.labels())
+            assertEquals(mapOf(named(app("games"), "Zulu")), customizations.customizations)
+        }
+    }
+
+    // The keyboard closed first: up, Back would close it, not the dialog.
+    @Test
+    fun backKey_inTheRenameDialog_closesIt_andChangesNothing() {
+        launchWith("games", "movies", "music").use { scenario ->
+            waitUntilTile("Games", hasFocus())
+            openRename()
+            onView(withId(UiR.id.dialog_field)).inRoot(isDialog()).perform(replaceText("Zulu"), closeSoftKeyboard())
+
+            pressInMenu(KeyEvent.KEYCODE_BACK)
+
+            waitUntilTile("Games", hasFocus())
+            assertEquals(listOf("Games", "Movies", "Music"), scenario.labels())
+            assertEquals(emptyMap<Any, Any>(), customizations.customizations)
+        }
+    }
+
+    @Test
+    fun resetInTheRenameDialog_givesTheAppItsOriginalName() {
+        customizations = FakeAppCustomizations(mapOf(named(app("games"), "Zulu")))
+        launchWith("games", "movies", "music").use { scenario ->
+            waitUntilTile("Movies", hasFocus())
+            press(KeyEvent.KEYCODE_DPAD_RIGHT)
+            press(KeyEvent.KEYCODE_DPAD_RIGHT)
+            waitUntilTile("Zulu", hasFocus())
+            openRename()
+            onView(withId(UiR.id.dialog_field)).inRoot(isDialog()).perform(closeSoftKeyboard())
+
+            // Below the field, Cancel, Reset and Rename side by side: Reset in the middle.
+            pressInMenu(KeyEvent.KEYCODE_DPAD_DOWN)
+            when {
+                matchesNow(withText(R.string.home_rename_cancel), hasFocus(), isDialog()) -> pressInMenu(KeyEvent.KEYCODE_DPAD_RIGHT)
+                matchesNow(withText(R.string.home_rename_confirm), hasFocus(), isDialog()) -> pressInMenu(KeyEvent.KEYCODE_DPAD_LEFT)
+            }
+            waitUntilMatches(withText(R.string.home_rename_reset), hasFocus(), TIMEOUT_MS, root = isDialog())
+            pressInMenu(KeyEvent.KEYCODE_DPAD_CENTER)
+
+            waitUntilTile("Games", hasFocus())
+            assertEquals(listOf("Games", "Movies", "Music"), scenario.labels())
+            assertEquals(emptyMap<Any, Any>(), customizations.customizations)
         }
     }
 

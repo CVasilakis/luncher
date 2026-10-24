@@ -181,6 +181,13 @@ class HomeScreenshotTest {
         shadowOf(Looper.getMainLooper()).idleFor(Duration.ofSeconds(1))
     }
 
+    /** Rename in the menu of the tile of [label], as OK on it would: the dialog asking for its name. */
+    private fun HomeActivity.openRename(label: String) {
+        openMenu(label)
+        checkNotNull(shownMenu()).entries().single { it.label.text == getString(R.string.home_menu_rename) }.performClick()
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofSeconds(1))
+    }
+
     /** Moves Music one place right, as Move in its menu and the D-pad would. */
     private fun HomeActivity.moveMusic() {
         tile("Music").startMoving()
@@ -337,5 +344,30 @@ class HomeScreenshotTest {
         start().openMenu("Radio")
 
         captureScreenFocused("src/test/screenshots/home/home_menu_arabic.png")
+    }
+
+    // Rename for an app with its own name: the field holds it, Reset dimmed.
+    @Test
+    fun renameDialog() {
+        start().openRename("Radio")
+
+        captureScreenFocused("src/test/screenshots/home/home_rename.png")
+    }
+
+    // For an app the user renamed: its original name below the field, Reset available.
+    @Test
+    fun renameDialogRenamed() {
+        start(named = mapOf("radio" to "Kids radio")).openRename("Kids radio")
+
+        captureScreenFocused("src/test/screenshots/home/home_rename_renamed.png")
+    }
+
+    // The same in Arabic: the dialog mirrors, the home screen doesn't.
+    @Test
+    @Config(qualifiers = "ar-rEG-$TV_1080P")
+    fun renameDialogInArabic() {
+        start(named = mapOf("radio" to "راديو الأطفال")).openRename("راديو الأطفال")
+
+        captureScreenFocused("src/test/screenshots/home/home_rename_arabic.png")
     }
 }

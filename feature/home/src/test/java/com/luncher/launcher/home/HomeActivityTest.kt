@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Looper
 import android.view.KeyEvent
 import android.view.View
+import android.view.WindowManager
 import android.widget.TextView
 import com.luncher.domain.apps.AppArrangement
 import com.luncher.domain.apps.AppCustomization
@@ -88,6 +89,14 @@ class HomeActivityTest {
     private fun HomeActivity.press(keyCode: Int) {
         dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, keyCode))
         dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_UP, keyCode))
+    }
+
+    // The rename dialog's keyboard: kept from sliding the screen up for the focused tile (NameDialog moves instead).
+    @Test
+    fun `the keyboard doesn't move the home screen`() {
+        val mode = start().get().window.attributes.softInputMode and WindowManager.LayoutParams.SOFT_INPUT_MASK_ADJUST
+
+        assertEquals(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING, mode)
     }
 
     @Test

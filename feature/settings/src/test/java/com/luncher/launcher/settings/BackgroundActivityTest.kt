@@ -8,6 +8,7 @@ import android.view.FocusFinder
 import android.view.KeyEvent
 import android.view.View
 import android.view.ViewGroup
+import android.view.WindowManager
 import android.view.inputmethod.EditorInfo
 import android.widget.EditText
 import android.widget.ImageView
@@ -223,6 +224,14 @@ class BackgroundActivityTest {
     private fun rename(name: String) {
         field().setText(name)
         answer("Rename")
+    }
+
+    // A picture's rename's keyboard: kept from sliding the editor up for the focused picture (NameDialog moves instead).
+    @Test
+    fun `the keyboard doesn't move the editor`() {
+        val mode = start().get().window.attributes.softInputMode and WindowManager.LayoutParams.SOFT_INPUT_MASK_ADJUST
+
+        assertEquals(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING, mode)
     }
 
     @Test

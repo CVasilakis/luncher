@@ -39,12 +39,15 @@
             android:theme="@style/Theme.Luncher.Settings.FullScreen" />
 
         <!-- The background editor, full-screen like the appearance editor, which opens it; also
-             opened from the window after a share, with that picture chosen. -->
+             opened from the window after a share, with that picture chosen. adjustNothing: the
+             keyboard a picture's rename opens doesn't slide the editor up behind it to keep the
+             focused picture in sight; the dialog moves instead (NameDialog). -->
         <activity
             android:name=".BackgroundActivity"
             android:exported="false"
             android:launchMode="singleTop"
-            android:theme="@style/Theme.Luncher.Settings.FullScreen" />
+            android:theme="@style/Theme.Luncher.Settings.FullScreen"
+            android:windowSoftInputMode="adjustNothing" />
 
         <!-- The window over the home screen after another app shared pictures, floating like the
              settings panel. singleTop: a share that arrives while it shows comes to it

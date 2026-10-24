@@ -35,9 +35,11 @@ ui/
     │   │   │                     the list (slideFor), the rows' usual height; FittedRows, what a row asks its list
     │   │   ├── FocusSlide.kt     a list's slide under the focus: the bar it draws where the focus stays
     │   │   ├── ThemedSpinner.kt  a wait's spinning wheel, in the accent
-    │   │   ├── Dialogs.kt        the dialogs over the menus and settings, floating panels: a question or a message
-    │   │   │                     (MessageDialog), a menu of actions on one thing (MenuDialog), a new name (NameDialog);
-    │   │   │                     the features give their texts and what each button does
+    │   │   ├── Dialogs.kt        the dialogs over the menus, the settings and the home screen, floating panels: a
+    │   │   │                     question or a message (MessageDialog), a menu of actions on one thing (MenuDialog), a
+    │   │   │                     new name (NameDialog: a note below the field, a third button, dimmed where it can't be
+    │   │   │                     chosen, a length limit; above the keyboard while it shows); the features give their
+    │   │   │                     texts and what each button does
     │   │   ├── NameField.kt      a new name's field, outlined in the accent while focused, in the error color once refused
     │   │   ├── Badge.kt          a dialog's mark beside its title: done, danger or info
     │   │   ├── EntriesRow.kt     buttons (or fields) side by side, or one below the other when one doesn't fit
@@ -131,6 +133,14 @@ can, the focused thing stands out from afar, and every color comes from the user
   corners, and its entries with it (`ListEntry.corner`, `ScrollFrame.corner`,
   [`feature/home/`](../feature/home/README.md#a-tiles-menu)). An entry far from its container's
   corners (a side sheet's, a dialog's) keeps `corner_entry` (12 dp).
+- **The keyboard covers no dialog, and moves no screen.** A dialog with a field (`NameDialog`) is
+  centered, and near the top of the screen, `dialog_margin` from its edge, while the keyboard
+  shows. The screen that opens one declares `windowSoftInputMode="adjustNothing"`: by default
+  Android slides a window up so its own focused view (a low tile, a low picture) clears the
+  keyboard, a black band below it. From API 30 on, Android says whether the keyboard shows, not
+  reliably how tall it is (0 on some versions), so the dialog moves on whether it shows, changing
+  its window only when that changes (changed before the keyboard is up, the window would keep it
+  down); before API 30, Android moves the dialog above the keyboard and back by itself.
 - **Room for the zoom, inside what clips.** A parent that clips cuts each child to the child's own
   bounds, so a zoomed field or button needs its room inside the view that holds it: padding, with
   `clipToPadding` off, and `clipChildren` off on what's between it and what clips. The layout

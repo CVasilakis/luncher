@@ -24,8 +24,9 @@ domain/src/
 │   │   ├── AppArrangement.kt    model: the user's order of the shown apps, and the hidden apps, as stored
 │   │   ├── AppArrangements.kt   port: where the arrangement is kept, and when it changes
 │   │   ├── HomeApps.kt          rule: which apps the home screen shows, in which order, and which are hidden, each with what the user set for it, matched to the installed apps (StoredMatch); the orders by name (NameOrder)
-│   │   ├── ArrangedApps.kt      model and rules: the shown and hidden apps (HomeApps); hiding or showing one, and what to store; all of them by the device's label, for Hide apps
+│   │   ├── ArrangedApps.kt      model and rules: the shown and hidden apps (HomeApps); hiding or showing one, and what to store; what to store of what the user set for the apps with one renamed (renamed); all of them by the device's label, for Hide apps
 │   │   ├── AppAction.kt         model and rule: what the user can do to an app from its tile's menu, one type each, and which the menu lists, each available or not (AppMenuEntry)
+│   │   ├── AppNames.kt          rule: the name an app the user renamed keeps (appName), or its own label again; how long it may be (MAX_APP_NAME)
 │   │   ├── AppInfoScreen.kt     port: whether the device has the page about an app in its settings, which App info opens
 │   │   └── Banner.kt            model and rule: which image a tile shows (the app's banner, or its icon and name)
 │   ├── appearance/
