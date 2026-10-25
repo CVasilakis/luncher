@@ -363,14 +363,17 @@ decoded or drawn again; the row keeps its thumbnail, and moves to its new place 
 focus with it.
 
 **Delete** asks first, its badge beside the title (`:ui`'s `Badge`, as every dialog's mark), Cancel focused, so a repeated OK deletes nothing, saying what deleting it
-does, in one text for any picture and another for the background's: the picture goes from
-Luncher's pictures only, and the background's picture leaves the home screen with no picture.
-That happens at once (`Wallpaper.forget`): the background stored without a picture, then the kept
-wallpaper deleted, then the picture. A draft's picture deleted is no picture in the draft.
+does, a sentence for each of its uses, then that the picture goes from Luncher's pictures only:
+the background's picture leaves the home screen with no picture, and the tiles that show it
+show their app's own image again, with how many (counted among the installed apps, shown or
+hidden, the tiles the user can find). That happens at once, the uses first, so nothing names a
+picture that's gone: the tiles' pictures stored as none (those of apps not installed now too),
+the background stored without a picture (`Wallpaper.forget`), then the kept wallpaper deleted,
+then the picture. A draft's picture deleted is no picture in the draft.
 
 **Delete all**, beside Save, deletes every picture of the library the same way, after the same
-kind of question, Cancel focused, which says how many, and, when one is the background's, that the
-home screen will have no picture. The editor stays, the focus on Save. While the library is empty
+kind of question, Cancel focused, which says how many, and what that does to their uses, as
+Delete says it of one, the tiles counted for all of them. The editor stays, the focus on Save. While the library is empty
 it's dimmed, and the focus passes it by.
 
 The editor is put together from parts a screen that chooses a picture of the library and frames it
@@ -392,7 +395,7 @@ the preview (`settings_picture_editor_controls`) are theirs, included by the scr
 | `OptionGrid`, `OptionRow`, `OptionList`, `AppearanceLabels` | the options' fields, two a row, OK opening a list of the values the draft's picture offers, which the preview follows as the focus moves; Back in it puts the value from before back |
 | `MessageDialog`, `MenuDialog`, `NameDialog` (`:ui`) | the dialogs over the list, a badge beside the title and the text below starting under it: the question before deleting; a picture's Rename and Delete; the field for a new name, and why it's refused; this screen gives their texts and what each button does |
 | `LibraryList` | the list: the first row the screen names (No picture here), the pictures with their thumbnails, Add from folder and the empty library's help, the chosen mark; the focus kept as the library changes; opening Add from folder, then focusing the picture it added (`EXTRA_ADDED`), which the screen chooses, or the first in the list of those Add all added, choosing none (`EXTRA_ADDED_ALL`) |
-| `PictureActions` | the library read with each picture's uses; a picture's Rename and Delete, Delete all, their questions, and deleting: the uses forgotten first (`Wallpaper.forget`), then the pictures |
+| `PictureActions` | the library read with each picture's uses, the wallpaper and the installed apps' tiles; a picture's Rename and Delete, Delete all, their questions, and deleting: the uses forgotten first (the tiles' through `AppCustomizations`, the wallpaper's through `Wallpaper.forget`), then the pictures |
 | `PicturePreparing` | the pictures not prepared for the screen, prepared at its start behind the working window, stopped with the screen and gone on with as it comes back |
 | `PictureDraft` | the draft: only the values its picture offers on the screen, whether it changed as Save counts it, Back's question, and the draft kept in the instance state (`DraftState`: the background's dim and blur beside the picture and framing every draft has) |
 | `PictureStartColumn` | the preview the screen gives, at the shape it gives (here the TV's), as large as the room the options, Save and Delete all leave |

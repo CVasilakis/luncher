@@ -27,8 +27,8 @@ platform/
     │   │   │   ├── PreferencesAppArrangements.kt    AppArrangements on SharedPreferences: the file and its format
     │   │   │   ├── PreferencesAppCustomizations.kt  AppCustomizations on SharedPreferences: a file of its own, a JSON object per app
     │   │   │   ├── PackageManagerAppInfoScreen.kt   AppInfoScreen on PackageManager: whether an activity takes the intent App info starts
-    │   │   │   ├── BannerImages.kt                  AppImages<Bitmap>: draws an app's Banner into a bitmap of the tile's size
-    │   │   │   └── CachedBannerImages.kt            AppImages<Bitmap> in front of BannerImages: each tile's image kept in a file for the next start
+    │   │   │   ├── BannerImages.kt                  AppImages<Bitmap>: draws an app's Banner into a bitmap of the tile's size, a picture through PictureTiles
+    │   │   │   └── CachedBannerImages.kt            AppImages<Bitmap> in front of BannerImages and PictureTiles: each tile's image kept in a file for the next start
     │   │   ├── clock/
     │   │   │   └── AndroidClock.kt                  Clock on the system time, settings and time broadcasts
     │   │   ├── images/
@@ -39,6 +39,8 @@ platform/
     │   │   │   ├── FilePictureImages.kt             PictureImages<Bitmap>: draws a picture of the library from its original at a size, framed, dimmed, blurred (the wallpaper)
     │   │   │   ├── WorkingCopies.kt                 the working copies: each picture decoded once, covering half the screen, kept as a JPEG
     │   │   │   ├── WorkingCopyImages.kt             PictureImages<Bitmap> and PreparedPictures on the working copies: what the screens show
+    │   │   │   ├── PictureTiles.kt                  a picture of the library drawn into an app's tile, for the banner adapters
+    │   │   │   ├── WorkingCopyTiles.kt              PictureTiles on the working copies, never the originals; a damaged copy deleted
     │   │   │   ├── CachedPictureImages.kt           PictureImages<Bitmap> in front of WorkingCopyImages: each picture's thumbnail kept in a file
     │   │   │   ├── PictureFiles.kt                  reading a picture file: its size, upright, its format, whether it's whole; drawing it framed in ARGB_8888
     │   │   │   ├── JpegOrientation.kt               a JPEG's orientation tag, read without ExifInterface
@@ -92,7 +94,11 @@ is in a package of its own (`images/`: the caches' file format; `outside/`: aski
   draws) is drawn and written again, so unlike a stored setting it needs no test of its format
   and no migration, and Android may delete it; renaming an app draws its tile only again.
   Writing waits until the main thread is idle, so it doesn't slow the start that draws, and is
-  then a job per image.
+  then a job per image. A tile's picture of the library is kept the same way, its file saying
+  the picture, its framing and `FilePictureImages.DRAWING` (not the app's install or name, which
+  it doesn't draw); a picture that can't be drawn now shows the app's own image, kept as that,
+  never as the picture, which would hide the picture once it can be drawn. A tile drawn of a
+  picture that's gone is deleted whenever the library changes, and in the sweep once per process.
   `CachedPictureImages` keeps the pictures' thumbnails the same way, one file per picture, in the
   same file format (`PixelFiles`), but draws them in jobs, so it writes each in the job that drew it.
 - **Public,** since `AppGraph` in `:app` creates them; no other module depends on this one.
@@ -144,6 +150,7 @@ last one:
 | `MediaFolderPictures` | `FolderPictures<Uri, Bitmap>` | it lists the drop folders (below); and keeps the previews it draws while Add from folder shows, one file per picture in `cacheDir/folder-previews/` (`PixelFiles`, the picture, its size and the preview's size and framing in the header), deleted as the screen closes and as it opens anew |
 | `FilePictureImages` | `PictureImages<Bitmap>` | nothing: it draws a picture of the library from its original at a size, framed by the domain's `frame`, blurred and dimmed as its `PictureStyle` says: the wallpaper, which is stored for good. `DRAWING` is the drawing's version, up by one with each change to it, so what the others kept the old way is drawn again. |
 | `WorkingCopyImages` | `PictureImages<Bitmap>`, `PreparedPictures` | each picture's working copy (`WorkingCopies`), in `filesDir/picture-copies/<picture>`: the whole picture, upright, decoded once and scaled to cover half the screen (what the editors' previews show at most), as a JPEG of quality 92, a few hundred KB, after a header with `FilePictureImages.DRAWING` and the size it covers. The screens' thumbnails and previews are drawn from it, framed, blurred and dimmed in milliseconds at each step of an option, where the original takes a decode of the photo each time; the preview of the background saved is the home screen's own wallpaper instead, shrunk ([`feature/settings/README.md`](../feature/settings/README.md#appearance)). One file per picture, replaced when the screen or the drawing changes; in `filesDir`, which Android doesn't delete, so it's made once. Made again later (another screen) but not written (a full disk), a picture is drawn from its original until it can be. |
+| `WorkingCopyTiles` | `PictureTiles` (of `:platform`) | nothing: it draws a tile's picture from its working copy, decoded at about the tile's size (`inSampleSize`, after its header), framed, on the main thread when `CachedBannerImages` has no tile kept; **never from the original**. A copy not made for this screen draws nothing, and is kept to be made again; one that doesn't decode is damaged, and deleted in a job of `JobPriority.PICTURE_LIBRARY`, only if it's still the file that failed, so a good copy made meanwhile stays. |
 | `CachedPictureImages` | `PictureImages<Bitmap>` | each picture's thumbnail, as `WorkingCopyImages` drew it at the background editor's row size in pixels, in `cacheDir/thumbnails/<picture>`, its size, style and `FilePictureImages.DRAWING` in the header, so it's read at once with the screen's first frame. One file per picture: another size or style replaces it, so another TV leaves no file behind. |
 | `FileStoredWallpaper` | `StoredWallpaper<Bitmap>` | the wallpaper, drawn at the screen's size, in `filesDir/wallpaper`, where Android doesn't delete it as it may a cache; in the `PixelFiles` format, what it was drawn from and `FilePictureImages.DRAWING` in the header, so one drawn by another version reads as none and is drawn again. One file only: a new one is written beside it, then replaces it in one step. |
 

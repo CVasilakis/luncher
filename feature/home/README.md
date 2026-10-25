@@ -80,20 +80,36 @@ one job, so a new arrangement, image source or top bar item changes one of them:
 | Part | Job |
 |---|---|
 | `homeApps` (`:domain`) | which apps show, in which order, and which are hidden: the installed apps matched to the stored `AppArrangement` ([Hidden apps](../settings/README.md#hidden-apps)), each a `HomeApp` with what the user set for it, matched the same way (a reinstalled app, or one whose update renamed its activity, keeps its name) |
-| `AppCustomizations` (`:domain`), `PreferencesAppCustomizations` (`:platform`) | what the user set for each app (its name), and when it changes; kept apart from the arrangement |
+| `AppCustomizations` (`:domain`), `PreferencesAppCustomizations` (`:platform`) | what the user set for each app (its name, its tile's picture), and when it changes; kept apart from the arrangement |
 | `Appearance` (`:domain`) | how the home screen looks, as the user set it in the [appearance editor](../settings/README.md#appearance), in parts: `TileGeometry` (the tiles' width, the gap between them, their vertical and horizontal alignment, whether the app names show: below the focused tile, below every tile, or not at all), `TileStyle` (their corners: a radius, 16 dp by default, or round ends; the focus frame: on by default, else the focused tile lifted), `TopBarAppearance` (whether the time and the date show, the clock's side, the time's side of the date), `Background` (the wallpaper: a picture of the picture library, or none, its fit, position, dim and blur). [Below](#appearance): how each part is applied. |
 | `AppearanceSettings` (`:domain`), `PreferencesAppearanceSettings` (`:platform`) | the stored appearance, and when it changes |
 | `TileLayout`, `TileLayouts` (`:domain`) | where each tile goes and how big it is; `TileGrid` is the only one so far, with as many columns as fit tiles of about the geometry's width (`TileGrid.columnsFor`), so tiles keep their size next to the top bar's text on any screen. `TileLayouts` is the only place that picks the arrangement, for the tiles' places and for moving an app alike. |
 | `TileFocus` (`:domain`) | where each arrow takes the focus among the tiles ([below](#focus)) |
 | `AppTilesView` | lays tiles out where the `TileLayout` says, moves the focus where the `TileFocus` says, and scrolls to the focused one; holds the `TilePaints` its tiles share |
-| `bannerFor` (`:domain`) | which image a tile shows |
-| `AppImages` (`:domain`), `CachedBannerImages` and `BannerImages` (`:platform`) | draws that image into a bitmap of the tile's size, or reads the one an earlier start drew |
+| `bannerFor` (`:domain`) | which image a tile shows: the app's banner, the card of its icon and name for an app without one, or a picture of the library the user chose for it ([below](#a-tiles-picture)) |
+| `AppImages` (`:domain`), `CachedBannerImages`, `BannerImages` and `WorkingCopyTiles` (`:platform`) | draws that image into a bitmap of the tile's size, or reads the one an earlier start drew |
 | `AppTileView` | draws that bitmap, the focus zoom with the frame or the lift ([below](#appearance)), with the corners `TilePaints` gives, and its app's name below it if the geometry says (while focused, or always); while its app is [moved](#moving-an-app), a white frame |
 | `Clock` (`:domain`) | what time it is, in which time zone and hour format, and when that changes |
 | `AndroidClock` (`:platform`) | reads those from Android, and watches the time broadcasts only while something listens |
 | `ClockView` | formats a reading in the device's language; the time and the date side by side, in the order the top bar gives, either or both hidden |
 | `topBarLayout` (`:domain`), `TopBarView` | which edge of the top bar the clock and the settings entry are at, the time's side of the date, and whether each of the two shows; the view moves its items there |
-| `HomeActivity` | reads the apps, their arrangement and what the user set for them in `onResume`; when the shown apps changed, creates tiles for new ones (an updated app is new: its banner may have changed; so is a renamed one, whose tile alone is drawn again) and drops the others. Without tiles, says why: nothing installed, or everything hidden. Starts the clock and follows the wallpaper, the appearance, the arrangement, the names and the installed apps in `onStart`, and stops all six in `onStop`: an app hidden or shown in the settings, or hidden from its tile's menu, shows at once, and so does an app renamed, installed, updated or removed; moving an app saves without reading the apps again, and an app changed while moving one shows when that ends. When the focused app is gone (hidden, removed), the focus goes to the tile now in its place, or the last one; without tiles, to the settings entry. Opens the [settings panel](../settings/README.md#the-settings-panel) on OK on the gear or on the Menu key. A long press of OK on a tile opens [its menu](#a-tiles-menu); [moving an app](#moving-an-app) gets every key first while it's on. |
+| `HomeActivity` | reads the apps, their arrangement and what the user set for them in `onStart`, so a change made while it was hidden shows as soon as it's visible again, even behind the settings panel; when the shown apps changed, creates tiles for new ones (an updated app is new: its banner may have changed; so is a renamed one, or one whose tile's picture changed, whose tile alone is drawn again) and drops the others. Without tiles, says why: nothing installed, or everything hidden. Starts the clock and follows the wallpaper, the appearance, the arrangement, the names and the installed apps in `onStart`, and stops all six in `onStop`: an app hidden or shown in the settings, or hidden from its tile's menu, shows at once, and so does an app renamed, given a picture, installed, updated or removed; moving an app saves without reading the apps again, and an app changed while moving one shows when that ends. When the focused app is gone (hidden, removed), the focus goes to the tile now in its place, or the last one; without tiles, to the settings entry. Opens the [settings panel](../settings/README.md#the-settings-panel) on OK on the gear or on the Menu key. A long press of OK on a tile opens [its menu](#a-tiles-menu); [moving an app](#moving-an-app) gets every key first while it's on. |
+
+### A tile's picture
+
+A tile shows its app's banner, or, for an app without one, a card of its icon and name; or a
+picture of the library the user chose for it (`AppCustomization.image`, a `TileImage`: the
+picture, filled from its middle or a side, or stretched), which `bannerFor` gives as
+`Banner.Picture`, with the app's own image to show where the picture can't be drawn now. It's
+drawn as the banners are, on the main thread when no earlier start kept it
+(`CachedBannerImages`), then kept: from the picture's working copy, decoded at about the tile's
+size, a few times what a banner costs, and **never from the original**, a photo whose decode would
+hold up the start. A copy not prepared for the screen as it is (the TV switched resolution, an
+update draws pictures otherwise) leaves the tile with its app's own image, kept as that, never as
+the picture, so the picture shows as soon as its copy is made; a tile kept with its picture shows
+it meanwhile. A copy that doesn't decode is damaged: the tile shows its app's own image, and the
+copy is deleted, to be made again. A picture deleted from the library takes its tiles' pictures
+with it ([`settings/README.md`](../settings/README.md#background)), and their kept images.
 
 ### The top bar
 

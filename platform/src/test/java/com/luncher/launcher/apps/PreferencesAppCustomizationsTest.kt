@@ -4,6 +4,11 @@ import android.content.Context
 import android.content.SharedPreferences
 import com.luncher.domain.apps.AppCustomization
 import com.luncher.domain.apps.LaunchableApp
+import com.luncher.domain.apps.TileImage
+import com.luncher.domain.pictures.Fit
+import com.luncher.domain.pictures.Framing
+import com.luncher.domain.pictures.PictureId
+import com.luncher.domain.pictures.PicturePosition
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -20,6 +25,9 @@ class PreferencesAppCustomizationsTest {
 
     private val movies = LaunchableApp("com.example.movies", "com.example.movies.MainActivity")
     private val news = LaunchableApp("com.example.news", ".NewsActivity")
+    private val music = LaunchableApp("com.example.music", ".Music")
+
+    private val beach = TileImage(PictureId("3f9a"), Framing(Fit.FILL, PicturePosition.LEFT))
 
     // The stored format, written out: once released, a TV keeps it across updates, so a change of
     // it has to read this one too. The other tests save and read back, which a change of both
@@ -27,23 +35,28 @@ class PreferencesAppCustomizationsTest {
     private val stored = mapOf(
         "com.example.movies/com.example.movies.MainActivity" to """{"name":"Cinema"}""",
         "com.example.news/.NewsActivity" to """{"name":"Täglich \/ News\nΝέα ☀"}""",
+        "com.example.music/.Music" to """{"name":"Songs","image":{"picture":"3f9a","fit":"FILL","position":"LEFT"}}""",
+        "com.example.movies/.Trailers" to """{"image":{"picture":"77c0","fit":"STRETCH","position":"CENTER"}}""",
+    )
+
+    /** What [stored] holds. */
+    private val customizations = mapOf(
+        movies to AppCustomization(name = "Cinema"),
+        news to AppCustomization(name = "Täglich / News\nΝέα ☀"),
+        music to AppCustomization(name = "Songs", image = beach),
+        LaunchableApp("com.example.movies", ".Trailers") to AppCustomization(image = TileImage(PictureId("77c0"), Framing(Fit.STRETCH))),
     )
 
     @Test
     fun `reads the stored format`() {
         preferences.edit().apply { stored.forEach { (key, value) -> putString(key, value) } }.commit()
 
-        assertEquals(
-            mapOf(movies to AppCustomization(name = "Cinema"), news to AppCustomization(name = "Täglich / News\nΝέα ☀")),
-            PreferencesAppCustomizations(context).read(),
-        )
+        assertEquals(customizations, PreferencesAppCustomizations(context).read())
     }
 
     @Test
     fun `saves in the stored format`() {
-        PreferencesAppCustomizations(context).save(
-            mapOf(movies to AppCustomization(name = "Cinema"), news to AppCustomization(name = "Täglich / News\nΝέα ☀")),
-        )
+        PreferencesAppCustomizations(context).save(customizations)
 
         assertEquals(stored, preferences.all)
     }
@@ -96,6 +109,31 @@ class PreferencesAppCustomizationsTest {
             .commit()
 
         assertEquals(mapOf(movies to AppCustomization(name = "Cinema")), PreferencesAppCustomizations(context).read())
+    }
+
+    @Test
+    fun `an image without a picture it can read is none, and a fit or position it doesn't know the default`() {
+        preferences.edit()
+            .putString("com.example.movies/com.example.movies.MainActivity", """{"name":"Cinema","image":{"fit":"FILL"}}""")
+            .putString("com.example.news/.NewsActivity", """{"name":"Daily","image":"beach"}""")
+            .putString("com.example.music/.Music", """{"image":{"picture":"3f9a","fit":"TILE","position":"MIDDLE"}}""")
+            .commit()
+
+        assertEquals(
+            mapOf(
+                movies to AppCustomization(name = "Cinema"),
+                news to AppCustomization(name = "Daily"),
+                music to AppCustomization(image = TileImage(PictureId("3f9a"))),
+            ),
+            PreferencesAppCustomizations(context).read(),
+        )
+    }
+
+    @Test
+    fun `an image without a picture isn't stored`() {
+        PreferencesAppCustomizations(context).save(mapOf(movies to AppCustomization(name = "Cinema", image = TileImage(null))))
+
+        assertEquals(mapOf("com.example.movies/com.example.movies.MainActivity" to """{"name":"Cinema"}"""), preferences.all)
     }
 
     @Test

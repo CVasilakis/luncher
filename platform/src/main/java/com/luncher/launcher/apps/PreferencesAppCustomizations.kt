@@ -4,15 +4,22 @@ import android.content.Context
 import com.luncher.domain.apps.AppCustomization
 import com.luncher.domain.apps.AppCustomizations
 import com.luncher.domain.apps.LaunchableApp
+import com.luncher.domain.apps.TileImage
+import com.luncher.domain.pictures.Fit
+import com.luncher.domain.pictures.Framing
+import com.luncher.domain.pictures.PictureId
+import com.luncher.domain.pictures.PicturePosition
 import org.json.JSONException
 import org.json.JSONObject
 
 /**
  * [AppCustomizations] in SharedPreferences, a file of its own: a key per app, `package/activity`,
- * whose value is what the user set for it as a JSON object, `{"name":"Headlines"}`, a field per
- * value set. JSON keeps any character a name may hold (a line break, a `/`), and has room for the
- * values to come. An app with nothing set has no key. A key or a value it can't read is skipped,
- * and so is a field it doesn't know (written by a newer version).
+ * whose value is what the user set for it as a JSON object, a field per value set:
+ * `{"name":"Headlines","image":{"picture":"<id>","fit":"FILL","position":"LEFT"}}`. JSON keeps
+ * any character a name may hold (a line break, a `/`), and has room for the values to come. An
+ * app with nothing set has no key. A key or a value it can't read is skipped, and so is a field
+ * it doesn't know (written by a newer version); an image without a picture is none, and a fit or
+ * position it doesn't know is the default.
  *
  * Read from storage once per process, then kept; a save writes in the background (`apply`) and
  * tells the listeners at once. Every screen gets this one instance from AppGraph, so a save made
@@ -47,7 +54,14 @@ class PreferencesAppCustomizations(context: Context) : AppCustomizations {
     }
 
     private fun encode(customization: AppCustomization): String =
-        JSONObject().apply { customization.name?.let { put(NAME, it) } }.toString()
+        JSONObject().apply {
+            customization.name?.let { put(NAME, it) }
+            val image = customization.image
+            val picture = image?.picture
+            if (picture != null) {
+                put(IMAGE, JSONObject().put(PICTURE, picture.value).put(FIT, image.framing.fit.name).put(POSITION, image.framing.position.name))
+            }
+        }.toString()
 
     private fun decode(stored: Map<String, *>): Map<LaunchableApp, AppCustomization> {
         val customizations = HashMap<LaunchableApp, AppCustomization>()
@@ -68,13 +82,24 @@ class PreferencesAppCustomizations(context: Context) : AppCustomizations {
     private fun customization(value: String): AppCustomization? =
         try {
             val json = JSONObject(value)
-            AppCustomization(name = json.opt(NAME) as? String)
+            AppCustomization(name = json.opt(NAME) as? String, image = (json.opt(IMAGE) as? JSONObject)?.let(::image))
         } catch (e: JSONException) {
             null
         }
 
+    private fun image(json: JSONObject): TileImage? {
+        val picture = json.opt(PICTURE) as? String ?: return null
+        val fit = Fit.entries.firstOrNull { it.name == json.opt(FIT) } ?: Framing().fit
+        val position = PicturePosition.entries.firstOrNull { it.name == json.opt(POSITION) } ?: Framing().position
+        return TileImage(PictureId(picture), Framing(fit, position))
+    }
+
     private companion object {
         const val FILE = "app_customizations"
         const val NAME = "name"
+        const val IMAGE = "image"
+        const val PICTURE = "picture"
+        const val FIT = "fit"
+        const val POSITION = "position"
     }
 }

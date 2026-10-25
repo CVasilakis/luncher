@@ -67,13 +67,13 @@
         <item quantity="many">تُحذف الصور الـ<xliff:g id="count" example="11">%d</xliff:g> من صور Luncher فقط.</item>
         <item quantity="other">تُحذف الصور الـ<xliff:g id="count" example="100">%d</xliff:g> من صور Luncher فقط.</item>
     </plurals>
-    <plurals name="settings_background_delete_all_text_background">
-        <item quantity="zero">إحداها مستخدمة كخلفية: لن تعرض الشاشة الرئيسية أي صورة. تُحذف <xliff:g id="count" example="0">%d</xliff:g> صورة من صور Luncher فقط.</item>
-        <item quantity="one">مستخدمة كخلفية: لن تعرض الشاشة الرئيسية أي صورة. تُحذف الصورة من صور Luncher فقط.</item>
-        <item quantity="two">إحداهما مستخدمة كخلفية: لن تعرض الشاشة الرئيسية أي صورة. تُحذف الصورتان من صور Luncher فقط.</item>
-        <item quantity="few">إحداها مستخدمة كخلفية: لن تعرض الشاشة الرئيسية أي صورة. تُحذف الصور الـ<xliff:g id="count" example="3">%d</xliff:g> من صور Luncher فقط.</item>
-        <item quantity="many">إحداها مستخدمة كخلفية: لن تعرض الشاشة الرئيسية أي صورة. تُحذف الصور الـ<xliff:g id="count" example="11">%d</xliff:g> من صور Luncher فقط.</item>
-        <item quantity="other">إحداها مستخدمة كخلفية: لن تعرض الشاشة الرئيسية أي صورة. تُحذف الصور الـ<xliff:g id="count" example="100">%d</xliff:g> من صور Luncher فقط.</item>
+    <plurals name="settings_background_delete_all_used_background">
+        <item quantity="zero">إحداها مستخدمة كخلفية: لن تعرض الشاشة الرئيسية أي صورة.</item>
+        <item quantity="one">مستخدمة كخلفية: لن تعرض الشاشة الرئيسية أي صورة.</item>
+        <item quantity="two">إحداهما مستخدمة كخلفية: لن تعرض الشاشة الرئيسية أي صورة.</item>
+        <item quantity="few">إحداها مستخدمة كخلفية: لن تعرض الشاشة الرئيسية أي صورة.</item>
+        <item quantity="many">إحداها مستخدمة كخلفية: لن تعرض الشاشة الرئيسية أي صورة.</item>
+        <item quantity="other">إحداها مستخدمة كخلفية: لن تعرض الشاشة الرئيسية أي صورة.</item>
     </plurals>
     <string name="settings_background_discard_question">تجاهل التغييرات؟</string>
     <string name="settings_background_discard_text">لم تُحفظ التغييرات على الخلفية.</string>
@@ -93,7 +93,15 @@
     <string name="settings_pictures_delete">حذف</string>
     <string name="settings_pictures_delete_question">حذف <xliff:g id="name" example="beach.png">%1$s</xliff:g>؟</string>
     <string name="settings_pictures_delete_text">تُحذف الصورة من صور Luncher فقط.</string>
-    <string name="settings_pictures_delete_text_background">مستخدمة كخلفية: لن تعرض الشاشة الرئيسية أي صورة. تُحذف الصورة من صور Luncher فقط.</string>
+    <string name="settings_pictures_delete_used_background">مستخدمة كخلفية: لن تعرض الشاشة الرئيسية أي صورة.</string>
+    <plurals name="settings_pictures_delete_used_tiles">
+        <item quantity="zero">مستخدمة في <xliff:g id="count" example="0">%d</xliff:g> مربع: ستعرض صور تطبيقاتها مرة أخرى.</item>
+        <item quantity="one">مستخدمة في مربع: سيعرض صورة تطبيقه مرة أخرى.</item>
+        <item quantity="two">مستخدمة في مربعين: سيعرضان صورتي تطبيقيهما مرة أخرى.</item>
+        <item quantity="few">مستخدمة في <xliff:g id="count" example="3">%d</xliff:g> مربعات: ستعرض صور تطبيقاتها مرة أخرى.</item>
+        <item quantity="many">مستخدمة في <xliff:g id="count" example="11">%d</xliff:g> مربعًا: ستعرض صور تطبيقاتها مرة أخرى.</item>
+        <item quantity="other">مستخدمة في <xliff:g id="count" example="100">%d</xliff:g> مربع: ستعرض صور تطبيقاتها مرة أخرى.</item>
+    </plurals>
     <string name="settings_pictures_rename">إعادة تسمية</string>
     <string name="settings_pictures_rename_title">إعادة تسمية الصورة</string>
     <string name="settings_pictures_rename_no_name">اكتب اسمًا</string>

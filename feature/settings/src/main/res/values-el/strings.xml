@@ -63,9 +63,9 @@
         <item quantity="one">Η εικόνα διαγράφεται μόνο από τις εικόνες του Luncher.</item>
         <item quantity="other">Οι <xliff:g id="count" example="9">%d</xliff:g> εικόνες διαγράφονται μόνο από τις εικόνες του Luncher.</item>
     </plurals>
-    <plurals name="settings_background_delete_all_text_background">
-        <item quantity="one">Χρησιμοποιείται ως φόντο: η αρχική οθόνη θα μείνει χωρίς εικόνα. Η εικόνα διαγράφεται μόνο από τις εικόνες του Luncher.</item>
-        <item quantity="other">Μία χρησιμοποιείται ως φόντο: η αρχική οθόνη θα μείνει χωρίς εικόνα. Οι <xliff:g id="count" example="9">%d</xliff:g> εικόνες διαγράφονται μόνο από τις εικόνες του Luncher.</item>
+    <plurals name="settings_background_delete_all_used_background">
+        <item quantity="one">Χρησιμοποιείται ως φόντο: η αρχική οθόνη θα μείνει χωρίς εικόνα.</item>
+        <item quantity="other">Μία χρησιμοποιείται ως φόντο: η αρχική οθόνη θα μείνει χωρίς εικόνα.</item>
     </plurals>
     <string name="settings_background_discard_question">Απόρριψη αλλαγών;</string>
     <string name="settings_background_discard_text">Οι αλλαγές στο φόντο δεν έχουν αποθηκευτεί.</string>
@@ -85,7 +85,11 @@
     <string name="settings_pictures_delete">Διαγραφή</string>
     <string name="settings_pictures_delete_question">Διαγραφή του <xliff:g id="name" example="beach.png">%1$s</xliff:g>;</string>
     <string name="settings_pictures_delete_text">Η εικόνα διαγράφεται μόνο από τις εικόνες του Luncher.</string>
-    <string name="settings_pictures_delete_text_background">Χρησιμοποιείται ως φόντο: η αρχική οθόνη θα μείνει χωρίς εικόνα. Η εικόνα διαγράφεται μόνο από τις εικόνες του Luncher.</string>
+    <string name="settings_pictures_delete_used_background">Χρησιμοποιείται ως φόντο: η αρχική οθόνη θα μείνει χωρίς εικόνα.</string>
+    <plurals name="settings_pictures_delete_used_tiles">
+        <item quantity="one">Χρησιμοποιείται σε ένα πλακίδιο: θα δείξει ξανά την εικόνα της εφαρμογής του.</item>
+        <item quantity="other">Χρησιμοποιείται σε <xliff:g id="count" example="3">%d</xliff:g> πλακίδια: θα δείξουν ξανά τις εικόνες των εφαρμογών τους.</item>
+    </plurals>
     <string name="settings_pictures_rename">Μετονομασία</string>
     <string name="settings_pictures_rename_title">Μετονομασία εικόνας</string>
     <string name="settings_pictures_rename_no_name">Πληκτρολογήστε ένα όνομα</string>

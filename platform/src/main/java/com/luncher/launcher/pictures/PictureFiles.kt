@@ -360,7 +360,7 @@ internal object PictureFiles {
     }
 
     /** The largest power of 2 at most [scale]: decoded that much smaller, the picture is still at least as large as needed. */
-    private fun sampleSize(scale: Float): Int {
+    fun sampleSize(scale: Float): Int {
         var sample = 1
         while (sample * 2 <= scale) sample *= 2
         return sample

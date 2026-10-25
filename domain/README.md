@@ -16,7 +16,8 @@ domain/src/
 │   ├── apps/
 │   │   ├── LaunchableApp.kt     model: an app's TV launcher activity (package + activity), its identity
 │   │   ├── InstalledApp.kt      model: a launchable app with its label, whether it has a banner, and when it was installed or updated, as the device reports it
-│   │   ├── AppCustomization.kt  model: what the user set for one app, as stored: its name (later its own picture)
+│   │   ├── AppCustomization.kt  model: what the user set for one app, as stored: its name, its tile's picture
+│   │   ├── TileImage.kt         model: a picture of the library on an app's tile, and its framing (a PictureChoice); without a picture, a draft's "the app's own banner"
 │   │   ├── AppCustomizations.kt port: where what the user set for each app is kept, and when it changes
 │   │   ├── HomeApp.kt           model: an app as the user set it up, the installed app with its AppCustomization; its name, the user's or the label
 │   │   ├── InstalledApps.kt     port: the TV apps installed on the device, and when apps change
@@ -24,11 +25,11 @@ domain/src/
 │   │   ├── AppArrangement.kt    model: the user's order of the shown apps, and the hidden apps, as stored
 │   │   ├── AppArrangements.kt   port: where the arrangement is kept, and when it changes
 │   │   ├── HomeApps.kt          rule: which apps the home screen shows, in which order, and which are hidden, each with what the user set for it, matched to the installed apps (StoredMatch); the orders by name (NameOrder)
-│   │   ├── ArrangedApps.kt      model and rules: the shown and hidden apps (HomeApps); hiding or showing one, and what to store; what to store of what the user set for the apps with one renamed (renamed); all of them by the device's label, for Hide apps
+│   │   ├── ArrangedApps.kt      model and rules: the shown and hidden apps (HomeApps); hiding or showing one, and what to store; what to store of what the user set for the apps with one renamed (renamed), its tile's picture chosen (withImage), or pictures deleted (withoutPictures); all of them by the device's label, for Hide apps
 │   │   ├── AppAction.kt         model and rule: what the user can do to an app from its tile's menu, one type each, and which the menu lists, each available or not (AppMenuEntry)
 │   │   ├── AppNames.kt          rule: the name an app the user renamed keeps (appName), or its own label again; how long it may be (MAX_APP_NAME)
 │   │   ├── AppInfoScreen.kt     port: whether the device has the page about an app in its settings, which App info opens
-│   │   └── Banner.kt            model and rule: which image a tile shows (the app's banner, or its icon and name)
+│   │   └── Banner.kt            model and rule: which image a tile shows (the app's banner, or its icon and name; or the picture the user chose, the app's own where it can't be drawn now)
 │   ├── appearance/
 │   │   ├── Appearance.kt        model: how the home screen looks, as far as the user can change it, and Luncher's theme, in parts (docs/ARCHITECTURE.md#appearance)
 │   │   ├── TileGeometry.kt      model: where tiles go and how big they are, in dp; their alignment; whether the app names show below the tiles
@@ -63,7 +64,7 @@ domain/src/
 │   │   ├── Framing.kt           model and rules: how a picture fills a space of another shape (Fit, PicturePosition), which part of it shows, what filling cuts from it (PictureCut: nothing under 1%, its sides, or its top and bottom), and which positions move it then (offeredPositions)
 │   │   ├── PictureChoice.kt     model and rules: a picture of the library chosen for something, or none, with its framing; another picture chosen as it is, the stored one as stored, only a framing that changes anything, whether the fit and the position do
 │   │   ├── PictureStyle.kt      model and rule: a picture's framing, dim and blur (Blur: off, then three levels of equal steps), as it's drawn
-│   │   ├── PictureUse.kt        model and rule: what a picture is used for (the wallpaper), and an appearance without deleted pictures
+│   │   ├── PictureUse.kt        model and rule: what a picture is used for (the wallpaper, the installed apps' tiles), and an appearance without deleted pictures
 │   │   ├── PictureImages.kt     port: a picture drawn at a size in a style, in the UI's image type; kept or drawn anew, a screen's drawing stopped when it's dropped
 │   │   ├── PreparedPictures.kt  port: each picture prepared once for the screens (its working copy), and whether it is for the screen as it is now
 │   │   └── FolderPictures.kt    port, model and rule: the pictures in the drop folders, their preview, and the order they're listed in
@@ -97,7 +98,7 @@ domain/src/
     ├── appearance/FakeAppearanceSettings.kt  fake of the AppearanceSettings port: the appearance in memory
     ├── appearance/AppearanceChanges.kt       each option at each value but its default, in a context that offers it: what the catalog-wide tests draw (SAMPLE_WALLPAPER for the background's, wide or tall)
     ├── clock/FakeClock.kt          fake of the Clock port: a fixed time the test moves
-    ├── jobs/ManualJobs.kt          fake of the Jobs port: the queued jobs run when the test says, all or the next one, in the real order
+    ├── jobs/ManualJobs.kt          fake of the Jobs port: the queued jobs run when the test says, all or the next one, in the real order; their priorities
     ├── pictures/FakePictures.kt    fake of the Pictures and PictureImport ports: the library in memory, each source's answer set by the test
     ├── pictures/FakePictureImages.kt  fake of the PictureImages port: draws what the test says, keeps what it drew
     ├── pictures/FakePreparedPictures.kt fake of the PreparedPictures port: every picture prepared but those the test says

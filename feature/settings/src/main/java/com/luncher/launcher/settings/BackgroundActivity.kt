@@ -90,7 +90,7 @@ class BackgroundActivity : Activity() {
     private lateinit var options: OptionGrid<Appearance, AppearanceContext, AppearanceOption<*>>
 
     /** The library as it shows, and renaming and deleting its pictures. */
-    private val actions by lazy { PictureActions(this, pictures, settings, wallpaper, { theme.roles }, ::deleted) }
+    private val actions by lazy { PictureActions(this, pictures, settings, wallpaper, graph.installedApps, graph.appArrangements, graph.appCustomizations, { theme.roles }, ::deleted) }
     private val library get() = actions.library
 
     /** The pictures not prepared for this screen, prepared at its start, while a window says so. */

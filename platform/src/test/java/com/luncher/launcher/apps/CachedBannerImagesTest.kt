@@ -13,7 +13,16 @@ import com.luncher.domain.apps.AppCustomization
 import com.luncher.domain.apps.FakeInstalledApps.Companion.app
 import com.luncher.domain.apps.FakeInstalledApps.Companion.homeApp
 import com.luncher.domain.apps.HomeApp
+import com.luncher.domain.apps.TileImage
 import com.luncher.domain.jobs.ManualJobs
+import com.luncher.domain.pictures.FakePictures
+import com.luncher.domain.pictures.Fit
+import com.luncher.domain.pictures.Framing
+import com.luncher.domain.pictures.PictureId
+import com.luncher.domain.pictures.PicturePosition
+import com.luncher.domain.apps.bannerFor
+import com.luncher.launcher.pictures.FilePictureImages
+import com.luncher.launcher.pictures.PictureTiles
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -45,13 +54,36 @@ class CachedBannerImagesTest {
         }
     }
 
+    /** The library's pictures whose working copy isn't ready (not prepared for this screen, damaged), and those deleted. */
+    private val notReady = mutableSetOf<PictureId>()
+    private val deleted = mutableSetOf<PictureId>()
+
+    /** Draws each picture in a color of its own, by its framing, and counts what it draws. */
+    private inner class CountingPictures : PictureTiles {
+        var drawn = 0
+
+        override fun draw(picture: PictureId, framing: Framing, width: Int, height: Int): Bitmap? {
+            if (picture in notReady || picture in deleted) return null
+            drawn++
+            val image = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+            image.eraseColor(Color.rgb(picture.value.length * 20, framing.fit.ordinal * 100, framing.position.ordinal * 50))
+            return image
+        }
+
+        override fun exists(picture: PictureId): Boolean = picture !in deleted
+    }
+
+    private val library = FakePictures<Any>()
+
     private var images = CountingImages()
-    private var cache = CachedBannerImages(context, images, jobs)
+    private var pictures = CountingPictures()
+    private var cache = CachedBannerImages(context, images, pictures, library, jobs)
 
     /** As the next cold start: a new process, with what the files hold. */
     private fun restart() {
         images = CountingImages()
-        cache = CachedBannerImages(context, images, jobs)
+        pictures = CountingPictures()
+        cache = CachedBannerImages(context, images, pictures, library, jobs)
     }
 
     /**
@@ -192,4 +224,137 @@ class CachedBannerImagesTest {
         assertFalse(fileOf(gone).parentFile!!.exists())
     }
 
+    // A picture of the library on the tile.
+
+    private val beach = PictureId("beach")
+
+    /** [app]'s tile with the picture [picture], framed so. */
+    private fun withPicture(app: HomeApp, picture: PictureId = beach, framing: Framing = Framing()) =
+        bannerFor(app.copy(customization = app.customization.copy(image = TileImage(picture, framing)))) as Banner.Picture
+
+    @Test
+    fun `draws a tile's picture, and reads it back on the next start, drawing nothing`() {
+        val movies = installed("movies")
+        val drawn = cache.render(movies, withPicture(movies), 300, 169)
+        assertEquals(1 to 0, pictures.drawn to images.drawn)
+        writeEverything()
+        restart()
+
+        val read = cache.render(movies, withPicture(movies), 300, 169)
+
+        assertEquals(0 to 0, pictures.drawn to images.drawn)
+        assertTrue(read.sameAs(drawn))
+    }
+
+    @Test
+    fun `a picture that can't be drawn now shows the app's own image, kept as that, never as the picture`() {
+        val movies = installed("movies")
+        notReady += beach
+        val drawn = cache.render(movies, withPicture(movies), 300, 169)
+        assertEquals("the app's banner drawn", 0 to 1, pictures.drawn to images.drawn)
+        writeEverything()
+
+        restart()
+        val read = cache.render(movies, withPicture(movies), 300, 169)
+        assertEquals("still not ready: the banner kept read", 0 to 0, pictures.drawn to images.drawn)
+        assertTrue(read.sameAs(drawn))
+
+        notReady -= beach
+        restart()
+        cache.render(movies, withPicture(movies), 300, 169)
+        assertEquals("ready: the picture drawn, not the banner read", 1 to 0, pictures.drawn to images.drawn)
+    }
+
+    @Test
+    fun `a tile kept with its picture shows while the picture's copy isn't ready`() {
+        val movies = installed("movies")
+        val drawn = cache.render(movies, withPicture(movies), 300, 169)
+        writeEverything()
+        notReady += beach
+        restart()
+
+        val read = cache.render(movies, withPicture(movies), 300, 169)
+
+        assertEquals(0 to 0, pictures.drawn to images.drawn)
+        assertTrue(read.sameAs(drawn))
+    }
+
+    @Test
+    fun `draws a tile's picture again for another picture, framing, size or drawing, not for the app's install or name`() {
+        val movies = installed("movies", updated = 1)
+        cache.render(movies, withPicture(movies), 300, 169)
+        writeEverything()
+        val others = listOf(
+            withPicture(movies, PictureId("alps")) to 300,
+            withPicture(movies, framing = Framing(Fit.STRETCH)) to 300,
+            withPicture(movies, framing = Framing(Fit.FILL, PicturePosition.LEFT)) to 300,
+            withPicture(movies) to 400,
+        )
+        for ((banner, width) in others) {
+            restart()
+            cache.render(movies, banner, width, 169)
+            assertEquals("$banner $width", 1, pictures.drawn)
+        }
+
+        for (app in listOf(installed("movies", updated = 2), installed("movies", updated = 1, label = "Films", given = "Cinema"))) {
+            restart()
+            cache.render(app, withPicture(app), 300, 169)
+            assertEquals("$app", 0, pictures.drawn)
+        }
+    }
+
+    @Test
+    fun `draws a tile's picture again for another version of the drawing`() {
+        val movies = installed("movies")
+        cache.render(movies, withPicture(movies), 300, 169)
+        writeEverything()
+        // As an update of Luncher that draws pictures otherwise: that field of the file another.
+        val file = fileOf(movies)
+        val bytes = file.readBytes()
+        // magic, format, width, height, kind; the two installs; the name (empty); the picture's id; its fit and position
+        val at = 4 * 5 + 8 * 2 + 2 + (2 + beach.value.length) + 4 * 2
+        java.nio.ByteBuffer.wrap(bytes).putInt(at, FilePictureImages.DRAWING + 1)
+        file.writeBytes(bytes)
+        restart()
+        cache.render(movies, withPicture(movies), 300, 169)
+        assertEquals(1, pictures.drawn)
+    }
+
+    @Test
+    fun `a picture deleted takes its tiles' files with it, and nothing else`() {
+        val movies = installed("movies")
+        val music = installed("music")
+        val news = installed("news")
+        val alps = PictureId("alps")
+        cache.render(movies, withPicture(movies), 300, 169)
+        cache.render(music, withPicture(music, alps), 300, 169)
+        cache.render(news, Banner.AppBanner, 300, 169)
+        writeEverything()
+
+        deleted += beach
+        library.delete(emptySet())   // the library tells its listeners, as it does after its own jobs
+
+        assertTrue("a job's work", fileOf(movies).exists())
+        jobs.runAll()
+        assertFalse(fileOf(movies).exists())
+        assertTrue(fileOf(music).exists())
+        assertTrue(fileOf(news).exists())
+    }
+
+    @Test
+    fun `the files of tiles whose picture is gone are deleted once per process too`() {
+        val movies = installed("movies")
+        val music = installed("music")
+        cache.render(movies, withPicture(movies), 300, 169)
+        cache.render(music, Banner.AppBanner, 300, 169)
+        writeEverything()
+        deleted += beach   // in another process, which ended before its sweep
+        restart()
+
+        cache.render(music, Banner.AppBanner, 300, 169)
+        writeEverything()
+
+        assertFalse(fileOf(movies).exists())
+        assertTrue(fileOf(music).exists())
+    }
 }

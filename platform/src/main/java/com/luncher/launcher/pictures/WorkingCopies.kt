@@ -4,6 +4,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import com.luncher.domain.pictures.Fit
 import com.luncher.domain.pictures.Framing
+import com.luncher.domain.pictures.frame
 import com.luncher.launcher.ui.ScreenSize
 import java.io.BufferedInputStream
 import java.io.BufferedOutputStream
@@ -50,6 +51,18 @@ internal class WorkingCopies(
 
         /** Not decoded: not a picture this TV can show, or stopped. */
         NOT_DECODED,
+    }
+
+    /** How drawing a tile from a working copy went ([drawTile]). */
+    sealed interface Tile {
+        /** Drawn, at the size asked. */
+        class Drawn(val image: Bitmap) : Tile
+
+        /** No copy, or one made for another screen or drawing: it's made again, the file kept till then. */
+        data object NotMade : Tile
+
+        /** Made for this screen, but it doesn't decode: the file of [length] bytes, last changed at [modified]. */
+        class Damaged(val length: Long, val modified: Long) : Tile
     }
 
     fun fileOf(picture: String) = File(folder, picture)
@@ -111,6 +124,46 @@ internal class WorkingCopies(
         }
     }
 
+    /**
+     * [picture]'s working copy, if it was [made] for the screen as it is now, drawn into a new
+     * ARGB_8888 bitmap of [width] x [height] px as [framing] puts it: a tile's picture. Decoded at no
+     * more than the size needed (`inSampleSize`, as [PictureFiles.draw] picks it, after a decode of
+     * its size), then framed and freed. Never from the original: where the copy isn't made for this
+     * screen, [Tile.NotMade]; where its header is, but it doesn't decode, [Tile.Damaged]. A JPEG cut
+     * short decodes without an error from API 24 on, so only some damage shows here.
+     */
+    fun drawTile(picture: String, width: Int, height: Int, framing: Framing): Tile {
+        val file = fileOf(picture)
+        if (!file.isFile) return Tile.NotMade
+        val damaged = Tile.Damaged(file.length(), file.lastModified())
+        try {
+            val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+            DataInputStream(BufferedInputStream(FileInputStream(file), BUFFER)).use { input ->
+                if (readHeader(input) != target()) return Tile.NotMade
+                BitmapFactory.decodeStream(input, null, bounds)
+            }
+            if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return damaged
+            val area = frame(bounds.outWidth, bounds.outHeight, width, height, framing)
+            val options = BitmapFactory.Options().apply {
+                inSampleSize = PictureFiles.sampleSize(minOf((area.right - area.left) / width, (area.bottom - area.top) / height))
+                inPreferredConfig = Bitmap.Config.ARGB_8888
+            }
+            val decoded = DataInputStream(BufferedInputStream(FileInputStream(file), BUFFER)).use { input ->
+                input.skipBytes(HEADER_BYTES)
+                BitmapFactory.decodeStream(input, null, options)
+            } ?: return damaged
+            // A copy cut short leaves its missing rows transparent in a bitmap said to be opaque (PictureFiles.draw).
+            decoded.setHasAlpha(true)
+            try {
+                return Tile.Drawn(PictureFiles.draw(decoded, width, height, framing, background))
+            } finally {
+                decoded.recycle()
+            }
+        } catch (e: IOException) {
+            return damaged
+        }
+    }
+
     private fun header(file: File): Pair<Int, Int>? {
         if (!file.isFile) return null
         return try {
@@ -143,5 +196,8 @@ internal class WorkingCopies(
         private const val QUALITY = 92
 
         private const val BUFFER = 64 * 1024
+
+        /** The header's length: [MAGIC], [FORMAT], the drawing's version and the size covered, an Int each. */
+        private const val HEADER_BYTES = 5 * 4
     }
 }

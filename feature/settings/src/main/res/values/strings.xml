@@ -125,16 +125,18 @@
     <string name="settings_background_save">Save</string>
     <!-- Beside Save, in red: deletes every picture of the library, after a question. -->
     <string name="settings_background_delete_all">Delete all</string>
-    <!-- That question; below it, what deleting them does and doesn't do, with how many; then the
-         same when one of them is the background's picture, which the home screen loses. -->
+    <!-- That question; below it, a sentence for each use of the pictures deleting changes (when one
+         of them is the background's picture, which the home screen loses: the sentence below; on
+         tiles: settings_pictures_delete_used_tiles, counting the tiles of every picture), then
+         what deleting them does and doesn't do, with how many. -->
     <string name="settings_background_delete_all_question">Delete all pictures?</string>
+    <plurals name="settings_background_delete_all_used_background">
+        <item quantity="one">Used as the background: the home screen will have no picture.</item>
+        <item quantity="other">One is used as the background: the home screen will have no picture.</item>
+    </plurals>
     <plurals name="settings_background_delete_all_text">
         <item quantity="one">The picture is deleted from Luncher\'s pictures only.</item>
         <item quantity="other">The <xliff:g id="count" example="9">%d</xliff:g> pictures are deleted from Luncher\'s pictures only.</item>
-    </plurals>
-    <plurals name="settings_background_delete_all_text_background">
-        <item quantity="one">Used as the background: the home screen will have no picture. The picture is deleted from Luncher\'s pictures only.</item>
-        <item quantity="other">One is used as the background: the home screen will have no picture. The <xliff:g id="count" example="9">%d</xliff:g> pictures are deleted from Luncher\'s pictures only.</item>
     </plurals>
     <!-- The question when Back is pressed in the editor with a picture or an option changed and
          not saved; below it, what leaving does. Its answers: Cancel (settings_pictures_cancel),
@@ -247,10 +249,16 @@
     <string name="settings_pictures_delete">Delete</string>
     <!-- The question before deleting one picture, named. -->
     <string name="settings_pictures_delete_question">Delete <xliff:g id="name" example="beach.png">%1$s</xliff:g>?</string>
-    <!-- Below that question: what deleting it does and doesn't do; then the same for the
-         background's picture, which the home screen loses. -->
+    <!-- Below that question: a sentence for each use of the picture deleting changes, then what
+         deleting it does and doesn't do (the last). Its uses: the background's picture, which the
+         home screen loses; and app tiles that show it in place of their app's own banner or icon,
+         with how many (also below Delete all's question). -->
+    <string name="settings_pictures_delete_used_background">Used as the background: the home screen will have no picture.</string>
+    <plurals name="settings_pictures_delete_used_tiles">
+        <item quantity="one">Used on a tile: it will show its app\'s own image again.</item>
+        <item quantity="other">Used on <xliff:g id="count" example="3">%d</xliff:g> tiles: they will show their apps\' own images again.</item>
+    </plurals>
     <string name="settings_pictures_delete_text">The picture is deleted from Luncher\'s pictures only.</string>
-    <string name="settings_pictures_delete_text_background">Used as the background: the home screen will have no picture. The picture is deleted from Luncher\'s pictures only.</string>
     <!-- An action on a picture, beside Delete, and the answer that confirms the new name. -->
     <string name="settings_pictures_rename">Rename</string>
     <!-- The title above the field where the user types a picture's new name. -->

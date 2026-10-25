@@ -14,7 +14,11 @@ import com.luncher.domain.apps.FakeAppArrangements
 import com.luncher.domain.apps.FakeAppCustomizations
 import com.luncher.domain.apps.FakeAppCustomizations.Companion.named
 import com.luncher.domain.apps.HomeApp
+import com.luncher.domain.apps.TileImage
 import com.luncher.domain.apps.bannerFor
+import com.luncher.domain.pictures.Fit
+import com.luncher.domain.pictures.Framing
+import com.luncher.domain.pictures.PictureId
 import com.luncher.launcher.apps.BannerImages
 import android.graphics.Bitmap
 import com.luncher.domain.apps.FakeInstalledApps
@@ -319,13 +323,14 @@ class HomeActivityTest {
         assertEquals(listOf("News", "Music", "Movies"), start().get().labels())
     }
 
+    // A screen that covers it whole (the appearance editor) stops it: it doesn't listen meanwhile.
     @Test
-    fun `hides apps hidden in the settings when it comes back`() {
+    fun `shows apps changed while it was hidden as soon as it's visible again, before it resumes`() {
         val controller = start()
 
-        controller.pause()                          // the settings panel opened over it...
+        controller.pause().stop()
         arrangements.arrangement = AppArrangement(order = null, hidden = listOf(app("movies").launchable))
-        controller.resume()                         // ...and closed
+        controller.restart()   // started behind the settings panel, which keeps it paused
 
         assertEquals(listOf("Music", "News"), controller.get().labels())
     }
@@ -609,5 +614,51 @@ class HomeActivityTest {
         customizations.save(mapOf(app("news").launchable to AppCustomization.NONE))
 
         assertEquals(listOf("Movies", "Music", "News"), controller.get().labels())
+    }
+
+    // The pictures the user chose for tiles.
+
+    @Test
+    fun `shows a picture chosen for a tile while it's shown at once, drawing that tile only again, the focus kept`() {
+        val controller = start()
+        val tiles = controller.get().tiles()
+        tiles.single { it.app.name == "News" }.requestFocus()
+        drawnFor.clear()
+        val image = TileImage(PictureId("beach"), Framing(Fit.STRETCH))
+
+        customizations.save(mapOf(app("news").launchable to AppCustomization(image = image)))
+        shadowOf(Looper.getMainLooper()).idle()   // the next frame, which lays the new tile out and draws it
+
+        val news = controller.get().tiles().single { it.app.name == "News" }
+        assertEquals(listOf(Banner.Picture(PictureId("beach"), Framing(Fit.STRETCH), Banner.AppIcon)), drawnFor.map(::bannerFor))
+        assertSame(tiles.single { it.app.name == "Music" }, controller.get().tiles().single { it.app.name == "Music" })
+        assertTrue(news.isFocused)
+    }
+
+    // Deleted in the background editor, which covers the home screen whole; back to the settings
+    // panel, the home screen shows behind it, started but not resumed.
+    @Test
+    fun `a picture deleted while it was hidden is off its tile as soon as it's visible again, behind the settings panel`() {
+        customizations.customizations = mapOf(app("news").launchable to AppCustomization(image = TileImage(PictureId("beach"))))
+        val controller = start()
+
+        controller.pause().stop()
+        customizations.customizations = emptyMap()
+        controller.restart()
+
+        assertEquals(Banner.AppIcon, bannerFor(controller.get().tiles().single { it.app.name == "News" }.app))
+    }
+
+    @Test
+    fun `a picture taken off a tile shows the app's own image again`() {
+        customizations.customizations = mapOf(app("news").launchable to AppCustomization(image = TileImage(PictureId("beach"))))
+        val controller = start()
+        drawnFor.clear()
+
+        customizations.save(emptyMap())
+        shadowOf(Looper.getMainLooper()).idle()
+
+        assertEquals(listOf(Banner.AppIcon), drawnFor.map(::bannerFor))
+        assertEquals(Banner.AppIcon, bannerFor(controller.get().tiles().single { it.app.name == "News" }.app))
     }
 }

@@ -21,8 +21,9 @@ import java.util.zip.Inflater
  * was drawn from; then the image's pixels as they are in memory (ARGB_8888, premultiplied),
  * compressed with [Deflater], so a pixel reads back exactly as it was drawn, its transparency too.
  *
- * [read] and [header] are for the main thread, where screens read what's kept: [read] reuses this
- * instance's buffers, so each cache has its own. [write] is a job's, and allocates its own.
+ * [read] is for the main thread, where screens read what's kept, and reuses this instance's
+ * buffers, so each cache has its own. [header] keeps nothing, for either (a cache's sweep reads
+ * headers in a job). [write] is a job's, and allocates its own.
  */
 internal class PixelFiles(private val magic: Int, private val format: Int) {
 

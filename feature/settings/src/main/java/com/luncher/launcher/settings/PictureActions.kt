@@ -4,10 +4,14 @@ import android.app.Activity
 import android.app.Dialog
 import com.luncher.domain.appearance.AppearanceSettings
 import com.luncher.domain.appearance.ColorRoles
+import com.luncher.domain.apps.AppArrangements
+import com.luncher.domain.apps.AppCustomizations
+import com.luncher.domain.apps.ArrangedApps
+import com.luncher.domain.apps.InstalledApps
+import com.luncher.domain.apps.homeApps
 import com.luncher.domain.pictures.Picture
 import com.luncher.domain.pictures.PictureId
 import com.luncher.domain.pictures.PictureLibrary
-import com.luncher.domain.pictures.PictureUse
 import com.luncher.domain.pictures.Pictures
 import com.luncher.domain.pictures.Renaming
 import com.luncher.domain.pictures.pictureUses
@@ -28,15 +32,20 @@ import java.util.Locale
  * on one offers Rename and Delete ([offer]); Delete all deletes every one ([confirmDeleteAll]).
  * Renaming asks for the new name, which another picture mustn't have ([renaming]); deleting asks
  * first, Cancel focused, saying what deleting does to the picture's uses (the wallpaper's goes back
- * to no picture), and does it: the uses forgotten first ([Wallpaper.forget]), so nothing names a
- * picture that's gone, then the pictures, then [deleted] tells the screen. A renamed picture needs
- * nothing of it: the library's listeners read it again. In the theme's colors, [roles].
+ * to no picture, the tiles that show it to their app's own image; counted among the installed
+ * apps, shown or hidden, those the user can find), and does it: the uses forgotten first (the
+ * tiles' through [customizations], the wallpaper's through [Wallpaper.forget]), so nothing names
+ * a picture that's gone, then the pictures, then [deleted] tells the screen. A renamed picture
+ * needs nothing of it: the library's listeners read it again. In the theme's colors, [roles].
  */
 internal class PictureActions(
     private val activity: Activity,
     private val pictures: Pictures,
     private val settings: AppearanceSettings,
     private val wallpaper: Wallpaper<*>,
+    private val installedApps: InstalledApps,
+    private val arrangements: AppArrangements,
+    private val customizations: AppCustomizations,
     private val roles: () -> ColorRoles,
     private val deleted: (Set<PictureId>) -> Unit,
 ) {
@@ -49,9 +58,14 @@ internal class PictureActions(
 
     /** The library as it is now, by name, as the device's language sorts words, with each picture's uses. */
     fun read(): PictureLibrary {
-        library = PictureLibrary(pictures.read(), Locale.getDefault(), pictureUses(settings.read()))
+        val apps = arranged()
+        library = PictureLibrary(pictures.read(), Locale.getDefault(), pictureUses(settings.read(), apps.shown + apps.hidden))
         return library
     }
+
+    /** The installed apps as the user set them up, shown and hidden, each with its tile's picture. */
+    private fun arranged(): ArrangedApps =
+        homeApps(installedApps.tvApps(), activity.packageName, arrangements.read(), customizations.read(), Locale.getDefault())
 
     /** What can be done to [picture]: rename it or delete it, under its name and size. */
     fun offer(picture: Picture) {
@@ -70,20 +84,19 @@ internal class PictureActions(
     }
 
     /**
-     * Asks before deleting every picture, Cancel focused, saying how many and whether the
-     * background loses its picture; once they're deleted, [then]. Nothing while there's none.
+     * Asks before deleting every picture, Cancel focused, saying how many and what that does to
+     * their uses (the background's picture, the tiles'); once they're deleted, [then]. Nothing
+     * while there's none.
      */
     fun confirmDeleteAll(then: () -> Unit) {
         val count = library.pictures.size
         if (count == 0) return
-        val wallpaperToo = library.pictures.any { PictureUse.Wallpaper in library.usesOf(it.id) }
-        val text = if (wallpaperToo) R.plurals.settings_background_delete_all_text_background else R.plurals.settings_background_delete_all_text
         show(
             MessageDialog(
                 activity,
                 roles(),
                 activity.getString(R.string.settings_background_delete_all_question),
-                activity.resources.getQuantityString(text, count, count),
+                activity.deleteAllText(count, library.pictures.flatMap { library.usesOf(it.id) }),
                 listOf(
                     DialogButton(activity.getString(R.string.settings_pictures_cancel), DialogButton.Kind.TONAL) {},
                     DialogButton(activity.getString(R.string.settings_pictures_delete), DialogButton.Kind.DANGER, UiR.drawable.icon_trash) {
@@ -142,10 +155,13 @@ internal class PictureActions(
     }
 
     /**
-     * Deletes the pictures [ids]: if the wallpaper's is one, the background has no picture any
-     * more, stored at once, and the wallpaper kept is deleted before the pictures.
+     * Deletes the pictures [ids]: the tiles that show one show their app's own image again, those of
+     * hidden apps and of apps not installed now too, and if the wallpaper's is one, the background
+     * has no picture any more, both stored at once; the wallpaper kept is deleted before the
+     * pictures.
      */
     private fun delete(ids: Set<PictureId>) {
+        arranged().withoutPictures(ids)?.let(customizations::save)
         wallpaper.forget(ids)
         pictures.delete(ids)
         deleted(ids)

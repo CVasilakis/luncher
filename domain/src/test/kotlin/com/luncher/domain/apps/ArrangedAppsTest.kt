@@ -2,6 +2,9 @@ package com.luncher.domain.apps
 
 import com.luncher.domain.apps.FakeInstalledApps.Companion.app
 import com.luncher.domain.apps.FakeInstalledApps.Companion.homeApp
+import com.luncher.domain.pictures.Fit
+import com.luncher.domain.pictures.Framing
+import com.luncher.domain.pictures.PictureId
 import java.util.Locale
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -203,5 +206,73 @@ class ArrangedAppsTest {
     @Test(expected = IllegalArgumentException::class)
     fun `can't rename an app that isn't installed`() {
         arranged().renamed(homeApp("away"), "Away")
+    }
+
+    // A tile's image: what to store.
+
+    private val beach = PictureId("beach")
+    private val alps = PictureId("alps")
+
+    private fun showing(name: String, picture: PictureId, given: String? = null) =
+        id(name) to AppCustomization(name = given, image = TileImage(picture))
+
+    @Test
+    fun `an image chosen for a tile is stored with what's set for it and for the others`() {
+        val arranged = homeApps(installed, "com.luncher.launcher", AppArrangement.NONE, named("news", "Arts") + named("games", "Play"), Locale.ENGLISH)
+        val image = TileImage(beach, Framing(Fit.STRETCH))
+
+        val stored = arranged.withImage(arranged.shown.first { it.name == "Arts" }, image)
+
+        assertEquals(mapOf(id("news") to AppCustomization(name = "Arts", image = image)) + named("games", "Play"), stored)
+    }
+
+    @Test
+    fun `the app's own banner again, or an image without a picture, stores none, and its name stays`() {
+        val stored = mapOf(showing("news", beach, given = "Arts"), showing("games", alps))
+        val arranged = homeApps(installed, "com.luncher.launcher", AppArrangement.NONE, stored, Locale.ENGLISH)
+
+        assertEquals(named("news", "Arts") + showing("games", alps), arranged.withImage(arranged.shown.first { it.name == "Arts" }, null))
+        assertEquals(mapOf(showing("news", beach, given = "Arts")), arranged.withImage(homeApp("games"), TileImage(null, Framing(Fit.STRETCH))))
+    }
+
+    @Test
+    fun `a hidden app's tile can have an image, and an app not installed can't`() {
+        val arranged = arranged(AppArrangement(order = null, hidden = listOf(id("news"))))
+
+        assertEquals(mapOf(showing("news", beach)), arranged.withImage(homeApp("news"), TileImage(beach)))
+        assertThrows { arranged.withImage(homeApp("away"), TileImage(beach)) }
+    }
+
+    @Test
+    fun `deleting pictures puts every tile that shows one back to its own banner, hidden and absent apps too`() {
+        val away = LaunchableApp("com.example.away", "com.example.away.MainActivity")
+        val stored = mapOf(
+            showing("news", beach, given = "Arts"),
+            showing("games", beach),
+            showing("music", alps),
+            away to AppCustomization(image = TileImage(beach)),
+        ) + named("movies", "Films")
+        val arranged = homeApps(installed, "com.luncher.launcher", AppArrangement(order = null, hidden = listOf(id("games"))), stored, Locale.ENGLISH)
+
+        assertEquals(
+            named("news", "Arts") + showing("music", alps) + named("movies", "Films"),
+            arranged.withoutPictures(setOf(beach, PictureId("other"))),
+        )
+    }
+
+    @Test
+    fun `deleting pictures no tile shows stores nothing`() {
+        val arranged = homeApps(installed, "com.luncher.launcher", AppArrangement.NONE, mapOf(showing("music", alps)) + named("news", "Arts"), Locale.ENGLISH)
+
+        assertNull(arranged.withoutPictures(setOf(beach)))
+    }
+
+    private fun assertThrows(block: () -> Unit) {
+        try {
+            block()
+        } catch (e: IllegalArgumentException) {
+            return
+        }
+        throw AssertionError("not refused")
     }
 }

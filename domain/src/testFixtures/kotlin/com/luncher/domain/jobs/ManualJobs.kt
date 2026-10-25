@@ -11,6 +11,9 @@ class ManualJobs : Jobs {
     /** How many jobs are queued, not run yet. */
     val pending: Int get() = queue.size
 
+    /** The priorities of the queued jobs, in the order they came. */
+    fun pendingPriorities(): List<Int> = queue.map { it.priority }
+
     override fun run(priority: Int, job: () -> Unit): Cancellable {
         val queued = Queued(priority, count++, job)
         queue += queued

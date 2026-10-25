@@ -101,7 +101,33 @@ internal fun Context.notAddedLines(outcome: Outcome.Several): List<String> {
 /** The most pixels a picture can have, in millions, as the texts say it. */
 private val MEGAPIXELS = (PictureLimits.MAX_PIXELS / 1_000_000).toInt()
 
-/** What deleting a picture with [uses] does, said before deleting: one text for each case, whole sentences. */
-internal fun Context.deleteText(uses: List<PictureUse>): String = getString(
-    if (PictureUse.Wallpaper in uses) R.string.settings_pictures_delete_text_background else R.string.settings_pictures_delete_text,
-)
+/**
+ * What deleting a picture with [uses] does, said before deleting: a sentence for each kind of use
+ * it has, then what deleting does and doesn't do; whole sentences, each a string of its own.
+ */
+internal fun Context.deleteText(uses: List<PictureUse>): String =
+    (usesText(uses) { getString(R.string.settings_pictures_delete_used_background) } + getString(R.string.settings_pictures_delete_text))
+        .joinToString(" ")
+
+/** What deleting all [count] pictures does, as [deleteText] says it of one, [uses] being all of theirs. */
+internal fun Context.deleteAllText(count: Int, uses: List<PictureUse>): String =
+    (
+        usesText(uses) { resources.getQuantityString(R.plurals.settings_background_delete_all_used_background, count) } +
+            resources.getQuantityString(R.plurals.settings_background_delete_all_text, count, count)
+        ).joinToString(" ")
+
+/** A sentence for each kind of use in [uses] that deleting changes: the background's, [background]; the tiles', with how many. */
+private fun Context.usesText(uses: List<PictureUse>, background: () -> String): List<String> {
+    var wallpaper = false
+    var tiles = 0
+    for (use in uses) {
+        when (use) {
+            PictureUse.Wallpaper -> wallpaper = true
+            is PictureUse.Tile -> tiles++
+        }
+    }
+    return listOfNotNull(
+        if (wallpaper) background() else null,
+        if (tiles > 0) resources.getQuantityString(R.plurals.settings_pictures_delete_used_tiles, tiles, tiles) else null,
+    )
+}

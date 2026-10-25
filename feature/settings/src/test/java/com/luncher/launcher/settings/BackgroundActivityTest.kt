@@ -18,6 +18,15 @@ import android.widget.ScrollView
 import android.widget.TextView
 import androidx.test.platform.app.InstrumentationRegistry
 import com.luncher.domain.appearance.Appearance
+import com.luncher.domain.apps.AppArrangement
+import com.luncher.domain.apps.AppCustomization
+import com.luncher.domain.apps.FakeAppArrangements
+import com.luncher.domain.apps.FakeAppCustomizations
+import com.luncher.domain.apps.FakeInstalledApps
+import com.luncher.domain.apps.FakeInstalledApps.Companion.app
+import com.luncher.domain.apps.LaunchableApp
+import com.luncher.domain.apps.TileImage
+import com.luncher.domain.pictures.PictureId
 import com.luncher.domain.appearance.Background
 import com.luncher.domain.pictures.FakePictures
 import com.luncher.domain.pictures.FakePictures.Companion.picture
@@ -69,9 +78,26 @@ class BackgroundActivityTest {
 
     private lateinit var graph: TestPicturesGraph
 
-    /** A library of [pictures], the background [background] as stored. */
-    private fun graph(vararg pictures: Picture, background: Background = Background()): TestPicturesGraph {
-        graph = TestPicturesGraph(FakePictures(*pictures))
+    /** What the user set for each app, the pictures on tiles among it: [graph] gives it. */
+    private var customizations = FakeAppCustomizations()
+
+    /**
+     * A library of [pictures], the background [background] as stored; [apps] installed, those
+     * [hidden] hidden, and the pictures [onTiles] on the tiles of apps, by name, installed or not.
+     */
+    private fun graph(
+        vararg pictures: Picture,
+        background: Background = Background(),
+        apps: List<String> = emptyList(),
+        hidden: List<String> = emptyList(),
+        onTiles: Map<String, Picture> = emptyMap(),
+    ): TestPicturesGraph {
+        customizations = FakeAppCustomizations(onTiles.entries.associate { (app, picture) -> app(app).launchable to AppCustomization(image = TileImage(picture.id)) })
+        graph = object : TestPicturesGraph(FakePictures(*pictures)) {
+            override val installedApps = FakeInstalledApps(*apps.map { app(it) }.toTypedArray())
+            override val appArrangements = FakeAppArrangements(AppArrangement(order = null, hidden = hidden.map { app(it).launchable }))
+            override val appCustomizations = this@BackgroundActivityTest.customizations
+        }
         graph.appearanceSettings.appearance = Appearance(background = background)
         application.graph = graph
         return graph
@@ -1000,6 +1026,62 @@ class BackgroundActivityTest {
     }
 
     @Test
+    fun `deleting a picture on tiles says on how many, counting installed apps only, and puts every one back to its app's own image first`() {
+        graph(beach, sunset, apps = listOf("movies", "music", "news"), hidden = listOf("music"), onTiles = mapOf("movies" to beach, "music" to beach, "away" to beach, "news" to sunset))
+        customizations.customizations += app("movies").launchable to AppCustomization(name = "Films", image = TileImage(beach.id))
+        val activity = start().get()
+        var namedWhenDeleted: List<PictureId>? = null
+        graph.library.addListener { namedWhenDeleted = customizations.customizations.values.mapNotNull { it.image?.picture } }
+
+        activity.longPress("beach.png", "Delete")
+        assertEquals(
+            "Used on 2 tiles: they will show their apps' own images again. The picture is deleted from Luncher's pictures only.",
+            dialog()!!.second,
+        )
+        answer("Delete")
+
+        assertEquals(
+            "the hidden app's and the one not installed's too; its name kept",
+            mapOf(app("movies").launchable to AppCustomization(name = "Films"), app("news").launchable to AppCustomization(image = TileImage(sunset.id))),
+            customizations.customizations,
+        )
+        assertEquals("the tiles first: when the library said so, nothing named it", listOf(sunset.id), namedWhenDeleted)
+        assertEquals(listOf(sunset), graph.library.pictures)
+    }
+
+    @Test
+    fun `deleting the wallpaper's picture on a tile says both, a sentence each, and leaves neither`() {
+        graph(beach, sunset, background = Background(beach.id, dim = 40), apps = listOf("movies"), onTiles = mapOf("movies" to beach))
+        val activity = start().get()
+
+        activity.longPress("beach.png", "Delete")
+        assertEquals(
+            "Used as the background: the home screen will have no picture. Used on a tile: it will show its app's own image again. " +
+                "The picture is deleted from Luncher's pictures only.",
+            dialog()!!.second,
+        )
+        answer("Delete")
+
+        assertEquals(Background(dim = 40), stored)
+        assertEquals(emptyMap<LaunchableApp, AppCustomization>(), customizations.customizations)
+    }
+
+    @Test
+    fun `deleting a picture no installed app's tile shows says nothing of tiles, and stores nothing of the apps`() {
+        graph(beach, sunset, apps = listOf("movies"), onTiles = mapOf("movies" to sunset))
+        var saved = 0
+        customizations.addListener { saved++ }
+        val activity = start().get()
+
+        activity.longPress("beach.png", "Delete")
+        assertEquals("The picture is deleted from Luncher's pictures only.", dialog()!!.second)
+        answer("Delete")
+
+        assertEquals(0, saved)
+        assertEquals(listOf(sunset), graph.library.pictures)
+    }
+
+    @Test
     fun `Cancel deletes nothing`() {
         graph(beach)
         val activity = start().get()
@@ -1050,6 +1132,24 @@ class BackgroundActivityTest {
         assertEquals(Background(dim = 40), stored)
         drawInTheBackground()
         assertNull(graph.storedWallpaper.kept)
+    }
+
+    @Test
+    fun `Delete all counts the tiles of every picture, and puts them all back to their app's own image`() {
+        graph(beach, sunset, old, background = Background(sunset.id), apps = listOf("movies", "news", "music"), onTiles = mapOf("movies" to beach, "news" to sunset, "away" to old))
+        val activity = start().get()
+
+        activity.deleteAll().performClick()
+        idle()
+        assertEquals(
+            "One is used as the background: the home screen will have no picture. Used on 2 tiles: they will show their apps' own images again. " +
+                "The 3 pictures are deleted from Luncher's pictures only.",
+            dialog()!!.second,
+        )
+        answer("Delete")
+
+        assertEquals(emptyMap<LaunchableApp, AppCustomization>(), customizations.customizations)
+        assertEquals(Background(), stored)
     }
 
     @Test

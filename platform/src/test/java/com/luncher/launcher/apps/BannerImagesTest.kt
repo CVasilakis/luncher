@@ -16,6 +16,10 @@ import com.luncher.domain.apps.FakeInstalledApps.Companion.homeApp
 import com.luncher.domain.apps.HomeApp
 import com.luncher.domain.apps.InstalledApp
 import com.luncher.domain.apps.LaunchableApp
+import com.luncher.domain.pictures.Fit
+import com.luncher.domain.pictures.Framing
+import com.luncher.domain.pictures.PictureId
+import com.luncher.launcher.pictures.PictureTiles
 import com.luncher.launcher.platform.R
 import com.luncher.launcher.testing.TV_1080P
 import org.junit.Assert.assertEquals
@@ -37,6 +41,8 @@ class BannerImagesTest {
 
     private val context = RuntimeEnvironment.getApplication()
     private val banners = BannerImages(context)
+
+    private val beach = PictureId("beach")
 
     @Suppress("DEPRECATION")
     private val cardColor = context.resources.getColor(R.color.banner_card)
@@ -87,6 +93,37 @@ class BannerImagesTest {
         val image = banners.render(movies, Banner.AppBanner, 300, 169)
 
         assertEquals(Color.WHITE, image.getPixel(1, 1))
+    }
+
+    @Test
+    fun `draws a picture of the library the user chose, through what draws pictures`() {
+        val asked = mutableListOf<Framing>()
+        val pictures = object : PictureTiles {
+            override fun draw(picture: PictureId, framing: Framing, width: Int, height: Int): Bitmap? {
+                asked += framing
+                return if (picture == beach) Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888).apply { eraseColor(Color.RED) } else null
+            }
+
+            override fun exists(picture: PictureId) = true
+        }
+
+        val image = BannerImages(context, pictures).render(movies, Banner.Picture(beach, Framing(Fit.STRETCH), Banner.AppBanner), 300, 169)
+
+        assertEquals(Color.RED, image.getPixel(1, 1))
+        assertEquals(300 to 169, image.width to image.height)
+        assertEquals(listOf(Framing(Fit.STRETCH)), asked)
+    }
+
+    @Test
+    fun `draws the app's own image for a picture it can't draw now, or without anything that draws pictures`() {
+        val none = object : PictureTiles {
+            override fun draw(picture: PictureId, framing: Framing, width: Int, height: Int): Bitmap? = null
+
+            override fun exists(picture: PictureId) = true
+        }
+
+        assertEquals(Color.WHITE, BannerImages(context, none).render(movies, Banner.Picture(beach, Framing(), Banner.AppBanner), 300, 169).getPixel(1, 1))
+        assertEquals(cardColor, banners.render(movies, Banner.Picture(beach, Framing(), Banner.AppIcon), 300, 169).getPixel(1, 1))
     }
 
     @Test

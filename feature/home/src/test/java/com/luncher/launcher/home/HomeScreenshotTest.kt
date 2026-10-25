@@ -24,6 +24,8 @@ import com.luncher.domain.appearance.TileStyle
 import com.luncher.domain.appearance.TopBarAppearance
 import com.luncher.domain.appearance.VerticalAlignment
 import com.luncher.domain.apps.AppArrangement
+import com.luncher.domain.apps.AppCustomization
+import com.luncher.domain.apps.TileImage
 import com.luncher.domain.apps.FakeAppArrangements
 import com.luncher.domain.apps.FakeAppCustomizations
 import com.luncher.domain.apps.FakeAppCustomizations.Companion.named
@@ -39,6 +41,7 @@ import com.luncher.domain.pictures.PicturePosition
 import com.luncher.domain.wallpaper.FakeStoredWallpaper
 import com.luncher.domain.wallpaper.WallpaperDrawing
 import com.luncher.launcher.pictures.FilePictureImages
+import com.luncher.launcher.pictures.WorkingCopyImages
 import com.luncher.launcher.ui.WorkingDialog
 import com.luncher.launcher.testing.TV_1080P
 import org.junit.Test
@@ -68,7 +71,8 @@ class HomeScreenshotTest {
     /**
      * The home screen, its wallpaper drawn and shown unless [drawn] is false: then, its window
      * saying it's being drawn, [kept] being what the last start kept. [hasAppInfo]: whether the
-     * device has the apps' page in its settings. [named]: the names the user gave apps.
+     * device has the apps' page in its settings. [named]: the names the user gave apps; [images]: the
+     * pictures they chose for their tiles.
      */
     private fun start(
         hidden: List<String> = emptyList(),
@@ -77,6 +81,7 @@ class HomeScreenshotTest {
         kept: Pair<WallpaperDrawing, Bitmap>? = null,
         hasAppInfo: Boolean = true,
         named: Map<String, String> = emptyMap(),
+        images: Map<String, TileImage> = emptyMap(),
     ): HomeActivity {
         val application = RuntimeEnvironment.getApplication() as HomeTestApplication
         val graph = object : TestHomeGraph(application) {
@@ -92,7 +97,10 @@ class HomeScreenshotTest {
             override val pictureImages = FilePictureImages(application)
             override val storedWallpaper = FakeStoredWallpaper(kept)
             override val appInfoScreen = FakeAppInfoScreen(hasAppInfo)
-            override val appCustomizations = FakeAppCustomizations(named.entries.associate { (app, name) -> named(app(app), name) })
+            override val appCustomizations = FakeAppCustomizations(
+                named.entries.associate { (app, name) -> named(app(app), name) } +
+                    images.entries.associate { (app, image) -> app(app).launchable to AppCustomization(name = named[app], image = image) },
+            )
         }
         application.graph = graph
         val activity = Robolectric.buildActivity(HomeActivity::class.java).setup().get()
@@ -258,6 +266,17 @@ class HomeScreenshotTest {
 
         start(appearance = appearance, named = mapOf("news" to "Headlines", "an app name too long for its tile" to "TV"))
             .window.decorView.captureFocused("src/test/screenshots/home/home_screen_renamed.png")
+    }
+
+    // Pictures of the library on two tiles, the landscape filling Games' from its middle and
+    // stretched whole on Music's, with the corners every tile has.
+    @Test
+    fun homeScreenWithPicturesOnTiles() {
+        val landscape = landscape()
+        WorkingCopyImages(RuntimeEnvironment.getApplication()).prepare(landscape) { false }
+
+        start(images = mapOf("games" to TileImage(landscape), "music" to TileImage(landscape, Framing(Fit.STRETCH))))
+            .window.decorView.captureFocused("src/test/screenshots/home/home_screen_tile_pictures.png")
     }
 
     // Moving Music, lifted: the held tile's white frame tells it from one only focused.

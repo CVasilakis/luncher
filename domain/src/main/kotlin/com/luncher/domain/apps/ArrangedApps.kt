@@ -1,10 +1,12 @@
 package com.luncher.domain.apps
 
+import com.luncher.domain.pictures.PictureId
+
 /**
  * The installed apps as the user arranged and set them up ([homeApps]): the ones the home screen
  * shows, in order, and the hidden ones, each with what the user set for it ([HomeApp]). [hide]
- * and [show] return a changed copy; [arrangement] is what to store, and [renamed] what to store of
- * what the user set for the apps.
+ * and [show] return a changed copy; [arrangement] is what to store, and [renamed], [withImage] and
+ * [withoutPictures] what to store of what the user set for the apps.
  */
 class ArrangedApps internal constructor(
     val shown: List<HomeApp>,
@@ -64,11 +66,35 @@ class ArrangedApps internal constructor(
      * its own label again for null; the rest of what's set for it, and for every other app, as it
      * is, the entries of apps not installed now too. An app with nothing set is left out.
      */
-    fun renamed(app: HomeApp, name: String?): Map<LaunchableApp, AppCustomization> {
+    fun renamed(app: HomeApp, name: String?): Map<LaunchableApp, AppCustomization> = changed(app) { it.copy(name = name) }
+
+    /**
+     * What to store of what the user set for the apps, with [app]'s tile showing [image], or its
+     * own banner again for null or an image without a picture (a draft's "the app's own banner");
+     * everything else as [renamed] keeps it.
+     */
+    fun withImage(app: HomeApp, image: TileImage?): Map<LaunchableApp, AppCustomization> =
+        changed(app) { it.copy(image = image?.takeIf { image.picture != null }) }
+
+    /**
+     * What to store of what the user set for the apps once the pictures [deleted] are gone: every
+     * tile that shows one back to its app's own banner, those of hidden apps and of apps not
+     * installed now too, so nothing names a picture that's gone; everything else as it is. Null
+     * when no app's tile shows one: nothing to store.
+     */
+    fun withoutPictures(deleted: Set<PictureId>): Map<LaunchableApp, AppCustomization>? {
+        if (customizations.values.none { it.image?.picture in deleted }) return null
+        return customizations.mapValues { (_, customization) ->
+            if (customization.image?.picture in deleted) customization.copy(image = null) else customization
+        }.filterValues { it != AppCustomization.NONE }
+    }
+
+    /** What to store with [app]'s customization changed by [change]; an entry left with nothing set is dropped. */
+    private inline fun changed(app: HomeApp, change: (AppCustomization) -> AppCustomization): Map<LaunchableApp, AppCustomization> {
         require(shown.any { it.launchable == app.launchable } || hidden.any { it.launchable == app.launchable }) {
             "not installed: ${app.launchable}"
         }
-        val customization = (customizations[app.launchable] ?: AppCustomization.NONE).copy(name = name)
+        val customization = change(customizations[app.launchable] ?: AppCustomization.NONE)
         return if (customization == AppCustomization.NONE) customizations - app.launchable else customizations + (app.launchable to customization)
     }
 

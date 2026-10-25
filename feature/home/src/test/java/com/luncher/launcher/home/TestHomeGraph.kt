@@ -37,6 +37,8 @@ import com.luncher.domain.pictures.PictureStyle
 import com.luncher.domain.wallpaper.FakeStoredWallpaper
 import com.luncher.domain.wallpaper.Wallpaper
 import com.luncher.launcher.apps.BannerImages
+import com.luncher.launcher.pictures.PictureTiles
+import com.luncher.launcher.pictures.WorkingCopyTiles
 
 /**
  * The default tile size, in rows from the top left with the short row last, so a tile's index
@@ -52,13 +54,20 @@ val topLeftTiles = TileGeometry(
 /**
  * The ports a test gives the home screen: fakes, which a test replaces with its own
  * (`object : TestHomeGraph(application) { override … }`), the tiles in [topLeftTiles], and the
- * real images, so the screenshots show the tiles as the app draws them.
+ * real images, the pictures on tiles too, so the screenshots show the tiles as the app draws them.
  */
 open class TestHomeGraph(context: Context) : HomeGraph {
     override val installedApps: InstalledApps = FakeInstalledApps()
     override val appArrangements: AppArrangements = FakeAppArrangements()
     override val appCustomizations: AppCustomizations = FakeAppCustomizations()
-    override val appImages: AppImages<Bitmap> = BannerImages(context)
+
+    /**
+     * How a tile's picture is drawn: from its working copy, in the test's own files, as the app
+     * does; a test that shows one prepares its copy first (`WorkingCopyImages.prepare`).
+     */
+    open val pictureTiles: PictureTiles by lazy { WorkingCopyTiles(context, jobs) }
+
+    override val appImages: AppImages<Bitmap> by lazy { BannerImages(context, pictureTiles) }
     override val appInfoScreen: AppInfoScreen = FakeAppInfoScreen()
     override val clock: Clock = FakeClock()
     override val appearanceSettings: AppearanceSettings = FakeAppearanceSettings(Appearance(topLeftTiles))

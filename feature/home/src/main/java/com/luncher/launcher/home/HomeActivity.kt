@@ -67,7 +67,7 @@ class HomeActivity : Activity() {
     /** The dialog Rename in a tile's menu opened; null when none was. */
     private var renameDialog: NameDialog? = null
 
-    /** What the tiles show; null until the first [onResume]. */
+    /** What the tiles show; null until the first [onStart]. */
     private var shown: List<HomeApp>? = null
 
     /** The apps as last read, shown and hidden: what the tiles' menu acts on. */
@@ -131,10 +131,14 @@ class HomeActivity : Activity() {
         }
     }
 
-    // Visible from onStart to onStop; paused only, e.g. behind a dialog, it still shows.
-    // The appearance, the arrangement, the names and the installed apps, as the clock, only while
-    // visible: a change made meanwhile (in the appearance editor, which covers the home screen
-    // whole) is applied once, when it comes back. The apps are read again in onResume.
+    // Visible from onStart to onStop; paused only, e.g. behind a dialog or the settings panel, it
+    // still shows. The appearance, the arrangement, the names and the installed apps, as the clock,
+    // only while visible: a change made meanwhile (in the appearance or background editor, which
+    // cover the home screen whole) is applied once, when it comes back. The apps are read again
+    // here, not as it resumes: started again behind the settings panel, it shows what changed while
+    // it was hidden (a picture deleted from the tiles that showed it) at once, not only once the
+    // panel closes; and while it's started, the listeners show every change, so resuming needs no
+    // read. Moving an app ended as it stopped.
     override fun onStart() {
         super.onStart()
         clockView.start(clock)
@@ -144,6 +148,7 @@ class HomeActivity : Activity() {
         arrangements.addListener(showArrangement)
         customizations.addListener(showAppChanges)
         installedApps.addListener(showAppChanges)
+        refresh()
     }
 
     override fun onStop() {
@@ -159,13 +164,6 @@ class HomeActivity : Activity() {
         arrangements.removeListener(showArrangement)
         customizations.removeListener(showAppChanges)
         installedApps.removeListener(showAppChanges)
-    }
-
-    override fun onResume() {
-        super.onResume()
-        // Paused and resumed while moving an app (a system dialog came and went): the tiles are
-        // the user's work in progress, so the apps are read again only when the mode ends.
-        if (!move.active) refresh()
     }
 
     // Home while the home screen is in front.

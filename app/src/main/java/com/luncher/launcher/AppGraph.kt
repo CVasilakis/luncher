@@ -36,6 +36,7 @@ import com.luncher.launcher.pictures.FilePictureImages
 import com.luncher.launcher.pictures.FilesPictures
 import com.luncher.launcher.pictures.MediaFolderPictures
 import com.luncher.launcher.pictures.WorkingCopyImages
+import com.luncher.launcher.pictures.WorkingCopyTiles
 import com.luncher.launcher.settings.SettingsGraph
 import com.luncher.launcher.wallpaper.FileStoredWallpaper
 
@@ -60,7 +61,15 @@ open class AppGraph(context: Context) : HomeGraph, SettingsGraph {
 
     override val appInfoScreen: AppInfoScreen by lazy { PackageManagerAppInfoScreen(appContext) }
 
-    override val appImages: AppImages<Bitmap> by lazy { CachedBannerImages(appContext, BannerImages(appContext), jobs) }
+    /**
+     * The tiles' images, kept for the next start: the apps' own, and the pictures of the library
+     * chosen for tiles, drawn from their working copies; the files of tiles whose picture is
+     * deleted go with it, so the cache watches the library.
+     */
+    override val appImages: AppImages<Bitmap> by lazy { CachedBannerImages(appContext, BannerImages(appContext), pictureTiles, pictures, jobs) }
+
+    /** A tile's picture, drawn from its working copy only. */
+    private val pictureTiles by lazy { WorkingCopyTiles(appContext, jobs) }
 
     /** The background thread, for the adapters' and screens' jobs; open so a test can run them when it says. */
     override val jobs: Jobs by lazy { BackgroundThreadJobs() }
