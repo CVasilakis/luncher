@@ -30,7 +30,7 @@ import org.robolectric.shadows.ShadowDialog
 import com.luncher.launcher.ui.R as UiR
 
 /**
- * A picture editor's draft on its own, of a choice that isn't the background (as the tile image's
+ * A picture editor's draft on its own, of a choice that isn't the background (as the tile banner
  * picker's will be): the values it holds, what counts as changed, Back's question, the instance state.
  */
 @RunWith(RobolectricTestRunner::class)

@@ -33,8 +33,8 @@ import org.robolectric.annotation.Config
 import java.util.Locale
 
 /**
- * A picture editor's list on its own, with a first row of another screen's (as the tile image's
- * picker's "App's banner"): what goes to the screen, and where the focus goes as the library changes.
+ * A picture editor's list on its own, with a first row of another screen's (as the tile banner
+ * picker's "Original banner"): what goes to the screen, and where the focus goes as the library changes.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(qualifiers = "en-rUS-$TV_1080P")
@@ -74,7 +74,7 @@ class LibraryListTest {
             }
         }
         list = LibraryList(
-            activity, activity.findViewById(R.id.settings_pictures_column), "App's banner", banner,
+            activity, activity.findViewById(R.id.settings_pictures_column), "Original banner", banner,
             thumbnails, jobs, { colorRoles(ThemeAppearance()) }, listener,
         )
     }
@@ -100,9 +100,9 @@ class LibraryListTest {
     fun `the first row is the screen's, named and pictured as it says, and OK on it chooses no picture`() {
         show(beach, sunset)
 
-        assertEquals(listOf("App's banner", "beach.png", "sunset.jpg", "Add from folder"), rows().map { it.name() })
-        assertSame(banner, row("App's banner").findViewById<ImageView>(R.id.settings_pictures_thumbnail).drawable)
-        row("App's banner").performClick()
+        assertEquals(listOf("Original banner", "beach.png", "sunset.jpg", "Add from folder"), rows().map { it.name() })
+        assertSame(banner, row("Original banner").findViewById<ImageView>(R.id.settings_pictures_thumbnail).drawable)
+        row("Original banner").performClick()
         row("sunset.jpg").performClick()
         assertEquals(listOf(null, sunset.id), chosen)
     }
@@ -114,7 +114,7 @@ class LibraryListTest {
 
         setUp()
         show(beach, sunset)
-        assertEquals("App's banner", focused())
+        assertEquals("Original banner", focused())
     }
 
     @Test

@@ -38,7 +38,7 @@ How the docs are written and kept up to date: [below](#writing-the-docs). Coding
 | Path | Contents |
 |---|---|
 | [`app/`](../app/README.md) | The application module: the composition root that joins the others, the manifest, icon and version, and the instrumented tests. |
-| [`feature/`](../feature/README.md) | The screens, one module per feature: the home screen; the settings panel and the screens it opens, the background editor and the picture library among them. |
+| [`feature/`](../feature/README.md) | The screens, one module per feature: the home screen; the settings panel and the screens it opens, the background editor and the picture library among them; the tile banner picker a tile's menu opens. |
 | [`platform/`](../platform/README.md) | The adapters: the domain's ports on Android APIs. |
 | [`ui/`](../ui/README.md) | What every screen shares: the theme, colors and UI helpers. |
 | [`domain/`](../domain/README.md) | Pure Kotlin module: the launcher's models, rules and ports (no Android). |

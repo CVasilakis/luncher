@@ -164,6 +164,7 @@ internal class TileMenu(private val activity: Activity) : Dialog(activity, R.sty
         AppAction.Move -> R.string.home_menu_move
         AppAction.Hide -> R.string.home_menu_hide
         AppAction.Rename -> R.string.home_menu_rename
+        AppAction.TileBanner -> R.string.home_menu_tile_banner
         AppAction.Info -> R.string.home_menu_info
     }
 
@@ -171,6 +172,7 @@ internal class TileMenu(private val activity: Activity) : Dialog(activity, R.sty
         AppAction.Move -> UiR.drawable.icon_move
         AppAction.Hide -> UiR.drawable.icon_eye_off
         AppAction.Rename -> UiR.drawable.icon_pencil
+        AppAction.TileBanner -> UiR.drawable.icon_image
         AppAction.Info -> UiR.drawable.icon_info
     }
 

@@ -95,7 +95,7 @@ internal class PictureActions(
             MessageDialog(
                 activity,
                 roles(),
-                activity.getString(R.string.settings_background_delete_all_question),
+                activity.getString(R.string.settings_pictures_delete_all_question),
                 activity.deleteAllText(count, library.pictures.flatMap { library.usesOf(it.id) }),
                 listOf(
                     DialogButton(activity.getString(R.string.settings_pictures_cancel), DialogButton.Kind.TONAL) {},

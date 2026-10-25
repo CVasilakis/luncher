@@ -133,7 +133,7 @@ comparing images. Screenshots need Robolectric's native graphics
 
 TVs aren't all 960×540 dp: 720p at the 1080p density is 640×360 dp, some TV boxes run 1080p at
 240 or 160 dpi (1280 or 1920 dp wide), screens can be 4:3, 16:10 or 21:9, and the user can make
-text larger. `HomeLayoutTest`, `SettingsLayoutTest` and `BackgroundLayoutTest` run on each of these screens, `TV_SCREENS` in
+text larger. `HomeLayoutTest`, `SettingsLayoutTest`, `BackgroundLayoutTest` and `TileBannerLayoutTest` run on each of these screens, `TV_SCREENS` in
 `ui/src/testFixtures/…/testing/TvDevice.kt`, in each language Luncher's texts are in (`LANGUAGES`
 there, [`TRANSLATIONS.md`](TRANSLATIONS.md)), and check rules rather than pixels
 (`LayoutChecks.kt`): everything inside the TV's overscan margin, tiles clear of each other and of

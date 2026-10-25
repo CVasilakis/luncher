@@ -68,6 +68,9 @@ open class AppGraph(context: Context) : HomeGraph, SettingsGraph {
      */
     override val appImages: AppImages<Bitmap> by lazy { CachedBannerImages(appContext, BannerImages(appContext), pictureTiles, pictures, jobs) }
 
+    /** An app's own image, for the tile banner picker: drawn at its preview's size, never kept, so the tiles' kept images stay as they are. */
+    override val appBanners: AppImages<Bitmap> by lazy { BannerImages(appContext) }
+
     /** A tile's picture, drawn from its working copy only. */
     private val pictureTiles by lazy { WorkingCopyTiles(appContext, jobs) }
 

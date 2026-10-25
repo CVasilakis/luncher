@@ -15,6 +15,10 @@
     <string name="home_menu_hide">Hide</string>
     <!-- Rename: give the app a name of the user's own, shown on the home screen in place of its own. -->
     <string name="home_menu_rename">Rename</string>
+    <!-- Tile banner: choose the image the app's tile shows on this home screen, a picture of
+         Luncher's pictures in place of the app's own banner, or its own again; opens the screen
+         where it's chosen and framed. The app's own banner isn't changed. -->
+    <string name="home_menu_tile_banner">Tile banner</string>
     <!-- App info: open the app's page in the device's settings (its storage, permissions, force
          stop, uninstall), as Android's own "App info". Dimmed where the device has no such page. -->
     <string name="home_menu_info">App info</string>

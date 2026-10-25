@@ -79,13 +79,14 @@
     <string name="settings_appearance_background">Background</string>
     <!-- Beside the Background entry: the name of a picture that has none. -->
     <!-- Beside the Background entry while the background has no picture. -->
-    <!-- An option: how the picture covers the screen. Its values: Fill (keeping its shape, what
-         doesn't fit cut off) and Stretch (all of it, its shape changed to the screen's). -->
+    <!-- An option: how the picture covers the screen, or an app's tile in the tile banner picker.
+         Its values: Fill (keeping its shape, what doesn't fit cut off) and Stretch (all of it, its
+         shape changed to the screen's, or the tile's). -->
     <string name="settings_appearance_fit">Fit</string>
     <string name="settings_appearance_fill">Fill</string>
     <string name="settings_appearance_stretch">Stretch</string>
-    <!-- An option, while the picture fills the screen: which part of it shows. Its values are
-         Center, Top, Bottom, Left and Right. -->
+    <!-- An option, while the picture fills the screen (or the tile): which part of it shows. Its
+         values are Center, Top, Bottom, Left and Right. -->
     <string name="settings_appearance_position">Position</string>
     <!-- An option: how much darker the picture is drawn, so the tiles stand out. Its values are
          Off (settings_appearance_off) and the three below, 20, 40 and 60 percent darker: the words
@@ -118,39 +119,44 @@
     <!-- A message, when the device has no settings app to open. -->
     <string name="settings_system_unavailable">No settings app on this device</string>
 
-    <!-- The background editor (its title is settings_appearance_background): at the top of its
+    <!-- The picture editors, where a picture of Luncher's pictures is chosen and framed: the
+         background editor (its title is settings_appearance_background) and the tile banner
+         picker (a picture for an app's tile, settings_tile_banner_*). At the top of their
          pictures, how to rename or delete one; OK is the remote's button. -->
-    <string name="settings_background_hint">Hold OK on a picture to rename or delete it</string>
-    <!-- Its last entry: stores the picture and options chosen, which the editor only shows until then. -->
-    <string name="settings_background_save">Save</string>
+    <string name="settings_pictures_hint">Hold OK on a picture to rename or delete it</string>
+    <!-- Below a picture editor's options: stores the picture and options chosen, which the editor only shows until then. -->
+    <string name="settings_picture_editor_save">Save</string>
     <!-- Beside Save, in red: deletes every picture of the library, after a question. -->
-    <string name="settings_background_delete_all">Delete all</string>
+    <string name="settings_picture_editor_delete_all">Delete all</string>
     <!-- That question; below it, a sentence for each use of the pictures deleting changes (when one
          of them is the background's picture, which the home screen loses: the sentence below; on
          tiles: settings_pictures_delete_used_tiles, counting the tiles of every picture), then
          what deleting them does and doesn't do, with how many. -->
-    <string name="settings_background_delete_all_question">Delete all pictures?</string>
-    <plurals name="settings_background_delete_all_used_background">
+    <string name="settings_pictures_delete_all_question">Delete all pictures?</string>
+    <plurals name="settings_pictures_delete_all_used_background">
         <item quantity="one">Used as the background: the home screen will have no picture.</item>
         <item quantity="other">One is used as the background: the home screen will have no picture.</item>
     </plurals>
-    <plurals name="settings_background_delete_all_text">
+    <plurals name="settings_pictures_delete_all_text">
         <item quantity="one">The picture is deleted from Luncher\'s pictures only.</item>
         <item quantity="other">The <xliff:g id="count" example="9">%d</xliff:g> pictures are deleted from Luncher\'s pictures only.</item>
     </plurals>
-    <!-- The question when Back is pressed in the editor with a picture or an option changed and
-         not saved; below it, what leaving does. Its answers: Cancel (settings_pictures_cancel),
-         which stays in the editor, and Discard, in red, which leaves it without saving. -->
-    <string name="settings_background_discard_question">Discard changes?</string>
+    <!-- The question when Back is pressed in a picture editor with a picture or an option changed
+         and not saved; below it, what leaving does (the background editor's
+         settings_background_discard_text, the picker's settings_tile_banner_discard_text). Its
+         answers: Cancel (settings_pictures_cancel), which stays in the editor, and Discard, in
+         red, which leaves it without saving. -->
+    <string name="settings_picture_editor_discard_question">Discard changes?</string>
     <string name="settings_background_discard_text">The changes to the background aren\'t saved.</string>
-    <string name="settings_background_discard">Discard</string>
+    <string name="settings_tile_banner_discard_text">The changes to the tile\'s image aren\'t saved.</string>
+    <string name="settings_picture_editor_discard">Discard</string>
     <!-- In a window over the editor while the wallpaper is drawn after Save, which takes a moment. -->
     <string name="settings_background_applying">Processing background…</string>
-    <!-- In a window over the background editor as it opens, while its pictures are prepared to be
+    <!-- In a window over a picture editor as it opens, while its pictures are prepared to be
          shown quickly (made once, again only after the TV changes its resolution or an update):
          for one picture, then for several, which one of how many. -->
-    <string name="settings_background_preparing">Preparing the picture…</string>
-    <string name="settings_background_preparing_count">Preparing picture <xliff:g id="number" example="3">%1$d</xliff:g> of <xliff:g id="total" example="10">%2$d</xliff:g>…</string>
+    <string name="settings_pictures_preparing">Preparing the picture…</string>
+    <string name="settings_pictures_preparing_count">Preparing picture <xliff:g id="number" example="3">%1$d</xliff:g> of <xliff:g id="total" example="10">%2$d</xliff:g>…</string>
     <!-- Beside the picture chosen. -->
 
     <!-- The window over the home screen after another app shared a picture with Luncher: its
@@ -243,6 +249,11 @@
     <string name="settings_pictures_details"><xliff:g id="width" example="1920">%1$d</xliff:g> × <xliff:g id="height" example="1080">%2$d</xliff:g> · <xliff:g id="size" example="3.1 MB">%3$s</xliff:g></string>
     <!-- Choosing the wallpaper, the first tile: no picture, the plain background. -->
     <string name="settings_pictures_no_picture">No picture</string>
+    <!-- The tile banner picker, where a picture of Luncher's pictures is chosen for an app's tile
+         (from the tile's menu on the home screen, home_menu_tile_banner): its first entry, the
+         tile with no picture, showing the banner the app came with (or its icon, for an app
+         without one). -->
+    <string name="settings_tile_banner_original">Original banner</string>
     <!-- The name of a picture whose app gave it none. -->
     <string name="settings_pictures_unnamed">Picture</string>
     <!-- An action on a picture, and the answer that confirms it. -->
@@ -350,8 +361,8 @@
     <!-- Values of settings_appearance_mode. -->
     <string name="settings_appearance_dark">Dark</string>
     <string name="settings_appearance_light_mode">Light</string>
-    <!-- The label above the background editor's pictures, the library. -->
-    <string name="settings_background_pictures">Pictures</string>
+    <!-- The label above a picture editor's pictures, the library. -->
+    <string name="settings_pictures_label">Pictures</string>
     <!-- Add from folder: the label above the list of the folders' pictures, and how many there are beside it. -->
     <string name="settings_pictures_folder_label">In the folder</string>
     <plurals name="settings_pictures_folder_count">

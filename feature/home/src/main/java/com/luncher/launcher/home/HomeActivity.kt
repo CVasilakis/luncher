@@ -27,6 +27,7 @@ import com.luncher.domain.apps.appName
 import com.luncher.domain.apps.homeApps
 import com.luncher.launcher.settings.R as SettingsR
 import com.luncher.launcher.settings.SettingsActivity
+import com.luncher.launcher.settings.TileBannerActivity
 import com.luncher.launcher.ui.DialogButton
 import com.luncher.launcher.ui.NameDialog
 import com.luncher.launcher.ui.color
@@ -37,8 +38,8 @@ import java.util.Locale
  * The home screen: the time, the date and a settings entry above the TV apps the user didn't hide,
  * as tiles; OK on a tile opens its app, OK on the settings entry (or the Menu key) opens the
  * settings panel. A long press of OK on a tile opens its [TileMenu], to move its app ([MoveMode],
- * which gets every key first while it's on), hide it, rename it, or open its info in the device's
- * settings.
+ * which gets every key first while it's on), hide it, rename it, choose a picture for its tile
+ * ([TileBannerActivity]), or open its info in the device's settings.
  *
  * How it looks follows the user's [Appearance] while it's shown: each part goes to the view that
  * draws it (the background to the window, [HomeWallpaper]), which compares it with what it has, so
@@ -235,6 +236,8 @@ class HomeActivity : Activity() {
             // Stored, and shown as any change of the arrangement is (showArrangement).
             AppAction.Hide -> arrangements.save(arranged.hide(tile.app).arrangement)
             AppAction.Rename -> askName(tile.app)
+            // Full-screen, so the home screen is stopped meanwhile, and shows the tile as stored once it's back (onStart).
+            AppAction.TileBanner -> startActivity(TileBannerActivity.intent(this, tile.app.launchable))
             AppAction.Info -> openAppInfo(tile.app)
         }
     }

@@ -74,8 +74,8 @@ class AppInfoTest {
         longPressOk()   // on the focused tile
         assertTrue("The tile's menu didn't open", device.wait(Until.hasObject(TILE_MENU), TIMEOUT_MS))
         waitForDialogFocus(home)
-        // Past Hide and Rename, and Move, offered only with another app shown: the device's apps are what they are.
-        repeat(if (device.hasObject(entry(R.string.home_menu_move))) 3 else 2) { device.pressDPadDown() }
+        // Past Hide, Rename and Tile banner, and Move, offered only with another app shown: the device's apps are what they are.
+        repeat(if (device.hasObject(entry(R.string.home_menu_move))) 4 else 3) { device.pressDPadDown() }
         // The entry has the focus, not its label.
         assertTrue("App info didn't get the focus", device.wait(Until.hasObject(By.pkg(LUNCHER).focused(true).hasChild(entry(R.string.home_menu_info))), TIMEOUT_MS))
         device.pressDPadCenter()

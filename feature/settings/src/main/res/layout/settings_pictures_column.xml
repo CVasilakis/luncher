@@ -27,7 +27,7 @@
             style="@style/Widget.Luncher.Settings.Label"
             android:layout_marginStart="@dimen/settings_container_padding"
             android:layout_marginBottom="0dp"
-            android:text="@string/settings_background_pictures" />
+            android:text="@string/settings_pictures_label" />
 
         <com.luncher.launcher.ui.ThemedText
             android:id="@+id/settings_pictures_hint"
@@ -36,7 +36,7 @@
             android:layout_marginStart="@dimen/settings_appearance_value_gap"
             android:layout_marginEnd="@dimen/settings_container_padding"
             android:layout_weight="1"
-            android:text="@string/settings_background_hint"
+            android:text="@string/settings_pictures_hint"
             android:textAlignment="viewEnd"
             android:textSize="@dimen/text_supporting"
             app:colorRole="onSurfaceVariant" />

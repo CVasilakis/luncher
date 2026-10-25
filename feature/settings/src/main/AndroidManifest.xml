@@ -49,6 +49,16 @@
             android:theme="@style/Theme.Luncher.Settings.FullScreen"
             android:windowSoftInputMode="adjustNothing" />
 
+        <!-- The tile banner picker, opened from a tile's menu on the home screen: full-screen,
+             over it, as the background editor, whose layout and parts it shares. adjustNothing,
+             as there: a picture's rename doesn't slide it up behind the dialog. -->
+        <activity
+            android:name=".TileBannerActivity"
+            android:exported="false"
+            android:launchMode="singleTop"
+            android:theme="@style/Theme.Luncher.Settings.FullScreen"
+            android:windowSoftInputMode="adjustNothing" />
+
         <!-- The window over the home screen after another app shared pictures, floating like the
              settings panel. singleTop: a share that arrives while it shows comes to it
              (onNewIntent), its pictures joining those being added, rather than to a new window,

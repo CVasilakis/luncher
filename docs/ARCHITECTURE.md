@@ -40,12 +40,16 @@ them or they're `internal` there. The settings every Android module's build shar
 A feature module holds everything of one feature on the Android side: its screens, views, layouts,
 resources and manifest entries. It declares the ports it needs in an interface of its own
 (`HomeGraph`), which `AppGraph` implements and the Application hands out; its activities get them
-through `graph`. Everything in it is `internal` except its activities and that interface.
+through `graph`. Everything in it is `internal` except its activities and that interface (and an
+activity's `intent`, below).
 
 Features don't depend on each other, with one exception: a feature may start another feature's
 activity by its class (`Intent(this, SettingsActivity::class.java)`), and use nothing else of it,
 which the other's `internal` enforces. The compiler then checks the link, which an intent action
-string wouldn't. Such links go one way; one that would close a cycle goes through an interface
+string wouldn't. An activity that must be told what it's for (the tile banner picker: which app)
+has one public function that makes the intent, its extras' keys its own
+(`TileBannerActivity.intent(context, app)`), so the compiler checks those too, and the starting
+feature uses that, not the extras. Such links go one way; one that would close a cycle goes through an interface
 `:app` implements instead. What two features share is either domain (a model or port in
 `:domain`), or UI-only (`:ui`).
 
@@ -199,9 +203,11 @@ a test.
    user edits, and each thing edited has a catalog of its own, a sealed type over its own model:
    the appearance's is `AppearanceOption`. Every layer that handles a catalog does so in an
    exhaustive `when`, so a new option doesn't compile until each one handles it, and a catalog
-   added touches no other. Which values change anything can depend on facts that aren't
+   added touches no other (the tile image's, `TileImageOption` over `TileImage`, is one more).
+   Which values change anything can depend on facts that aren't
    settings, so aren't in `Appearance`: a context of the catalog's own, which a screen builds
-   and passes with the model, and no other catalog sees. The appearance's is
+   and passes with the model, and no other catalog sees (the tile image's, `TileImageContext`,
+   what filling a tile cuts from its picture). The appearance's is
    `AppearanceContext`, today what filling the screen cuts from the background's picture
    (`backgroundCut`, from `pictureCut`): left and right move only a wide picture, top and bottom
    only a tall one, and neither the position nor the fit one of the screen's shape. An option
@@ -280,7 +286,7 @@ is a role in `ColorRoles`, with its value in each mode and a contrast check
 | New data the rules or screens need from the device (settings, pictures, installed apps) | a port (interface) in `:domain` with a fake in its test fixtures; an adapter in `:platform`, in the package of the port's topic; one line in `AppGraph`; the port in the graph interface of each feature that uses it |
 | An image the UI shows (banners, a picture's thumbnail) | which image: a model and rule in `:domain` (like `Banner`, or a picture's `Framing`); drawing it: an adapter in `:platform` behind a port generic in the image type (`AppImages<Bitmap>`, `PictureImages<Bitmap>`), since `:domain` can't name `Bitmap`. It draws at the size shown ([rule 5](#rules)), and is slow work if it's slow ([above](#background-work-and-changes-while-shown)). Kept for the next start, it's a cache adapter in front of the one that draws (`CachedBannerImages`, `CachedPictureImages`). Drawn from a picture the user brought in, it's drawn from the picture's working copy, decoded once, never from the original again, except what's stored for good (the wallpaper) ([point 7](#background-work-and-changes-while-shown)); a tile's picture is drawn so too, the app's own image showing while its copy isn't ready. |
 | Asking another app for something, or reading what it sends (a shared file, its provider) | an adapter in `:platform`, which asks through `outside/` ([point 6](#background-work-and-changes-while-shown)) with the one `OutsideCalls` `AppGraph` gives it; if a screen waits for the answer, its port returns a `Cancellable` (`PictureImport.add`) |
-| A picture the user brings in, and what it's used for | the picture library: `:domain`'s `pictures/` (the models, the rules of framing, limits and formats, and the ports), its adapters in `:platform`'s `pictures/`, its screens in `:feature:settings` ([`feature/settings/README.md`](../feature/settings/README.md#background)); the pictures other apps share, added one at a time: `ReceivedPictures` in `:domain`'s `pictures/`, the share screen and its window in `:feature:settings` ([`feature/settings/README.md`](../feature/settings/README.md#adding-a-picture)); the wallpaper drawn from one and kept: `:domain`'s `wallpaper/` and `FileStoredWallpaper` ([`feature/home/README.md`](../feature/home/README.md#the-wallpaper)) |
+| A picture the user brings in, and what it's used for | the picture library: `:domain`'s `pictures/` (the models, the rules of framing, limits and formats, and the ports), its adapters in `:platform`'s `pictures/`, its screens in `:feature:settings` ([`feature/settings/README.md`](../feature/settings/README.md#background)), the tile banner picker among them, for a tile's picture ([`feature/settings/README.md`](../feature/settings/README.md#tile-banner)); the pictures other apps share, added one at a time: `ReceivedPictures` in `:domain`'s `pictures/`, the share screen and its window in `:feature:settings` ([`feature/settings/README.md`](../feature/settings/README.md#adding-a-picture)); the wallpaper drawn from one and kept: `:domain`'s `wallpaper/` and `FileStoredWallpaper` ([`feature/home/README.md`](../feature/home/README.md#the-wallpaper)) |
 | How the home screen arranges apps (grid, apps per row, alignment, a carousel) | a `TileLayout` in `:domain`'s `layout/` that computes sizes and positions, and `TileMoves` for where a tile the user moves goes, with unit tests; `TileLayouts` picks it, so everything that shows tiles lays them out alike; the view that shows the tiles only places them where the layout says ([`feature/home/README.md`](../feature/home/README.md#the-home-screen)) |
 | Something the user can do to one app from its tile (move it, hide it, rename it, open its info, give it a picture of the library) | an `AppAction` in `:domain`'s `apps/`, listed by `appActions`, with unit tests, available or not as facts of the device it's given say (dimmed in the menu where it isn't); its label in `:feature:home`'s `TileMenu` and what it does in `HomeActivity`, each an exhaustive `when` that doesn't compile without it; what it needs from the device through a port; what it keeps for the app (its name, its tile's picture) a value of `AppCustomization`, stored through `AppCustomizations` and matched to the apps by `homeApps`, so every screen gets it on the `HomeApp` ([`feature/home/README.md`](../feature/home/README.md#a-tiles-menu)) |
 | Where a moved app goes, which key does what to it | `MoveSession` in `:domain`'s `arrange/`, with unit tests; `MoveMode` in `:feature:home` turns keys into its moves ([`feature/home/README.md`](../feature/home/README.md#moving-an-app)) |

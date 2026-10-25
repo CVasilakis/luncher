@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The tile banner picker: at the start the preview of the app's tile, the app's name below it,
+     the options (Fit and Position), Save and Delete all, which scroll on the smallest screens; at
+     the end, below their label and the hint, the pictures to choose from in their container: the
+     background editor's layout, with a tile in place of the home screen.
+     Mirrored in a right-to-left language, like the other settings screens; the preview's content
+     isn't. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:baselineAligned="false"
+    android:clipChildren="false"
+    android:orientation="horizontal">
+
+    <!-- As the background editor's start column: the overscan margin at the start, less the room
+         the content keeps for a focused entry's zoom; the gap to the pictures at the end. The
+         preview as tall as the room left (PictureStartColumn). -->
+    <com.luncher.launcher.settings.PictureStartColumn
+        android:id="@+id/settings_tile_banner_start"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:clipChildren="false"
+        android:clipToPadding="false"
+        android:paddingStart="@dimen/settings_screen_margin_less_room"
+        android:paddingTop="@dimen/settings_appearance_margin_vertical"
+        android:paddingEnd="@dimen/settings_screen_gap_less_room"
+        android:paddingBottom="@dimen/settings_appearance_margin_vertical"
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:clipChildren="false"
+            android:clipToPadding="false"
+            android:orientation="vertical"
+            android:paddingLeft="@dimen/settings_container_padding"
+            android:paddingRight="@dimen/settings_container_padding">
+
+            <!-- The app's tile with the draft's image, its size set by PictureStartColumn, its
+                 corners the tiles'. Not focusable. -->
+            <com.luncher.launcher.settings.TilePreviewView
+                android:id="@+id/settings_tile_banner_preview"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_gravity="center_horizontal" />
+
+            <!-- Which app's tile it is, below it, as the home screen names a tile: the name it
+                 shows there. -->
+            <com.luncher.launcher.ui.ThemedText
+                android:id="@+id/settings_tile_banner_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/settings_label_gap"
+                android:ellipsize="end"
+                android:gravity="center"
+                android:singleLine="true"
+                android:textAlignment="center"
+                android:textSize="@dimen/text_entry" />
+
+            <!-- The options, Save and Delete all. -->
+            <include layout="@layout/settings_picture_editor_controls" />
+        </LinearLayout>
+    </com.luncher.launcher.settings.PictureStartColumn>
+
+    <!-- The pictures to choose from. -->
+    <include layout="@layout/settings_pictures_column" />
+</LinearLayout>

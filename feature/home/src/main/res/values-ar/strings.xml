@@ -8,6 +8,7 @@
     <string name="home_menu_move">نقل</string>
     <string name="home_menu_hide">إخفاء</string>
     <string name="home_menu_rename">إعادة تسمية</string>
+    <string name="home_menu_tile_banner">لافتة المربع</string>
     <string name="home_menu_info">معلومات التطبيق</string>
     <string name="home_menu_info_unavailable">معلومات التطبيق غير متاحة على هذا الجهاز</string>
     <string name="home_rename_title">إعادة تسمية التطبيق</string>

@@ -55,24 +55,25 @@
     <string name="settings_system">Ρυθμίσεις συστήματος</string>
     <string name="settings_system_unavailable">Καμία εφαρμογή ρυθμίσεων σε αυτή τη συσκευή</string>
 
-    <string name="settings_background_hint">Κρατήστε πατημένο το OK σε μια εικόνα για να τη μετονομάσετε ή να τη διαγράψετε</string>
-    <string name="settings_background_save">Αποθήκευση</string>
-    <string name="settings_background_delete_all">Διαγραφή όλων</string>
-    <string name="settings_background_delete_all_question">Διαγραφή όλων των εικόνων;</string>
-    <plurals name="settings_background_delete_all_text">
+    <string name="settings_pictures_hint">Κρατήστε πατημένο το OK σε μια εικόνα για να τη μετονομάσετε ή να τη διαγράψετε</string>
+    <string name="settings_picture_editor_save">Αποθήκευση</string>
+    <string name="settings_picture_editor_delete_all">Διαγραφή όλων</string>
+    <string name="settings_pictures_delete_all_question">Διαγραφή όλων των εικόνων;</string>
+    <plurals name="settings_pictures_delete_all_text">
         <item quantity="one">Η εικόνα διαγράφεται μόνο από τις εικόνες του Luncher.</item>
         <item quantity="other">Οι <xliff:g id="count" example="9">%d</xliff:g> εικόνες διαγράφονται μόνο από τις εικόνες του Luncher.</item>
     </plurals>
-    <plurals name="settings_background_delete_all_used_background">
+    <plurals name="settings_pictures_delete_all_used_background">
         <item quantity="one">Χρησιμοποιείται ως φόντο: η αρχική οθόνη θα μείνει χωρίς εικόνα.</item>
         <item quantity="other">Μία χρησιμοποιείται ως φόντο: η αρχική οθόνη θα μείνει χωρίς εικόνα.</item>
     </plurals>
-    <string name="settings_background_discard_question">Απόρριψη αλλαγών;</string>
+    <string name="settings_picture_editor_discard_question">Απόρριψη αλλαγών;</string>
     <string name="settings_background_discard_text">Οι αλλαγές στο φόντο δεν έχουν αποθηκευτεί.</string>
-    <string name="settings_background_discard">Απόρριψη</string>
+    <string name="settings_tile_banner_discard_text">Οι αλλαγές στην εικόνα του πλακιδίου δεν έχουν αποθηκευτεί.</string>
+    <string name="settings_picture_editor_discard">Απόρριψη</string>
     <string name="settings_background_applying">Επεξεργασία φόντου…</string>
-    <string name="settings_background_preparing">Προετοιμασία της εικόνας…</string>
-    <string name="settings_background_preparing_count">Προετοιμασία εικόνας <xliff:g id="number" example="3">%1$d</xliff:g> από <xliff:g id="total" example="10">%2$d</xliff:g>…</string>
+    <string name="settings_pictures_preparing">Προετοιμασία της εικόνας…</string>
+    <string name="settings_pictures_preparing_count">Προετοιμασία εικόνας <xliff:g id="number" example="3">%1$d</xliff:g> από <xliff:g id="total" example="10">%2$d</xliff:g>…</string>
 
     <string name="settings_pictures_adding">Προσθήκη της εικόνας…</string>
     <string name="settings_pictures_how">Για να προσθέσετε μια εικόνα:</string>
@@ -81,6 +82,7 @@
     <string name="settings_pictures_add_from_folder">Προσθήκη από φάκελο</string>
     <string name="settings_pictures_details"><xliff:g id="width" example="1920">%1$d</xliff:g> × <xliff:g id="height" example="1080">%2$d</xliff:g> · <xliff:g id="size" example="3,1 MB">%3$s</xliff:g></string>
     <string name="settings_pictures_no_picture">Χωρίς εικόνα</string>
+    <string name="settings_tile_banner_original">Αρχικό banner</string>
     <string name="settings_pictures_unnamed">Εικόνα</string>
     <string name="settings_pictures_delete">Διαγραφή</string>
     <string name="settings_pictures_delete_question">Διαγραφή του <xliff:g id="name" example="beach.png">%1$s</xliff:g>;</string>
@@ -188,7 +190,7 @@
     <string name="settings_appearance_gray">Γκρι</string>
     <string name="settings_appearance_dark">Σκούρα</string>
     <string name="settings_appearance_light_mode">Φωτεινή</string>
-    <string name="settings_background_pictures">Εικόνες</string>
+    <string name="settings_pictures_label">Εικόνες</string>
     <string name="settings_pictures_folder_label">Στον φάκελο</string>
     <plurals name="settings_pictures_folder_count">
         <item quantity="one"><xliff:g id="count" example="1">%d</xliff:g> εικόνα</item>

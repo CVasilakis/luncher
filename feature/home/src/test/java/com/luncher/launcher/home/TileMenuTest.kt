@@ -2,6 +2,7 @@ package com.luncher.launcher.home
 
 import android.content.Intent
 import android.net.Uri
+import android.os.Bundle
 import android.os.Looper
 import android.provider.Settings
 import android.view.KeyEvent
@@ -12,12 +13,18 @@ import com.luncher.domain.appearance.Corners
 import com.luncher.domain.appearance.FakeAppearanceSettings
 import com.luncher.domain.appearance.TileStyle
 import com.luncher.domain.apps.AppArrangement
+import com.luncher.domain.apps.AppCustomization
 import com.luncher.domain.apps.FakeAppArrangements
 import com.luncher.domain.apps.FakeAppCustomizations
 import com.luncher.domain.apps.FakeAppCustomizations.Companion.named
 import com.luncher.domain.apps.FakeAppInfoScreen
 import com.luncher.domain.apps.FakeInstalledApps
 import com.luncher.domain.apps.FakeInstalledApps.Companion.app
+import com.luncher.domain.apps.TileImage
+import com.luncher.domain.pictures.Fit
+import com.luncher.domain.pictures.Framing
+import com.luncher.domain.pictures.PictureId
+import com.luncher.launcher.settings.TileBannerActivity
 import com.luncher.launcher.testing.TV_1080P
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -97,7 +104,7 @@ class TileMenuTest {
         val menu = activity.longPress("b")
 
         assertTrue(menu.isShowing)
-        assertEquals(listOf("Move", "Hide", "Rename", "App info"), menu.labels())
+        assertEquals(listOf("Move", "Hide", "Rename", "Tile banner", "App info"), menu.labels())
         assertTrue(menu.entries().first().isFocused)
         assertTrue("the tile keeps its focus", activity.tile("b").isFocused)
         assertFalse(activity.moving())
@@ -129,7 +136,7 @@ class TileMenuTest {
         installedApps.apps = listOf(app("a"), app("x"))
         val activity = start().get()
 
-        assertEquals(listOf("Hide", "Rename", "App info"), activity.longPress("a").labels())
+        assertEquals(listOf("Hide", "Rename", "Tile banner", "App info"), activity.longPress("a").labels())
     }
 
     @Test
@@ -145,6 +152,39 @@ class TileMenuTest {
         assertEquals(Uri.parse("package:${app("b").launchable.packageName}"), intent.data)
         assertTrue(intent.flags and Intent.FLAG_ACTIVITY_NEW_TASK != 0)
     }
+
+    @Test
+    fun `Tile banner opens the picker for the app's tile, over the home screen in its task`() {
+        val activity = start().get()
+        val menu = activity.longPress("b")
+
+        menu.choose("Tile banner")
+
+        assertFalse(menu.isShowing)
+        val intent = shadowOf(activity).nextStartedActivity
+        val expected = TileBannerActivity.intent(activity, app("b").launchable)
+        assertEquals(expected.component, intent.component)
+        assertEquals(expected.extras!!.strings(), intent.extras!!.strings())
+        assertEquals(0, intent.flags and Intent.FLAG_ACTIVITY_NEW_TASK)
+    }
+
+    // The picker covers the home screen whole, which is stopped meanwhile and shows the result as it starts.
+    @Test
+    fun `the picture the picker saved for a tile is on it once the home screen is back`() {
+        val controller = start()
+        val activity = controller.get()
+        activity.longPress("b").choose("Tile banner")
+        controller.pause().stop()
+
+        val image = TileImage(PictureId("beach"), Framing(Fit.STRETCH))
+        customizations.save(mapOf(app("b").launchable to AppCustomization(image = image)))
+        controller.restart().resume()
+
+        assertEquals(image, activity.tile("b").app.customization.image)
+        assertTrue(activity.tile("b").isFocused)
+    }
+
+    private fun Bundle.strings(): Map<String, String?> = keySet().associateWith { getString(it) }
 
     // The settings app disabled since the menu opened.
     @Test
@@ -164,16 +204,16 @@ class TileMenuTest {
         appInfoScreen.exists = false
         val activity = start().get()
         val menu = activity.longPress("b")
-        val (move, _, rename, info) = menu.entries()
+        val (move, _, _, image, info) = menu.entries()
 
-        assertEquals(listOf("Move", "Hide", "Rename", "App info"), menu.labels())
+        assertEquals(listOf("Move", "Hide", "Rename", "Tile banner", "App info"), menu.labels())
         assertTrue(info.alpha < 1f)
-        assertEquals(1f, rename.alpha)
+        assertEquals(1f, image.alpha)
         assertFalse(info.isFocusable)
         assertTrue(move.isFocused)
         // Down from the entry above it goes nowhere: Android's search finds no focusable view.
-        rename.requestFocus()
-        assertNull(rename.focusSearch(View.FOCUS_DOWN))
+        image.requestFocus()
+        assertNull(image.focusSearch(View.FOCUS_DOWN))
     }
 
     @Test

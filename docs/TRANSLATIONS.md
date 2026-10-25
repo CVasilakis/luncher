@@ -12,7 +12,7 @@ how a string is written so that it translates well, and what a new string or lan
 | Module | Texts | Languages |
 |---|---|---|
 | `:feature:home` | the home screen, a tile's menu and moving an app | `res/values/strings.xml` (English), `res/values-el/` (Greek), `res/values-ar/` (Arabic) |
-| `:feature:settings` | the settings panels, the appearance and background editors, Add from folder, the window after a share | the same |
+| `:feature:settings` | the settings panels, the appearance and background editors, the tile banner picker, Add from folder, the window after a share | the same |
 | `:app` | the app's name | `translatable="false"`: a name, the same in every language |
 
 Strings stay with the screen that shows them, each module's prefixed with its name (`home_…`,
@@ -27,9 +27,9 @@ as that language sorts words (`NameOrder`: "Άρης" after "Αθήνα" in Gree
 with the language's own patterns, a file's size, which Android formats (`Formatter`), and the
 pictures' names, which are their files'.
 
-A right-to-left language mirrors the settings panels, the picture library's screens and the
-window over the home screen while its wallpaper is drawn, but not the home screen, nor the
-editors' preview of it, nor a picture
+A right-to-left language mirrors the settings panels, the picture library's screens (the tile
+image's picker among them) and the window over the home screen while its wallpaper is drawn, but
+not the home screen, nor the editors' preview of it or of a tile, nor a picture
 ([`app/README.md`](../app/README.md#manifest-why-each-part-is-there)).
 
 ## Wording
@@ -95,7 +95,7 @@ The English follows these rules; a translation keeps them as its language allows
 
 ## Checking a translation
 
-- **The layout tests** (`HomeLayoutTest`, `SettingsLayoutTest`, `BackgroundLayoutTest`) run every
+- **The layout tests** (`HomeLayoutTest`, `SettingsLayoutTest`, `BackgroundLayoutTest`, `TileBannerLayoutTest`) run every
   screen in every language, with the longest date each has: nothing cut, except where the layout allows it, and
   everything fits ([`TESTING.md`](TESTING.md#layouts-on-other-screens)). In Arabic, that's the
   mirrored settings panels too.

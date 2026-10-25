@@ -255,7 +255,7 @@ drawing goes on when the home screen stops, and shows when it's back. A wallpape
 background editor is drawn the same way; if the user goes home before it's done, the window says
 "Processing background…", as the editor's did.
 
-A picture that's gone (deleted in the background editor, which sets the wallpaper to none, or its
+A picture that's gone (deleted in a picture editor, which sets the wallpaper to none, or its
 file lost) is no wallpaper, and without one, none is kept: asked for none, `Wallpaper` deletes the
 kept file. The wallpaper takes about 8 MB of memory at 1080p while shown.
 
@@ -317,6 +317,7 @@ panel follows the tiles.
 | Move | [moves the app](#moving-an-app); not offered while it's the only app shown |
 | Hide | hides the app at once, first among the hidden apps; the [Hide apps](../settings/README.md#hidden-apps) list shows it again |
 | Rename | asks for a name of the user's own for the app, which the home screen shows wherever it names the app ([below](#renaming-an-app)) |
+| Tile banner | opens the tile banner picker ([`settings/README.md`](../settings/README.md#tile-banner)), full-screen over the home screen, where a picture of the library is chosen for the tile and framed; the home screen, stopped meanwhile, shows the tile as stored once it's back ([above](#a-tiles-picture)) |
 | App info | opens the app's page in the device's settings (its storage, permissions, force stop, uninstall), in a task of its own, as another app; Back returns to the home screen, which shows what changed there (an app uninstalled or disabled) as any change of the apps. Dimmed where the device has no such page, as on the Android TV 5.1 (API 22) emulator, whose settings have only the list of all apps. A settings app gone since the menu opened gets a message instead |
 
 | Part | Job |
@@ -327,9 +328,9 @@ panel follows the tiles.
 | `tileMenuPlacement` (`:domain`) | where the menu goes: above the tile as it's drawn (zoomed, its name below it), below where there's no room, across centered, or in line with the tile's edge where centered would leave the room; beside it, level with it, where it fits neither above nor below; `tileMenuHeight`: how tall it may be, the most room there is where it fits whole nowhere |
 | `AppTileView.focusedBounds` | where the tile is drawn on the screen while it has focus, for that rule |
 | `TileMenu` | the menu's window: an entry for each action with its icon and label from exhaustive `when`s over `AppAction`, dimmed and out of the focus's way where it isn't available, placed where the rule says; in the theme's colors, its corners following the tiles' (`style`, `menuCorner`) |
-| `HomeActivity` | opens the menu on a long press, and does what an entry says, in an exhaustive `when` too: Move starts `MoveMode`, Hide stores the arrangement with the app hidden, which shows as any change of it does, Rename asks for the name (`:ui`'s `NameDialog`) and stores it, App info starts the device's page for the app |
+| `HomeActivity` | opens the menu on a long press, and does what an entry says, in an exhaustive `when` too: Move starts `MoveMode`, Hide stores the arrangement with the app hidden, which shows as any change of it does, Rename asks for the name (`:ui`'s `NameDialog`) and stores it, Tile banner starts the picker for the app (`TileBannerActivity.intent`), App info starts the device's page for the app |
 
-A new action (a picture of the user's own for its tile) is a type of `AppAction`, listed by
+A new action is a type of `AppAction`, listed by
 `appActions`, which then doesn't compile in `:feature:home` until the menu has its label and icon,
 and `HomeActivity` what it does. One the device may not be able to do is listed with
 `available` false rather than left out, from a fact `appActions` takes as a parameter, which

@@ -7,6 +7,7 @@
     <string name="home_menu_move">Μετακίνηση</string>
     <string name="home_menu_hide">Απόκρυψη</string>
     <string name="home_menu_rename">Μετονομασία</string>
+    <string name="home_menu_tile_banner">Banner πλακιδίου</string>
     <string name="home_menu_info">Πληροφορίες εφαρμογής</string>
     <string name="home_menu_info_unavailable">Οι πληροφορίες εφαρμογής δεν είναι διαθέσιμες σε αυτή τη συσκευή</string>
     <string name="home_rename_title">Μετονομασία εφαρμογής</string>

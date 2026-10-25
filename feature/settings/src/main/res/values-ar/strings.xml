@@ -55,11 +55,11 @@
     <string name="settings_system">إعدادات النظام</string>
     <string name="settings_system_unavailable">لا يوجد تطبيق إعدادات على هذا الجهاز</string>
 
-    <string name="settings_background_hint">اضغط مطولًا على OK فوق صورة لإعادة تسميتها أو حذفها</string>
-    <string name="settings_background_save">حفظ</string>
-    <string name="settings_background_delete_all">حذف الكل</string>
-    <string name="settings_background_delete_all_question">حذف كل الصور؟</string>
-    <plurals name="settings_background_delete_all_text">
+    <string name="settings_pictures_hint">اضغط مطولًا على OK فوق صورة لإعادة تسميتها أو حذفها</string>
+    <string name="settings_picture_editor_save">حفظ</string>
+    <string name="settings_picture_editor_delete_all">حذف الكل</string>
+    <string name="settings_pictures_delete_all_question">حذف كل الصور؟</string>
+    <plurals name="settings_pictures_delete_all_text">
         <item quantity="zero">تُحذف <xliff:g id="count" example="0">%d</xliff:g> صورة من صور Luncher فقط.</item>
         <item quantity="one">تُحذف الصورة من صور Luncher فقط.</item>
         <item quantity="two">تُحذف الصورتان من صور Luncher فقط.</item>
@@ -67,7 +67,7 @@
         <item quantity="many">تُحذف الصور الـ<xliff:g id="count" example="11">%d</xliff:g> من صور Luncher فقط.</item>
         <item quantity="other">تُحذف الصور الـ<xliff:g id="count" example="100">%d</xliff:g> من صور Luncher فقط.</item>
     </plurals>
-    <plurals name="settings_background_delete_all_used_background">
+    <plurals name="settings_pictures_delete_all_used_background">
         <item quantity="zero">إحداها مستخدمة كخلفية: لن تعرض الشاشة الرئيسية أي صورة.</item>
         <item quantity="one">مستخدمة كخلفية: لن تعرض الشاشة الرئيسية أي صورة.</item>
         <item quantity="two">إحداهما مستخدمة كخلفية: لن تعرض الشاشة الرئيسية أي صورة.</item>
@@ -75,12 +75,13 @@
         <item quantity="many">إحداها مستخدمة كخلفية: لن تعرض الشاشة الرئيسية أي صورة.</item>
         <item quantity="other">إحداها مستخدمة كخلفية: لن تعرض الشاشة الرئيسية أي صورة.</item>
     </plurals>
-    <string name="settings_background_discard_question">تجاهل التغييرات؟</string>
+    <string name="settings_picture_editor_discard_question">تجاهل التغييرات؟</string>
     <string name="settings_background_discard_text">لم تُحفظ التغييرات على الخلفية.</string>
-    <string name="settings_background_discard">تجاهل</string>
+    <string name="settings_tile_banner_discard_text">لم تُحفظ التغييرات على صورة المربع.</string>
+    <string name="settings_picture_editor_discard">تجاهل</string>
     <string name="settings_background_applying">جارٍ معالجة الخلفية…</string>
-    <string name="settings_background_preparing">جارٍ تجهيز الصورة…</string>
-    <string name="settings_background_preparing_count">جارٍ تجهيز الصورة <xliff:g id="number" example="3">%1$d</xliff:g> من <xliff:g id="total" example="10">%2$d</xliff:g>…</string>
+    <string name="settings_pictures_preparing">جارٍ تجهيز الصورة…</string>
+    <string name="settings_pictures_preparing_count">جارٍ تجهيز الصورة <xliff:g id="number" example="3">%1$d</xliff:g> من <xliff:g id="total" example="10">%2$d</xliff:g>…</string>
 
     <string name="settings_pictures_adding">جارٍ إضافة الصورة…</string>
     <string name="settings_pictures_how">لإضافة صورة:</string>
@@ -89,6 +90,7 @@
     <string name="settings_pictures_add_from_folder">إضافة من مجلد</string>
     <string name="settings_pictures_details">⁦<xliff:g id="width" example="1920">%1$d</xliff:g> × <xliff:g id="height" example="1080">%2$d</xliff:g>⁩ · <xliff:g id="size" example="3.1 MB">%3$s</xliff:g></string>
     <string name="settings_pictures_no_picture">بلا صورة</string>
+    <string name="settings_tile_banner_original">اللافتة الأصلية</string>
     <string name="settings_pictures_unnamed">صورة</string>
     <string name="settings_pictures_delete">حذف</string>
     <string name="settings_pictures_delete_question">حذف <xliff:g id="name" example="beach.png">%1$s</xliff:g>؟</string>
@@ -252,7 +254,7 @@
     <string name="settings_appearance_gray">رمادي</string>
     <string name="settings_appearance_dark">داكن</string>
     <string name="settings_appearance_light_mode">فاتح</string>
-    <string name="settings_background_pictures">الصور</string>
+    <string name="settings_pictures_label">الصور</string>
     <string name="settings_pictures_folder_label">في المجلد</string>
     <plurals name="settings_pictures_folder_count">
         <item quantity="zero"><xliff:g id="count" example="0">%d</xliff:g> صورة</item>

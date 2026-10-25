@@ -16,6 +16,9 @@ sealed interface AppAction {
     /** Gives the app a name of the user's own, or its own label back ([appName], [ArrangedApps.renamed]). */
     data object Rename : AppAction
 
+    /** Shows a picture of the library on the app's tile, framed as the user says, or its own banner again ([TileImage]). */
+    data object TileBanner : AppAction
+
     /** Opens the app's page in the device's settings ([AppInfoScreen]). */
     data object Info : AppAction
 }
@@ -29,7 +32,7 @@ data class AppMenuEntry(val action: AppAction, val available: Boolean = true)
 
 /**
  * The entries the menu of [app], one of [arranged]'s shown apps, lists, in its order: Move, Hide,
- * Rename, App info. Move only where it changes something: with no other app shown, there's nowhere to move
+ * Rename, Tile banner, App info. Move only where it changes something: with no other app shown, there's nowhere to move
  * it, so it isn't listed. App info is listed always, available where the device has the app's
  * page in its settings ([hasAppInfo], [AppInfoScreen.exists]).
  */
@@ -39,6 +42,7 @@ fun appActions(arranged: ArrangedApps, app: HomeApp, hasAppInfo: Boolean): List<
         AppMenuEntry(AppAction.Move).takeIf { arranged.shown.size > 1 },
         AppMenuEntry(AppAction.Hide),
         AppMenuEntry(AppAction.Rename),
+        AppMenuEntry(AppAction.TileBanner),
         AppMenuEntry(AppAction.Info, available = hasAppInfo),
     )
 }

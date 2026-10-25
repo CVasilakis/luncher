@@ -12,6 +12,8 @@ import com.luncher.domain.appearance.Side
 import com.luncher.domain.appearance.ThemeMode
 import com.luncher.domain.appearance.VerticalAlignment
 import com.luncher.domain.appearance.colorRoles
+import com.luncher.domain.apps.TileImage
+import com.luncher.domain.apps.TileImageOption
 import com.luncher.domain.pictures.Blur
 import com.luncher.domain.pictures.Fit
 import com.luncher.domain.pictures.PicturePosition
@@ -19,7 +21,8 @@ import com.luncher.launcher.ui.R as UiR
 
 // What the options, their values and the appearance's groups are called, in the user's language:
 // one exhaustive `when` each, so a new option doesn't compile until it has its labels. The
-// appearance editor and the background editor both show the appearance's.
+// appearance editor and the background editor both show the appearance's; the tile banner picker
+// the tile image's, named as the background's fit and position are.
 
 /**
  * What a catalog's options [O], over its model [M], are called, and their values, in the user's
@@ -101,6 +104,20 @@ internal object AppearanceLabels : OptionLabels<Appearance, AppearanceOption<*>>
     override fun swatch(option: AppearanceOption<*>, model: Appearance): Int? = when (option) {
         AppearanceOption.AccentColor -> colorRoles(model.theme).primary
         else -> null
+    }
+}
+
+/** The tile image's options ([TileImageOption]): the fit and the position, called as the background's. */
+internal object TileImageLabels : OptionLabels<TileImage, TileImageOption<*>> {
+
+    override fun label(option: TileImageOption<*>): Int = when (option) {
+        TileImageOption.TileFit -> R.string.settings_appearance_fit
+        TileImageOption.TilePosition -> R.string.settings_appearance_position
+    }
+
+    override fun value(option: TileImageOption<*>, model: TileImage, context: Context): String = when (option) {
+        TileImageOption.TileFit -> context.getString(fit(TileImageOption.TileFit.get(model)))
+        TileImageOption.TilePosition -> context.getString(position(TileImageOption.TilePosition.get(model)))
     }
 }
 

@@ -7,7 +7,7 @@ import kotlin.math.roundToInt
 /**
  * Tiles in rows of [columns] ([columnsFor] picks how many for a width), in order left to right and
  * top to bottom. The tiles share the [width] they get between them, [gap] apart, with the banner's
- * 16:9 shape; what's left over after rounding goes to equal margins on both sides, so the grid is
+ * 16:9 shape ([TileShape]); what's left over after rounding goes to equal margins on both sides, so the grid is
  * centered. The row that isn't full is the last one, or the first with [shortRowFirst], and goes
  * where [rowAlignment] says: at the left, centered, or at the right. Below each row, the last one
  * too, is [nameHeight] of room for the focused tile's name, none by default. The rows go where
@@ -38,7 +38,7 @@ class TileGrid(
     }
 
     override val tileWidth: Int = ((width - gap * (columns - 1)) / columns).coerceAtLeast(0)
-    override val tileHeight: Int = tileWidth * BANNER_HEIGHT / BANNER_WIDTH
+    override val tileHeight: Int = tileWidth * TileShape.HEIGHT / TileShape.WIDTH
 
     private val margin: Int = ((width - tileWidth * columns - gap * (columns - 1)) / 2).coerceAtLeast(0)
     private val rows: Int = rows(tileCount)
@@ -132,10 +132,6 @@ class TileGrid(
             require(tileWidth > 0) { "tileWidth must be positive: $tileWidth" }
             return ((width + gap).toFloat() / (tileWidth + gap)).roundToInt().coerceAtLeast(1)
         }
-
-        // Android TV banners are 320x180 dp.
-        private const val BANNER_WIDTH = 16
-        private const val BANNER_HEIGHT = 9
     }
 }
 

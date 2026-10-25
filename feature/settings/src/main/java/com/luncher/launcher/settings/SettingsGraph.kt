@@ -6,6 +6,7 @@ import android.net.Uri
 import com.luncher.domain.appearance.AppearanceSettings
 import com.luncher.domain.apps.AppArrangements
 import com.luncher.domain.apps.AppCustomizations
+import com.luncher.domain.apps.AppImages
 import com.luncher.domain.apps.InstalledApps
 import com.luncher.domain.jobs.Jobs
 import com.luncher.domain.pictures.FolderPictures
@@ -24,8 +25,15 @@ interface SettingsGraph {
     val installedApps: InstalledApps
     val appArrangements: AppArrangements
 
-    /** What the user set for each app: Hide apps shows the name given beside the real one. */
+    /** What the user set for each app: Hide apps shows the name given beside the real one; the tile banner picker stores the picture on its tile. */
     val appCustomizations: AppCustomizations
+
+    /**
+     * An app's own image drawn at any size, kept nowhere: the tile banner picker shows it. Not
+     * the home screen's tiles' images, which are kept at the tile's size, a file for each app, so
+     * drawing another size through them would replace the tile's.
+     */
+    val appBanners: AppImages<Bitmap>
 
     /** The home screen's appearance; also the wallpaper, which a picture of the library is made or stops being. */
     val appearanceSettings: AppearanceSettings

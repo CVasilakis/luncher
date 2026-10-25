@@ -360,14 +360,14 @@ class BackgroundActivityTest {
             waitUntil(allOf(withId(R.id.settings_pictures_chosen), isDisplayed(), isDescendantOfA(row("sunset.jpg"))), isDisplayed())
 
             press(KeyEvent.KEYCODE_BACK)
-            waitUntil(withText(R.string.settings_background_discard_question), isDisplayed(), inDialog = true)
+            waitUntil(withText(R.string.settings_picture_editor_discard_question), isDisplayed(), inDialog = true)
             waitUntil(withText(R.string.settings_pictures_cancel), hasFocus(), inDialog = true)
             pressInDialog(KeyEvent.KEYCODE_DPAD_CENTER)
             waitUntil(row("sunset.jpg"), hasFocus())
 
             press(KeyEvent.KEYCODE_BACK)
             waitUntil(withText(R.string.settings_pictures_cancel), hasFocus(), inDialog = true)
-            pressToButton(R.string.settings_background_discard)
+            pressToButton(R.string.settings_picture_editor_discard)
             pressInDialog(KeyEvent.KEYCODE_DPAD_CENTER)
             waitUntilFinishing()
             assertEquals("nothing stored", Background(beach.id), appearance.appearance.background)

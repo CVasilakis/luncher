@@ -17,7 +17,8 @@ domain/src/
 │   │   ├── LaunchableApp.kt     model: an app's TV launcher activity (package + activity), its identity
 │   │   ├── InstalledApp.kt      model: a launchable app with its label, whether it has a banner, and when it was installed or updated, as the device reports it
 │   │   ├── AppCustomization.kt  model: what the user set for one app, as stored: its name, its tile's picture
-│   │   ├── TileImage.kt         model: a picture of the library on an app's tile, and its framing (a PictureChoice); without a picture, a draft's "the app's own banner"
+│   │   ├── TileImage.kt         model: a picture of the library on an app's tile, and its framing (a PictureChoice); without a picture, a draft's "the app's own banner"; only a framing its context offers
+│   │   ├── TileImageOption.kt   models and rules: the tile image's catalog of options (fit, position), each with its values and those its context offers (TileImageContext: what filling a tile cuts from the picture)
 │   │   ├── AppCustomizations.kt port: where what the user set for each app is kept, and when it changes
 │   │   ├── HomeApp.kt           model: an app as the user set it up, the installed app with its AppCustomization; its name, the user's or the label
 │   │   ├── InstalledApps.kt     port: the TV apps installed on the device, and when apps change
@@ -26,7 +27,7 @@ domain/src/
 │   │   ├── AppArrangements.kt   port: where the arrangement is kept, and when it changes
 │   │   ├── HomeApps.kt          rule: which apps the home screen shows, in which order, and which are hidden, each with what the user set for it, matched to the installed apps (StoredMatch); the orders by name (NameOrder)
 │   │   ├── ArrangedApps.kt      model and rules: the shown and hidden apps (HomeApps); hiding or showing one, and what to store; what to store of what the user set for the apps with one renamed (renamed), its tile's picture chosen (withImage), or pictures deleted (withoutPictures); all of them by the device's label, for Hide apps
-│   │   ├── AppAction.kt         model and rule: what the user can do to an app from its tile's menu, one type each, and which the menu lists, each available or not (AppMenuEntry)
+│   │   ├── AppAction.kt         model and rule: what the user can do to an app from its tile's menu (move, hide, rename, a picture for its tile, its info), one type each, and which the menu lists, each available or not (AppMenuEntry)
 │   │   ├── AppNames.kt          rule: the name an app the user renamed keeps (appName), or its own label again; how long it may be (MAX_APP_NAME)
 │   │   ├── AppInfoScreen.kt     port: whether the device has the page about an app in its settings, which App info opens
 │   │   └── Banner.kt            model and rule: which image a tile shows (the app's banner, or its icon and name; or the picture the user chose, the app's own where it can't be drawn now)
@@ -56,7 +57,7 @@ domain/src/
 │   │   ├── Picture.kt           model: a picture of the library (PictureId, from its content), its name, size as shown, bytes, when added
 │   │   ├── Pictures.kt          port: the library's pictures, renaming and deleting them, and when they change
 │   │   ├── PictureImport.kt     port: adding a picture from a source, slow, cancellable, when its copying starts, and how that went (ImportResult)
-│   │   ├── PictureLibrary.kt    rule: the library as the background editor lists it, by name, and what each one is used for
+│   │   ├── PictureLibrary.kt    rule: the library as the picture editors list it, by name, and what each one is used for
 │   │   ├── PictureLimits.kt     rule: the largest picture the library takes (bytes, megapixels), and the most pictures one share brings
 │   │   ├── PictureNames.kt      rules: the name a picture keeps (pictureName), a name the library has already (nameClash: the same file, or another), the name a picture renamed keeps or why it can't (renaming), and what a drop folder's listing, or its preview, already tells can't be added (whyRefused)
 │   │   ├── ReceivedPictures.kt  helper: the pictures other apps shared, added one at a time in sessions the window that took them last holds; how far it got, then how it went (Outcome), stopped on Cancel; also Add all's, an instance of its own
@@ -84,6 +85,7 @@ domain/src/
 │       ├── TileLayout.kt        how an arrangement of tiles reports sizes and positions
 │       ├── TileMoves.kt         how it says where a tile the user moves goes, and which row and place across a tile is at
 │       ├── Direction.kt         model: a D-pad arrow
+│       ├── TileShape.kt         model and rule: a tile's shape, 16:9, and the corners of a tile drawn at another size, as round for it as the home screen's
 │       ├── TileGrid.kt          rule: the grid (rows of tiles as wide as a width; the short row first or last, at the left, centered or at the right; at the top, centered or at the bottom of a height; room below each row for the tiles' names), and moves in it
 │       ├── TileFocus.kt         rule: where each arrow takes the focus among the tiles: along the row, the nearest tile up or down, and back the way it came
 │       ├── TileLayouts.kt       rule: the layouts for a TileGeometry, in pixels at a density; picks the arrangement and placement
@@ -95,6 +97,7 @@ domain/src/
     ├── apps/FakeAppArrangements.kt fake of the AppArrangements port: the arrangement in memory
     ├── apps/FakeAppCustomizations.kt fake of the AppCustomizations port: what the user set in memory; named(app, name)
     ├── apps/FakeAppInfoScreen.kt   fake of the AppInfoScreen port: whether the page exists, as the test sets it
+    ├── apps/FakeAppImages.kt       fake of the AppImages port: draws what the test says, counting what it drew
     ├── appearance/FakeAppearanceSettings.kt  fake of the AppearanceSettings port: the appearance in memory
     ├── appearance/AppearanceChanges.kt       each option at each value but its default, in a context that offers it: what the catalog-wide tests draw (SAMPLE_WALLPAPER for the background's, wide or tall)
     ├── clock/FakeClock.kt          fake of the Clock port: a fixed time the test moves

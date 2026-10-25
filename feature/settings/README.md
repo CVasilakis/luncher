@@ -2,7 +2,9 @@
 
 The settings panel, `:feature:settings`, and the screens it opens: Hide apps, the appearance
 editor, and from it the background editor, where the wallpaper is chosen from Luncher's picture
-library, with Add from folder; and the way in for the pictures another app shares. What a feature
+library, with Add from folder; the tile banner picker, which the home screen's tile menu opens,
+where a picture of the library is chosen for an app's tile; and the way in for the pictures
+another app shares. What a feature
 module holds and may use: [`../README.md`](../README.md); the rules it follows:
 [`../../docs/ARCHITECTURE.md`](../../docs/ARCHITECTURE.md).
 
@@ -41,6 +43,8 @@ feature/settings/
     │   │   ├── PictureDraft.kt   a picture editor's draft: its values offered, changed as Save counts it, Back's question, the instance state
     │   │   ├── OptionGrid.kt     a picture editor's options, of any catalog, as a grid of fields, two a row
     │   │   ├── PictureStartColumn.kt  a picture editor's start: the preview it's given, options, Save and Delete all, the preview as large as the room left
+    │   │   ├── TileBannerActivity.kt  the tile banner picker: the picture editors' parts, a preview of the app's tile, Save through the per-app port
+    │   │   ├── TilePreviewView.kt    its preview: the app's tile with the draft's image, a tile's shape and corners
     │   │   ├── AddFromFolderActivity.kt  the drop folders' pictures, a preview of the selected one; OK adds it, then returns it; Add all
     │   │   ├── SharePictureActivity.kt   where another app's share arrives: opens the home screen and the window, no screen
     │   │   ├── PictureReceivedActivity.kt the window over the home screen after a share: shows the pictures being added, then their uses, or how many were saved and why the others weren't
@@ -59,19 +63,21 @@ feature/settings/
         └── screenshots/          reference images, committed: settings/, pictures/
 ```
 
-Everything but the activities and `SettingsGraph` is `internal`.
+Everything but the activities and `SettingsGraph` is `internal`, and `TileBannerActivity.intent`, the one way another
+feature opens the picker ([`ARCHITECTURE.md`](../../docs/ARCHITECTURE.md#features)).
 
 ## Manifest
 
 | Element | Reason (don't remove without replacing it) |
 |---|---|
 | Every activity but `SharePictureActivity`: `exported="false"` | Only Luncher opens them. |
-| The panels and the two editors: `launchMode="singleTop"` | A repeated OK or Menu press doesn't stack a second one. |
+| The panels, the two editors and the tile banner picker: `launchMode="singleTop"` | A repeated OK or Menu press doesn't stack a second one. |
 | `HideAppsActivity`: `Theme.Luncher.Settings.Panel` | Opens in the settings panel's place, which already dims the home screen ([below](#hidden-apps)). |
 | `AppearanceActivity`: `Theme.Luncher.Settings.FullScreen` | Full-screen and opaque: it covers the home screen whole, so the home screen is stopped meanwhile and applies the changes once, when it comes back ([`ARCHITECTURE.md`](../../docs/ARCHITECTURE.md#appearance), point 5). |
 | No `screenOrientation` | Android 8.0 (API 26) refuses one on a floating activity; it shows over the landscape home screen anyway, as the editor does. |
 | `BackgroundActivity`: `Theme.Luncher.Settings.FullScreen` | Full-screen and opaque, as the appearance editor, which opens it. |
 | `BackgroundActivity`: `windowSoftInputMode="adjustNothing"` | The keyboard a picture's Rename opens doesn't slide the editor up behind the dialog to keep a low picture in sight, with a black band below; the dialog moves instead (`:ui`'s `NameDialog`, [`ui/README.md`](../../ui/README.md#the-design-system)). |
+| `TileBannerActivity`: `Theme.Luncher.Settings.FullScreen`, `windowSoftInputMode="adjustNothing"` | As the background editor, whose layout and parts it shares: full-screen and opaque over the home screen, which is stopped meanwhile and shows the tile as stored when it comes back; a picture's Rename doesn't slide it up. |
 | `AddFromFolderActivity`: `Theme.Luncher.Settings.Pictures` | Full-screen and opaque, on the home screen's background. |
 | `SharePictureActivity`: `exported="true"` | Other apps' shares arrive there. |
 | `<queries>` for `MAIN`+`HOME` | Package visibility (targetSdk 30+): `SharePictureActivity` tells whether Luncher is the device's home app by what a `HOME` intent resolves to ([below](#adding-a-picture)), which needs every home app visible. Without it, Android hides the stock launcher, and Luncher, the only home app left, seems the default: a share then opened a second home screen beside the stock launcher's (measured on API 30). |
@@ -376,9 +382,9 @@ kind of question, Cancel focused, which says how many, and what that does to the
 Delete says it of one, the tiles counted for all of them. The editor stays, the focus on Save. While the library is empty
 it's dimmed, and the focus passes it by.
 
-The editor is put together from parts a screen that chooses a picture of the library and frames it
-can share, each one concern behind a narrow surface, its state its own, none of them knowing which
-screen holds it; the layouts of the list's column (`settings_pictures_column`) and of what's below
+The editor is put together from parts every screen that chooses a picture of the library and
+frames it shares (the tile banner picker too, [below](#tile-banner)), each one concern behind a
+narrow surface, its state its own, none of them knowing which screen holds it; the layouts of the list's column (`settings_pictures_column`) and of what's below
 the preview (`settings_picture_editor_controls`) are theirs, included by the screen's.
 
 | Part | Job |
@@ -419,6 +425,55 @@ screen of another size) is drawn in the background from its working copy, a `Lat
 and shows when it's done. The screen keeps each picture's row while the picture is in the library, so its thumbnail is
 read or drawn once, and drops the requests in `onStop`. A draft survives a configuration change
 (a TV switching resolution), kept in the instance state.
+
+### Tile banner
+
+The tile banner picker (`TileBannerActivity`) is where a picture of the library is chosen for one
+app's tile, in place of its own banner, and framed; Tile banner in the tile's menu on the home
+screen opens it ([`../home/README.md`](../home/README.md#a-tiles-menu)), for that app. (The code calls
+what it chooses the tile's image: `TileImage`, and its options `TileImageOption`.) It's the
+background editor's screen with a tile in place of the home screen, put together from the same
+parts ([above](#background)), so everything not said here is as there: the pictures' list, its
+focus and its hint, the long press's Rename and Delete, Delete all (the whole library, after the
+same question), Add from folder, preparing the pictures at its start, the options' fields and
+their lists, the draft and Back's question, the instance state, mirroring in a right-to-left
+language but for the preview's content and the pictures.
+
+At the end, the list's first row is "Original banner": no picture, the tile showing
+its app's own image (its banner, or for an app without one its icon card), its thumbnail that
+image. At the start, a preview of the app's tile with the draft (`TilePreviewView`): a tile's
+shape, 16:9 (`TileShape`), as large as the room the others leave (`PictureStartColumn`), its
+corners as round for its size as the tiles' are on the home screen (the appearance's corner
+radius, `TileShape.cornerRadius`); below it the app's name as the home screen shows it, centered,
+so the screen says which app's tile it is with no title; then the tile image's options, Fit and
+Position, a row of two fields, then Save and Delete all.
+
+The options are the tile image's catalog (`TileImageOption`, with its own context,
+`TileImageContext`): what they offer follows what filling **a tile** cuts from the picture, not the
+screen: Left and Right for a picture wider than a tile, Top and Bottom for a taller one, both
+dimmed for a picture of a tile's shape (a 1920 x 1080 one), and without a picture; the position
+also while stretched. Their names and values are the background's (`TileImageLabels`).
+
+The picker opens on what's stored for the tile, the focus on its picture, or on Original banner.
+**Save** only stores the choice, through `AppCustomizations` (`ArrangedApps.withImage`: what else
+is set for the app kept), and closes, at once, with no window: the chosen picture's working copy
+is made already (as it was added, or by the preparing at the picker's start), so it's a decision
+([`ARCHITECTURE.md`](../../docs/ARCHITECTURE.md#background-work-and-changes-while-shown), point
+9), and the home screen draws the tile as it comes back. Original banner saved takes the picture
+off the tile. Unchanged, Save just closes. A picture another tile, or the wallpaper, shows can be
+chosen too. Deleting the draft's picture makes Original banner the draft; deleting the tile's
+stored picture takes it off the tile at once, as deleting does everywhere. The app is found among
+the installed apps, shown or hidden, by the package and activity the home screen passed
+(`TileBannerActivity.intent`); gone (uninstalled meanwhile), the picker closes, storing nothing.
+
+| Part | Job |
+|---|---|
+| `TileImage`, `TileImageOption`, `TileImageContext` (`:domain`) | the draft and what's stored: a picture or none, and its framing; its options and what each offers for a picture in a tile's shape |
+| `AppCustomizations` (`:domain`), `ArrangedApps.withImage` | where the choice is stored, with what else the user set for the app |
+| `AppImages` (`:domain`), `SettingsGraph.appBanners` | the app's own image, drawn at the preview's and the row's size, kept nowhere: the home screen's kept tiles (`appImages` there) are at the tile's size, a file per app, and drawing another size through them would replace the tile's |
+| `PictureImages` (`:domain`) | a picture drawn from its working copy at the preview's size, in the background, the latest request winning, as the background editor's preview draws one |
+| `TilePreviewView` | the preview: the app's own image at once, a picture once drawn (the app's own where it can't be drawn, as on its tile), each drawn again only when the draft or the size changes |
+| `TileBannerActivity` | what's the tile banner picker's alone: the app it's for, its preview and name, Save through `AppCustomizations`; the picture editors' parts ([above](#background)) put together |
 
 ### Adding a picture
 

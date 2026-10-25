@@ -15,6 +15,7 @@ import com.luncher.domain.apps.AppArrangements
 import com.luncher.domain.apps.AppCustomizations
 import com.luncher.domain.apps.FakeAppArrangements
 import com.luncher.domain.apps.FakeAppCustomizations
+import com.luncher.domain.apps.FakeAppImages
 import com.luncher.domain.apps.FakeInstalledApps
 import com.luncher.domain.apps.InstalledApps
 import com.luncher.domain.appearance.SAMPLE_WALLPAPER
@@ -42,6 +43,9 @@ open class TestSettingsGraph(
     override val installedApps: InstalledApps = FakeInstalledApps()
     override val appArrangements: AppArrangements = FakeAppArrangements()
     override val appCustomizations: AppCustomizations = FakeAppCustomizations()
+
+    /** An app's own image: a [sample] of its own colors, by its package. */
+    override val appBanners = FakeAppImages { app, _, width, height -> sample(app.launchable.packageName, width, height) }
     override val appearanceSettings = FakeAppearanceSettings()
     override val pictures get() = library
     override val pictureImport get() = library

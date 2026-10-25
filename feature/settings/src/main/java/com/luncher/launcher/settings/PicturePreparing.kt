@@ -91,8 +91,8 @@ internal class PicturePreparing(
     /** "Preparing picture 2 of 5…", or for one, "Preparing the picture…". */
     private fun text(): String =
         if (total == 1) {
-            activity.getString(R.string.settings_background_preparing)
+            activity.getString(R.string.settings_pictures_preparing)
         } else {
-            activity.getString(R.string.settings_background_preparing_count, total - preparing.size + 1, total)
+            activity.getString(R.string.settings_pictures_preparing_count, total - preparing.size + 1, total)
         }
 }

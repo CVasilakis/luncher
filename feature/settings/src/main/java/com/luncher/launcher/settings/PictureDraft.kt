@@ -78,12 +78,12 @@ internal class PictureDraft<P : PictureChoice<P>, C>(
         dialog = MessageDialog(
             activity,
             roles(),
-            activity.getString(R.string.settings_background_discard_question),
+            activity.getString(R.string.settings_picture_editor_discard_question),
             discardText,
             // Cancel first, so a repeated Back or OK loses nothing.
             listOf(
                 DialogButton(activity.getString(R.string.settings_pictures_cancel), DialogButton.Kind.TONAL) {},
-                DialogButton(activity.getString(R.string.settings_background_discard), DialogButton.Kind.DANGER) { close() },
+                DialogButton(activity.getString(R.string.settings_picture_editor_discard), DialogButton.Kind.DANGER) { close() },
             ),
             Badge.Kind.DANGER to UiR.drawable.icon_warning,
         ).also { it.show() }

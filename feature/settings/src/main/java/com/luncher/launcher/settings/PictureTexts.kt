@@ -112,8 +112,8 @@ internal fun Context.deleteText(uses: List<PictureUse>): String =
 /** What deleting all [count] pictures does, as [deleteText] says it of one, [uses] being all of theirs. */
 internal fun Context.deleteAllText(count: Int, uses: List<PictureUse>): String =
     (
-        usesText(uses) { resources.getQuantityString(R.plurals.settings_background_delete_all_used_background, count) } +
-            resources.getQuantityString(R.plurals.settings_background_delete_all_text, count, count)
+        usesText(uses) { resources.getQuantityString(R.plurals.settings_pictures_delete_all_used_background, count) } +
+            resources.getQuantityString(R.plurals.settings_pictures_delete_all_text, count, count)
         ).joinToString(" ")
 
 /** A sentence for each kind of use in [uses] that deleting changes: the background's, [background]; the tiles', with how many. */

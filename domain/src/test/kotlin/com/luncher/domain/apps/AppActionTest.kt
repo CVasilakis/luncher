@@ -14,9 +14,9 @@ class AppActionTest {
     )
 
     @Test
-    fun `offers moving, hiding and renaming the app, and its info`() {
+    fun `offers moving, hiding, renaming the app and a picture for its tile, and its info`() {
         assertEquals(
-            listOf(AppMenuEntry(AppAction.Move), AppMenuEntry(AppAction.Hide), AppMenuEntry(AppAction.Rename), AppMenuEntry(AppAction.Info)),
+            listOf(AppMenuEntry(AppAction.Move), AppMenuEntry(AppAction.Hide), AppMenuEntry(AppAction.Rename), AppMenuEntry(AppAction.TileBanner), AppMenuEntry(AppAction.Info)),
             appActions(arranged("a", "b"), homeApp("a"), hasAppInfo = true),
         )
     }
@@ -25,7 +25,7 @@ class AppActionTest {
     @Test
     fun `offers no move with no other app shown`() {
         assertEquals(
-            listOf(AppMenuEntry(AppAction.Hide), AppMenuEntry(AppAction.Rename), AppMenuEntry(AppAction.Info)),
+            listOf(AppMenuEntry(AppAction.Hide), AppMenuEntry(AppAction.Rename), AppMenuEntry(AppAction.TileBanner), AppMenuEntry(AppAction.Info)),
             appActions(arranged("a", hidden = listOf("b")), homeApp("a"), hasAppInfo = true),
         )
     }
@@ -33,15 +33,15 @@ class AppActionTest {
     @Test
     fun `lists the app's info, unavailable, where the device has no page for it`() {
         assertEquals(
-            listOf(AppMenuEntry(AppAction.Move), AppMenuEntry(AppAction.Hide), AppMenuEntry(AppAction.Rename), AppMenuEntry(AppAction.Info, available = false)),
+            listOf(AppMenuEntry(AppAction.Move), AppMenuEntry(AppAction.Hide), AppMenuEntry(AppAction.Rename), AppMenuEntry(AppAction.TileBanner), AppMenuEntry(AppAction.Info, available = false)),
             appActions(arranged("a", "b"), homeApp("a"), hasAppInfo = false),
         )
     }
 
     @Test
-    fun `with no other app shown and no page for its info, only hiding and renaming it are available`() {
+    fun `with no other app shown and no page for its info, only hiding, renaming and a picture are available`() {
         assertEquals(
-            listOf(AppMenuEntry(AppAction.Hide), AppMenuEntry(AppAction.Rename), AppMenuEntry(AppAction.Info, available = false)),
+            listOf(AppMenuEntry(AppAction.Hide), AppMenuEntry(AppAction.Rename), AppMenuEntry(AppAction.TileBanner), AppMenuEntry(AppAction.Info, available = false)),
             appActions(arranged("a", hidden = listOf("b")), homeApp("a"), hasAppInfo = false),
         )
     }
