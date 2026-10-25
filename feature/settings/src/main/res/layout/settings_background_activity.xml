@@ -6,7 +6,6 @@
      Mirrored in a right-to-left language, like the other settings screens; the preview's content
      isn't. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:baselineAligned="false"
@@ -15,10 +14,10 @@
 
     <!-- The overscan margin at the start, less the room the content keeps for a focused entry's
          zoom; the gap to the pictures at the end. The preview as tall as the room left
-         (BackgroundStartColumn); on the smallest screens, moving the focus scrolls it. It cuts
+         (PictureStartColumn); on the smallest screens, moving the focus scrolls it. It cuts
          its content neither at its padding nor at the content's edges, which end at Save and
          Delete all: their zoom and shadow reach past them. -->
-    <com.luncher.launcher.settings.BackgroundStartColumn
+    <com.luncher.launcher.settings.PictureStartColumn
         android:id="@+id/settings_background_start"
         android:layout_width="0dp"
         android:layout_height="match_parent"
@@ -41,115 +40,18 @@
             android:paddingRight="@dimen/settings_container_padding">
 
             <!-- The home screen with the draft's background, its size set by
-                 BackgroundStartColumn, its corners rounded. Not focusable. -->
+                 PictureStartColumn, its corners rounded. Not focusable. -->
             <com.luncher.launcher.settings.AppearancePreviewView
                 android:id="@+id/settings_background_preview"
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
                 android:layout_gravity="center_horizontal" />
 
-            <!-- BackgroundActivity adds the background's options, two fields a row. -->
-            <LinearLayout
-                android:id="@+id/settings_background_options"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/settings_screen_gap"
-                android:clipChildren="false"
-                android:orientation="vertical" />
-
-            <!-- Save at the start, Delete all at the end, half the row each; one below the other
-                 when either doesn't fit its half (EntriesRow). -->
-            <com.luncher.launcher.ui.EntriesRow
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/settings_screen_gap"
-                android:baselineAligned="false"
-                android:clipChildren="false"
-                android:orientation="horizontal">
-
-                <com.luncher.launcher.ui.PillButton
-                    android:id="@+id/settings_background_save"
-                    style="@style/Widget.Luncher.Button"
-                    android:drawableStart="@drawable/icon_check"
-                    android:text="@string/settings_background_save" />
-
-                <!-- In the error color: it deletes every picture. Dimmed, and passed by, while there's none. -->
-                <com.luncher.launcher.ui.PillButton
-                    android:id="@+id/settings_background_delete_all"
-                    style="@style/Widget.Luncher.Button"
-                    android:drawableStart="@drawable/icon_trash"
-                    android:text="@string/settings_background_delete_all"
-                    app:kind="danger" />
-            </com.luncher.launcher.ui.EntriesRow>
+            <!-- The options, Save and Delete all. -->
+            <include layout="@layout/settings_picture_editor_controls" />
         </LinearLayout>
-    </com.luncher.launcher.settings.BackgroundStartColumn>
+    </com.luncher.launcher.settings.PictureStartColumn>
 
-    <!-- BackgroundActivity sets the width: settings_appearance_options_width, or half the screen.
-         The overscan margin at the end only (lint's RtlSymmetry wants both sides set). -->
-    <LinearLayout
-        android:id="@+id/settings_background_end"
-        android:layout_width="@dimen/settings_appearance_options_width"
-        android:layout_height="match_parent"
-        android:clipChildren="false"
-        android:orientation="vertical"
-        android:paddingStart="0dp"
-        android:paddingTop="@dimen/settings_appearance_margin_vertical"
-        android:paddingEnd="@dimen/settings_appearance_margin_horizontal"
-        android:paddingBottom="@dimen/settings_appearance_margin_vertical">
-
-        <!-- The label, and at its end how to rename or delete a picture. -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/settings_label_gap"
-            android:gravity="bottom"
-            android:orientation="horizontal">
-
-            <com.luncher.launcher.ui.ThemedText
-                style="@style/Widget.Luncher.Settings.Label"
-                android:layout_marginStart="@dimen/settings_container_padding"
-                android:layout_marginBottom="0dp"
-                android:text="@string/settings_background_pictures" />
-
-            <com.luncher.launcher.ui.ThemedText
-                android:id="@+id/settings_background_hint"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="@dimen/settings_appearance_value_gap"
-                android:layout_marginEnd="@dimen/settings_container_padding"
-                android:layout_weight="1"
-                android:text="@string/settings_background_hint"
-                android:textAlignment="viewEnd"
-                android:textSize="@dimen/text_supporting"
-                app:colorRole="onSurfaceVariant" />
-        </LinearLayout>
-
-        <!-- As tall as the pictures, at most what the column leaves; they scroll there, a row
-             ahead of the focus, cut along the container's corners, fading out where there's more.
-             Down past the last picture stays there, not to Save or Delete all. -->
-        <com.luncher.launcher.settings.ListFrame
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:fill="surface">
-
-            <com.luncher.launcher.ui.LookAheadScrollView
-                android:id="@+id/settings_background_list_scroll"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:scrollbars="none">
-
-                <!-- No picture, the library's pictures, Add from folder; while the library is empty,
-                     how to add a picture. BackgroundActivity adds them. A margin inside around
-                     them, which their corners follow. -->
-                <LinearLayout
-                    android:id="@+id/settings_background_list"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:clipChildren="false"
-                    android:clipToPadding="false"
-                    android:orientation="vertical"
-                    android:padding="@dimen/settings_container_padding" />
-            </com.luncher.launcher.ui.LookAheadScrollView>
-        </com.luncher.launcher.settings.ListFrame>
-    </LinearLayout>
+    <!-- The pictures to choose from. -->
+    <include layout="@layout/settings_pictures_column" />
 </LinearLayout>

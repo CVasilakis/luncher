@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- An option of the background editor, a field of the 2 x 2 grid: its name above its value, and
-     a mark that OK opens its values in a list beside it (OptionList). Outlined while its list
-     shows. Zoomed while focused: a field, not a row of a list. -->
+<!-- An option of a picture editor, a field of its grid (OptionGrid; the background editor's is
+     2 x 2): its name above its value, and a mark that OK opens its values in a list beside it
+     (OptionList). Outlined while its list shows. Zoomed while focused: a field, not a row of a
+     list. -->
 <com.luncher.launcher.ui.ListEntry xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="0dp"

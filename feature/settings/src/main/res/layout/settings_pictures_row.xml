@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- A picture to choose in the background editor: its thumbnail, its name, on one line, cut with
-     "…" (BackgroundActivity sets it), below it its size in px and its file's
+<!-- A picture to choose in a picture editor's list (LibraryList): its thumbnail, its name, on one
+     line, cut with "…" (LibraryList sets it), below it its size in px and its file's
      size, as Add from folder shows them (no place: it's in Luncher's own storage), and a check
-     while it's the draft's; it's activated then, tinted with the accent. Also No picture (the
-     plain background as its thumbnail) and Add from folder (a plus in place of the thumbnail),
-     with no line below, their names on two lines at most (Add from folder needs both on the
-     smallest screens). -->
+     while it's the draft's; it's activated then, tinted with the accent. Also the first row (No
+     picture, the plain background as its thumbnail) and Add from folder (a plus in place of the
+     thumbnail), with no line below, their names on two lines at most (Add from folder needs both
+     on the smallest screens). -->
 <com.luncher.launcher.ui.ListEntry xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
@@ -15,15 +15,15 @@
     android:gravity="center_vertical"
     android:orientation="horizontal"
     android:paddingLeft="@dimen/entry_padding"
-    android:paddingTop="@dimen/settings_background_row_padding"
+    android:paddingTop="@dimen/settings_pictures_row_padding"
     android:paddingRight="@dimen/entry_padding"
-    android:paddingBottom="@dimen/settings_background_row_padding"
+    android:paddingBottom="@dimen/settings_pictures_row_padding"
     app:entryCorner="@dimen/corner_entry_in_container">
 
     <ImageView
-        android:id="@+id/settings_background_thumbnail"
-        android:layout_width="@dimen/settings_background_thumbnail_width"
-        android:layout_height="@dimen/settings_background_thumbnail_height"
+        android:id="@+id/settings_pictures_thumbnail"
+        android:layout_width="@dimen/settings_pictures_thumbnail_width"
+        android:layout_height="@dimen/settings_pictures_thumbnail_height"
         android:background="@drawable/settings_pictures_thumbnail_background"
         android:importantForAccessibility="no"
         android:scaleType="centerCrop" />
@@ -37,7 +37,7 @@
         android:orientation="vertical">
 
         <com.luncher.launcher.ui.ThemedText
-            android:id="@+id/settings_background_name"
+            android:id="@+id/settings_pictures_name"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:duplicateParentState="true"
@@ -46,7 +46,7 @@
             android:textSize="@dimen/text_entry" />
 
         <com.luncher.launcher.ui.ThemedText
-            android:id="@+id/settings_background_details"
+            android:id="@+id/settings_pictures_details"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/settings_entry_line_gap"
@@ -59,7 +59,7 @@
     </LinearLayout>
 
     <com.luncher.launcher.ui.ThemedIcon
-        android:id="@+id/settings_background_chosen"
+        android:id="@+id/settings_pictures_chosen"
         android:layout_width="@dimen/icon"
         android:layout_height="@dimen/icon"
         android:layout_marginStart="@dimen/settings_appearance_value_gap"

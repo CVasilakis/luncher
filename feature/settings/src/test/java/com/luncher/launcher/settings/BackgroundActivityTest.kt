@@ -105,13 +105,13 @@ class BackgroundActivityTest {
     private val stored get() = graph.appearanceSettings.appearance.background
 
     private fun Activity.listRows(): List<View> {
-        val list = findViewById<LinearLayout>(R.id.settings_background_list)
-        return (0 until list.childCount).map(list::getChildAt).filter { it.findViewById<View>(R.id.settings_background_name) != null }
+        val list = findViewById<LinearLayout>(R.id.settings_pictures_list)
+        return (0 until list.childCount).map(list::getChildAt).filter { it.findViewById<View>(R.id.settings_pictures_name) != null }
     }
 
-    private fun View.name() = findViewById<TextView>(R.id.settings_background_name).text.toString()
+    private fun View.name() = findViewById<TextView>(R.id.settings_pictures_name).text.toString()
 
-    private fun View.chosen() = findViewById<View>(R.id.settings_background_chosen).visibility == View.VISIBLE
+    private fun View.chosen() = findViewById<View>(R.id.settings_pictures_chosen).visibility == View.VISIBLE
 
     /** The list's names, the chosen one ending in " ✓". */
     private fun Activity.list(): List<String> = listRows().map { if (it.chosen()) "${it.name()} ✓" else it.name() }
@@ -119,13 +119,13 @@ class BackgroundActivityTest {
     private fun Activity.row(name: String) = listRows().single { it.name() == name }
 
     /** The name of the row that has the focus. Not currentFocus: under Robolectric the window never gets focus. */
-    private fun Activity.focused() = window.decorView.findFocus()?.findViewById<TextView>(R.id.settings_background_name)?.text?.toString()
+    private fun Activity.focused() = window.decorView.findFocus()?.findViewById<TextView>(R.id.settings_pictures_name)?.text?.toString()
 
-    private fun Activity.hint() = findViewById<TextView>(R.id.settings_background_hint).text.toString()
+    private fun Activity.hint() = findViewById<TextView>(R.id.settings_pictures_hint).text.toString()
 
     /** The options' fields, in order: two a row. */
     private fun Activity.options(): List<View> {
-        val options = findViewById<LinearLayout>(R.id.settings_background_options)
+        val options = findViewById<LinearLayout>(R.id.settings_picture_editor_options)
         return (0 until options.childCount).map(options::getChildAt).flatMap { line -> (0 until (line as LinearLayout).childCount).map(line::getChildAt) }
     }
 
@@ -190,7 +190,7 @@ class BackgroundActivityTest {
     }
 
     private fun Activity.save() {
-        findViewById<View>(R.id.settings_background_save).performClick()
+        findViewById<View>(R.id.settings_picture_editor_save).performClick()
         idle()
     }
 
@@ -254,7 +254,7 @@ class BackgroundActivityTest {
 
         assertEquals(listOf("No picture ✓", "sunset.jpg", "Add from folder"), activity.list())
         for (label in listOf("Fit", "Position", "Dim", "Blur")) assertFalse(label, activity.option(label).isFocusable)
-        assertTrue(activity.findViewById<View>(R.id.settings_background_save).isFocusable)
+        assertTrue(activity.findViewById<View>(R.id.settings_picture_editor_save).isFocusable)
     }
 
     @Test
@@ -264,7 +264,7 @@ class BackgroundActivityTest {
         val activity = start().get()
 
         assertEquals(listOf("No picture ✓", "Add from folder"), activity.list())
-        val list = activity.findViewById<LinearLayout>(R.id.settings_background_list)
+        val list = activity.findViewById<LinearLayout>(R.id.settings_pictures_list)
         val howTo = list.getChildAt(list.childCount - 1) as TextView
         assertTrue(howTo.text.contains("Android/media/${activity.packageName}"))
     }
@@ -300,7 +300,7 @@ class BackgroundActivityTest {
     fun `Down past the end of the pictures stays there, not on an option, Save or Delete all, which Left still reaches`() {
         graph(beach, sunset, background = Background(beach.id))
         val activity = start().get()
-        val list = activity.findViewById<LinearLayout>(R.id.settings_background_list)
+        val list = activity.findViewById<LinearLayout>(R.id.settings_pictures_list)
         val last = list.getChildAt(list.childCount - 1)
         last.requestFocus()
 
@@ -319,7 +319,7 @@ class BackgroundActivityTest {
     fun `while the pictures slide, the focused one looks at rest until it's under the focus`() {
         graph(*Array(20) { picture("picture%02d.jpg".format(it), added = it.toLong()) })
         val activity = start().get()
-        val scroll = activity.findViewById<ScrollView>(R.id.settings_background_list_scroll)
+        val scroll = activity.findViewById<ScrollView>(R.id.settings_pictures_list_scroll)
         val looper = shadowOf(Looper.getMainLooper())
         idle()
         ShadowChoreographer.setPaused(true)
@@ -353,8 +353,8 @@ class BackgroundActivityTest {
     fun `the pictures scroll a row ahead of the focus, both ways, moving the focus or the list, never both`() {
         graph(*Array(20) { picture("picture%02d.jpg".format(it), added = it.toLong()) })
         val activity = start().get()
-        val scroll = activity.findViewById<ScrollView>(R.id.settings_background_list_scroll)
-        val list = activity.findViewById<LinearLayout>(R.id.settings_background_list)
+        val scroll = activity.findViewById<ScrollView>(R.id.settings_pictures_list_scroll)
+        val list = activity.findViewById<LinearLayout>(R.id.settings_pictures_list)
         val rows = (0 until list.childCount).map(list::getChildAt)
         val pitch = rows[1].top - rows[0].top
 
@@ -399,17 +399,17 @@ class BackgroundActivityTest {
         graph(beach, long)
         val activity = start().get()
 
-        val name = activity.row(long.name).findViewById<TextView>(R.id.settings_background_name)
+        val name = activity.row(long.name).findViewById<TextView>(R.id.settings_pictures_name)
         assertEquals(1, name.layout.lineCount)
         assertTrue("\"${name.text}\" isn't cut", name.layout.getEllipsisCount(0) > 0)
-        assertEquals(0, activity.row("beach.png").findViewById<TextView>(R.id.settings_background_name).layout.getEllipsisCount(0))
+        assertEquals(0, activity.row("beach.png").findViewById<TextView>(R.id.settings_pictures_name).layout.getEllipsisCount(0))
     }
 
     @Test
     fun `a picture's row says its size in px and its file's, No picture and Add from folder nothing`() {
         graph(portrait, background = Background(portrait.id))
         val activity = start().get()
-        fun View.details() = findViewById<TextView>(R.id.settings_background_details)
+        fun View.details() = findViewById<TextView>(R.id.settings_pictures_details)
 
         assertEquals("3024 × 4032 · 1.0 MB", activity.row("portrait.jpg").details().text.toString())
         assertEquals(View.VISIBLE, activity.row("portrait.jpg").details().visibility)
@@ -454,7 +454,7 @@ class BackgroundActivityTest {
     fun `an option's list opens beside its field, a start field's from its first value, an end field's with its value level with the field`() {
         graph(portrait, background = Background(portrait.id, dim = 40, blur = com.luncher.domain.pictures.Blur.MEDIUM))
         val activity = start().get()
-        val options = activity.findViewById<View>(R.id.settings_background_options)
+        val options = activity.findViewById<View>(R.id.settings_picture_editor_options)
         val optionsEnd = IntArray(2).also(options::getLocationInWindow)[0] + options.width
         val preview = activity.findViewById<View>(R.id.settings_background_preview)
         val previewBottom = IntArray(2).also(preview::getLocationInWindow)[1] + preview.height
@@ -901,7 +901,7 @@ class BackgroundActivityTest {
         graph.thumbnails.cache[beach.id to PictureStyle()] = sample("kept", 192, 108)
         val activity = start().get()
         activity.row("beach.png").requestFocus()
-        val thumbnail = activity.row("beach.png").findViewById<ImageView>(R.id.settings_background_thumbnail).drawable
+        val thumbnail = activity.row("beach.png").findViewById<ImageView>(R.id.settings_pictures_thumbnail).drawable
 
         activity.longPress("beach.png", "Rename")
         assertEquals("Rename picture", dialog()!!.first)
@@ -913,7 +913,7 @@ class BackgroundActivityTest {
         assertEquals(listOf(beach.copy(name = "Waves"), sunset), graph.library.pictures)
         assertEquals(listOf("No picture ✓", "sunset.jpg", "Waves", "Add from folder"), activity.list())
         assertEquals("Waves", activity.focused())
-        assertSame(thumbnail, activity.row("Waves").findViewById<ImageView>(R.id.settings_background_thumbnail).drawable)
+        assertSame(thumbnail, activity.row("Waves").findViewById<ImageView>(R.id.settings_pictures_thumbnail).drawable)
         drawInTheBackground()
         assertTrue("nothing drawn again", graph.thumbnails.rendered.none { it.first == beach.id })
     }
@@ -1010,7 +1010,7 @@ class BackgroundActivityTest {
         assertEquals(listOf(beach), graph.library.pictures)
     }
 
-    private fun Activity.deleteAll() = findViewById<View>(R.id.settings_background_delete_all)
+    private fun Activity.deleteAll() = findViewById<View>(R.id.settings_picture_editor_delete_all)
 
     @Test
     fun `Delete all, beside Save, asks with how many, Cancel first, and deletes every picture`() {
@@ -1030,7 +1030,7 @@ class BackgroundActivityTest {
         assertEquals(emptyList<Picture>(), graph.library.pictures)
         assertEquals(listOf("No picture ✓", "Add from folder"), activity.list())
         assertFalse("dimmed and passed by, with none left", activity.deleteAll().isFocusable)
-        assertTrue("the focus on Save", activity.findViewById<View>(R.id.settings_background_save).isFocused)
+        assertTrue("the focus on Save", activity.findViewById<View>(R.id.settings_picture_editor_save).isFocused)
     }
 
     @Test
@@ -1157,12 +1157,12 @@ class BackgroundActivityTest {
         graph.thumbnails.cache[beach.id to PictureStyle()] = sample("kept", 192, 108)
 
         val activity = start().get()
-        assertTrue((activity.row("beach.png").findViewById<ImageView>(R.id.settings_background_thumbnail)).drawable != null)
-        assertNull(activity.row("sunset.jpg").findViewById<ImageView>(R.id.settings_background_thumbnail).drawable)
+        assertTrue((activity.row("beach.png").findViewById<ImageView>(R.id.settings_pictures_thumbnail)).drawable != null)
+        assertNull(activity.row("sunset.jpg").findViewById<ImageView>(R.id.settings_pictures_thumbnail).drawable)
 
         drawInTheBackground()
 
-        assertTrue(activity.row("sunset.jpg").findViewById<ImageView>(R.id.settings_background_thumbnail).drawable != null)
+        assertTrue(activity.row("sunset.jpg").findViewById<ImageView>(R.id.settings_pictures_thumbnail).drawable != null)
         assertTrue(graph.thumbnails.rendered.any { it.first == sunset.id })
     }
 
@@ -1223,7 +1223,7 @@ class BackgroundActivityTest {
         assertNull(dialog())
         drawInTheBackground()
         for (picture in listOf(beach, sunset, old)) {
-            assertTrue(picture.name, activity.row(picture.name).findViewById<ImageView>(R.id.settings_background_thumbnail).drawable != null)
+            assertTrue(picture.name, activity.row(picture.name).findViewById<ImageView>(R.id.settings_pictures_thumbnail).drawable != null)
         }
     }
 

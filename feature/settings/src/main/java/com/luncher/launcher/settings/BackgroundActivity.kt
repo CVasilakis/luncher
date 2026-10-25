@@ -2,57 +2,27 @@ package com.luncher.launcher.settings
 
 import android.annotation.SuppressLint
 import android.app.Activity
-import android.app.Dialog
 import android.content.Intent
-import android.content.res.ColorStateList
 import android.graphics.drawable.ColorDrawable
 import android.os.Build
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
-import android.util.TypedValue
 import android.view.View
 import android.window.OnBackInvokedDispatcher
-import android.widget.ImageView
-import android.widget.LinearLayout
-import android.widget.TextView
 import com.luncher.domain.appearance.Appearance
 import com.luncher.domain.appearance.AppearanceContext
+import com.luncher.domain.appearance.AppearanceOption
 import com.luncher.domain.appearance.Background
-import com.luncher.domain.appearance.ColorRoles
 import com.luncher.domain.appearance.appearanceOptions
-import com.luncher.domain.jobs.JobPriority
-import com.luncher.domain.jobs.LatestRequest
 import com.luncher.domain.pictures.Blur
-import com.luncher.domain.pictures.Fit
-import com.luncher.domain.pictures.Framing
 import com.luncher.domain.pictures.Picture
 import com.luncher.domain.pictures.PictureId
-import com.luncher.domain.pictures.PictureLibrary
-import com.luncher.domain.pictures.PicturePosition
-import com.luncher.domain.pictures.PictureStyle
-import com.luncher.domain.pictures.PictureUse
 import com.luncher.domain.pictures.choosing
-import com.luncher.domain.pictures.Renaming
 import com.luncher.domain.pictures.pictureCut
-import com.luncher.domain.pictures.pictureUses
-import com.luncher.domain.pictures.renaming
-import com.luncher.launcher.ui.Badge
-import com.luncher.launcher.ui.DialogButton
-import com.luncher.launcher.ui.EntriesRow
-import com.luncher.launcher.ui.MenuAction
-import com.luncher.launcher.ui.MenuDialog
-import com.luncher.launcher.ui.MessageDialog
-import com.luncher.launcher.ui.NameDialog
-import com.luncher.launcher.ui.ThemedText
 import com.luncher.launcher.ui.WorkingDialog
 import com.luncher.launcher.ui.color
-import com.luncher.launcher.ui.roundRect
 import com.luncher.launcher.ui.screenSize
-import com.luncher.launcher.ui.styleAll
 import com.luncher.launcher.ui.styleScreen
 import com.luncher.launcher.ui.R as UiR
-import java.util.Locale
 
 /**
  * The background editor, full-screen, opened from the appearance editor's Background button. At
@@ -85,192 +55,136 @@ import java.util.Locale
  * returns; or adds several (Add all), and the editor focuses the first of them in the list,
  * choosing none.
  *
- * All thumbnails are read at once when it shows, from what the thumbnails' [PictureImages][graph]
- * kept; those not kept are drawn in the background and show as each is done. Pictures that aren't
- * prepared for the screen as it is now ([PreparedPictures][graph]) are prepared first, at its
- * start, while a window says so ([prepareMissing]), so that afterwards nothing the user does
- * waits for a picture to be decoded.
+ * The editor is made of the parts every picture editor shares, each one concern: the pictures'
+ * list ([LibraryList]: the rows, their thumbnails, the focus kept, Add from folder), what's done to
+ * the pictures ([PictureActions]: the library read with its uses, Rename, Delete, Delete all),
+ * their preparing at its start ([PicturePreparing]), the draft ([PictureDraft]: what Save counts
+ * as changed, Back's question, the instance state), the options' fields ([OptionGrid]) and the
+ * start column ([PictureStartColumn]); what's the wallpaper's alone is here: the preview of the
+ * home screen, the options of the background, and Save.
  */
 class BackgroundActivity : Activity() {
 
     private val settings by lazy { graph.appearanceSettings }
     private val pictures by lazy { graph.pictures }
     private val images by lazy { graph.pictureImages }
-    private val thumbnails by lazy { graph.thumbnails }
     private val prepared by lazy { graph.preparedPictures }
     private val wallpaper by lazy { graph.wallpaper }
-    private val main = Handler(Looper.getMainLooper())
     private val theme by lazy {
         ScreenTheme(settings) {
             checkNotNull(window).styleScreen(it)
-            styleRows(it)
+            list.style(it)
         }
     }
 
     /** The appearance as stored, which the preview shows with the [draft]. */
     private lateinit var stored: Appearance
 
-    /** The background as the user has chosen it so far, stored only on Save; set through [holdDraft]. */
-    private lateinit var draft: Background
-
-    /** Which of the options' values change anything for the [draft]'s picture on this screen. */
-    private var context = AppearanceContext.UNKNOWN
+    /** The background as the user has chosen it so far, stored only on Save. */
+    private lateinit var draft: PictureDraft<Background, AppearanceContext>
 
     private lateinit var preview: AppearancePreviewView
-    private lateinit var list: LinearLayout
-    private lateinit var noneRow: View
-    private lateinit var addRow: View
-    private lateinit var howTo: ThemedText
+    private lateinit var list: LibraryList
     private lateinit var save: View
     private lateinit var deleteAll: View
-    private val options = mutableListOf<AppearanceRow>()
-    private var library = PictureLibrary(emptyList(), Locale.getDefault())
+    private lateinit var options: OptionGrid<Appearance, AppearanceContext, AppearanceOption<*>>
 
-    /** Each picture's row, kept while it's in the library, so its thumbnail is read or drawn once. */
-    private val rows = LinkedHashMap<PictureId, View>()
+    /** The library as it shows, and renaming and deleting its pictures. */
+    private val actions by lazy { PictureActions(this, pictures, settings, wallpaper, { theme.roles }, ::deleted) }
+    private val library get() = actions.library
 
-    /** The thumbnails being drawn, each a request of its own, all dropped in [onStop]. */
-    private val drawing = HashMap<PictureId, LatestRequest>()
-    private var thumbnailWidth = 0
-    private var thumbnailHeight = 0
+    /** The pictures not prepared for this screen, prepared at its start, while a window says so. */
+    private val preparing by lazy {
+        PicturePreparing(this, prepared, graph.jobs, { theme.roles }, { if (started) showLibrary() }, ::finish)
+    }
 
-    /** The pictures being prepared, a request each, while the window says so; all dropped in [onStop]. */
-    private val preparing = LinkedHashMap<PictureId, LatestRequest>()
-    private var preparingTotal = 0
-
-    /**
-     * The pictures just added, the first of them in the list to focus when the library shows next:
-     * found then, not when they come. A result comes before [onStart] reads the library again, so
-     * the editor, stopped while they were added, still has the library from before them.
-     */
-    private var toFocus: Set<PictureId> = emptySet()
     private var started = false
-    private var dialog: Dialog? = null
-    private var working: WorkingDialog? = null
+
+    /** The window while Save draws the wallpaper. */
+    private var saving: WorkingDialog? = null
 
     private val showLibrary: () -> Unit = { showLibrary() }
+
+    /** What's done on the list: OK chooses, a long press offers Rename and Delete. */
+    private val listener = object : LibraryList.Listener {
+        override fun chosen(picture: PictureId?) = choose(picture)
+
+        override fun longPressed(picture: Picture) = actions.offer(picture)
+
+        /**
+         * Add from folder added [chosen] (or found it there already): chosen, and focused as the
+         * list shows next; or added several (Add all): the first of them in the list focused, none
+         * chosen.
+         */
+        override fun added(chosen: PictureId?) {
+            if (chosen != null) choose(chosen)
+            if (started) showLibrary()
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.settings_background_activity)
         preview = findViewById(R.id.settings_background_preview)
-        list = findViewById(R.id.settings_background_list)
-        // Its width, or on a narrow screen half of it, so the preview keeps the other half.
-        findViewById<View>(R.id.settings_background_end).layoutParams.width = minOf(
-            resources.getDimensionPixelSize(R.dimen.settings_appearance_options_width),
-            resources.displayMetrics.widthPixels / 2,
-        )
-        thumbnailWidth = resources.getDimensionPixelSize(R.dimen.settings_background_thumbnail_width)
-        thumbnailHeight = resources.getDimensionPixelSize(R.dimen.settings_background_thumbnail_height)
+        // The home screen, at the TV's shape, as the wallpaper is drawn.
+        findViewById<PictureStartColumn>(R.id.settings_background_start).hold(preview) { screenSize() }
 
         stored = settings.read()
         // Its picture's shape is known once the library is read, as it starts (showLibrary).
-        holdDraft(savedInstanceState?.let(::draftIn) ?: stored.background)
+        draft = PictureDraft(
+            this,
+            savedInstanceState,
+            stored.background,
+            { settings.read().background },
+            ::contextOf,
+            Background::offeredIn,
+            BackgroundState,
+            getString(R.string.settings_background_discard_text),
+        ) { theme.roles }
 
-        // The options' fields, two a row; one below the other where either doesn't fit its half (EntriesRow).
-        val optionsView = findViewById<LinearLayout>(R.id.settings_background_options)
-        val gap = resources.getDimensionPixelSize(R.dimen.settings_fields_gap)
-        var fields: LinearLayout? = null
-        for (option in appearanceOptions().groups.single { it.editedApart }.options) {
-            val line = fields?.takeIf { it.childCount < 2 } ?: EntriesRow(this, null).apply {
-                clipChildren = false
-                // The gap above as a margin: padding would cut the fields' zoom at the row's sides.
-                val params = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
-                if (optionsView.childCount > 0) params.topMargin = gap
-                optionsView.addView(this, params)
-                fields = this
-            }
-            val view = layoutInflater.inflate(R.layout.settings_background_option, line, false)
-            line.addView(view)
-            options += AppearanceRow(option, AppearanceLabels, view, ::appearance, { context }, { changed -> setDraft(changed.background) }) { row ->
-                OptionList(option, AppearanceLabels, row.view, optionsView, appearance(), context, theme.roles, { changed -> setDraft(changed.background) }, row::listClosed)
-            }
-        }
-        save = findViewById(R.id.settings_background_save)
+        options = OptionGrid(
+            findViewById(R.id.settings_picture_editor_options),
+            appearanceOptions().groups.single { it.editedApart }.options,
+            AppearanceLabels,
+            ::appearance,
+            { draft.context },
+            { theme.roles },
+        ) { changed -> setDraft(changed.background) }
+        save = findViewById(R.id.settings_picture_editor_save)
         save.setOnClickListener { save() }
-        deleteAll = findViewById(R.id.settings_background_delete_all)
-        deleteAll.setOnClickListener { confirmDeleteAll() }
+        deleteAll = findViewById(R.id.settings_picture_editor_delete_all)
+        deleteAll.setOnClickListener {
+            // Delete all is dimmed then, with nothing left to delete.
+            actions.confirmDeleteAll { save.requestFocus() }
+        }
 
-        noneRow = row(getString(R.string.settings_pictures_no_picture)) { choose(null) }
-        noneRow.findViewById<ImageView>(R.id.settings_background_thumbnail).apply {
-            setImageDrawable(ColorDrawable(color(UiR.color.background)))
-            clipToOutline = true
-        }
-        addRow = row(getString(R.string.settings_pictures_add_from_folder)) { addFromFolder() }
-        addRow.findViewById<ImageView>(R.id.settings_background_thumbnail).apply {
-            setImageResource(UiR.drawable.icon_plus)
-            scaleType = ImageView.ScaleType.CENTER
-        }
-        howTo = ThemedText(this).apply {
-            role = ThemedText.ON_SURFACE_VARIANT
-            setTextSize(TypedValue.COMPLEX_UNIT_PX, resources.getDimension(UiR.dimen.text_supporting))
-            val padding = resources.getDimensionPixelSize(UiR.dimen.entry_padding)
-            setPadding(padding, padding, padding, 0)
-            text = listOf(
-                getString(R.string.settings_pictures_how),
-                getString(R.string.settings_pictures_how_share),
-                getString(R.string.settings_pictures_how_folder),
-                "   " + dropFolder(),
-            ).joinToString("\n")
-        }
+        list = LibraryList(
+            this,
+            findViewById(R.id.settings_pictures_column),
+            getString(R.string.settings_pictures_no_picture),
+            ColorDrawable(color(UiR.color.background)),
+            graph.thumbnails,
+            graph.jobs,
+            { theme.roles },
+            listener,
+        )
 
         preview.showWallpapers(graph.wallpaper, images, graph.jobs)
         show()
         window.styleScreen(theme.roles)
-        styleRows(theme.roles)
+        list.style(theme.roles)
         // Android 16 (API 36) on, for apps targeting it, sends Back here, not to onBackPressed.
         if (Build.VERSION.SDK_INT >= 36) {
-            onBackInvokedDispatcher.registerOnBackInvokedCallback(OnBackInvokedDispatcher.PRIORITY_DEFAULT) { back() }
+            onBackInvokedDispatcher.registerOnBackInvokedCallback(OnBackInvokedDispatcher.PRIORITY_DEFAULT) { draft.back(::finish) }
         }
     }
 
     // Back on Android 15 (API 35) and older; onCreate handles Android 16, which lint doesn't see.
     // Deprecated, but its replacements need AndroidX (OnBackPressedCallback) or API 33
-    // (OnBackInvokedCallback). Doesn't call super: back() closes the editor when it should.
+    // (OnBackInvokedCallback). Doesn't call super: the draft closes the editor when it should.
     @SuppressLint("GestureBackNavigation")
     @Deprecated("Deprecated in Java")
-    override fun onBackPressed() = back()
-
-    /** Back: closes the editor, after asking, Cancel focused, while the draft isn't what's stored. */
-    private fun back() {
-        if (!changed()) return finish()
-        show(
-            MessageDialog(
-                this,
-                theme.roles,
-                getString(R.string.settings_background_discard_question),
-                getString(R.string.settings_background_discard_text),
-                // Cancel first, so a repeated Back or OK loses nothing.
-                listOf(
-                    DialogButton(getString(R.string.settings_pictures_cancel), DialogButton.Kind.TONAL) {},
-                    DialogButton(getString(R.string.settings_background_discard), DialogButton.Kind.DANGER) { finish() },
-                ),
-                Badge.Kind.DANGER to UiR.drawable.icon_warning,
-            ),
-        )
-    }
-
-    /**
-     * Whether the draft differs from the background stored, as the editor shows it: in the
-     * draft's context, so a stored position the draft shows as the middle counts as unchanged, as
-     * it draws the same, and a stored background of another picture differs from it anyway.
-     */
-    private fun changed(): Boolean = draft != settings.read().background.offeredIn(context)
-
-    /**
-     * What styleScreen can't reach: the rows not in the list now (made, or taken out as the library
-     * changes), how to add a picture, and Add from folder's plus.
-     */
-    private fun styleRows(roles: ColorRoles) {
-        noneRow.styleAll(roles)
-        addRow.styleAll(roles)
-        for (row in rows.values) row.styleAll(roles)
-        howTo.style(roles)
-        addRow.findViewById<ImageView>(R.id.settings_background_thumbnail).apply {
-            background = roundRect(roles.surfaceHighest, resources.getDimension(UiR.dimen.corner_picture))
-            imageTintList = ColorStateList.valueOf(roles.primary)
-        }
-    }
+    override fun onBackPressed() = draft.back(::finish)
 
     override fun onStart() {
         super.onStart()
@@ -290,62 +204,43 @@ class BackgroundActivity : Activity() {
         theme.stop()
         started = false
         pictures.removeListener(showLibrary)
-        for (request in drawing.values) request.stop()
-        drawing.clear()
+        list.stop()
         preview.stopWallpaper()
-        if (preparing.isNotEmpty()) {
-            stopPreparing()
-            working?.dismiss()
-        }
+        preparing.stop()
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        for (option in options) option.closeList()
-        dialog?.dismiss()
-        working?.dismiss()
+        options.closeLists()
+        draft.dismiss()
+        actions.dismiss()
+        preparing.dismiss()
+        saving?.dismiss()
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
-        outState.putString(DRAFT_PICTURE, draft.picture?.value)
-        outState.putString(DRAFT_FIT, draft.framing.fit.name)
-        outState.putString(DRAFT_POSITION, draft.framing.position.name)
-        outState.putInt(DRAFT_DIM, draft.dim)
-        outState.putString(DRAFT_BLUR, draft.blur.name)
+        draft.save(outState)
     }
 
     @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         @Suppress("DEPRECATION")
         super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode != ADD_FROM_FOLDER || resultCode != RESULT_OK || data == null) return
-        data.getStringExtra(AddFromFolderActivity.EXTRA_ADDED)?.let { chooseAdded(PictureId(it)) }
-        data.getStringArrayExtra(AddFromFolderActivity.EXTRA_ADDED_ALL)?.let { added -> focusAdded(added.mapTo(HashSet(), ::PictureId)) }
+        list.result(requestCode, resultCode, data)
     }
 
     /** The stored appearance with the draft as its background: what the preview and the options show. */
-    private fun appearance(): Appearance = stored.copy(background = draft)
+    private fun appearance(): Appearance = stored.copy(background = draft.value)
 
     /**
      * Chooses [picture] in the draft ([choosing]): the stored picture as it's stored,
      * another one as it is, its position in the middle, neither dimmed nor blurred.
      */
-    private fun choose(picture: PictureId?) = setDraft(draft.choosing(picture, stored.background))
+    private fun choose(picture: PictureId?) = setDraft(draft.value.choosing(picture, stored.background))
 
     private fun setDraft(background: Background) {
-        val before = draft
-        holdDraft(background)
-        if (draft != before) show()
-    }
-
-    /**
-     * Makes [background] the draft, with only the values its picture offers on this screen
-     * ([Background.offeredIn]): a position that wouldn't move it is the middle.
-     */
-    private fun holdDraft(background: Background) {
-        context = contextOf(background.picture)
-        draft = background.offeredIn(context)
+        if (draft.set(background)) show()
     }
 
     /**
@@ -358,174 +253,29 @@ class BackgroundActivity : Activity() {
         return AppearanceContext(backgroundCut = pictureCut(shown.width, shown.height, screen.width, screen.height))
     }
 
-    /** The draft as the options, the preview and the check beside its picture show it. */
+    /** The draft as the options, the preview and the check beside its picture show it; Delete all dimmed without pictures. */
     private fun show() {
-        for (option in options) option.show()
+        options.show()
         preview.appearance = appearance()
-        markChosen(noneRow, draft.picture == null)
-        for ((id, row) in rows) markChosen(row, draft.picture == id)
+        list.markChosen(draft.value.picture)
         val any = library.pictures.isNotEmpty()
         deleteAll.alpha = if (any) 1f else DIMMED
         deleteAll.isFocusable = any
         deleteAll.isFocusableInTouchMode = any
     }
 
-    /** The draft's picture: checked, its row tinted with the accent and its name in it (activated). */
-    private fun markChosen(row: View, chosen: Boolean) {
-        row.findViewById<View>(R.id.settings_background_chosen).visibility = if (chosen) View.VISIBLE else View.GONE
-        row.isActivated = chosen
-    }
-
     /**
-     * The library as it is now: a row for each picture, its thumbnail read at once if it's kept,
-     * else drawn. The list is made again only when pictures were added, deleted or moved: as the
-     * editor comes back with none, the focus and the scroll stay as they are.
+     * The library as it is now, its pictures prepared first where they aren't; a draft's picture
+     * deleted meanwhile (in another screen) is no picture, and one still there has its shape known
+     * now. The focus is placed once the draft shows, which decides what can take it.
      */
     private fun showLibrary() {
-        val focused = window.decorView.findFocus()
-        val focusedPicture = rows.entries.firstOrNull { it.value == focused }?.key
-        val focusedIndex = focusedPicture?.let(library::indexOf) ?: -1
-        val listed = if (list.childCount > 0) library.pictures.map { it.id } else null
-        library = PictureLibrary(pictures.read(), Locale.getDefault(), pictureUses(settings.read()))
-        val ids = library.pictures.mapTo(HashSet()) { it.id }
-        rows.keys.retainAll(ids)
-        drawing.keys.filter { it !in ids }.forEach { drawing.remove(it)?.stop() }
-        val waiting = prepareMissing()
-        // A draft's picture deleted meanwhile (in another screen) is no picture; one still there
-        // has its shape known now.
-        holdDraft(draft.copy(picture = draft.picture?.takeIf { it in ids }))
-        for (picture in library.pictures) {
-            // Its name as it is now: renamed, a picture keeps its row.
-            rows.getOrPut(picture.id) { pictureRow(picture) }.findViewById<TextView>(R.id.settings_background_name).text = nameOf(picture)
-            if (!waiting && picture.id !in drawing && thumbnailOf(picture.id).drawable == null) draw(picture)
-        }
-        if (library.pictures.map { it.id } != listed) {
-            list.removeAllViews()
-            list.addView(noneRow)
-            for (picture in library.pictures) list.addView(rows.getValue(picture.id))
-            list.addView(addRow)
-            if (library.pictures.isEmpty()) list.addView(howTo)
-        }
+        val library = actions.read()
+        val waiting = preparing.start(library.pictures)
+        draft.hold(draft.value.copy(picture = draft.value.picture?.takeIf { library.indexOf(it) >= 0 }))
+        list.show(library, drawThumbnails = !waiting)
         show()
-
-        // A picture just added gets the focus; otherwise it stays, unless what had it is gone:
-        // then the picture that took its place, or the one before it; at first, the chosen one.
-        val added = library.pictures.firstOrNull { it.id in toFocus }?.let { rows[it.id] }
-        toFocus = emptySet()
-        when {
-            added != null -> added.requestFocus()
-            focused != null && isInEditor(focused) -> focused.requestFocus()
-            focusedIndex >= 0 && rows.isNotEmpty() -> rows.values.elementAt(focusedIndex.coerceAtMost(rows.size - 1)).requestFocus()
-            focused == null -> (draft.picture?.let { rows[it] } ?: noneRow).requestFocus()
-            else -> noneRow.requestFocus()
-        }
-    }
-
-    /**
-     * Whether [view] is still among the editor's views, not taken out of the list with its
-     * picture. Not [View.isShown]: Android shows the window again only after [onStart], so as the
-     * editor comes back from another screen or the TV's sleep, none of its views is shown yet.
-     */
-    private fun isInEditor(view: View): Boolean {
-        var parent = view.parent
-        while (parent is View) {
-            if (parent === window.decorView) return true
-            parent = parent.parent
-        }
-        return false
-    }
-
-    /** A row of the list named [name]; OK on it does [ok]. */
-    private fun row(name: String, ok: () -> Unit): View {
-        val row = layoutInflater.inflate(R.layout.settings_background_picture, list, false)
-        row.findViewById<TextView>(R.id.settings_background_name).text = name
-        row.setOnClickListener { ok() }
-        return row
-    }
-
-    /**
-     * A new row for [picture]: its thumbnail if it's kept, its name, on one line, cut with "…" where
-     * it doesn't fit, and below it its size in px and its file's size; a long press of OK offers to
-     * rename or delete it.
-     */
-    private fun pictureRow(picture: Picture): View {
-        val row = row(nameOf(picture)) { choose(picture.id) }
-        row.findViewById<TextView>(R.id.settings_background_name).setSingleLine(true)
-        row.findViewById<TextView>(R.id.settings_background_details).apply {
-            text = details(picture.width, picture.height, picture.bytes)
-            visibility = View.VISIBLE
-        }
-        row.styleAll(theme.roles)
-        val thumbnail = row.findViewById<ImageView>(R.id.settings_background_thumbnail)
-        thumbnail.clipToOutline = true
-        thumbnails.cached(picture.id, thumbnailWidth, thumbnailHeight, THUMBNAIL)?.let(thumbnail::setImageBitmap)
-        row.setOnLongClickListener {
-            library.pictures.firstOrNull { it.id == picture.id }?.let(::offerActions)
-            true
-        }
-        return row
-    }
-
-    private fun thumbnailOf(id: PictureId) = rows.getValue(id).findViewById<ImageView>(R.id.settings_background_thumbnail)
-
-    /**
-     * Prepares the library's pictures that aren't, for the screen as it is now (another size, an
-     * update, a picture added before), one job each, while a window says so; true while it does.
-     * Once all are, the library shows again, and its thumbnails and the preview are drawn from them
-     * in milliseconds. Cancel, or Back, closes the editor: nothing was chosen yet. A picture that
-     * can't be prepared counts as done: it's drawn from its original then.
-     */
-    private fun prepareMissing(): Boolean {
-        if (preparing.isNotEmpty()) return true
-        val missing = library.pictures.filter { !prepared.isPrepared(it.id) }
-        if (missing.isEmpty()) return false
-        preparingTotal = missing.size
-        for (picture in missing) {
-            val request = LatestRequest(graph.jobs, JobPriority.PICTURE_SCREENS) { main.post(it) }
-            preparing[picture.id] = request
-            request.load({ stopped -> prepared.prepare(picture.id, stopped) }) { prepared(picture.id) }
-        }
-        showPreparing()
-        return true
-    }
-
-    private fun prepared(picture: PictureId) {
-        preparing.remove(picture) ?: return
-        if (preparing.isNotEmpty()) return showPreparing()
-        working?.close { if (started) showLibrary() }
-    }
-
-    /** The window, saying which picture of how many is prepared; Cancel, or Back, closes the editor. */
-    private fun showPreparing() {
-        val working = working ?: WorkingDialog(this, theme.roles).also { working = it }
-        working.show(preparingText(), getString(R.string.settings_pictures_cancel)) {
-            stopPreparing()
-            finish()
-        }
-    }
-
-    private fun stopPreparing() {
-        for (request in preparing.values) request.stop()
-        preparing.clear()
-    }
-
-    /** "Preparing picture 2 of 5…", or for one, "Preparing the picture…". */
-    private fun preparingText(): String =
-        if (preparingTotal == 1) {
-            getString(R.string.settings_background_preparing)
-        } else {
-            getString(R.string.settings_background_preparing_count, preparingTotal - preparing.size + 1, preparingTotal)
-        }
-
-    /** Draws [picture]'s thumbnail in the background, shown when done. */
-    private fun draw(picture: Picture) {
-        if (picture.id in drawing) return
-        val request = LatestRequest(graph.jobs, JobPriority.PICTURE_SCREENS) { main.post(it) }
-        drawing[picture.id] = request
-        request.load({ stopped -> thumbnails.render(picture.id, thumbnailWidth, thumbnailHeight, THUMBNAIL, stopped) }) { image ->
-            drawing.remove(picture.id)
-            if (image != null && picture.id in rows) thumbnailOf(picture.id).setImageBitmap(image)
-        }
+        list.placeFocus(draft.value.picture)
     }
 
     /**
@@ -535,163 +285,49 @@ class BackgroundActivity : Activity() {
      * stored; no picture is stored at once.
      */
     private fun save() {
-        if (!changed()) return finish()
+        if (!draft.changed()) return finish()
         val screen = screenSize()
-        if (draft.picture == null) {
-            wallpaper.save(draft, screen.width, screen.height) {}
+        val background = draft.value
+        if (background.picture == null) {
+            wallpaper.save(background, screen.width, screen.height) {}
             return finish()
         }
-        val working = working ?: WorkingDialog(this, theme.roles).also { working = it }
-        working.show(getString(R.string.settings_background_applying))
-        wallpaper.save(draft, screen.width, screen.height) {
-            working.close { if (!isDestroyed) finish() }
+        val saving = saving ?: WorkingDialog(this, theme.roles).also { saving = it }
+        saving.show(getString(R.string.settings_background_applying))
+        wallpaper.save(background, screen.width, screen.height) {
+            saving.close { if (!isDestroyed) finish() }
         }
-    }
-
-    private fun addFromFolder() {
-        @Suppress("DEPRECATION")
-        startActivityForResult(Intent(this, AddFromFolderActivity::class.java), ADD_FROM_FOLDER)
-    }
-
-    /** The picture Add from folder added (or found there already): chosen and focused. */
-    private fun chooseAdded(picture: PictureId) {
-        toFocus = setOf(picture)
-        choose(picture)
-        if (started) showLibrary()
-    }
-
-    /** The pictures Add all added: the first of them in the list focused, none chosen. */
-    private fun focusAdded(added: Set<PictureId>) {
-        toFocus = added
-        if (started) showLibrary()
-    }
-
-    /** What can be done to [picture]: rename it or delete it, under its name and size. */
-    private fun offerActions(picture: Picture) {
-        show(
-            MenuDialog(
-                this,
-                theme.roles,
-                nameOf(picture),
-                details(picture.width, picture.height, picture.bytes),
-                listOf(
-                    MenuAction(getString(R.string.settings_pictures_rename), UiR.drawable.icon_pencil) { askName(picture) },
-                    MenuAction(getString(R.string.settings_pictures_delete), UiR.drawable.icon_trash, deletes = true) { confirmDelete(picture) },
-                ),
-            ),
-        )
-    }
-
-    /** Asks for [picture]'s new name, and keeps the dialog, saying why, while it can't be that. */
-    private fun askName(picture: Picture) {
-        show(
-            NameDialog(
-                this,
-                theme.roles,
-                getString(R.string.settings_pictures_rename_title),
-                picture.name,
-                getString(R.string.settings_pictures_cancel),
-                getString(R.string.settings_pictures_rename),
-            ) { typed ->
-                when (val renamed = renaming(picture, typed, library.pictures)) {
-                    is Renaming.To -> {
-                        pictures.rename(picture.id, renamed.name)
-                        null
-                    }
-                    Renaming.NoName -> getString(R.string.settings_pictures_rename_no_name)
-                    Renaming.NameTaken -> getString(R.string.settings_pictures_folder_name_taken)
-                }
-            },
-        )
-    }
-
-    private fun confirmDelete(picture: Picture) {
-        show(
-            MessageDialog(
-                this,
-                theme.roles,
-                getString(R.string.settings_pictures_delete_question, nameOf(picture)),
-                deleteText(library.usesOf(picture.id)),
-                // Cancel first, so a repeated OK doesn't delete.
-                listOf(
-                    DialogButton(getString(R.string.settings_pictures_cancel), DialogButton.Kind.TONAL) {},
-                    DialogButton(getString(R.string.settings_pictures_delete), DialogButton.Kind.DANGER, UiR.drawable.icon_trash) { delete(setOf(picture.id)) },
-                ),
-                Badge.Kind.DANGER to UiR.drawable.icon_trash,
-            ),
-        )
-    }
-
-    /** Asks before deleting every picture, Cancel focused, saying how many and whether the background loses its picture. */
-    private fun confirmDeleteAll() {
-        val count = library.pictures.size
-        if (count == 0) return
-        val wallpaperToo = library.pictures.any { PictureUse.Wallpaper in library.usesOf(it.id) }
-        val text = if (wallpaperToo) R.plurals.settings_background_delete_all_text_background else R.plurals.settings_background_delete_all_text
-        show(
-            MessageDialog(
-                this,
-                theme.roles,
-                getString(R.string.settings_background_delete_all_question),
-                resources.getQuantityString(text, count, count),
-                listOf(
-                    DialogButton(getString(R.string.settings_pictures_cancel), DialogButton.Kind.TONAL) {},
-                    DialogButton(getString(R.string.settings_pictures_delete), DialogButton.Kind.DANGER, UiR.drawable.icon_trash) {
-                        delete(library.pictures.mapTo(HashSet()) { it.id })
-                        // Delete all is dimmed now, with nothing left to delete.
-                        save.requestFocus()
-                    },
-                ),
-                Badge.Kind.DANGER to UiR.drawable.icon_trash,
-            ),
-        )
     }
 
     /**
-     * Deletes the pictures [ids]. If the wallpaper's is one, the background has no picture any
-     * more, stored at once, and the wallpaper kept is deleted before the pictures; if the draft's
-     * is, the draft has none either.
+     * After the pictures [ids] were deleted: the background stored without the wallpaper's, and
+     * the draft without its own.
      */
-    private fun delete(ids: Set<PictureId>) {
-        wallpaper.forget(ids)
+    private fun deleted(ids: Set<PictureId>) {
         stored = settings.read()
-        if (draft.picture in ids) holdDraft(draft.copy(picture = null))
-        pictures.delete(ids)
+        if (draft.value.picture in ids) draft.hold(draft.value.copy(picture = null))
         show()
     }
 
-    private fun show(dialog: Dialog) {
-        this.dialog?.dismiss()
-        this.dialog = dialog
-        dialog.show()
-    }
+    /** The draft in the instance state: its picture and framing, as every picture editor's, then its dim and blur. */
+    private object BackgroundState : DraftState<Background> {
+        private const val DIM = "draft_dim"
+        private const val BLUR = "draft_blur"
 
-    /** The draft [state] kept, as [onSaveInstanceState] wrote it. */
-    private fun draftIn(state: Bundle): Background? =
-        try {
-            Background(
-                state.getString(DRAFT_PICTURE)?.let(::PictureId),
-                Framing(
-                    Fit.valueOf(state.getString(DRAFT_FIT) ?: return null),
-                    PicturePosition.valueOf(state.getString(DRAFT_POSITION) ?: return null),
-                ),
-                state.getInt(DRAFT_DIM),
-                Blur.valueOf(state.getString(DRAFT_BLUR) ?: return null),
-            )
-        } catch (e: IllegalArgumentException) {
-            null
+        override fun write(draft: Background, state: Bundle) {
+            state.putChoice(draft)
+            state.putInt(DIM, draft.dim)
+            state.putString(BLUR, draft.blur.name)
         }
 
-    internal companion object {
-        private const val ADD_FROM_FOLDER = 1
-        private const val DRAFT_PICTURE = "draft_picture"
-        private const val DRAFT_FIT = "draft_fit"
-        private const val DRAFT_POSITION = "draft_position"
-        private const val DRAFT_DIM = "draft_dim"
-        private const val DRAFT_BLUR = "draft_blur"
-        private const val DIMMED = 0.4f
+        override fun read(state: Bundle): Background? {
+            val framing = state.choiceFraming() ?: return null
+            val blur = enumIn<Blur>(state.getString(BLUR)) ?: return null
+            return Background(state.choicePicture(), framing, state.getInt(DIM), blur)
+        }
+    }
 
-        /** How a thumbnail shows its picture: filling its frame, its middle. */
-        private val THUMBNAIL = PictureStyle(Framing())
+    private companion object {
+        const val DIMMED = 0.4f
     }
 }

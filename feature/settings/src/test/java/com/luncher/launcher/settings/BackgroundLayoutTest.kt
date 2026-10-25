@@ -121,12 +121,12 @@ class BackgroundLayoutTest(private val screen: TvScreen) {
     /** The editor inside the margins, its texts whole, each of its options at each value it offers. */
     private fun assertEditorFits(activity: BackgroundActivity) {
         val preview = activity.findViewById<View>(R.id.settings_background_preview)
-        val end = activity.findViewById<View>(R.id.settings_background_end)
+        val end = activity.findViewById<View>(R.id.settings_pictures_column)
         val metrics = activity.resources.displayMetrics
 
         activity.assertShown("preview", preview)
-        activity.assertShown("Save", activity.findViewById(R.id.settings_background_save))
-        activity.assertShown("hint", activity.findViewById(R.id.settings_background_hint))
+        activity.assertShown("Save", activity.findViewById(R.id.settings_picture_editor_save))
+        activity.assertShown("hint", activity.findViewById(R.id.settings_pictures_hint))
         assertApart(screen, "preview and pictures", bounds(preview), bounds(end))
         // As tall as the room left, of the TV's shape, a quarter of its height at the column's width at least.
         val column = activity.findViewById<View>(R.id.settings_background_start)
@@ -136,7 +136,7 @@ class BackgroundLayoutTest(private val screen: TvScreen) {
         // 540 dp or more; a shorter one scrolls the column instead.
         if (metrics.heightPixels / metrics.density >= 540) {
             val margin = activity.resources.getDimension(R.dimen.settings_appearance_margin_vertical)
-            val save = bounds(activity.findViewById(R.id.settings_background_save))
+            val save = bounds(activity.findViewById(R.id.settings_picture_editor_save))
             assertTrue("Save at $save, below the margin on $screen", save.bottom <= metrics.heightPixels - margin + 1)
         }
         // Each focused, zoomed whole, a button with its shadow, as the column scrolls to it. (The
@@ -144,28 +144,28 @@ class BackgroundLayoutTest(private val screen: TvScreen) {
         val entryZoom = preview.floatResource(UiR.dimen.entry_zoom)
         val buttonZoom = preview.floatResource(UiR.dimen.button_zoom)
         val lift = activity.resources.getDimension(UiR.dimen.button_lift)
-        for ((what, id) in listOf("Save" to R.id.settings_background_save, "Delete all" to R.id.settings_background_delete_all)) {
+        for ((what, id) in listOf("Save" to R.id.settings_picture_editor_save, "Delete all" to R.id.settings_picture_editor_delete_all)) {
             val button = activity.findViewById<View>(id)
             assertTrue("$what can't take the focus on $screen", button.requestFocus())
             idle()
             assertZoomShown(screen, what, button, buttonZoom, lift)
         }
-        for (field in activity.children(R.id.settings_background_options).flatMap { line -> (0 until (line as ViewGroup).childCount).map(line::getChildAt) }) {
+        for (field in activity.children(R.id.settings_picture_editor_options).flatMap { line -> (0 until (line as ViewGroup).childCount).map(line::getChildAt) }) {
             field.requestFocus()
             idle()
             assertZoomShown(screen, "an option", field, entryZoom)
         }
-        for (row in activity.children(R.id.settings_background_list)) {
+        for (row in activity.children(R.id.settings_pictures_list)) {
             activity.assertAcross("a picture's row", row)
-            row.findViewById<View>(R.id.settings_background_chosen)?.let { activity.assertAcross("its check", it) }
+            row.findViewById<View>(R.id.settings_pictures_chosen)?.let { activity.assertAcross("its check", it) }
         }
         // Luncher's own names whole: No picture, first, and Add from folder, last.
-        val rows = activity.children(R.id.settings_background_list)
-        for (row in listOf(rows.first(), rows.last())) assertWhole(screen, row.findViewById(R.id.settings_background_name))
+        val rows = activity.children(R.id.settings_pictures_list)
+        for (row in listOf(rows.first(), rows.last())) assertWhole(screen, row.findViewById(R.id.settings_pictures_name))
         // Each option's list whole on the screen, inside the margins across, and each value it
         // offers chosen in turn, in order, the first last again, so the fit is back to filling for
         // the position.
-        val options = activity.children(R.id.settings_background_options).flatMap { line -> (0 until (line as ViewGroup).childCount).map(line::getChildAt) }
+        val options = activity.children(R.id.settings_picture_editor_options).flatMap { line -> (0 until (line as ViewGroup).childCount).map(line::getChildAt) }
         val catalog = appearanceOptions().groups.single { it.editedApart }.options
         for ((row, option) in options.zip(catalog)) {
             activity.assertShown("an option", row)
@@ -205,7 +205,7 @@ class BackgroundLayoutTest(private val screen: TvScreen) {
     @Test
     fun `the background editor fits while the library is empty`() {
         val activity = start()
-        val rows = activity.children(R.id.settings_background_list)
+        val rows = activity.children(R.id.settings_pictures_list)
 
         for (row in rows) activity.assertAcross("a row of the list", row)
         assertWhole(screen, rows.last() as TextView)   // how to add a picture
@@ -214,7 +214,7 @@ class BackgroundLayoutTest(private val screen: TvScreen) {
     @Test
     fun `what a long press offers fits, and the delete question, and the rename dialog saying why a name can't be`() {
         val activity = start(*library)
-        val row = activity.children(R.id.settings_background_list)[1]
+        val row = activity.children(R.id.settings_pictures_list)[1]
         fun offered(): ViewGroup {
             row.performLongClick()
             idle()

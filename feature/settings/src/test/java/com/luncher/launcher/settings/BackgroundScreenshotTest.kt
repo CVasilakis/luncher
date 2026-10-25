@@ -76,8 +76,8 @@ class BackgroundScreenshotTest {
 
     /** The row of the list named [name]. */
     private fun BackgroundActivity.row(name: String): View {
-        val list = findViewById<ViewGroup>(R.id.settings_background_list)
-        return (0 until list.childCount).map(list::getChildAt).single { it.findViewById<TextView>(R.id.settings_background_name)?.text == name }
+        val list = findViewById<ViewGroup>(R.id.settings_pictures_list)
+        return (0 until list.childCount).map(list::getChildAt).single { it.findViewById<TextView>(R.id.settings_pictures_name)?.text == name }
     }
 
     // The wallpaper chosen and focused, its options at their values, the preview drawing it.
@@ -97,7 +97,7 @@ class BackgroundScreenshotTest {
     fun backgroundEditorSaving() {
         val activity = editor(*library)
         activity.row("beach.png").performClick()
-        activity.findViewById<View>(R.id.settings_background_save).performClick()
+        activity.findViewById<View>(R.id.settings_picture_editor_save).performClick()
         idle()
         captureScreenFocused("src/test/screenshots/settings/settings_background_saving.png")
     }
@@ -107,7 +107,7 @@ class BackgroundScreenshotTest {
     @Test
     fun optionList() {
         val activity = editor(*library)
-        val fit = (activity.findViewById<ViewGroup>(R.id.settings_background_options).getChildAt(1) as ViewGroup).getChildAt(1)
+        val fit = (activity.findViewById<ViewGroup>(R.id.settings_picture_editor_options).getChildAt(1) as ViewGroup).getChildAt(1)
         fit.requestFocus()
         fit.performClick()
         idle()
@@ -118,7 +118,7 @@ class BackgroundScreenshotTest {
     @Test
     fun optionListOfTheFirstColumn() {
         val activity = editor(*library)
-        val dim = (activity.findViewById<ViewGroup>(R.id.settings_background_options).getChildAt(1) as ViewGroup).getChildAt(0)
+        val dim = (activity.findViewById<ViewGroup>(R.id.settings_picture_editor_options).getChildAt(1) as ViewGroup).getChildAt(0)
         dim.requestFocus()
         dim.performClick()
         idle()
@@ -151,7 +151,7 @@ class BackgroundScreenshotTest {
     // Delete all, beside Save, with the background's picture among them: the question, Cancel focused.
     @Test
     fun deleteAllQuestion() {
-        editor(*library).findViewById<android.view.View>(R.id.settings_background_delete_all).performClick()
+        editor(*library).findViewById<android.view.View>(R.id.settings_picture_editor_delete_all).performClick()
         idle()
         captureScreenFocused("src/test/screenshots/settings/settings_background_delete_all.png")
     }

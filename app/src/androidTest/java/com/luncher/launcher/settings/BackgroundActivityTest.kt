@@ -178,8 +178,8 @@ class BackgroundActivityTest {
         press(KeyEvent.KEYCODE_DPAD_LEFT)
         repeat(6) {
             when {
-                hasFocus(withId(R.id.settings_background_save)) -> return
-                hasFocus(withId(R.id.settings_background_delete_all)) -> press(KeyEvent.KEYCODE_DPAD_LEFT)
+                hasFocus(withId(R.id.settings_picture_editor_save)) -> return
+                hasFocus(withId(R.id.settings_picture_editor_delete_all)) -> press(KeyEvent.KEYCODE_DPAD_LEFT)
                 else -> press(KeyEvent.KEYCODE_DPAD_DOWN)
             }
         }
@@ -219,9 +219,9 @@ class BackgroundActivityTest {
 
     /** The list's row named [name]. */
     // The row itself, the list's child, which takes the focus: its name is in a column inside it.
-    private fun row(name: String) = allOf(withParent(withId(R.id.settings_background_list)), hasDescendant(allOf(withId(R.id.settings_background_name), withText(name))))
+    private fun row(name: String) = allOf(withParent(withId(R.id.settings_pictures_list)), hasDescendant(allOf(withId(R.id.settings_pictures_name), withText(name))))
 
-    private fun row(name: Int) = allOf(withParent(withId(R.id.settings_background_list)), hasDescendant(allOf(withId(R.id.settings_background_name), withText(name))))
+    private fun row(name: Int) = allOf(withParent(withId(R.id.settings_pictures_list)), hasDescendant(allOf(withId(R.id.settings_pictures_name), withText(name))))
 
     /**
      * Checks [condition] on the view [view] matches, in a dialog ([inDialog]) or an option's list
@@ -299,7 +299,7 @@ class BackgroundActivityTest {
             waitUntil(option(R.string.settings_appearance_blur, R.string.settings_appearance_off), hasFocus())
             press(KeyEvent.KEYCODE_DPAD_RIGHT)
             press(KeyEvent.KEYCODE_DPAD_RIGHT)
-            waitUntil(withId(R.id.settings_background_list), hasFocus())   // a row beside the options
+            waitUntil(withId(R.id.settings_pictures_list), hasFocus())   // a row beside the options
             onView(option(R.string.settings_appearance_blur, R.string.settings_appearance_off)).check(matches(isDisplayed()))
 
             press(KeyEvent.KEYCODE_DPAD_LEFT)
@@ -357,7 +357,7 @@ class BackgroundActivityTest {
             press(KeyEvent.KEYCODE_DPAD_DOWN)
             waitUntil(row("sunset.jpg"), hasFocus())
             press(KeyEvent.KEYCODE_DPAD_CENTER)
-            waitUntil(allOf(withId(R.id.settings_background_chosen), isDisplayed(), isDescendantOfA(row("sunset.jpg"))), isDisplayed())
+            waitUntil(allOf(withId(R.id.settings_pictures_chosen), isDisplayed(), isDescendantOfA(row("sunset.jpg"))), isDisplayed())
 
             press(KeyEvent.KEYCODE_BACK)
             waitUntil(withText(R.string.settings_background_discard_question), isDisplayed(), inDialog = true)
@@ -388,8 +388,8 @@ class BackgroundActivityTest {
             press(KeyEvent.KEYCODE_DPAD_DOWN)
 
             waitUntil(row(R.string.settings_pictures_add_from_folder), hasFocus())
-            onView(withId(R.id.settings_background_save)).check(matches(not(hasFocus())))
-            onView(withId(R.id.settings_background_delete_all)).check(matches(not(hasFocus())))
+            onView(withId(R.id.settings_picture_editor_save)).check(matches(not(hasFocus())))
+            onView(withId(R.id.settings_picture_editor_delete_all)).check(matches(not(hasFocus())))
         }
     }
 
@@ -434,7 +434,7 @@ class BackgroundActivityTest {
 
             waitUntilDestroyed(AddFromFolderActivity::class.java)   // it closes once the picture is added
             waitUntil(row("holiday.jpg"), hasFocus())
-            waitUntil(allOf(withId(R.id.settings_background_chosen), isDisplayed()), isDisplayed())
+            waitUntil(allOf(withId(R.id.settings_pictures_chosen), isDisplayed()), isDisplayed())
         }
     }
 
@@ -447,7 +447,7 @@ class BackgroundActivityTest {
 
             waitUntilDestroyed(AddFromFolderActivity::class.java)
             waitUntil(row(R.string.settings_pictures_add_from_folder), hasFocus())
-            onView(allOf(withId(R.id.settings_background_chosen), isDisplayed())).check(matches(isDescendantOfA(row("sunset.jpg"))))
+            onView(allOf(withId(R.id.settings_pictures_chosen), isDisplayed())).check(matches(isDescendantOfA(row("sunset.jpg"))))
         }
     }
 
@@ -503,16 +503,16 @@ class BackgroundActivityTest {
             waitUntil(row("sunset.jpg"), hasFocus())
             // Left, to the options, and down them to Save; Right, beside it, Delete all.
             focusSave()
-            waitUntil(withId(R.id.settings_background_save), hasFocus())
+            waitUntil(withId(R.id.settings_picture_editor_save), hasFocus())
             press(KeyEvent.KEYCODE_DPAD_RIGHT)
-            waitUntil(withId(R.id.settings_background_delete_all), hasFocus())
+            waitUntil(withId(R.id.settings_picture_editor_delete_all), hasFocus())
             press(KeyEvent.KEYCODE_DPAD_CENTER)
 
             waitUntil(withText(R.string.settings_pictures_cancel), hasFocus(), inDialog = true)
             pressToButton(R.string.settings_pictures_delete)
             pressInDialog(KeyEvent.KEYCODE_DPAD_CENTER)
 
-            waitUntil(withId(R.id.settings_background_save), hasFocus())
+            waitUntil(withId(R.id.settings_picture_editor_save), hasFocus())
             assertEquals(emptyList<Any>(), fake.pictures)
             assertEquals("the background without its picture, at once", null, appearance.appearance.background.picture)
         }
@@ -546,7 +546,7 @@ class BackgroundActivityTest {
             // The first of them by name focused; the background still No picture.
             waitUntil(row("holiday.jpg"), hasFocus())
             onView(row("logo.jpg")).check(matches(isDisplayed()))
-            onView(allOf(withId(R.id.settings_background_chosen), isDisplayed())).check(matches(isDescendantOfA(row(R.string.settings_pictures_no_picture))))
+            onView(allOf(withId(R.id.settings_pictures_chosen), isDisplayed())).check(matches(isDescendantOfA(row(R.string.settings_pictures_no_picture))))
         }
     }
 

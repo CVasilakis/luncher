@@ -34,8 +34,13 @@ feature/settings/
     │   │   ├── OptionRow.kt      an option's row, of any catalog: both editors'; Left and Right step it, or OK opens its list
     │   │   ├── OptionList.kt     an option's values in a list beside its field, of any catalog: the background editor's
     │   │   ├── OptionLabels.kt   what a catalog's options and their values are called (OptionLabels), the appearance's (AppearanceLabels) with the accents' swatches; the groups' names and icons
-    │   │   ├── BackgroundActivity.kt the background editor: the pictures, the draft, Save; renames and deletes pictures, prepares them
-    │   │   ├── BackgroundStartColumn.kt  its preview, options, Save and Delete all, the preview as large as the room left
+    │   │   ├── BackgroundActivity.kt the background editor: the picture editors' parts below, the preview of the home screen, Save
+    │   │   ├── LibraryList.kt    a picture editor's list: the first row it's given, the pictures, Add from folder; the thumbnails, the focus kept
+    │   │   ├── PictureActions.kt the library read with each picture's uses, and Rename, Delete, Delete all with their questions
+    │   │   ├── PicturePreparing.kt   the pictures not prepared for the screen, prepared at its start behind a window
+    │   │   ├── PictureDraft.kt   a picture editor's draft: its values offered, changed as Save counts it, Back's question, the instance state
+    │   │   ├── OptionGrid.kt     a picture editor's options, of any catalog, as a grid of fields, two a row
+    │   │   ├── PictureStartColumn.kt  a picture editor's start: the preview it's given, options, Save and Delete all, the preview as large as the room left
     │   │   ├── AddFromFolderActivity.kt  the drop folders' pictures, a preview of the selected one; OK adds it, then returns it; Add all
     │   │   ├── SharePictureActivity.kt   where another app's share arrives: opens the home screen and the window, no screen
     │   │   ├── PictureReceivedActivity.kt the window over the home screen after a share: shows the pictures being added, then their uses, or how many were saved and why the others weren't
@@ -285,7 +290,7 @@ grid of fields, each its name above its value, and Save (filled) with Delete all
 the error color) beside it, half the row each; two fields, or the buttons, go one below the other
 when either doesn't fit its half (`:ui`'s `EntriesRow`: a long translation on a narrow screen). There's no
 title, nor a label above the preview: the preview gets that room.
-The preview is as large as the room the others leave (`BackgroundStartColumn`), at most as tall
+The preview is as large as the room the others leave (`PictureStartColumn`), at most as tall
 as its screen at the column's width, at least a quarter of that, so Save and Delete all show without scrolling on a 1080p screen;
 on the smallest screens the column scrolls. In a right-to-left language it mirrors like the other
 settings screens; the preview's content and the pictures don't.
@@ -368,6 +373,11 @@ kind of question, Cancel focused, which says how many, and, when one is the back
 home screen will have no picture. The editor stays, the focus on Save. While the library is empty
 it's dimmed, and the focus passes it by.
 
+The editor is put together from parts a screen that chooses a picture of the library and frames it
+can share, each one concern behind a narrow surface, its state its own, none of them knowing which
+screen holds it; the layouts of the list's column (`settings_pictures_column`) and of what's below
+the preview (`settings_picture_editor_controls`) are theirs, included by the screen's.
+
 | Part | Job |
 |---|---|
 | `Picture`, `PictureLibrary` (`:domain`) | a picture of the library; the library in the list's order, by name, and what each one is used for |
@@ -379,9 +389,14 @@ it's dimmed, and the focus passes it by.
 | `Wallpaper` (`:domain`) | Save (`save`: drawn, kept, then stored), deleting the wallpaper's picture (`forget`), and the saved background's image, which the preview shows while the draft is that background (`readyFor`) |
 | `pictureCut`, `AppearanceContext`, `Background.offeredIn` (`:domain`) | what filling the screen cuts from the draft's picture, the options' values that offers, and the draft without a position it doesn't |
 | `choosing` (`:domain`, `PictureChoice`'s rule) | the draft with another picture chosen: as it is, or as stored if it's the stored one |
-| `OptionRow`, `OptionList`, `AppearanceLabels` | the options' rows, OK opening a list of the values the draft's picture offers, which the preview follows as the focus moves; Back in it puts the value from before back |
+| `OptionGrid`, `OptionRow`, `OptionList`, `AppearanceLabels` | the options' fields, two a row, OK opening a list of the values the draft's picture offers, which the preview follows as the focus moves; Back in it puts the value from before back |
 | `MessageDialog`, `MenuDialog`, `NameDialog` (`:ui`) | the dialogs over the list, a badge beside the title and the text below starting under it: the question before deleting; a picture's Rename and Delete; the field for a new name, and why it's refused; this screen gives their texts and what each button does |
-| `BackgroundActivity` | the list, the draft, Save and its window, Delete all, the questions; chooses and focuses the picture Add from folder added (`EXTRA_ADDED`), or focuses the first in the list of those Add all added, choosing none (`EXTRA_ADDED_ALL`) |
+| `LibraryList` | the list: the first row the screen names (No picture here), the pictures with their thumbnails, Add from folder and the empty library's help, the chosen mark; the focus kept as the library changes; opening Add from folder, then focusing the picture it added (`EXTRA_ADDED`), which the screen chooses, or the first in the list of those Add all added, choosing none (`EXTRA_ADDED_ALL`) |
+| `PictureActions` | the library read with each picture's uses; a picture's Rename and Delete, Delete all, their questions, and deleting: the uses forgotten first (`Wallpaper.forget`), then the pictures |
+| `PicturePreparing` | the pictures not prepared for the screen, prepared at its start behind the working window, stopped with the screen and gone on with as it comes back |
+| `PictureDraft` | the draft: only the values its picture offers on the screen, whether it changed as Save counts it, Back's question, and the draft kept in the instance state (`DraftState`: the background's dim and blur beside the picture and framing every draft has) |
+| `PictureStartColumn` | the preview the screen gives, at the shape it gives (here the TV's), as large as the room the options, Save and Delete all leave |
+| `BackgroundActivity` | what's the wallpaper's alone: the background's options, the preview of the home screen, Save and its window; the parts above put together |
 
 **Prepared once, then at once.** Each picture of the library has a working copy
 ([`platform/README.md`](../../platform/README.md#pictures)): the whole picture decoded once, as

@@ -168,21 +168,21 @@ class AppearanceActivityTest {
 
             // The background editor: No picture chosen and focused, then the pictures.
             // The background editor's rows, the list's children, which take the focus: their names are in a column inside them.
-            waitUntil(allOf(withParent(withId(R.id.settings_background_list)), hasDescendant(withText(R.string.settings_pictures_no_picture))), hasFocus())
+            waitUntil(allOf(withParent(withId(R.id.settings_pictures_list)), hasDescendant(withText(R.string.settings_pictures_no_picture))), hasFocus())
             press(KeyEvent.KEYCODE_DPAD_DOWN)
-            waitUntil(allOf(withParent(withId(R.id.settings_background_list)), hasDescendant(withText("sunset.jpg"))), hasFocus())
+            waitUntil(allOf(withParent(withId(R.id.settings_pictures_list)), hasDescendant(withText("sunset.jpg"))), hasFocus())
             press(KeyEvent.KEYCODE_DPAD_CENTER)
-            waitUntil(allOf(withId(R.id.settings_background_chosen), isDisplayed()), isDisplayed())
+            waitUntil(allOf(withId(R.id.settings_pictures_chosen), isDisplayed()), isDisplayed())
             // Left, to the fields, down them to the buttons, and Left from Delete all to Save.
             press(KeyEvent.KEYCODE_DPAD_LEFT)
             repeat(6) {
                 when {
-                    hasFocus(withId(R.id.settings_background_save)) -> {}
-                    hasFocus(withId(R.id.settings_background_delete_all)) -> press(KeyEvent.KEYCODE_DPAD_LEFT)
+                    hasFocus(withId(R.id.settings_picture_editor_save)) -> {}
+                    hasFocus(withId(R.id.settings_picture_editor_delete_all)) -> press(KeyEvent.KEYCODE_DPAD_LEFT)
                     else -> press(KeyEvent.KEYCODE_DPAD_DOWN)
                 }
             }
-            waitUntil(withId(R.id.settings_background_save), hasFocus())
+            waitUntil(withId(R.id.settings_picture_editor_save), hasFocus())
             assertEquals("nothing stored before Save", null, settings.appearance.background.picture)
             press(KeyEvent.KEYCODE_DPAD_CENTER)
 
