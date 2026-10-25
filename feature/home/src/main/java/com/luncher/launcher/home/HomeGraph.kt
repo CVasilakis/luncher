@@ -8,6 +8,7 @@ import com.luncher.domain.apps.AppCustomizations
 import com.luncher.domain.apps.AppImages
 import com.luncher.domain.apps.AppInfoScreen
 import com.luncher.domain.apps.InstalledApps
+import com.luncher.domain.apps.PreparedTileImages
 import com.luncher.domain.clock.Clock
 import com.luncher.domain.wallpaper.Wallpaper
 
@@ -23,6 +24,9 @@ interface HomeGraph {
     val appCustomizations: AppCustomizations
 
     val appImages: AppImages<Bitmap>
+
+    /** The pictures of the library the tiles show, prepared for the screen as it is: one for the process. */
+    val preparedTileImages: PreparedTileImages
 
     /** Whether a tile's menu can open the app's page in the device's settings. */
     val appInfoScreen: AppInfoScreen

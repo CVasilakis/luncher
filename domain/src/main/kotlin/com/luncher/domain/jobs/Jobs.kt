@@ -30,7 +30,11 @@ object JobPriority {
     /** Add from folder's previews of the pictures not selected, drawn ahead in case they're selected next. */
     const val PICTURE_PREFETCH = 1
 
-    /** What the pictures' screens load: thumbnails, previews, the drop folders' list, preparing pictures. */
+    /**
+     * What the pictures' screens load: thumbnails, previews, the drop folders' list, preparing
+     * pictures; and the home screen's preparing of its tiles' pictures, the same work, which the
+     * library's changes (a damaged copy deleted) come before.
+     */
     const val PICTURE_SCREENS = 2
 
     /**

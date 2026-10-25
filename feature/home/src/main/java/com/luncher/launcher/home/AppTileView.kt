@@ -16,9 +16,11 @@ import android.text.TextUtils
 import android.view.View
 import com.luncher.domain.appearance.AppName
 import com.luncher.domain.apps.AppImages
+import com.luncher.domain.apps.Banner
 import com.luncher.domain.apps.HomeApp
 import com.luncher.domain.apps.bannerFor
 import com.luncher.domain.layout.PixelBounds
+import com.luncher.domain.pictures.PictureId
 
 /**
  * One app on the home screen: its banner, and while it has focus, a zoom with, as
@@ -37,6 +39,9 @@ import com.luncher.domain.layout.PixelBounds
  *
  * While the user moves its app, a [held] tile has a white frame, and the focused one's zoom: the
  * frame tells it apart from one only focused.
+ *
+ * A tile whose picture of the library isn't prepared for this screen shows its app's own image
+ * until it is, then is drawn again with it ([followPreparing]).
  */
 @SuppressLint("ViewConstructor") // Created in code only, never from XML.
 internal class AppTileView(
@@ -48,6 +53,12 @@ internal class AppTileView(
 ) : View(context) {
 
     private var image: Bitmap? = null
+
+    /** The picture of the library the user chose for the tile, if any. */
+    private val picture: PictureId? = (bannerFor(app) as? Banner.Picture)?.picture
+
+    /** Whether [picture] was being prepared, the tile showing its app's own image meanwhile. */
+    private var waitsForPicture = false
 
     /** Fills the tile's rounded shape with [image]; its shader is made with each new image. */
     private val imagePaint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
@@ -116,10 +127,30 @@ internal class AppTileView(
         invalidate()
     }
 
-    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
+    /**
+     * Follows its picture's preparing, as [preparing] says it is now: once it's done, the tile is
+     * drawn again, with its picture, nothing else laid out. A tile without a picture does nothing.
+     */
+    fun followPreparing(preparing: (PictureId) -> Boolean) {
+        val picture = picture ?: return
+        if (preparing(picture)) {
+            waitsForPicture = true
+        } else if (waitsForPicture) {
+            waitsForPicture = false
+            render(width, height)
+            invalidate()
+        }
+    }
+
+    /** The image drawn at [w] x [h] px, its shader with it; none while the tile has no size. */
+    private fun render(w: Int, h: Int) {
         val image = if (w > 0 && h > 0) images.render(app, bannerFor(app), w, h) else null
         this.image = image
         imagePaint.shader = image?.let { BitmapShader(it, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP) }
+    }
+
+    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
+        render(w, h)
         bounds.set(0f, 0f, w.toFloat(), h.toFloat())
         val inset = paints.focusFrame.strokeWidth / 2
         frameBounds.set(inset, inset, w - inset, h - inset)

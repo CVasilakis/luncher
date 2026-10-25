@@ -20,4 +20,6 @@
     <string name="home_wallpaper_screen_changed">Προσαρμογή του φόντου σε αυτή την οθόνη…</string>
     <string name="home_wallpaper_outdated">Ενημέρωση του φόντου…</string>
     <string name="home_wallpaper_saving">Επεξεργασία φόντου…</string>
+    <string name="home_tile_images_screen_changed">Προσαρμογή των banner πλακιδίων σε αυτή την οθόνη…</string>
+    <string name="home_tile_images_outdated">Ενημέρωση των banner πλακιδίων…</string>
 </resources>

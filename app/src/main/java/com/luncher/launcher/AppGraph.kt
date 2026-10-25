@@ -11,6 +11,7 @@ import com.luncher.domain.apps.AppCustomizations
 import com.luncher.domain.apps.AppInfoScreen
 import com.luncher.domain.apps.AppImages
 import com.luncher.domain.apps.InstalledApps
+import com.luncher.domain.apps.PreparedTileImages
 import com.luncher.domain.clock.Clock
 import com.luncher.domain.jobs.Jobs
 import com.luncher.domain.pictures.FolderPictures
@@ -71,8 +72,13 @@ open class AppGraph(context: Context) : HomeGraph, SettingsGraph {
     /** An app's own image, for the tile banner picker: drawn at its preview's size, never kept, so the tiles' kept images stay as they are. */
     override val appBanners: AppImages<Bitmap> by lazy { BannerImages(appContext) }
 
-    /** A tile's picture, drawn from its working copy only. */
-    private val pictureTiles by lazy { WorkingCopyTiles(appContext, jobs) }
+    /** A tile's picture, drawn from its working copy only; one found damaged is made again. */
+    private val pictureTiles by lazy { WorkingCopyTiles(appContext, jobs, onDamaged = { preparedTileImages.damaged(it) }) }
+
+    /** The tiles' pictures, prepared for the screen as it is: one for the process, so the preparing goes on when the home screen stops. */
+    override val preparedTileImages: PreparedTileImages by lazy {
+        PreparedTileImages(preparedPictures, jobs) { Handler(Looper.getMainLooper()).post(it) }
+    }
 
     /** The background thread, for the adapters' and screens' jobs; open so a test can run them when it says. */
     override val jobs: Jobs by lazy { BackgroundThreadJobs() }

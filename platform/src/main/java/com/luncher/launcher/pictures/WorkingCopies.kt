@@ -4,6 +4,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import com.luncher.domain.pictures.Fit
 import com.luncher.domain.pictures.Framing
+import com.luncher.domain.pictures.PreparingCause
 import com.luncher.domain.pictures.frame
 import com.luncher.launcher.ui.ScreenSize
 import java.io.BufferedInputStream
@@ -71,7 +72,17 @@ internal class WorkingCopies(
     private fun target(): Pair<Int, Int> = screen().let { (it.width + 1) / 2 to (it.height + 1) / 2 }
 
     /** Whether [picture]'s working copy is there, and made for the screen as it is now. */
-    fun made(picture: String): Boolean = header(fileOf(picture)) == target()
+    fun made(picture: String): Boolean = whyMake(picture) == null
+
+    /**
+     * Why [picture]'s working copy must be made again, or null if it's there and made for the
+     * screen as it is now: one of this format and drawing made for another size is for another
+     * screen; none, or one of another format or drawing, is outdated.
+     */
+    fun whyMake(picture: String): PreparingCause? {
+        val made = header(fileOf(picture)) ?: return PreparingCause.OUTDATED
+        return if (made == target()) null else PreparingCause.SCREEN_CHANGED
+    }
 
     /**
      * [original], of [shape], decoded into a working copy written to [into], through a new file

@@ -42,6 +42,7 @@ import com.luncher.domain.wallpaper.FakeStoredWallpaper
 import com.luncher.domain.wallpaper.WallpaperDrawing
 import com.luncher.launcher.pictures.FilePictureImages
 import com.luncher.launcher.pictures.WorkingCopyImages
+import com.luncher.launcher.ui.ScreenSize
 import com.luncher.launcher.ui.WorkingDialog
 import com.luncher.launcher.testing.TV_1080P
 import org.junit.Test
@@ -97,6 +98,8 @@ class HomeScreenshotTest {
             override val pictureImages = FilePictureImages(application)
             override val storedWallpaper = FakeStoredWallpaper(kept)
             override val appInfoScreen = FakeAppInfoScreen(hasAppInfo)
+            // The tiles' pictures prepared as in the app, on the same files.
+            override val preparedPictures = WorkingCopyImages(application)
             override val appCustomizations = FakeAppCustomizations(
                 named.entries.associate { (app, name) -> named(app(app), name) } +
                     images.entries.associate { (app, image) -> app(app).launchable to AppCustomization(name = named[app], image = image) },
@@ -175,6 +178,29 @@ class HomeScreenshotTest {
         val background = Background(landscape(), dim = 20)
         val kept = WallpaperDrawing(background.picture!!, background.style, 1280, 720) to Bitmap.createBitmap(1280, 720, Bitmap.Config.ARGB_8888)
         start(appearance = Appearance(background = background), drawn = false, kept = kept)
+        shadowOf(Looper.getMainLooper()).idle()
+    }
+
+    // Two tiles' picture prepared for a 720p screen, on a 1080p one: their apps' own images show
+    // while the window says why.
+    @Test
+    fun homeScreenFittingTheTileBanners() {
+        fittingTheTileBanners()
+        captureScreenFocused("src/test/screenshots/home/home_screen_fitting_tile_banners.png")
+    }
+
+    // The same in Greek, its longest wording.
+    @Test
+    @Config(qualifiers = "el-rGR-$TV_1080P")
+    fun homeScreenFittingTheTileBannersInGreek() {
+        fittingTheTileBanners()
+        captureScreenFocused("src/test/screenshots/home/home_screen_fitting_tile_banners_greek.png")
+    }
+
+    private fun fittingTheTileBanners() {
+        val landscape = landscape()
+        WorkingCopyImages(RuntimeEnvironment.getApplication(), screen = { ScreenSize(1280, 720) }).prepare(landscape) { false }
+        start(drawn = false, images = mapOf("games" to TileImage(landscape), "music" to TileImage(landscape, Framing(Fit.STRETCH))))
         shadowOf(Looper.getMainLooper()).idle()
     }
 

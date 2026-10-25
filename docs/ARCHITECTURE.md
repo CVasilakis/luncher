@@ -111,7 +111,8 @@ work is kept from coming back, and how a wait shows.
    State that outlives the screens, because work for one of them goes on when it closes (the
    wallpaper being drawn) or a screen recreated must find it where it was (the shared pictures
    being added), is a helper in `:domain` built on ports, one per process, which `AppGraph` makes
-   and every screen that needs it watches the same way (`Wallpaper`, `ReceivedPictures`).
+   and every screen that needs it watches the same way (`Wallpaper`, `ReceivedPictures`,
+   `PreparedTileImages`).
 3. **Slow work is a job:** a computation from immutable inputs to an immutable result (a file and
    a size to a bitmap), which touches no view and no state, or an adapter's writing of a file only
    it reads, replaced in one step. Jobs run one at a time on a single background thread, at
@@ -154,7 +155,8 @@ work is kept from coming back, and how a wait shows.
    version); when any of that differs, it's made again in place. It's made as early as its input
    exists (a picture's working copy during its import, `PreparedPictures`). A screen that finds
    one missing makes all of them at its start, behind a working window, before the user can act,
-   so nothing lags afterwards (the background editor's "Preparing picture 2 of 5…"). Options and
+   so nothing lags afterwards (the background editor's "Preparing picture 2 of 5…"; the home
+   screen's "Updating the tile banners…", with the wallpaper's drawing when both are due). Options and
    styles are applied to the kept result, never to the original again; only what's stored for
    good (the wallpaper, on Save) is drawn from the original.
 8. **Nothing is left behind.** One kept file per thing, never one per size or variant, replaced

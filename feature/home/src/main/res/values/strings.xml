@@ -50,4 +50,10 @@
     <!-- The same, while a new wallpaper saved in the background editor is drawn, which the user
          left before it was done: as that editor says it (settings_background_applying). -->
     <string name="home_wallpaper_saving">Processing background…</string>
+    <!-- While the pictures the user chose for tiles (with Tile banner, home_menu_tile_banner) are
+         prepared again, in the same window, after the background's message when both are due:
+         the TV's screen changed size, so they're prepared for it. -->
+    <string name="home_tile_images_screen_changed">Fitting the tile banners to this screen…</string>
+    <!-- The same, when they're outdated: Luncher was updated, or what was prepared is lost or damaged. -->
+    <string name="home_tile_images_outdated">Updating the tile banners…</string>
 </resources>

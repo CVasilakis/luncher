@@ -2,6 +2,8 @@ package com.luncher.launcher.pictures
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.os.Handler
+import android.os.Looper
 import com.luncher.domain.jobs.JobPriority
 import com.luncher.domain.jobs.Jobs
 import com.luncher.domain.pictures.Framing
@@ -21,7 +23,8 @@ import com.luncher.launcher.ui.R as UiR
  * made again. One that doesn't decode is damaged: it draws nothing, and is deleted, so it's made
  * again too, in a job of [JobPriority.PICTURE_LIBRARY], the priority of everything that changes the
  * library's files, and only if it's still the file that failed: a good copy that a job made
- * meanwhile, under the same name, stays.
+ * meanwhile, under the same name, stays. Once it's deleted, [onDamaged] is told on the main thread,
+ * to have it made again ([PreparedTileImages][com.luncher.domain.apps.PreparedTileImages]).
  */
 class WorkingCopyTiles(
     context: Context,
@@ -29,9 +32,11 @@ class WorkingCopyTiles(
     private val originals: File = File(context.filesDir, "pictures"),
     copies: File = File(context.filesDir, WorkingCopies.FOLDER),
     screen: () -> ScreenSize = { context.applicationContext.screenSize() },
+    private val onDamaged: (PictureId) -> Unit = {},
 ) : PictureTiles {
 
     private val workingCopies = WorkingCopies(copies, context.color(UiR.color.background), screen)
+    private val main = Handler(Looper.getMainLooper())
 
     override fun draw(picture: PictureId, framing: Framing, width: Int, height: Int): Bitmap? =
         when (val tile = workingCopies.drawTile(picture.value, width, height, framing)) {
@@ -40,7 +45,7 @@ class WorkingCopyTiles(
             is WorkingCopies.Tile.Damaged -> {
                 val file = workingCopies.fileOf(picture.value)
                 jobs.run(JobPriority.PICTURE_LIBRARY) {
-                    if (file.length() == tile.length && file.lastModified() == tile.modified) file.delete()
+                    if (file.length() == tile.length && file.lastModified() == tile.modified && file.delete()) main.post { onDamaged(picture) }
                 }
                 null
             }

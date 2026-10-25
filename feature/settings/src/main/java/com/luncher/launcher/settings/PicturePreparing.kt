@@ -10,6 +10,7 @@ import com.luncher.domain.jobs.LatestRequest
 import com.luncher.domain.pictures.Picture
 import com.luncher.domain.pictures.PictureId
 import com.luncher.domain.pictures.PreparedPictures
+import com.luncher.domain.pictures.isPrepared
 import com.luncher.launcher.ui.WorkingDialog
 
 /**

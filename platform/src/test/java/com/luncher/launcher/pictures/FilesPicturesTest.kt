@@ -11,6 +11,7 @@ import com.luncher.domain.pictures.PictureId
 import com.luncher.domain.pictures.PictureLimits
 import com.luncher.domain.pictures.PictureStyle
 import com.luncher.domain.pictures.SizeLimit
+import com.luncher.domain.pictures.isPrepared
 import com.luncher.launcher.ui.ScreenSize
 import com.luncher.launcher.outside.AnotherApp
 import com.luncher.launcher.outside.OutsideCalls

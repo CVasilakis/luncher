@@ -25,15 +25,18 @@ import com.luncher.domain.apps.FakeAppCustomizations
 import com.luncher.domain.apps.FakeAppInfoScreen
 import com.luncher.domain.apps.FakeInstalledApps
 import com.luncher.domain.apps.InstalledApps
+import com.luncher.domain.apps.PreparedTileImages
 import com.luncher.domain.clock.Clock
 import com.luncher.domain.clock.FakeClock
 import com.luncher.domain.jobs.ManualJobs
 import com.luncher.domain.pictures.FakePictureImages
+import com.luncher.domain.pictures.FakePreparedPictures
 import com.luncher.domain.pictures.Fit
 import com.luncher.domain.pictures.PictureId
 import com.luncher.domain.pictures.PictureImages
 import com.luncher.domain.pictures.PicturePosition
 import com.luncher.domain.pictures.PictureStyle
+import com.luncher.domain.pictures.PreparedPictures
 import com.luncher.domain.wallpaper.FakeStoredWallpaper
 import com.luncher.domain.wallpaper.Wallpaper
 import com.luncher.launcher.apps.BannerImages
@@ -63,11 +66,18 @@ open class TestHomeGraph(context: Context) : HomeGraph {
 
     /**
      * How a tile's picture is drawn: from its working copy, in the test's own files, as the app
-     * does; a test that shows one prepares its copy first (`WorkingCopyImages.prepare`).
+     * does; a test that shows one prepares its copy first (`WorkingCopyImages.prepare`). A copy
+     * found damaged is made again, as in the app.
      */
-    open val pictureTiles: PictureTiles by lazy { WorkingCopyTiles(context, jobs) }
+    open val pictureTiles: PictureTiles by lazy { WorkingCopyTiles(context, jobs, onDamaged = { preparedTileImages.damaged(it) }) }
 
     override val appImages: AppImages<Bitmap> by lazy { BannerImages(context, pictureTiles) }
+
+    /** What [preparedTileImages] prepares the tiles' pictures with: every one prepared, unless a test says otherwise. */
+    open val preparedPictures: PreparedPictures = FakePreparedPictures()
+
+    // Made on first use, from what a test's subclass gives.
+    override val preparedTileImages by lazy { PreparedTileImages(preparedPictures, jobs) { Handler(Looper.getMainLooper()).post(it) } }
     override val appInfoScreen: AppInfoScreen = FakeAppInfoScreen()
     override val clock: Clock = FakeClock()
     override val appearanceSettings: AppearanceSettings = FakeAppearanceSettings(Appearance(topLeftTiles))

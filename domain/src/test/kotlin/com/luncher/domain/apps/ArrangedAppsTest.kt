@@ -261,6 +261,21 @@ class ArrangedAppsTest {
     }
 
     @Test
+    fun `the tiles' pictures are the shown apps' in their order, then the hidden ones', each once, absent apps' left out`() {
+        val away = LaunchableApp("com.example.away", "com.example.away.MainActivity")
+        val stored = mapOf(
+            showing("news", beach),
+            showing("games", alps),
+            showing("movies", PictureId("sea")),
+            showing("music", beach),
+            away to AppCustomization(image = TileImage(PictureId("away"))),
+        )
+        val arranged = homeApps(installed, "com.luncher.launcher", AppArrangement(order = null, hidden = listOf(id("games"))), stored, Locale.ENGLISH)
+
+        assertEquals(listOf(PictureId("sea"), beach, alps), arranged.tilePictures.toList())
+    }
+
+    @Test
     fun `deleting pictures no tile shows stores nothing`() {
         val arranged = homeApps(installed, "com.luncher.launcher", AppArrangement.NONE, mapOf(showing("music", alps)) + named("news", "Arts"), Locale.ENGLISH)
 

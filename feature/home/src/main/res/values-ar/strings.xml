@@ -21,4 +21,6 @@
     <string name="home_wallpaper_screen_changed">جارٍ ملاءمة الخلفية لهذه الشاشة…</string>
     <string name="home_wallpaper_outdated">جارٍ تحديث الخلفية…</string>
     <string name="home_wallpaper_saving">جارٍ معالجة الخلفية…</string>
+    <string name="home_tile_images_screen_changed">جارٍ ملاءمة لافتات المربعات لهذه الشاشة…</string>
+    <string name="home_tile_images_outdated">جارٍ تحديث لافتات المربعات…</string>
 </resources>

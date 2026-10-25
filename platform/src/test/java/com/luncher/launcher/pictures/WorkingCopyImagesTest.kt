@@ -9,6 +9,8 @@ import com.luncher.domain.pictures.Framing
 import com.luncher.domain.pictures.PictureId
 import com.luncher.domain.pictures.PicturePosition
 import com.luncher.domain.pictures.PictureStyle
+import com.luncher.domain.pictures.PreparingCause
+import com.luncher.domain.pictures.isPrepared
 import com.luncher.launcher.ui.ScreenSize
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -90,6 +92,24 @@ class WorkingCopyImagesTest {
         file.writeBytes(file.readBytes().also { it[7] = 99 })   // the format's version
 
         assertFalse(images.isPrepared(wide))
+    }
+
+    @Test
+    fun `says why a picture isn't prepared, outdated without a copy or with one of another format or drawing, the screen changed with one for another size`() {
+        assertEquals(PreparingCause.OUTDATED, images.whyPrepare(wide))
+        images.prepare(wide) { false }
+        assertNull(images.whyPrepare(wide))
+
+        screen = ScreenSize(1280, 720)
+        assertEquals(PreparingCause.SCREEN_CHANGED, images.whyPrepare(wide))
+
+        screen = ScreenSize(1920, 1080)
+        val file = File(copies, wide.value)
+        val made = file.readBytes()
+        file.writeBytes(made.copyOf().also { it[11] = 99 })   // the drawing's version
+        assertEquals(PreparingCause.OUTDATED, images.whyPrepare(wide))
+        file.writeBytes(made.copyOf().also { it[7] = 99 })   // the format's version
+        assertEquals(PreparingCause.OUTDATED, images.whyPrepare(wide))
     }
 
     @Test

@@ -26,7 +26,8 @@ domain/src/
 │   │   ├── AppArrangement.kt    model: the user's order of the shown apps, and the hidden apps, as stored
 │   │   ├── AppArrangements.kt   port: where the arrangement is kept, and when it changes
 │   │   ├── HomeApps.kt          rule: which apps the home screen shows, in which order, and which are hidden, each with what the user set for it, matched to the installed apps (StoredMatch); the orders by name (NameOrder)
-│   │   ├── ArrangedApps.kt      model and rules: the shown and hidden apps (HomeApps); hiding or showing one, and what to store; what to store of what the user set for the apps with one renamed (renamed), its tile's picture chosen (withImage), or pictures deleted (withoutPictures); all of them by the device's label, for Hide apps
+│   │   ├── ArrangedApps.kt      model and rules: the shown and hidden apps (HomeApps); hiding or showing one, and what to store; what to store of what the user set for the apps with one renamed (renamed), its tile's picture chosen (withImage), or pictures deleted (withoutPictures); all of them by the device's label, for Hide apps; the pictures their tiles show (tilePictures)
+│   │   ├── PreparedTileImages.kt helper: the pictures the tiles show, prepared for the screen as it is (one job each, given up for the process where one can't be, one found damaged prepared again once), one per process, which the home screen watches; whether it prepares and why
 │   │   ├── AppAction.kt         model and rule: what the user can do to an app from its tile's menu (move, hide, rename, a picture for its tile, its info), one type each, and which the menu lists, each available or not (AppMenuEntry)
 │   │   ├── AppNames.kt          rule: the name an app the user renamed keeps (appName), or its own label again; how long it may be (MAX_APP_NAME)
 │   │   ├── AppInfoScreen.kt     port: whether the device has the page about an app in its settings, which App info opens
@@ -67,7 +68,7 @@ domain/src/
 │   │   ├── PictureStyle.kt      model and rule: a picture's framing, dim and blur (Blur: off, then three levels of equal steps), as it's drawn
 │   │   ├── PictureUse.kt        model and rule: what a picture is used for (the wallpaper, the installed apps' tiles), and an appearance without deleted pictures
 │   │   ├── PictureImages.kt     port: a picture drawn at a size in a style, in the UI's image type; kept or drawn anew, a screen's drawing stopped when it's dropped
-│   │   ├── PreparedPictures.kt  port: each picture prepared once for the screens (its working copy), and whether it is for the screen as it is now
+│   │   ├── PreparedPictures.kt  port: each picture prepared once for the screens (its working copy), and whether it is for the screen as it is now, or why not (PreparingCause: another screen, or outdated)
 │   │   └── FolderPictures.kt    port, model and rule: the pictures in the drop folders, their preview, and the order they're listed in
 │   ├── wallpaper/
 │   │   ├── WallpaperDrawing.kt  model and rule: what a wallpaper is drawn from (a picture, its style, the screen's size), and why the one kept won't do (DrawingCause)
@@ -104,7 +105,7 @@ domain/src/
     ├── jobs/ManualJobs.kt          fake of the Jobs port: the queued jobs run when the test says, all or the next one, in the real order; their priorities
     ├── pictures/FakePictures.kt    fake of the Pictures and PictureImport ports: the library in memory, each source's answer set by the test
     ├── pictures/FakePictureImages.kt  fake of the PictureImages port: draws what the test says, keeps what it drew
-    ├── pictures/FakePreparedPictures.kt fake of the PreparedPictures port: every picture prepared but those the test says
+    ├── pictures/FakePreparedPictures.kt fake of the PreparedPictures port: every picture prepared but those the test says, for the cause it says, and those it can't; how often it was asked
     ├── wallpaper/FakeStoredWallpaper.kt fake of the StoredWallpaper port: the wallpaper kept in memory
     └── pictures/FakeFolderPictures.kt fake of the FolderPictures port: the drop folders' pictures in memory
 ```
@@ -126,8 +127,10 @@ Packages are by topic (`appearance/`, `apps/`, `arrange/`, `clock/`, `jobs/`, `l
   [`ARCHITECTURE.md`](../docs/ARCHITECTURE.md#background-work-and-changes-while-shown), built on the
   `Jobs` port and tested with `ManualJobs`; `Wallpaper`, in `wallpaper/`, state that outlives a
   screen, one per process, built on `StoredWallpaper`, `PictureImages`, `AppearanceSettings` and
-  `Jobs`, and tested with their fakes; and `ReceivedPictures`, in `pictures/`, the shared pictures
-  being added, built on `PictureImport` and tested with `FakePictures`.
+  `Jobs`, and tested with their fakes; `ReceivedPictures`, in `pictures/`, the shared pictures
+  being added, built on `PictureImport` and tested with `FakePictures`; and `PreparedTileImages`,
+  in `apps/`, the tiles' pictures prepared for the screen, one per process too, built on
+  `PreparedPictures` and `Jobs`, and tested with their fakes.
 - Ports are interfaces named after what they provide (`InstalledApps`), not how
   (`PackageManagerApps`); adapters in `:platform` implement them. A port whose result is a UI type
   this module can't name is generic in it (`AppImages<Image>`), and so is one that takes an
@@ -135,7 +138,10 @@ Packages are by topic (`appearance/`, `apps/`, `arrange/`, `clock/`, `jobs/`, `l
   thread, through a function it's given (`PictureImport.add`), with a sealed result each screen
   handles in an exhaustive `when` (`ImportResult`). One a screen may stop waiting for returns a
   `Cancellable`, whose KDoc says what cancelling stops (`PictureImport.add`: no answer, nothing
-  added).
+  added). A port has no default methods: the app's code is desugared for API 22, which moves a
+  default's body out of the interface, and a fake in the instrumented tests' APK, built apart,
+  calls it in the interface (`AbstractMethodError` on every API level). What's said from a port's
+  answers is an extension function beside it (`PreparedPictures.isPrepared`).
 - A port for state that changes while it's shown (`Clock`, `AppearanceSettings`, `AppArrangements`,
   `AppCustomizations`, `InstalledApps`, `Pictures`) is a port you can watch
   ([`ARCHITECTURE.md`](../docs/ARCHITECTURE.md#background-work-and-changes-while-shown)).

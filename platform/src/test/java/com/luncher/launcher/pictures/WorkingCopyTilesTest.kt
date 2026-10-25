@@ -2,6 +2,7 @@ package com.luncher.launcher.pictures
 
 import android.graphics.Bitmap
 import android.graphics.Color
+import android.os.Looper
 import com.luncher.domain.jobs.JobPriority
 import com.luncher.domain.jobs.ManualJobs
 import com.luncher.domain.pictures.Fit
@@ -20,6 +21,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
+import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.GraphicsMode
 import java.io.File
 
@@ -35,7 +37,10 @@ class WorkingCopyTilesTest {
     /** The screen as it is: the tests change it as a TV switching its resolution would. */
     private var screen = ScreenSize(1920, 1080)
     private val prepared = WorkingCopyImages(context, originals, copies) { screen }
-    private val tiles = WorkingCopyTiles(context, jobs, originals, copies) { screen }
+
+    /** The pictures whose copy was deleted as damaged, as the main thread was told. */
+    private val damaged = mutableListOf<PictureId>()
+    private val tiles = WorkingCopyTiles(context, jobs, originals, copies, { screen }) { damaged += it }
 
     /** A picture of the library, its left half red, its right half blue, 4:1, with its working copy made. */
     private fun wide(name: String = "wide"): PictureId {
@@ -116,6 +121,19 @@ class WorkingCopyTilesTest {
     }
 
     @Test
+    fun `once a damaged copy is deleted, the main thread is told, to have it made again`() {
+        val wide = wide()
+        copyOf(wide).writeBytes(copyOf(wide).readBytes().copyOf(20) + ByteArray(500) { 7 })
+        tiles.draw(wide, Framing(), 307, 172)
+
+        assertEquals("not before it's deleted", emptyList<PictureId>(), damaged)
+        jobs.runAll()
+        shadowOf(Looper.getMainLooper()).idle()
+
+        assertEquals(listOf(wide), damaged)
+    }
+
+    @Test
     fun `a copy cut short in its header is damaged too`() {
         val wide = wide()
         copyOf(wide).writeBytes(copyOf(wide).readBytes().copyOf(10))
@@ -135,8 +153,10 @@ class WorkingCopyTilesTest {
 
         copyOf(wide).writeBytes(good)   // as a prepare job would, under the same name
         jobs.runAll()
+        shadowOf(Looper.getMainLooper()).idle()
 
         assertTrue(copyOf(wide).exists())
+        assertEquals("nothing to make again", emptyList<PictureId>(), damaged)
         assertNotNull(tiles.draw(wide, Framing(), 307, 172))
     }
 

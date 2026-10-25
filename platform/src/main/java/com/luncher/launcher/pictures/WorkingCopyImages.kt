@@ -6,6 +6,7 @@ import com.luncher.domain.pictures.PictureId
 import com.luncher.domain.pictures.PictureImages
 import com.luncher.domain.pictures.PictureStyle
 import com.luncher.domain.pictures.PreparedPictures
+import com.luncher.domain.pictures.PreparingCause
 import com.luncher.launcher.ui.ScreenSize
 import com.luncher.launcher.ui.color
 import com.luncher.launcher.ui.screenSize
@@ -32,7 +33,7 @@ class WorkingCopyImages(
     private val background = context.color(UiR.color.background)
     private val workingCopies = WorkingCopies(copies, background, screen)
 
-    override fun isPrepared(picture: PictureId): Boolean = workingCopies.made(picture.value)
+    override fun whyPrepare(picture: PictureId): PreparingCause? = workingCopies.whyMake(picture.value)
 
     override fun prepare(picture: PictureId, stopped: () -> Boolean): Boolean {
         if (workingCopies.made(picture.value)) return true

@@ -61,6 +61,10 @@ class ArrangedApps internal constructor(
         (shown.map { AppVisibility(it, hidden = false) } + hidden.map { AppVisibility(it, hidden = true) })
             .sortedWith(compareBy(byLabel) { it.app })
 
+    /** The pictures of the library the apps' tiles show, the shown apps' first, then the hidden ones': what's prepared for them ([PreparedTileImages]). */
+    val tilePictures: Set<PictureId>
+        get() = (shown.asSequence() + hidden.asSequence()).mapNotNullTo(LinkedHashSet()) { it.customization.image?.picture }
+
     /**
      * What to store of what the user set for the apps, with [app] named [name] ([appName]'s), or by
      * its own label again for null; the rest of what's set for it, and for every other app, as it

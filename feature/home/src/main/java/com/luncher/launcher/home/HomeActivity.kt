@@ -25,12 +25,14 @@ import com.luncher.domain.apps.MAX_APP_NAME
 import com.luncher.domain.apps.appActions
 import com.luncher.domain.apps.appName
 import com.luncher.domain.apps.homeApps
+import com.luncher.domain.pictures.PictureId
 import com.luncher.launcher.settings.R as SettingsR
 import com.luncher.launcher.settings.SettingsActivity
 import com.luncher.launcher.settings.TileBannerActivity
 import com.luncher.launcher.ui.DialogButton
 import com.luncher.launcher.ui.NameDialog
 import com.luncher.launcher.ui.color
+import com.luncher.launcher.ui.screenSize
 import com.luncher.launcher.ui.R as UiR
 import java.util.Locale
 
@@ -51,6 +53,7 @@ class HomeActivity : Activity() {
     private val arrangements by lazy { graph.appArrangements }
     private val customizations by lazy { graph.appCustomizations }
     private val images by lazy { graph.appImages }
+    private val tileImages by lazy { graph.preparedTileImages }
     private val appInfoScreen by lazy { graph.appInfoScreen }
     private val clock by lazy { graph.clock }
     private val appearanceSettings by lazy { graph.appearanceSettings }
@@ -61,6 +64,7 @@ class HomeActivity : Activity() {
     private lateinit var empty: TextView
     private lateinit var move: MoveMode
     private lateinit var wallpaper: HomeWallpaper
+    private lateinit var working: HomeWorking
 
     /** The tiles' menu: made the first time a long press opens it. */
     private var menu: TileMenu? = null
@@ -92,6 +96,10 @@ class HomeActivity : Activity() {
         if (move.active) appsChangedWhileMoving = true else refresh()
     }
 
+    // A tile's picture prepared while shown: that tile drawn again with it, the others as they are.
+    private val preparingTileImage: (PictureId) -> Boolean = { tileImages.preparing(it) }
+    private val showTileImages: () -> Unit = { followTileImages() }
+
     private val openApp = View.OnClickListener { open((it as AppTileView).app) }
 
     private val openMenu = View.OnLongClickListener {
@@ -113,6 +121,7 @@ class HomeActivity : Activity() {
         settingsEntry = findViewById(R.id.home_settings)
         settingsEntry.setOnClickListener { openSettings() }
         wallpaper = HomeWallpaper(this, graph.wallpaper, ::showOnPicture)
+        working = HomeWorking(this, graph.wallpaper, tileImages)
         move = MoveMode(
             tiles,
             normalBar = listOf(clockView, settingsEntry),
@@ -144,6 +153,8 @@ class HomeActivity : Activity() {
         super.onStart()
         clockView.start(clock)
         wallpaper.start()
+        working.start()
+        tileImages.addListener(showTileImages)
         appearanceSettings.addListener(showAppearance)
         showAppearance()
         arrangements.addListener(showArrangement)
@@ -161,6 +172,8 @@ class HomeActivity : Activity() {
         move.end()
         clockView.stop()
         wallpaper.stop()
+        working.stop()
+        tileImages.removeListener(showTileImages)
         appearanceSettings.removeListener(showAppearance)
         arrangements.removeListener(showArrangement)
         customizations.removeListener(showAppChanges)
@@ -188,6 +201,17 @@ class HomeActivity : Activity() {
         // Unchanged, as on most returns to the home screen: keep the tiles, their images and focus.
         if (arranged.shown != shown) show(arranged.shown)
         showWhyEmpty(arranged)
+        // The pictures the tiles show, hidden apps' too, prepared for this screen if they aren't:
+        // asked only when they, or the screen, changed. Tiles made meanwhile, or whose picture was
+        // prepared while the home screen was stopped, follow it too.
+        val screen = screenSize()
+        tileImages.prepare(arranged.tilePictures, screen.width, screen.height)
+        followTileImages()
+    }
+
+    /** Each tile whose picture was prepared since it was drawn without it, drawn again with it. */
+    private fun followTileImages() {
+        for (i in 0 until tiles.childCount) (tiles.getChildAt(i) as AppTileView).followPreparing(preparingTileImage)
     }
 
     private fun show(appearance: Appearance) {
@@ -200,8 +224,8 @@ class HomeActivity : Activity() {
 
     /**
      * The theme's accent on the tiles' focus frame and the gear's disc, and its colors in the
-     * tile's menu and the window while the wallpaper is drawn; the home screen itself stays dark,
-     * on its wallpaper. Applied only when the theme changed.
+     * tile's menu and the window while the wallpaper is drawn or the tiles' pictures prepared; the
+     * home screen itself stays dark, on its wallpaper. Applied only when the theme changed.
      */
     private fun showTheme(theme: ThemeAppearance) {
         if (theme == shownTheme) return
@@ -215,7 +239,7 @@ class HomeActivity : Activity() {
             })
         }
         menu?.style(roles, tiles.tileStyle.corners)
-        wallpaper.roles = roles
+        working.roles = roles
     }
 
     /**

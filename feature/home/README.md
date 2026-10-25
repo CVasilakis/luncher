@@ -25,9 +25,11 @@ feature/home/
     │   │   ├── ClockView.kt      the top bar's time and date, following the Clock port
     │   │   ├── OutlinedTextView.kt  a text on the wallpaper, with :ui's WallpaperOutline around it
     │   │   ├── AppTilesView.kt   places the tiles where the domain's TileLayout says; scrolls
-    │   │   ├── AppTileView.kt    one app: its image, focus zoom with a frame or a lift and shadow; its name; held while moved
+    │   │   ├── AppTileView.kt    one app: its image, focus zoom with a frame or a lift and shadow; its name; held while moved;
+    │   │   │                     drawn again once its picture is prepared
     │   │   ├── TilePaints.kt     what every tile draws with: frames, dimming, the name, the corners, the focus frame on or off, the shadow's outline
-    │   │   ├── HomeWallpaper.kt  the wallpaper, the window's background, as the process's Wallpaper says; a window while it's drawn again
+    │   │   ├── HomeWallpaper.kt  the wallpaper, the window's background, as the process's Wallpaper says
+    │   │   ├── HomeWorking.kt    the one window while the wallpaper is drawn again or the tiles' pictures prepared, saying why
     │   │   ├── TileMenu.kt       a tile's menu: the domain's AppActions for its app, those the device can't do
     │   │   │                     dimmed, in a window above, below or beside it, its corners following the tiles'
     │   │   └── MoveMode.kt       moving an app: keys to the domain's MoveSession, the top bar's title and hint
@@ -93,7 +95,7 @@ one job, so a new arrangement, image source or top bar item changes one of them:
 | `AndroidClock` (`:platform`) | reads those from Android, and watches the time broadcasts only while something listens |
 | `ClockView` | formats a reading in the device's language; the time and the date side by side, in the order the top bar gives, either or both hidden |
 | `topBarLayout` (`:domain`), `TopBarView` | which edge of the top bar the clock and the settings entry are at, the time's side of the date, and whether each of the two shows; the view moves its items there |
-| `HomeActivity` | reads the apps, their arrangement and what the user set for them in `onStart`, so a change made while it was hidden shows as soon as it's visible again, even behind the settings panel; when the shown apps changed, creates tiles for new ones (an updated app is new: its banner may have changed; so is a renamed one, or one whose tile's picture changed, whose tile alone is drawn again) and drops the others. Without tiles, says why: nothing installed, or everything hidden. Starts the clock and follows the wallpaper, the appearance, the arrangement, the names and the installed apps in `onStart`, and stops all six in `onStop`: an app hidden or shown in the settings, or hidden from its tile's menu, shows at once, and so does an app renamed, given a picture, installed, updated or removed; moving an app saves without reading the apps again, and an app changed while moving one shows when that ends. When the focused app is gone (hidden, removed), the focus goes to the tile now in its place, or the last one; without tiles, to the settings entry. Opens the [settings panel](../settings/README.md#the-settings-panel) on OK on the gear or on the Menu key. A long press of OK on a tile opens [its menu](#a-tiles-menu); [moving an app](#moving-an-app) gets every key first while it's on. |
+| `HomeActivity` | reads the apps, their arrangement and what the user set for them in `onStart`, so a change made while it was hidden shows as soon as it's visible again, even behind the settings panel; when the shown apps changed, creates tiles for new ones (an updated app is new: its banner may have changed; so is a renamed one, or one whose tile's picture changed, whose tile alone is drawn again) and drops the others. Without tiles, says why: nothing installed, or everything hidden. Starts the clock and follows the wallpaper, the tiles' pictures being prepared, the appearance, the arrangement, the names and the installed apps in `onStart`, and stops all seven in `onStop`: an app hidden or shown in the settings, or hidden from its tile's menu, shows at once, and so does an app renamed, given a picture, installed, updated or removed; moving an app saves without reading the apps again, and an app changed while moving one shows when that ends. When the focused app is gone (hidden, removed), the focus goes to the tile now in its place, or the last one; without tiles, to the settings entry. Opens the [settings panel](../settings/README.md#the-settings-panel) on OK on the gear or on the Menu key. A long press of OK on a tile opens [its menu](#a-tiles-menu); [moving an app](#moving-an-app) gets every key first while it's on. |
 
 ### A tile's picture
 
@@ -106,10 +108,28 @@ drawn as the banners are, on the main thread when no earlier start kept it
 size, a few times what a banner costs, and **never from the original**, a photo whose decode would
 hold up the start. A copy not prepared for the screen as it is (the TV switched resolution, an
 update draws pictures otherwise) leaves the tile with its app's own image, kept as that, never as
-the picture, so the picture shows as soon as its copy is made; a tile kept with its picture shows
-it meanwhile. A copy that doesn't decode is damaged: the tile shows its app's own image, and the
-copy is deleted, to be made again. A picture deleted from the library takes its tiles' pictures
+the picture, so the picture shows as soon as its copy is made ([below](#preparing-the-tiles-pictures));
+a tile kept with its picture shows it meanwhile. A copy that doesn't decode is damaged: the tile
+shows its app's own image, and the copy is deleted, to be made again. A picture deleted from the library takes its tiles' pictures
 with it ([`settings/README.md`](../settings/README.md#background)), and their kept images.
+
+### Preparing the tiles' pictures
+
+The home screen makes the missing copies, behind its window. At each read of the apps it tells
+`PreparedTileImages` (`:domain`, one per process, made by `AppGraph`) which pictures the tiles of
+every installed app show, hidden ones' too, so showing an app again never waits, and the screen's
+size. Those not prepared for it are prepared, one job each (`JobPriority.PICTURE_SCREENS`), while
+the window says why: "Fitting the tile banners to this screen…" when each one is for a screen of
+another size, else "Updating the tile banners…". It's the wallpaper's window, which says the
+wallpaper's cause first when both are due ([below](#the-wallpaper)), and takes every key. It asks
+only when the pictures or the screen changed since, so a return to the home screen costs nothing.
+
+A copy deleted as damaged is made again at once: `WorkingCopyTiles` tells `PreparedTileImages`
+once the file is gone; found damaged again, it's left. A picture that can't be prepared (its
+original unreadable, a full disk) is given up until Luncher starts again, its tile keeping its
+app's image, so nothing is tried again and again. As each picture is prepared, the tiles that
+show it are drawn again (`AppTileView.followPreparing`), nothing else laid out. The preparing goes
+on when the home screen stops, and its tiles show their pictures when it's back.
 
 ### The top bar
 
@@ -250,7 +270,10 @@ done. Meanwhile the home screen shows its plain color, and a window over it (`Wo
 `:ui`) says why, taking every key, Back too, so the wait reads as one, not as a screen that's
 stuck: "Fitting the background to this screen…" for a screen of another size (the TV switched to
 4K, say), "Updating the background…" when the one kept is of something else, was drawn by another
-version, or is lost. The window shows for half a second at least, so it never just flashes. A
+version, or is lost. The window shows for half a second at least, so it never just flashes. It's
+the home screen's one window for a wait (`HomeWorking`): while the [tiles'
+pictures](#preparing-the-tiles-pictures) are prepared too, it says so once the wallpaper is drawn,
+its message changed, never closed and opened again in between. A
 drawing goes on when the home screen stops, and shows when it's back. A wallpaper saved in the
 background editor is drawn the same way; if the user goes home before it's done, the window says
 "Processing background…", as the editor's did.
@@ -266,7 +289,8 @@ kept file. The wallpaper takes about 8 MB of memory at 1080p while shown.
 | `Wallpaper` (`:domain`) | the wallpaper as it stands, one per process, made by `AppGraph`: reads the one kept, draws it again when it won't do, saves a new background (drawn, then stored), forgets a deleted picture |
 | `StoredWallpaper` (`:domain`) / `FileStoredWallpaper` (`:platform`) | the one wallpaper kept, a file replaced in one step |
 | `PictureImages` (`:domain`) / `FilePictureImages` (`:platform`) | draws the picture at the screen's size, keeping nothing |
-| `HomeWallpaper` | the window's background as `Wallpaper` says, and its window while it's drawn |
+| `HomeWallpaper` | the window's background as `Wallpaper` says |
+| `HomeWorking` | the window while the wallpaper is drawn or the tiles' pictures prepared (`PreparedTileImages`), as both say: the wallpaper's cause first |
 | `WorkingDialog` (`:ui`) | that window: a spinning wheel and why, taking every key, half a second at least |
 
 ### Focus
@@ -343,7 +367,7 @@ and it takes the theme's colors,
 light or dark, as the settings panel does. The home screen applies the theme as it follows the
 appearance (`showTheme`, only when the theme part changed): the accent on the tiles' focus frame
 (`AppTilesView.accent`) and on the gear's focus disc, the colors on the menu and on the window
-that says the wallpaper is being drawn (`HomeWallpaper.roles`). Light or dark leaves the home
+that says the wallpaper is being drawn or the tiles' pictures prepared (`HomeWorking.roles`). Light or dark leaves the home
 screen itself dark, on its wallpaper.
 
 The menu is a dialog, a window of its own, so Android keeps the keys and the focus in it while it
