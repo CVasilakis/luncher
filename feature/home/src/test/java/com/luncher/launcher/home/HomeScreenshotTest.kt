@@ -1,12 +1,6 @@
 package com.luncher.launcher.home
 
 import android.graphics.Bitmap
-import android.graphics.Canvas
-import android.graphics.Color
-import android.graphics.LinearGradient
-import android.graphics.Paint
-import android.graphics.Path
-import android.graphics.Shader
 import android.os.Looper
 import android.view.KeyEvent
 import android.view.View
@@ -38,7 +32,6 @@ import com.luncher.domain.layout.TileSize
 import com.luncher.domain.pictures.Blur
 import com.luncher.domain.pictures.Fit
 import com.luncher.domain.pictures.Framing
-import com.luncher.domain.pictures.PictureId
 import com.luncher.domain.pictures.PicturePosition
 import com.luncher.domain.wallpaper.FakeStoredWallpaper
 import com.luncher.domain.wallpaper.WallpaperDrawing
@@ -57,7 +50,6 @@ import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 import java.time.Duration
 import org.robolectric.annotation.GraphicsMode
-import java.io.File
 
 /**
  * Reference images live in src/test/screenshots/home/ of this module. `recordRoborazziDebug` writes
@@ -115,31 +107,6 @@ class HomeScreenshotTest {
         // and shown, the window that said so closed
         shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(WorkingDialog.SHORTEST))
         return activity
-    }
-
-    /**
-     * A picture in the library's folder, as one added there: a made-up landscape, a sky and two
-     * ranges of hills, its sharp edges showing the blur.
-     */
-    private fun landscape(): PictureId {
-        val id = PictureId("landscape")
-        val picture = Bitmap.createBitmap(1600, 1200, Bitmap.Config.ARGB_8888)
-        val canvas = Canvas(picture)
-        canvas.drawPaint(Paint().apply { shader = LinearGradient(0f, 0f, 0f, 1200f, Color.rgb(40, 50, 110), Color.rgb(220, 110, 120), Shader.TileMode.CLAMP) })
-        canvas.drawCircle(1150f, 640f, 110f, Paint().apply { color = Color.rgb(250, 200, 120) })
-        for ((top, shade) in listOf(560f to Color.rgb(70, 50, 100), 760f to Color.rgb(40, 30, 60))) {
-            val hills = Path().apply {
-                moveTo(0f, top + 120)
-                for (x in 0..1600 step 200) lineTo(x.toFloat(), top + if (x / 200 % 2 == 0) 120f else 0f)
-                lineTo(1600f, 1200f)
-                lineTo(0f, 1200f)
-                close()
-            }
-            canvas.drawPath(hills, Paint(Paint.ANTI_ALIAS_FLAG).apply { color = shade })
-        }
-        val folder = File(RuntimeEnvironment.getApplication().filesDir, "pictures").apply { mkdirs() }
-        File(folder, id.value).outputStream().use { picture.compress(Bitmap.CompressFormat.PNG, 100, it) }
-        return id
     }
 
     // The wallpaper, a landscape photo filling the screen from its bottom, dimmed and lightly

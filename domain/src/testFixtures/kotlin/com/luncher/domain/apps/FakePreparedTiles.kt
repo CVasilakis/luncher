@@ -10,7 +10,8 @@ import java.util.Collections
 
 /**
  * [PreparedTiles] in memory: each app's tile kept for the drawing it was prepared for ([kept]),
- * read back as [draw] draws it. A tile whose picture's copy [copies] doesn't have prepared isn't
+ * read back as [draw] draws it, with the shape [shape] makes of that where the drawing asks for it
+ * ([TileDrawing.withShape], the pictures [seeThrough]). A tile whose picture's copy [copies] doesn't have prepared isn't
  * prepared ([TilePreparing.COPY_MISSING]); those of [damagedCopies] find their copy damaged, once
  * each; [failing] apps' can't be kept. With [jobs], everything slow fails unless a job runs it: the
  * main thread never prepares. Safe on a real background thread too (the instrumented tests): its
@@ -19,6 +20,7 @@ import java.util.Collections
 class FakePreparedTiles<Image>(
     private val copies: PreparedPictures? = null,
     private val jobs: ManualJobs? = null,
+    private val shape: (Image) -> ShapeMasks<Image>? = { null },
     private val draw: (TileDrawing) -> Image,
 ) : PreparedTiles<Image> {
 
@@ -76,13 +78,19 @@ class FakePreparedTiles<Image>(
     override fun make(drawing: TileDrawing, stopped: () -> Boolean): PreparedTile<Image>? {
         inJob()
         if (stopped() || copies?.isPrepared(drawing.picture) == false) return null
-        return PreparedTile(draw(drawing), drawing.picture in seeThrough, shape = null)
+        return tile(drawing)
     }
 
     override fun read(app: LaunchableApp, drawing: TileDrawing): TileRead<Image> = when {
         kept[app] != drawing -> TileRead.NotPrepared
         app in damaged -> TileRead.Damaged
-        else -> TileRead.Ready(PreparedTile(draw(drawing), drawing.picture in seeThrough, shape = null))
+        else -> TileRead.Ready(tile(drawing))
+    }
+
+    private fun tile(drawing: TileDrawing): PreparedTile<Image> {
+        val image = draw(drawing)
+        val seeThrough = drawing.picture in seeThrough
+        return PreparedTile(image, seeThrough, if (drawing.withShape(seeThrough)) shape(image) else null)
     }
 
     override fun delete(app: LaunchableApp) {

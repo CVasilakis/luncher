@@ -54,6 +54,9 @@ ui/
     │   │   │                     below a tile; the home screen's, and the room the appearance preview leaves
     │   │   ├── TileShapes.kt     a see-through picture's shape on its tile, made as the tile is prepared: a band
     │   │   │                     around its outline and its soft shadow, at half the tile's scale
+    │   │   ├── TilePainter.kt    draws a home tile from its parts (TileParts): its image, a see-through picture's look
+    │   │   │                     (backdrop, a focus that follows the tile or the picture's shape), the focus and held
+    │   │   │                     frames; the home screen's tiles, and the tile banner picker's preview of one
     │   │   ├── WallpaperOutline.kt  the dark edge around what's drawn on the wallpaper, on the home screen
     │   │   │                     and in the previews of it
     │   │   └── WorkingDialog.kt  a floating panel in the theme's colors, a spinning wheel and a message, taking every key,
@@ -73,7 +76,7 @@ ui/
     │       │   │                 corners, the dialogs' and WorkingDialog's sizes, the wallpaper outline's width, the
     │       │   │                 tile name's text size and gap; the home screen's padding at the sides
     │       │   │                 (screen_padding_horizontal), which the home tile's size comes from; the tile
-    │       │   │                 shape's band and shadow
+    │       │   │                 shape's band, shadow and its drop; the tile's frame
     │       │   └── themes.xml    Theme.Luncher, the app's and the home screen's theme; Theme.Luncher.Dialog, the
     │       │                     dialogs', and Theme.Luncher.Working; Widget.Luncher.Button, a button's
     │       └── values-h450dp/    a screen's title, and the gap below a panel's, on a screen 450 dp tall or more
@@ -89,13 +92,20 @@ ui/
 ```
 
 Resources here have no prefix (`accent`, `Theme.Luncher`, `icon_check`); a feature's are named after it
-(`home_tile_frame`). Code refers to them through this module's R class, imported as
+(`home_tile_lift`). Code refers to them through this module's R class, imported as
 `com.luncher.launcher.ui.R as UiR` next to the module's own `R`; layouts and themes by name, as
 any resource.
 
 The test fixtures are what the screens' JVM tests share, in every module
 (`testImplementation(testFixtures(project(":ui")))`): how they're used,
 [`../docs/TESTING.md`](../docs/TESTING.md#layouts-on-other-screens).
+
+A home tile's drawing is here (`TilePainter`), not in `:feature:home`, so the tile banner picker's
+preview draws a tile as the home screen does: one painter per screen, its paints made once (the
+image's, the glass's, the masks', the focus and held frames), and for each tile its `TileParts`,
+made with each image: the shader that rounds it, its shape's masks placed at the tile's scale, and
+the look as it applies (none for an opaque image). Drawing allocates nothing. What each look
+draws: [`../feature/home/README.md`](../feature/home/README.md#appearance).
 
 ## The design system
 

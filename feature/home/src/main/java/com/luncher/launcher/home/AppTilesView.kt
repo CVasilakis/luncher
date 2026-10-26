@@ -54,12 +54,12 @@ internal class AppTilesView(context: Context, attrs: AttributeSet?) : ViewGroup(
 
     private var layouts = TileLayouts(tileGeometry, pixelsPerDp, paints.nameHeight)
 
-    /** The focused tile's frame's color: the theme's accent, as the home screen shows it. */
-    var accent: Int = paints.focusFrame.color
+    /** The focus's color, its frame's or its band's around a picture's shape: the theme's accent, as the home screen shows it. */
+    var accent: Int = paints.painter.accent
         set(value) {
             if (field == value) return
             field = value
-            paints.focusFrame.color = value
+            paints.painter.accent = value
             for (i in 0 until childCount) getChildAt(i).invalidate()
         }
 

@@ -472,7 +472,8 @@ Dark glass, or Frosted), and **Focus**, what the focus frame, or the lifted tile
 appearance's Focus frame, for every tile. Both are dimmed without a picture, and for a picture
 that isn't see-through, or isn't known to be yet (`Picture.seeThrough`, learned as its working
 copy is made, which the picker's start does where it's missing: the options follow as the library
-tells). The look is stored and offered, but neither the home screen nor the preview draws it yet.
+tells). The home screen draws the look ([`../home/README.md`](../home/README.md#appearance)); the
+preview doesn't yet: it shows the picture alone.
 
 The picker opens on what's stored for the tile, the focus on its picture, or on Original banner.
 The look is the tile's, not a picture's (`PictureChoice`'s values of the thing itself): another

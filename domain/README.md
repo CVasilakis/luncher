@@ -102,7 +102,7 @@ domain/src/
     ├── apps/FakeAppCustomizations.kt fake of the AppCustomizations port: what the user set in memory; named(app, name)
     ├── apps/FakeAppInfoScreen.kt   fake of the AppInfoScreen port: whether the page exists, as the test sets it
     ├── apps/FakeAppImages.kt       fake of the AppImages port: draws what the test says, counting what it drew
-    ├── apps/FakePreparedTiles.kt   fake of the PreparedTiles port: the tiles kept in memory, each for its drawing; copies missing or damaged, tiles that can't be kept or don't read, as the test says; with ManualJobs, failing if asked to prepare outside a job
+    ├── apps/FakePreparedTiles.kt   fake of the PreparedTiles port: the tiles kept in memory, each for its drawing, with the shape a test makes where it asks for one; copies missing or damaged, tiles that can't be kept or don't read, as the test says; with ManualJobs, failing if asked to prepare outside a job
     ├── appearance/FakeAppearanceSettings.kt  fake of the AppearanceSettings port: the appearance in memory
     ├── appearance/AppearanceChanges.kt       each option at each value but its default, in a context that offers it: what the catalog-wide tests draw (SAMPLE_WALLPAPER for the background's, wide or tall)
     ├── clock/FakeClock.kt          fake of the Clock port: a fixed time the test moves

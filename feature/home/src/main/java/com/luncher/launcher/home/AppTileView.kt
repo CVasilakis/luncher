@@ -5,36 +5,39 @@ import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.BitmapShader
 import android.graphics.Canvas
 import android.graphics.Color
-import android.graphics.Paint
 import android.graphics.Rect
-import android.graphics.RectF
-import android.graphics.Shader
 import android.text.TextUtils
 import android.view.View
 import com.luncher.domain.appearance.AppName
 import com.luncher.domain.apps.AppImages
 import com.luncher.domain.apps.Banner
 import com.luncher.domain.apps.HomeApp
-import com.luncher.domain.apps.PreparedTile
 import com.luncher.domain.apps.PreparedTileImages
 import com.luncher.domain.apps.bannerFor
 import com.luncher.domain.layout.PixelBounds
 import com.luncher.domain.layout.TileSize
+import com.luncher.launcher.ui.TileParts
+import com.luncher.launcher.ui.TilePainter
 
 /**
  * One app on the home screen: its banner, and while it has focus, a zoom with, as
  * [TilePaints.framed] says, a frame inside its edge or a shadow, as if lifted: as big either way,
  * since the frame takes no room outside the tile. The image is drawn at the tile's size whenever
  * that size changes (the number of columns, for example), so drawing the tile is a single bitmap
- * copy. With rounded corners ([TilePaints]), the same bitmap fills a rounded rectangle through a
- * shader made with it, and the frame and the shadow follow the corners: a new radius only redraws,
- * with the image as it is.
+ * copy. :ui's [TilePainter] draws it, from the tile's own [TileParts], made with each image: with
+ * rounded corners ([TilePaints]), the same bitmap fills a rounded rectangle through a shader made
+ * with it, and the frame and the shadow follow the corners: a new radius only redraws, with the
+ * image as it is.
  *
  * The shadow is Android's own, cast by the tile's outline as it rises (its translationZ, in the
- * state animator), drawn by the GPU: nothing is blurred or allocated for it. As
+ * state animator), drawn by the GPU: nothing is blurred or allocated for it. A see-through picture
+ * has its look ([TileLook][com.luncher.domain.apps.TileLook]): its backdrop, and its focus, which
+ * follows the tile's shape, as every tile's, or the picture's own. Where it follows the picture's,
+ * the tile isn't lifted: its zoom alone, and the picture's own shadow, the painter's
+ * ([TileParts.castsOutlineShadow]). The backdrop, and the band or shadow around the picture's
+ * shape, follow the focus in the zoom's time ([focusFade]). As
  * [TilePaints.names] says, the app's name shows centered below the tile, cut to the tile's width:
  * below the focused one only, fading in and out with the focus, or below every one at all times;
  * drawn with the tile, outside its bounds, which [AppTilesView] doesn't clip, so it zooms with it.
@@ -44,7 +47,7 @@ import com.luncher.domain.layout.TileSize
  *
  * A tile's picture of the library is prepared ahead, and only read here ([PreparedTileImages]): one
  * not prepared for this tile shows its app's own image until it is, then is drawn again with it
- * ([followPreparing]). A see-through one is drawn over the background color, as every picture was.
+ * ([followPreparing]).
  */
 @SuppressLint("ViewConstructor") // Created in code only, never from XML.
 internal class AppTileView(
@@ -53,14 +56,12 @@ internal class AppTileView(
     private val images: AppImages<Bitmap>,
     /** The tiles' pictures, read as prepared. */
     private val tiles: PreparedTileImages<Bitmap>,
-    /** Shared by every tile: the frames, the name's paint, the corners and whether the focused tile is framed. */
+    /** Shared by every tile: the painter, the name's paint, the corners and whether the focused tile is framed. */
     private val paints: TilePaints,
 ) : View(context) {
 
-    private var image: Bitmap? = null
-
-    /** The picture of the library the user chose for the tile, if any, as prepared; null while it isn't. */
-    private var prepared: PreparedTile<Bitmap>? = null
+    /** What the tile is drawn with: its image, its picture's look; none while it has no size. */
+    private var parts: TileParts? = null
 
     private val banner = bannerFor(app)
 
@@ -73,28 +74,25 @@ internal class AppTileView(
     /** Whether [picture] is being prepared, the tile showing its app's own image meanwhile. */
     private var waitsForPicture = false
 
-    /** Fills the tile's rounded shape with [image]; its shader is made with each new image. */
-    private val imagePaint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
-
-    /** The tile's bounds, and its frame's line, set with each new size. */
-    private val bounds = RectF()
-    private val frameBounds = RectF()
-
     /** The app's name as it fits the tile's width, and where it starts: set with each new size. */
     private var name = ""
     private var nameLeft = 0f
 
     /**
-     * The name's fade, with the focus: forward as it comes, back as it goes. Made once, so a key
-     * press only starts it.
+     * The focus as it comes and goes, in the zoom's time: forward as it comes, back as it goes. The
+     * name fades with it, and a see-through picture's look follows it; run only for those. Made
+     * once, so a key press only starts it.
      */
-    private val nameFade = ValueAnimator.ofFloat(0f, 1f).apply {
+    private val focusFade = ValueAnimator.ofFloat(0f, 1f).apply {
         duration = resources.getInteger(android.R.integer.config_shortAnimTime).toLong()
         addUpdateListener { invalidate() }
     }
 
-    /** Whether the state animator is the framed tile's; null before the first. */
-    private var framed: Boolean? = null
+    /** Whether the state animator lifts the tile; null before the first. */
+    private var lifts: Boolean? = null
+
+    /** How strong the lifted tile's shadow is, cast by its outline ([TilePaints.tileOutline]). */
+    val outlineAlpha: Float get() = parts?.outlineAlpha ?: 1f
 
     /** The user holds this tile, to move it. */
     var held = false
@@ -126,18 +124,26 @@ internal class AppTileView(
      * has it; new corners give the shadow a new outline. Then redraws.
      */
     fun restyle() {
-        val frame = paints.framed
-        if (frame != framed) {
-            framed = frame
-            translationZ = 0f   // the frame's animator doesn't lift, so it wouldn't bring the tile down
-            stateListAnimator = AnimatorInflater.loadStateListAnimator(
-                context,
-                if (frame) R.animator.home_tile_focus else R.animator.home_tile_lift,
-            )
-            jumpDrawablesToCurrentState()
-        }
+        chooseAnimator()
         invalidateOutline()
         invalidate()
+    }
+
+    /**
+     * The state animator: lifting the tile while it has focus, without the frame, unless its
+     * picture casts its own shadow; else zooming it only. A new one puts the tile at once where
+     * it has it.
+     */
+    private fun chooseAnimator() {
+        val lift = !paints.framed && parts?.castsOutlineShadow != false
+        if (lift == lifts) return
+        lifts = lift
+        translationZ = 0f   // the zoom alone doesn't lift, so it wouldn't bring the tile down
+        stateListAnimator = AnimatorInflater.loadStateListAnimator(
+            context,
+            if (lift) R.animator.home_tile_lift else R.animator.home_tile_focus,
+        )
+        jumpDrawablesToCurrentState()
     }
 
     /**
@@ -151,72 +157,52 @@ internal class AppTileView(
         } else if (waitsForPicture) {
             waitsForPicture = false
             render(width, height)
+            chooseAnimator()
+            invalidateOutline()
             invalidate()
         }
     }
 
     /**
-     * The image at [w] x [h] px, its shader with it: the picture as prepared for this size, read,
-     * else the app's own; none while the tile has no size.
+     * The parts at [w] x [h] px: the picture as prepared for this size, read, with its look, else
+     * the app's own image; none while the tile has no size.
      */
     private fun render(w: Int, h: Int) {
         val prepared = if (w > 0 && h > 0) picture?.let { tiles.read(app.launchable, it.drawing(TileSize(w, h))) } else null
-        this.prepared = prepared
         waitsForPicture = picture != null && prepared == null && tiles.preparing(app.launchable)
-        val image = when {
+        parts = when {
             w <= 0 || h <= 0 -> null
-            prepared != null -> prepared.image
-            else -> images.render(app, own, w, h)
+            prepared != null -> paints.painter.parts(prepared.image, prepared.seeThrough, prepared.shape, picture!!.look)
+            else -> paints.painter.parts(images.render(app, own, w, h))
         }
-        this.image = image
-        imagePaint.shader = image?.let { BitmapShader(it, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP) }
     }
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         render(w, h)
-        bounds.set(0f, 0f, w.toFloat(), h.toFloat())
-        val inset = paints.focusFrame.strokeWidth / 2
-        frameBounds.set(inset, inset, w - inset, h - inset)
+        chooseAnimator()
         name = TextUtils.ellipsize(app.name, paints.namePaint, w.toFloat(), TextUtils.TruncateAt.END).toString()
         nameLeft = (w - paints.namePaint.measureText(name)) / 2
         invalidateOutline()
     }
 
     override fun onDraw(canvas: Canvas) {
-        val radius = paints.cornerRadius(height)
-        val image = image
-        if (image != null) {
-            // Under a see-through picture, the background's color, as every picture was drawn over.
-            val under = if (prepared?.seeThrough == true) paints.seeThroughFill else null
-            if (radius == 0f) {
-                if (under != null) canvas.drawRect(bounds, under)
-                canvas.drawBitmap(image, 0f, 0f, null)
-            } else {
-                if (under != null) canvas.drawRoundRect(bounds, radius, radius, under)
-                canvas.drawRoundRect(bounds, radius, radius, imagePaint)
-            }
-        }
-        val frame = when {
-            held -> paints.heldFrame
-            isFocused && paints.framed -> paints.focusFrame
-            else -> null
-        }
-        if (frame != null) {
-            // The line's middle runs half its width inside the edge, its corners as much tighter.
-            val frameRadius = (radius - frame.strokeWidth / 2).coerceAtLeast(0f)
-            canvas.drawRoundRect(frameBounds, frameRadius, frameRadius, frame)
+        val parts = parts
+        if (parts != null) {
+            paints.painter.draw(canvas, parts, paints.cornerRadius(height), focus(), isFocused, paints.framed, held)
         }
         if (paints.showsNames) drawName(canvas)
     }
 
+    /** How far the focus has come, 0 to 1, as [focusFade] has it while it runs. */
+    private fun focus(): Float = when {
+        focusFade.isRunning -> focusFade.animatedFraction
+        isFocused -> 1f
+        else -> 0f
+    }
+
     /** The app's name below the tile, whole, or as faded in as the focus has it, with its outline. */
     private fun drawName(canvas: Canvas) {
-        val shown = when {
-            paints.names == AppName.ALWAYS -> 1f
-            nameFade.isRunning -> nameFade.animatedFraction
-            isFocused -> 1f
-            else -> 0f
-        }
+        val shown = if (paints.names == AppName.ALWAYS) 1f else focus()
         if (shown <= 0f) return
         val paint = paints.namePaint
         val outline = paints.nameOutline
@@ -233,9 +219,9 @@ internal class AppTileView(
 
     override fun onFocusChanged(gainFocus: Boolean, direction: Int, previouslyFocusedRect: Rect?) {
         super.onFocusChanged(gainFocus, direction, previouslyFocusedRect)
-        if (paints.names == AppName.WHEN_FOCUSED) {
+        if (paints.names == AppName.WHEN_FOCUSED || parts?.followsFocus == true) {
             // Back the way it came if it's still fading, else in from nothing or out from whole.
-            if (nameFade.isRunning || !gainFocus) nameFade.reverse() else nameFade.start()
+            if (focusFade.isRunning || !gainFocus) focusFade.reverse() else focusFade.start()
         }
         invalidate()
     }

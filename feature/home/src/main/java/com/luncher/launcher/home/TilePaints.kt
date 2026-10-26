@@ -2,38 +2,28 @@ package com.luncher.launcher.home
 
 import android.content.Context
 import android.graphics.Outline
-import android.graphics.Paint
 import android.text.TextPaint
 import android.view.View
 import android.view.ViewOutlineProvider
 import com.luncher.domain.appearance.AppName
 import com.luncher.domain.appearance.Corners
 import com.luncher.domain.appearance.TileGeometry
-import com.luncher.domain.appearance.ThemeAppearance
 import com.luncher.domain.appearance.TileStyle
-import com.luncher.domain.appearance.colorRoles
 import com.luncher.launcher.ui.TileName
+import com.luncher.launcher.ui.TilePainter
 import com.luncher.launcher.ui.WallpaperOutline
-import com.luncher.launcher.ui.color
-import com.luncher.launcher.ui.R as UiR
 
 /**
- * What every tile draws with besides its own image: the focus frame, the held frame, the focused
- * app's name, the corners and whether the focused tile is framed, from the home screen's
- * [TileStyle], and the outline a lifted tile's shadow takes.
- * [AppTilesView] holds the one set its tiles share, so a style change updates it once and redraws,
- * without touching each tile's own state.
+ * What every tile draws with besides its own parts: the painter (:ui's [TilePainter], its frames
+ * in the theme's accent, [AppTilesView.accent]), the focused app's name, the corners and whether
+ * the focused tile is framed, from the home screen's [TileStyle], and the outline a lifted tile's
+ * shadow takes. [AppTilesView] holds the one set its tiles share, so a style change updates it
+ * once and redraws, without touching each tile's own state.
  */
 internal class TilePaints(context: Context) {
 
-    /** A focused tile's frame, in the theme's accent ([AppTilesView.accent]). */
-    val focusFrame = frame(colorRoles(ThemeAppearance()).homeAccent, context)
-
-    /** What a see-through picture is drawn over: the background's color, as every picture's tile was. */
-    val seeThroughFill = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = context.color(UiR.color.background) }
-
-    /** A held tile's frame, while the user moves its app. */
-    val heldFrame = frame(context.color(UiR.color.text_primary), context)
+    /** Draws each tile, its image and its look, the focus frame and the held frame. */
+    val painter = TilePainter(context)
 
     /** The tiles' corners, from the home screen's style. */
     var corners: Corners = TileStyle().corners
@@ -73,12 +63,15 @@ internal class TilePaints(context: Context) {
     val nameHeight: Int = name.room(AppTileView.LARGEST_ZOOM)
 
     /**
-     * The shape a lifted tile's shadow takes: the tile's, with its corners. Shared by every tile;
-     * Android asks it again when a tile's size changes, or the tile asks with a new radius.
+     * The shape a lifted tile's shadow takes: the tile's, with its corners, as strong as the tile's
+     * parts say ([AppTileView.outlineAlpha]: lighter under a see-through picture). Shared by every
+     * tile; Android asks it again when a tile's size changes, or the tile asks with a new radius or
+     * new parts.
      */
     val tileOutline = object : ViewOutlineProvider() {
         override fun getOutline(view: View, outline: Outline) {
             outline.setRoundRect(0, 0, view.width, view.height, cornerRadius(view.height))
+            outline.alpha = (view as? AppTileView)?.outlineAlpha ?: 1f
         }
     }
 
@@ -86,12 +79,6 @@ internal class TilePaints(context: Context) {
 
     /** The radius of the corners of a tile [tileHeight] pixels high; 0 draws it square. */
     fun cornerRadius(tileHeight: Int): Float = corners.pixels(tileHeight, pixelsPerDp)
-
-    private fun frame(color: Int, context: Context) = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        style = Paint.Style.STROKE
-        strokeWidth = context.resources.getDimension(R.dimen.home_tile_frame)
-        this.color = color
-    }
 
     companion object {
         const val OPAQUE = 255

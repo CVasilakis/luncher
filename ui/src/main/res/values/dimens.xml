@@ -92,6 +92,12 @@
          that follows the shape is drawn with, and how far its soft shadow spreads (TileShapes). -->
     <dimen name="tile_shape_band">2.5dp</dimen>
     <dimen name="tile_shape_shadow">7dp</dimen>
+    <!-- How far below the picture its shape's shadow falls on a lifted tile: half of it as the
+         focus comes, all of it once focused (TilePainter). -->
+    <dimen name="tile_shape_shadow_drop">6dp</dimen>
+    <!-- The focus frame's and the held frame's line, inside a tile's edge (TilePainter): the home
+         screen's, and the tile banner picker's preview's. -->
+    <dimen name="tile_frame">3dp</dimen>
     <!-- The app's name below the focused tile (TileName), and the gap between the two, both before
          the tile's zoom, which they're drawn with: the home screen's, and the room the appearance
          editor's preview leaves it. -->

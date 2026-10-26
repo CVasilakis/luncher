@@ -12,7 +12,7 @@ import com.luncher.domain.apps.TileMask
  * prepared, in a job: a band around its outline, which a focus frame that follows the shape is
  * drawn with, and its soft shadow, which the tile casts as it's lifted. Each at half the tile's
  * scale ([SCALE]): their blur hides it, and they take a quarter of the memory. Both are kept, so
- * turning the appearance's focus frame on or off prepares nothing. The tile's painter draws them.
+ * turning the appearance's focus frame on or off prepares nothing. [TilePainter] draws them.
  */
 class TileShapes(context: Context) {
 

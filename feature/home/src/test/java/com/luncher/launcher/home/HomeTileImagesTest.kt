@@ -36,6 +36,7 @@ import com.luncher.launcher.apps.BannerImages
 import com.luncher.launcher.apps.FilePreparedTiles
 import com.luncher.launcher.pictures.WorkingCopyImages
 import com.luncher.launcher.testing.TV_1080P
+import com.luncher.launcher.ui.TilePainter
 import com.luncher.launcher.ui.WorkingDialog
 import com.luncher.launcher.ui.homeTileSize
 import org.junit.Assert.assertEquals
@@ -191,7 +192,7 @@ class HomeTileImagesTest {
     }
 
     @Test
-    fun `a see-through picture's tile is drawn over the background's color, as every picture's was`() {
+    fun `a see-through picture's tile is drawn with its look, its glass behind it, over nothing else`() {
         val clear = FakePreparedTiles(fakeCopies, jobs) { Bitmap.createBitmap(it.size.width, it.size.height, Bitmap.Config.ARGB_8888) }
         clear.seeThrough += beach
         clear.kept[news] = newsDrawing()
@@ -202,7 +203,10 @@ class HomeTileImagesTest {
         val image = Bitmap.createBitmap(tile.width, tile.height, Bitmap.Config.ARGB_8888)
         tile.draw(Canvas(image))
 
-        assertEquals(activity.getColor(UiR.color.background), image.getPixel(image.width / 2, image.height / 2))
+        // The default look's light glass, at rest: the wallpaper shows through it.
+        val middle = image.getPixel(image.width / 2, image.height / 2)
+        assertEquals((TilePainter.LIGHT_GLASS * 255).toInt(), Color.alpha(middle))
+        assertEquals(Color.WHITE, middle or (0xFF shl 24))
     }
 
     @Test

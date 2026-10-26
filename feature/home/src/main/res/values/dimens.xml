@@ -5,7 +5,6 @@
     <dimen name="home_padding_vertical">32dp</dimen>
     <!-- Between the top bar and the tiles; room for a focused tile's zoom in the first row. -->
     <dimen name="home_tiles_padding_top">24dp</dimen>
-    <dimen name="home_tile_frame">3dp</dimen>
     <!-- How high a lifted tile rises while it has focus: the size and softness of its shadow. -->
     <dimen name="home_tile_lift">12dp</dimen>
     <dimen name="home_time_text">32sp</dimen>

@@ -25,9 +25,10 @@ feature/home/
     │   │   ├── ClockView.kt      the top bar's time and date, following the Clock port
     │   │   ├── OutlinedTextView.kt  a text on the wallpaper, with :ui's WallpaperOutline around it
     │   │   ├── AppTilesView.kt   places the tiles where the domain's TileLayout says; scrolls
-    │   │   ├── AppTileView.kt    one app: its image, or its picture as prepared, read; focus zoom with a frame or a lift and
-    │   │   │                     shadow; its name; held while moved; drawn again once its picture is prepared
-    │   │   ├── TilePaints.kt     what every tile draws with: frames, dimming, the name, the corners, the focus frame on or off, the shadow's outline
+    │   │   ├── AppTileView.kt    one app: its image, or its picture as prepared, read, with its look, drawn by :ui's TilePainter;
+    │   │   │                     focus zoom with a frame or a lift and shadow; its name; held while moved; drawn again once
+    │   │   │                     its picture is prepared
+    │   │   ├── TilePaints.kt     what every tile draws with: the painter, the name, the corners, the focus frame on or off, the shadow's outline
     │   │   ├── HomeWallpaper.kt  the wallpaper, the window's background, as the process's Wallpaper says
     │   │   ├── HomeWorking.kt    the one window while the wallpaper is drawn again or the tiles' pictures prepared, saying why
     │   │   ├── TileMenu.kt       a tile's menu: the domain's AppActions for its app, those the device can't do
@@ -91,7 +92,7 @@ one job, so a new arrangement, image source or top bar item changes one of them:
 | `bannerFor` (`:domain`) | which image a tile shows: the app's banner, the card of its icon and name for an app without one, or a picture of the library the user chose for it ([below](#a-tiles-picture)) |
 | `AppImages` (`:domain`), `CachedBannerImages` and `BannerImages` (`:platform`) | draws the app's own image into a bitmap of the tile's size, or reads the one an earlier start drew |
 | `PreparedTileImages`, `PreparedTiles` (`:domain`), `FilePreparedTiles` (`:platform`) | a tile's picture, prepared ahead in jobs and kept, read as the tile is drawn ([below](#a-tiles-picture)) |
-| `AppTileView` | draws that bitmap, the focus zoom with the frame or the lift ([below](#appearance)), with the corners `TilePaints` gives, and its app's name below it if the geometry says (while focused, or always); while its app is [moved](#moving-an-app), a white frame |
+| `AppTileView`, `TilePainter` (`:ui`) | draws that bitmap, a see-through picture's look, the focus zoom with the frame or the lift ([below](#appearance)), with the corners `TilePaints` gives, and its app's name below it if the geometry says (while focused, or always); while its app is [moved](#moving-an-app), a white frame |
 | `Clock` (`:domain`) | what time it is, in which time zone and hour format, and when that changes |
 | `AndroidClock` (`:platform`) | reads those from Android, and watches the time broadcasts only while something listens |
 | `ClockView` | formats a reading in the device's language; the time and the date side by side, in the order the top bar gives, either or both hidden |
@@ -115,9 +116,8 @@ tile's focus follows, and the tile's size (`:ui`'s `homeTileSize`, the size `Til
 in the screen's width less the home screen's padding at the sides, which `:ui` holds, so the
 picker prepares the same size; `HomeLayoutTest` checks the tiles laid out are that size). Its
 backdrop isn't: it's drawn live. Kept with the image: whether it's see-through, and, where the
-focus follows a see-through picture's shape, that shape's masks at half scale, which a later
-drawing of the look uses. For now a see-through picture is drawn over the background's color,
-as every picture was.
+focus follows a see-through picture's shape, that shape's masks at half scale, which the tile's
+look is drawn with ([below](#appearance)).
 
 A tile whose picture isn't prepared for its drawing (none yet, the TV switched resolution, an
 update draws pictures otherwise) shows its app's own image, kept as that, so the picture shows as
@@ -240,9 +240,11 @@ top bar, in its middle (with three rows, the second in the middle; with two, the
 or at its bottom, if they fit it; otherwise they start at the top and scroll. Centered or at the
 bottom, a full bottom row puts the short row first rather than last.
 
-With rounded corners (the default), each tile fills a rounded rectangle with its bitmap through a
-shader made with the bitmap, when its size changes; the focus and held frames follow the same
-corners. The radius in pixels is the domain's (`Corners`): at most
+Every tile is drawn by `:ui`'s `TilePainter`, one the tiles share (in `TilePaints`), from the
+tile's own `TileParts`, made with each new bitmap: the home screen and the tile banner picker's
+preview draw the same way, and a frame is drawn one way only. With rounded corners (the default),
+each tile fills a rounded rectangle with its bitmap through a shader made with the bitmap, when
+its size changes; the focus and held frames follow the same corners. The radius in pixels is the domain's (`Corners`): at most
 half the tile's height, which is what round ends are, so they're half circles on any screen. A new
 radius draws the same bitmaps, so no banner is drawn again. Drawing allocates nothing, with or
 without rounded corners.
@@ -257,6 +259,31 @@ Android's renderer casts its shadow from its outline, a rounded rectangle with t
 blurred bitmap, no software layer, nothing drawn per frame in Luncher's code; `AppTilesView` doesn't
 clip its tiles, so it shows past the tile. A held tile has a white frame, with the frame on or off,
 and the same zoom: the white frame tells it apart from one only focused.
+
+A see-through picture of the library has the tile's look (`TileLook`, set in the [tile banner
+picker](../settings/README.md#tile-banner)), which the painter draws; an opaque picture, or an
+app's own image, has none, and looks as above, whatever look is stored. Behind the picture, inside
+the tile's rounded shape, its **backdrop**: nothing (None), a white glass (Light glass, 12 %
+white, 26 % focused, the default) or a black one (Dark glass, 30 %, 45 % focused); Frosted is drawn
+as Light glass for now. Its **focus** follows the tile, as every tile's, or the picture's shape:
+- **Tile, framed:** the frame inside the tile's edge, as on every tile, around the glass.
+- **Tile, lifted:** Android's shadow of the tile's outline, lighter (the outline's alpha at 0.3),
+  since it shows through the glass. Without a backdrop, a light card (22 % white) comes with the
+  focus: Android's shadow would otherwise show through the picture's see-through parts as a dark
+  box behind nothing.
+- **Shape, framed:** no frame inside the edge; a band in the accent around the picture's shape,
+  drawn from the shape's band mask, prepared with the tile.
+- **Shape, lifted:** the tile zooms, but doesn't rise (`home_tile_focus`, no outline shadow): the
+  picture casts its own soft shadow, from its shadow mask, under it, darker and lower as the focus
+  comes.
+
+The glass, the band and the picture's shadow come and go with the focus, in the zoom's time,
+through the animator the name fades with: made once per tile, and run only for a tile whose look
+follows the focus, or whose name fades. The frame shows at once, as it always did. A held tile has
+its white frame, not the band. The masks, at half the tile's scale, are drawn twice their size,
+filtered, through matrices made with the tile's parts; the glass is a rounded rectangle in a paint
+kept for it: drawing a look allocates nothing either. The tile's look changes how its state animator lifts it, so it's chosen again with a
+new style and with a new bitmap (the picture prepared, which the app's own image stood in for).
 
 With the app name shown (`TileGeometry.appName`, Off by default), a tile draws its app's name
 centered below it, in the primary text color, cut with "…" to the tile's width, outlined as

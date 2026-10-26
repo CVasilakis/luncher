@@ -242,7 +242,7 @@ class HomeAppearanceTest {
         val tile = activity.tiles().first()
         assertEquals(AppTileView.FOCUSED_ZOOM, tile.scaleX)
         assertEquals(0f, tile.translationZ)
-        val focusFrame = activity.grid().paints.focusFrame
+        val focusFrame = activity.grid().paints.painter.focusFrame
         val frame = RectF()
         val canvas = object : Canvas(Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888)) {
             override fun drawRoundRect(rect: RectF, rx: Float, ry: Float, paint: Paint) {
