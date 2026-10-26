@@ -36,6 +36,19 @@ class TileLayoutsTest {
     }
 
     @Test
+    fun `a tile's size is the layout's, whatever the number of tiles and the height`() {
+        val layouts = TileLayouts(topLeft, pixelsPerDp = 2f)
+
+        val size = layouts.tileSize(1728)
+
+        assertEquals(TileSize(307, 172), size)
+        for (count in listOf(1, 5, 12)) {
+            val tiles = layouts.tiles(count, 1728, 760)
+            assertEquals(size, TileSize(tiles.tileWidth, tiles.tileHeight))
+        }
+    }
+
+    @Test
     fun `wider tiles make fewer columns`() {
         val tiles = TileLayouts(topLeft.copy(tileWidthDp = 300), pixelsPerDp = 1f).tiles(tileCount = 7, width, height)
 

@@ -26,11 +26,14 @@ import com.luncher.domain.apps.FakeAppImages
 import com.luncher.domain.apps.FakeInstalledApps
 import com.luncher.domain.apps.FakeInstalledApps.Companion.app
 import com.luncher.domain.apps.LaunchableApp
+import com.luncher.domain.apps.PreparedTileImages
 import com.luncher.domain.apps.TileBackdrop
+import com.luncher.domain.apps.TileDrawing
 import com.luncher.domain.apps.TileFocusShape
 import com.luncher.domain.apps.TileImage
 import com.luncher.domain.apps.TileLook
 import com.luncher.domain.layout.TileShape
+import com.luncher.domain.layout.TileSize
 import com.luncher.domain.pictures.FakePictures
 import com.luncher.domain.pictures.FakePictures.Companion.picture
 import com.luncher.domain.pictures.Fit
@@ -39,6 +42,8 @@ import com.luncher.domain.pictures.Picture
 import com.luncher.domain.pictures.PicturePosition
 import com.luncher.domain.pictures.PictureStyle
 import com.luncher.launcher.testing.TV_1080P
+import com.luncher.launcher.ui.WorkingDialog
+import com.luncher.launcher.ui.homeTileSize
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -54,6 +59,7 @@ import org.robolectric.Shadows.shadowOf
 import org.robolectric.android.controller.ActivityController
 import org.robolectric.annotation.Config
 import org.robolectric.shadows.ShadowDialog
+import java.time.Duration
 import com.luncher.launcher.ui.R as UiR
 
 /** The tile banner picker: the pictures to choose from for one app's tile, the draft, Save, deleting and adding pictures. */
@@ -198,6 +204,20 @@ class TileBannerActivityTest {
         findViewById<View>(R.id.settings_picture_editor_save).performClick()
         idle()
     }
+
+    private fun after(millis: Long) = shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(millis))
+
+    /** The tile saved prepared behind its window, which closes after half a second at least. */
+    private fun prepareTheTile() {
+        assertEquals("Processing tile banner…", dialog()!!.first)
+        drawInTheBackground()
+        after(WorkingDialog.SHORTEST)
+        assertNull(dialog())
+    }
+
+    /** What the movies app's tile showing [picture] is drawn from, at the home screen's tiles' size. */
+    private fun tileDrawing(picture: Picture, framing: Framing = Framing(), focus: TileFocusShape = TileFocusShape.TILE) =
+        TileDrawing(picture.id, framing, focus, application.homeTileSize(graph.appearanceSettings.read().tileGeometry))
 
     private fun Activity.back() {
         dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_BACK))
@@ -466,6 +486,8 @@ class TileBannerActivityTest {
         activity.save()
 
         assertEquals(TileImage(logo.id, look = TileLook(TileBackdrop.NONE, TileFocusShape.SHAPE)), stored)
+        // The picture's shape to prepare, behind the window.
+        prepareTheTile()
         assertTrue(activity.isFinishing)
     }
 
@@ -507,7 +529,7 @@ class TileBannerActivityTest {
     }
 
     @Test
-    fun `Save stores the picture and its framing for the app's tile, what else is set for it kept, and closes`() {
+    fun `Save stores the picture and its framing for the app's tile, what else is set for it kept, then prepares the tile behind a window, and closes`() {
         graph(panorama, onTiles = mapOf(movies.launchable to AppCustomization(name = "Films"), music.launchable to image(panorama)))
         val activity = start().get()
 
@@ -522,8 +544,78 @@ class TileBannerActivityTest {
             ),
             customizations.customizations,
         )
+        assertEquals("Processing tile banner…", dialog()!!.first)
+        assertFalse(activity.isFinishing)
+        // Through the process's own, which the home screen follows.
+        assertEquals(PreparedTileImages.State.Saving, graph.preparedTileImages.state)
+        drawInTheBackground()
+        assertEquals(listOf(movies.launchable to tileDrawing(panorama, Framing(Fit.FILL, PicturePosition.LEFT))), graph.preparedTiles.prepared)
+        assertEquals(PreparedTileImages.State.None, graph.preparedTileImages.state)
+        assertFalse("half a second at least", activity.isFinishing)
+        after(WorkingDialog.SHORTEST)
+        assertNull(dialog())
         assertTrue(activity.isFinishing)
-        assertNull("no window: storing is a decision", dialog())
+    }
+
+    @Test
+    fun `Save prepares the tile at the home screen's tiles' size, for the geometry as it is`() {
+        val geometry = TileGeometry(tileWidthDp = 200)
+        graph(panorama, appearance = Appearance(geometry))
+        val activity = start().get()
+
+        activity.ok("panorama.jpg")
+        activity.save()
+        drawInTheBackground()
+
+        assertEquals(activity.homeTileSize(geometry), graph.preparedTiles.prepared.single().second.size)
+        // 1080p, 1728 px between the paddings: 4 columns of about 200 dp, 48 px apart.
+        assertEquals(TileSize(396, 222), activity.homeTileSize(geometry))
+    }
+
+    @Test
+    fun `a backdrop changed alone is stored and closes at once, with no window, its tile prepared already`() {
+        graph(logo, onTiles = mapOf(movies.launchable to image(logo)))
+        graph.preparedTiles.kept[movies.launchable] = tileDrawing(logo)   // as the home screen had it prepared
+        val activity = start().get()
+
+        activity.set("Backdrop", "Frosted")
+        activity.save()
+
+        assertEquals(TileImage(logo.id, look = TileLook(TileBackdrop.FROSTED)), stored)
+        assertNull(dialog())
+        assertTrue(activity.isFinishing)
+        drawInTheBackground()
+        assertTrue(graph.preparedTiles.prepared.isEmpty())
+    }
+
+    @Test
+    fun `Original banner saved closes at once, with no window, and what was prepared of the tile is deleted`() {
+        graph(beach, onTiles = mapOf(movies.launchable to image(beach)))
+        graph.preparedTiles.kept[movies.launchable] = tileDrawing(beach)
+        val activity = start().get()
+
+        activity.ok("Original banner")
+        activity.save()
+
+        assertNull(stored)
+        assertNull(dialog())
+        assertTrue(activity.isFinishing)
+        drawInTheBackground()
+        assertEquals(listOf(movies.launchable), graph.preparedTiles.deleted)
+    }
+
+    @Test
+    fun `a tile that can't be prepared closes the window all the same, the picture stored`() {
+        graph(panorama)
+        graph.preparedTiles.failing += movies.launchable
+        val activity = start().get()
+
+        activity.ok("panorama.jpg")
+        activity.save()
+        prepareTheTile()
+
+        assertTrue(activity.isFinishing)
+        assertEquals(TileImage(panorama.id), stored)
     }
 
     @Test

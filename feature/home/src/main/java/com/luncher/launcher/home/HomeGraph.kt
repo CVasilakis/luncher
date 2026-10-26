@@ -25,8 +25,8 @@ interface HomeGraph {
 
     val appImages: AppImages<Bitmap>
 
-    /** The pictures of the library the tiles show, prepared for the screen as it is: one for the process. */
-    val preparedTileImages: PreparedTileImages
+    /** The pictures of the library the tiles show, prepared ahead and read: one for the process. */
+    val preparedTileImages: PreparedTileImages<Bitmap>
 
     /** Whether a tile's menu can open the app's page in the device's settings. */
     val appInfoScreen: AppInfoScreen

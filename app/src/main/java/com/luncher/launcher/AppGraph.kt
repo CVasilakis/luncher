@@ -24,6 +24,7 @@ import com.luncher.domain.wallpaper.Wallpaper
 import com.luncher.launcher.appearance.PreferencesAppearanceSettings
 import com.luncher.launcher.apps.BannerImages
 import com.luncher.launcher.apps.CachedBannerImages
+import com.luncher.launcher.apps.FilePreparedTiles
 import com.luncher.launcher.apps.PackageManagerAppInfoScreen
 import com.luncher.launcher.apps.PackageManagerInstalledApps
 import com.luncher.launcher.apps.PreferencesAppArrangements
@@ -37,7 +38,6 @@ import com.luncher.launcher.pictures.FilePictureImages
 import com.luncher.launcher.pictures.FilesPictures
 import com.luncher.launcher.pictures.MediaFolderPictures
 import com.luncher.launcher.pictures.WorkingCopyImages
-import com.luncher.launcher.pictures.WorkingCopyTiles
 import com.luncher.launcher.settings.SettingsGraph
 import com.luncher.launcher.wallpaper.FileStoredWallpaper
 
@@ -62,22 +62,19 @@ open class AppGraph(context: Context) : HomeGraph, SettingsGraph {
 
     override val appInfoScreen: AppInfoScreen by lazy { PackageManagerAppInfoScreen(appContext) }
 
-    /**
-     * The tiles' images, kept for the next start: the apps' own, and the pictures of the library
-     * chosen for tiles, drawn from their working copies; the files of tiles whose picture is
-     * deleted go with it, so the cache watches the library.
-     */
-    override val appImages: AppImages<Bitmap> by lazy { CachedBannerImages(appContext, BannerImages(appContext), pictureTiles, pictures, jobs) }
+    /** The apps' own images on their tiles, kept for the next start; a picture of the library on a tile is prepared ([preparedTileImages]). */
+    override val appImages: AppImages<Bitmap> by lazy { CachedBannerImages(appContext, BannerImages(appContext), jobs) }
 
     /** An app's own image, for the tile banner picker: drawn at its preview's size, never kept, so the tiles' kept images stay as they are. */
     override val appBanners: AppImages<Bitmap> by lazy { BannerImages(appContext) }
 
-    /** A tile's picture, drawn from its working copy only; one found damaged is made again. */
-    private val pictureTiles by lazy { WorkingCopyTiles(appContext, jobs, onDamaged = { preparedTileImages.damaged(it) }) }
-
-    /** The tiles' pictures, prepared for the screen as it is: one for the process, so the preparing goes on when the home screen stops. */
-    override val preparedTileImages: PreparedTileImages by lazy {
-        PreparedTileImages(preparedPictures, jobs) { Handler(Looper.getMainLooper()).post(it) }
+    /**
+     * The tiles' pictures of the library, prepared ahead from their working copies and kept, so the
+     * home screen only reads them: one for the process, so the preparing goes on when a screen
+     * stops, and the tile banner picker's Save and the home screen prepare through the same.
+     */
+    override val preparedTileImages: PreparedTileImages<Bitmap> by lazy {
+        PreparedTileImages(preparedPictures, FilePreparedTiles(appContext), jobs) { Handler(Looper.getMainLooper()).post(it) }
     }
 
     /** The background thread, for the adapters' and screens' jobs; open so a test can run them when it says. */

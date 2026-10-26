@@ -34,13 +34,15 @@ import com.luncher.domain.appearance.HorizontalAlignment
 import com.luncher.domain.appearance.TileGeometry
 import com.luncher.domain.appearance.VerticalAlignment
 import com.luncher.domain.apps.AppCustomization
-import com.luncher.domain.apps.Banner
 import com.luncher.domain.apps.FakeAppArrangements
 import com.luncher.domain.apps.FakeAppCustomizations
 import com.luncher.domain.apps.FakeAppImages
 import com.luncher.domain.apps.FakeInstalledApps
 import com.luncher.domain.apps.FakeInstalledApps.Companion.app
+import com.luncher.domain.apps.FakePreparedTiles
+import com.luncher.domain.apps.PreparedTileImages
 import com.luncher.domain.apps.TileBackdrop
+import com.luncher.domain.apps.TileDrawing
 import com.luncher.domain.apps.TileFocusShape
 import com.luncher.domain.apps.TileImage
 import com.luncher.domain.apps.TileLook
@@ -69,6 +71,7 @@ import com.luncher.launcher.testing.waitForHomeScreen
 import com.luncher.launcher.testing.waitUntilDestroyed
 import com.luncher.launcher.testing.waitUntilMatches
 import com.luncher.launcher.ui.ListEntry
+import com.luncher.launcher.ui.homeTileSize
 import org.hamcrest.Matcher
 import org.hamcrest.Matchers.allOf
 import org.junit.After
@@ -103,15 +106,17 @@ class TileBannerActivityTest {
     /** New at each launch: [RetryWhenCovered] runs a covered test again on the same instance. */
     private lateinit var customizations: FakeAppCustomizations
     private lateinit var tiles: FakeAppImages<Bitmap>
+    private lateinit var prepared: FakePreparedTiles<Bitmap>
 
     /**
      * The test's own apps (movies and music), library ([beach], [sunset] and [logo], every one prepared)
-     * and what's set for the apps ([stored]), in memory; the tiles' images drawn as a plain color,
-     * each one counted.
+     * and what's set for the apps ([stored]), in memory; the tiles' own images drawn as a plain color,
+     * each one counted; their pictures prepared and kept in memory ([prepared]), as plain as the pictures.
      */
     private fun useTheTestsGraph(stored: Map<com.luncher.domain.apps.LaunchableApp, AppCustomization> = emptyMap()) {
         customizations = FakeAppCustomizations(stored)
         tiles = FakeAppImages { _, _, width, height -> Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888).apply { eraseColor(TILE) } }
+        prepared = FakePreparedTiles { Bitmap.createBitmap(it.size.width, it.size.height, Bitmap.Config.ARGB_8888).apply { eraseColor(PICTURE) } }
         val library = FakePictures<Uri>(beach, sunset, logo)
         application.graph = object : AppGraph(application) {
             override val installedApps = FakeInstalledApps(listOf(movies, app("music")))
@@ -128,6 +133,7 @@ class TileBannerActivityTest {
             override val preparedPictures: PreparedPictures = FakePreparedPictures()
             // Not the device's kept wallpaper: none, kept in memory.
             override val wallpaper = Wallpaper(FakeStoredWallpaper(), pictureImages, appearanceSettings, jobs) { Handler(Looper.getMainLooper()).post(it) }
+            override val preparedTileImages = PreparedTileImages(preparedPictures, this@TileBannerActivityTest.prepared, jobs) { Handler(Looper.getMainLooper()).post(it) }
         }
     }
 
@@ -237,11 +243,11 @@ class TileBannerActivityTest {
         }
     }
 
-    /** What the home screen last drew on the tile of [app]: read on the main thread, which draws. */
-    private fun lastDrawnFor(app: com.luncher.domain.apps.LaunchableApp): Banner? {
-        var banner: Banner? = null
-        InstrumentationRegistry.getInstrumentation().runOnMainSync { banner = tiles.rendered.lastOrNull { it.app == app }?.banner }
-        return banner
+    /** The tiles' pictures prepared so far, each for which app and from what: read on the main thread, as the home screen reads them. */
+    private fun preparedTiles(): List<Pair<com.luncher.domain.apps.LaunchableApp, TileDrawing>> {
+        var tiles = emptyList<Pair<com.luncher.domain.apps.LaunchableApp, TileDrawing>>()
+        InstrumentationRegistry.getInstrumentation().runOnMainSync { tiles = prepared.prepared.toList() }
+        return tiles
     }
 
     @Test
@@ -269,7 +275,9 @@ class TileBannerActivityTest {
             waitUntilDestroyed(TileBannerActivity::class.java)
             waitUntil(withContentDescription("Movies"), hasFocus())
             assertEquals(mapOf(movies.launchable to AppCustomization(image = TileImage(beach.id))), customizations.customizations)
-            assertEquals(Banner.Picture(beach.id, Framing(), Banner.AppIcon), lastDrawnFor(movies.launchable))
+            // Prepared at Save, at the home screen's tiles' size, which reads it.
+            val size = application.homeTileSize(topLeftTiles)
+            assertEquals(listOf(movies.launchable to TileDrawing(beach.id, Framing(), TileFocusShape.TILE, size)), preparedTiles())
         }
     }
 

@@ -14,8 +14,8 @@ import com.luncher.launcher.ui.WorkingDialog
 /**
  * The home screen's one window for work it waits for, followed from [start] to [stop]: while the
  * process's [Wallpaper] is drawn (saved in the background editor; again, as the screen changed size
- * or Luncher was updated), or the tiles' pictures are prepared ([PreparedTileImages]: for the same
- * two causes, or one found damaged). A [WorkingDialog] over the home screen says why, taking every
+ * or Luncher was updated), or the tiles' pictures are prepared ([PreparedTileImages]: saved in the
+ * tile banner picker; for the same two causes, or one found damaged). A [WorkingDialog] over the home screen says why, taking every
  * key until both are done: a wait the user is told of, not a screen that seems stuck.
  *
  * When both are due, the wallpaper is drawn first (its job comes first), and the window says so,
@@ -25,7 +25,7 @@ import com.luncher.launcher.ui.WorkingDialog
 internal class HomeWorking(
     private val activity: Activity,
     private val wallpaper: Wallpaper<Bitmap>,
-    private val tileImages: PreparedTileImages,
+    private val tileImages: PreparedTileImages<*>,
 ) {
 
     /** Made the first time there's work while the home screen shows. */
@@ -73,10 +73,13 @@ internal class HomeWorking(
                 DrawingCause.OUTDATED -> R.string.home_wallpaper_outdated
             }
         }
-        val preparing = tileImages.state as? PreparedTileImages.State.Preparing ?: return null
-        return when (preparing.cause) {
-            PreparingCause.SCREEN_CHANGED -> R.string.home_tile_images_screen_changed
-            PreparingCause.OUTDATED -> R.string.home_tile_images_outdated
+        return when (val tiles = tileImages.state) {
+            PreparedTileImages.State.None -> null
+            PreparedTileImages.State.Saving -> R.string.home_tile_images_saving
+            is PreparedTileImages.State.Preparing -> when (tiles.cause) {
+                PreparingCause.SCREEN_CHANGED -> R.string.home_tile_images_screen_changed
+                PreparingCause.OUTDATED -> R.string.home_tile_images_outdated
+            }
         }
     }
 }

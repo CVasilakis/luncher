@@ -15,6 +15,7 @@ import com.luncher.domain.apps.FakeAppCustomizations
 import com.luncher.domain.apps.FakeAppCustomizations.Companion.named
 import com.luncher.domain.apps.HomeApp
 import com.luncher.domain.apps.TileImage
+import com.luncher.domain.apps.TileLook
 import com.luncher.domain.apps.bannerFor
 import com.luncher.domain.pictures.Fit
 import com.luncher.domain.pictures.Framing
@@ -68,7 +69,7 @@ class HomeActivityTest {
             override val appImages = object : AppImages<Bitmap> {
                 private val images = BannerImages(application)
 
-                override fun render(app: HomeApp, banner: Banner, width: Int, height: Int): Bitmap {
+                override fun render(app: HomeApp, banner: Banner.Own, width: Int, height: Int): Bitmap {
                     drawnFor += app
                     return images.render(app, banner, width, height)
                 }
@@ -630,7 +631,7 @@ class HomeActivityTest {
         shadowOf(Looper.getMainLooper()).idle()   // the next frame, which lays the new tile out and draws it
 
         val news = controller.get().tiles().single { it.app.name == "News" }
-        assertEquals(listOf(Banner.Picture(PictureId("beach"), Framing(Fit.STRETCH), Banner.AppIcon)), drawnFor.map(::bannerFor))
+        assertEquals(listOf(Banner.Picture(PictureId("beach"), Framing(Fit.STRETCH), TileLook(), Banner.AppIcon)), drawnFor.map(::bannerFor))
         assertSame(tiles.single { it.app.name == "Music" }, controller.get().tiles().single { it.app.name == "Music" })
         assertTrue(news.isFocused)
     }

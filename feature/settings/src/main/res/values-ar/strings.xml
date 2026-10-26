@@ -80,6 +80,7 @@
     <string name="settings_tile_banner_discard_text">لم تُحفظ التغييرات على صورة المربع.</string>
     <string name="settings_picture_editor_discard">تجاهل</string>
     <string name="settings_background_applying">جارٍ معالجة الخلفية…</string>
+    <string name="settings_tile_banner_saving">جارٍ معالجة لافتة المربع…</string>
     <string name="settings_pictures_preparing">جارٍ تجهيز الصورة…</string>
     <string name="settings_pictures_preparing_count">جارٍ تجهيز الصورة <xliff:g id="number" example="3">%1$d</xliff:g> من <xliff:g id="total" example="10">%2$d</xliff:g>…</string>
 

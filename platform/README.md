@@ -27,20 +27,19 @@ platform/
     │   │   │   ├── PreferencesAppArrangements.kt    AppArrangements on SharedPreferences: the file and its format
     │   │   │   ├── PreferencesAppCustomizations.kt  AppCustomizations on SharedPreferences: a file of its own, a JSON object per app (its name; its tile's picture, framing and look)
     │   │   │   ├── PackageManagerAppInfoScreen.kt   AppInfoScreen on PackageManager: whether an activity takes the intent App info starts
-    │   │   │   ├── BannerImages.kt                  AppImages<Bitmap>: draws an app's Banner into a bitmap of the tile's size, a picture through PictureTiles
-    │   │   │   └── CachedBannerImages.kt            AppImages<Bitmap> in front of BannerImages and PictureTiles: each tile's image kept in a file for the next start
+    │   │   │   ├── BannerImages.kt                  AppImages<Bitmap>: draws an app's own Banner into a bitmap of the tile's size
+    │   │   │   ├── CachedBannerImages.kt            AppImages<Bitmap> in front of BannerImages: each app's own image kept in a file for the next start
+    │   │   │   └── FilePreparedTiles.kt             PreparedTiles<Bitmap>: each tile's picture of the library drawn from its working copy in a job, kept in filesDir with its shape, read on the main thread
     │   │   ├── clock/
     │   │   │   └── AndroidClock.kt                  Clock on the system time, settings and time broadcasts
     │   │   ├── images/
-    │   │   │   └── PixelFiles.kt                    the image caches' and the kept wallpaper's file format: a header, then the pixels, compressed
+    │   │   │   └── PixelFiles.kt                    the image caches', the kept wallpaper's and the prepared tiles' file format: a header, then the pixels of one image or a few, compressed
     │   │   ├── pictures/
     │   │   │   ├── FilesPictures.kt                 Pictures and PictureImport<Uri> on files: the library's pictures and their index
     │   │   │   ├── MediaFolderPictures.kt           FolderPictures<Uri, Bitmap> in the drop folders, Android/media/<applicationId>
     │   │   │   ├── FilePictureImages.kt             PictureImages<Bitmap>: draws a picture of the library from its original at a size, framed, dimmed, blurred (the wallpaper)
     │   │   │   ├── WorkingCopies.kt                 the working copies: each picture decoded once, covering half the screen, kept as a JPEG, or a PNG if it's see-through
     │   │   │   ├── WorkingCopyImages.kt             PictureImages<Bitmap> and PreparedPictures on the working copies: what the screens show; why one isn't prepared
-    │   │   │   ├── PictureTiles.kt                  a picture of the library drawn into an app's tile, for the banner adapters
-    │   │   │   ├── WorkingCopyTiles.kt              PictureTiles on the working copies, never the originals; a damaged copy deleted, and told of
     │   │   │   ├── CachedPictureImages.kt           PictureImages<Bitmap> in front of WorkingCopyImages: each picture's thumbnail kept in a file
     │   │   │   ├── PictureFiles.kt                  reading a picture file: its size, upright, its format, whether it's whole; drawing it framed in ARGB_8888
     │   │   │   ├── JpegOrientation.kt               a JPEG's orientation tag, read without ExifInterface
@@ -96,14 +95,11 @@ is in a package of its own (`images/`: the caches' file format; `outside/`: aski
   draws) is drawn and written again, so unlike a stored setting it needs no test of its format
   and no migration, and Android may delete it; renaming an app draws its tile only again.
   Writing waits until the main thread is idle, so it doesn't slow the start that draws, and is
-  then a job per image. A tile's picture of the library is kept the same way, its file saying
-  the picture, its framing and `FilePictureImages.DRAWING` (not the app's install or name, which
-  it doesn't draw); a picture that can't be drawn now shows the app's own image, kept as that,
-  never as the picture, which would hide the picture once it can be drawn. A tile drawn of a
-  picture that's gone is deleted whenever a picture of the library is gone (not when one is
-  added or renamed, or found see-through), and in the sweep once per process.
-  `CachedPictureImages` keeps the pictures' thumbnails the same way, one file per picture, in the
-  same file format (`PixelFiles`), but draws them in jobs, so it writes each in the job that drew it.
+  then a job per image. A tile's picture of the library isn't kept here, but prepared ahead and
+  kept for good (`FilePreparedTiles`, [below](#pictures)); its app's own image, which shows while
+  it isn't prepared, is. `CachedPictureImages` keeps the pictures' thumbnails the same way, one
+  file per picture, in the same file format (`PixelFiles`), but draws them in jobs, so it writes
+  each in the job that drew it.
 - **Public,** since `AppGraph` in `:app` creates them; no other module depends on this one.
 
 ## Another app's answers
@@ -153,7 +149,7 @@ last one:
 | `MediaFolderPictures` | `FolderPictures<Uri, Bitmap>` | it lists the drop folders (below); and keeps the previews it draws while Add from folder shows, one file per picture in `cacheDir/folder-previews/` (`PixelFiles`, the picture, its size and the preview's size and framing in the header), deleted as the screen closes and as it opens anew |
 | `FilePictureImages` | `PictureImages<Bitmap>` | nothing: it draws a picture of the library from its original at a size, framed by the domain's `frame`, blurred and dimmed as its `PictureStyle` says: the wallpaper, which is stored for good. `DRAWING` is the drawing's version, up by one with each change to it, so what the others kept the old way is drawn again. |
 | `WorkingCopyImages` | `PictureImages<Bitmap>`, `PreparedPictures` | each picture's working copy (`WorkingCopies`), in `filesDir/picture-copies/<picture>`: the whole picture, upright, decoded once and scaled to cover half the screen (what the editors' previews show at most), as a JPEG of quality 92, a few hundred KB, after a header with `FilePictureImages.DRAWING`, the size it covers and whether the picture is see-through. A see-through picture's copy is a PNG instead, so its transparent parts stay so: lossless, alpha included, on every version, and about a JPEG's size for a logo (WebP's lossy alpha blurs edges, and its lossless form exists from API 30 on only). See-through is decided once, as the copy is made: the decoder said the picture has alpha (a JPEG never does, so one cut short, whose missing rows decode transparent, isn't), and the copy, then drawn over nothing, has a pixel that isn't opaque; every other copy is drawn over the background color. The screens' thumbnails and previews are drawn from it, framed, blurred and dimmed in milliseconds at each step of an option, where the original takes a decode of the photo each time; the preview of the background saved is the home screen's own wallpaper instead, shrunk ([`feature/settings/README.md`](../feature/settings/README.md#appearance)). One file per picture, replaced when the screen or the drawing changes; in `filesDir`, which Android doesn't delete, so it's made once. Made again later (another screen) but not written (a full disk), a picture is drawn from its original until it can be. Why one isn't prepared, from its header (`PreparingCause`): another size is another screen; none, or another format or drawing, is outdated. |
-| `WorkingCopyTiles` | `PictureTiles` (of `:platform`) | nothing: it draws a tile's picture from its working copy, decoded at about the tile's size (`inSampleSize`, after its header), framed, on the main thread when `CachedBannerImages` has no tile kept; **never from the original**. A copy not made for this screen draws nothing, and is kept to be made again; one that doesn't decode is damaged, and deleted in a job of `JobPriority.PICTURE_LIBRARY`, only if it's still the file that failed, so a good copy made meanwhile stays; once it's deleted, the main thread is told (`onDamaged`), which `AppGraph` passes to `PreparedTileImages`, to have it made again. |
+| `FilePreparedTiles` | `PreparedTiles<Bitmap>` | each tile's picture of the library, one file per app in `filesDir/tile-pictures/<package>/<activity>`: drawn in a job from its working copy, decoded at about the tile's size (`inSampleSize`, after its header), framed, at the home screen's tiles' size, a see-through picture over nothing, its transparent parts kept, any other over the background; **never from the original**, and never on the main thread, which only reads it. In `filesDir`, which Android doesn't delete as it may a cache, so a start never finds a tile missing that was prepared, and never shows the home screen's window for it. In the `PixelFiles` format: its header what it was made for (the picture, its framing, the tile's size, `FilePictureImages.DRAWING` and the working copies' format), whether it's see-through, and, where the tile's focus follows a see-through picture's shape, the shape's two masks' sizes and places; then the image (ARGB_8888), and the masks (ALPHA_8, `:ui`'s `TileShapes`: a band around the outline and a soft shadow, at half the tile's scale, which their blur hides, for a quarter of the memory; both kept, so turning the focus frame on or off prepares nothing). One kept for another size is for another screen; for anything else, outdated; one whose header is right but whose pixels don't read is damaged. An opaque picture's shape is its tile's, so its focus prepares nothing. A copy that doesn't decode is deleted in the job that found it, to be made again. Which tiles are kept is `PreparedTileImages`' to say: it deletes a tile's file when the tile no longer shows a picture, and, once per process, every file no tile names. |
 | `CachedPictureImages` | `PictureImages<Bitmap>` | each picture's thumbnail, as `WorkingCopyImages.keepingSeeThrough` drew it at the picture editors' row size in pixels (a see-through picture's over nothing, from its copy, a PNG with alpha, in a plain style; every other one as the screens draw it, pixel for pixel), in `cacheDir/thumbnails/<picture>`, its size, style and `FilePictureImages.DRAWING` in the header, so it's read at once with the screen's first frame. One file per picture: another size or style replaces it, so another TV leaves no file behind. A change to how thumbnails alone are drawn raises the file's own format, not `DRAWING`, which would draw the wallpaper and the working copies again too. |
 | `FileStoredWallpaper` | `StoredWallpaper<Bitmap>` | the wallpaper, drawn at the screen's size, in `filesDir/wallpaper`, where Android doesn't delete it as it may a cache; in the `PixelFiles` format, what it was drawn from and `FilePictureImages.DRAWING` in the header, so one drawn by another version reads as none and is drawn again. One file only: a new one is written beside it, then replaces it in one step. |
 
@@ -207,9 +203,10 @@ last one:
   photo is in Display P3), turns it as its orientation tag says, which BitmapFactory doesn't, and
   draws the framed part into a bitmap of exactly that size, over the home screen's background
   color (for a transparent picture), or over nothing (`Color.TRANSPARENT`), which only a
-  see-through picture's working copy is; then frees the decoded one. Everything the screens show
-  (the tiles, the previews, the wallpaper) is still drawn over the background, but the lists'
-  thumbnails of see-through pictures (`WorkingCopyImages.keepingSeeThrough`). A decoder may give another config
+  see-through picture's working copy is, its tile's prepared picture (`FilePreparedTiles`), and the
+  lists' thumbnails of it (`WorkingCopyImages.keepingSeeThrough`); then frees the decoded one.
+  The previews and the wallpaper are drawn over the background, and the home screen draws the
+  background under a see-through tile. A decoder may give another config
   (16-bit PNG: RGBA_F16 from API 26 on; GIF: none up to 26), which the drawing turns into ARGB_8888.
 - **Blur and dim** are drawn into the picture's bitmap, after its framing; dim is a black fill of
   its share. A blurred picture is drawn at half the size: it decodes smaller (a 12 MP photo for a

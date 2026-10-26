@@ -56,4 +56,7 @@
     <string name="home_tile_images_screen_changed">Fitting the tile banners to this screen…</string>
     <!-- The same, when they're outdated: Luncher was updated, or what was prepared is lost or damaged. -->
     <string name="home_tile_images_outdated">Updating the tile banners…</string>
+    <!-- The same, while a tile's picture saved in the tile banner picker is prepared, which the
+         user left before it was done: as that picker says it (settings_tile_banner_saving). -->
+    <string name="home_tile_images_saving">Processing tile banner…</string>
 </resources>

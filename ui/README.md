@@ -46,10 +46,14 @@ ui/
     │   │   ├── Windows.kt        a panel's window and a screen's own, styled
     │   │   ├── ScreenSize.kt     screenSize(): the screen's size in px, what the wallpaper is drawn at and
     │   │   │                     the previews' shape
+    │   │   ├── HomeTiles.kt      homeTileSize(): the home screen's tiles' size in px, what their pictures are prepared
+    │   │   │                     at, by the home screen and the tile banner picker alike
     │   │   ├── ShortestShowing.kt  how long a wait has shown, so it shows half a second at least: WorkingDialog's,
     │   │   │                     and the share window's wheel
     │   │   ├── TileName.kt       the app name below a tile: its paint, its gap, the room it takes
     │   │   │                     below a tile; the home screen's, and the room the appearance preview leaves
+    │   │   ├── TileShapes.kt     a see-through picture's shape on its tile, made as the tile is prepared: a band
+    │   │   │                     around its outline and its soft shadow, at half the tile's scale
     │   │   ├── WallpaperOutline.kt  the dark edge around what's drawn on the wallpaper, on the home screen
     │   │   │                     and in the previews of it
     │   │   └── WorkingDialog.kt  a floating panel in the theme's colors, a spinning wheel and a message, taking every key,
@@ -67,7 +71,9 @@ ui/
     │       │   │                 a picture), the wallpaper outline; a panel, as a window is before it's styled
     │       │   ├── dimens.xml    the design system's type, corners, zoom, buttons, icons, entries and fade; a panel's
     │       │   │                 corners, the dialogs' and WorkingDialog's sizes, the wallpaper outline's width, the
-    │       │   │                 tile name's text size and gap
+    │       │   │                 tile name's text size and gap; the home screen's padding at the sides
+    │       │   │                 (screen_padding_horizontal), which the home tile's size comes from; the tile
+    │       │   │                 shape's band and shadow
     │       │   └── themes.xml    Theme.Luncher, the app's and the home screen's theme; Theme.Luncher.Dialog, the
     │       │                     dialogs', and Theme.Luncher.Working; Widget.Luncher.Button, a button's
     │       └── values-h450dp/    a screen's title, and the gap below a panel's, on a screen 450 dp tall or more

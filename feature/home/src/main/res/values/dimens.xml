@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Android TV's overscan margin, plus room for the focused tile's zoom. -->
-    <dimen name="home_padding_horizontal">48dp</dimen>
+    <!-- Android TV's overscan margin, plus room for the focused tile's zoom; at the sides, :ui's
+         screen_padding_horizontal, which what shows a home tile elsewhere sizes it from too. -->
     <dimen name="home_padding_vertical">32dp</dimen>
     <!-- Between the top bar and the tiles; room for a focused tile's zoom in the first row. -->
     <dimen name="home_tiles_padding_top">24dp</dimen>

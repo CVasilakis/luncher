@@ -8,6 +8,7 @@ import com.luncher.domain.apps.AppArrangements
 import com.luncher.domain.apps.AppCustomizations
 import com.luncher.domain.apps.AppImages
 import com.luncher.domain.apps.InstalledApps
+import com.luncher.domain.apps.PreparedTileImages
 import com.luncher.domain.jobs.Jobs
 import com.luncher.domain.pictures.FolderPictures
 import com.luncher.domain.pictures.PictureImages
@@ -58,6 +59,13 @@ interface SettingsGraph {
 
     /** Each picture prepared once, so the two above draw it in milliseconds; prepared anew at the editor's start when it isn't. */
     val preparedPictures: PreparedPictures
+
+    /**
+     * The tiles' pictures, prepared ahead for the home screen: the tile banner picker's Save
+     * prepares the tile it saved through it, the home screen's own, so the home screen, back
+     * meanwhile, waits for it. One for the process.
+     */
+    val preparedTileImages: PreparedTileImages<Bitmap>
 
     /** The background thread, for what the screens load (thumbnails, previews). */
     val jobs: Jobs

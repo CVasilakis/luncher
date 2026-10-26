@@ -27,6 +27,7 @@ import com.luncher.domain.apps.FakeAppInfoScreen
 import com.luncher.domain.apps.FakeInstalledApps
 import com.luncher.domain.apps.FakeInstalledApps.Companion.app
 import com.luncher.domain.clock.FakeClock
+import com.luncher.domain.layout.TileSize
 import com.luncher.domain.pictures.PictureId
 import com.luncher.domain.pictures.PictureStyle
 import com.luncher.domain.wallpaper.FakeStoredWallpaper
@@ -47,6 +48,7 @@ import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
 import org.junit.After
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -58,6 +60,7 @@ import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import org.robolectric.shadows.ShadowDialog
+import com.luncher.launcher.ui.homeTileSize
 import com.luncher.launcher.ui.R as UiR
 
 /**
@@ -134,7 +137,7 @@ class HomeLayoutTest(private val screen: TvScreen) {
     /** The screen less the overscan margin, where everything of the home screen must be. */
     private fun HomeActivity.safeArea(): RectF {
         val metrics = resources.displayMetrics
-        val horizontal = resources.getDimension(R.dimen.home_padding_horizontal)
+        val horizontal = resources.getDimension(UiR.dimen.screen_padding_horizontal)
         val vertical = resources.getDimension(R.dimen.home_padding_vertical)
         return RectF(horizontal, vertical, metrics.widthPixels - horizontal, metrics.heightPixels - vertical)
     }
@@ -185,6 +188,16 @@ class HomeLayoutTest(private val screen: TvScreen) {
         assertWhole(screen, time)
         assertWhole(screen, date)
         activity.checkTiles()
+    }
+
+    // What a tile's picture is prepared at, by the home screen and by the tile banner picker,
+    // which can't see the home screen's layout: off by a pixel, every picture saved there would be
+    // prepared again behind the home screen's window.
+    @Test
+    fun `its tiles are as big as a tile's picture is prepared`() {
+        val activity = start()
+
+        for (tile in activity.visibleTiles()) assertEquals(activity.homeTileSize(appearance.read().tileGeometry), TileSize(tile.width, tile.height))
     }
 
     // The clock and the settings entry swapped, the time after the date; the rows at the bottom, a

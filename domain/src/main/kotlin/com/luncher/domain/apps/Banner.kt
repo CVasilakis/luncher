@@ -1,5 +1,6 @@
 package com.luncher.domain.apps
 
+import com.luncher.domain.layout.TileSize
 import com.luncher.domain.pictures.Framing
 import com.luncher.domain.pictures.PictureId
 
@@ -16,10 +17,15 @@ sealed interface Banner {
     data object AppIcon : Own
 
     /**
-     * The [picture] of the library the user chose for the tile, put into it as [framing] says;
-     * where it can't be drawn now (not prepared for this screen, damaged), the app's [own] image.
+     * The [picture] of the library the user chose for the tile, put into it as [framing] says, the
+     * tile showing it with its [look]; where it isn't prepared now ([PreparedTileImages]: not for
+     * this screen, damaged), the app's [own] image.
      */
-    data class Picture(val picture: PictureId, val framing: Framing, val own: Own) : Banner
+    data class Picture(val picture: PictureId, val framing: Framing, val look: TileLook, val own: Own) : Banner {
+
+        /** What this tile's picture is prepared from, for a tile of [size]. */
+        fun drawing(size: TileSize): TileDrawing = TileDrawing(picture, framing, look.focus, size)
+    }
 }
 
 /** The image to show for [app]: the picture the user chose for it, else its own ([ownBanner]). */
@@ -27,7 +33,7 @@ fun bannerFor(app: HomeApp): Banner {
     val own = ownBanner(app)
     val image = app.customization.image ?: return own
     val picture = image.picture ?: return own
-    return Banner.Picture(picture, image.framing, own)
+    return Banner.Picture(picture, image.framing, image.look, own)
 }
 
 /** [app]'s own image: its banner when it has one, otherwise its icon and name. */

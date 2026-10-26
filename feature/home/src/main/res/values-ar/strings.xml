@@ -23,4 +23,5 @@
     <string name="home_wallpaper_saving">جارٍ معالجة الخلفية…</string>
     <string name="home_tile_images_screen_changed">جارٍ ملاءمة لافتات المربعات لهذه الشاشة…</string>
     <string name="home_tile_images_outdated">جارٍ تحديث لافتات المربعات…</string>
+    <string name="home_tile_images_saving">جارٍ معالجة لافتة المربع…</string>
 </resources>

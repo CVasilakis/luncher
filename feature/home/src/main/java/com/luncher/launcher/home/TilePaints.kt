@@ -29,6 +29,9 @@ internal class TilePaints(context: Context) {
     /** A focused tile's frame, in the theme's accent ([AppTilesView.accent]). */
     val focusFrame = frame(colorRoles(ThemeAppearance()).homeAccent, context)
 
+    /** What a see-through picture is drawn over: the background's color, as every picture's tile was. */
+    val seeThroughFill = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = context.color(UiR.color.background) }
+
     /** A held tile's frame, while the user moves its app. */
     val heldFrame = frame(context.color(UiR.color.text_primary), context)
 

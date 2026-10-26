@@ -2,6 +2,7 @@ package com.luncher.launcher.pictures
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Color
 import com.luncher.domain.pictures.Fit
 import com.luncher.domain.pictures.Framing
 import com.luncher.domain.pictures.PreparingCause
@@ -63,14 +64,14 @@ internal class WorkingCopies(
 
     /** How drawing a tile from a working copy went ([drawTile]). */
     sealed interface Tile {
-        /** Drawn, at the size asked. */
-        class Drawn(val image: Bitmap) : Tile
+        /** Drawn, at the size asked; of a picture that's [seeThrough], drawn over nothing, or not, over the background. */
+        class Drawn(val image: Bitmap, val seeThrough: Boolean) : Tile
 
         /** No copy, or one made for another screen or drawing: it's made again, the file kept till then. */
         data object NotMade : Tile
 
-        /** Made for this screen, but it doesn't decode: the file of [length] bytes, last changed at [modified]. */
-        class Damaged(val length: Long, val modified: Long) : Tile
+        /** Made for this screen, but it doesn't decode. */
+        data object Damaged : Tile
     }
 
     fun fileOf(picture: String) = File(folder, picture)
@@ -154,23 +155,24 @@ internal class WorkingCopies(
 
     /**
      * [picture]'s working copy, if it was [made] for the screen as it is now, drawn into a new
-     * ARGB_8888 bitmap of [width] x [height] px as [framing] puts it: a tile's picture. Decoded at no
-     * more than the size needed (`inSampleSize`, as [PictureFiles.draw] picks it, after a decode of
-     * its size), then framed and freed. Never from the original: where the copy isn't made for this
+     * ARGB_8888 bitmap of [width] x [height] px as [framing] puts it: a tile's picture, a see-through
+     * one over nothing, its transparent parts kept, any other over [background]. Decoded at no more
+     * than the size needed (`inSampleSize`, as [PictureFiles.draw] picks it, after a decode of its
+     * size), then framed and freed. Never from the original: where the copy isn't made for this
      * screen, [Tile.NotMade]; where its header is, but it doesn't decode, [Tile.Damaged]. A JPEG cut
      * short decodes without an error from API 24 on, so only some damage shows here.
      */
     fun drawTile(picture: String, width: Int, height: Int, framing: Framing): Tile {
         val file = fileOf(picture)
         if (!file.isFile) return Tile.NotMade
-        val damaged = Tile.Damaged(file.length(), file.lastModified())
         try {
             val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-            DataInputStream(BufferedInputStream(FileInputStream(file), BUFFER)).use { input ->
-                if (readHeader(input)?.covers != target()) return Tile.NotMade
+            val header = DataInputStream(BufferedInputStream(FileInputStream(file), BUFFER)).use { input ->
+                val header = readHeader(input)?.takeIf { it.covers == target() } ?: return Tile.NotMade
                 BitmapFactory.decodeStream(input, null, bounds)
+                header
             }
-            if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return damaged
+            if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return Tile.Damaged
             val area = frame(bounds.outWidth, bounds.outHeight, width, height, framing)
             val options = BitmapFactory.Options().apply {
                 inSampleSize = PictureFiles.sampleSize(minOf((area.right - area.left) / width, (area.bottom - area.top) / height))
@@ -179,16 +181,17 @@ internal class WorkingCopies(
             val decoded = DataInputStream(BufferedInputStream(FileInputStream(file), BUFFER)).use { input ->
                 input.skipBytes(HEADER_BYTES)
                 BitmapFactory.decodeStream(input, null, options)
-            } ?: return damaged
+            } ?: return Tile.Damaged
             // A copy cut short leaves its missing rows transparent in a bitmap said to be opaque (PictureFiles.draw).
             decoded.setHasAlpha(true)
             try {
-                return Tile.Drawn(PictureFiles.draw(decoded, width, height, framing, background))
+                val seeThrough = header.seeThrough
+                return Tile.Drawn(PictureFiles.draw(decoded, width, height, framing, if (seeThrough) Color.TRANSPARENT else background), seeThrough)
             } finally {
                 decoded.recycle()
             }
         } catch (e: IOException) {
-            return damaged
+            return Tile.Damaged
         }
     }
 
@@ -231,8 +234,11 @@ internal class WorkingCopies(
         /** "LWRK": a file of this class. */
         private const val MAGIC = 0x4C57524B
 
-        /** The file format's version; another one is a mismatch, made again. 2: see-through copies kept as PNGs. */
-        private const val FORMAT = 2
+        /**
+         * The file format's version; another one is a mismatch, made again. 2: see-through copies
+         * kept as PNGs. What's drawn from a copy says it was drawn from this one ([FilePreparedTiles][com.luncher.launcher.apps.FilePreparedTiles]).
+         */
+        const val FORMAT = 2
 
         // Whether a copy is see-through, in its header: a PNG, else a JPEG.
         private const val OPAQUE = 0

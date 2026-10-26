@@ -8,6 +8,7 @@ import android.widget.TextView
 import com.luncher.domain.appearance.Appearance
 import com.luncher.domain.appearance.Background
 import com.luncher.domain.appearance.FakeAppearanceSettings
+import com.luncher.domain.jobs.JobPriority
 import com.luncher.domain.jobs.ManualJobs
 import com.luncher.domain.pictures.FakePictureImages
 import com.luncher.domain.pictures.PictureId
@@ -82,7 +83,8 @@ class HomeWallpaperTest {
         val activity = start().get()
 
         assertSame(kept, (activity.background() as BitmapDrawable).bitmap)
-        assertEquals(0, jobs.pending)
+        // Nothing drawn: the one job is the tiles' pictures' once-per-process sweep (PreparedTileImages).
+        assertFalse(JobPriority.WALLPAPER in jobs.pendingPriorities())
         assertNull(working())
     }
 

@@ -25,8 +25,8 @@ feature/home/
     │   │   ├── ClockView.kt      the top bar's time and date, following the Clock port
     │   │   ├── OutlinedTextView.kt  a text on the wallpaper, with :ui's WallpaperOutline around it
     │   │   ├── AppTilesView.kt   places the tiles where the domain's TileLayout says; scrolls
-    │   │   ├── AppTileView.kt    one app: its image, focus zoom with a frame or a lift and shadow; its name; held while moved;
-    │   │   │                     drawn again once its picture is prepared
+    │   │   ├── AppTileView.kt    one app: its image, or its picture as prepared, read; focus zoom with a frame or a lift and
+    │   │   │                     shadow; its name; held while moved; drawn again once its picture is prepared
     │   │   ├── TilePaints.kt     what every tile draws with: frames, dimming, the name, the corners, the focus frame on or off, the shadow's outline
     │   │   ├── HomeWallpaper.kt  the wallpaper, the window's background, as the process's Wallpaper says
     │   │   ├── HomeWorking.kt    the one window while the wallpaper is drawn again or the tiles' pictures prepared, saying why
@@ -89,7 +89,8 @@ one job, so a new arrangement, image source or top bar item changes one of them:
 | `TileFocus` (`:domain`) | where each arrow takes the focus among the tiles ([below](#focus)) |
 | `AppTilesView` | lays tiles out where the `TileLayout` says, moves the focus where the `TileFocus` says, and scrolls to the focused one; holds the `TilePaints` its tiles share |
 | `bannerFor` (`:domain`) | which image a tile shows: the app's banner, the card of its icon and name for an app without one, or a picture of the library the user chose for it ([below](#a-tiles-picture)) |
-| `AppImages` (`:domain`), `CachedBannerImages`, `BannerImages` and `WorkingCopyTiles` (`:platform`) | draws that image into a bitmap of the tile's size, or reads the one an earlier start drew |
+| `AppImages` (`:domain`), `CachedBannerImages` and `BannerImages` (`:platform`) | draws the app's own image into a bitmap of the tile's size, or reads the one an earlier start drew |
+| `PreparedTileImages`, `PreparedTiles` (`:domain`), `FilePreparedTiles` (`:platform`) | a tile's picture, prepared ahead in jobs and kept, read as the tile is drawn ([below](#a-tiles-picture)) |
 | `AppTileView` | draws that bitmap, the focus zoom with the frame or the lift ([below](#appearance)), with the corners `TilePaints` gives, and its app's name below it if the geometry says (while focused, or always); while its app is [moved](#moving-an-app), a white frame |
 | `Clock` (`:domain`) | what time it is, in which time zone and hour format, and when that changes |
 | `AndroidClock` (`:platform`) | reads those from Android, and watches the time broadcasts only while something listens |
@@ -101,35 +102,54 @@ one job, so a new arrangement, image source or top bar item changes one of them:
 
 A tile shows its app's banner, or, for an app without one, a card of its icon and name; or a
 picture of the library the user chose for it (`AppCustomization.image`, a `TileImage`: the
-picture, filled from its middle or a side, or stretched), which `bannerFor` gives as
-`Banner.Picture`, with the app's own image to show where the picture can't be drawn now. It's
-drawn as the banners are, on the main thread when no earlier start kept it
-(`CachedBannerImages`), then kept: from the picture's working copy, decoded at about the tile's
-size, a few times what a banner costs, and **never from the original**, a photo whose decode would
-hold up the start. A copy not prepared for the screen as it is (the TV switched resolution, an
-update draws pictures otherwise) leaves the tile with its app's own image, kept as that, never as
-the picture, so the picture shows as soon as its copy is made ([below](#preparing-the-tiles-pictures));
-a tile kept with its picture shows it meanwhile. A copy that doesn't decode is damaged: the tile
-shows its app's own image, and the copy is deleted, to be made again. A picture deleted from the library takes its tiles' pictures
-with it ([`settings/README.md`](../settings/README.md#background)), and their kept images.
+picture, filled from its middle or a side, or stretched, and the tile's look), which `bannerFor`
+gives as `Banner.Picture`, with the app's own image to show where the picture isn't prepared. The
+picture is **prepared ahead, and only read here**: drawn in a job from the picture's working copy,
+decoded at about the tile's size, never from the original, a photo whose decode would hold up
+the start, and kept for good (`FilePreparedTiles`, in the app's private files), so the home
+screen's main thread never decodes a picture. It's prepared at Save in the tile banner picker
+([`settings/README.md`](../settings/README.md#tile-banner)), and by the home screen behind its
+window where it isn't for the tile as it is ([below](#preparing-the-tiles-pictures)). What a
+tile's picture is prepared for is its drawing (`TileDrawing`): the picture, its framing, what the
+tile's focus follows, and the tile's size (`:ui`'s `homeTileSize`, the size `TileLayouts` gives
+in the screen's width less the home screen's padding at the sides, which `:ui` holds, so the
+picker prepares the same size; `HomeLayoutTest` checks the tiles laid out are that size). Its
+backdrop isn't: it's drawn live. Kept with the image: whether it's see-through, and, where the
+focus follows a see-through picture's shape, that shape's masks at half scale, which a later
+drawing of the look uses. For now a see-through picture is drawn over the background's color,
+as every picture was.
+
+A tile whose picture isn't prepared for its drawing (none yet, the TV switched resolution, an
+update draws pictures otherwise) shows its app's own image, kept as that, so the picture shows as
+soon as it's prepared. One that doesn't read (damaged) shows its app's own image, and is prepared
+again, once. A tile that no longer shows a picture (the app uninstalled, its picture deleted from
+the library, [`settings/README.md`](../settings/README.md#background), or its own banner chosen
+again) has what was prepared of it deleted.
 
 ### Preparing the tiles' pictures
 
-The home screen makes the missing copies, behind its window. At each read of the apps it tells
-`PreparedTileImages` (`:domain`, one per process, made by `AppGraph`) which pictures the tiles of
-every installed app show, hidden ones' too, so showing an app again never waits, and the screen's
-size. Those not prepared for it are prepared, one job each (`JobPriority.PICTURE_SCREENS`), while
-the window says why: "Fitting the tile banners to this screen…" when each one is for a screen of
-another size, else "Updating the tile banners…". It's the wallpaper's window, which says the
-wallpaper's cause first when both are due ([below](#the-wallpaper)), and takes every key. It asks
-only when the pictures or the screen changed since, so a return to the home screen costs nothing.
+The home screen prepares the missing tiles' pictures, behind its window. At each read of the apps,
+and when the appearance gives the tiles another size, it tells `PreparedTileImages` (`:domain`,
+one per process, made by `AppGraph`, the same the tile banner picker saves through) what every
+installed app's tile showing a picture is drawn from, hidden ones' too, so showing an app again
+never waits (`ArrangedApps.tileDrawings`). Those not prepared for it are prepared in jobs
+(`JobPriority.PICTURE_SCREENS`), the picture's working copy first where it isn't made for the
+screen, then the tile, while the window says why: "Fitting the tile banners to this screen…" when
+each one is for a tile of another size, "Processing tile banner…" while a tile saved in the
+picker isn't done yet (the user went home meanwhile), else "Updating the tile banners…". It's the
+wallpaper's window, which says the wallpaper's cause first when both are due
+([below](#the-wallpaper)), and takes every key. It asks only when what the tiles are drawn from,
+or their size, changed since, so a return to the home screen costs nothing.
 
-A copy deleted as damaged is made again at once: `WorkingCopyTiles` tells `PreparedTileImages`
-once the file is gone; found damaged again, it's left. A picture that can't be prepared (its
-original unreadable, a full disk) is given up until Luncher starts again, its tile keeping its
-app's image, so nothing is tried again and again. As each picture is prepared, the tiles that
-show it are drawn again (`AppTileView.followPreparing`), nothing else laid out. The preparing goes
-on when the home screen stops, and its tiles show their pictures when it's back.
+A working copy found damaged as a tile is prepared is deleted and made again at once, then the
+tile; found damaged again, the tile is given up. So is a tile that doesn't read. A tile that can't
+be prepared (its picture's original unreadable, a full disk) is given up until Luncher starts
+again, keeping its app's image, so nothing is tried again and again; saving it again in the
+picker tries once more. As each tile is prepared, it's drawn again
+(`AppTileView.followPreparing`), nothing else laid out. The preparing goes on when the home screen
+stops, and its tiles show their pictures when it's back. What's kept is what the tiles show: a
+tile that leaves them has its file deleted, in a job, and the first preparing of a process deletes
+every file no tile names.
 
 ### The top bar
 
@@ -174,7 +194,8 @@ on a return to the home screen; otherwise it stays on the same app.
 What keeps it light:
 
 - **One bitmap per tile, at the tile's size.** A banner resource is usually 640×360 px or more;
-  only the scaled copy is kept, and drawing a tile copies it once.
+  only the scaled copy is kept, and drawing a tile copies it once. A see-through picture whose
+  focus follows its shape adds its two masks, at half the tile's scale, one byte a pixel.
 - **Only new apps cost a bitmap.** Coming back to the home screen, or an app changing while it's
   shown, reads the app list again, but keeps the tiles, their bitmaps and the focus when it's the
   same; when an app was installed or updated, only its tile is new. Changes are heard from
@@ -290,7 +311,7 @@ kept file. The wallpaper takes about 8 MB of memory at 1080p while shown.
 | `StoredWallpaper` (`:domain`) / `FileStoredWallpaper` (`:platform`) | the one wallpaper kept, a file replaced in one step |
 | `PictureImages` (`:domain`) / `FilePictureImages` (`:platform`) | draws the picture at the screen's size, keeping nothing |
 | `HomeWallpaper` | the window's background as `Wallpaper` says |
-| `HomeWorking` | the window while the wallpaper is drawn or the tiles' pictures prepared (`PreparedTileImages`), as both say: the wallpaper's cause first |
+| `HomeWorking` | the window while the wallpaper is drawn or the tiles' pictures prepared (`PreparedTileImages`, a tile saved in the picker among them), as both say: the wallpaper's cause first |
 | `WorkingDialog` (`:ui`) | that window: a spinning wheel and why, taking every key, half a second at least |
 
 ### Focus

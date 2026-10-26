@@ -24,9 +24,9 @@
             android:layout_height="wrap_content"
             android:gravity="center_vertical"
             android:orientation="horizontal"
-            android:paddingLeft="@dimen/home_padding_horizontal"
+            android:paddingLeft="@dimen/screen_padding_horizontal"
             android:paddingTop="@dimen/home_padding_vertical"
-            android:paddingRight="@dimen/home_padding_horizontal">
+            android:paddingRight="@dimen/screen_padding_horizontal">
 
             <!-- Time and date share a baseline, side by side in the order the appearance gives. -->
             <com.luncher.launcher.home.ClockView
@@ -102,9 +102,9 @@
             android:layout_weight="1"
             android:clipChildren="false"
             android:clipToPadding="false"
-            android:paddingLeft="@dimen/home_padding_horizontal"
+            android:paddingLeft="@dimen/screen_padding_horizontal"
             android:paddingTop="@dimen/home_tiles_padding_top"
-            android:paddingRight="@dimen/home_padding_horizontal"
+            android:paddingRight="@dimen/screen_padding_horizontal"
             android:paddingBottom="@dimen/home_padding_vertical" />
     </LinearLayout>
 

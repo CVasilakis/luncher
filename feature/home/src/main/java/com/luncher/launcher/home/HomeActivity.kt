@@ -25,14 +25,13 @@ import com.luncher.domain.apps.MAX_APP_NAME
 import com.luncher.domain.apps.appActions
 import com.luncher.domain.apps.appName
 import com.luncher.domain.apps.homeApps
-import com.luncher.domain.pictures.PictureId
 import com.luncher.launcher.settings.R as SettingsR
 import com.luncher.launcher.settings.SettingsActivity
 import com.luncher.launcher.settings.TileBannerActivity
 import com.luncher.launcher.ui.DialogButton
 import com.luncher.launcher.ui.NameDialog
 import com.luncher.launcher.ui.color
-import com.luncher.launcher.ui.screenSize
+import com.luncher.launcher.ui.homeTileSize
 import com.luncher.launcher.ui.R as UiR
 import java.util.Locale
 
@@ -97,7 +96,6 @@ class HomeActivity : Activity() {
     }
 
     // A tile's picture prepared while shown: that tile drawn again with it, the others as they are.
-    private val preparingTileImage: (PictureId) -> Boolean = { tileImages.preparing(it) }
     private val showTileImages: () -> Unit = { followTileImages() }
 
     private val openApp = View.OnClickListener { open((it as AppTileView).app) }
@@ -201,17 +199,23 @@ class HomeActivity : Activity() {
         // Unchanged, as on most returns to the home screen: keep the tiles, their images and focus.
         if (arranged.shown != shown) show(arranged.shown)
         showWhyEmpty(arranged)
-        // The pictures the tiles show, hidden apps' too, prepared for this screen if they aren't:
-        // asked only when they, or the screen, changed. Tiles made meanwhile, or whose picture was
-        // prepared while the home screen was stopped, follow it too.
-        val screen = screenSize()
-        tileImages.prepare(arranged.tilePictures, screen.width, screen.height)
+        prepareTiles()
+    }
+
+    /**
+     * The pictures the tiles show, hidden apps' too, prepared for tiles of the size they have now
+     * if they aren't: asked only when what they're drawn from, or the screen, changed. Tiles made
+     * meanwhile, or whose picture was prepared while the home screen was stopped, follow it too.
+     */
+    private fun prepareTiles() {
+        val arranged = arranged ?: return
+        tileImages.prepare(arranged.tileDrawings(homeTileSize(tiles.tileGeometry)))
         followTileImages()
     }
 
     /** Each tile whose picture was prepared since it was drawn without it, drawn again with it. */
     private fun followTileImages() {
-        for (i in 0 until tiles.childCount) (tiles.getChildAt(i) as AppTileView).followPreparing(preparingTileImage)
+        for (i in 0 until tiles.childCount) (tiles.getChildAt(i) as AppTileView).followPreparing()
     }
 
     private fun show(appearance: Appearance) {
@@ -220,6 +224,8 @@ class HomeActivity : Activity() {
         topBar.appearance = appearance.topBar
         wallpaper.show(appearance.background)
         showTheme(appearance.theme)
+        // Another tile size: the pictures prepared for it.
+        prepareTiles()
     }
 
     /**
@@ -341,7 +347,7 @@ class HomeActivity : Activity() {
         tiles.removeAllViews()
         for (app in apps) {
             tiles.addView(
-                kept[app] ?: AppTileView(this, app, images, tiles.paints).apply {
+                kept[app] ?: AppTileView(this, app, images, tileImages, tiles.paints).apply {
                     setOnClickListener(openApp)
                     setOnLongClickListener(openMenu)
                 },

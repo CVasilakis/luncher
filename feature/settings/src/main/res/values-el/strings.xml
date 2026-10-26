@@ -72,6 +72,7 @@
     <string name="settings_tile_banner_discard_text">Οι αλλαγές στην εικόνα του πλακιδίου δεν έχουν αποθηκευτεί.</string>
     <string name="settings_picture_editor_discard">Απόρριψη</string>
     <string name="settings_background_applying">Επεξεργασία φόντου…</string>
+    <string name="settings_tile_banner_saving">Επεξεργασία banner πλακιδίου…</string>
     <string name="settings_pictures_preparing">Προετοιμασία της εικόνας…</string>
     <string name="settings_pictures_preparing_count">Προετοιμασία εικόνας <xliff:g id="number" example="3">%1$d</xliff:g> από <xliff:g id="total" example="10">%2$d</xliff:g>…</string>
 

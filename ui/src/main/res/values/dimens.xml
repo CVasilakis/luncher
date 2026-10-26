@@ -84,6 +84,14 @@
          (WallpaperOutline). The home screen's gear (feature/home's home_settings.xml) draws twice
          this, in its own units. -->
     <dimen name="wallpaper_outline">0.75dp</dimen>
+    <!-- The home screen's padding at the sides, its top bar's and its tiles' (feature/home's
+         home_activity.xml): Android TV's overscan margin, plus room for the focused tile's zoom.
+         Here, as what shows a home tile elsewhere sizes it from it too (homeTileSize). -->
+    <dimen name="screen_padding_horizontal">48dp</dimen>
+    <!-- How far the band around a see-through picture's shape reaches past it, the frame a focus
+         that follows the shape is drawn with, and how far its soft shadow spreads (TileShapes). -->
+    <dimen name="tile_shape_band">2.5dp</dimen>
+    <dimen name="tile_shape_shadow">7dp</dimen>
     <!-- The app's name below the focused tile (TileName), and the gap between the two, both before
          the tile's zoom, which they're drawn with: the home screen's, and the room the appearance
          editor's preview leaves it. -->

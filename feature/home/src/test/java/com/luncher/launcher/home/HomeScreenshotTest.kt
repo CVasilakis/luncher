@@ -25,6 +25,7 @@ import com.luncher.domain.appearance.TopBarAppearance
 import com.luncher.domain.appearance.VerticalAlignment
 import com.luncher.domain.apps.AppArrangement
 import com.luncher.domain.apps.AppCustomization
+import com.luncher.domain.apps.TileDrawing
 import com.luncher.domain.apps.TileImage
 import com.luncher.domain.apps.FakeAppArrangements
 import com.luncher.domain.apps.FakeAppCustomizations
@@ -33,6 +34,7 @@ import com.luncher.domain.apps.FakeAppInfoScreen
 import com.luncher.domain.apps.FakeInstalledApps
 import com.luncher.domain.apps.FakeInstalledApps.Companion.app
 import com.luncher.domain.clock.FakeClock
+import com.luncher.domain.layout.TileSize
 import com.luncher.domain.pictures.Blur
 import com.luncher.domain.pictures.Fit
 import com.luncher.domain.pictures.Framing
@@ -40,6 +42,7 @@ import com.luncher.domain.pictures.PictureId
 import com.luncher.domain.pictures.PicturePosition
 import com.luncher.domain.wallpaper.FakeStoredWallpaper
 import com.luncher.domain.wallpaper.WallpaperDrawing
+import com.luncher.launcher.apps.FilePreparedTiles
 import com.luncher.launcher.pictures.FilePictureImages
 import com.luncher.launcher.pictures.WorkingCopyImages
 import com.luncher.launcher.ui.ScreenSize
@@ -199,8 +202,14 @@ class HomeScreenshotTest {
 
     private fun fittingTheTileBanners() {
         val landscape = landscape()
-        WorkingCopyImages(RuntimeEnvironment.getApplication(), screen = { ScreenSize(1280, 720) }).prepare(landscape) { false }
-        start(drawn = false, images = mapOf("games" to TileImage(landscape), "music" to TileImage(landscape, Framing(Fit.STRETCH))))
+        // Copies and tiles as a 720p screen had them prepared, its tiles 205 x 115 px.
+        val application = RuntimeEnvironment.getApplication()
+        val screen = ScreenSize(1280, 720)
+        WorkingCopyImages(application, screen = { screen }).prepare(landscape) { false }
+        val images = mapOf("games" to TileImage(landscape), "music" to TileImage(landscape, Framing(Fit.STRETCH)))
+        val tiles = FilePreparedTiles(application, screen = { screen })
+        for ((name, image) in images) tiles.prepare(app(name).launchable, TileDrawing(landscape, image.framing, image.look.focus, TileSize(205, 115)))
+        start(drawn = false, images = images)
         shadowOf(Looper.getMainLooper()).idle()
     }
 

@@ -128,7 +128,7 @@ internal class TileMenu(private val activity: Activity) : Dialog(activity, R.sty
         val window = checkNotNull(window)
         val screen = activity.window.decorView
         val resources = activity.resources
-        val marginX = resources.getDimensionPixelSize(R.dimen.home_padding_horizontal)
+        val marginX = resources.getDimensionPixelSize(UiR.dimen.screen_padding_horizontal)
         val marginY = resources.getDimensionPixelSize(R.dimen.home_padding_vertical)
         val topBar = activity.findViewById<View>(R.id.home_top_bar)
         topBar.getLocationOnScreen(location)

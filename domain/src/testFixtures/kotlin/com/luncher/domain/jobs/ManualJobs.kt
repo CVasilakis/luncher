@@ -11,6 +11,10 @@ class ManualJobs : Jobs {
     /** How many jobs are queued, not run yet. */
     val pending: Int get() = queue.size
 
+    /** Whether a job is running now: what's slow is only ever done then. */
+    var running = false
+        private set
+
     /** The priorities of the queued jobs, in the order they came. */
     fun pendingPriorities(): List<Int> = queue.map { it.priority }
 
@@ -32,7 +36,12 @@ class ManualJobs : Jobs {
         if (queue.isEmpty()) return false
         val next = queue.maxWith(compareBy<Queued> { it.priority }.thenByDescending { it.order })
         queue.remove(next)
-        next.job()
+        running = true
+        try {
+            next.job()
+        } finally {
+            running = false
+        }
         return true
     }
 }

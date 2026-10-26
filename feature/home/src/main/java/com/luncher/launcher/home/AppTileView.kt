@@ -18,9 +18,11 @@ import com.luncher.domain.appearance.AppName
 import com.luncher.domain.apps.AppImages
 import com.luncher.domain.apps.Banner
 import com.luncher.domain.apps.HomeApp
+import com.luncher.domain.apps.PreparedTile
+import com.luncher.domain.apps.PreparedTileImages
 import com.luncher.domain.apps.bannerFor
 import com.luncher.domain.layout.PixelBounds
-import com.luncher.domain.pictures.PictureId
+import com.luncher.domain.layout.TileSize
 
 /**
  * One app on the home screen: its banner, and while it has focus, a zoom with, as
@@ -40,24 +42,35 @@ import com.luncher.domain.pictures.PictureId
  * While the user moves its app, a [held] tile has a white frame, and the focused one's zoom: the
  * frame tells it apart from one only focused.
  *
- * A tile whose picture of the library isn't prepared for this screen shows its app's own image
- * until it is, then is drawn again with it ([followPreparing]).
+ * A tile's picture of the library is prepared ahead, and only read here ([PreparedTileImages]): one
+ * not prepared for this tile shows its app's own image until it is, then is drawn again with it
+ * ([followPreparing]). A see-through one is drawn over the background color, as every picture was.
  */
 @SuppressLint("ViewConstructor") // Created in code only, never from XML.
 internal class AppTileView(
     context: Context,
     val app: HomeApp,
     private val images: AppImages<Bitmap>,
+    /** The tiles' pictures, read as prepared. */
+    private val tiles: PreparedTileImages<Bitmap>,
     /** Shared by every tile: the frames, the name's paint, the corners and whether the focused tile is framed. */
     private val paints: TilePaints,
 ) : View(context) {
 
     private var image: Bitmap? = null
 
-    /** The picture of the library the user chose for the tile, if any. */
-    private val picture: PictureId? = (bannerFor(app) as? Banner.Picture)?.picture
+    /** The picture of the library the user chose for the tile, if any, as prepared; null while it isn't. */
+    private var prepared: PreparedTile<Bitmap>? = null
 
-    /** Whether [picture] was being prepared, the tile showing its app's own image meanwhile. */
+    private val banner = bannerFor(app)
+
+    /** The picture of the library the user chose for the tile, if any. */
+    private val picture: Banner.Picture? = banner as? Banner.Picture
+
+    /** The app's own image: shown without a picture, and while the picture isn't prepared. */
+    private val own: Banner.Own = picture?.own ?: banner as Banner.Own
+
+    /** Whether [picture] is being prepared, the tile showing its app's own image meanwhile. */
     private var waitsForPicture = false
 
     /** Fills the tile's rounded shape with [image]; its shader is made with each new image. */
@@ -128,12 +141,12 @@ internal class AppTileView(
     }
 
     /**
-     * Follows its picture's preparing, as [preparing] says it is now: once it's done, the tile is
+     * Follows its picture's preparing, as [tiles] says it is now: once it's done, the tile is
      * drawn again, with its picture, nothing else laid out. A tile without a picture does nothing.
      */
-    fun followPreparing(preparing: (PictureId) -> Boolean) {
-        val picture = picture ?: return
-        if (preparing(picture)) {
+    fun followPreparing() {
+        if (picture == null) return
+        if (tiles.preparing(app.launchable)) {
             waitsForPicture = true
         } else if (waitsForPicture) {
             waitsForPicture = false
@@ -142,9 +155,19 @@ internal class AppTileView(
         }
     }
 
-    /** The image drawn at [w] x [h] px, its shader with it; none while the tile has no size. */
+    /**
+     * The image at [w] x [h] px, its shader with it: the picture as prepared for this size, read,
+     * else the app's own; none while the tile has no size.
+     */
     private fun render(w: Int, h: Int) {
-        val image = if (w > 0 && h > 0) images.render(app, bannerFor(app), w, h) else null
+        val prepared = if (w > 0 && h > 0) picture?.let { tiles.read(app.launchable, it.drawing(TileSize(w, h))) } else null
+        this.prepared = prepared
+        waitsForPicture = picture != null && prepared == null && tiles.preparing(app.launchable)
+        val image = when {
+            w <= 0 || h <= 0 -> null
+            prepared != null -> prepared.image
+            else -> images.render(app, own, w, h)
+        }
         this.image = image
         imagePaint.shader = image?.let { BitmapShader(it, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP) }
     }
@@ -163,9 +186,13 @@ internal class AppTileView(
         val radius = paints.cornerRadius(height)
         val image = image
         if (image != null) {
+            // Under a see-through picture, the background's color, as every picture was drawn over.
+            val under = if (prepared?.seeThrough == true) paints.seeThroughFill else null
             if (radius == 0f) {
+                if (under != null) canvas.drawRect(bounds, under)
                 canvas.drawBitmap(image, 0f, 0f, null)
             } else {
+                if (under != null) canvas.drawRoundRect(bounds, radius, radius, under)
                 canvas.drawRoundRect(bounds, radius, radius, imagePaint)
             }
         }

@@ -17,7 +17,9 @@ import com.luncher.domain.apps.FakeAppArrangements
 import com.luncher.domain.apps.FakeAppCustomizations
 import com.luncher.domain.apps.FakeAppImages
 import com.luncher.domain.apps.FakeInstalledApps
+import com.luncher.domain.apps.FakePreparedTiles
 import com.luncher.domain.apps.InstalledApps
+import com.luncher.domain.apps.PreparedTileImages
 import com.luncher.domain.appearance.SAMPLE_WALLPAPER
 import com.luncher.domain.jobs.ManualJobs
 import com.luncher.domain.pictures.FakeFolderPictures
@@ -59,6 +61,12 @@ open class TestSettingsGraph(
 
     /** The preview's wallpaper is drawn when a test runs these, and a result is shown when it runs the main looper. */
     override val jobs = ManualJobs()
+
+    /** The tiles' pictures as kept for the home screen, in memory: none at first; prepared in a job only, or it fails. */
+    open val preparedTiles by lazy { FakePreparedTiles<Bitmap>(preparedPictures, jobs) { Bitmap.createBitmap(it.size.width, it.size.height, Bitmap.Config.ARGB_8888) } }
+
+    // Made on first use, from what a test's subclass gives.
+    override val preparedTileImages by lazy { PreparedTileImages(preparedPictures, preparedTiles, jobs) { Handler(Looper.getMainLooper()).post(it) } }
 
     /** What [wallpaper] keeps: nothing at first. */
     open val storedWallpaper = FakeStoredWallpaper<Bitmap>()

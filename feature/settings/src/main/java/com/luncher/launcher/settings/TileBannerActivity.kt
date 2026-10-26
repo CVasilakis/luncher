@@ -11,6 +11,7 @@ import android.view.View
 import android.widget.TextView
 import android.window.OnBackInvokedDispatcher
 import com.luncher.domain.apps.ArrangedApps
+import com.luncher.domain.apps.Banner
 import com.luncher.domain.apps.HomeApp
 import com.luncher.domain.apps.LaunchableApp
 import com.luncher.domain.apps.TileBackdrop
@@ -19,6 +20,7 @@ import com.luncher.domain.apps.TileImage
 import com.luncher.domain.apps.TileImageContext
 import com.luncher.domain.apps.TileImageOption
 import com.luncher.domain.apps.TileLook
+import com.luncher.domain.apps.bannerFor
 import com.luncher.domain.apps.homeApps
 import com.luncher.domain.apps.ownBanner
 import com.luncher.domain.apps.tileImageOptions
@@ -27,6 +29,8 @@ import com.luncher.domain.pictures.Picture
 import com.luncher.domain.pictures.PictureId
 import com.luncher.domain.pictures.choosing
 import com.luncher.launcher.ui.ScreenSize
+import com.luncher.launcher.ui.WorkingDialog
+import com.luncher.launcher.ui.homeTileSize
 import com.luncher.launcher.ui.styleScreen
 import java.util.Locale
 
@@ -46,10 +50,11 @@ import java.util.Locale
  * picture chosen shows as it is, in the middle, its fit kept, the stored one as it's stored, the
  * tile's look kept whichever is chosen; the values offered are those that move the picture in a
  * tile's shape ([TileImageContext]), and a look changed where it's dimmed is no change. Nothing
- * is stored until Save, which stores the choice at once, through the per-app port, and closes:
- * the chosen picture's working copy is made already (as it was added, or as the picker opened),
- * so it's a decision, with no wait, and the home screen draws the tile as it comes back.
- * Original banner saved takes the picture off the tile. Back with the draft changed asks first;
+ * is stored until Save, which stores the choice at once, through the per-app port, then prepares
+ * the tile's picture for the home screen, at its tiles' size, behind a window that shows for half
+ * a second at least, and closes once it's done, so the home screen reads the tile as it comes
+ * back; a choice whose tile is prepared already (another backdrop, drawn live) closes at once.
+ * Original banner saved takes the picture off the tile, and closes at once. Back with the draft changed asks first;
  * Back, or Home, leaves the tile as it was. A picture another tile or the wallpaper uses can be
  * chosen too.
  *
@@ -64,6 +69,7 @@ class TileBannerActivity : Activity() {
     private val installedApps by lazy { graph.installedApps }
     private val arrangements by lazy { graph.appArrangements }
     private val customizations by lazy { graph.appCustomizations }
+    private val tileImages by lazy { graph.preparedTileImages }
     private val theme by lazy {
         ScreenTheme(settings) {
             checkNotNull(window).styleScreen(it)
@@ -89,6 +95,9 @@ class TileBannerActivity : Activity() {
     private lateinit var save: View
     private lateinit var deleteAll: View
     private lateinit var options: OptionGrid<TileImage, TileImageContext, TileImageOption<*>>
+
+    /** The window while the tile saved is prepared: made the first time Save waits. */
+    private var saving: WorkingDialog? = null
 
     /** The library as it shows, and renaming and deleting its pictures. */
     private val actions by lazy { PictureActions(this, pictures, settings, graph.wallpaper, installedApps, arrangements, customizations, { theme.roles }, ::deleted) }
@@ -235,6 +244,7 @@ class TileBannerActivity : Activity() {
         draft.dismiss()
         actions.dismiss()
         preparing.dismiss()
+        saving?.dismiss()
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -313,17 +323,31 @@ class TileBannerActivity : Activity() {
     }
 
     /**
-     * Stores the draft for the app's tile and closes, or closes at once if it's what's stored, as
-     * the picker showed it (a stored position its picture doesn't offer showed as the middle, and
-     * draws the same). Original banner chosen stores none. No window: storing is a decision, the
-     * picture's working copy made already, and the home screen draws the tile as it comes back.
+     * Stores the draft for the app's tile, or closes at once if it's what's stored, as the picker
+     * showed it (a stored position its picture doesn't offer showed as the middle, and draws the
+     * same). Then the tile's picture, as stored, is prepared for the home screen's tiles, through
+     * the process's [tileImages], which the home screen follows: while a window says so (half a
+     * second at least), the picker closing once it's done, or can't be (the home screen tries
+     * again). Where nothing is to be prepared (the tile is already, as for another backdrop; or
+     * Original banner, which takes what was prepared away) it closes at once.
      */
     private fun save() {
         if (!draft.changed()) return finish()
         val arranged = arranged()
-        val app = (arranged.shown + arranged.hidden).firstOrNull { it.launchable == launchable }
-        if (app != null) customizations.save(arranged.withImage(app, draft.value))
-        finish()
+        val app = (arranged.shown + arranged.hidden).firstOrNull { it.launchable == launchable } ?: return finish()
+        customizations.save(arranged.withImage(app, draft.value))
+        // As stored, and as the home screen reads it.
+        if (!readApp()) return
+        val banner = bannerFor(this.app) as? Banner.Picture
+        if (banner == null) {
+            tileImages.forget(launchable)
+            return finish()
+        }
+        val drawing = banner.drawing(homeTileSize(settings.read().tileGeometry))
+        val waits = tileImages.save(launchable, drawing) { saving?.close { if (!isDestroyed) finish() } }
+        if (!waits) return finish()
+        val saving = saving ?: WorkingDialog(this, theme.roles).also { saving = it }
+        saving.show(getString(R.string.settings_tile_banner_saving))
     }
 
     /**

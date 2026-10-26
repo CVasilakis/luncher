@@ -152,6 +152,9 @@
     <string name="settings_picture_editor_discard">Discard</string>
     <!-- In a window over the editor while the wallpaper is drawn after Save, which takes a moment. -->
     <string name="settings_background_applying">Processing background…</string>
+    <!-- In a window over the tile banner picker while the tile's picture is prepared after Save,
+         which takes a moment: as the background editor's (settings_background_applying). -->
+    <string name="settings_tile_banner_saving">Processing tile banner…</string>
     <!-- In a window over a picture editor as it opens, while its pictures are prepared to be
          shown quickly (made once, again only after the TV changes its resolution or an update):
          for one picture, then for several, which one of how many. -->

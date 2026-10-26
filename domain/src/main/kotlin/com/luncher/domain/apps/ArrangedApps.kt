@@ -1,5 +1,6 @@
 package com.luncher.domain.apps
 
+import com.luncher.domain.layout.TileSize
 import com.luncher.domain.pictures.PictureId
 
 /**
@@ -61,9 +62,19 @@ class ArrangedApps internal constructor(
         (shown.map { AppVisibility(it, hidden = false) } + hidden.map { AppVisibility(it, hidden = true) })
             .sortedWith(compareBy(byLabel) { it.app })
 
-    /** The pictures of the library the apps' tiles show, the shown apps' first, then the hidden ones': what's prepared for them ([PreparedTileImages]). */
-    val tilePictures: Set<PictureId>
-        get() = (shown.asSequence() + hidden.asSequence()).mapNotNullTo(LinkedHashSet()) { it.customization.image?.picture }
+    /**
+     * What the tiles showing a picture of the library are drawn from, tiles of [size]: the shown
+     * apps' first, then the hidden ones', so showing an app again needs nothing prepared. What's
+     * prepared and kept for them ([PreparedTileImages]).
+     */
+    fun tileDrawings(size: TileSize): Map<LaunchableApp, TileDrawing> {
+        val drawings = LinkedHashMap<LaunchableApp, TileDrawing>()
+        for (app in shown.asSequence() + hidden.asSequence()) {
+            val banner = bannerFor(app) as? Banner.Picture ?: continue
+            drawings[app.launchable] = banner.drawing(size)
+        }
+        return drawings
+    }
 
     /**
      * What to store of what the user set for the apps, with [app] named [name] ([appName]'s), or by

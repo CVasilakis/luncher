@@ -37,6 +37,13 @@ class TileLayouts(geometry: TileGeometry, pixelsPerDp: Float, nameHeight: Int = 
     /** [tileCount] tiles in [width] by [height] pixels; also where a moved tile goes among them. */
     fun tiles(tileCount: Int, width: Int, height: Int): TileGrid = grid(tileCount, width, height, vertical)
 
+    /**
+     * The size of every tile in a space [width] pixels wide, however many tiles there are and
+     * however tall the space: what a tile's picture is prepared at, by the home screen and by the
+     * tile banner picker alike, so the two agree to the pixel.
+     */
+    fun tileSize(width: Int): TileSize = tiles(tileCount = 0, width, height = 0).let { TileSize(it.tileWidth, it.tileHeight) }
+
     /** Where a moved tile goes among [tileCount] tiles [width] pixels wide: as [tiles], whatever the height. */
     fun moves(tileCount: Int, width: Int): TileMoves = grid(tileCount, width, height = 0, VerticalAlignment.TOP)
 

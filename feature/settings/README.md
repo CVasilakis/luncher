@@ -480,12 +480,22 @@ picture chosen keeps the draft's, and so does the stored picture chosen again, w
 its stored framing only. Where Backdrop and Focus are dimmed, a look changed is no change
 (`TileImage.counted`): Back doesn't ask and Save just closes, though the draft keeps the look for
 the next picture, and a picture saved stores it.
-**Save** only stores the choice, through `AppCustomizations` (`ArrangedApps.withImage`: what else
-is set for the app kept), and closes, at once, with no window: the chosen picture's working copy
-is made already (as it was added, or by the preparing at the picker's start), so it's a decision
+**Save** stores the choice, through `AppCustomizations` (`ArrangedApps.withImage`: what else is
+set for the app kept), then prepares the tile's picture for the home screen, which only reads it
+([`../home/README.md`](../home/README.md#a-tiles-picture)): drawn from the picture's working copy
+at the home screen's tiles' size (`:ui`'s `homeTileSize`, from the screen's width less the home
+screen's padding at the sides, which `:ui` holds, so the two agree to the pixel), in a job, while
+a window says "Processing tile banner…" (`WorkingDialog`, half a second at least, taking every
+key); the picker closes once it's done. It prepares through the process's
+`PreparedTileImages`, the one the home screen follows, so a return to the home screen meanwhile
+(Home) shows the home screen's window saying the same, until it's done, and nothing is prepared
+twice. Where nothing is to prepare, it closes at once, with no window
 ([`ARCHITECTURE.md`](../../docs/ARCHITECTURE.md#background-work-and-changes-while-shown), point
-9), and the home screen draws the tile as it comes back. Original banner saved takes the picture
-off the tile. Unchanged, Save just closes. A picture another tile, or the wallpaper, shows can be
+9): a tile prepared already for what was saved (another Backdrop, drawn live; Focus on an opaque
+picture, whose shape is the tile's), and Original banner, which takes the picture off the tile and
+deletes what was prepared of it. A tile that can't be prepared (a full disk) closes the window all
+the same, the choice stored: the home screen tries once more behind its own window, then shows the
+app's own image. Unchanged, Save just closes. A picture another tile, or the wallpaper, shows can be
 chosen too. Deleting the draft's picture makes Original banner the draft; deleting the tile's
 stored picture takes it off the tile at once, as deleting does everywhere. The app is found among
 the installed apps, shown or hidden, by the package and activity the home screen passed
@@ -495,10 +505,11 @@ the installed apps, shown or hidden, by the package and activity the home screen
 |---|---|
 | `TileImage`, `TileLook`, `TileImageOption`, `TileImageContext` (`:domain`) | the draft and what's stored: a picture or none, its framing and the tile's look; its options, what each offers for a picture in a tile's shape, and whether it applies (the look only to a see-through picture); what Save counts as changed (`counted`) |
 | `AppCustomizations` (`:domain`), `ArrangedApps.withImage` | where the choice is stored, with what else the user set for the app |
+| `PreparedTileImages` (`:domain`), `SettingsGraph.preparedTileImages`; `homeTileSize` (`:ui`) | the tile saved prepared for the home screen, at its tiles' size, through the process's one, which the home screen follows; whether there's anything to wait for |
 | `AppImages` (`:domain`), `SettingsGraph.appBanners` | the app's own image, drawn at the preview's and the row's size, kept nowhere: the home screen's kept tiles (`appImages` there) are at the tile's size, a file per app, and drawing another size through them would replace the tile's |
 | `PictureImages` (`:domain`) | a picture drawn from its working copy at the preview's size, in the background, the latest request winning, as the background editor's preview draws one |
 | `TilePreviewView` | the preview: the app's own image at once, a picture once drawn (the app's own where it can't be drawn, as on its tile), each drawn again only when the draft or the size changes |
-| `TileBannerActivity` | what's the tile banner picker's alone: the app it's for, its preview and name, Save through `AppCustomizations`; the picture editors' parts ([above](#background)) put together |
+| `TileBannerActivity` | what's the tile banner picker's alone: the app it's for, its preview and name, Save through `AppCustomizations` and `PreparedTileImages`, behind its window; the picture editors' parts ([above](#background)) put together |
 
 ### Adding a picture
 

@@ -2,6 +2,7 @@ package com.luncher.domain.apps
 
 import com.luncher.domain.apps.FakeInstalledApps.Companion.app
 import com.luncher.domain.apps.FakeInstalledApps.Companion.homeApp
+import com.luncher.domain.layout.TileSize
 import com.luncher.domain.pictures.Fit
 import com.luncher.domain.pictures.Framing
 import com.luncher.domain.pictures.PictureId
@@ -261,7 +262,7 @@ class ArrangedAppsTest {
     }
 
     @Test
-    fun `the tiles' pictures are the shown apps' in their order, then the hidden ones', each once, absent apps' left out`() {
+    fun `the tiles' drawings are the shown apps' in their order, then the hidden ones', at the size given, absent apps' left out`() {
         val away = LaunchableApp("com.example.away", "com.example.away.MainActivity")
         val stored = mapOf(
             showing("news", beach),
@@ -272,7 +273,12 @@ class ArrangedAppsTest {
         )
         val arranged = homeApps(installed, "com.luncher.launcher", AppArrangement(order = null, hidden = listOf(id("games"))), stored, Locale.ENGLISH)
 
-        assertEquals(listOf(PictureId("sea"), beach, alps), arranged.tilePictures.toList())
+        val size = TileSize(345, 194)
+        fun drawing(picture: PictureId) = TileDrawing(picture, Framing(), TileFocusShape.TILE, size)
+        assertEquals(
+            listOf(id("movies") to drawing(PictureId("sea")), id("music") to drawing(beach), id("news") to drawing(beach), id("games") to drawing(alps)),
+            arranged.tileDrawings(size).toList(),
+        )
     }
 
     @Test

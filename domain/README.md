@@ -23,16 +23,17 @@ domain/src/
 │   │   ├── AppCustomizations.kt port: where what the user set for each app is kept, and when it changes
 │   │   ├── HomeApp.kt           model: an app as the user set it up, the installed app with its AppCustomization; its name, the user's or the label
 │   │   ├── InstalledApps.kt     port: the TV apps installed on the device, and when apps change
-│   │   ├── AppImages.kt         port: an app's image drawn at a size, in the UI's image type
+│   │   ├── AppImages.kt         port: an app's own image drawn at a size, in the UI's image type
 │   │   ├── AppArrangement.kt    model: the user's order of the shown apps, and the hidden apps, as stored
 │   │   ├── AppArrangements.kt   port: where the arrangement is kept, and when it changes
 │   │   ├── HomeApps.kt          rule: which apps the home screen shows, in which order, and which are hidden, each with what the user set for it, matched to the installed apps (StoredMatch); the orders by name (NameOrder)
-│   │   ├── ArrangedApps.kt      model and rules: the shown and hidden apps (HomeApps); hiding or showing one, and what to store; what to store of what the user set for the apps with one renamed (renamed), its tile's picture chosen (withImage), or pictures deleted (withoutPictures); all of them by the device's label, for Hide apps; the pictures their tiles show (tilePictures)
-│   │   ├── PreparedTileImages.kt helper: the pictures the tiles show, prepared for the screen as it is (one job each, given up for the process where one can't be, one found damaged prepared again once), one per process, which the home screen watches; whether it prepares and why
+│   │   ├── ArrangedApps.kt      model and rules: the shown and hidden apps (HomeApps); hiding or showing one, and what to store; what to store of what the user set for the apps with one renamed (renamed), its tile's picture chosen (withImage), or pictures deleted (withoutPictures); all of them by the device's label, for Hide apps; what the tiles showing a picture are drawn from, at a tile's size (tileDrawings)
+│   │   ├── PreparedTiles.kt     port and models: each tile's picture prepared ahead from its copy and kept, for what it was drawn from (TileDrawing: the picture, its framing, the focus, the tile's size), read on the main thread (PreparedTile: the image, whether it's see-through, the picture's shape at half scale, ShapeMasks)
+│   │   ├── PreparedTileImages.kt helper: the tiles' pictures prepared for what they're drawn from (the copy first, then the tile, one job each; given up for the process where one can't be; one found damaged prepared again once), and read; a tile saved in the picker prepared the same way (Saving); what no tile names deleted; one per process, which the home screen and the picker watch; whether it prepares and why
 │   │   ├── AppAction.kt         model and rule: what the user can do to an app from its tile's menu (move, hide, rename, a picture for its tile, its info), one type each, and which the menu lists, each available or not (AppMenuEntry)
 │   │   ├── AppNames.kt          rule: the name an app the user renamed keeps (appName), or its own label again; how long it may be (MAX_APP_NAME)
 │   │   ├── AppInfoScreen.kt     port: whether the device has the page about an app in its settings, which App info opens
-│   │   └── Banner.kt            model and rule: which image a tile shows (the app's banner, or its icon and name; or the picture the user chose, the app's own where it can't be drawn now)
+│   │   └── Banner.kt            model and rule: which image a tile shows (the app's banner, or its icon and name; or the picture the user chose, with the tile's look, the app's own where it isn't prepared); what that picture's tile is drawn from (drawing)
 │   ├── appearance/
 │   │   ├── Appearance.kt        model: how the home screen looks, as far as the user can change it, and Luncher's theme, in parts (docs/ARCHITECTURE.md#appearance)
 │   │   ├── TileGeometry.kt      model: where tiles go and how big they are, in dp; their alignment; whether the app names show below the tiles
@@ -88,6 +89,7 @@ domain/src/
 │       ├── TileMoves.kt         how it says where a tile the user moves goes, and which row and place across a tile is at
 │       ├── Direction.kt         model: a D-pad arrow
 │       ├── TileShape.kt         model and rule: a tile's shape, 16:9, and the corners of a tile drawn at another size, as round for it as the home screen's
+│       ├── TileSize.kt          model: a tile's size in px, as TileLayouts lays it out (tileSize)
 │       ├── TileGrid.kt          rule: the grid (rows of tiles as wide as a width; the short row first or last, at the left, centered or at the right; at the top, centered or at the bottom of a height; room below each row for the tiles' names), and moves in it
 │       ├── TileFocus.kt         rule: where each arrow takes the focus among the tiles: along the row, the nearest tile up or down, and back the way it came
 │       ├── TileLayouts.kt       rule: the layouts for a TileGeometry, in pixels at a density; picks the arrangement and placement
@@ -100,10 +102,11 @@ domain/src/
     ├── apps/FakeAppCustomizations.kt fake of the AppCustomizations port: what the user set in memory; named(app, name)
     ├── apps/FakeAppInfoScreen.kt   fake of the AppInfoScreen port: whether the page exists, as the test sets it
     ├── apps/FakeAppImages.kt       fake of the AppImages port: draws what the test says, counting what it drew
+    ├── apps/FakePreparedTiles.kt   fake of the PreparedTiles port: the tiles kept in memory, each for its drawing; copies missing or damaged, tiles that can't be kept or don't read, as the test says; with ManualJobs, failing if asked to prepare outside a job
     ├── appearance/FakeAppearanceSettings.kt  fake of the AppearanceSettings port: the appearance in memory
     ├── appearance/AppearanceChanges.kt       each option at each value but its default, in a context that offers it: what the catalog-wide tests draw (SAMPLE_WALLPAPER for the background's, wide or tall)
     ├── clock/FakeClock.kt          fake of the Clock port: a fixed time the test moves
-    ├── jobs/ManualJobs.kt          fake of the Jobs port: the queued jobs run when the test says, all or the next one, in the real order; their priorities
+    ├── jobs/ManualJobs.kt          fake of the Jobs port: the queued jobs run when the test says, all or the next one, in the real order; their priorities; whether one is running
     ├── pictures/FakePictures.kt    fake of the Pictures and PictureImport ports: the library in memory, each source's answer set by the test; a picture found see-through or not as its copy is made (learn)
     ├── pictures/FakePictureImages.kt  fake of the PictureImages port: draws what the test says, keeps what it drew
     ├── pictures/FakePreparedPictures.kt fake of the PreparedPictures port: every picture prepared but those the test says, for the cause it says, and those it can't; how often it was asked
@@ -130,8 +133,8 @@ Packages are by topic (`appearance/`, `apps/`, `arrange/`, `clock/`, `jobs/`, `l
   screen, one per process, built on `StoredWallpaper`, `PictureImages`, `AppearanceSettings` and
   `Jobs`, and tested with their fakes; `ReceivedPictures`, in `pictures/`, the shared pictures
   being added, built on `PictureImport` and tested with `FakePictures`; and `PreparedTileImages`,
-  in `apps/`, the tiles' pictures prepared for the screen, one per process too, built on
-  `PreparedPictures` and `Jobs`, and tested with their fakes.
+  in `apps/`, the tiles' pictures prepared ahead and read, one per process too, built on
+  `PreparedPictures`, `PreparedTiles` and `Jobs`, and tested with their fakes.
 - Ports are interfaces named after what they provide (`InstalledApps`), not how
   (`PackageManagerApps`); adapters in `:platform` implement them. A port whose result is a UI type
   this module can't name is generic in it (`AppImages<Image>`), and so is one that takes an

@@ -166,6 +166,10 @@ internal class AppearancePreviewView(context: Context, attrs: AttributeSet?) : V
     private val screenHeight = context.screenSize().heightAt(SCREEN_WIDTH)
     private val tilesHeight = screenHeight - TILES_TOP - PADDING_BOTTOM
 
+    /** The home screen's padding at the sides, in dp, as it has it (:ui's), and the tiles' width between. */
+    private val paddingHorizontal = resources.getDimension(UiR.dimen.screen_padding_horizontal) / resources.displayMetrics.density
+    private val tilesWidth = SCREEN_WIDTH - 2 * paddingHorizontal
+
     /** Pixels per dp of the sample screen. */
     private var scale = 0f
     private val screen = RectF()
@@ -313,9 +317,9 @@ internal class AppearancePreviewView(context: Context, attrs: AttributeSet?) : V
     private fun placeTiles() {
         if (scale == 0f) return
         val layouts = TileLayouts(appearance.tileGeometry, scale, nameHeight = (nameRoom * scale).roundToInt())
-        val grid = layouts.tiles(TILES, (TILES_WIDTH * scale).roundToInt(), (tilesHeight * scale).roundToInt())
+        val grid = layouts.tiles(TILES, (tilesWidth * scale).roundToInt(), (tilesHeight * scale).roundToInt())
         tileHeight = grid.tileHeight
-        val left = screen.left + PADDING_HORIZONTAL * scale
+        val left = screen.left + paddingHorizontal * scale
         val top = screen.top + TILES_TOP * scale
         for (i in tiles.indices) {
             val x = left + grid.left(i)
@@ -365,12 +369,12 @@ internal class AppearancePreviewView(context: Context, attrs: AttributeSet?) : V
         date.setEmpty()
         gear.setEmpty()
         val layout = topBarLayout(appearance.topBar)
-        var x = PADDING_HORIZONTAL.toFloat()
+        var x = paddingHorizontal
         for (item in layout.left) {
             place(item, x)
             x += width(item) + ITEM_GAP
         }
-        x = (SCREEN_WIDTH - PADDING_HORIZONTAL).toFloat()
+        x = SCREEN_WIDTH - paddingHorizontal
         for (i in layout.right.indices.reversed()) {
             val item = layout.right[i]
             x -= width(item)
@@ -404,7 +408,8 @@ internal class AppearancePreviewView(context: Context, attrs: AttributeSet?) : V
         TopBarItem.SETTINGS -> BAR_HEIGHT
     }
 
-    // The sample screen, in dp: about the home screen's paddings and sizes (feature/home's dimens).
+    // The sample screen, in dp: about the home screen's paddings and sizes (feature/home's dimens);
+    // the padding at the sides is its own (paddingHorizontal).
     private companion object {
         /**
          * [image], the screen's wallpaper, shrunk to [width] x [height] px without its thin lines
@@ -429,13 +434,11 @@ internal class AppearancePreviewView(context: Context, attrs: AttributeSet?) : V
         }
 
         const val SCREEN_WIDTH = 960
-        const val PADDING_HORIZONTAL = 48
         const val PADDING_TOP = 32
         const val PADDING_BOTTOM = 32
         /** The settings entry's size, which the bar's height is. */
         const val BAR_HEIGHT = 40
         const val TILES_TOP = PADDING_TOP + BAR_HEIGHT + 24
-        const val TILES_WIDTH = SCREEN_WIDTH - 2 * PADDING_HORIZONTAL
         const val TILES = 7
         const val FOCUSED = 0
         /** The focused tile's zoom, framed or lifted (feature/home's AppTileView), the largest. */

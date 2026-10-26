@@ -16,7 +16,6 @@ import android.util.TypedValue
 import com.luncher.domain.apps.AppImages
 import com.luncher.domain.apps.Banner
 import com.luncher.domain.apps.HomeApp
-import com.luncher.launcher.pictures.PictureTiles
 import com.luncher.launcher.platform.R
 import com.luncher.launcher.ui.color
 import com.luncher.launcher.ui.R as UiR
@@ -33,13 +32,8 @@ import com.luncher.launcher.ui.R as UiR
  * freed once drawn (platform/README.md#writing-adapters). Decoded without Android's density
  * scaling, the file's pixels are scaled once, to the tile's size, rather than twice. Other banners
  * (a vector, a color, a nine-patch) are drawn as Android loads them.
- *
- * A picture of the library the user chose for the tile ([Banner.Picture]) is drawn by [pictures],
- * or, where it can't be now, or without [pictures], the app's own image. [CachedBannerImages],
- * which keeps what was drawn, asks [pictures] itself, so as to know which it got, and asks this
- * one only for the app's own.
  */
-class BannerImages(context: Context, private val pictures: PictureTiles? = null) : AppImages<Bitmap> {
+class BannerImages(context: Context) : AppImages<Bitmap> {
 
     private val packageManager = context.packageManager
 
@@ -61,20 +55,12 @@ class BannerImages(context: Context, private val pictures: PictureTiles? = null)
         textAlign = Paint.Align.CENTER
     }
 
-    /**
-     * [app]'s [banner], drawn [width] x [height] px. Falls back to the icon card if the banner can't
-     * be loaded, and from a picture it can't draw to the app's own image.
-     */
-    override fun render(app: HomeApp, banner: Banner, width: Int, height: Int): Bitmap {
-        if (banner is Banner.Picture) pictures?.draw(banner.picture, banner.framing, width, height)?.let { return it }
+    /** [app]'s [banner], drawn [width] x [height] px. Falls back to the icon card if the banner can't be loaded. */
+    override fun render(app: HomeApp, banner: Banner.Own, width: Int, height: Int): Bitmap {
         val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
         val component = ComponentName(app.launchable.packageName, app.launchable.activityName)
-        val own = when (banner) {
-            is Banner.Own -> banner
-            is Banner.Picture -> banner.own
-        }
-        val drawn = when (own) {
+        val drawn = when (banner) {
             Banner.AppBanner -> load { drawBanner(component, canvas, width, height) } ?: false
             Banner.AppIcon -> false
         }
