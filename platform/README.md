@@ -25,7 +25,7 @@ platform/
     │   │   ├── apps/
     │   │   │   ├── PackageManagerInstalledApps.kt   InstalledApps on PackageManager, and LauncherApps for when apps change
     │   │   │   ├── PreferencesAppArrangements.kt    AppArrangements on SharedPreferences: the file and its format
-    │   │   │   ├── PreferencesAppCustomizations.kt  AppCustomizations on SharedPreferences: a file of its own, a JSON object per app
+    │   │   │   ├── PreferencesAppCustomizations.kt  AppCustomizations on SharedPreferences: a file of its own, a JSON object per app (its name; its tile's picture, framing and look)
     │   │   │   ├── PackageManagerAppInfoScreen.kt   AppInfoScreen on PackageManager: whether an activity takes the intent App info starts
     │   │   │   ├── BannerImages.kt                  AppImages<Bitmap>: draws an app's Banner into a bitmap of the tile's size, a picture through PictureTiles
     │   │   │   └── CachedBannerImages.kt            AppImages<Bitmap> in front of BannerImages and PictureTiles: each tile's image kept in a file for the next start
@@ -74,7 +74,9 @@ is in a package of its own (`images/`: the caches' file format; `outside/`: aski
   know reads as a default rather than failing (`PreferencesAppearanceSettings`: that option's
   default, the others as stored). Text the user typed is encoded so that any character survives,
   a line break or a `/` (`PreferencesAppCustomizations`: a JSON object per app, its fields what
-  the user set, a field it doesn't know skipped).
+  the user set, a field it doesn't know skipped; its tile's image an object of its own, the
+  picture, the fit and position, the backdrop and focus, each value by its enum's name, one
+  missing, as in an image stored before the look was, its default).
 - **Device state that changes** (the time, later the network) is watched only while a listener is
   registered ([`ARCHITECTURE.md`](../docs/ARCHITECTURE.md#background-work-and-changes-while-shown)):
   `AndroidClock` registers its broadcast receiver with the first listener and unregisters it with

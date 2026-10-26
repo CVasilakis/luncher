@@ -4,7 +4,10 @@ import android.content.Context
 import android.content.SharedPreferences
 import com.luncher.domain.apps.AppCustomization
 import com.luncher.domain.apps.LaunchableApp
+import com.luncher.domain.apps.TileBackdrop
+import com.luncher.domain.apps.TileFocusShape
 import com.luncher.domain.apps.TileImage
+import com.luncher.domain.apps.TileLook
 import com.luncher.domain.pictures.Fit
 import com.luncher.domain.pictures.Framing
 import com.luncher.domain.pictures.PictureId
@@ -27,7 +30,7 @@ class PreferencesAppCustomizationsTest {
     private val news = LaunchableApp("com.example.news", ".NewsActivity")
     private val music = LaunchableApp("com.example.music", ".Music")
 
-    private val beach = TileImage(PictureId("3f9a"), Framing(Fit.FILL, PicturePosition.LEFT))
+    private val beach = TileImage(PictureId("3f9a"), Framing(Fit.FILL, PicturePosition.LEFT), TileLook(TileBackdrop.FROSTED, TileFocusShape.SHAPE))
 
     // The stored format, written out: once released, a TV keeps it across updates, so a change of
     // it has to read this one too. The other tests save and read back, which a change of both
@@ -35,8 +38,8 @@ class PreferencesAppCustomizationsTest {
     private val stored = mapOf(
         "com.example.movies/com.example.movies.MainActivity" to """{"name":"Cinema"}""",
         "com.example.news/.NewsActivity" to """{"name":"Täglich \/ News\nΝέα ☀"}""",
-        "com.example.music/.Music" to """{"name":"Songs","image":{"picture":"3f9a","fit":"FILL","position":"LEFT"}}""",
-        "com.example.movies/.Trailers" to """{"image":{"picture":"77c0","fit":"STRETCH","position":"CENTER"}}""",
+        "com.example.music/.Music" to """{"name":"Songs","image":{"picture":"3f9a","fit":"FILL","position":"LEFT","backdrop":"FROSTED","focus":"SHAPE"}}""",
+        "com.example.movies/.Trailers" to """{"image":{"picture":"77c0","fit":"STRETCH","position":"CENTER","backdrop":"LIGHT_GLASS","focus":"TILE"}}""",
     )
 
     /** What [stored] holds. */
@@ -59,6 +62,40 @@ class PreferencesAppCustomizationsTest {
         PreferencesAppCustomizations(context).save(customizations)
 
         assertEquals(stored, preferences.all)
+    }
+
+    @Test
+    fun `stores every backdrop and focus by its name`() {
+        val keys = mapOf(
+            TileBackdrop.NONE to "NONE",
+            TileBackdrop.LIGHT_GLASS to "LIGHT_GLASS",
+            TileBackdrop.DARK_GLASS to "DARK_GLASS",
+            TileBackdrop.FROSTED to "FROSTED",
+        )
+        for ((backdrop, key) in keys) {
+            for ((focus, focusKey) in mapOf(TileFocusShape.TILE to "TILE", TileFocusShape.SHAPE to "SHAPE")) {
+                val customizations = mapOf(movies to AppCustomization(image = TileImage(PictureId("3f9a"), look = TileLook(backdrop, focus))))
+                PreferencesAppCustomizations(context).save(customizations)
+
+                assertEquals(
+                    """{"image":{"picture":"3f9a","fit":"FILL","position":"CENTER","backdrop":"$key","focus":"$focusKey"}}""",
+                    preferences.getString("com.example.movies/com.example.movies.MainActivity", null),
+                )
+                assertEquals(customizations, PreferencesAppCustomizations(context).read())
+            }
+        }
+    }
+
+    @Test
+    fun `an image stored without a look, as before the look was stored, has the default look`() {
+        preferences.edit()
+            .putString("com.example.music/.Music", """{"name":"Songs","image":{"picture":"3f9a","fit":"FILL","position":"LEFT"}}""")
+            .commit()
+
+        assertEquals(
+            mapOf(music to AppCustomization(name = "Songs", image = TileImage(PictureId("3f9a"), Framing(Fit.FILL, PicturePosition.LEFT), TileLook()))),
+            PreferencesAppCustomizations(context).read(),
+        )
     }
 
     @Test
@@ -112,11 +149,11 @@ class PreferencesAppCustomizationsTest {
     }
 
     @Test
-    fun `an image without a picture it can read is none, and a fit or position it doesn't know the default`() {
+    fun `an image without a picture it can read is none, and a value it doesn't know the default`() {
         preferences.edit()
             .putString("com.example.movies/com.example.movies.MainActivity", """{"name":"Cinema","image":{"fit":"FILL"}}""")
             .putString("com.example.news/.NewsActivity", """{"name":"Daily","image":"beach"}""")
-            .putString("com.example.music/.Music", """{"image":{"picture":"3f9a","fit":"TILE","position":"MIDDLE"}}""")
+            .putString("com.example.music/.Music", """{"image":{"picture":"3f9a","fit":"TILE","position":"MIDDLE","backdrop":"MIRROR","focus":3}}""")
             .commit()
 
         assertEquals(

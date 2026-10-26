@@ -16,7 +16,10 @@ import com.luncher.domain.apps.AppCustomization
 import com.luncher.domain.apps.FakeAppCustomizations
 import com.luncher.domain.apps.FakeInstalledApps
 import com.luncher.domain.apps.FakeInstalledApps.Companion.app
+import com.luncher.domain.apps.TileBackdrop
+import com.luncher.domain.apps.TileFocusShape
 import com.luncher.domain.apps.TileImage
+import com.luncher.domain.apps.TileLook
 import com.luncher.domain.pictures.FakePictureImages
 import com.luncher.domain.pictures.FakePictures
 import com.luncher.domain.pictures.FakePictures.Companion.picture
@@ -192,6 +195,18 @@ class TileBannerScreenshotTest {
             appearance = Appearance(theme = ThemeAppearance(mode = ThemeMode.LIGHT)),
             thumbnails = seeThroughThumbnails,
         ).window.decorView.captureFocused("src/test/screenshots/settings/settings_tile_banner_see_through_light.png")
+    }
+
+    // A see-through picture's tile, on dark glass, the focus following its shape: OK on Backdrop, at
+    // the row's start: its values beside it, over Focus, the one it has level with the field.
+    @Test
+    fun tileBannerBackdropList() {
+        val activity = picker(*seeThrough, image = TileImage(cutout.id, look = TileLook(TileBackdrop.DARK_GLASS, TileFocusShape.SHAPE)), thumbnails = seeThroughThumbnails)
+        val backdrop = (activity.findViewById<ViewGroup>(R.id.settings_picture_editor_options).getChildAt(1) as ViewGroup).getChildAt(0)
+        backdrop.requestFocus()
+        backdrop.performClick()
+        idle()
+        captureScreenFocused("src/test/screenshots/settings/settings_tile_banner_backdrop_list.png")
     }
 
     // Mirrored, but not the preview's content nor the pictures.

@@ -138,6 +138,8 @@ class BackgroundActivity : Activity() {
             { settings.read().background },
             ::contextOf,
             Background::offeredIn,
+            // Every value it keeps changes something for its picture.
+            Background::offeredIn,
             BackgroundState,
             getString(R.string.settings_background_discard_text),
         ) { theme.roles }

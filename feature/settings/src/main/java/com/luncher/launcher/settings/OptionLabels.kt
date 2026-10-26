@@ -12,6 +12,8 @@ import com.luncher.domain.appearance.Side
 import com.luncher.domain.appearance.ThemeMode
 import com.luncher.domain.appearance.VerticalAlignment
 import com.luncher.domain.appearance.colorRoles
+import com.luncher.domain.apps.TileBackdrop
+import com.luncher.domain.apps.TileFocusShape
 import com.luncher.domain.apps.TileImage
 import com.luncher.domain.apps.TileImageOption
 import com.luncher.domain.pictures.Blur
@@ -22,7 +24,7 @@ import com.luncher.launcher.ui.R as UiR
 // What the options, their values and the appearance's groups are called, in the user's language:
 // one exhaustive `when` each, so a new option doesn't compile until it has its labels. The
 // appearance editor and the background editor both show the appearance's; the tile banner picker
-// the tile image's, named as the background's fit and position are.
+// the tile image's, its fit and position named as the background's are.
 
 /**
  * What a catalog's options [O], over its model [M], are called, and their values, in the user's
@@ -107,18 +109,34 @@ internal object AppearanceLabels : OptionLabels<Appearance, AppearanceOption<*>>
     }
 }
 
-/** The tile image's options ([TileImageOption]): the fit and the position, called as the background's. */
+/** The tile image's options ([TileImageOption]): the fit and the position, called as the background's; the tile's look. */
 internal object TileImageLabels : OptionLabels<TileImage, TileImageOption<*>> {
 
     override fun label(option: TileImageOption<*>): Int = when (option) {
         TileImageOption.TileFit -> R.string.settings_appearance_fit
         TileImageOption.TilePosition -> R.string.settings_appearance_position
+        TileImageOption.Backdrop -> R.string.settings_tile_banner_backdrop
+        TileImageOption.Focus -> R.string.settings_tile_banner_focus
     }
 
     override fun value(option: TileImageOption<*>, model: TileImage, context: Context): String = when (option) {
         TileImageOption.TileFit -> context.getString(fit(TileImageOption.TileFit.get(model)))
         TileImageOption.TilePosition -> context.getString(position(TileImageOption.TilePosition.get(model)))
+        TileImageOption.Backdrop -> context.getString(backdrop(TileImageOption.Backdrop.get(model)))
+        TileImageOption.Focus -> context.getString(focusShape(TileImageOption.Focus.get(model)))
     }
+}
+
+private fun backdrop(backdrop: TileBackdrop): Int = when (backdrop) {
+    TileBackdrop.NONE -> R.string.settings_tile_banner_none
+    TileBackdrop.LIGHT_GLASS -> R.string.settings_tile_banner_light_glass
+    TileBackdrop.DARK_GLASS -> R.string.settings_tile_banner_dark_glass
+    TileBackdrop.FROSTED -> R.string.settings_tile_banner_frosted
+}
+
+private fun focusShape(focus: TileFocusShape): Int = when (focus) {
+    TileFocusShape.TILE -> R.string.settings_tile_banner_tile
+    TileFocusShape.SHAPE -> R.string.settings_tile_banner_shape
 }
 
 private fun accent(accent: AccentColor): Int = when (accent) {

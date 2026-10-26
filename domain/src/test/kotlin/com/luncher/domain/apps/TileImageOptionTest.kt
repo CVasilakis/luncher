@@ -1,5 +1,7 @@
 package com.luncher.domain.apps
 
+import com.luncher.domain.apps.TileImageOption.Backdrop
+import com.luncher.domain.apps.TileImageOption.Focus
 import com.luncher.domain.apps.TileImageOption.TileFit
 import com.luncher.domain.apps.TileImageOption.TilePosition
 import com.luncher.domain.options.step
@@ -82,10 +84,61 @@ class TileImageOptionTest {
     }
 
     @Test
-    fun `the defaults are what a picture chosen starts as`() {
+    fun `the defaults are what a tile's first picture starts as`() {
         assertEquals(Fit.FILL, TileFit.default)
         assertEquals(PicturePosition.CENTER, TilePosition.default)
-        assertEquals(listOf(TileFit, TilePosition), tileImageOptions)
+        assertEquals(TileBackdrop.LIGHT_GLASS, Backdrop.default)
+        assertEquals(TileFocusShape.TILE, Focus.default)
+    }
+
+    @Test
+    fun `the picker shows the fit, the position, the backdrop and the focus, in that order`() {
+        assertEquals(listOf(TileFit, TilePosition, Backdrop, Focus), tileImageOptions)
+    }
+
+    @Test
+    fun `the backdrop and the focus offer every value everywhere, in order`() {
+        val seeThrough = TileImageContext.of(1920, 1080, seeThrough = true)
+        for (context in listOf(panorama, tileShaped, seeThrough, TileImageContext.UNKNOWN)) {
+            assertEquals(listOf(TileBackdrop.NONE, TileBackdrop.LIGHT_GLASS, TileBackdrop.DARK_GLASS, TileBackdrop.FROSTED), Backdrop.values(context))
+            assertEquals(listOf(TileFocusShape.TILE, TileFocusShape.SHAPE), Focus.values(context))
+        }
+    }
+
+    @Test
+    fun `the backdrop and the focus apply only to a see-through picture`() {
+        val picture = TileImage(beach)
+        val seeThrough = TileImageContext.of(4000, 1000, seeThrough = true)
+
+        for (option in listOf(Backdrop, Focus)) {
+            assertTrue(option.appliesTo(picture, seeThrough))
+            assertTrue("whatever its shape", option.appliesTo(picture, TileImageContext.of(1920, 1080, seeThrough = true)))
+            assertFalse("opaque", option.appliesTo(picture, panorama))
+            assertFalse("not known yet", option.appliesTo(picture, TileImageContext.UNKNOWN))
+            assertFalse("the app's own banner", option.appliesTo(TileImage(null), seeThrough))
+        }
+    }
+
+    @Test
+    fun `the backdrop and the focus read and change only their part of the look`() {
+        val image = TileImage(beach, Framing(Fit.STRETCH, PicturePosition.LEFT), TileLook(TileBackdrop.DARK_GLASS, TileFocusShape.SHAPE))
+
+        assertEquals(image.copy(look = TileLook(TileBackdrop.FROSTED, TileFocusShape.SHAPE)), Backdrop.set(image, TileBackdrop.FROSTED))
+        assertEquals(image.copy(look = TileLook(TileBackdrop.DARK_GLASS, TileFocusShape.TILE)), Focus.set(image, TileFocusShape.TILE))
+        assertEquals(TileBackdrop.DARK_GLASS, Backdrop.get(image))
+        assertEquals(TileFocusShape.SHAPE, Focus.get(image))
+    }
+
+    @Test
+    fun `stepping the backdrop and the focus goes through their values, around`() {
+        val seeThrough = TileImageContext.of(1920, 1080, seeThrough = true)
+        var image = TileImage(beach, look = TileLook(TileBackdrop.NONE))
+        val backdrops = List(4) { image = Backdrop.step(image, forward = true, seeThrough); Backdrop.get(image) }
+
+        assertEquals(listOf(TileBackdrop.LIGHT_GLASS, TileBackdrop.DARK_GLASS, TileBackdrop.FROSTED, TileBackdrop.NONE), backdrops)
+        assertEquals(TileBackdrop.FROSTED, Backdrop.get(Backdrop.step(TileImage(beach, look = TileLook(TileBackdrop.NONE)), forward = false, seeThrough)))
+        assertEquals(TileFocusShape.SHAPE, Focus.get(Focus.step(TileImage(beach), forward = true, seeThrough)))
+        assertEquals(TileFocusShape.TILE, Focus.get(Focus.step(TileImage(beach, look = TileLook(focus = TileFocusShape.SHAPE)), forward = true, seeThrough)))
     }
 
     @Test

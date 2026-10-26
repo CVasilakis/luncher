@@ -209,7 +209,8 @@ a test.
    Which values change anything can depend on facts that aren't
    settings, so aren't in `Appearance`: a context of the catalog's own, which a screen builds
    and passes with the model, and no other catalog sees (the tile image's, `TileImageContext`,
-   what filling a tile cuts from its picture). The appearance's is
+   what filling a tile cuts from its picture, and whether it's see-through, which the tile's
+   look applies to). The appearance's is
    `AppearanceContext`, today what filling the screen cuts from the background's picture
    (`backgroundCut`, from `pictureCut`): left and right move only a wide picture, top and bottom
    only a tall one, and neither the position nor the fit one of the screen's shape. An option
@@ -261,7 +262,8 @@ isn't an option, since its values are the library's pictures, not a list known i
 chooses the picture and its options in a draft, which only Save stores (the picture and its
 framing chosen by the rules every picture chosen for something follows, `PictureChoice` in
 `:domain`'s `pictures/`: another picture shows as it is, its fit kept, and the stored one as it's
-stored; the background adds its own dim and blur): applying a
+stored; the background adds its own dim and blur, which go with its picture, and a tile its look,
+which is the tile's and stays whichever picture is chosen): applying a
 background decodes a photo and draws the wallpaper at the screen's size, a wait the user sees on
 a TV, too slow for each value the user tries. Save goes through `Wallpaper` in `:domain`'s `wallpaper/`, which draws and
 keeps the picture first, then stores the background, so the setting never names a wallpaper that

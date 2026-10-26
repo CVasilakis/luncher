@@ -83,6 +83,14 @@
     <string name="settings_pictures_details"><xliff:g id="width" example="1920">%1$d</xliff:g> × <xliff:g id="height" example="1080">%2$d</xliff:g> · <xliff:g id="size" example="3,1 MB">%3$s</xliff:g></string>
     <string name="settings_pictures_no_picture">Χωρίς εικόνα</string>
     <string name="settings_tile_banner_original">Αρχικό banner</string>
+    <string name="settings_tile_banner_backdrop">Υπόβαθρο</string>
+    <string name="settings_tile_banner_none">Κανένα</string>
+    <string name="settings_tile_banner_light_glass">Ανοιχτό γυαλί</string>
+    <string name="settings_tile_banner_dark_glass">Σκούρο γυαλί</string>
+    <string name="settings_tile_banner_frosted">Θαμπό γυαλί</string>
+    <string name="settings_tile_banner_focus">Επιλογή</string>
+    <string name="settings_tile_banner_tile">Πλακίδιο</string>
+    <string name="settings_tile_banner_shape">Σχήμα</string>
     <string name="settings_pictures_unnamed">Εικόνα</string>
     <string name="settings_pictures_delete">Διαγραφή</string>
     <string name="settings_pictures_delete_question">Διαγραφή του <xliff:g id="name" example="beach.png">%1$s</xliff:g>;</string>

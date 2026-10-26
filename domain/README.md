@@ -17,8 +17,9 @@ domain/src/
 │   │   ├── LaunchableApp.kt     model: an app's TV launcher activity (package + activity), its identity
 │   │   ├── InstalledApp.kt      model: a launchable app with its label, whether it has a banner, and when it was installed or updated, as the device reports it
 │   │   ├── AppCustomization.kt  model: what the user set for one app, as stored: its name, its tile's picture
-│   │   ├── TileImage.kt         model: a picture of the library on an app's tile, and its framing (a PictureChoice); without a picture, a draft's "the app's own banner"; only a framing its context offers
-│   │   ├── TileImageOption.kt   models and rules: the tile image's catalog of options (fit, position), each with its values and those its context offers (TileImageContext: what filling a tile cuts from the picture)
+│   │   ├── TileImage.kt         model: a picture of the library on an app's tile, its framing (a PictureChoice) and the tile's look, kept whichever picture is chosen; without a picture, a draft's "the app's own banner"; only a framing its context offers; the look counted only for a see-through picture
+│   │   ├── TileLook.kt          model: how a tile shows a see-through picture: its backdrop (none, light or dark glass, frosted) and what the focus follows (the tile's shape, or the picture's)
+│   │   ├── TileImageOption.kt   models and rules: the tile image's catalog of options (fit, position, backdrop, focus), each with its values and those its context offers (TileImageContext: what filling a tile cuts from the picture, whether it's see-through)
 │   │   ├── AppCustomizations.kt port: where what the user set for each app is kept, and when it changes
 │   │   ├── HomeApp.kt           model: an app as the user set it up, the installed app with its AppCustomization; its name, the user's or the label
 │   │   ├── InstalledApps.kt     port: the TV apps installed on the device, and when apps change
@@ -64,7 +65,7 @@ domain/src/
 │   │   ├── ReceivedPictures.kt  helper: the pictures other apps shared, added one at a time in sessions the window that took them last holds; how far it got, then how it went (Outcome), stopped on Cancel; also Add all's, an instance of its own
 │   │   ├── PictureFormat.kt     model and rule: the formats a TV may not show (HEIF, AVIF), recognized by a file's header
 │   │   ├── Framing.kt           model and rules: how a picture fills a space of another shape (Fit, PicturePosition), which part of it shows, what filling cuts from it (PictureCut: nothing under 1%, its sides, or its top and bottom), and which positions move it then (offeredPositions)
-│   │   ├── PictureChoice.kt     model and rules: a picture of the library chosen for something, or none, with its framing; another picture chosen as it is, the stored one as stored, only a framing that changes anything, whether the fit and the position do
+│   │   ├── PictureChoice.kt     model and rules: a picture of the library chosen for something, or none, with its framing; another picture chosen as it is, the stored one as stored, the thing's own values (a tile's look) kept; only a framing that changes anything, whether the fit and the position do
 │   │   ├── PictureStyle.kt      model and rule: a picture's framing, dim and blur (Blur: off, then three levels of equal steps), as it's drawn
 │   │   ├── PictureUse.kt        model and rule: what a picture is used for (the wallpaper, the installed apps' tiles), and an appearance without deleted pictures
 │   │   ├── PictureImages.kt     port: a picture drawn at a size in a style, in the UI's image type; kept or drawn anew, a screen's drawing stopped when it's dropped
@@ -103,7 +104,7 @@ domain/src/
     ├── appearance/AppearanceChanges.kt       each option at each value but its default, in a context that offers it: what the catalog-wide tests draw (SAMPLE_WALLPAPER for the background's, wide or tall)
     ├── clock/FakeClock.kt          fake of the Clock port: a fixed time the test moves
     ├── jobs/ManualJobs.kt          fake of the Jobs port: the queued jobs run when the test says, all or the next one, in the real order; their priorities
-    ├── pictures/FakePictures.kt    fake of the Pictures and PictureImport ports: the library in memory, each source's answer set by the test
+    ├── pictures/FakePictures.kt    fake of the Pictures and PictureImport ports: the library in memory, each source's answer set by the test; a picture found see-through or not as its copy is made (learn)
     ├── pictures/FakePictureImages.kt  fake of the PictureImages port: draws what the test says, keeps what it drew
     ├── pictures/FakePreparedPictures.kt fake of the PreparedPictures port: every picture prepared but those the test says, for the cause it says, and those it can't; how often it was asked
     ├── wallpaper/FakeStoredWallpaper.kt fake of the StoredWallpaper port: the wallpaper kept in memory

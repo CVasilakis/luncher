@@ -26,7 +26,10 @@ import com.luncher.domain.apps.FakeAppImages
 import com.luncher.domain.apps.FakeInstalledApps
 import com.luncher.domain.apps.FakeInstalledApps.Companion.app
 import com.luncher.domain.apps.LaunchableApp
+import com.luncher.domain.apps.TileBackdrop
+import com.luncher.domain.apps.TileFocusShape
 import com.luncher.domain.apps.TileImage
+import com.luncher.domain.apps.TileLook
 import com.luncher.domain.layout.TileShape
 import com.luncher.domain.pictures.FakePictures
 import com.luncher.domain.pictures.FakePictures.Companion.picture
@@ -66,6 +69,9 @@ class TileBannerActivityTest {
     // In a 16:9 tile: a panorama is cut at its sides, a portrait at its top and bottom, a 1920 x 1080 picture not at all.
     private val panorama = picture("panorama.jpg", added = 4, width = 6000, height = 1000)
     private val portrait = picture("portrait.jpg", added = 5, width = 3024, height = 4032)
+
+    // With see-through parts: a logo, as wide as a panorama.
+    private val logo = picture("logo.png", added = 6, width = 6000, height = 1000).copy(seeThrough = true)
 
     private val movies = app("movies")
     private val music = app("music")
@@ -384,6 +390,123 @@ class TileBannerActivityTest {
     }
 
     @Test
+    fun `the tile's look follows the fit and the position, two a row, at its defaults`() {
+        graph(logo)
+        val activity = start().get()
+        activity.ok("logo.png")
+
+        val options = activity.findViewById<LinearLayout>(R.id.settings_picture_editor_options)
+        val rows = (0 until options.childCount).map { line -> (options.getChildAt(line) as LinearLayout).let { row -> (0 until row.childCount).map { row.getChildAt(it).findViewById<TextView>(R.id.settings_option_label).text.toString() } } }
+        assertEquals(listOf(listOf("Fit", "Position"), listOf("Backdrop", "Focus")), rows)
+        assertEquals("Light glass", activity.value("Backdrop"))
+        assertEquals("Tile", activity.value("Focus"))
+        assertEquals(listOf("None", "Light glass", "Dark glass", "Frosted"), activity.values("Backdrop"))
+        assertEquals(listOf("Tile", "Shape"), activity.values("Focus"))
+    }
+
+    @Test
+    fun `the backdrop and the focus are dimmed and passed by for Original banner and an opaque picture, not for a see-through one`() {
+        graph(panorama, logo)
+        val activity = start().get()
+        assertTrue(activity.dimmed("Backdrop"))
+        assertTrue(activity.dimmed("Focus"))
+
+        activity.ok("panorama.jpg")
+        assertTrue(activity.dimmed("Backdrop"))
+        assertTrue(activity.dimmed("Focus"))
+
+        activity.ok("logo.png")
+        assertFalse(activity.dimmed("Backdrop"))
+        assertFalse(activity.dimmed("Focus"))
+    }
+
+    // Not known until its working copy is made, as the picker's start prepares it: then the library tells.
+    @Test
+    fun `a picture found see-through while the picker shows offers the look from then on`() {
+        val unknown = logo.copy(seeThrough = null)
+        graph(unknown, onTiles = mapOf(movies.launchable to image(unknown)))
+        val activity = start().get()
+        assertTrue(activity.dimmed("Backdrop"))
+
+        graph.library.learn(unknown.id, seeThrough = true)
+
+        assertFalse(activity.dimmed("Backdrop"))
+        assertFalse(activity.dimmed("Focus"))
+    }
+
+    @Test
+    fun `the look is the tile's, another picture keeps it, and so does the stored one chosen again, with its own framing`() {
+        val otherLogo = picture("other-logo.png", added = 7).copy(seeThrough = true)
+        graph(logo, otherLogo, onTiles = mapOf(movies.launchable to AppCustomization(image = TileImage(logo.id, Framing(Fit.FILL, PicturePosition.RIGHT)))))
+        val activity = start().get()
+
+        activity.ok("other-logo.png")
+        activity.set("Backdrop", "Dark glass")
+        activity.set("Focus", "Shape")
+        activity.ok("Original banner")
+        activity.ok("logo.png")
+
+        assertEquals("Right", activity.value("Position"))
+        assertEquals("Dark glass", activity.value("Backdrop"))
+        assertEquals("Shape", activity.value("Focus"))
+        activity.save()
+        assertEquals(TileImage(logo.id, Framing(Fit.FILL, PicturePosition.RIGHT), TileLook(TileBackdrop.DARK_GLASS, TileFocusShape.SHAPE)), stored)
+    }
+
+    @Test
+    fun `a look changed makes the draft changed, Back asks, and Save stores it`() {
+        graph(logo, onTiles = mapOf(movies.launchable to image(logo)))
+        val activity = start().get()
+
+        activity.set("Backdrop", "None")
+        activity.back()
+        assertEquals("Discard changes?", dialog()!!.first)
+        answer("Cancel")
+        activity.set("Focus", "Shape")
+        activity.save()
+
+        assertEquals(TileImage(logo.id, look = TileLook(TileBackdrop.NONE, TileFocusShape.SHAPE)), stored)
+        assertTrue(activity.isFinishing)
+    }
+
+    @Test
+    fun `a look changed for an opaque picture is no change, nothing stored, nothing asked, though the draft keeps it`() {
+        graph(panorama, logo, onTiles = mapOf(movies.launchable to image(panorama)))
+        val before = customizations.customizations
+        val activity = start().get()
+
+        activity.ok("logo.png")
+        activity.set("Backdrop", "Frosted")
+        activity.ok("panorama.jpg")
+        activity.back()
+
+        assertNull("nothing asked", dialog())
+        assertTrue(activity.isFinishing)
+        assertSame(before, customizations.customizations)
+        val again = start().get()
+        again.ok("logo.png")
+        again.set("Backdrop", "Frosted")
+        again.ok("panorama.jpg")
+        again.save()
+        assertSame("nothing stored", before, customizations.customizations)
+    }
+
+    @Test
+    fun `another opaque picture saved keeps the look set before, for the tile`() {
+        graph(panorama, portrait, logo, onTiles = mapOf(movies.launchable to image(panorama)))
+        val activity = start().get()
+
+        activity.ok("logo.png")
+        activity.set("Backdrop", "Dark glass")
+        activity.ok("portrait.jpg")
+        assertTrue(activity.dimmed("Backdrop"))
+        assertEquals("Dark glass", activity.value("Backdrop"))
+        activity.save()
+
+        assertEquals(TileImage(portrait.id, look = TileLook(TileBackdrop.DARK_GLASS)), stored)
+    }
+
+    @Test
     fun `Save stores the picture and its framing for the app's tile, what else is set for it kept, and closes`() {
         graph(panorama, onTiles = mapOf(movies.launchable to AppCustomization(name = "Films"), music.launchable to image(panorama)))
         val activity = start().get()
@@ -654,6 +777,23 @@ class TileBannerActivityTest {
         assertEquals(listOf("Original banner", "beach.png", "panorama.jpg ✓", "Add from folder"), controller.get().list())
         assertEquals("Right", controller.get().value("Position"))
         assertEquals(TileImage(beach.id), stored)
+    }
+
+    @Test
+    fun `after a configuration change, the draft's look stays`() {
+        graph(logo, onTiles = mapOf(movies.launchable to image(logo)))
+        val controller = start()
+        controller.get().set("Backdrop", "Frosted")
+        controller.get().set("Focus", "Shape")
+
+        RuntimeEnvironment.setQualifiers("+tvdpi")
+        controller.configurationChange()
+        idle()
+
+        assertEquals("Frosted", controller.get().value("Backdrop"))
+        assertEquals("Shape", controller.get().value("Focus"))
+        controller.get().save()
+        assertEquals(TileImage(logo.id, look = TileLook(TileBackdrop.FROSTED, TileFocusShape.SHAPE)), stored)
     }
 
     @Test

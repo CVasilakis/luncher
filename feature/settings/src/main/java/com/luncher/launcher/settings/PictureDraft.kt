@@ -18,7 +18,9 @@ import com.luncher.launcher.ui.R as UiR
  * What a picture editor's user has chosen so far, a picture and how it's framed (the screen's
  * model, [P]), stored only by the screen's Save. It holds only the values its picture offers on the
  * screen ([offeredIn] in the picture's [context]: a position that wouldn't move it is the middle),
- * and tells whether it differs from what's stored as Save counts it ([changed]). Back with it
+ * and tells whether it differs from what's stored as Save counts it ([changed], each side as
+ * [counted] says: what [offeredIn] keeps, or less, where a value the draft keeps changes nothing
+ * for its picture, as a tile's look for an opaque picture). Back with it
  * changed asks first, Cancel focused, as the changes would be lost ([back]). It's kept across a
  * configuration change (a TV switching resolution) in the instance state, as the screen's [state]
  * writes it; the screen opens with [opening] else.
@@ -30,6 +32,7 @@ internal class PictureDraft<P : PictureChoice<P>, C>(
     private val stored: () -> P,
     private val contextOf: (PictureId?) -> C,
     private val offeredIn: (P, C) -> P,
+    private val counted: (P, C) -> P,
     private val state: DraftState<P>,
     private val discardText: String,
     private val roles: () -> ColorRoles,
@@ -65,11 +68,11 @@ internal class PictureDraft<P : PictureChoice<P>, C>(
     }
 
     /**
-     * Whether the draft differs from what's stored, as the screen shows it: in the draft's context,
-     * so a stored position the draft shows as the middle counts as unchanged, as it draws the same,
-     * and a stored choice of another picture differs from it anyway.
+     * Whether the draft differs from what's stored, as the screen shows it: both [counted] in the
+     * draft's context, so a stored position the draft shows as the middle counts as unchanged, as
+     * it draws the same, and a stored choice of another picture differs from it anyway.
      */
-    fun changed(): Boolean = value != offeredIn(stored(), context)
+    fun changed(): Boolean = counted(value, context) != counted(stored(), context)
 
     /** Back: [close]s the screen, after asking, Cancel focused, while the draft isn't what's stored. */
     fun back(close: () -> Unit) {

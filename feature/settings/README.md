@@ -397,13 +397,13 @@ the preview (`settings_picture_editor_controls`) are theirs, included by the scr
 | `pictureUses`, `withoutPictures` (`:domain`) | what each picture is used for, which deleting it says, and the background without it |
 | `Wallpaper` (`:domain`) | Save (`save`: drawn, kept, then stored), deleting the wallpaper's picture (`forget`), and the saved background's image, which the preview shows while the draft is that background (`readyFor`) |
 | `pictureCut`, `AppearanceContext`, `Background.offeredIn` (`:domain`) | what filling the screen cuts from the draft's picture, the options' values that offers, and the draft without a position it doesn't |
-| `choosing` (`:domain`, `PictureChoice`'s rule) | the draft with another picture chosen: as it is, or as stored if it's the stored one |
+| `choosing` (`:domain`, `PictureChoice`'s rule) | the draft with another picture chosen: as it is, or as stored if it's the stored one; a value of the thing itself (a tile's look) kept either way |
 | `OptionGrid`, `OptionRow`, `OptionList`, `AppearanceLabels` | the options' fields, two a row, OK opening a list of the values the draft's picture offers, which the preview follows as the focus moves; Back in it puts the value from before back |
 | `MessageDialog`, `MenuDialog`, `NameDialog` (`:ui`) | the dialogs over the list, a badge beside the title and the text below starting under it: the question before deleting; a picture's Rename and Delete; the field for a new name, and why it's refused; this screen gives their texts and what each button does |
 | `LibraryList` | the list: the first row the screen names (No picture here), the pictures with their thumbnails, Add from folder and the empty library's help, the chosen mark; the focus kept as the library changes; opening Add from folder, then focusing the picture it added (`EXTRA_ADDED`), which the screen chooses, or the first in the list of those Add all added, choosing none (`EXTRA_ADDED_ALL`) |
 | `PictureActions` | the library read with each picture's uses, the wallpaper and the installed apps' tiles; a picture's Rename and Delete, Delete all, their questions, and deleting: the uses forgotten first (the tiles' through `AppCustomizations`, the wallpaper's through `Wallpaper.forget`), then the pictures |
 | `PicturePreparing` | the pictures not prepared for the screen, prepared at its start behind the working window, stopped with the screen and gone on with as it comes back |
-| `PictureDraft` | the draft: only the values its picture offers on the screen, whether it changed as Save counts it, Back's question, and the draft kept in the instance state (`DraftState`: the background's dim and blur beside the picture and framing every draft has) |
+| `PictureDraft` | the draft: only the values its picture offers on the screen, whether it changed as Save counts it (each side as the screen's `counted` says: the background's as offered, a tile's without a look that changes nothing), Back's question, and the draft kept in the instance state (`DraftState`: the background's dim and blur, a tile's look, beside the picture and framing every draft has) |
 | `PictureStartColumn` | the preview the screen gives, at the shape it gives (here the TV's), as large as the room the options, Save and Delete all leave |
 | `BackgroundActivity` | what's the wallpaper's alone: the background's options, the preview of the home screen, Save and its window; the parts above put together |
 
@@ -452,16 +452,30 @@ image. At the start, a preview of the app's tile with the draft (`TilePreviewVie
 shape, 16:9 (`TileShape`), as large as the room the others leave (`PictureStartColumn`), its
 corners as round for its size as the tiles' are on the home screen (the appearance's corner
 radius, `TileShape.cornerRadius`); below it the app's name as the home screen shows it, centered,
-so the screen says which app's tile it is with no title; then the tile image's options, Fit and
-Position, a row of two fields, then Save and Delete all.
+so the screen says which app's tile it is with no title; then the tile image's options, two
+rows of two fields: Fit and Position, then the tile's look, Backdrop and Focus; then Save and
+Delete all.
 
 The options are the tile image's catalog (`TileImageOption`, with its own context,
-`TileImageContext`): what they offer follows what filling **a tile** cuts from the picture, not the
-screen: Left and Right for a picture wider than a tile, Top and Bottom for a taller one, both
-dimmed for a picture of a tile's shape (a 1920 x 1080 one), and without a picture; the position
-also while stretched. Their names and values are the background's (`TileImageLabels`).
+`TileImageContext`): what Fit and Position offer follows what filling **a tile** cuts from the
+picture, not the screen: Left and Right for a picture wider than a tile, Top and Bottom for a
+taller one, both dimmed for a picture of a tile's shape (a 1920 x 1080 one), and without a
+picture; the position also while stretched. Their names and values are the background's
+(`TileImageLabels`). The look (`TileLook`) is for a picture with see-through parts (a logo cut out
+of its background): **Backdrop**, what's behind it in the tile (None, Light glass, the default,
+Dark glass, or Frosted), and **Focus**, what the focus frame, or the lifted tile's shadow, follows
+(the Tile's shape, the default, or the picture's own Shape); the focus style itself stays the
+appearance's Focus frame, for every tile. Both are dimmed without a picture, and for a picture
+that isn't see-through, or isn't known to be yet (`Picture.seeThrough`, learned as its working
+copy is made, which the picker's start does where it's missing: the options follow as the library
+tells). The look is stored and offered, but neither the home screen nor the preview draws it yet.
 
 The picker opens on what's stored for the tile, the focus on its picture, or on Original banner.
+The look is the tile's, not a picture's (`PictureChoice`'s values of the thing itself): another
+picture chosen keeps the draft's, and so does the stored picture chosen again, which brings back
+its stored framing only. Where Backdrop and Focus are dimmed, a look changed is no change
+(`TileImage.counted`): Back doesn't ask and Save just closes, though the draft keeps the look for
+the next picture, and a picture saved stores it.
 **Save** only stores the choice, through `AppCustomizations` (`ArrangedApps.withImage`: what else
 is set for the app kept), and closes, at once, with no window: the chosen picture's working copy
 is made already (as it was added, or by the preparing at the picker's start), so it's a decision
@@ -475,7 +489,7 @@ the installed apps, shown or hidden, by the package and activity the home screen
 
 | Part | Job |
 |---|---|
-| `TileImage`, `TileImageOption`, `TileImageContext` (`:domain`) | the draft and what's stored: a picture or none, and its framing; its options and what each offers for a picture in a tile's shape |
+| `TileImage`, `TileLook`, `TileImageOption`, `TileImageContext` (`:domain`) | the draft and what's stored: a picture or none, its framing and the tile's look; its options, what each offers for a picture in a tile's shape, and whether it applies (the look only to a see-through picture); what Save counts as changed (`counted`) |
 | `AppCustomizations` (`:domain`), `ArrangedApps.withImage` | where the choice is stored, with what else the user set for the app |
 | `AppImages` (`:domain`), `SettingsGraph.appBanners` | the app's own image, drawn at the preview's and the row's size, kept nowhere: the home screen's kept tiles (`appImages` there) are at the tile's size, a file per app, and drawing another size through them would replace the tile's |
 | `PictureImages` (`:domain`) | a picture drawn from its working copy at the preview's size, in the background, the latest request winning, as the background editor's preview draws one |

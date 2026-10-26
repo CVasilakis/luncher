@@ -28,6 +28,9 @@ data class Background(
 
     override fun starting(picture: PictureId?, framing: Framing) = Background(picture, framing)
 
+    /** [stored] as it is: the dim and blur go with its picture, and the background has no values of its own. */
+    override fun restoring(stored: Background) = stored
+
     /**
      * This background with only values that change anything in [context], where filling the screen
      * cuts [AppearanceContext.backgroundCut] from its picture ([offeredIn]).

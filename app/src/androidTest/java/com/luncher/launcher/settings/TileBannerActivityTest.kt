@@ -12,6 +12,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.action.ViewActions.pressKey
 import androidx.test.espresso.matcher.RootMatchers.isDialog
+import androidx.test.espresso.matcher.RootMatchers.isPlatformPopup
 import androidx.test.espresso.matcher.ViewMatchers.hasDescendant
 import androidx.test.espresso.matcher.ViewMatchers.hasFocus
 import androidx.test.espresso.matcher.ViewMatchers.isAssignableFrom
@@ -20,6 +21,7 @@ import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
 import androidx.test.espresso.matcher.ViewMatchers.isRoot
 import androidx.test.espresso.matcher.ViewMatchers.withContentDescription
 import androidx.test.espresso.matcher.ViewMatchers.withId
+import androidx.test.espresso.matcher.ViewMatchers.withChild
 import androidx.test.espresso.matcher.ViewMatchers.withParent
 import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -38,7 +40,10 @@ import com.luncher.domain.apps.FakeAppCustomizations
 import com.luncher.domain.apps.FakeAppImages
 import com.luncher.domain.apps.FakeInstalledApps
 import com.luncher.domain.apps.FakeInstalledApps.Companion.app
+import com.luncher.domain.apps.TileBackdrop
+import com.luncher.domain.apps.TileFocusShape
 import com.luncher.domain.apps.TileImage
+import com.luncher.domain.apps.TileLook
 import com.luncher.domain.pictures.FakePictureImages
 import com.luncher.domain.pictures.FakePictures
 import com.luncher.domain.pictures.FakePictures.Companion.picture
@@ -90,6 +95,9 @@ class TileBannerActivityTest {
 
     private val beach = picture("beach.png", added = 1)
     private val sunset = picture("sunset.jpg", added = 2)
+
+    // See-through, and of a tile's shape: the look applies, the fit and the position don't. Last by name.
+    private val logo = picture("zebra-logo.png", added = 3).copy(seeThrough = true)
     private val movies = app("movies")
 
     /** New at each launch: [RetryWhenCovered] runs a covered test again on the same instance. */
@@ -97,14 +105,14 @@ class TileBannerActivityTest {
     private lateinit var tiles: FakeAppImages<Bitmap>
 
     /**
-     * The test's own apps (movies and music), library ([beach] and [sunset], every one prepared)
+     * The test's own apps (movies and music), library ([beach], [sunset] and [logo], every one prepared)
      * and what's set for the apps ([stored]), in memory; the tiles' images drawn as a plain color,
      * each one counted.
      */
     private fun useTheTestsGraph(stored: Map<com.luncher.domain.apps.LaunchableApp, AppCustomization> = emptyMap()) {
         customizations = FakeAppCustomizations(stored)
         tiles = FakeAppImages { _, _, width, height -> Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888).apply { eraseColor(TILE) } }
-        val library = FakePictures<Uri>(beach, sunset)
+        val library = FakePictures<Uri>(beach, sunset, logo)
         application.graph = object : AppGraph(application) {
             override val installedApps = FakeInstalledApps(listOf(movies, app("music")))
             override val appArrangements = FakeAppArrangements()
@@ -153,8 +161,23 @@ class TileBannerActivityTest {
         onView(isRoot()).inRoot(isDialog()).perform(pressKey(keyCode))
     }
 
-    private fun waitUntil(view: Matcher<View>, condition: Matcher<View>, inDialog: Boolean = false) =
-        waitUntilMatches(view, condition, TIMEOUT_MS, root = if (inDialog) isDialog() else null)
+    private fun pressInList(keyCode: Int) {
+        onView(isRoot()).inRoot(isPlatformPopup()).perform(pressKey(keyCode))
+    }
+
+    /** In a dialog ([inDialog]) or an option's list ([inList]), retrying while a window comes up. */
+    private fun waitUntil(view: Matcher<View>, condition: Matcher<View>, inDialog: Boolean = false, inList: Boolean = false) =
+        waitUntilMatches(view, condition, TIMEOUT_MS, root = if (inDialog) isDialog() else if (inList) isPlatformPopup() else null)
+
+    /** The tile image's option named [label], with [value]: a field of the grid. */
+    private fun option(label: Int, value: Int) = allOf(
+        isAssignableFrom(ListEntry::class.java),
+        hasDescendant(allOf(withId(R.id.settings_option_label), withText(label))),
+        hasDescendant(allOf(withId(R.id.settings_option_value), withText(value))),
+    )
+
+    /** A value of an option's list, named [value]. */
+    private fun listed(value: Int) = withChild(allOf(withId(R.id.settings_option_list_value), withText(value)))
 
     private fun waitUntilMenuEntryFocused(label: Int) =
         waitUntil(allOf(isAssignableFrom(ListEntry::class.java), hasDescendant(allOf(withId(HomeR.id.home_tile_menu_label), withText(label)))), hasFocus(), inDialog = true)
@@ -247,6 +270,51 @@ class TileBannerActivityTest {
             waitUntil(withContentDescription("Movies"), hasFocus())
             assertEquals(mapOf(movies.launchable to AppCustomization(image = TileImage(beach.id))), customizations.customizations)
             assertEquals(Banner.Picture(beach.id, Framing(), Banner.AppIcon), lastDrawnFor(movies.launchable))
+        }
+    }
+
+    // The look's fields, below Fit and Position, which a picture of a tile's shape dims: Left from the
+    // list reaches Focus, beside it, and Left again Backdrop; Down from Backdrop, Save.
+    @Test
+    fun aSeeThroughPicture_theLooksFieldsTakeTheKeys_andSaveStoresTheLook() {
+        useTheTestsGraph()
+        ActivityScenario.launch<TileBannerActivity>(TileBannerActivity.intent(application, movies.launchable)).use {
+            waitUntil(row(R.string.settings_tile_banner_original), hasFocus())
+            waitForFocus(TileBannerActivity::class.java)
+            for (name in listOf("beach.png", "sunset.jpg", "zebra-logo.png")) {
+                press(KeyEvent.KEYCODE_DPAD_DOWN)
+                waitUntil(row(name), hasFocus())
+            }
+            choose("zebra-logo.png")
+
+            press(KeyEvent.KEYCODE_DPAD_LEFT)
+            waitUntil(option(R.string.settings_tile_banner_focus, R.string.settings_tile_banner_tile), hasFocus())
+            press(KeyEvent.KEYCODE_DPAD_CENTER)
+            waitUntil(listed(R.string.settings_tile_banner_tile), hasFocus(), inList = true)
+            pressInList(KeyEvent.KEYCODE_DPAD_DOWN)
+            waitUntil(listed(R.string.settings_tile_banner_shape), hasFocus(), inList = true)
+            pressInList(KeyEvent.KEYCODE_DPAD_CENTER)
+            waitUntil(option(R.string.settings_tile_banner_focus, R.string.settings_tile_banner_shape), hasFocus())
+
+            press(KeyEvent.KEYCODE_DPAD_LEFT)
+            waitUntil(option(R.string.settings_tile_banner_backdrop, R.string.settings_tile_banner_light_glass), hasFocus())
+            press(KeyEvent.KEYCODE_DPAD_CENTER)
+            waitUntil(listed(R.string.settings_tile_banner_light_glass), hasFocus(), inList = true)
+            pressInList(KeyEvent.KEYCODE_DPAD_DOWN)
+            waitUntil(listed(R.string.settings_tile_banner_dark_glass), hasFocus(), inList = true)
+            pressInList(KeyEvent.KEYCODE_DPAD_DOWN)
+            waitUntil(listed(R.string.settings_tile_banner_frosted), hasFocus(), inList = true)
+            pressInList(KeyEvent.KEYCODE_DPAD_CENTER)
+            waitUntil(option(R.string.settings_tile_banner_backdrop, R.string.settings_tile_banner_frosted), hasFocus())
+
+            press(KeyEvent.KEYCODE_DPAD_DOWN)
+            waitUntil(withId(R.id.settings_picture_editor_save), hasFocus())
+            press(KeyEvent.KEYCODE_DPAD_CENTER)
+            waitUntilFinishing()
+            assertEquals(
+                mapOf(movies.launchable to AppCustomization(image = TileImage(logo.id, look = TileLook(TileBackdrop.FROSTED, TileFocusShape.SHAPE)))),
+                customizations.customizations,
+            )
         }
     }
 

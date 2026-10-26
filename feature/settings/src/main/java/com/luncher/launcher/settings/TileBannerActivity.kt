@@ -13,9 +13,12 @@ import android.window.OnBackInvokedDispatcher
 import com.luncher.domain.apps.ArrangedApps
 import com.luncher.domain.apps.HomeApp
 import com.luncher.domain.apps.LaunchableApp
+import com.luncher.domain.apps.TileBackdrop
+import com.luncher.domain.apps.TileFocusShape
 import com.luncher.domain.apps.TileImage
 import com.luncher.domain.apps.TileImageContext
 import com.luncher.domain.apps.TileImageOption
+import com.luncher.domain.apps.TileLook
 import com.luncher.domain.apps.homeApps
 import com.luncher.domain.apps.ownBanner
 import com.luncher.domain.apps.tileImageOptions
@@ -34,13 +37,15 @@ import java.util.Locale
  * the end, the pictures to choose from, in their container: Original banner (no picture), the
  * library's pictures by name, and Add from folder, a hint above them; at the start, a preview of
  * the app's tile with the chosen image, as large as the room allows, the app's name below it, the
- * tile image's options (Fit, Position) as fields, and Save with Delete all beside it. Mirrored in a
+ * tile image's options as fields, two a row (Fit, Position; then the tile's look, Backdrop and
+ * Focus, dimmed but for a see-through picture), and Save with Delete all beside it. Mirrored in a
  * right-to-left language, like the other settings screens; the preview's content isn't.
  *
  * What the user changes is a draft, as in the background editor: OK on a picture chooses it, OK on
  * an option opens its values in a list beside its field ([OptionList]), the preview following; a
- * picture chosen shows as it is, in the middle, its fit kept, the stored one as it's stored; the
- * values offered are those that move the picture in a tile's shape ([TileImageContext]). Nothing
+ * picture chosen shows as it is, in the middle, its fit kept, the stored one as it's stored, the
+ * tile's look kept whichever is chosen; the values offered are those that move the picture in a
+ * tile's shape ([TileImageContext]), and a look changed where it's dimmed is no change. Nothing
  * is stored until Save, which stores the choice at once, through the per-app port, and closes:
  * the chosen picture's working copy is made already (as it was added, or as the picker opened),
  * so it's a decision, with no wait, and the home screen draws the tile as it comes back.
@@ -139,6 +144,7 @@ class TileBannerActivity : Activity() {
             { stored },
             ::contextOf,
             TileImage::offeredIn,
+            TileImage::counted,
             TileImageState,
             getString(R.string.settings_tile_banner_discard_text),
         ) { theme.roles }
@@ -269,10 +275,13 @@ class TileBannerActivity : Activity() {
         if (draft.set(image)) show()
     }
 
-    /** What filling a tile cuts from [picture]; unknown without a picture, or before the library is read. */
+    /**
+     * What filling a tile cuts from [picture], and whether it's see-through (known once its working
+     * copy is made, which the library tells); unknown without a picture, or before the library is read.
+     */
     private fun contextOf(picture: PictureId?): TileImageContext {
         val shown = library.pictures.firstOrNull { it.id == picture } ?: return TileImageContext.UNKNOWN
-        return TileImageContext.of(shown.width, shown.height)
+        return TileImageContext.of(shown.width, shown.height, shown.seeThrough == true)
     }
 
     /** The draft as the options, the preview and the check beside its picture show it; the app's name; Delete all dimmed without pictures. */
@@ -338,13 +347,22 @@ class TileBannerActivity : Activity() {
         draft.hold(if (picture != null && gone(picture)) draft.value.choosing(null, stored) else draft.value)
     }
 
-    /** The draft in the instance state: its picture and framing, as every picture editor's. */
+    /** The draft in the instance state: its picture and framing, as every picture editor's, then its look. */
     private object TileImageState : DraftState<TileImage> {
-        override fun write(draft: TileImage, state: Bundle) = state.putChoice(draft)
+        private const val BACKDROP = "draft_backdrop"
+        private const val FOCUS = "draft_focus"
+
+        override fun write(draft: TileImage, state: Bundle) {
+            state.putChoice(draft)
+            state.putString(BACKDROP, draft.look.backdrop.name)
+            state.putString(FOCUS, draft.look.focus.name)
+        }
 
         override fun read(state: Bundle): TileImage? {
             val framing = state.choiceFraming() ?: return null
-            return TileImage(state.choicePicture(), framing)
+            val backdrop = enumIn<TileBackdrop>(state.getString(BACKDROP)) ?: return null
+            val focus = enumIn<TileFocusShape>(state.getString(FOCUS)) ?: return null
+            return TileImage(state.choicePicture(), framing, TileLook(backdrop, focus))
         }
     }
 

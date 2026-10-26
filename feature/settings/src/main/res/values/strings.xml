@@ -254,6 +254,22 @@
          tile with no picture, showing the banner the app came with (or its icon, for an app
          without one). -->
     <string name="settings_tile_banner_original">Original banner</string>
+    <!-- The tile banner picker's options for a picture with see-through parts (a logo cut out of
+         its background); dimmed for an opaque picture, and for the original banner. Backdrop:
+         what shows behind the picture, inside the tile: None (the home screen's background
+         through the see-through parts), Light glass and Dark glass (a translucent light or dark
+         card), Frosted (the background behind the tile, blurred, like frosted glass). -->
+    <string name="settings_tile_banner_backdrop">Backdrop</string>
+    <string name="settings_tile_banner_none">None</string>
+    <string name="settings_tile_banner_light_glass">Light glass</string>
+    <string name="settings_tile_banner_dark_glass">Dark glass</string>
+    <string name="settings_tile_banner_frosted">Frosted</string>
+    <!-- Focus: what the focus frame, or the shadow of the tile the remote's focus is on, follows:
+         the Tile's rounded shape, or the picture's own Shape (its outline, without its
+         see-through parts). -->
+    <string name="settings_tile_banner_focus">Focus</string>
+    <string name="settings_tile_banner_tile">Tile</string>
+    <string name="settings_tile_banner_shape">Shape</string>
     <!-- The name of a picture whose app gave it none. -->
     <string name="settings_pictures_unnamed">Picture</string>
     <!-- An action on a picture, and the answer that confirms it. -->

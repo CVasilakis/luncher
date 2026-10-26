@@ -83,6 +83,14 @@ class FakePictures<Source>(
         answer()
     }
 
+    /** Whether the picture [id] is see-through, learned as its working copy is made, as the library learns it: told to the listeners. */
+    fun learn(id: PictureId, seeThrough: Boolean) {
+        val at = pictures.indexOfFirst { it.id == id }
+        if (at < 0 || pictures[at].seeThrough == seeThrough) return
+        pictures[at] = pictures[at].copy(seeThrough = seeThrough)
+        changed()
+    }
+
     override fun addListener(listener: () -> Unit) {
         listeners += listener
     }

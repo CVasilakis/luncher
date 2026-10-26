@@ -63,8 +63,9 @@ class TileBannerLayoutTest(private val screen: TvScreen) {
     private val library = (1..6).map { picture("picture $it.jpg", added = it.toLong(), width = 4000 + it, height = 3000, bytes = 12_345_678) }.toTypedArray()
 
     // Cut at the sides and at the top and bottom in a tile: between them, they offer every position.
-    private val panorama = picture("panorama.jpg", added = 7, width = 6000, height = 1000)
-    private val portrait = picture("portrait.jpg", added = 8, width = 1000, height = 4000)
+    // See-through, so the tile's look takes the focus and offers its values too.
+    private val panorama = picture("panorama.png", added = 7, width = 6000, height = 1000).copy(seeThrough = true)
+    private val portrait = picture("portrait.png", added = 8, width = 1000, height = 4000).copy(seeThrough = true)
 
     private val movies = app("movies")
 
@@ -169,14 +170,16 @@ class TileBannerLayoutTest(private val screen: TvScreen) {
         val rows = activity.children(R.id.settings_pictures_list)
         for (row in listOf(rows.first(), rows.last())) assertWhole(screen, row.findViewById(R.id.settings_pictures_name))
         // Each option's list whole on the screen, inside the margins, and each value it offers
-        // chosen in turn, the first last again, so the fit is back to filling for the position.
+        // chosen in turn, the one it showed last again, so the fit is back to filling for the position.
         for ((row, option) in activity.fields().zip(tileImageOptions)) {
             activity.assertShown("an option", row)
             val value = row.findViewById<TextView>(R.id.settings_option_value)
             val first = value.text.toString()
-            val count = activity.openList(row, option).childCount
+            val list = activity.openList(row, option)
+            val count = list.childCount
+            val shown = (0 until count).single { list.getChildAt(it).findViewById<TextView>(R.id.settings_option_list_value).text.toString() == first }
             shadowOf(activity.application).latestPopupWindow.dismiss()   // as Back
-            for (index in (1 until count) + 0) {
+            for (index in (0 until count).filter { it != shown } + shown) {
                 val entry = activity.openList(row, option).getChildAt(index)
                 entry.requestFocus()
                 entry.performClick()
@@ -184,7 +187,7 @@ class TileBannerLayoutTest(private val screen: TvScreen) {
                 assertWhole(screen, row.findViewById(R.id.settings_option_label))
                 assertWhole(screen, value)
             }
-            assertEquals("$option back at its first value on $screen", first, value.text.toString())
+            assertEquals("$option back at its value on $screen", first, value.text.toString())
         }
     }
 

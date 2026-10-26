@@ -42,6 +42,8 @@ class PictureDraftTest {
         override fun framed(framing: Framing) = copy(framing = framing)
 
         override fun starting(picture: PictureId?, framing: Framing) = DraftChoice(picture, framing)
+
+        override fun restoring(stored: DraftChoice) = stored
     }
 
     private val wide = PictureId("wide")
@@ -57,13 +59,18 @@ class PictureDraftTest {
         activity = Robolectric.buildActivity(Activity::class.java).setup().get()
     }
 
-    private fun draft(opening: DraftChoice = stored, saved: Bundle? = null) = PictureDraft(
+    private fun draft(
+        opening: DraftChoice = stored,
+        saved: Bundle? = null,
+        counted: (DraftChoice, PictureCut?) -> DraftChoice = { choice, cut -> choice.offeredIn(cut) },
+    ) = PictureDraft(
         activity,
         saved,
         opening,
         { stored },
         { cuts[it] },
         { choice, cut -> choice.offeredIn(cut) },
+        counted,
         ChoiceState,
         "The changes aren't saved.",
     ) { colorRoles(ThemeAppearance()) }
@@ -111,6 +118,21 @@ class PictureDraftTest {
         draft.set(DraftChoice(wide))
         assertFalse(draft.changed())
         draft.set(DraftChoice(tall))
+        assertTrue(draft.changed())
+    }
+
+    @Test
+    fun `counts each side as the screen says, a value that changes nothing for its picture as unchanged, though the draft keeps it`() {
+        stored = DraftChoice(tall)
+        // As if the fit changed nothing for a tall picture.
+        val draft = draft { choice, cut -> if (cut == PictureCut.TOP_AND_BOTTOM) choice.framed(Framing()) else choice.offeredIn(cut) }
+
+        draft.set(DraftChoice(tall, Framing(Fit.STRETCH)))
+        assertFalse(draft.changed())
+        assertEquals(DraftChoice(tall, Framing(Fit.STRETCH)), draft.value)
+        draft.back { closed++ }
+        assertEquals("closed, asking nothing", 1, closed)
+        draft.set(DraftChoice(wide, Framing(Fit.STRETCH)))
         assertTrue(draft.changed())
     }
 

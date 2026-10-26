@@ -5,17 +5,20 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-// The rules every picture choice follows, through one that isn't the background: a value of its
-// own beside the picture and its framing, which another picture starts at its default.
+// The rules every picture choice follows, through one that is neither the background nor a tile's:
+// beside the picture and its framing, a value that goes with the picture, which another picture
+// starts at its default, and a value of the thing's own, which every picture keeps.
 class PictureChoiceTest {
 
     private data class Choice(
         override val picture: PictureId? = null,
         override val framing: Framing = Framing(),
         val shade: Int = 0,
+        val own: Int = 0,
     ) : PictureChoice<Choice> {
         override fun framed(framing: Framing) = copy(framing = framing)
-        override fun starting(picture: PictureId?, framing: Framing) = Choice(picture, framing)
+        override fun starting(picture: PictureId?, framing: Framing) = Choice(picture, framing, own = own)
+        override fun restoring(stored: Choice) = stored.copy(own = own)
     }
 
     private val sunset = PictureId("sunset")
@@ -37,6 +40,16 @@ class PictureChoiceTest {
 
         assertEquals(stored, draft.choosing(sunset, stored))
         assertEquals("no picture stored", Choice(shade = 20), Choice(beach).choosing(null, Choice(shade = 20)))
+    }
+
+    @Test
+    fun `the thing's own value is kept whichever picture is chosen, the stored one's too`() {
+        val stored = Choice(sunset, Framing(Fit.FILL, PicturePosition.TOP), shade = 20, own = 1)
+        val draft = Choice(beach, Framing(Fit.STRETCH), shade = 60, own = 2)
+
+        assertEquals(Choice(PictureId("alps"), Framing(Fit.STRETCH), own = 2), draft.choosing(PictureId("alps"), stored))
+        assertEquals(stored.copy(own = 2), draft.choosing(sunset, stored))
+        assertEquals(Choice(null, Framing(Fit.STRETCH), own = 2), draft.choosing(null, stored))
     }
 
     @Test
