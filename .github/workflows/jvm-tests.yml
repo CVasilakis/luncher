@@ -65,3 +65,11 @@ jobs:
             feature/*/build/outputs/roborazzi/
             app/build/reports/lint-results-debug.html
           retention-days: 7                        # a failed run is looked into the same day
+      - name: Upload Luncher release APK
+        if: success()
+        uses: actions/upload-artifact@v7
+        with:
+          name: Odyssy-Release-APK
+          path: app/build/outputs/apk/release/*.apk
+          if-no-files-found: error
+          retention-days: 7
