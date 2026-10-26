@@ -27,6 +27,7 @@ import com.luncher.domain.pictures.PictureLibrary
 import com.luncher.domain.pictures.PictureStyle
 import com.luncher.launcher.ui.ThemedText
 import com.luncher.launcher.ui.roundRect
+import com.luncher.launcher.ui.stateColors
 import com.luncher.launcher.ui.styleAll
 import com.luncher.launcher.ui.R as UiR
 import java.util.Locale
@@ -213,7 +214,7 @@ internal class LibraryList(
             background = roundRect(roles.surfaceHighest, resources.getDimension(UiR.dimen.corner_picture))
             imageTintList = ColorStateList.valueOf(roles.primary)
         }
-        for (line in lines.values) line.setStroke(thumbnailLine, roles.outlineVariant)
+        for (line in lines.values) line.setStroke(thumbnailLine, lineColors(roles))
     }
 
     /** The screen's activity result: what Add from folder added, if it's its. */
@@ -290,7 +291,8 @@ internal class LibraryList(
     /**
      * [picture]'s thumbnail as see-through as the picture is known to be: over the row, with no card
      * behind it (a background as clear, which still rounds its corners), and a hairline around it,
-     * drawn over its image (the view's overlay), so a picture reaching its edge doesn't hide it; else
+     * drawn over its image ([PictureThumbnail.line]), so a picture reaching its edge doesn't hide it,
+     * in the color of the row's state ([lineColors]); else
      * on the card. Brought up to date each time the library shows, as a row may be made before its
      * picture's copy, which tells whether it's see-through. The thumbnail itself is drawn see-through
      * by [thumbnails] from the copy alone.
@@ -302,18 +304,28 @@ internal class LibraryList(
         if (seeThrough) {
             // Inside the thumbnail, its outer edge on the thumbnail's own: Android draws a stroke
             // inside the bounds, so its corners are rounded half a line less.
-            val line = roundRect(Color.TRANSPARENT, thumbnailCorner - thumbnailLine / 2f, thumbnailLine, roles().outlineVariant)
+            val line = roundRect(Color.TRANSPARENT, thumbnailCorner - thumbnailLine / 2f)
+            line.setStroke(thumbnailLine, lineColors(roles()))
             line.setBounds(0, 0, thumbnailWidth, thumbnailHeight)
             lines[picture.id] = line
-            thumbnail.overlay.add(line)
+            thumbnail.line = line
             thumbnail.background = roundRect(Color.TRANSPARENT, thumbnailCorner)
         } else {
-            lines.remove(picture.id)?.let(thumbnail.overlay::remove)
+            lines.remove(picture.id)
+            thumbnail.line = null
             thumbnail.setBackgroundResource(R.drawable.settings_pictures_thumbnail_background)
         }
     }
 
-    private fun thumbnailOf(id: PictureId) = rows.getValue(id).findViewById<ImageView>(R.id.settings_pictures_thumbnail)
+    /**
+     * The hairline's colors: the theme's faint outline at rest, as on the focused row's inverse; on
+     * the chosen row, the outline itself: there the accent's tint is about as dark as the faint one
+     * in the dark theme, and the line all but vanished.
+     */
+    private fun lineColors(roles: ColorRoles) =
+        stateColors(rest = roles.outlineVariant, focused = roles.outlineVariant, activated = roles.outline)
+
+    private fun thumbnailOf(id: PictureId) = rows.getValue(id).findViewById<PictureThumbnail>(R.id.settings_pictures_thumbnail)
 
     /** Draws [picture]'s thumbnail in the background, shown when done. */
     private fun draw(picture: Picture) {

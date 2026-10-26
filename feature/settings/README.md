@@ -38,6 +38,7 @@ feature/settings/
     │   │   ├── OptionLabels.kt   what a catalog's options and their values are called (OptionLabels), the appearance's (AppearanceLabels) with the accents' swatches; the groups' names and icons
     │   │   ├── BackgroundActivity.kt the background editor: the picture editors' parts below, the preview of the home screen, Save
     │   │   ├── LibraryList.kt    a picture editor's list: the first row it's given, the pictures, Add from folder; the thumbnails, the focus kept
+    │   │   ├── PictureThumbnail.kt   a row's thumbnail, and over it a see-through picture's hairline in the row's state
     │   │   ├── PictureActions.kt the library read with each picture's uses, and Rename, Delete, Delete all with their questions
     │   │   ├── PicturePreparing.kt   the pictures not prepared for the screen, prepared at its start behind a window
     │   │   ├── PictureDraft.kt   a picture editor's draft: its values offered, changed as Save counts it, Back's question, the instance state
@@ -425,9 +426,12 @@ screen of another size) is drawn in the background from its working copy, a `Lat
 and shows when it's done. The screen keeps each picture's row while the picture is in the library, so its thumbnail is
 read or drawn once, and drops the requests in `onStop`. A see-through picture's thumbnail is see-through (its
 working copy drawn over nothing, `WorkingCopyImages.keepingSeeThrough`), over the row's own color
-without the card behind the others, with a hairline in the theme's `outlineVariant` around it,
-drawn over the picture (the thumbnail's overlay), so the column keeps the thumbnails' shape and a
-dark logo shows over a focused row. Only for a picture known to be see-through
+without the card behind the others, with a hairline around it, drawn over the picture
+(`PictureThumbnail`, which takes its row's state, as the row's texts do), so the column keeps the
+thumbnails' shape and a dark logo shows over a focused row: the theme's `outlineVariant` at rest
+and on the focused row, its `outline` on the chosen row's accent tint, where the faint one all but
+vanished in the dark theme (`LibraryListTest` checks it reads there at least as well as at rest,
+for every accent in both modes). Only for a picture known to be see-through
 (`Picture.seeThrough`), which its copy tells: a row made before (while the editor prepares the
 pictures) gets the line as the library shows again; the other rows, opaque pictures' included,
 are as they were. A draft survives a configuration change

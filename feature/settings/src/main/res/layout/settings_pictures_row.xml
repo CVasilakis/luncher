@@ -20,11 +20,12 @@
     android:paddingBottom="@dimen/settings_pictures_row_padding"
     app:entryCorner="@dimen/corner_entry_in_container">
 
-    <ImageView
+    <com.luncher.launcher.settings.PictureThumbnail
         android:id="@+id/settings_pictures_thumbnail"
         android:layout_width="@dimen/settings_pictures_thumbnail_width"
         android:layout_height="@dimen/settings_pictures_thumbnail_height"
         android:background="@drawable/settings_pictures_thumbnail_background"
+        android:duplicateParentState="true"
         android:importantForAccessibility="no"
         android:scaleType="centerCrop" />
 

@@ -12,6 +12,7 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.test.platform.app.InstrumentationRegistry
+import com.luncher.domain.appearance.AccentColor
 import com.luncher.domain.appearance.ThemeAppearance
 import com.luncher.domain.appearance.ThemeMode
 import com.luncher.domain.appearance.colorRoles
@@ -111,6 +112,30 @@ class LibraryListTest {
     private fun edgeAndMiddle(name: String): Pair<Int, Int> = thumbnail(name).let { it.getPixel(it.width / 2, 0) to it.getPixel(it.width / 2, it.height / 2) }
 
     private fun focused() = activity.window.decorView.findFocus()?.findViewById<TextView>(R.id.settings_pictures_name)?.text?.toString()
+
+    /**
+     * [name]'s row drawn over the list's own color ([surface]), as on the screen: the color of its
+     * thumbnail's hairline (the top edge's middle) and of the row just above the thumbnail.
+     */
+    private fun lineAndRow(name: String, surface: Int): Pair<Int, Int> {
+        val row = row(name)
+        row.measure(View.MeasureSpec.makeMeasureSpec(ROW_WIDTH, View.MeasureSpec.EXACTLY), View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED))
+        row.layout(0, 0, row.measuredWidth, row.measuredHeight)
+        val bitmap = Bitmap.createBitmap(row.width, row.height, Bitmap.Config.ARGB_8888)
+        bitmap.eraseColor(surface)
+        row.draw(Canvas(bitmap))
+        val thumbnail = row.findViewById<View>(R.id.settings_pictures_thumbnail)
+        val x = thumbnail.left + thumbnail.width / 2
+        return bitmap.getPixel(x, thumbnail.top) to bitmap.getPixel(x, thumbnail.top - 2)
+    }
+
+    /** WCAG's contrast ratio of two opaque colors, 1 to 21. */
+    private fun contrast(a: Int, b: Int): Double {
+        fun channel(c: Int): Double = (c / 255.0).let { if (it <= 0.03928) it / 12.92 else Math.pow((it + 0.055) / 1.055, 2.4) }
+        fun luminance(c: Int) = 0.2126 * channel(Color.red(c)) + 0.7152 * channel(Color.green(c)) + 0.0722 * channel(Color.blue(c))
+        val (high, low) = listOf(luminance(a), luminance(b)).sortedDescending()
+        return (high + 0.05) / (low + 0.05)
+    }
 
     @Test
     fun `the first row is the screen's, named and pictured as it says, and OK on it chooses no picture`() {
@@ -271,6 +296,46 @@ class LibraryListTest {
         assertEquals("in the theme's color", light.outlineVariant, edgeAndMiddle("beach.png").first)
     }
 
+    // The chosen row's tint, the accent's at 16 %, is about as dark as the faint outline in the
+    // dark theme: drawn so, the line all but vanished while the focus was off the list.
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)   // to draw the rows
+    fun `the hairline reads on the chosen row as well as at rest, in both themes and every accent`() {
+        show(beach.copy(seeThrough = true), sunset.copy(seeThrough = true))
+        list.markChosen(beach.id)
+        for (mode in ThemeMode.entries) for (accent in AccentColor.entries) {
+            val roles = colorRoles(ThemeAppearance(accent, mode))
+            list.style(roles)
+
+            val (chosenLine, chosenRow) = lineAndRow("beach.png", roles.surface)
+            val (restLine, restRow) = lineAndRow("sunset.jpg", roles.surface)
+
+            val chosen = contrast(chosenLine, chosenRow)
+            val rest = contrast(restLine, restRow)
+            assertTrue("$mode $accent: %.2f on the chosen row, %.2f at rest".format(chosen, rest), chosen >= rest)
+            assertEquals("$mode $accent: the faint outline at rest", roles.outlineVariant, restLine)
+            assertEquals("$mode $accent: the outline on the chosen row", roles.outline, chosenLine)
+        }
+    }
+
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)   // to draw the line
+    fun `on the focused row the hairline is the faint outline, the chosen row's too`() {
+        show(beach.copy(seeThrough = true))
+        list.markChosen(beach.id)
+        val thumbnail = row("beach.png").findViewById<PictureThumbnail>(R.id.settings_pictures_thumbnail)
+        assertTrue(row("beach.png").requestFocus())
+        // Android passes a row's activated and selected states to its children, not its focus.
+        assertTrue("the thumbnail has the row's focus", android.R.attr.state_focused in thumbnail.drawableState)
+        val line = checkNotNull(thumbnail.line)
+        // Robolectric gives no window the focus: the state Android gives the focused, chosen row.
+        line.state = intArrayOf(android.R.attr.state_focused, android.R.attr.state_window_focused, android.R.attr.state_activated)
+        val bitmap = Bitmap.createBitmap(line.bounds.width(), line.bounds.height(), Bitmap.Config.ARGB_8888)
+        line.draw(Canvas(bitmap))
+
+        assertEquals(colorRoles(ThemeAppearance()).outlineVariant, bitmap.getPixel(bitmap.width / 2, 0))
+    }
+
     @Test
     @GraphicsMode(GraphicsMode.Mode.NATIVE)   // to draw the thumbnails
     fun `a row made before its picture was known to be see-through gets the line once it is`() {
@@ -283,5 +348,10 @@ class LibraryListTest {
 
         assertSame("kept", made, row("beach.png"))
         assertEquals(colorRoles(ThemeAppearance()).outlineVariant to Color.TRANSPARENT, edgeAndMiddle("beach.png"))
+    }
+
+    private companion object {
+        /** About a picture editor's list on a 1080p TV, in px. */
+        const val ROW_WIDTH = 800
     }
 }

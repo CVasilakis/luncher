@@ -53,7 +53,7 @@ private val ANY = intArrayOf()
  * A text's or an icon's colors: [rest], the inverse on a focused entry or a list's selected row
  * ([focused]), and the accent on the entry chosen ([activated], the background's picture, say).
  */
-internal fun stateColors(rest: Int, focused: Int, activated: Int = rest): ColorStateList =
+fun stateColors(rest: Int, focused: Int, activated: Int = rest): ColorStateList =
     ColorStateList(arrayOf(FOCUSED, SELECTED, ACTIVATED, ANY), intArrayOf(focused, focused, activated, rest))
 
 /** A rounded rectangle of [color], [radius] px at its corners, with an edge of [stroke] px in [strokeColor]. */
