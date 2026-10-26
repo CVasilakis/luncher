@@ -29,6 +29,13 @@ internal object TestPictureFiles {
         return bitmap
     }
 
+    /** A [width] x [height] logo: a red square in its middle, the rest transparent. */
+    fun logo(width: Int, height: Int): Bitmap {
+        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        Canvas(bitmap).drawRect(width / 4f, height / 4f, width * 3 / 4f, height * 3 / 4f, Paint().apply { color = Color.RED })
+        return bitmap
+    }
+
     fun png(bitmap: Bitmap): ByteArray = ByteArrayOutputStream().also { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }.toByteArray()
 
     /** [bitmap] as a JPEG with the EXIF orientation tag [orientation], as a phone writes a photo taken on its side. */

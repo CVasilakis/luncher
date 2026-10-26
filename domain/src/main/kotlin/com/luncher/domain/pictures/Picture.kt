@@ -18,4 +18,10 @@ data class Picture(
     val bytes: Long,
     /** When it was added, in ms since 1970. */
     val added: Long,
+    /**
+     * Whether it has see-through parts, which the screens can show what's behind through; null
+     * while that isn't known (a picture an earlier version added, until its working copy is made
+     * again), which counts as opaque: it's drawn as an opaque picture is, until it's known.
+     */
+    val seeThrough: Boolean? = null,
 )

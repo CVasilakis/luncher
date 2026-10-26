@@ -2,7 +2,9 @@ package com.luncher.launcher.pictures
 
 import android.graphics.Color
 import android.net.Uri
+import android.os.Handler
 import android.os.Looper
+import com.luncher.domain.jobs.JobPriority
 import com.luncher.domain.jobs.ManualJobs
 import com.luncher.domain.pictures.ImportResult
 import com.luncher.domain.pictures.Picture
@@ -75,6 +77,11 @@ class FilesPicturesTest {
         """{"id":"0123456789abcdef0123456789abcdef","name":"sunset.jpg","width":1920,"height":1080,"bytes":3100000,"added":1700000000000},""" +
         """{"id":"fedcba9876543210fedcba9876543210","name":"beach.png","width":1080,"height":1920,"bytes":250000,"added":1700000001000}]}"""
 
+    // The same, as this version writes it once it knows whether each picture is see-through.
+    private val storedIndexKnown = """{"format":1,"pictures":[""" +
+        """{"id":"0123456789abcdef0123456789abcdef","name":"sunset.jpg","width":1920,"height":1080,"bytes":3100000,"added":1700000000000,"seeThrough":false},""" +
+        """{"id":"fedcba9876543210fedcba9876543210","name":"beach.png","width":1080,"height":1920,"bytes":250000,"added":1700000001000,"seeThrough":true}]}"""
+
     /** As the next start: a new process, with what the files hold. */
     private fun restart() {
         library = newLibrary()
@@ -116,12 +123,39 @@ class FilesPicturesTest {
     @Test
     fun `writes the stored format`() {
         folder.mkdirs()
+        File(folder, "index.json").writeText(storedIndexKnown.replace("}]}", "},{\"id\":\"gone\",\"name\":\"\",\"width\":1,\"height\":1,\"bytes\":1,\"added\":1}]}"))
+
+        library.delete(setOf(PictureId("gone")))
+        settle()
+
+        assertEquals(storedIndexKnown, File(folder, "index.json").readText())
+    }
+
+    @Test
+    fun `reads whether each picture is see-through, as stored`() {
+        folder.mkdirs()
+        File(folder, "index.json").writeText(storedIndexKnown)
+
+        assertEquals(listOf(sunset.copy(seeThrough = false), beach.copy(seeThrough = true)), library.read())
+    }
+
+    @Test
+    fun `writes nothing of whether a picture is see-through while it doesn't know`() {
+        folder.mkdirs()
         File(folder, "index.json").writeText(storedIndex.replace("}]}", "},{\"id\":\"gone\",\"name\":\"\",\"width\":1,\"height\":1,\"bytes\":1,\"added\":1}]}"))
 
         library.delete(setOf(PictureId("gone")))
         settle()
 
         assertEquals(storedIndex, File(folder, "index.json").readText())
+    }
+
+    @Test
+    fun `an entry saying something else of whether it's see-through is kept, not known to be either`() {
+        folder.mkdirs()
+        File(folder, "index.json").writeText(storedIndexKnown.replace("\"seeThrough\":false", "\"seeThrough\":\"partly\""))
+
+        assertEquals(listOf(sunset, beach.copy(seeThrough = true)), library.read())
     }
 
     @Test
@@ -314,6 +348,86 @@ class FilesPicturesTest {
         val preview = prepared.render(picture.id, 96, 54, PictureStyle()) { false }!!
         assertTrue(TestPictureFiles.isRed(preview.getPixel(10, 27)))
         assertTrue(TestPictureFiles.isBlue(preview.getPixel(86, 27)))
+    }
+
+    @Test
+    fun `knows whether a picture is see-through as it adds it, and keeps that after a restart`() {
+        val logo = (add(shared("logo.png", TestPictureFiles.png(TestPictureFiles.logo(64, 36)))) as ImportResult.Added).picture
+        val opaque = (add(shared("red.png", red)) as ImportResult.Added).picture
+
+        assertEquals(true, logo.seeThrough)
+        assertEquals(false, opaque.seeThrough)
+        restart()
+        assertEquals(listOf(true, false), library.read().map { it.seeThrough })
+    }
+
+    @Test
+    fun `keeps what copies made later say together, in one write and one call of the listeners, once the screens' jobs queued before have run`() {
+        folder.mkdirs()
+        File(folder, "index.json").writeText(storedIndex)
+        library.read()
+        settle()
+        var heard = 0
+        library.addListener { heard++ }
+        // A screen's preparing: its copy made later, in a job queued before the first one's word came.
+        jobs.run(JobPriority.PICTURE_SCREENS) { Handler(Looper.getMainLooper()).post { library.made(beach.id, true) } }
+
+        library.made(sunset.id, false)
+        assertEquals("not at once", listOf(sunset, beach), library.read())
+        settle()
+
+        assertEquals(1, heard)
+        assertEquals(listOf(sunset.copy(seeThrough = false), beach.copy(seeThrough = true)), library.read())
+        assertEquals(storedIndexKnown, File(folder, "index.json").readText())
+    }
+
+    @Test
+    fun `what a copy said of a picture deleted meanwhile is left out`() {
+        folder.mkdirs()
+        File(folder, "index.json").writeText(storedIndex)
+        var heard = 0
+        library.addListener { heard++ }
+
+        library.made(sunset.id, true)
+        library.delete(setOf(sunset.id))
+        settle()
+
+        assertEquals(1, heard)
+        assertEquals(listOf(beach), library.read())
+    }
+
+    @Test
+    fun `what a copy says that the library knows already changes nothing`() {
+        folder.mkdirs()
+        File(folder, "index.json").writeText(storedIndexKnown)
+        library.read()
+        settle()
+        var heard = 0
+        library.addListener { heard++ }
+
+        library.made(beach.id, true)
+        settle()
+
+        assertEquals(0, heard)
+        assertEquals(0, jobs.pending)
+    }
+
+    @Test
+    fun `reads once per process whether a picture is see-through from its copy, where the index doesn't say`() {
+        val logo = (add(shared("logo.png", TestPictureFiles.png(TestPictureFiles.logo(64, 36)))) as ImportResult.Added).picture
+        val index = File(folder, "index.json")
+        index.writeText(index.readText().replace(",\"seeThrough\":true", ""))   // as if the process ended before it was written
+        restart()
+        var heard = 0
+        library.addListener { heard++ }
+
+        assertEquals(listOf(logo.copy(seeThrough = null)), library.read())
+        settle()
+
+        assertEquals(1, heard)
+        assertEquals(listOf(logo), library.read())
+        restart()
+        assertEquals(listOf(logo), library.read())
     }
 
     @Test

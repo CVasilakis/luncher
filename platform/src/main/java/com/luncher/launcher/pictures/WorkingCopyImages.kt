@@ -2,6 +2,8 @@ package com.luncher.launcher.pictures
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.os.Handler
+import android.os.Looper
 import com.luncher.domain.pictures.PictureId
 import com.luncher.domain.pictures.PictureImages
 import com.luncher.domain.pictures.PictureStyle
@@ -20,18 +22,22 @@ import com.luncher.launcher.ui.R as UiR
  * milliseconds, where drawing it from the original decodes a photo every time. A picture without
  * a working copy for the screen as it is gets one first (every picture has one as it's added, but
  * the screen may have changed since); one whose copy can't be written then (a full disk) is drawn
- * from its original in [originals] instead. Keeps nothing else: [CachedPictureImages]
- * keeps the thumbnails, in front of it.
+ * from its original in [originals] instead. Each copy it makes tells, on the main thread, whether
+ * its picture is see-through ([onMade]), which the library keeps ([FilesPictures.made]): a picture
+ * an earlier version added gets it so. Keeps nothing else: [CachedPictureImages] keeps the
+ * thumbnails, in front of it.
  */
 class WorkingCopyImages(
     context: Context,
     private val originals: File = File(context.filesDir, "pictures"),
     copies: File = File(context.filesDir, WorkingCopies.FOLDER),
+    private val onMade: (picture: PictureId, seeThrough: Boolean) -> Unit = { _, _ -> },
     screen: () -> ScreenSize = { context.applicationContext.screenSize() },
 ) : PictureImages<Bitmap>, PreparedPictures {
 
     private val background = context.color(UiR.color.background)
     private val workingCopies = WorkingCopies(copies, background, screen)
+    private val main = Handler(Looper.getMainLooper())
 
     override fun whyPrepare(picture: PictureId): PreparingCause? = workingCopies.whyMake(picture.value)
 
@@ -39,7 +45,9 @@ class WorkingCopyImages(
         if (workingCopies.made(picture.value)) return true
         val original = File(originals, picture.value)
         val shape = PictureFiles.shape(original) ?: return false
-        return workingCopies.make(original, shape, workingCopies.fileOf(picture.value), stopped) == WorkingCopies.Made.MADE
+        val made = workingCopies.make(original, shape, workingCopies.fileOf(picture.value), stopped) as? WorkingCopies.Made.Written ?: return false
+        main.post { onMade(picture, made.seeThrough) }
+        return true
     }
 
     override fun cached(picture: PictureId, width: Int, height: Int, style: PictureStyle): Bitmap? = null

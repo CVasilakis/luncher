@@ -55,7 +55,7 @@ domain/src/
 │   │   ├── Jobs.kt              port: the background thread; cancelling (Cancellable) a queued job; every job's priority (JobPriority)
 │   │   └── LatestRequest.kt     helper: one thing a screen loads in the background, only the latest request counting
 │   ├── pictures/
-│   │   ├── Picture.kt           model: a picture of the library (PictureId, from its content), its name, size as shown, bytes, when added
+│   │   ├── Picture.kt           model: a picture of the library (PictureId, from its content), its name, size as shown, bytes, when added, whether it's see-through (unknown counts as opaque)
 │   │   ├── Pictures.kt          port: the library's pictures, renaming and deleting them, and when they change
 │   │   ├── PictureImport.kt     port: adding a picture from a source, slow, cancellable, when its copying starts, and how that went (ImportResult)
 │   │   ├── PictureLibrary.kt    rule: the library as the picture editors list it, by name, and what each one is used for

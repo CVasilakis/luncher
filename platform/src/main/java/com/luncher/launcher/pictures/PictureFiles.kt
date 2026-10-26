@@ -107,14 +107,30 @@ internal object PictureFiles {
 
     /**
      * [file] drawn into a new ARGB_8888 bitmap of [width] x [height] px, as [framing] puts it, over
-     * [background] (which shows through a picture's transparent parts); null if it can't be read.
-     * Decoded at no more than the size needed ([inSampleSize][BitmapFactory.Options.inSampleSize]),
-     * into sRGB from API 26 on (a phone's photo may be in a wider color space), upright as its
-     * orientation tag says, and freed once drawn. A decoder may give another config (16-bit PNGs
-     * decode to RGBA_F16 from API 26 on, GIFs to none up to 26): drawing it here makes it ARGB_8888.
-     * Null too once [stopped] says so: the decode stops then ([decode]).
+     * [background] (which shows through a picture's transparent parts; [Color.TRANSPARENT] leaves
+     * them clear); null if it can't be read. Decoded at no more than the size needed
+     * ([inSampleSize][BitmapFactory.Options.inSampleSize]), into sRGB from API 26 on (a phone's
+     * photo may be in a wider color space), upright as its orientation tag says, and freed once
+     * drawn. A decoder may give another config (16-bit PNGs decode to RGBA_F16 from API 26 on, GIFs
+     * to none up to 26): drawing it here makes it ARGB_8888. Null too once [stopped] says so: the
+     * decode stops then ([decode]).
      */
-    fun draw(file: File, width: Int, height: Int, framing: Framing, background: Int, stopped: () -> Boolean = { false }): Bitmap? {
+    fun draw(file: File, width: Int, height: Int, framing: Framing, background: Int, stopped: () -> Boolean = { false }): Bitmap? =
+        drawn(file, width, height, framing, background, keepAlpha = false, stopped)?.image
+
+    /** A picture drawn by [drawKeepingAlpha]: [image], and whether its decoder said it has [alpha]. */
+    class Drawn(val image: Bitmap, val alpha: Boolean)
+
+    /**
+     * [file] drawn as [draw] does, but over nothing where its decoder says it has alpha, so its
+     * transparent parts stay clear: a working copy's drawing ([WorkingCopies]). One its decoder says
+     * is opaque is drawn over [background] as [draw] draws it, pixel for pixel: a JPEG never has
+     * alpha, though one cut short leaves its missing rows transparent, which keep the background.
+     */
+    fun drawKeepingAlpha(file: File, width: Int, height: Int, framing: Framing, background: Int, stopped: () -> Boolean): Drawn? =
+        drawn(file, width, height, framing, background, keepAlpha = true, stopped)
+
+    private fun drawn(file: File, width: Int, height: Int, framing: Framing, background: Int, keepAlpha: Boolean, stopped: () -> Boolean): Drawn? {
         val shape = shape(file) ?: return null
         val area = frame(shape.width, shape.height, width, height, framing)
         val options = BitmapFactory.Options().apply {
@@ -123,6 +139,8 @@ internal object PictureFiles {
             if (Build.VERSION.SDK_INT >= 26) inPreferredColorSpace = ColorSpace.get(ColorSpace.Named.SRGB)
         }
         val decoded = decode(file, options, stopped) ?: return null
+        // The decoder's word, before it's overruled: what the picture's format and header say.
+        val alpha = decoded.hasAlpha()
         // A cut-off JPEG decoded at a sample size leaves its missing rows transparent in a bitmap
         // said to be opaque, which drawing would copy through the background as they are.
         decoded.setHasAlpha(true)
@@ -140,16 +158,16 @@ internal object PictureFiles {
         )
         val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
-        canvas.drawColor(background)
+        canvas.drawColor(if (keepAlpha && alpha) Color.TRANSPARENT else background)
         canvas.drawBitmap(decoded, matrix, Paint(Paint.FILTER_BITMAP_FLAG or Paint.DITHER_FLAG))
         decoded.recycle()
-        return bitmap
+        return Drawn(bitmap, alpha)
     }
 
     /**
      * The part of [source] (already upright) that [framing] puts into [width] x [height] px, drawn
-     * into a new ARGB_8888 bitmap of that size over [background], filtered: a working copy's
-     * framing, as [draw] frames a file.
+     * into a new ARGB_8888 bitmap of that size over [background] ([Color.TRANSPARENT] leaves its
+     * transparent parts clear), filtered: a working copy's framing, as [draw] frames a file.
      */
     fun draw(source: Bitmap, width: Int, height: Int, framing: Framing, background: Int): Bitmap {
         val area = frame(source.width, source.height, width, height, framing)
@@ -183,7 +201,9 @@ internal object PictureFiles {
      * way, which add up to nearly a Gaussian blur, each a running sum, so the cost doesn't depend on
      * how strong it is. In place, in one array of the pixels: the rows through a line buffer, the
      * columns by a running sum per column, top to bottom, keeping only the rows the sums still
-     * need as they were. [image] must be opaque, as [draw] makes it: its alpha isn't blurred.
+     * need as they were. [image] must be opaque, as [draw] makes it over an opaque background: its
+     * alpha isn't blurred, so nothing see-through is blurred (a working copy kept so is drawn over
+     * the background before it's styled).
      */
     fun blur(image: Bitmap, blur: Blur) {
         if (blur == Blur.OFF) return

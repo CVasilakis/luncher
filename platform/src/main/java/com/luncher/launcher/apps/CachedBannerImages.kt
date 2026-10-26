@@ -38,8 +38,9 @@ import java.io.File
  * thread is idle, so that it doesn't slow the start that draws them, and is then a job of
  * [JobPriority.BANNER_CACHE] for each image. Once per process, a job also deletes the files of
  * apps no longer installed, and of tiles whose picture is gone; and again, those of tiles whose
- * picture is gone, whenever [library] changes, so a picture deleted leaves none of its pixels
- * here. The file format: [read] and [write] (platform/README.md#writing-adapters).
+ * picture is gone, whenever a picture [library] had is gone, so a picture deleted leaves none of
+ * its pixels here; a change that leaves every picture there (one added, renamed, or found
+ * see-through) deletes nothing. The file format: [read] and [write] (platform/README.md#writing-adapters).
  */
 class CachedBannerImages(
     context: Context,
@@ -86,12 +87,21 @@ class CachedBannerImages(
     private var waitingForIdle = false
     private var cleaned = false
 
+    /** The library's pictures as of its last change; null before the first. */
+    private var pictureIds: Set<PictureId>? = null
+
     private val pixelFiles = PixelFiles(MAGIC, FORMAT)
 
     init {
-        // For the process: the cache lives as long as it. A change runs one sweep, after the
-        // library's own jobs, which delete a picture's files first.
-        library.addListener { jobs.run(JobPriority.BANNER_CACHE) { deletePicturesGone() } }
+        // For the process: the cache lives as long as it. A change that took a picture away (any
+        // change, the first time) runs one sweep, after the library's own jobs, which delete a
+        // picture's files first.
+        library.addListener {
+            val ids = library.read().mapTo(HashSet()) { it.id }
+            val gone = pictureIds?.any { it !in ids } ?: true
+            pictureIds = ids
+            if (gone) jobs.run(JobPriority.BANNER_CACHE) { deletePicturesGone() }
+        }
     }
 
     override fun render(app: HomeApp, banner: Banner, width: Int, height: Int): Bitmap {

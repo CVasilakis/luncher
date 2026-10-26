@@ -106,8 +106,11 @@ open class AppGraph(context: Context) : HomeGraph, SettingsGraph {
 
     override val folderPictures: FolderPictures<Uri, Bitmap> by lazy { MediaFolderPictures(appContext, jobs) }
 
-    /** The working copies, on the library's files: what the screens draw pictures from. */
-    private val workingCopies by lazy { WorkingCopyImages(appContext) }
+    /**
+     * The working copies, on the library's files: what the screens draw pictures from. Each one made
+     * tells the library whether its picture is see-through, which it keeps.
+     */
+    private val workingCopies by lazy { WorkingCopyImages(appContext, onMade = { picture, seeThrough -> library.made(picture, seeThrough) }) }
 
     override val pictureImages: PictureImages<Bitmap> by lazy { workingCopies }
 

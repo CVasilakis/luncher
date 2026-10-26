@@ -39,12 +39,17 @@ import com.luncher.launcher.ui.R as UiR
 /**
  * [Pictures] and [PictureImport] on files: each picture's original file, unchanged, in [folder],
  * named after a hash of its content (the same picture added twice is stored once), and an index
- * of them ([INDEX]: name, size, dimensions as shown, when added) written whole, to a new file that
- * then replaces the old one at once. A name is the index's only, so renaming a picture writes
- * the index and nothing else. Its working copy, from which the screens draw it, is made
- * as it's added, kept in [copies]/<id> ([WorkingCopies]), and deleted with it, as is its
- * thumbnail, kept in [images]/<id> ([CachedPictureImages]). A picture whose working copy can't be
- * written or put in place isn't added: every picture added has one.
+ * of them ([INDEX]: name, size, dimensions as shown, when added, whether it's see-through) written
+ * whole, to a new file that then replaces the old one at once. A name is the index's only, so
+ * renaming a picture writes the index and nothing else. Its working copy, from which the screens
+ * draw it, is made as it's added, kept in [copies]/<id> ([WorkingCopies]), and deleted with it, as
+ * is its thumbnail, kept in [images]/<id> ([CachedPictureImages]). A picture whose working copy
+ * can't be written or put in place isn't added: every picture added has one.
+ *
+ * Whether a picture is see-through is decided as its working copy is made: at its import, and
+ * whenever the screens make the copy again ([made]), which is how a picture an earlier version
+ * added gets it; and, once per process, read from the copies of those the index doesn't know it
+ * of, in case it was lost then (the process ended before the index was written).
  *
  * The index is read once per process, on the main thread, then kept there. Everything slow is a
  * job of [JobPriority.PICTURE_LIBRARY], one priority so they keep their order: adding a picture
@@ -86,7 +91,16 @@ class FilesPictures(
      */
     private sealed interface Copied {
         class Failed(val result: ImportResult) : Copied
-        class Copy(val file: File, val copy: File, val id: PictureId, val name: String, val bytes: Long, val width: Int, val height: Int) : Copied {
+        class Copy(
+            val file: File,
+            val copy: File,
+            val id: PictureId,
+            val name: String,
+            val bytes: Long,
+            val width: Int,
+            val height: Int,
+            val seeThrough: Boolean,
+        ) : Copied {
             /** Deletes what was made, for a picture that isn't added. */
             fun delete() {
                 file.delete()
@@ -103,6 +117,9 @@ class FilesPictures(
     // The main thread's; jobs get copies.
     private var index: LinkedHashMap<PictureId, Picture>? = null
     private val listeners = mutableListOf<() -> Unit>()
+
+    /** Whether pictures are see-through, as copies made since the last change of the index said; by picture. */
+    private val learned = HashMap<PictureId, Boolean>()
 
     override fun read(): List<Picture> = index().values.toList()
 
@@ -175,6 +192,36 @@ class FilesPictures(
         }
     }
 
+    /**
+     * On the main thread: [picture]'s working copy was made again, outside an import (another
+     * screen, an update of the copies' format), and found it [seeThrough] or not. What comes
+     * together, as a screen prepares several pictures at its start, is kept into the index
+     * together, once the jobs of the screens queued before it have run: a job of their priority,
+     * after them, says so. Then one write of the index, and one call of the listeners, if anything
+     * changed; a picture deleted meanwhile is left out.
+     */
+    fun made(picture: PictureId, seeThrough: Boolean) {
+        val first = learned.isEmpty()
+        learned[picture] = seeThrough
+        if (first) jobs.run(JobPriority.PICTURE_SCREENS) { main.post(::keepLearned) }
+    }
+
+    private fun keepLearned() {
+        val index = index()
+        var changed = false
+        for ((id, seeThrough) in learned) {
+            val picture = index[id] ?: continue
+            if (picture.seeThrough == seeThrough) continue
+            index[id] = picture.copy(seeThrough = seeThrough)
+            changed = true
+        }
+        learned.clear()
+        if (!changed) return
+        val entries = index.values.toList()
+        jobs.run(JobPriority.PICTURE_LIBRARY) { writeIndex(entries) }
+        changed()
+    }
+
     override fun addListener(listener: () -> Unit) {
         listeners += listener
     }
@@ -185,7 +232,10 @@ class FilesPictures(
 
     private fun changed() = listeners.toList().forEach { it() }
 
-    /** The index, read on first use; with a job, once per process, that deletes what it doesn't name. */
+    /**
+     * The index, read on first use; with a job, once per process, that deletes what it doesn't name,
+     * and reads whether the pictures it doesn't know that of are see-through from their copies.
+     */
     private fun index(): LinkedHashMap<PictureId, Picture> {
         index?.let { return it }
         val file = File(folder, INDEX)
@@ -196,7 +246,12 @@ class FilesPictures(
         // An index that can't be read keeps every file: they may be the user's pictures.
         if (read != null || !file.exists()) {
             val kept = index.keys.mapTo(HashSet()) { it.value }
-            jobs.run(JobPriority.PICTURE_LIBRARY) { deleteUnlisted(kept) }
+            val unknown = index.values.filter { it.seeThrough == null }.map { it.id }
+            jobs.run(JobPriority.PICTURE_LIBRARY) {
+                deleteUnlisted(kept)
+                val found = unknown.mapNotNull { id -> workingCopies.seeThrough(id.value)?.let { id to it } }
+                if (found.isNotEmpty()) main.post { found.forEach { (id, seeThrough) -> made(id, seeThrough) } }
+            }
         }
         return index
     }
@@ -245,7 +300,7 @@ class FilesPictures(
         val index = index()
         index[copied.id]?.let { return import.answer(ImportResult.AlreadyThere(it)) }   // the same picture, added meanwhile
         nameClash(copied.name, copied.bytes, index.values)?.let { return import.answer(it) }   // one of its name, added meanwhile
-        val picture = Picture(copied.id, copied.name, copied.width, copied.height, copied.bytes, now())
+        val picture = Picture(copied.id, copied.name, copied.width, copied.height, copied.bytes, now(), copied.seeThrough)
         index[picture.id] = picture
         val entries = index.values.toList()
         jobs.run(JobPriority.PICTURE_LIBRARY) { writeIndex(entries) }
@@ -330,18 +385,15 @@ class FilesPictures(
             !PictureLimits.allowsSize(shape.width, shape.height) -> ImportResult.TooLarge(SizeLimit.PIXELS)
             // Stopped, it's whole here, and the decode below stops at once.
             !PictureFiles.whole(file) { stop.isStopped } -> ImportResult.NotAPicture
-            else -> when (workingCopies.make(file, shape, copy) { stop.isStopped }) {
-                WorkingCopies.Made.MADE -> null
-                WorkingCopies.Made.NOT_WRITTEN -> ImportResult.NoSpace
-                WorkingCopies.Made.NOT_DECODED -> if (stop.isStopped) ImportResult.Unreadable else unsupportedOrNot(file)
+            else -> when (val made = workingCopies.make(file, shape, copy) { stop.isStopped }) {
+                is WorkingCopies.Made.Written -> return Copied.Copy(file, copy, id, described.name, bytes, shape.width, shape.height, made.seeThrough)
+                WorkingCopies.Made.NotWritten -> ImportResult.NoSpace
+                WorkingCopies.Made.NotDecoded -> if (stop.isStopped) ImportResult.Unreadable else unsupportedOrNot(file)
             }
         }
-        if (unfit != null || shape == null) {
-            file.delete()
-            copy.delete()
-            return Copied.Failed(unfit ?: ImportResult.NotAPicture)
-        }
-        return Copied.Copy(file, copy, id, described.name, bytes, shape.width, shape.height)
+        file.delete()
+        copy.delete()
+        return Copied.Failed(unfit)
     }
 
     /** A file BitmapFactory can't decode: in a format this TV can't show, which is said, or not a picture at all. */
@@ -410,9 +462,11 @@ class FilesPictures(
 
     /**
      * The index's pictures, or null if it can't be read (an empty library if there's none). The
-     * format, `{"format": 1, "pictures": [{"id", "name", "width", "height", "bytes", "added"}, …]}`,
-     * is kept on the TV across updates: a later version reads this one, and an entry it can't
-     * read is left out, the others kept.
+     * format, `{"format": 1, "pictures": [{"id", "name", "width", "height", "bytes", "added",
+     * "seeThrough"}, …]}`, is kept on the TV across updates: a later version reads this one, and an
+     * entry it can't read is left out, the others kept. `seeThrough` is there once it's known: an
+     * entry without it, written before Luncher knew it, or with a value it can't read, is of a
+     * picture not known to be see-through or not (null).
      */
     private fun readIndex(file: File): List<Picture>? {
         if (!file.exists()) return emptyList()
@@ -428,6 +482,7 @@ class FilesPictures(
                         entry.getInt("height"),
                         entry.getLong("bytes"),
                         entry.getLong("added"),
+                        entry.opt("seeThrough") as? Boolean,
                     )
                 } catch (e: JSONException) {
                     null
@@ -444,15 +499,15 @@ class FilesPictures(
     private fun writeIndex(pictures: List<Picture>) {
         val entries = JSONArray()
         for (picture in pictures) {
-            entries.put(
-                JSONObject()
-                    .put("id", picture.id.value)
-                    .put("name", picture.name)
-                    .put("width", picture.width)
-                    .put("height", picture.height)
-                    .put("bytes", picture.bytes)
-                    .put("added", picture.added),
-            )
+            val entry = JSONObject()
+                .put("id", picture.id.value)
+                .put("name", picture.name)
+                .put("width", picture.width)
+                .put("height", picture.height)
+                .put("bytes", picture.bytes)
+                .put("added", picture.added)
+            picture.seeThrough?.let { entry.put("seeThrough", it) }
+            entries.put(entry)
         }
         val text = JSONObject().put("format", FORMAT).put("pictures", entries).toString()
         val file = File(folder, INDEX)

@@ -25,12 +25,19 @@ import kotlin.math.ceil
  * picture on the screens: a few hundred KB each, read in milliseconds, its losses invisible at
  * that size. The wallpaper is drawn from the original ([FilePictureImages]).
  *
+ * A see-through picture's copy is a PNG instead, its transparent parts kept: lossless, alpha
+ * included, on every version, and about a JPEG's size for a logo. See-through is decided here,
+ * once: its decoder said the picture has alpha (a JPEG never does, so one cut short, whose missing
+ * rows decode transparent, isn't), and the copy, drawn over nothing, has a pixel that isn't
+ * opaque. Every other copy is drawn over [background], as the screens show it.
+ *
  * One file per picture, named by its id, after a header saying what it was made for: [FORMAT],
- * [FilePictureImages.DRAWING] and the half of the [screen] it covers, in px. One made for anything
- * else isn't [made], and making it again replaces it, in one step (a new file, then renamed), so
- * a TV that changed its resolution leaves no copy of the old size behind. [FilesPictures] makes one
- * as it adds a picture, deletes it with the picture, and once per process deletes those of no
- * picture. Safe on any thread: it keeps nothing.
+ * [FilePictureImages.DRAWING] and the half of the [screen] it covers, in px; then whether it's
+ * see-through, which says the image's format too. One made for anything else isn't [made], and
+ * making it again replaces it, in one step (a new file, then renamed), so a TV that changed its
+ * resolution leaves no copy of the old size behind. [FilesPictures] makes one as it adds a
+ * picture, deletes it with the picture, and once per process deletes those of no picture. Safe on
+ * any thread: it keeps nothing.
  */
 internal class WorkingCopies(
     val folder: File,
@@ -39,19 +46,19 @@ internal class WorkingCopies(
 ) {
 
     /** How making a working copy went. */
-    enum class Made {
-        /** Made and written. */
-        MADE,
+    sealed interface Made {
+        /** Made and written; of a picture that's [seeThrough] or not. */
+        class Written(val seeThrough: Boolean) : Made
 
         /**
          * Decoded, but not written (a full disk): the picture is fine. As it's added, it's refused
          * ([FilesPictures]); a copy made again later (for another screen) is made once it can be,
          * the picture drawn from its original meanwhile ([WorkingCopyImages]).
          */
-        NOT_WRITTEN,
+        data object NotWritten : Made
 
         /** Not decoded: not a picture this TV can show, or stopped. */
-        NOT_DECODED,
+        data object NotDecoded : Made
     }
 
     /** How drawing a tile from a working copy went ([drawTile]). */
@@ -81,25 +88,33 @@ internal class WorkingCopies(
      */
     fun whyMake(picture: String): PreparingCause? {
         val made = header(fileOf(picture)) ?: return PreparingCause.OUTDATED
-        return if (made == target()) null else PreparingCause.SCREEN_CHANGED
+        return if (made.covers == target()) null else PreparingCause.SCREEN_CHANGED
     }
 
     /**
+     * Whether [picture] is see-through, as its working copy says, made for any screen; null without
+     * one of this format and drawing. Quick: its header only.
+     */
+    fun seeThrough(picture: String): Boolean? = header(fileOf(picture))?.seeThrough
+
+    /**
      * [original], of [shape], decoded into a working copy written to [into], through a new file
-     * renamed into place; stops once [stopped] says so.
+     * renamed into place, a PNG if it's see-through, else a JPEG; stops once [stopped] says so.
      */
     fun make(original: File, shape: PictureFiles.Shape, into: File, stopped: () -> Boolean): Made {
         val (width, height) = target()
         // Covering the target, as a picture fills the screen; never larger than the picture itself.
         val scale = minOf(1.0, maxOf(width.toDouble() / shape.width, height.toDouble() / shape.height))
-        val copy = PictureFiles.draw(
+        val drawn = PictureFiles.drawKeepingAlpha(
             original,
             ceil(shape.width * scale).toInt().coerceAtLeast(1),
             ceil(shape.height * scale).toInt().coerceAtLeast(1),
             Framing(Fit.STRETCH),
             background,
             stopped,
-        ) ?: return Made.NOT_DECODED
+        ) ?: return Made.NotDecoded
+        val copy = drawn.image
+        val seeThrough = drawn.alpha && !opaque(copy)
         val temporary = File(into.parentFile, into.name + TEMPORARY)
         try {
             into.parentFile?.mkdirs()
@@ -109,13 +124,15 @@ internal class WorkingCopies(
                 output.writeInt(FilePictureImages.DRAWING)
                 output.writeInt(width)
                 output.writeInt(height)
-                if (!copy.compress(Bitmap.CompressFormat.JPEG, QUALITY, output)) throw IOException("not written")
+                output.writeInt(if (seeThrough) SEE_THROUGH else OPAQUE)
+                val format = if (seeThrough) Bitmap.CompressFormat.PNG else Bitmap.CompressFormat.JPEG
+                if (!copy.compress(format, QUALITY, output)) throw IOException("not written")
             }
             if (!temporary.renameTo(into)) throw IOException("not renamed")
-            return Made.MADE
+            return Made.Written(seeThrough)
         } catch (e: IOException) {
             temporary.delete()
-            return Made.NOT_WRITTEN
+            return Made.NotWritten
         } finally {
             copy.recycle()
         }
@@ -127,7 +144,7 @@ internal class WorkingCopies(
         if (!file.isFile) return null
         return try {
             DataInputStream(BufferedInputStream(FileInputStream(file), BUFFER)).use { input ->
-                if (readHeader(input) != target()) return null
+                if (readHeader(input)?.covers != target()) return null
                 BitmapFactory.decodeStream(input, null, BitmapFactory.Options().apply { inPreferredConfig = Bitmap.Config.ARGB_8888 })
             }
         } catch (e: IOException) {
@@ -150,7 +167,7 @@ internal class WorkingCopies(
         try {
             val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
             DataInputStream(BufferedInputStream(FileInputStream(file), BUFFER)).use { input ->
-                if (readHeader(input) != target()) return Tile.NotMade
+                if (readHeader(input)?.covers != target()) return Tile.NotMade
                 BitmapFactory.decodeStream(input, null, bounds)
             }
             if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return damaged
@@ -175,7 +192,20 @@ internal class WorkingCopies(
         }
     }
 
-    private fun header(file: File): Pair<Int, Int>? {
+    /** Whether every pixel of [image] is opaque: row by row, up to the first that isn't. */
+    private fun opaque(image: Bitmap): Boolean {
+        val row = IntArray(image.width)
+        for (y in 0 until image.height) {
+            image.getPixels(row, 0, image.width, 0, y, image.width, 1)
+            for (pixel in row) if (pixel ushr 24 != 0xFF) return false
+        }
+        return true
+    }
+
+    /** What a copy's header says: the size it covers, in px, and whether it's see-through. */
+    private class Header(val covers: Pair<Int, Int>, val seeThrough: Boolean)
+
+    private fun header(file: File): Header? {
         if (!file.isFile) return null
         return try {
             DataInputStream(FileInputStream(file)).use(::readHeader)
@@ -184,10 +214,11 @@ internal class WorkingCopies(
         }
     }
 
-    /** The size a file's copy covers, if it's of this format and drawing; else null. */
-    private fun readHeader(input: DataInputStream): Pair<Int, Int>? {
+    /** What a file's copy was made for, if it's of this format and drawing; else null. */
+    private fun readHeader(input: DataInputStream): Header? {
         if (input.readInt() != MAGIC || input.readInt() != FORMAT || input.readInt() != FilePictureImages.DRAWING) return null
-        return input.readInt() to input.readInt()
+        val covers = input.readInt() to input.readInt()
+        return Header(covers, input.readInt() == SEE_THROUGH)
     }
 
     companion object {
@@ -200,15 +231,19 @@ internal class WorkingCopies(
         /** "LWRK": a file of this class. */
         private const val MAGIC = 0x4C57524B
 
-        /** The file format's version; another one is a mismatch, made again. */
-        private const val FORMAT = 1
+        /** The file format's version; another one is a mismatch, made again. 2: see-through copies kept as PNGs. */
+        private const val FORMAT = 2
 
-        /** Of the JPEG: its losses are invisible at a preview's size; 85 would save a third, with more artifacts. */
+        // Whether a copy is see-through, in its header: a PNG, else a JPEG.
+        private const val OPAQUE = 0
+        private const val SEE_THROUGH = 1
+
+        /** Of the JPEG: its losses are invisible at a preview's size; 85 would save a third, with more artifacts. A PNG ignores it. */
         private const val QUALITY = 92
 
         private const val BUFFER = 64 * 1024
 
-        /** The header's length: [MAGIC], [FORMAT], the drawing's version and the size covered, an Int each. */
-        private const val HEADER_BYTES = 5 * 4
+        /** The header's length: [MAGIC], [FORMAT], the drawing's version, the size covered and whether it's see-through, an Int each. */
+        private const val HEADER_BYTES = 6 * 4
     }
 }

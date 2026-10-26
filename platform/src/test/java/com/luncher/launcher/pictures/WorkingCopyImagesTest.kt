@@ -3,6 +3,7 @@ package com.luncher.launcher.pictures
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Color
+import android.os.Looper
 import com.luncher.domain.pictures.Blur
 import com.luncher.domain.pictures.Fit
 import com.luncher.domain.pictures.Framing
@@ -20,6 +21,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
+import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.GraphicsMode
 import java.io.DataInputStream
 import java.io.File
@@ -34,7 +36,10 @@ class WorkingCopyImagesTest {
 
     /** The screen as it is: the tests change it as a TV switching its resolution would. */
     private var screen = ScreenSize(1920, 1080)
-    private val images = WorkingCopyImages(context, originals, copies) { screen }
+
+    /** What each copy made told, in order. */
+    private val made = mutableListOf<Pair<PictureId, Boolean>>()
+    private val images = WorkingCopyImages(context, originals, copies, onMade = { picture, seeThrough -> made += picture to seeThrough }) { screen }
 
     /** A picture of the library whose file holds [bitmap], as a PNG. */
     private fun stored(name: String, bitmap: Bitmap): PictureId {
@@ -45,7 +50,7 @@ class WorkingCopyImagesTest {
     /** The working copy's own size, after its header. */
     private fun copySize(picture: PictureId): Pair<Int, Int> =
         DataInputStream(File(copies, picture.value).inputStream()).use { input ->
-            input.skipBytes(20)
+            input.skipBytes(24)
             val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
             BitmapFactory.decodeStream(input, null, bounds)
             bounds.outWidth to bounds.outHeight
@@ -110,6 +115,22 @@ class WorkingCopyImagesTest {
         assertEquals(PreparingCause.OUTDATED, images.whyPrepare(wide))
         file.writeBytes(made.copyOf().also { it[7] = 99 })   // the format's version
         assertEquals(PreparingCause.OUTDATED, images.whyPrepare(wide))
+    }
+
+    @Test
+    fun `tells on the main thread whether each copy it makes is of a see-through picture`() {
+        val logo = stored("logo", TestPictureFiles.logo(400, 200))
+
+        images.prepare(logo) { false }
+        images.prepare(wide) { false }
+        assertEquals("not in the job", emptyList<Pair<PictureId, Boolean>>(), made)
+        shadowOf(Looper.getMainLooper()).idle()
+
+        assertEquals(listOf(logo to true, wide to false), made)
+        images.prepare(logo) { false }
+        images.render(wide, 96, 54, PictureStyle()) { false }
+        shadowOf(Looper.getMainLooper()).idle()
+        assertEquals("nothing for a copy already made", 2, made.size)
     }
 
     @Test

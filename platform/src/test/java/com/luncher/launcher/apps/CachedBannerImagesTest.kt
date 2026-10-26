@@ -18,6 +18,7 @@ import com.luncher.domain.jobs.ManualJobs
 import com.luncher.domain.pictures.FakePictures
 import com.luncher.domain.pictures.Fit
 import com.luncher.domain.pictures.Framing
+import com.luncher.domain.pictures.Picture
 import com.luncher.domain.pictures.PictureId
 import com.luncher.domain.pictures.PicturePosition
 import com.luncher.domain.apps.bannerFor
@@ -339,6 +340,18 @@ class CachedBannerImagesTest {
         assertFalse(fileOf(movies).exists())
         assertTrue(fileOf(music).exists())
         assertTrue(fileOf(news).exists())
+    }
+
+    @Test
+    fun `a change of the library that leaves every picture there sweeps nothing, after the first`() {
+        library.pictures += Picture(beach, "beach.jpg", 1920, 1080, 1, 1)
+        library.rename(beach, "first")   // nothing was known of the library before: a sweep
+        jobs.runAll()
+
+        library.rename(beach, "renamed")
+        assertEquals("renamed", 0, jobs.pending)
+        library.delete(setOf(beach))
+        assertEquals("deleted", 1, jobs.pending)
     }
 
     @Test
