@@ -160,9 +160,10 @@ can, the focused thing stands out from afar, and every color comes from the user
 - **A scrolling list's window is whole rows, and one thing moves at a time.** While its rows
   don't all fit, a list gives them one height, a little taller or shorter than the usual row, so
   a whole number of them fill its room: as many as fit stretched, or one more squeezed, whichever
-  changes the rows less as a ratio (`fitRows`, `WholeRows.kt`); a row whose content needs more (a
-  name on two lines) is that much taller, and the window is whole rows as long as it doesn't
-  show. The fade covers the row at the edge, so that row looks dimmed, not cut. Up and Down move
+  changes the rows less as a ratio (`fitRows`, `WholeRows.kt`); a squeezed row gives up its
+  padding, never its content (`ListEntry` doesn't clip to its padding); a row whose content needs
+  more (a name on two lines) is that much taller, and the window is whole rows as long as it
+  doesn't show. The fade covers the row at the edge, so that row looks dimmed, not cut. Up and Down move
   the focus while the row beyond the next one shows whole; else the focus stays where it is and
   the list slides a row behind it, in 150 ms (`slideFor`, `FocusSlide`). For that time the list
   draws the focus itself where it stays, the focused fill and inside it the passing rows' texts

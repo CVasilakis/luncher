@@ -3,6 +3,7 @@ package com.luncher.launcher.settings
 import android.app.Activity
 import android.content.Intent
 import android.graphics.Bitmap
+import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.os.Looper
@@ -12,6 +13,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.test.platform.app.InstrumentationRegistry
 import com.luncher.domain.appearance.ThemeAppearance
+import com.luncher.domain.appearance.ThemeMode
 import com.luncher.domain.appearance.colorRoles
 import com.luncher.domain.jobs.ManualJobs
 import com.luncher.domain.pictures.FakePictureImages
@@ -30,6 +32,7 @@ import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
+import org.robolectric.annotation.GraphicsMode
 import java.util.Locale
 
 /**
@@ -93,6 +96,19 @@ class LibraryListTest {
     private fun View.name() = findViewById<TextView>(R.id.settings_pictures_name).text.toString()
 
     private fun row(name: String) = rows().single { it.name() == name }
+
+    /** [name]'s thumbnail as it's drawn, at its size: its background, its image (clear here), what's over it. */
+    private fun thumbnail(name: String): Bitmap {
+        val view = row(name).findViewById<ImageView>(R.id.settings_pictures_thumbnail)
+        val width = activity.resources.getDimensionPixelSize(R.dimen.settings_pictures_thumbnail_width)
+        val height = activity.resources.getDimensionPixelSize(R.dimen.settings_pictures_thumbnail_height)
+        view.measure(View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY), View.MeasureSpec.makeMeasureSpec(height, View.MeasureSpec.EXACTLY))
+        view.layout(0, 0, width, height)
+        return Bitmap.createBitmap(view.width, view.height, Bitmap.Config.ARGB_8888).also { view.draw(Canvas(it)) }
+    }
+
+    /** The color of [name]'s thumbnail at its top edge's middle, where the hairline is, and at its middle. */
+    private fun edgeAndMiddle(name: String): Pair<Int, Int> = thumbnail(name).let { it.getPixel(it.width / 2, 0) to it.getPixel(it.width / 2, it.height / 2) }
 
     private fun focused() = activity.window.decorView.findFocus()?.findViewById<TextView>(R.id.settings_pictures_name)?.text?.toString()
 
@@ -235,5 +251,37 @@ class LibraryListTest {
         shadowOf(Looper.getMainLooper()).idle()
         assertEquals(listOf(beach.id, sunset.id), thumbnails.rendered.map { it.first })
         assertTrue(row("sunset.jpg").findViewById<ImageView>(R.id.settings_pictures_thumbnail).drawable != null)
+    }
+
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)   // to draw the thumbnails
+    fun `a see-through picture's thumbnail shows over the row with a hairline around it, the others on their card, without one`() {
+        val dark = colorRoles(ThemeAppearance())
+        val card = activity.getColor(R.color.settings_pictures_card)
+
+        show(beach.copy(seeThrough = true), sunset.copy(seeThrough = false), tower)
+
+        assertEquals("the line, the row through the picture", dark.outlineVariant to Color.TRANSPARENT, edgeAndMiddle("beach.png"))
+        assertEquals("opaque: the card, no line", card to card, edgeAndMiddle("sunset.jpg"))
+        assertEquals("not known yet: as opaque", card to card, edgeAndMiddle("tower.jpg"))
+        assertEquals("the first row as it was", Color.RED, thumbnail("Original banner").getPixel(40, 0))
+
+        val light = colorRoles(ThemeAppearance(mode = ThemeMode.LIGHT))
+        list.style(light)
+        assertEquals("in the theme's color", light.outlineVariant, edgeAndMiddle("beach.png").first)
+    }
+
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)   // to draw the thumbnails
+    fun `a row made before its picture was known to be see-through gets the line once it is`() {
+        val card = activity.getColor(R.color.settings_pictures_card)
+        show(beach, drawThumbnails = false)
+        val made = row("beach.png")
+        assertEquals(card to card, edgeAndMiddle("beach.png"))
+
+        show(beach.copy(seeThrough = true))
+
+        assertSame("kept", made, row("beach.png"))
+        assertEquals(colorRoles(ThemeAppearance()).outlineVariant to Color.TRANSPARENT, edgeAndMiddle("beach.png"))
     }
 }

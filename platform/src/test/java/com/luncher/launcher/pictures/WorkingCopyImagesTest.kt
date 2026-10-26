@@ -13,6 +13,7 @@ import com.luncher.domain.pictures.PictureStyle
 import com.luncher.domain.pictures.PreparingCause
 import com.luncher.domain.pictures.isPrepared
 import com.luncher.launcher.ui.ScreenSize
+import com.luncher.launcher.ui.color
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -23,6 +24,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.GraphicsMode
+import com.luncher.launcher.ui.R as UiR
 import java.io.DataInputStream
 import java.io.File
 
@@ -184,5 +186,40 @@ class WorkingCopyImagesTest {
         assertFalse(images.isPrepared(wide))
         assertTrue(TestPictureFiles.isRed(image.getPixel(5, 27)))
         assertTrue(TestPictureFiles.isBlue(image.getPixel(90, 27)))
+    }
+
+    @Test
+    fun `kept see-through, a see-through picture is drawn over nothing, where the screens draw it over the background`() {
+        val logo = stored("logo", TestPictureFiles.logo(400, 200))
+        val background = context.color(UiR.color.background)
+
+        val clear = images.keepingSeeThrough.render(logo, 96, 48, PictureStyle()) { false }!!
+        val filled = images.render(logo, 96, 48, PictureStyle()) { false }!!
+
+        assertEquals(Color.TRANSPARENT, clear.getPixel(4, 4))
+        assertTrue(TestPictureFiles.isRed(clear.getPixel(48, 24)))
+        assertEquals(background, filled.getPixel(4, 4))
+        assertTrue(TestPictureFiles.isRed(filled.getPixel(48, 24)))
+    }
+
+    @Test
+    fun `kept see-through, an opaque picture is drawn as the screens draw it, pixel for pixel`() {
+        val clear = images.keepingSeeThrough.render(wide, 96, 54, PictureStyle()) { false }!!
+        val filled = images.render(wide, 96, 54, PictureStyle()) { false }!!
+
+        assertTrue(clear.sameAs(filled))
+    }
+
+    @Test
+    fun `kept see-through, a see-through picture dimmed or blurred, or drawn from its original, is over the background`() {
+        val logo = stored("logo", TestPictureFiles.logo(400, 200))
+        val kept = images.keepingSeeThrough
+
+        assertEquals(255, Color.alpha(kept.render(logo, 96, 48, PictureStyle(dim = 20)) { false }!!.getPixel(4, 4)))
+        assertEquals(255, Color.alpha(kept.render(logo, 96, 48, PictureStyle(blur = Blur.LIGHT)) { false }!!.getPixel(4, 4)))
+        File(copies, logo.value).delete()
+        copies.delete()
+        copies.writeText("a file where the folder should be")
+        assertEquals(255, Color.alpha(kept.render(logo, 96, 48, PictureStyle()) { false }!!.getPixel(4, 4)))
     }
 }

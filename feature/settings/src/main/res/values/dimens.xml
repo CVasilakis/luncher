@@ -63,7 +63,7 @@
     <!-- The picture editors (the background editor): their fields, their height at least, their
          padding at the end, their label's size and their value's, the gap between them; a
          picture's row, its padding above and below; its thumbnail, 16:9, the size the thumbnails
-         are drawn at. -->
+         are drawn at; the hairline around a see-through picture's thumbnail. -->
     <dimen name="settings_field_height">56dp</dimen>
     <dimen name="settings_field_padding_end">12dp</dimen>
     <dimen name="text_field_label">13sp</dimen>
@@ -72,6 +72,7 @@
     <dimen name="settings_pictures_row_padding">8dp</dimen>
     <dimen name="settings_pictures_thumbnail_width">80dp</dimen>
     <dimen name="settings_pictures_thumbnail_height">45dp</dimen>
+    <dimen name="settings_pictures_thumbnail_line">1dp</dimen>
 
     <!-- An option's values in a list beside its field (OptionList): its padding around the
          entries, which their corners follow; its least width, its gap to the field, its shadow,

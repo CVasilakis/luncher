@@ -27,9 +27,10 @@ import com.luncher.domain.appearance.ColorRoles
  * [ThemedIcon]s that take its state (`duplicateParentState`).
  *
  * In a list that scrolls a row ahead ([LookAheadListView], [LookAheadScrollView]), a row is as tall
- * as its list makes its rows, so the list's window ends on a whole row ([FittedRows]), and while the list
- * slides under the focus ([FocusSlide]), the list draws the row's focused look, and the row itself
- * looks at rest meanwhile.
+ * as its list makes its rows, so the list's window ends on a whole row ([FittedRows]): squeezed,
+ * it gives up its padding, never its content. While the list slides under the focus
+ * ([FocusSlide]), the list draws the row's focused look, and the row itself looks at rest
+ * meanwhile.
  */
 open class ListEntry @JvmOverloads constructor(context: Context, attrs: AttributeSet? = null) : LinearLayout(context, attrs), Themed {
 
@@ -73,6 +74,10 @@ open class ListEntry @JvmOverloads constructor(context: Context, attrs: Attribut
             stateListAnimator = AnimatorInflater.loadStateListAnimator(context, R.animator.entry_zoom)
         }
         a.recycle()
+        // A row its list squeezes to fit its window whole (FittedRows) gives up its padding, not its
+        // content: cut at the padding, a thumbnail as tall as a picture's row allows lost its last
+        // pixel row.
+        clipToPadding = false
     }
 
     override fun style(roles: ColorRoles) {

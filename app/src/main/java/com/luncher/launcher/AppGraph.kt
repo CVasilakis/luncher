@@ -114,7 +114,8 @@ open class AppGraph(context: Context) : HomeGraph, SettingsGraph {
 
     override val pictureImages: PictureImages<Bitmap> by lazy { workingCopies }
 
-    override val thumbnails: PictureImages<Bitmap> by lazy { CachedPictureImages(appContext, workingCopies) }
+    /** Drawn from the working copies, a see-through picture's left clear, to show over the list's row. */
+    override val thumbnails: PictureImages<Bitmap> by lazy { CachedPictureImages(appContext, workingCopies.keepingSeeThrough) }
 
     override val preparedPictures: PreparedPictures by lazy { workingCopies }
 

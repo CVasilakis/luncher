@@ -10,12 +10,12 @@ import java.io.File
 
 /**
  * [PictureImages] that keep what [images] draw in files, so a screen shows them at once the next
- * time ([cached]), as `CachedBannerImages` does for the tiles: the background editor's thumbnails,
- * at the list's row size in px. Not the previews, which are drawn from working copies in
- * milliseconds at each step ([WorkingCopyImages]), nor the wallpaper, which is kept apart
- * (`FileStoredWallpaper`), where Android doesn't delete it. One file per picture, in
- * [folder]/<picture id>, which [FilesPictures] deletes with the picture: another size or style
- * replaces it, so a TV of another resolution leaves none behind. The format:
+ * time ([cached]), as `CachedBannerImages` does for the tiles: the picture editors' thumbnails,
+ * at the list's row size in px, a see-through picture's transparency kept. Not the previews,
+ * which are drawn from working copies in milliseconds at each step ([WorkingCopyImages]), nor the
+ * wallpaper, which is kept apart (`FileStoredWallpaper`), where Android doesn't delete it. One
+ * file per picture, in [folder]/<picture id>, which [FilesPictures] deletes with the picture:
+ * another size or style replaces it, so a TV of another resolution leaves none behind. The format:
  * [PixelFiles], with how and from what the image was drawn as the header; a file that doesn't match is
  * drawn and written again, so it needs no migration, and Android may delete it.
  *
@@ -81,8 +81,11 @@ class CachedPictureImages(
 
         /**
          * The file format's version; the drawing's, [FilePictureImages.DRAWING], is in the header.
-         * Another one of either is a mismatch, drawn and written again.
+         * Another one of either is a mismatch, drawn and written again. 4: a see-through picture's
+         * thumbnail is drawn over nothing ([WorkingCopyImages.keepingSeeThrough]), so one of 3 is
+         * drawn again, over the background as it was; raised here, not [FilePictureImages.DRAWING],
+         * which would draw the wallpaper and the working copies again too.
          */
-        private const val FORMAT = 3
+        private const val FORMAT = 4
     }
 }

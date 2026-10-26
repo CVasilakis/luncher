@@ -37,6 +37,20 @@ fun sample(name: String, width: Int, height: Int): Bitmap {
 }
 
 /**
+ * A see-through picture to show in place of a logo's: a round mark in [color] and a bar beside it,
+ * on nothing, their edges soft, so the row shows through it.
+ */
+fun seeThroughSample(color: Int, width: Int, height: Int): Bitmap {
+    val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+    val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply { this.color = color }
+    Canvas(bitmap).apply {
+        drawCircle(width * 0.3f, height * 0.5f, height * 0.3f, paint)
+        drawRoundRect(width * 0.48f, height * 0.38f, width * 0.85f, height * 0.62f, height * 0.08f, height * 0.08f, paint)
+    }
+    return bitmap
+}
+
+/**
  * A picture in a drop folder, named [name], on a USB drive if [removable]; [unsupported] in a
  * format this TV can't show; of [bytes], [width] x [height] px.
  */

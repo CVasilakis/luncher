@@ -393,7 +393,7 @@ the preview (`settings_picture_editor_controls`) are theirs, included by the scr
 | `Pictures`, `PictureImport` (`:domain`) / `FilesPictures` (`:platform`) | the library, which the screen follows while it shows, renaming and deleting, and adding to it |
 | `renaming` (`:domain`) | the name a picture renamed keeps, or why it can't: none typed, or another picture's |
 | `PreparedPictures`, `PictureImages` (`:domain`) / `WorkingCopyImages` (`:platform`) | each picture's working copy, made once; the preview's wallpaper drawn from it at each value tried, but the saved background's, the home screen's own ([above](#appearance)) |
-| `PictureImages` (`:domain`) / `CachedPictureImages` (`:platform`) | the thumbnails, drawn from the working copies at the row's size in pixels, and kept |
+| `PictureImages` (`:domain`) / `CachedPictureImages` (`:platform`) | the thumbnails, drawn from the working copies at the row's size in pixels, a see-through picture's left see-through, and kept |
 | `pictureUses`, `withoutPictures` (`:domain`) | what each picture is used for, which deleting it says, and the background without it |
 | `Wallpaper` (`:domain`) | Save (`save`: drawn, kept, then stored), deleting the wallpaper's picture (`forget`), and the saved background's image, which the preview shows while the draft is that background (`readyFor`) |
 | `pictureCut`, `AppearanceContext`, `Background.offeredIn` (`:domain`) | what filling the screen cuts from the draft's picture, the options' values that offers, and the draft without a position it doesn't |
@@ -423,7 +423,14 @@ All thumbnails are read at once when the screen shows, from what `CachedPictureI
 main thread, so the list shows them with its first frame; one not kept (a picture just added, a
 screen of another size) is drawn in the background from its working copy, a `LatestRequest` each,
 and shows when it's done. The screen keeps each picture's row while the picture is in the library, so its thumbnail is
-read or drawn once, and drops the requests in `onStop`. A draft survives a configuration change
+read or drawn once, and drops the requests in `onStop`. A see-through picture's thumbnail is see-through (its
+working copy drawn over nothing, `WorkingCopyImages.keepingSeeThrough`), over the row's own color
+without the card behind the others, with a hairline in the theme's `outlineVariant` around it,
+drawn over the picture (the thumbnail's overlay), so the column keeps the thumbnails' shape and a
+dark logo shows over a focused row. Only for a picture known to be see-through
+(`Picture.seeThrough`), which its copy tells: a row made before (while the editor prepares the
+pictures) gets the line as the library shows again; the other rows, opaque pictures' included,
+are as they were. A draft survives a configuration change
 (a TV switching resolution), kept in the instance state.
 
 ### Tile banner

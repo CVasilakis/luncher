@@ -7,7 +7,9 @@ import com.luncher.domain.pictures.Blur
 import com.luncher.domain.pictures.Fit
 import com.luncher.domain.pictures.Framing
 import com.luncher.domain.pictures.PictureId
+import com.luncher.domain.pictures.PicturePosition
 import com.luncher.domain.pictures.PictureStyle
+import com.luncher.launcher.images.PixelFiles
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -91,6 +93,23 @@ class CachedPictureImagesTest {
         cache.render(sunset, 384, 216, PictureStyle())
         val file = File(folder, "sunset")
         file.writeBytes(file.readBytes().copyOf(40))   // cut short
+
+        assertNull(cache.cached(sunset, 384, 216, PictureStyle()))
+    }
+
+    @Test
+    fun `finds nothing in a file of the version before, whose see-through thumbnails were drawn over the background`() {
+        val image = drawn.render(sunset, 384, 216, PictureStyle())!!
+        PixelFiles(0x4C504943, 3).write(File(folder, "sunset"), image) { output ->
+            output.writeInt(FilePictureImages.DRAWING)
+            output.writeUTF("sunset")
+            output.writeInt(384)
+            output.writeInt(216)
+            output.writeUTF(Fit.FILL.name)
+            output.writeUTF(PicturePosition.CENTER.name)
+            output.writeInt(0)
+            output.writeUTF(Blur.OFF.name)
+        }
 
         assertNull(cache.cached(sunset, 384, 216, PictureStyle()))
     }

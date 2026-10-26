@@ -4,7 +4,9 @@ import android.app.Activity
 import android.content.Intent
 import android.content.res.ColorStateList
 import android.graphics.Bitmap
+import android.graphics.Color
 import android.graphics.drawable.Drawable
+import android.graphics.drawable.GradientDrawable
 import android.os.Handler
 import android.os.Looper
 import android.util.TypedValue
@@ -34,9 +36,10 @@ import java.util.Locale
  * (settings_pictures_column): a first row the screen names ([first]: No picture), the pictures in
  * the library's order, each with its thumbnail, its name on one line, cut with "…" where it
  * doesn't fit, and below it its size in px and its file's size, then Add from folder; while the
- * library is empty, how to add a picture follows. The draft's picture is marked ([markChosen]).
- * OK on a row, a long press of OK on a picture, and the pictures Add from folder added, go to the
- * screen's [listener].
+ * library is empty, how to add a picture follows. A see-through picture's thumbnail shows over the
+ * row, without the card behind the others, and a hairline around it keeps its shape in the column.
+ * The draft's picture is marked ([markChosen]). OK on a row, a long press of OK on a picture, and
+ * the pictures Add from folder added, go to the screen's [listener].
  *
  * Each picture's row is kept while the picture is in the library, so its thumbnail is read or
  * drawn once: read at once if [thumbnails] kept it, so the list shows it with its first frame, else
@@ -81,12 +84,17 @@ internal class LibraryList(
     private val howTo: ThemedText
     private val thumbnailWidth = activity.resources.getDimensionPixelSize(R.dimen.settings_pictures_thumbnail_width)
     private val thumbnailHeight = activity.resources.getDimensionPixelSize(R.dimen.settings_pictures_thumbnail_height)
+    private val thumbnailCorner = activity.resources.getDimension(R.dimen.settings_pictures_tile_corner)
+    private val thumbnailLine = activity.resources.getDimensionPixelSize(R.dimen.settings_pictures_thumbnail_line)
 
     /** The library as it shows. */
     private var library = PictureLibrary(emptyList(), Locale.getDefault())
 
     /** Each picture's row, kept while it's in the library, so its thumbnail is read or drawn once. */
     private val rows = LinkedHashMap<PictureId, View>()
+
+    /** The hairline around each see-through picture's thumbnail, by picture: its row shows it so. */
+    private val lines = HashMap<PictureId, GradientDrawable>()
 
     /** The thumbnails being drawn, each a request of its own, all dropped in [stop]. */
     private val drawing = HashMap<PictureId, LatestRequest>()
@@ -134,10 +142,11 @@ internal class LibraryList(
 
     /**
      * Shows [library] as it is now: a row for each picture, its thumbnail read at once if it's
-     * kept, else drawn, unless [drawThumbnails] is false (its pictures are being prepared). The
-     * list is made again only when pictures were added, deleted or moved. Then the screen shows
-     * its draft, which decides what can take the focus (an option dimmed, Delete all), and
-     * [placeFocus] puts the focus back.
+     * kept, else drawn, unless [drawThumbnails] is false (its pictures are being prepared), and
+     * see-through or not as the picture is known to be now ([showSeeThrough]). The list is made
+     * again only when pictures were added, deleted or moved. Then the screen shows its draft, which
+     * decides what can take the focus (an option dimmed, Delete all), and [placeFocus] puts the
+     * focus back.
      */
     fun show(library: PictureLibrary, drawThumbnails: Boolean) {
         val focused = activity.window.decorView.findFocus()
@@ -148,10 +157,12 @@ internal class LibraryList(
         this.library = library
         val ids = library.pictures.mapTo(HashSet()) { it.id }
         rows.keys.retainAll(ids)
+        lines.keys.retainAll(ids)
         drawing.keys.filter { it !in ids }.forEach { drawing.remove(it)?.stop() }
         for (picture in library.pictures) {
             // Its name as it is now: renamed, a picture keeps its row.
             rows.getOrPut(picture.id) { pictureRow(picture) }.findViewById<TextView>(R.id.settings_pictures_name).text = activity.nameOf(picture)
+            showSeeThrough(picture)
             if (drawThumbnails && picture.id !in drawing && thumbnailOf(picture.id).drawable == null) draw(picture)
         }
         if (library.pictures.map { it.id } != listed) {
@@ -202,6 +213,7 @@ internal class LibraryList(
             background = roundRect(roles.surfaceHighest, resources.getDimension(UiR.dimen.corner_picture))
             imageTintList = ColorStateList.valueOf(roles.primary)
         }
+        for (line in lines.values) line.setStroke(thumbnailLine, roles.outlineVariant)
     }
 
     /** The screen's activity result: what Add from folder added, if it's its. */
@@ -273,6 +285,32 @@ internal class LibraryList(
             true
         }
         return row
+    }
+
+    /**
+     * [picture]'s thumbnail as see-through as the picture is known to be: over the row, with no card
+     * behind it (a background as clear, which still rounds its corners), and a hairline around it,
+     * drawn over its image (the view's overlay), so a picture reaching its edge doesn't hide it; else
+     * on the card. Brought up to date each time the library shows, as a row may be made before its
+     * picture's copy, which tells whether it's see-through. The thumbnail itself is drawn see-through
+     * by [thumbnails] from the copy alone.
+     */
+    private fun showSeeThrough(picture: Picture) {
+        val seeThrough = picture.seeThrough == true
+        if (seeThrough == (picture.id in lines)) return
+        val thumbnail = thumbnailOf(picture.id)
+        if (seeThrough) {
+            // Inside the thumbnail, its outer edge on the thumbnail's own: Android draws a stroke
+            // inside the bounds, so its corners are rounded half a line less.
+            val line = roundRect(Color.TRANSPARENT, thumbnailCorner - thumbnailLine / 2f, thumbnailLine, roles().outlineVariant)
+            line.setBounds(0, 0, thumbnailWidth, thumbnailHeight)
+            lines[picture.id] = line
+            thumbnail.overlay.add(line)
+            thumbnail.background = roundRect(Color.TRANSPARENT, thumbnailCorner)
+        } else {
+            lines.remove(picture.id)?.let(thumbnail.overlay::remove)
+            thumbnail.setBackgroundResource(R.drawable.settings_pictures_thumbnail_background)
+        }
     }
 
     private fun thumbnailOf(id: PictureId) = rows.getValue(id).findViewById<ImageView>(R.id.settings_pictures_thumbnail)

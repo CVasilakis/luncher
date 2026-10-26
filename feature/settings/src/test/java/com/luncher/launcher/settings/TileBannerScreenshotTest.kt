@@ -1,5 +1,7 @@
 package com.luncher.launcher.settings
 
+import android.graphics.Bitmap
+import android.graphics.Color
 import android.os.Looper
 import android.view.View
 import android.view.ViewGroup
@@ -7,12 +9,15 @@ import android.widget.TextView
 import androidx.test.platform.app.InstrumentationRegistry
 import com.luncher.domain.appearance.Appearance
 import com.luncher.domain.appearance.Corners
+import com.luncher.domain.appearance.ThemeAppearance
+import com.luncher.domain.appearance.ThemeMode
 import com.luncher.domain.appearance.TileStyle
 import com.luncher.domain.apps.AppCustomization
 import com.luncher.domain.apps.FakeAppCustomizations
 import com.luncher.domain.apps.FakeInstalledApps
 import com.luncher.domain.apps.FakeInstalledApps.Companion.app
 import com.luncher.domain.apps.TileImage
+import com.luncher.domain.pictures.FakePictureImages
 import com.luncher.domain.pictures.FakePictures
 import com.luncher.domain.pictures.FakePictures.Companion.picture
 import com.luncher.domain.pictures.Fit
@@ -52,6 +57,25 @@ class TileBannerScreenshotTest {
     private val tileShaped = picture("poster.png", added = 2, bytes = 900_000)
     private val library = arrayOf(photo, panorama, tileShaped, picture("a picture with a name far too long for its row.jpg", added = 1, bytes = 1_100_000))
 
+    /**
+     * See-through pictures, and an opaque photo among them: a dark logo, which shows only over a
+     * light row, a white one, and a cut-out in the accent's colors.
+     */
+    private val darkLogo = picture("dark-logo.png", added = 3, bytes = 10_000).copy(seeThrough = true)
+    private val whiteLogo = picture("white-logo.png", added = 2, bytes = 28_000).copy(seeThrough = true)
+    private val cutout = picture("cutout.png", added = 1, bytes = 2_400_000).copy(seeThrough = true)
+    private val seeThrough = arrayOf(photo, darkLogo, whiteLogo, cutout)
+
+    /** The see-through pictures' thumbnails, see-through, the others as [TestPicturesGraph] draws them. */
+    private val seeThroughThumbnails = FakePictureImages { picture, width, height, _ ->
+        when (picture) {
+            darkLogo.id -> seeThroughSample(Color.rgb(24, 28, 34), width, height)
+            whiteLogo.id -> seeThroughSample(Color.WHITE, width, height)
+            cutout.id -> seeThroughSample(Color.rgb(230, 120, 40), width, height)
+            else -> sample(picture.value, width, height)
+        }
+    }
+
     private val youtube = app("youtube")
 
     private lateinit var graph: TestPicturesGraph
@@ -64,11 +88,20 @@ class TileBannerScreenshotTest {
 
     private fun idle() = shadowOf(Looper.getMainLooper()).idle()
 
-    /** The picker for YouTube's tile, with [pictures], its tile showing [image] as stored, every image drawn. */
-    private fun picker(vararg pictures: Picture, image: TileImage? = null, appearance: Appearance = Appearance()): TileBannerActivity {
+    /**
+     * The picker for YouTube's tile, with [pictures], its tile showing [image] as stored, every image
+     * drawn, the thumbnails by [thumbnails] if given.
+     */
+    private fun picker(
+        vararg pictures: Picture,
+        image: TileImage? = null,
+        appearance: Appearance = Appearance(),
+        thumbnails: FakePictureImages<Bitmap>? = null,
+    ): TileBannerActivity {
         graph = object : TestPicturesGraph(FakePictures(*pictures)) {
             override val installedApps = FakeInstalledApps(youtube, app("music"))
             override val appCustomizations = FakeAppCustomizations(mapOf(youtube.launchable to AppCustomization(image = image)))
+            override val thumbnails = thumbnails ?: super.thumbnails
         }
         application.graph = graph
         graph.appearanceSettings.appearance = appearance
@@ -140,6 +173,25 @@ class TileBannerScreenshotTest {
         activity.onBackPressed()
         idle()
         captureScreenFocused("src/test/screenshots/settings/settings_tile_banner_discard.png")
+    }
+
+    // See-through pictures: their thumbnails over the row, a hairline around each; the white logo
+    // chosen and focused; the opaque photo on its card, as before.
+    @Test
+    fun tileBannerPickerSeeThrough() {
+        picker(*seeThrough, image = TileImage(whiteLogo.id), thumbnails = seeThroughThumbnails)
+            .window.decorView.captureFocused("src/test/screenshots/settings/settings_tile_banner_see_through.png")
+    }
+
+    // The same in the light theme, the dark logo chosen and focused.
+    @Test
+    fun tileBannerPickerSeeThroughLight() {
+        picker(
+            *seeThrough,
+            image = TileImage(darkLogo.id),
+            appearance = Appearance(theme = ThemeAppearance(mode = ThemeMode.LIGHT)),
+            thumbnails = seeThroughThumbnails,
+        ).window.decorView.captureFocused("src/test/screenshots/settings/settings_tile_banner_see_through_light.png")
     }
 
     // Mirrored, but not the preview's content nor the pictures.
