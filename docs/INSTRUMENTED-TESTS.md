@@ -147,7 +147,8 @@ error; and Android can give the focus to a window before its first layout.
   (`RootViewWithoutFocusException`). So after the key that closes it, a test calls
   `waitUntilDestroyed()` (`Closed.kt`) before it looks at the screen it returns to: Add from
   folder in `BackgroundActivityTest`, the appearance editor and the background editor (closed by
-  Save) in `AppearanceActivityTest`, Hide apps and the settings panel in `HomeActivityTest`. UI
+  Save) in `AppearanceActivityTest`, Hide apps and the settings panel in `HomeActivityTest`, the
+  tile banner picker (closed by Save) in `TileBannerActivityTest`. UI
   Automator's looks don't pick a window, and a screen opened after the closed one is on top of
   it, so neither needs the wait.
 

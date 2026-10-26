@@ -12,7 +12,7 @@ slow CPU and storage). Two goals shape the structure:
 
 ```
 :app               ──▶  every module below; the composition root
-:feature:home      ──▶  :domain, :ui; :feature:settings, for its activity's class
+:feature:home      ──▶  :domain, :ui; :feature:settings, to start its activities
 :feature:settings  ──▶  :domain, :ui
 :platform          ──▶  :domain, :ui
 :ui                ──▶  :domain, for the theme's colors (ColorRoles)

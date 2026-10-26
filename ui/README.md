@@ -133,14 +133,17 @@ can, the focused thing stands out from afar, and every color comes from the user
   corners, and its entries with it (`ListEntry.corner`, `ScrollFrame.corner`,
   [`feature/home/`](../feature/home/README.md#a-tiles-menu)). An entry far from its container's
   corners (a side sheet's, a dialog's) keeps `corner_entry` (12 dp).
-- **The keyboard covers no dialog, and moves no screen.** A dialog with a field (`NameDialog`) is
+- **The keyboard covers no dialog's field, and moves no screen.** A dialog with a field (`NameDialog`) is
   centered, and near the top of the screen, `dialog_margin` from its edge, while the keyboard
   shows. The screen that opens one declares `windowSoftInputMode="adjustNothing"`: by default
   Android slides a window up so its own focused view (a low tile, a low picture) clears the
   keyboard, a black band below it. From API 30 on, Android says whether the keyboard shows, not
   reliably how tall it is (0 on some versions), so the dialog moves on whether it shows, changing
   its window only when that changes (changed before the keyboard is up, the window would keep it
-  down); before API 30, Android moves the dialog above the keyboard and back by itself.
+  down); before API 30, Android moves the dialog above the keyboard and back by itself. From API
+  30 on, the dialog's window doesn't shrink to the room above the keyboard either (its
+  `fitInsetsTypes` leave the keyboard out): on a screen too short for both (720p at 320 dpi) the
+  keyboard covers the buttons, whose Rename its Done stands in for, never the field.
 - **Room for the zoom, inside what clips.** A parent that clips cuts each child to the child's own
   bounds, so a zoomed field or button needs its room inside the view that holds it: padding, with
   `clipToPadding` off, and `clipChildren` off on what's between it and what clips. The layout

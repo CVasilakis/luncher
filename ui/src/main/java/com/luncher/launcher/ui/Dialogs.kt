@@ -191,6 +191,10 @@ class NameDialog(
             val window = checkNotNull(window)
             val margin = context.resources.getDimensionPixelSize(R.dimen.dialog_margin)
             var raised = false
+            // Nor does its window shrink to the room above the keyboard, as API 30 makes a window
+            // with a field do: on a short screen (720p at 320 dpi) that cut the field's text in
+            // half. Whole, the keyboard covers its buttons only, which its Done stands in for.
+            window.attributes = window.attributes.apply { fitInsetsTypes = fitInsetsTypes and WindowInsets.Type.ime().inv() }
             window.decorView.setOnApplyWindowInsetsListener { view, insets ->
                 val keyboard = insets.isVisible(WindowInsets.Type.ime())
                 if (keyboard != raised) {

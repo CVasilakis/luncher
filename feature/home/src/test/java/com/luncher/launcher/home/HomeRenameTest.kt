@@ -6,6 +6,7 @@ import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowInsets
+import android.view.WindowManager
 import android.view.inputmethod.EditorInfo
 import android.widget.TextView
 import com.luncher.domain.apps.AppCustomization
@@ -152,6 +153,19 @@ class HomeRenameTest {
         dialog.keyboard(shown = false)
         assertEquals(Gravity.CENTER, attributes().gravity)
         assertEquals(0, attributes().y)
+    }
+
+    // Robolectric doesn't shrink a window for the keyboard, so this checks what keeps Android from
+    // doing it: the window says which insets it fits (the flag a set fitInsetsTypes sets), and the
+    // keyboard isn't among them. Without the flag, API 30 adds the keyboard for a window with a field.
+    @Test
+    fun `the dialog's window doesn't shrink to the room above the keyboard`() {
+        val attributes = checkNotNull(start().get().rename("B").window).attributes
+        val privateFlags = WindowManager.LayoutParams::class.java.getField("privateFlags").getInt(attributes)
+        val controlled = WindowManager.LayoutParams::class.java.getField("PRIVATE_FLAG_FIT_INSETS_CONTROLLED").getInt(null)
+
+        assertTrue("the window says which insets it fits", privateFlags and controlled != 0)
+        assertEquals(0, attributes.fitInsetsTypes and WindowInsets.Type.ime())
     }
 
     @Test

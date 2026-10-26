@@ -646,12 +646,23 @@ before any was added closes the window, and the screen stays; after, the message
 those cancelled counted. Closing the screen while it adds (Home) stops the adding. While no picture
 of the list can be added, Add all is dimmed, and the focus passes it by.
 
-To try it on an emulator, put a picture in the debug build's drop folder, up to API 34 (from
-Android 16 on Luncher can't read a file adb put there either,
-[`platform/README.md`](../../platform/README.md#the-drop-folders); share one instead):
+To try it on an emulator, put a picture in the debug build's drop folder (from Android 16 on
+Luncher can't read a file adb put there,
+[`platform/README.md`](../../platform/README.md#the-drop-folders), until it's made the file's
+owner, below; or copy it there with a file manager on the emulator, or share one):
 
 ```bash
 adb push holiday.jpg /sdcard/Android/media/com.luncher.launcher.debug/
+```
+
+From Android 16 on, the media store can make Luncher the owner of what adb put there:
+
+```bash
+adb shell am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_FILE \
+  -d file:///sdcard/Android/media/com.luncher.launcher.debug/holiday.jpg
+adb shell "content update --uri content://media/external/file \
+  --bind owner_package_name:s:com.luncher.launcher.debug \
+  --where \"_data LIKE '%/Android/media/com.luncher.launcher.debug/%'\""
 ```
 
 To try a share, install the instrumented tests' APK too (`./gradlew installDebug

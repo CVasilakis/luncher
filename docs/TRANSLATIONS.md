@@ -28,7 +28,8 @@ with the language's own patterns, a file's size, which Android formats (`Formatt
 pictures' names, which are their files'.
 
 A right-to-left language mirrors the settings panels, the picture library's screens (the tile
-image's picker among them) and the window over the home screen while its wallpaper is drawn, but
+banner picker among them) and the windows over the home screen (a tile's menu, the rename dialog,
+the window while the wallpaper is drawn or the tiles' pictures are prepared), but
 not the home screen, nor the editors' preview of it or of a tile, nor a picture
 ([`app/README.md`](../app/README.md#manifest-why-each-part-is-there)).
 

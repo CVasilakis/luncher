@@ -7,7 +7,7 @@ rules it follows: [`../../docs/ARCHITECTURE.md`](../../docs/ARCHITECTURE.md).
 | | |
 |---|---|
 | Package | `com.luncher.launcher.home` |
-| Depends on | `:domain`; `:ui`; `:feature:settings`, for `SettingsActivity`'s class, which it starts, and the settings panel's names, which the message that every app is hidden refers to |
+| Depends on | `:domain`; `:ui`; `:feature:settings`, for `SettingsActivity`'s class and `TileBannerActivity.intent`, the screens it starts, and the settings panel's names, which the message that every app is hidden refers to |
 
 ## Layout
 

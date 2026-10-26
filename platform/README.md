@@ -246,8 +246,11 @@ last one:
 card (`Context.getExternalMediaDirs()`, which creates them): a file manager on the TV, or a computer
 writing a USB drive, puts pictures there, and Luncher reads them without any permission. Not
 `Android/data/<applicationId>`, which file managers can't write from Android 11 on. From Android
-16 on, a file another app (or adb) put there can't be read; `MediaFolderPictures` lists only what
-it can read, so there a picture comes in through a share.
+16 on, Luncher can open a file there only if the media store names Luncher as its owner. It does
+for what another app copies or moves into the folder (a file manager) and for what it finds on a
+USB drive written by a computer, since it gives a file there the owner the folder is named
+after; not for what adb pushes, whose owner is the shell. `MediaFolderPictures` lists only what
+it can read.
 
 ## Manifest
 

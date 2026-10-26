@@ -20,7 +20,8 @@ import com.luncher.launcher.ui.R as UiR
  * [FolderPictures] in Luncher's media folders, `Android/media/<applicationId>` on the TV's storage
  * and on each USB drive or SD card ([dropFolders]): a file manager, or a computer writing a USB
  * drive, puts pictures there, and Luncher reads them without any permission. Only files Luncher
- * can read: on Android 16 one another app put there can't be.
+ * can read: from Android 16 on, only those the media store names Luncher the owner of, which it
+ * does for what a file manager or a USB drive puts there, not for what adb pushes.
  *
  * Listing is a job of [JobPriority.PICTURE_SCREENS] (a drive is slow), which reads each file's
  * size and its format; a file BitmapFactory can't read is listed only if it's in a format Luncher
