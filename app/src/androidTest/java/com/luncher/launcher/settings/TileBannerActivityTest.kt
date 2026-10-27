@@ -41,6 +41,7 @@ import com.luncher.domain.apps.FakeInstalledApps
 import com.luncher.domain.apps.FakeInstalledApps.Companion.app
 import com.luncher.domain.apps.FakePreparedTiles
 import com.luncher.domain.apps.PreparedTileImages
+import com.luncher.domain.apps.PreparedTiles
 import com.luncher.domain.apps.TileBackdrop
 import com.luncher.domain.apps.TileDrawing
 import com.luncher.domain.apps.TileFocusShape
@@ -134,7 +135,8 @@ class TileBannerActivityTest {
             override val preparedPictures: PreparedPictures = FakePreparedPictures()
             // Not the device's kept wallpaper: none, kept in memory.
             override val wallpaper = Wallpaper(FakeStoredWallpaper(), pictureImages, BlurredWallpaperFrost(), appearanceSettings, jobs) { Handler(Looper.getMainLooper()).post(it) }
-            override val preparedTileImages = PreparedTileImages(preparedPictures, this@TileBannerActivityTest.prepared, jobs) { Handler(Looper.getMainLooper()).post(it) }
+            override val preparedTiles: PreparedTiles<Bitmap> = this@TileBannerActivityTest.prepared
+            override val preparedTileImages = PreparedTileImages(preparedPictures, preparedTiles, jobs) { Handler(Looper.getMainLooper()).post(it) }
         }
     }
 

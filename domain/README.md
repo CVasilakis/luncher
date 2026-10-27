@@ -91,6 +91,7 @@ domain/src/
 │       ├── Direction.kt         model: a D-pad arrow
 │       ├── TileShape.kt         model and rule: a tile's shape, 16:9, and the corners of a tile drawn at another size, as round for it as the home screen's
 │       ├── TileSize.kt          model: a tile's size in px, as TileLayouts lays it out (tileSize)
+│       ├── TilePlace.kt         model: where the home screen shows a tile, which it tells the tile banner picker; rule: the screen's middle without one (on)
 │       ├── TileGrid.kt          rule: the grid (rows of tiles as wide as a width; the short row first or last, at the left, centered or at the right; at the top, centered or at the bottom of a height; room below each row for the tiles' names), and moves in it
 │       ├── TileFocus.kt         rule: where each arrow takes the focus among the tiles: along the row, the nearest tile up or down, and back the way it came
 │       ├── TileLayouts.kt       rule: the layouts for a TileGeometry, in pixels at a density; picks the arrangement and placement
@@ -103,7 +104,7 @@ domain/src/
     ├── apps/FakeAppCustomizations.kt fake of the AppCustomizations port: what the user set in memory; named(app, name)
     ├── apps/FakeAppInfoScreen.kt   fake of the AppInfoScreen port: whether the page exists, as the test sets it
     ├── apps/FakeAppImages.kt       fake of the AppImages port: draws what the test says, counting what it drew
-    ├── apps/FakePreparedTiles.kt   fake of the PreparedTiles port: the tiles kept in memory, each for its drawing, with the shape a test makes where it asks for one; copies missing or damaged, tiles that can't be kept or don't read, as the test says; with ManualJobs, failing if asked to prepare outside a job
+    ├── apps/FakePreparedTiles.kt   fake of the PreparedTiles port: the tiles kept in memory, each for its drawing, with the shape a test makes where it asks for one; copies missing or damaged, tiles that can't be kept or don't read, as the test says; the drawings a preview made (made); with ManualJobs, failing if asked to prepare outside a job
     ├── appearance/FakeAppearanceSettings.kt  fake of the AppearanceSettings port: the appearance in memory
     ├── appearance/AppearanceChanges.kt       each option at each value but its default, in a context that offers it: what the catalog-wide tests draw (SAMPLE_WALLPAPER for the background's, wide or tall)
     ├── clock/FakeClock.kt          fake of the Clock port: a fixed time the test moves

@@ -266,8 +266,9 @@ class HomeActivity : Activity() {
             // Stored, and shown as any change of the arrangement is (showArrangement).
             AppAction.Hide -> arrangements.save(arranged.hide(tile.app).arrangement)
             AppAction.Rename -> askName(tile.app)
-            // Full-screen, so the home screen is stopped meanwhile, and shows the tile as stored once it's back (onStart).
-            AppAction.TileBanner -> startActivity(TileBannerActivity.intent(this, tile.app.launchable))
+            // Full-screen, so the home screen is stopped meanwhile, and shows the tile as stored once
+            // it's back (onStart). Its preview shows the tile where it is here, over that part of the wallpaper.
+            AppAction.TileBanner -> startActivity(TileBannerActivity.intent(this, tile.app.launchable, tiles.placeOf(tile)))
             AppAction.Info -> openAppInfo(tile.app)
         }
     }

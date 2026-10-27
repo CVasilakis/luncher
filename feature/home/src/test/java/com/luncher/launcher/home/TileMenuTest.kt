@@ -21,6 +21,7 @@ import com.luncher.domain.apps.FakeAppInfoScreen
 import com.luncher.domain.apps.FakeInstalledApps
 import com.luncher.domain.apps.FakeInstalledApps.Companion.app
 import com.luncher.domain.apps.TileImage
+import com.luncher.domain.layout.TilePlace
 import com.luncher.domain.pictures.Fit
 import com.luncher.domain.pictures.Framing
 import com.luncher.domain.pictures.PictureId
@@ -154,7 +155,7 @@ class TileMenuTest {
     }
 
     @Test
-    fun `Tile banner opens the picker for the app's tile, over the home screen in its task`() {
+    fun `Tile banner opens the picker for the app's tile, over the home screen in its task, saying where the tile shows`() {
         val activity = start().get()
         val menu = activity.longPress("b")
 
@@ -162,9 +163,14 @@ class TileMenuTest {
 
         assertFalse(menu.isShowing)
         val intent = shadowOf(activity).nextStartedActivity
-        val expected = TileBannerActivity.intent(activity, app("b").launchable)
+        // Where the tile is in the window, which covers the screen, scrolled as it shows, before its zoom.
+        val tile = activity.tile("b")
+        val tiles = tile.parent as View
+        val window = IntArray(2).also(tiles::getLocationInWindow)
+        val place = TilePlace(window[0] + tile.left - tiles.scrollX, window[1] + tile.top - tiles.scrollY, 1920, 1080)
+        val expected = TileBannerActivity.intent(activity, app("b").launchable, place)
         assertEquals(expected.component, intent.component)
-        assertEquals(expected.extras!!.strings(), intent.extras!!.strings())
+        assertEquals(expected.extras!!.values(), intent.extras!!.values())
         assertEquals(0, intent.flags and Intent.FLAG_ACTIVITY_NEW_TASK)
     }
 
@@ -184,7 +190,9 @@ class TileMenuTest {
         assertTrue(activity.tile("b").isFocused)
     }
 
-    private fun Bundle.strings(): Map<String, String?> = keySet().associateWith { getString(it) }
+    /** Each extra, arrays as lists, so two bundles compare by what they hold. */
+    @Suppress("DEPRECATION")
+    private fun Bundle.values(): Map<String, Any?> = keySet().associateWith { get(it).let { value -> if (value is IntArray) value.toList() else value } }
 
     // The settings app disabled since the menu opened.
     @Test

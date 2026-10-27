@@ -24,11 +24,10 @@ import com.luncher.domain.apps.bannerFor
 import com.luncher.domain.apps.homeApps
 import com.luncher.domain.apps.ownBanner
 import com.luncher.domain.apps.tileImageOptions
-import com.luncher.domain.layout.TileShape
+import com.luncher.domain.layout.TilePlace
 import com.luncher.domain.pictures.Picture
 import com.luncher.domain.pictures.PictureId
 import com.luncher.domain.pictures.choosing
-import com.luncher.launcher.ui.ScreenSize
 import com.luncher.launcher.ui.WorkingDialog
 import com.luncher.launcher.ui.homeTileSize
 import com.luncher.launcher.ui.styleScreen
@@ -40,7 +39,8 @@ import java.util.Locale
  * framed. The background editor's layout and parts, with a tile in place of the home screen: at
  * the end, the pictures to choose from, in their container: Original banner (no picture), the
  * library's pictures by name, and Add from folder, a hint above them; at the start, a preview of
- * the app's tile with the chosen image, as large as the room allows, the app's name below it, the
+ * the app's tile with the chosen image, at rest and focused, as the home screen will show it at the
+ * tile's place there, which the home screen gives ([intent]), the app's name below it, the
  * tile image's options as fields, two a row (Fit, Position; then the tile's look, Backdrop and
  * Focus, dimmed but for a see-through picture), and Save with Delete all beside it. Mirrored in a
  * right-to-left language, like the other settings screens; the preview's content isn't.
@@ -141,8 +141,8 @@ class TileBannerActivity : Activity() {
         opened = true
         setContentView(R.layout.settings_tile_banner_activity)
         preview = findViewById(R.id.settings_tile_banner_preview)
-        // The app's tile, at a tile's shape.
-        findViewById<PictureStartColumn>(R.id.settings_tile_banner_start).hold(preview) { TILE }
+        // The app's tile twice, at rest and focused, side by side.
+        findViewById<PictureStartColumn>(R.id.settings_tile_banner_start).hold(preview) { preview.shape() }
         name = findViewById(R.id.settings_tile_banner_name)
 
         // Its picture's shape is known once the library is read, as it starts (showLibrary).
@@ -187,7 +187,7 @@ class TileBannerActivity : Activity() {
             listener,
         )
 
-        preview.drawWith(graph.appBanners, graph.pictureImages, graph.jobs)
+        preview.drawWith(graph.appBanners, graph.preparedTiles, graph.wallpaper, graph.jobs, intent.place())
         show()
         window.styleScreen(theme.roles)
         list.style(theme.roles)
@@ -215,14 +215,9 @@ class TileBannerActivity : Activity() {
         started = true
         installedApps.addListener(showApp)
         pictures.addListener(showLibrary)
-        val appearance = settings.read()
-        preview.style(appearance.tileStyle.corners, appearance.tileGeometry)
+        preview.style(settings.read())
+        preview.start()
         showLibrary()
-    }
-
-    override fun onRestart() {
-        super.onRestart()
-        if (opened) preview.resume()
     }
 
     override fun onStop() {
@@ -393,25 +388,31 @@ class TileBannerActivity : Activity() {
     companion object {
         private const val EXTRA_PACKAGE = "com.luncher.launcher.settings.extra.TILE_PACKAGE"
         private const val EXTRA_ACTIVITY = "com.luncher.launcher.settings.extra.TILE_ACTIVITY"
+        private const val EXTRA_PLACE = "com.luncher.launcher.settings.extra.TILE_PLACE"
 
         private const val DIMMED = 0.4f
 
-        /** The preview's shape: a tile's. */
-        private val TILE = ScreenSize(TileShape.WIDTH, TileShape.HEIGHT)
-
         /**
          * Opens the picker for [app]'s tile, from another feature's screen (the home screen's tile
-         * menu): the one way to start it, so which app it's for is passed as it expects.
+         * menu): the one way to start it, so which app it's for is passed as it expects; and where
+         * the tile shows, [place], which its preview shows it at, or null where none is known (in
+         * the screen's middle then).
          */
-        fun intent(context: Context, app: LaunchableApp): Intent =
+        fun intent(context: Context, app: LaunchableApp, place: TilePlace? = null): Intent =
             Intent(context, TileBannerActivity::class.java)
                 .putExtra(EXTRA_PACKAGE, app.packageName)
                 .putExtra(EXTRA_ACTIVITY, app.activityName)
+                .apply { if (place != null) putExtra(EXTRA_PLACE, intArrayOf(place.x, place.y, place.screenWidth, place.screenHeight)) }
 
         private fun Intent.app(): LaunchableApp? {
             val packageName = getStringExtra(EXTRA_PACKAGE) ?: return null
             val activityName = getStringExtra(EXTRA_ACTIVITY) ?: return null
             return LaunchableApp(packageName, activityName)
+        }
+
+        private fun Intent.place(): TilePlace? {
+            val place = getIntArrayExtra(EXTRA_PLACE)?.takeIf { it.size == 4 } ?: return null
+            return TilePlace(place[0], place[1], place[2], place[3])
         }
     }
 }

@@ -42,6 +42,9 @@ class FakePreparedTiles<Image>(
     /** Every tile [prepare] prepared and kept, in order. */
     val prepared: MutableList<Pair<LaunchableApp, TileDrawing>> = Collections.synchronizedList(ArrayList())
 
+    /** Every drawing [make] made a tile of, kept nowhere (a preview's), in order. */
+    val made: MutableList<TileDrawing> = Collections.synchronizedList(ArrayList())
+
     /** Every app whose tile [delete] deleted, and the apps [deleteAllBut] kept, in order. */
     val deleted: MutableList<LaunchableApp> = Collections.synchronizedList(ArrayList())
     val keptOnly: MutableList<Set<LaunchableApp>> = Collections.synchronizedList(ArrayList())
@@ -78,6 +81,7 @@ class FakePreparedTiles<Image>(
     override fun make(drawing: TileDrawing, stopped: () -> Boolean): PreparedTile<Image>? {
         inJob()
         if (stopped() || copies?.isPrepared(drawing.picture) == false) return null
+        made += drawing
         return tile(drawing)
     }
 

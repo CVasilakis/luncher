@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- The tile banner picker: at the start the preview of the app's tile, the app's name below it,
-     the options (Fit and Position), Save and Delete all, which scroll on the smallest screens; at
+     the options (Fit, Position, Backdrop and Focus), Save and Delete all, which scroll on the smallest screens; at
      the end, below their label and the hint, the pictures to choose from in their container: the
      background editor's layout, with a tile in place of the home screen.
      Mirrored in a right-to-left language, like the other settings screens; the preview's content
@@ -37,8 +37,9 @@
             android:paddingLeft="@dimen/settings_container_padding"
             android:paddingRight="@dimen/settings_container_padding">
 
-            <!-- The app's tile with the draft's image, its size set by PictureStartColumn, its
-                 corners the tiles'. Not focusable. -->
+            <!-- The app's tile with the draft's image, at rest and focused, side by side, over the
+                 wallpaper at the tile's place on the home screen; its size set by
+                 PictureStartColumn, from its shape. Not focusable. -->
             <com.luncher.launcher.settings.TilePreviewView
                 android:id="@+id/settings_tile_banner_preview"
                 android:layout_width="match_parent"

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Lifts an app tile while it has focus, with the focus frame off: the framed tile's zoom
-     (home_tile_focus.xml), and a rise toward the viewer, which makes Android's renderer cast the
-     tile's shadow, from its outline. Declared once per tile, so a key press starts existing
-     animators instead of creating new ones. -->
+     (home_tile_focus.xml), and a rise toward the viewer, as high as :ui's tile_lift, which makes
+     Android's renderer cast the tile's shadow, from its outline. Declared once per tile, so a key
+     press starts existing animators instead of creating new ones. -->
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:state_focused="true">
         <set>
@@ -19,7 +19,7 @@
             <objectAnimator
                 android:duration="@android:integer/config_shortAnimTime"
                 android:propertyName="translationZ"
-                android:valueTo="@dimen/home_tile_lift"
+                android:valueTo="@dimen/tile_lift"
                 android:valueType="floatType" />
         </set>
     </item>

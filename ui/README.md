@@ -47,7 +47,8 @@ ui/
     │   │   ├── ScreenSize.kt     screenSize(): the screen's size in px, what the wallpaper is drawn at and
     │   │   │                     the previews' shape
     │   │   ├── HomeTiles.kt      homeTileSize(): the home screen's tiles' size in px, what their pictures are prepared
-    │   │   │                     at, by the home screen and the tile banner picker alike
+    │   │   │                     at, by the home screen and the tile banner picker alike; FOCUSED_TILE_ZOOM, the
+    │   │   │                     focused tile's zoom, the home screen's and the picker's preview's
     │   │   ├── ShortestShowing.kt  how long a wait has shown, so it shows half a second at least: WorkingDialog's,
     │   │   │                     and the share window's wheel
     │   │   ├── TileName.kt       the app name below a tile: its paint, its gap, the room it takes
@@ -76,7 +77,7 @@ ui/
     │       │   │                 corners, the dialogs' and WorkingDialog's sizes, the wallpaper outline's width, the
     │       │   │                 tile name's text size and gap; the home screen's padding at the sides
     │       │   │                 (screen_padding_horizontal), which the home tile's size comes from; the tile
-    │       │   │                 shape's band, shadow and its drop; the tile's frame
+    │       │   │                 shape's band, shadow and its drop; the tile's frame and its lift (tile_lift)
     │       │   └── themes.xml    Theme.Luncher, the app's and the home screen's theme; Theme.Luncher.Dialog, the
     │       │                     dialogs', and Theme.Luncher.Working; Widget.Luncher.Button, a button's
     │       └── values-h450dp/    a screen's title, and the gap below a panel's, on a screen 450 dp tall or more
@@ -92,7 +93,7 @@ ui/
 ```
 
 Resources here have no prefix (`accent`, `Theme.Luncher`, `icon_check`); a feature's are named after it
-(`home_tile_lift`). Code refers to them through this module's R class, imported as
+(`home_tile_focus`). Code refers to them through this module's R class, imported as
 `com.luncher.launcher.ui.R as UiR` next to the module's own `R`; layouts and themes by name, as
 any resource.
 

@@ -18,6 +18,7 @@ import com.luncher.domain.apps.PreparedTileImages
 import com.luncher.domain.apps.bannerFor
 import com.luncher.domain.layout.PixelBounds
 import com.luncher.domain.layout.TileSize
+import com.luncher.launcher.ui.FOCUSED_TILE_ZOOM
 import com.luncher.launcher.ui.TileParts
 import com.luncher.launcher.ui.TilePainter
 
@@ -293,8 +294,8 @@ internal class AppTileView(
     }
 
     companion object {
-        /** The focused tile's zoom, framed (home_tile_focus.xml) or lifted (home_tile_lift.xml). */
-        const val FOCUSED_ZOOM = 1.15f
+        /** The focused tile's zoom, framed (home_tile_focus.xml) or lifted (home_tile_lift.xml): :ui's. */
+        const val FOCUSED_ZOOM = FOCUSED_TILE_ZOOM
 
         /** A held tile's zoom, while the user moves its app: the focused one's. */
         const val HELD_ZOOM = FOCUSED_ZOOM

@@ -23,6 +23,7 @@ import com.luncher.domain.apps.FakeInstalledApps
 import com.luncher.domain.apps.FakeInstalledApps.Companion.app
 import com.luncher.domain.jobs.ManualJobs
 import com.luncher.launcher.testing.TV_1080P
+import com.luncher.launcher.ui.R as UiR
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertSame
@@ -162,7 +163,7 @@ class HomeAppearanceTest {
         idle()   // the focus animator's frames
 
         val tiles = activity.tiles()
-        val lift = activity.resources.getDimension(R.dimen.home_tile_lift)
+        val lift = activity.resources.getDimension(UiR.dimen.tile_lift)
         assertEquals(lift, tiles[0].translationZ)
         assertEquals(AppTileView.FOCUSED_ZOOM, tiles[0].scaleX)
         assertEquals(0f, tiles[1].translationZ)

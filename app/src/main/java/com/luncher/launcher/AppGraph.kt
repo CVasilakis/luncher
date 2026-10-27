@@ -12,6 +12,7 @@ import com.luncher.domain.apps.AppInfoScreen
 import com.luncher.domain.apps.AppImages
 import com.luncher.domain.apps.InstalledApps
 import com.luncher.domain.apps.PreparedTileImages
+import com.luncher.domain.apps.PreparedTiles
 import com.luncher.domain.clock.Clock
 import com.luncher.domain.jobs.Jobs
 import com.luncher.domain.pictures.FolderPictures
@@ -75,8 +76,11 @@ open class AppGraph(context: Context) : HomeGraph, SettingsGraph {
      * stops, and the tile banner picker's Save and the home screen prepare through the same.
      */
     override val preparedTileImages: PreparedTileImages<Bitmap> by lazy {
-        PreparedTileImages(preparedPictures, FilePreparedTiles(appContext), jobs) { Handler(Looper.getMainLooper()).post(it) }
+        PreparedTileImages(preparedPictures, preparedTiles, jobs) { Handler(Looper.getMainLooper()).post(it) }
     }
+
+    /** The prepared tiles' files, which [preparedTileImages] keeps, and the tile banner picker's preview makes a draft's tile through. */
+    override val preparedTiles: PreparedTiles<Bitmap> by lazy { FilePreparedTiles(appContext) }
 
     /** The background thread, for the adapters' and screens' jobs; open so a test can run them when it says. */
     override val jobs: Jobs by lazy { BackgroundThreadJobs() }

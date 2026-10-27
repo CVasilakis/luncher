@@ -1,6 +1,22 @@
 package com.luncher.launcher.settings
 
 import android.app.Activity
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Point
+import android.graphics.Rect
+import android.graphics.RectF
+import android.view.ViewGroup
+import com.luncher.domain.appearance.colorRoles
+import com.luncher.domain.layout.TilePlace
+import com.luncher.domain.pictures.FakePictureImages
+import com.luncher.domain.pictures.PictureId
+import com.luncher.domain.wallpaper.Wallpaper
+import com.luncher.launcher.ui.FOCUSED_TILE_ZOOM
+import com.luncher.launcher.ui.TileFrost
+import com.luncher.launcher.ui.TilePainter
+import org.robolectric.annotation.GraphicsMode
 import android.content.Intent
 import android.graphics.Outline
 import android.os.Looper
@@ -32,7 +48,6 @@ import com.luncher.domain.apps.TileDrawing
 import com.luncher.domain.apps.TileFocusShape
 import com.luncher.domain.apps.TileImage
 import com.luncher.domain.apps.TileLook
-import com.luncher.domain.layout.TileShape
 import com.luncher.domain.layout.TileSize
 import com.luncher.domain.pictures.FakePictures
 import com.luncher.domain.pictures.FakePictures.Companion.picture
@@ -294,56 +309,251 @@ class TileBannerActivityTest {
         assertEquals("Films", activity.findViewById<TextView>(R.id.settings_tile_banner_name).text.toString())
     }
 
-    @Test
-    fun `the preview has a tile's shape, its corners as round for its size as the tiles'`() {
-        val appearance = Appearance(tileGeometry = TileGeometry(tileWidthDp = 160), tileStyle = TileStyle(corners = Corners.Radius(9)))
-        graph(beach, appearance = appearance)
+    /** The preview's two panels, at rest then focused, and the tile in each. */
+    private fun TilePreviewView.panels(): Pair<ViewGroup, ViewGroup> = getChildAt(0) as ViewGroup to getChildAt(1) as ViewGroup
 
-        val preview = start().get().preview()
+    private fun ViewGroup.tile(): View = getChildAt(0)
 
-        assertEquals(preview.width * TileShape.HEIGHT / TileShape.WIDTH.toFloat(), preview.height.toFloat(), 1f)
-        val outline = Outline()
-        preview.outlineProvider.getOutline(preview, outline)
-        // 9 dp on a 90 dp tile: a tenth of the height.
-        assertEquals(preview.height / 10f, outline.radius, 0.5f)
-        assertTrue(preview.clipToOutline)
+    /** The home screen's tiles' size, with what's stored. */
+    private val tileSize get() = application.homeTileSize(graph.appearanceSettings.read().tileGeometry)
+
+    /** The picker for the movies app's tile, the home screen saying it shows at [place]. */
+    private fun startAt(place: TilePlace?): TileBannerActivity {
+        val controller = Robolectric.buildActivity(TileBannerActivity::class.java, TileBannerActivity.intent(application, movies.launchable, place)).setup()
+        idle()
+        return controller.get()
+    }
+
+    /**
+     * [graph] with a wallpaper whose every pixel tells where it is on the 1920 x 1080 screen
+     * ([at]): the home screen's, of [background], [appearance] with it, drawn once the test runs the jobs.
+     */
+    private fun wallpaperTellingWhere(background: Background = Background(PictureId("where")), appearance: Appearance = Appearance()) {
+        val library = graph.library
+        graph = object : TestPicturesGraph(library) {
+            override val installedApps = this@TileBannerActivityTest.installedApps
+            override val appCustomizations = this@TileBannerActivityTest.customizations
+            override val pictureImages = FakePictureImages { picture, width, height, _ ->
+                if (picture == background.picture) whereOnScreen(width, height) else sample(picture.value, width, height)
+            }
+        }
+        graph.appearanceSettings.appearance = appearance.copy(background = background)
+        graph.wallpaper.show(background, 1920, 1080)
+        application.graph = graph
+    }
+
+    private fun whereOnScreen(width: Int, height: Int): Bitmap {
+        val pixels = IntArray(width * height) { Color.rgb(it % width % 256, it / width % 256, it % width / 256 + 8 * (it / width / 256)) }
+        return Bitmap.createBitmap(pixels, width, height, Bitmap.Config.ARGB_8888)
+    }
+
+    /** Where on the screen a pixel of [whereOnScreen] is. */
+    private fun at(pixel: Int) = Point(Color.red(pixel) + 256 * (Color.blue(pixel) % 8), Color.green(pixel) + 256 * (Color.blue(pixel) / 8))
+
+    private fun View.drawn(): Bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888).also { draw(Canvas(it)) }
+
+    /** That [panel] shows the wallpaper around its tile as the home screen shows it around a tile at [place]: the tile there, pixel for pixel. */
+    private fun assertShownAt(place: TilePlace, panel: ViewGroup) {
+        val tile = panel.tile()
+        val drawn = panel.drawn()
+        // The middles of its edges, those beside the tile, zoomed, and its frame.
+        val zoomed = RectF(0f, 0f, tile.width.toFloat(), tile.height.toFloat())
+        tile.matrix.mapRect(zoomed)
+        zoomed.offset(tile.left.toFloat(), tile.top.toFloat())
+        zoomed.inset(-8f, -8f)
+        val edges = listOf(Point(panel.width / 2, 4), Point(4, panel.height / 2), Point(panel.width - 4, panel.height / 2), Point(panel.width / 2, panel.height - 4))
+        val beside = edges.filter { !zoomed.contains(it.x.toFloat(), it.y.toFloat()) }
+        assertTrue("the tile covers the panel's edges", beside.size >= 2)
+        for (point in beside) {
+            assertEquals("at $point", Point(place.x - tile.left + point.x, place.y - tile.top + point.y), at(drawn.getPixel(point.x, point.y)))
+        }
     }
 
     @Test
-    fun `the preview shows the app's own image at once, drawn at its size without the tiles' kept images`() {
+    fun `the preview shows the tile twice, side by side, at rest then focused, zoomed as on the home screen, at the home tile's size, each in a rounded panel`() {
+        graph(beach, appearance = Appearance(tileGeometry = TileGeometry(tileWidthDp = 160)))
+
+        val preview = start().get().preview()
+
+        val (resting, focused) = preview.panels()
+        assertTrue(resting.right <= focused.left)
+        assertEquals(resting.width, focused.width)
+        for ((panel, zoom) in listOf(resting to 1f, focused to FOCUSED_TILE_ZOOM)) {
+            assertEquals(tileSize, TileSize(panel.tile().width, panel.tile().height))
+            assertEquals(zoom, panel.tile().scaleX)
+            assertEquals(zoom, panel.tile().scaleY)
+            val outline = Outline()
+            panel.outlineProvider.getOutline(panel, outline)
+            assertEquals(application.resources.getDimension(R.dimen.settings_preview_corner), outline.radius)
+            assertTrue(panel.clipToOutline)
+        }
+    }
+
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun `each panel shows the wallpaper around the tile's place on the home screen, as large as there, once it's drawn`() {
+        graph(beach)
+        wallpaperTellingWhere()
+        val place = TilePlace(96, 700, 1920, 1080)
+        val (resting, focused) = startAt(place).preview().panels()
+        assertEquals("not drawn yet: the plain color", application.getColor(UiR.color.background), resting.drawn().getPixel(resting.width / 2, 8))
+
+        drawInTheBackground()
+
+        assertShownAt(place, resting)
+        assertShownAt(place, focused)
+        // Away from the screen's edges, in the middle of its panel.
+        for (panel in listOf(resting, focused)) {
+            assertEquals(panel.width / 2f, panel.tile().left + panel.tile().width / 2f, 1f)
+            assertEquals(panel.height / 2f, panel.tile().top + panel.tile().height / 2f, 1f)
+        }
+    }
+
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun `without a place from the home screen, or with one for another screen, the tile is in the screen's middle`() {
+        graph(beach)
+        val middle = TilePlace((1920 - tileSize.width) / 2, (1080 - tileSize.height) / 2, 1920, 1080)
+        for (place in listOf(null, TilePlace(96, 700, 1280, 720))) {
+            wallpaperTellingWhere()
+            val (resting, focused) = startAt(place).preview().panels()
+            drawInTheBackground()
+
+            assertShownAt(middle, resting)
+            assertShownAt(middle, focused)
+        }
+    }
+
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun `near the screen's edge the panels show the wallpaper up to it, the tile off their middle, where it is against the wallpaper`() {
+        graph(beach)
+        wallpaperTellingWhere()
+        val place = TilePlace(0, 1080 - tileSize.height, 1920, 1080)
+        val (resting, _) = startAt(place).preview().panels()
+        drawInTheBackground()
+
+        assertShownAt(place, resting)
+        val drawn = resting.drawn()
+        assertEquals(Point(0, 1079), at(drawn.getPixel(0, resting.height - 1)))
+        assertTrue("off the middle", resting.tile().left < (resting.width - tileSize.width) / 2)
+    }
+
+    @Test
+    fun `the app's own image shows at once, drawn at the home tile's size, without the tiles' kept images`() {
         graph(beach)
 
-        val preview = start().get().preview()
+        start()
 
-        assertEquals(FakeAppImages.Rendered(movies.launchable, Banner.AppIcon, preview.width, preview.height), banners.rendered.last())
+        assertEquals(FakeAppImages.Rendered(movies.launchable, Banner.AppIcon, tileSize.width, tileSize.height), banners.rendered.last())
     }
 
     @Test
-    fun `a picture chosen is drawn in the background, at the preview's size, as framed, the latest one showing`() {
+    fun `a picture chosen is made in the background as its tile is prepared, at the tile's size, as framed, the latest one showing, nothing kept`() {
         graph(portrait, panorama, onTiles = mapOf(movies.launchable to image(panorama, Framing(Fit.FILL, PicturePosition.LEFT))))
         val activity = start().get()
         drawInTheBackground()
-        assertEquals(panorama.id to PictureStyle(Framing(Fit.FILL, PicturePosition.LEFT)), graph.pictureImages.rendered.last())
+        assertEquals(listOf(tileDrawing(panorama, Framing(Fit.FILL, PicturePosition.LEFT))), graph.preparedTiles.made)
 
         activity.ok("portrait.jpg")
         activity.set("Fit", "Stretch")
         drawInTheBackground()
 
-        assertEquals(listOf(panorama.id to PictureStyle(Framing(Fit.FILL, PicturePosition.LEFT)), portrait.id to PictureStyle(Framing(Fit.STRETCH))), graph.pictureImages.rendered)
+        assertEquals(listOf(tileDrawing(panorama, Framing(Fit.FILL, PicturePosition.LEFT)), tileDrawing(portrait, Framing(Fit.STRETCH))), graph.preparedTiles.made)
+        assertTrue(graph.preparedTiles.kept.isEmpty())
         assertNull("nothing stored yet", stored?.picture?.takeIf { it != panorama.id })
     }
 
     @Test
-    fun `a picture that can't be drawn shows the app's own image in its place, as its tile would`() {
-        graph(beach)
+    fun `a new backdrop is drawn from the tile made, and Focus Shape makes the tile again, with the picture's shape, which then serves Tile too`() {
+        graph(logo, onTiles = mapOf(movies.launchable to image(logo)))
         val activity = start().get()
-        graph.pictureImages.missing += beach.id
-        val before = banners.rendered.size
-
-        activity.ok("beach.png")
         drawInTheBackground()
 
-        assertEquals(FakeAppImages.Rendered(movies.launchable, Banner.AppIcon, activity.preview().width, activity.preview().height), banners.rendered.drop(before).single())
+        activity.set("Backdrop", "Dark glass")
+        drawInTheBackground()
+        assertEquals(listOf(tileDrawing(logo)), graph.preparedTiles.made)
+
+        activity.set("Focus", "Shape")
+        drawInTheBackground()
+        activity.set("Focus", "Tile")
+        drawInTheBackground()
+        assertEquals(listOf(tileDrawing(logo), tileDrawing(logo, focus = TileFocusShape.SHAPE)), graph.preparedTiles.made)
+    }
+
+    @Test
+    fun `a picture whose tile can't be made shows the app's own image in its place, as its tile would, and is made once its copy is`() {
+        graph(beach, panorama, onTiles = mapOf(movies.launchable to image(beach)))
+        val activity = start().get()
+        drawInTheBackground()
+        graph.preparedPictures.missing += panorama.id
+        val before = banners.rendered.size
+
+        activity.ok("panorama.jpg")
+        drawInTheBackground()
+        assertEquals(FakeAppImages.Rendered(movies.launchable, Banner.AppIcon, tileSize.width, tileSize.height), banners.rendered.drop(before).single())
+
+        // Prepared meanwhile, which the library tells.
+        graph.preparedPictures.missing -= panorama.id
+        graph.library.learn(panorama.id, seeThrough = false)
+        drawInTheBackground()
+
+        assertEquals(listOf(tileDrawing(beach), tileDrawing(panorama)), graph.preparedTiles.made)
+    }
+
+    @Test
+    fun `lifted, the focused tile rises as the home screen's, from the outline the home screen's tiles cast their shadow from`() {
+        graph(beach, onTiles = mapOf(movies.launchable to image(beach)), appearance = Appearance(tileStyle = TileStyle(focusFrame = false, corners = Corners.Radius(9))))
+        val activity = start().get()
+        drawInTheBackground()
+
+        val (resting, focused) = activity.preview().panels()
+        assertEquals(application.resources.getDimension(UiR.dimen.tile_lift), focused.tile().translationZ)
+        assertEquals(0f, resting.tile().translationZ)
+        val outline = Outline()
+        focused.tile().outlineProvider.getOutline(focused.tile(), outline)
+        val bounds = Rect().also(outline::getRect)
+        assertEquals(Rect(1, 1, tileSize.width - 1, tileSize.height - 1), bounds)
+        assertEquals(9 * application.resources.displayMetrics.density - 1, outline.radius)
+        assertEquals(1f, outline.alpha)
+    }
+
+    @Test
+    fun `framed, or lifted with the focus following a see-through picture's shape, the focused tile doesn't rise`() {
+        graph(logo, onTiles = mapOf(movies.launchable to image(logo)), appearance = Appearance(tileStyle = TileStyle(focusFrame = true)))
+        val framed = start().get()
+        drawInTheBackground()
+        assertEquals(0f, framed.preview().panels().second.tile().translationZ)
+
+        graph(logo, onTiles = mapOf(movies.launchable to AppCustomization(image = TileImage(logo.id, look = TileLook(focus = TileFocusShape.SHAPE)))), appearance = Appearance(tileStyle = TileStyle(focusFrame = false)))
+        val shape = start().get()
+        drawInTheBackground()
+        assertEquals(0f, shape.preview().panels().second.tile().translationZ)
+    }
+
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun `each tile is drawn as the home screen draws one at its place, at rest and focused, a Frosted one over the wallpaper's frost there`() {
+        graph(logo, onTiles = mapOf(movies.launchable to AppCustomization(image = TileImage(logo.id, look = TileLook(TileBackdrop.FROSTED)))))
+        wallpaperTellingWhere(appearance = Appearance(tileStyle = TileStyle(corners = Corners.Radius(12))))
+        val place = TilePlace(640, 420, 1920, 1080)
+        val (resting, focused) = startAt(place).preview().panels()
+        drawInTheBackground()
+
+        val wallpaper = checkNotNull(graph.wallpaper.state as? Wallpaper.State.Ready)
+        val painter = TilePainter(application).apply {
+            accent = colorRoles(graph.appearanceSettings.read().theme).homeAccent
+            frost = TileFrost(wallpaper.frost, wallpaper.image.width, wallpaper.image.height)
+        }
+        val image = seeThroughSample(Color.WHITE, tileSize.width, tileSize.height)
+        val parts = painter.parts(image, seeThrough = true, look = TileLook(TileBackdrop.FROSTED))
+        val radius = 12 * application.resources.displayMetrics.density
+        for ((panel, focus) in listOf(resting to 0f, focused to 1f)) {
+            val expected = Bitmap.createBitmap(tileSize.width, tileSize.height, Bitmap.Config.ARGB_8888)
+            val zoom = if (focus > 0) FOCUSED_TILE_ZOOM else 1f
+            painter.draw(Canvas(expected), parts, radius, focus, focus > 0, framed = true, held = false, place.x.toFloat(), place.y.toFloat(), zoom)
+            assertTrue("drawn as the home screen draws it, focus $focus", expected.sameAs(panel.tile().drawn()))
+        }
     }
 
     @Test

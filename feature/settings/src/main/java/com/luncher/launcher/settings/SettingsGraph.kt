@@ -9,6 +9,7 @@ import com.luncher.domain.apps.AppCustomizations
 import com.luncher.domain.apps.AppImages
 import com.luncher.domain.apps.InstalledApps
 import com.luncher.domain.apps.PreparedTileImages
+import com.luncher.domain.apps.PreparedTiles
 import com.luncher.domain.jobs.Jobs
 import com.luncher.domain.pictures.FolderPictures
 import com.luncher.domain.pictures.PictureImages
@@ -66,6 +67,12 @@ interface SettingsGraph {
      * meanwhile, waits for it. One for the process.
      */
     val preparedTileImages: PreparedTileImages<Bitmap>
+
+    /**
+     * What [preparedTileImages] keeps the tiles' pictures in: the tile banner picker's preview makes
+     * the draft's tile through it, as a tile is prepared but kept nowhere ([PreparedTiles.make]).
+     */
+    val preparedTiles: PreparedTiles<Bitmap>
 
     /** The background thread, for what the screens load (thumbnails, previews). */
     val jobs: Jobs

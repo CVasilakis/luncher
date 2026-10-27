@@ -13,7 +13,6 @@ import com.luncher.domain.apps.FakeInstalledApps
 import com.luncher.domain.apps.FakeInstalledApps.Companion.app
 import com.luncher.domain.apps.TileImage
 import com.luncher.domain.apps.tileImageOptions
-import com.luncher.domain.layout.TileShape
 import com.luncher.domain.pictures.FakePictures
 import com.luncher.domain.pictures.FakePictures.Companion.picture
 import com.luncher.domain.pictures.Picture
@@ -133,13 +132,14 @@ class TileBannerLayoutTest(private val screen: TvScreen) {
         activity.assertShown("Save", activity.findViewById(R.id.settings_picture_editor_save))
         activity.assertShown("hint", activity.findViewById(R.id.settings_pictures_hint))
         assertApart(screen, "preview and pictures", bounds(preview), bounds(end))
-        // A tile's shape, to a pixel's rounding; as tall as the room left, a quarter of its height at the column's width at least.
+        // The two panels' shape, to a pixel's rounding; as tall as the room left, a quarter of its height at the column's width at least.
+        val shape = (preview as TilePreviewView).shape()
         assertTrue(
             "preview ${preview.width} x ${preview.height} on $screen",
-            abs(preview.width * TileShape.HEIGHT - preview.height * TileShape.WIDTH) < TileShape.WIDTH + TileShape.HEIGHT,
+            abs(preview.width * shape.height - preview.height * shape.width) < shape.width + shape.height,
         )
         val column = activity.findViewById<View>(R.id.settings_tile_banner_start)
-        val natural = (column.width - column.paddingLeft - column.paddingRight - 2 * activity.resources.getDimensionPixelSize(R.dimen.settings_container_padding)) * TileShape.HEIGHT / TileShape.WIDTH
+        val natural = (column.width - column.paddingLeft - column.paddingRight - 2 * activity.resources.getDimensionPixelSize(R.dimen.settings_container_padding)) * shape.height / shape.width
         assertTrue("preview ${preview.height} px tall on $screen, ${natural / 4} at least", preview.height >= natural / 4)
         // Save above the overscan margin without scrolling, where the screen is as tall as 1080p's
         // 540 dp or more; a shorter one scrolls the column instead.

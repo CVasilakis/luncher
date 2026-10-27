@@ -20,6 +20,7 @@ import com.luncher.domain.apps.FakeInstalledApps
 import com.luncher.domain.apps.FakePreparedTiles
 import com.luncher.domain.apps.InstalledApps
 import com.luncher.domain.apps.PreparedTileImages
+import com.luncher.domain.apps.TileDrawing
 import com.luncher.domain.appearance.SAMPLE_WALLPAPER
 import com.luncher.domain.jobs.ManualJobs
 import com.luncher.domain.pictures.FakeFolderPictures
@@ -35,6 +36,8 @@ import com.luncher.domain.wallpaper.DrawnWallpaper
 import com.luncher.domain.wallpaper.FakeStoredWallpaper
 import com.luncher.domain.wallpaper.FakeWallpaperFrost
 import com.luncher.domain.wallpaper.Wallpaper
+import com.luncher.launcher.ui.TileShapes
+import org.robolectric.RuntimeEnvironment
 
 /**
  * The ports a test gives the settings screens: fakes, which a test replaces with its own
@@ -64,8 +67,21 @@ open class TestSettingsGraph(
     /** The preview's wallpaper is drawn when a test runs these, and a result is shown when it runs the main looper. */
     override val jobs = ManualJobs()
 
-    /** The tiles' pictures as kept for the home screen, in memory: none at first; prepared in a job only, or it fails. */
-    open val preparedTiles by lazy { FakePreparedTiles<Bitmap>(preparedPictures, jobs) { Bitmap.createBitmap(it.size.width, it.size.height, Bitmap.Config.ARGB_8888) } }
+    /**
+     * The tiles' pictures as kept for the home screen, in memory: none at first; prepared, or made
+     * for the picker's preview, in a job only, or it fails. Each drawn as its picture's [sample];
+     * the library's see-through pictures' as a white [seeThroughSample], with its shape.
+     */
+    override val preparedTiles: FakePreparedTiles<Bitmap> by lazy { tilesOf { seeThroughSample(Color.WHITE, it.size.width, it.size.height) } }
+
+    /** [preparedTiles], the library's see-through pictures drawn by [seeThrough], with their shape. */
+    fun tilesOf(seeThrough: (TileDrawing) -> Bitmap): FakePreparedTiles<Bitmap> {
+        val shown = library.read().filter { it.seeThrough == true }.map { it.id }.toSet()
+        val shapes = TileShapes(RuntimeEnvironment.getApplication())
+        return FakePreparedTiles(preparedPictures, jobs, shapes::make) {
+            if (it.picture in shown) seeThrough(it) else sample(it.picture.value, it.size.width, it.size.height)
+        }.apply { this.seeThrough += shown }
+    }
 
     // Made on first use, from what a test's subclass gives.
     override val preparedTileImages by lazy { PreparedTileImages(preparedPictures, preparedTiles, jobs) { Handler(Looper.getMainLooper()).post(it) } }

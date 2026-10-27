@@ -12,7 +12,9 @@ import com.luncher.domain.layout.TileFocus
 import com.luncher.domain.layout.TileLayout
 import com.luncher.domain.layout.TileLayouts
 import com.luncher.domain.layout.TileMoves
+import com.luncher.domain.layout.TilePlace
 import com.luncher.launcher.ui.TileFrost
+import com.luncher.launcher.ui.screenSize
 
 /**
  * The home screen's app tiles, placed where a [TileLayout] says, scrolled so the focused tile stays
@@ -114,6 +116,15 @@ internal class AppTilesView(context: Context, attrs: AttributeSet?) : ViewGroup(
 
     /** Where the D-pad takes the focus among the tiles as [tileLayout] places them: made with it. */
     private var tileFocus: TileFocus = layouts.focus(childCount, width = 0)
+
+    /**
+     * Where [tile], one of these tiles, shows on the screen now, scrolled as it is, before its zoom:
+     * its place in the window, which covers the screen, as the wallpaper and its frost do.
+     */
+    fun placeOf(tile: View): TilePlace {
+        val screen = context.screenSize()
+        return TilePlace(origin[0] + tile.left, origin[1] + tile.top, screen.width, screen.height)
+    }
 
     /** How tiles move among [tileCount] of them, in the arrangement this view shows them in. */
     fun movesFor(tileCount: Int): TileMoves = layouts.moves(tileCount, width - paddingLeft - paddingRight)

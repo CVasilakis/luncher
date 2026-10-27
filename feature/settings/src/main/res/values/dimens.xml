@@ -52,6 +52,9 @@
     <dimen name="settings_screen_gap_less_room">10dp</dimen>
     <dimen name="settings_label_gap">12dp</dimen>
     <dimen name="settings_preview_corner">16dp</dimen>
+    <!-- The tile banner picker's preview: the room around the focused tile, zoomed, in its panel,
+         for its frame, its band or its shadow (TilePreviewView). -->
+    <dimen name="settings_tile_preview_room">16dp</dimen>
 
     <!-- The appearance editor: the groups' container at most this wide, and half the screen on a
          narrow one; an option set in from its group, level with the group's name (the group's

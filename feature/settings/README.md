@@ -45,7 +45,7 @@ feature/settings/
     │   │   ├── OptionGrid.kt     a picture editor's options, of any catalog, as a grid of fields, two a row
     │   │   ├── PictureStartColumn.kt  a picture editor's start: the preview it's given, options, Save and Delete all, the preview as large as the room left
     │   │   ├── TileBannerActivity.kt  the tile banner picker: the picture editors' parts, a preview of the app's tile, Save through the per-app port
-    │   │   ├── TilePreviewView.kt    its preview: the app's tile with the draft's image, a tile's shape and corners
+    │   │   ├── TilePreviewView.kt    its preview: the app's tile at rest and focused, as the home screen draws it, at its place there
     │   │   ├── AddFromFolderActivity.kt  the drop folders' pictures, a preview of the selected one; OK adds it, then returns it; Add all
     │   │   ├── SharePictureActivity.kt   where another app's share arrives: opens the home screen and the window, no screen
     │   │   ├── PictureReceivedActivity.kt the window over the home screen after a share: shows the pictures being added, then their uses, or how many were saved and why the others weren't
@@ -452,13 +452,29 @@ language but for the preview's content and the pictures.
 
 At the end, the list's first row is "Original banner": no picture, the tile showing
 its app's own image (its banner, or for an app without one its icon card), its thumbnail that
-image. At the start, a preview of the app's tile with the draft (`TilePreviewView`): a tile's
-shape, 16:9 (`TileShape`), as large as the room the others leave (`PictureStartColumn`), its
-corners as round for its size as the tiles' are on the home screen (the appearance's corner
-radius, `TileShape.cornerRadius`); below it the app's name as the home screen shows it, centered,
+image. At the start, a preview of the app's tile with the draft (`TilePreviewView`), what the
+home screen will show: the tile twice, side by side, each in a panel with the design system's
+corners, at rest and focused (zoomed by `:ui`'s `FOCUSED_TILE_ZOOM`, framed or lifted as the
+appearance's Focus frame says); below it the app's name as the home screen shows it, centered,
 so the screen says which app's tile it is with no title; then the tile image's options, two
 rows of two fields: Fit and Position, then the tile's look, Backdrop and Focus; then Save and
-Delete all.
+Delete all. The panels line up with the fields' two columns, the gap between them the fields'.
+
+Each panel shows the tile at the home tile's size (`homeTileSize`), over the part of the wallpaper
+around the tile's place on the home screen, at the screen's size: so it's the home screen there,
+pixel for pixel. The place is the home screen's to tell, as it opens the picker
+(`TileBannerActivity.intent`'s `TilePlace`, `:domain`): only it knows where its tiles are, as its
+top bar is as tall as its text and its scroll is where the focus went; it gives the tile's place
+in its window, scrolled as it shows, before its zoom (`AppTilesView.placeOf`). Without one, or
+with one given on a screen of another size (`TilePlace.on`), the tile is in the screen's middle.
+Near the screen's edge a panel shows the wallpaper up to it, the tile off its middle, where it is
+against the wallpaper. Without a wallpaper, or while it's being drawn, the panels show the home
+screen's plain color, edged in the theme's outline color; the wallpaper is the home screen's own
+(`Wallpaper.readyFor`), followed while the picker shows. The preview's shape
+(`TilePreviewView.shape`) is two panels each the zoomed tile with room around it
+(`settings_tile_preview_room`); `PictureStartColumn` gives it the height the others leave, and
+where that's less than the tile needs, both panels show the tile and the wallpaper smaller alike.
+Left to right in every language, the resting tile at the left, as the home screen doesn't mirror.
 
 The options are the tile image's catalog (`TileImageOption`, with its own context,
 `TileImageContext`): what Fit and Position offer follows what filling **a tile** cuts from the
@@ -472,8 +488,18 @@ Dark glass, or Frosted), and **Focus**, what the focus frame, or the lifted tile
 appearance's Focus frame, for every tile. Both are dimmed without a picture, and for a picture
 that isn't see-through, or isn't known to be yet (`Picture.seeThrough`, learned as its working
 copy is made, which the picker's start does where it's missing: the options follow as the library
-tells). The home screen draws the look ([`../home/README.md`](../home/README.md#appearance)); the
-preview doesn't yet: it shows the picture alone.
+tells). The home screen draws the look ([`../home/README.md`](../home/README.md#appearance)), and
+the preview draws it as the home screen does, with `:ui`'s `TilePainter`: the backdrop (Frosted,
+the wallpaper's frosted copy behind the tile's place), the frame or the band around the picture's
+shape, the lifted tile's shadow (Android's, from the outline the painter gives the home screen's
+tiles, `TilePainter.outline`; the picture's own soft shadow for Focus Shape). The draft's tile is
+made as the home screen's is prepared, at the tile's size, but kept nowhere
+(`PreparedTiles.make`, in a job, the latest request winning, the tile shown before staying
+meanwhile): the file is Save's. A new picture, framing or Focus makes it again, Focus Shape with
+the picture's shape (which then serves Tile too); a new backdrop is drawn from the tile made. The
+app's own image, for Original banner, is drawn at once at the tile's size; it also stands in for a
+picture whose tile can't be made (its working copy not prepared yet, or gone), as on the tile,
+which is made at the next change, the library telling once its copy is made.
 
 The picker opens on what's stored for the tile, the focus on its picture, or on Original banner.
 The look is the tile's, not a picture's (`PictureChoice`'s values of the thing itself): another
@@ -507,9 +533,11 @@ the installed apps, shown or hidden, by the package and activity the home screen
 | `TileImage`, `TileLook`, `TileImageOption`, `TileImageContext` (`:domain`) | the draft and what's stored: a picture or none, its framing and the tile's look; its options, what each offers for a picture in a tile's shape, and whether it applies (the look only to a see-through picture); what Save counts as changed (`counted`) |
 | `AppCustomizations` (`:domain`), `ArrangedApps.withImage` | where the choice is stored, with what else the user set for the app |
 | `PreparedTileImages` (`:domain`), `SettingsGraph.preparedTileImages`; `homeTileSize` (`:ui`) | the tile saved prepared for the home screen, at its tiles' size, through the process's one, which the home screen follows; whether there's anything to wait for |
-| `AppImages` (`:domain`), `SettingsGraph.appBanners` | the app's own image, drawn at the preview's and the row's size, kept nowhere: the home screen's kept tiles (`appImages` there) are at the tile's size, a file per app, and drawing another size through them would replace the tile's |
-| `PictureImages` (`:domain`) | a picture drawn from its working copy at the preview's size, in the background, the latest request winning, as the background editor's preview draws one |
-| `TilePreviewView` | the preview: the app's own image at once, a picture once drawn (the app's own where it can't be drawn, as on its tile), each drawn again only when the draft or the size changes |
+| `AppImages` (`:domain`), `SettingsGraph.appBanners` | the app's own image, drawn at the tile's and the row's size, kept nowhere: the home screen's kept tiles (`appImages` there) are its own, a file per app, and drawing through them would replace the tile's |
+| `PreparedTiles` (`:domain`), `SettingsGraph.preparedTiles` | the draft's tile made as a tile is prepared, at the tile's size, kept nowhere (`make`), in the background, the latest request winning |
+| `TilePlace` (`:domain`) | where the home screen showed the tile, which it passes with the intent; the screen's middle without one |
+| `Wallpaper` (`:domain`), `TilePainter`, `TileFrost`, `FOCUSED_TILE_ZOOM`, `tile_lift` (`:ui`) | the home screen's wallpaper and its frost; the tile drawn, zoomed and lifted as the home screen's |
+| `TilePreviewView` | the preview: two panels, the wallpaper's part around the tile's place, the tile at rest and focused; the app's own image at once, a picture's tile once made (the app's own where it can't be made), made again only when the picture, framing, Focus or the tile's size changes |
 | `TileBannerActivity` | what's the tile banner picker's alone: the app it's for, its preview and name, Save through `AppCustomizations` and `PreparedTileImages`, behind its window; the picture editors' parts ([above](#background)) put together |
 
 ### Adding a picture

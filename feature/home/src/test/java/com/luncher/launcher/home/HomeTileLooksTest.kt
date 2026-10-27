@@ -30,6 +30,7 @@ import com.luncher.launcher.testing.TV_1080P
 import com.luncher.launcher.ui.TilePainter
 import com.luncher.launcher.ui.TileShapes
 import com.luncher.launcher.ui.homeTileSize
+import com.luncher.launcher.ui.R as UiR
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -291,7 +292,7 @@ class HomeTileLooksTest {
     fun `lifted, a see-through tile whose focus follows the tile casts a lighter shadow of its outline`() {
         val tiles = start(TileLook(), TileLook(), style = TileStyle(focusFrame = false)).tiles()
 
-        assertEquals(tiles[0].resources.getDimension(R.dimen.home_tile_lift), tiles[0].translationZ)
+        assertEquals(tiles[0].resources.getDimension(UiR.dimen.tile_lift), tiles[0].translationZ)
         assertEquals(TilePainter.SEE_THROUGH_OUTLINE, outline(tiles[0]).alpha)
         assertEquals(TilePainter.SEE_THROUGH_OUTLINE, outline(tiles[1]).alpha)
     }
@@ -340,7 +341,7 @@ class HomeTileLooksTest {
         for (tile in lifted) {
             tile.requestFocus()
             idle()
-            assertEquals(tile.resources.getDimension(R.dimen.home_tile_lift), tile.translationZ)
+            assertEquals(tile.resources.getDimension(UiR.dimen.tile_lift), tile.translationZ)
             assertEquals(1f, outline(tile).alpha)
         }
     }
@@ -362,7 +363,7 @@ class HomeTileLooksTest {
 
         appearance.write(Appearance(topLeftTiles, TileStyle(focusFrame = false)))   // lifted again: the Tile one lifts
         idle()
-        assertEquals(tiles[1].resources.getDimension(R.dimen.home_tile_lift), tiles[1].translationZ)
+        assertEquals(tiles[1].resources.getDimension(UiR.dimen.tile_lift), tiles[1].translationZ)
         tiles[0].requestFocus()
         idle()
         assertEquals(0f, tiles[0].translationZ)
@@ -373,7 +374,7 @@ class HomeTileLooksTest {
         val shape = TileLook(TileBackdrop.NONE, TileFocusShape.SHAPE)
         val activity = start(shape, style = TileStyle(focusFrame = false))
         val tile = activity.tiles()[0]
-        val lift = tile.resources.getDimension(R.dimen.home_tile_lift)
+        val lift = tile.resources.getDimension(UiR.dimen.tile_lift)
 
         // Tiles of another size: the app's own image until the picture is prepared for it.
         appearance.write(Appearance(topLeftTiles.copy(tileWidthDp = 200), TileStyle(focusFrame = false)))

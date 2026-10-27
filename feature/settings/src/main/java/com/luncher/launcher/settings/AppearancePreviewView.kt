@@ -27,6 +27,7 @@ import com.luncher.domain.pictures.PictureImages
 import com.luncher.domain.wallpaper.Wallpaper
 import com.luncher.domain.wallpaper.WallpaperDrawing
 import com.luncher.domain.wallpaper.wallpaperDrawing
+import com.luncher.launcher.ui.FOCUSED_TILE_ZOOM
 import com.luncher.launcher.ui.TileName
 import com.luncher.launcher.ui.WallpaperOutline
 import com.luncher.launcher.ui.color
@@ -441,8 +442,8 @@ internal class AppearancePreviewView(context: Context, attrs: AttributeSet?) : V
         const val TILES_TOP = PADDING_TOP + BAR_HEIGHT + 24
         const val TILES = 7
         const val FOCUSED = 0
-        /** The focused tile's zoom, framed or lifted (feature/home's AppTileView), the largest. */
-        const val FOCUS_ZOOM = 1.15f
+        /** The focused tile's zoom, framed or lifted, the home screen's largest (:ui's). */
+        const val FOCUS_ZOOM = FOCUSED_TILE_ZOOM
         /**
          * A lifted tile's shadow: its layers, how much wider and lower each is than the last, in dp,
          * and each one's darkness. They overlap, so it's darkest at the tile, about 40 %, and fades
