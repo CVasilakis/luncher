@@ -118,7 +118,7 @@ class HomeActivity : Activity() {
         clockView = findViewById(R.id.home_clock)
         settingsEntry = findViewById(R.id.home_settings)
         settingsEntry.setOnClickListener { openSettings() }
-        wallpaper = HomeWallpaper(this, graph.wallpaper, ::showOnPicture)
+        wallpaper = HomeWallpaper(this, graph.wallpaper, ::showOnPicture) { tiles.frost = it }
         working = HomeWorking(this, graph.wallpaper, tileImages)
         move = MoveMode(
             tiles,

@@ -33,6 +33,7 @@ import com.luncher.domain.pictures.Blur
 import com.luncher.domain.pictures.Fit
 import com.luncher.domain.pictures.Framing
 import com.luncher.domain.pictures.PicturePosition
+import com.luncher.domain.wallpaper.DrawnWallpaper
 import com.luncher.domain.wallpaper.FakeStoredWallpaper
 import com.luncher.domain.wallpaper.WallpaperDrawing
 import com.luncher.launcher.apps.FilePreparedTiles
@@ -74,7 +75,7 @@ class HomeScreenshotTest {
         hidden: List<String> = emptyList(),
         appearance: Appearance = Appearance(),
         drawn: Boolean = true,
-        kept: Pair<WallpaperDrawing, Bitmap>? = null,
+        kept: Pair<WallpaperDrawing, DrawnWallpaper<Bitmap>>? = null,
         hasAppInfo: Boolean = true,
         named: Map<String, String> = emptyMap(),
         images: Map<String, TileImage> = emptyMap(),
@@ -146,7 +147,7 @@ class HomeScreenshotTest {
 
     private fun fittingTheWallpaper() {
         val background = Background(landscape(), dim = 20)
-        val kept = WallpaperDrawing(background.picture!!, background.style, 1280, 720) to Bitmap.createBitmap(1280, 720, Bitmap.Config.ARGB_8888)
+        val kept = WallpaperDrawing(background.picture!!, background.style, 1280, 720) to withFrost(Bitmap.createBitmap(1280, 720, Bitmap.Config.ARGB_8888))
         start(appearance = Appearance(background = background), drawn = false, kept = kept)
         shadowOf(Looper.getMainLooper()).idle()
     }

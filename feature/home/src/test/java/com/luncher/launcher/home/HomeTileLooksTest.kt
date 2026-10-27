@@ -5,7 +5,9 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Outline
 import android.os.Looper
+import android.view.View
 import com.luncher.domain.appearance.Appearance
+import com.luncher.domain.appearance.Background
 import com.luncher.domain.appearance.FakeAppearanceSettings
 import com.luncher.domain.appearance.TileStyle
 import com.luncher.domain.apps.AppCustomization
@@ -21,6 +23,8 @@ import com.luncher.domain.apps.TileLook
 import com.luncher.domain.pictures.FakePreparedPictures
 import com.luncher.domain.pictures.Framing
 import com.luncher.domain.pictures.PictureId
+import com.luncher.domain.wallpaper.FakeStoredWallpaper
+import com.luncher.domain.wallpaper.wallpaperDrawing
 import com.luncher.launcher.testing.TV_1080P
 import com.luncher.launcher.ui.TilePainter
 import com.luncher.launcher.ui.TileShapes
@@ -71,19 +75,21 @@ class HomeTileLooksTest {
 
     /**
      * The home screen with an app per look in [looks], in order, showing [picture] with it, every
-     * tile prepared; the focus on the first one, its zoom done.
+     * tile prepared; the focus on the first one, its zoom done. Over [wallpaper], kept with its
+     * frosted copy, if there's one.
      */
-    private fun start(vararg looks: TileLook, picture: PictureId = logo, style: TileStyle = TileStyle()): HomeActivity {
+    private fun start(vararg looks: TileLook, picture: PictureId = logo, style: TileStyle = TileStyle(), wallpaper: Bitmap? = null): HomeActivity {
         val names = looks.indices.map { "app $it" }
         val application = application as HomeTestApplication
         val images = names.zip(looks).associate { (name, look) -> app(name).launchable to TileImage(picture, Framing(), look) }
         for ((app, image) in images) tiles.kept[app] = TileDrawing(picture, image.framing, image.look.focus, size)
-        appearance.appearance = Appearance(topLeftTiles, style)
+        appearance.appearance = Appearance(topLeftTiles, style, background = if (wallpaper != null) sky else Background())
         application.graph = object : TestHomeGraph(application) {
             override val installedApps = FakeInstalledApps(names.map(::app))
             override val appCustomizations = FakeAppCustomizations(images.mapValues { AppCustomization(image = it.value) })
             override val appearanceSettings = this@HomeTileLooksTest.appearance
             override val preparedTiles = this@HomeTileLooksTest.tiles
+            override val storedWallpaper = FakeStoredWallpaper(wallpaper?.let { wallpaperDrawing(sky, 1920, 1080)!! to withFrost(it) })
         }
         return Robolectric.buildActivity(HomeActivity::class.java).setup().get().also { idle() }
     }
@@ -111,12 +117,61 @@ class HomeTileLooksTest {
 
     private fun alpha(strength: Float) = (strength * 255).toInt()
 
+    private val sky = Background(PictureId("sky"))
+
+    /**
+     * A sharp wallpaper: red and blue diagonal stripes 120 px wide, darker toward the bottom. Its
+     * frosted copy changes fast across the stripes, so a tile showing a part a few pixels off shows.
+     */
+    private fun stripes(): Bitmap = Bitmap.createBitmap(1920, 1080, Bitmap.Config.ARGB_8888).apply {
+        for (x in 0 until width) for (y in 0 until height) {
+            val shade = 255 - y * 120 / height
+            setPixel(x, y, if ((x + y) / 120 % 2 == 0) Color.rgb(shade, 40, 40) else Color.rgb(40, 40, shade))
+        }
+    }
+
+    /** The frosted copy the home screen has, kept with its wallpaper. */
+    private fun frost(): Bitmap = ((application as HomeTestApplication).graph as TestHomeGraph).storedWallpaper.kept!!.second.frost
+
+    /**
+     * What a Frosted tile shows at ([x], [y]) in the window, where only its backdrop is: the
+     * frosted copy there, stretched over the window and filtered, under its tint, as strong as [tint].
+     */
+    private fun frostAt(x: Float, y: Float, tint: Float): Int {
+        val frost = frost()
+        // Between the 4 nearest pixels' middles, as a filter samples it.
+        val u = (x * frost.width / 1920 - 0.5f).coerceIn(0f, frost.width - 1.001f)
+        val v = (y * frost.height / 1080 - 0.5f).coerceIn(0f, frost.height - 1.001f)
+        val i = u.toInt()
+        val j = v.toInt()
+        val fu = u - i
+        val fv = v - j
+        fun sample(channel: (Int) -> Int): Float =
+            channel(frost.getPixel(i, j)) * (1 - fu) * (1 - fv) + channel(frost.getPixel(i + 1, j)) * fu * (1 - fv) +
+                channel(frost.getPixel(i, j + 1)) * (1 - fu) * fv + channel(frost.getPixel(i + 1, j + 1)) * fu * fv
+        fun tinted(channel: (Int) -> Int) = (sample(channel) * (1 - tint) + 255 * tint).toInt()
+        return Color.rgb(tinted(Color::red), tinted(Color::green), tinted(Color::blue))
+    }
+
+    /** Where the middle of the tile's backdrop pixel ([backdrop]) shows in the window, as the tile is now, its zoom included. */
+    private fun AppTileView.backdropInWindow(): Pair<Float, Float> {
+        val corner = IntArray(2).also(::getLocationInWindow)
+        return corner[0] + (width / 6 + 0.5f) * scaleX to corner[1] + (height / 2 + 0.5f) * scaleY
+    }
+
+    /** The tile's backdrop pixel is the wallpaper behind it, blurred and tinted, within a few levels (the blur, the frost's pixels). */
+    private fun assertShowsTheWallpaperBehind(tile: AppTileView, message: String) {
+        val (x, y) = tile.backdropInWindow()
+        val tint = if (tile.isFocused) TilePainter.FROST_TINT_FOCUSED else TilePainter.FROST_TINT
+        assertColor(frostAt(x, y, tint), tile.drawn().backdrop(), alpha = 255, tolerance = 4, message = "$message, at ($x, $y)")
+    }
+
     /** [actual] is [expected] at [alpha], each color within [tolerance] of it (a blend's rounding). */
-    private fun assertColor(expected: Int, actual: Int, alpha: Int, tolerance: Int = 2) {
-        assertEquals("alpha of ${Integer.toHexString(actual)}", alpha, Color.alpha(actual))
+    private fun assertColor(expected: Int, actual: Int, alpha: Int, tolerance: Int = 2, message: String = "") {
+        assertEquals("$message: alpha of ${Integer.toHexString(actual)}", alpha, Color.alpha(actual))
         if (alpha == 0) return
         for (channel in listOf(Color::red, Color::green, Color::blue)) {
-            assertTrue("${Integer.toHexString(actual)} is ${Integer.toHexString(expected)}", abs(channel(expected) - channel(actual)) <= tolerance)
+            assertTrue("$message: ${Integer.toHexString(actual)} is ${Integer.toHexString(expected)}", abs(channel(expected) - channel(actual)) <= tolerance)
         }
     }
 
@@ -138,7 +193,7 @@ class HomeTileLooksTest {
                     assertColor(0, resting, alpha = 0)
                     assertColor(0, focused, alpha = 0)
                 }
-                // Frosted is drawn as the light glass, until the wallpaper's blurred copy is made.
+                // Frosted is drawn as the light glass without a wallpaper, as here.
                 TileBackdrop.LIGHT_GLASS, TileBackdrop.FROSTED -> {
                     assertColor(Color.WHITE, resting, alpha(TilePainter.LIGHT_GLASS))
                     assertColor(Color.WHITE, focused, alpha(TilePainter.LIGHT_GLASS_FOCUSED))
@@ -332,8 +387,112 @@ class HomeTileLooksTest {
             for (tile in activity.tiles()) {
                 tile.requestFocus()
                 shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(50))   // halfway in
+                repeat(100) { draw() }   // this look's first draws: what it loads once
                 val perDraw = (0 until 500).sumOf { draw() }.toDouble() / 500
                 // Below the smallest object, so a one-off allocation of the JVM's own doesn't count.
+                assertTrue("$style, ${tile.app.name}: $perDraw bytes per draw", perDraw < 16)
+            }
+        }
+    }
+
+    // Frosted: the wallpaper behind the tile, from its frosted copy, wherever the tile is.
+
+    @Test
+    fun `a Frosted tile shows the wallpaper behind it, blurred and tinted, scrolled too`() {
+        val activity = start(TileLook(), TileLook(TileBackdrop.FROSTED), TileLook(TileBackdrop.FROSTED), wallpaper = stripes())
+        val tiles = activity.tiles()
+        activity.findViewById<View>(R.id.home_settings).requestFocus()   // every tile at rest
+        idle()
+
+        assertShowsTheWallpaperBehind(tiles[1], "the second tile")
+        assertShowsTheWallpaperBehind(tiles[2], "the third tile")
+        assertTrue("two places, two colors", tiles[1].drawn().backdrop() != tiles[2].drawn().backdrop())
+
+        activity.findViewById<AppTilesView>(R.id.home_apps).scrollTo(0, 200)
+        assertShowsTheWallpaperBehind(tiles[1], "scrolled")
+    }
+
+    @Test
+    fun `a Frosted tile shows the wallpaper behind it as it shows zoomed, focused, held, or its app moved`() {
+        val activity = start(TileLook(), TileLook(TileBackdrop.FROSTED), TileLook(), wallpaper = stripes())
+        val tile = activity.tiles()[1]
+
+        tile.requestFocus()
+        idle()
+        assertEquals(AppTileView.FOCUSED_ZOOM, tile.scaleX)
+        assertShowsTheWallpaperBehind(tile, "focused")
+
+        val grid = activity.findViewById<AppTilesView>(R.id.home_apps)
+        grid.moveTile(1, 2)
+        idle()
+        assertShowsTheWallpaperBehind(tile, "its app moved")
+
+        tile.held = true
+        idle()
+        assertShowsTheWallpaperBehind(tile, "held")
+    }
+
+    @Test
+    fun `a Frosted tile is Light glass until the wallpaper is drawn, then shows it`() {
+        val activity = start(TileLook(), TileLook(TileBackdrop.FROSTED), wallpaper = stripes())
+        val graph = (application as HomeTestApplication).graph as TestHomeGraph
+        // Another wallpaper, not kept: drawn in the background, meanwhile none.
+        appearance.write(appearance.appearance.copy(background = Background(PictureId("sea"))))
+        idle()
+        val tile = activity.tiles()[1]
+        assertColor(Color.WHITE, tile.drawn().backdrop(), alpha(TilePainter.LIGHT_GLASS))
+        val grid = activity.findViewById<AppTilesView>(R.id.home_apps)
+        grid.draw(Canvas(Bitmap.createBitmap(grid.width, grid.height, Bitmap.Config.ARGB_8888)))   // every tile drawn as it is
+
+        while (graph.jobs.pending > 0) {
+            graph.jobs.runAll()
+            shadowOf(Looper.getMainLooper()).idle()
+        }
+
+        assertTrue("drawn again once the wallpaper is ready", tile.isDirty)
+        assertFalse("the others aren't", activity.tiles()[0].isDirty)
+        assertEquals("the wallpaper behind it, opaque", 255, Color.alpha(tile.drawn().backdrop()))
+    }
+
+    // Android doesn't draw a view again when only its parent scrolls: the Frosted tiles draw
+    // themselves again, the others aren't drawn for it.
+    @Test
+    fun `scrolling draws the Frosted tiles again, not the others`() {
+        val activity = start(TileLook(), TileLook(TileBackdrop.FROSTED), TileLook(TileBackdrop.DARK_GLASS), wallpaper = stripes())
+        val grid = activity.findViewById<AppTilesView>(R.id.home_apps)
+        grid.draw(Canvas(Bitmap.createBitmap(grid.width, grid.height, Bitmap.Config.ARGB_8888)))   // every tile drawn as it is
+        val tiles = activity.tiles()
+        assertFalse(tiles.any { it.isDirty })
+
+        grid.scrollTo(0, 120)
+
+        assertEquals(listOf(false, true, false), tiles.map { it.isDirty })
+    }
+
+    // Rule 5 (docs/ARCHITECTURE.md): over a wallpaper, Frosted tiles allocate nothing as they're
+    // drawn, at rest, as the focus comes, and scrolled.
+    @Test
+    fun `drawing Frosted tiles over a wallpaper allocates nothing, at rest, as the focus comes, and scrolled`() {
+        for (style in listOf(TileStyle(), TileStyle(focusFrame = false))) {
+            val activity = start(
+                TileLook(TileBackdrop.FROSTED), TileLook(TileBackdrop.FROSTED, TileFocusShape.SHAPE), TileLook(TileBackdrop.FROSTED),
+                style = style, wallpaper = stripes(),
+            )
+            val grid = activity.findViewById<AppTilesView>(R.id.home_apps)
+            val canvas = Canvas(Bitmap.createBitmap(grid.width, grid.height, Bitmap.Config.ARGB_8888))
+            val threads = ManagementFactory.getThreadMXBean() as com.sun.management.ThreadMXBean
+            fun draw(): Long {
+                grid.scrollTo(0, (grid.scrollY + 1) % 50)   // Android's own work, not the drawing's
+                val start = threads.currentThreadAllocatedBytes
+                grid.draw(canvas)
+                return threads.currentThreadAllocatedBytes - start
+            }
+            repeat(1000) { draw() }   // classes loaded, code compiled
+            for (tile in activity.tiles()) {
+                tile.requestFocus()
+                shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(50))   // halfway in
+                repeat(100) { draw() }   // this look's first draws: what it loads once
+                val perDraw = (0 until 500).sumOf { draw() }.toDouble() / 500
                 assertTrue("$style, ${tile.app.name}: $perDraw bytes per draw", perDraw < 16)
             }
         }

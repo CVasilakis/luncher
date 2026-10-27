@@ -39,6 +39,7 @@ import com.luncher.launcher.pictures.FilesPictures
 import com.luncher.launcher.pictures.MediaFolderPictures
 import com.luncher.launcher.pictures.WorkingCopyImages
 import com.luncher.launcher.settings.SettingsGraph
+import com.luncher.launcher.wallpaper.BlurredWallpaperFrost
 import com.luncher.launcher.wallpaper.FileStoredWallpaper
 
 /**
@@ -118,9 +119,12 @@ open class AppGraph(context: Context) : HomeGraph, SettingsGraph {
 
     /**
      * The wallpaper, kept in its own file at the screen's size and drawn from the original picture,
-     * not its working copy, as it's stored for good: the thumbnails' cache keeps none of it.
+     * not its working copy, as it's stored for good: the thumbnails' cache keeps none of it. Its
+     * frosted copy, for the Frosted tiles, is kept in the same file.
      */
     override val wallpaper: Wallpaper<Bitmap> by lazy {
-        Wallpaper(FileStoredWallpaper(appContext), FilePictureImages(appContext), appearanceSettings, jobs) { Handler(Looper.getMainLooper()).post(it) }
+        Wallpaper(FileStoredWallpaper(appContext), FilePictureImages(appContext), BlurredWallpaperFrost(), appearanceSettings, jobs) {
+            Handler(Looper.getMainLooper()).post(it)
+        }
     }
 }

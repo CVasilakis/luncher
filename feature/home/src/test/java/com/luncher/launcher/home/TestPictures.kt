@@ -57,6 +57,34 @@ fun seeThroughLogo(): PictureId {
     return added(PictureId("logo"), picture)
 }
 
+/**
+ * A sharp picture in the library's folder: diagonal bands of four colors and thin white rings on a
+ * dark blue, so a Frosted tile's backdrop shows whether it's the part behind the tile, blurred.
+ */
+fun stripes(): PictureId {
+    val picture = Bitmap.createBitmap(1600, 900, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(picture)
+    canvas.drawColor(Color.rgb(28, 36, 68))
+    val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+    val colors = intArrayOf(Color.rgb(235, 85, 60), Color.rgb(245, 200, 30), Color.rgb(60, 180, 215), Color.rgb(120, 210, 130))
+    for (band in 0 until 8) {
+        val left = band * 260f - 300f
+        val stripe = Path().apply {
+            moveTo(left, 900f)
+            lineTo(left + 60f, 900f)
+            lineTo(left + 660f, 0f)
+            lineTo(left + 600f, 0f)
+            close()
+        }
+        canvas.drawPath(stripe, paint.apply { color = colors[band % colors.size] })
+    }
+    paint.style = Paint.Style.STROKE
+    paint.strokeWidth = 6f
+    paint.color = Color.WHITE
+    for ((x, y) in listOf(330f to 520f, 1050f to 260f, 1300f to 700f)) canvas.drawCircle(x, y, 150f, paint)
+    return added(PictureId("stripes"), picture)
+}
+
 private fun added(id: PictureId, picture: Bitmap): PictureId {
     val folder = File(RuntimeEnvironment.getApplication().filesDir, "pictures").apply { mkdirs() }
     File(folder, id.value).outputStream().use { picture.compress(Bitmap.CompressFormat.PNG, 100, it) }

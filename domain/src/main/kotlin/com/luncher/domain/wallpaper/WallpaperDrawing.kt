@@ -7,6 +7,9 @@ import com.luncher.domain.pictures.PictureStyle
 /** What a wallpaper is drawn from: [picture] in [style], at [width] x [height] px, the screen's size. */
 data class WallpaperDrawing(val picture: PictureId, val style: PictureStyle, val width: Int, val height: Int)
 
+/** A wallpaper as drawn: [image], at the screen's size, and [frost], its frosted copy ([WallpaperFrost]), always together. */
+data class DrawnWallpaper<Image>(val image: Image, val frost: Image)
+
 /** The wallpaper [background] asks for on a screen of [width] x [height] px; null without a picture. */
 fun wallpaperDrawing(background: Background, width: Int, height: Int): WallpaperDrawing? =
     background.picture?.let { WallpaperDrawing(it, background.style, width, height) }

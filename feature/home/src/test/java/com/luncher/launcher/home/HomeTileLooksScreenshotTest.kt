@@ -24,6 +24,7 @@ import com.luncher.domain.clock.FakeClock
 import com.luncher.domain.pictures.Framing
 import com.luncher.domain.pictures.PicturePosition
 import com.luncher.domain.pictures.Fit
+import com.luncher.domain.pictures.PictureId
 import com.luncher.launcher.pictures.FilePictureImages
 import com.luncher.launcher.pictures.WorkingCopyImages
 import com.luncher.launcher.testing.TV_1080P
@@ -55,15 +56,17 @@ class HomeTileLooksScreenshotTest {
     private val looks = TileFocusShape.entries.flatMap { focus -> TileBackdrop.entries.map { TileLook(it, focus) } }
 
     /**
-     * The home screen over the landscape, an app per look, each showing the logo with it, its tile
-     * prepared as the app prepares it; the focus on the first, its zoom done.
+     * The home screen over the landscape, or [wallpaper], an app per look of [looks], each showing
+     * the logo with it, its tile prepared as the app prepares it; the focus on the first, its zoom
+     * done.
      */
-    private fun start(style: TileStyle): HomeActivity {
+    private fun start(style: TileStyle, looks: List<TileLook> = this.looks, wallpaper: () -> PictureId = ::landscape): HomeActivity {
         val application = RuntimeEnvironment.getApplication() as HomeTestApplication
         val logo = seeThroughLogo()
-        val background = Background(landscape(), Framing(Fit.FILL, PicturePosition.BOTTOM))
+        val background = Background(wallpaper(), Framing(Fit.FILL, PicturePosition.BOTTOM))
         // Numbered, so the order by name is the looks'.
-        val names = looks.mapIndexed { index, look -> "${index + 1} ${label(look.backdrop)}, ${label(look.focus)}" }
+        val digits = looks.size.toString().length
+        val names = looks.mapIndexed { index, look -> "${(index + 1).toString().padStart(digits, '0')} ${label(look.backdrop)}, ${label(look.focus)}" }
         val graph = object : TestHomeGraph(application) {
             override val installedApps = FakeInstalledApps(names.map(::app))
             override val clock = FakeClock()
@@ -124,6 +127,32 @@ class HomeTileLooksScreenshotTest {
     @Test
     fun tileLooksLiftedSheet() {
         sheet(start(TileStyle(focusFrame = false))).captureRoboImage("src/test/screenshots/home/home_tile_looks_lifted_sheet.png")
+    }
+
+    // Frosted tiles over a sharp wallpaper: each shows the stripes and rings behind it, blurred,
+    // in line with them around the tile; at rest, the first focused (zoomed, its frost too), and
+    // scrolled down to the last row. Each screen at half its size, one below the other.
+    @Test
+    fun tileLooksFrosted() {
+        val activity = start(TileStyle(), looks = List(24) { TileLook(TileBackdrop.FROSTED) }, wallpaper = ::stripes)
+        focusFrontWindow()
+        val tiles = activity.tiles()
+        activity.focus(activity.findViewById(R.id.home_settings))
+        val resting = activity.screen()
+        activity.focus(tiles.first())
+        val focused = activity.screen()
+        activity.focus(tiles.last())
+        val scrolled = activity.screen()
+        check(activity.findViewById<AppTilesView>(R.id.home_apps).scrollY > 0) { "the last row needs a scroll" }
+        val width = resting.width / 2
+        val height = resting.height / 2
+        val sheet = Bitmap.createBitmap(width, 3 * height, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(sheet)
+        val paint = Paint(Paint.FILTER_BITMAP_FLAG)
+        for ((row, screen) in listOf(resting, focused, scrolled).withIndex()) {
+            canvas.drawBitmap(screen, null, Rect(0, row * height, width, (row + 1) * height), paint)
+        }
+        sheet.captureRoboImage("src/test/screenshots/home/home_tile_looks_frosted.png")
     }
 
     /**

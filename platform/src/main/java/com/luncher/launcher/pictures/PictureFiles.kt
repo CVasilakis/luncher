@@ -236,6 +236,19 @@ internal object PictureFiles {
     }
 
     /**
+     * [image] at half its size (rounded down, a pixel at least), into a new bitmap: each pixel the
+     * average of the 2 x 2 under it, a filter's sample exactly between them, so every pixel counts.
+     * [image] stays as it is.
+     */
+    fun half(image: Bitmap): Bitmap {
+        val width = (image.width / 2).coerceAtLeast(1)
+        val height = (image.height / 2).coerceAtLeast(1)
+        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        Canvas(bitmap).drawBitmap(image, null, Rect(0, 0, width, height), Paint(Paint.FILTER_BITMAP_FLAG))
+        return bitmap
+    }
+
+    /**
      * The radii of three box blurs that together blur about as much as a Gaussian blur of standard
      * deviation [sigma] px: boxes of two widths next to each other, the mix whose variances add
      * up closest to sigma² (Kutskir's "boxesForGauss"); at most [MOST_RADIUS], which only a

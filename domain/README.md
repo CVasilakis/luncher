@@ -73,8 +73,9 @@ domain/src/
 │   │   ├── PreparedPictures.kt  port: each picture prepared once for the screens (its working copy), and whether it is for the screen as it is now, or why not (PreparingCause: another screen, or outdated)
 │   │   └── FolderPictures.kt    port, model and rule: the pictures in the drop folders, their preview, and the order they're listed in
 │   ├── wallpaper/
-│   │   ├── WallpaperDrawing.kt  model and rule: what a wallpaper is drawn from (a picture, its style, the screen's size), and why the one kept won't do (DrawingCause)
-│   │   ├── StoredWallpaper.kt   port: the one wallpaper kept, drawn at the screen's size, so a start shows it at once
+│   │   ├── WallpaperDrawing.kt  model and rule: what a wallpaper is drawn from (a picture, its style, the screen's size), and why the one kept won't do (DrawingCause); the wallpaper as drawn, with its frosted copy (DrawnWallpaper)
+│   │   ├── StoredWallpaper.kt   port: the one wallpaper kept, drawn at the screen's size, with its frosted copy, so a start shows both at once
+│   │   ├── WallpaperFrost.kt    port: a wallpaper's frosted copy, small and blurred, the Frosted tiles' backdrop, made with the wallpaper
 │   │   └── Wallpaper.kt         helper: the wallpaper as it stands (none, ready, or being drawn and why), one per process, which a screen watches; saving a background (drawn, kept, then stored), and forgetting a deleted picture; the image ready, for a preview of its background
 │   ├── clock/
 │   │   ├── ClockReading.kt      model: the time, time zone and hour format at one moment
@@ -111,6 +112,7 @@ domain/src/
     ├── pictures/FakePictureImages.kt  fake of the PictureImages port: draws what the test says, keeps what it drew
     ├── pictures/FakePreparedPictures.kt fake of the PreparedPictures port: every picture prepared but those the test says, for the cause it says, and those it can't; how often it was asked
     ├── wallpaper/FakeStoredWallpaper.kt fake of the StoredWallpaper port: the wallpaper kept in memory
+    ├── wallpaper/FakeWallpaperFrost.kt  fake of the WallpaperFrost port: the frosted copy the test makes, and which wallpapers it was asked for
     └── pictures/FakeFolderPictures.kt fake of the FolderPictures port: the drop folders' pictures in memory
 ```
 
@@ -130,8 +132,8 @@ Packages are by topic (`appearance/`, `apps/`, `arrange/`, `clock/`, `jobs/`, `l
   `jobs/`, the "latest request wins" of
   [`ARCHITECTURE.md`](../docs/ARCHITECTURE.md#background-work-and-changes-while-shown), built on the
   `Jobs` port and tested with `ManualJobs`; `Wallpaper`, in `wallpaper/`, state that outlives a
-  screen, one per process, built on `StoredWallpaper`, `PictureImages`, `AppearanceSettings` and
-  `Jobs`, and tested with their fakes; `ReceivedPictures`, in `pictures/`, the shared pictures
+  screen, one per process, built on `StoredWallpaper`, `PictureImages`, `WallpaperFrost`,
+  `AppearanceSettings` and `Jobs`, and tested with their fakes; `ReceivedPictures`, in `pictures/`, the shared pictures
   being added, built on `PictureImport` and tested with `FakePictures`; and `PreparedTileImages`,
   in `apps/`, the tiles' pictures prepared ahead and read, one per process too, built on
   `PreparedPictures`, `PreparedTiles` and `Jobs`, and tested with their fakes.

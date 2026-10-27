@@ -197,7 +197,8 @@ What keeps it light:
   only the scaled copy is kept, and drawing a tile copies it once. A see-through picture whose
   focus follows its shape adds its two masks, at half the tile's scale, one byte a pixel. Its
   glass costs no pass of its own at rest: it's in the picture's pass, so only the focused tile,
-  and the one the focus leaves, draw it apart.
+  and the one the focus leaves, draw it apart. Frosted is the costliest look: two passes at rest
+  (the frost with its tint, then the picture), and drawn again at each frame of a scroll.
 - **Only new apps cost a bitmap.** Coming back to the home screen, or an app changing while it's
   shown, reads the app list again, but keeps the tiles, their bitmaps and the focus when it's the
   same; when an app was installed or updated, only its tile is new. Changes are heard from
@@ -266,8 +267,9 @@ A see-through picture of the library has the tile's look (`TileLook`, set in the
 picker](../settings/README.md#tile-banner)), which the painter draws; an opaque picture, or an
 app's own image, has none, and looks as above, whatever look is stored. Behind the picture, inside
 the tile's rounded shape, its **backdrop**: nothing (None), a white glass (Light glass, 12 %
-white, 26 % focused, the default) or a black one (Dark glass, 30 %, 45 % focused); Frosted is drawn
-as Light glass for now. Its **focus** follows the tile, as every tile's, or the picture's shape:
+white, 26 % focused, the default), a black one (Dark glass, 30 %, 45 % focused), or the wallpaper
+behind the tile, blurred, under 10 % white, 20 % focused (Frosted; without a wallpaper, Light
+glass). Its **focus** follows the tile, as every tile's, or the picture's shape:
 - **Tile, framed:** the frame inside the tile's edge, as on every tile, around the glass.
 - **Tile, lifted:** Android's shadow of the tile's outline, lighter (the outline's alpha at 0.3),
   since it shows through the glass. Without a backdrop, a light card (22 % white) comes with the
@@ -287,6 +289,18 @@ filtered, through matrices made with the tile's parts; the glass is a rounded re
 kept for it, and at rest, in the picture's own pass, through a shader made with the parts
 ([`../../ui/README.md`](../../ui/README.md#layout)): drawing a look allocates nothing either. The tile's look changes how its state animator lifts it, so it's chosen again with a
 new style and with a new bitmap (the picture prepared, which the app's own image stood in for).
+
+A Frosted tile draws its part of the wallpaper's frosted copy ([below](#the-wallpaper)), which
+covers the window as the wallpaper does: the painter moves and scales the canvas so its space is
+the copy's, the tile's zoom undone around its middle, and draws the tile's shape there, through a
+shader made once with the copy, the tint composed in (`TileFrost`); a shader's matrix changed at
+each draw would make Android build the shader again. So the tile needs where it is in the window:
+`AppTilesView` keeps the origin of its tiles there, found as it's laid out and scrolled, and a
+tile adds its own place. Android doesn't draw a view again when it only moves or zooms
+(scrolling, the focus's zoom, the held tile's, an app moved), so the Frosted tiles draw
+themselves again then, and only they: `AppTilesView` tells them as it scrolls or is laid out, a
+tile as its zoom changes (`setScaleX`, its `animate()`) or it's placed elsewhere (`onLayout`). A new
+wallpaper, or none, draws them again too.
 
 With the app name shown (`TileGeometry.appName`, Off by default), a tile draws its app's name
 centered below it, in the primary text color, cut with "…" to the tile's width, outlined as
@@ -329,18 +343,27 @@ drawing goes on when the home screen stops, and shows when it's back. A wallpape
 background editor is drawn the same way; if the user goes home before it's done, the window says
 "Processing background…", as the editor's did.
 
+With the wallpaper comes its frosted copy, the [Frosted tiles'](#appearance) backdrop
+(`WallpaperFrost`): an eighth of the screen's size, strongly blurred, made in the same job right
+after the wallpaper is drawn, from it, kept in the same file and read with it, so a wallpaper is
+never ready without it, and a start has both at once. It's made with every wallpaper, Frosted
+tiles or not: it's small, and saving a tile's look never waits for it. A wallpaper kept before
+frosted copies were reads as none, and is drawn again once ("Updating the background…").
+
 A picture that's gone (deleted in a picture editor, which sets the wallpaper to none, or its
 file lost) is no wallpaper, and without one, none is kept: asked for none, `Wallpaper` deletes the
-kept file. The wallpaper takes about 8 MB of memory at 1080p while shown.
+kept file. The wallpaper takes about 8 MB of memory at 1080p while shown, its frosted copy about
+130 KB.
 
 | Part | Job |
 |---|---|
 | `Background` (`:domain`) | the picture, or none, and how it's drawn: fit, position, dim, blur |
 | `WallpaperDrawing`, `whyDraw` (`:domain`) | what a wallpaper is drawn from (the picture, its style, the screen's size), and why the one kept won't do |
 | `Wallpaper` (`:domain`) | the wallpaper as it stands, one per process, made by `AppGraph`: reads the one kept, draws it again when it won't do, saves a new background (drawn, then stored), forgets a deleted picture |
-| `StoredWallpaper` (`:domain`) / `FileStoredWallpaper` (`:platform`) | the one wallpaper kept, a file replaced in one step |
+| `StoredWallpaper` (`:domain`) / `FileStoredWallpaper` (`:platform`) | the one wallpaper kept, with its frosted copy, a file replaced in one step |
+| `WallpaperFrost` (`:domain`) / `BlurredWallpaperFrost` (`:platform`) | the wallpaper's frosted copy, made in the wallpaper's job |
 | `PictureImages` (`:domain`) / `FilePictureImages` (`:platform`) | draws the picture at the screen's size, keeping nothing |
-| `HomeWallpaper` | the window's background as `Wallpaper` says |
+| `HomeWallpaper` | the window's background as `Wallpaper` says, and the frosted copy to the tiles (`AppTilesView.frost`) |
 | `HomeWorking` | the window while the wallpaper is drawn or the tiles' pictures prepared (`PreparedTileImages`, a tile saved in the picker among them), as both say: the wallpaper's cause first |
 | `WorkingDialog` (`:ui`) | that window: a spinning wheel and why, taking every key, half a second at least |
 

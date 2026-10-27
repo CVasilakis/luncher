@@ -72,6 +72,7 @@ import com.luncher.launcher.testing.waitUntilDestroyed
 import com.luncher.launcher.testing.waitUntilMatches
 import com.luncher.launcher.ui.ListEntry
 import com.luncher.launcher.ui.homeTileSize
+import com.luncher.launcher.wallpaper.BlurredWallpaperFrost
 import org.hamcrest.Matcher
 import org.hamcrest.Matchers.allOf
 import org.junit.After
@@ -132,7 +133,7 @@ class TileBannerActivityTest {
             override val thumbnails: PictureImages<Bitmap> get() = pictureImages
             override val preparedPictures: PreparedPictures = FakePreparedPictures()
             // Not the device's kept wallpaper: none, kept in memory.
-            override val wallpaper = Wallpaper(FakeStoredWallpaper(), pictureImages, appearanceSettings, jobs) { Handler(Looper.getMainLooper()).post(it) }
+            override val wallpaper = Wallpaper(FakeStoredWallpaper(), pictureImages, BlurredWallpaperFrost(), appearanceSettings, jobs) { Handler(Looper.getMainLooper()).post(it) }
             override val preparedTileImages = PreparedTileImages(preparedPictures, this@TileBannerActivityTest.prepared, jobs) { Handler(Looper.getMainLooper()).post(it) }
         }
     }

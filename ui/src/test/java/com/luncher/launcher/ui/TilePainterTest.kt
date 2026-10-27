@@ -155,7 +155,7 @@ class TilePainterTest {
         val glasses = mapOf(
             TileBackdrop.LIGHT_GLASS to (Color.WHITE to TilePainter.LIGHT_GLASS),
             TileBackdrop.DARK_GLASS to (Color.BLACK to TilePainter.DARK_GLASS),
-            TileBackdrop.FROSTED to (Color.WHITE to TilePainter.LIGHT_GLASS),   // as light glass, for now
+            TileBackdrop.FROSTED to (Color.WHITE to TilePainter.LIGHT_GLASS),   // as light glass, without a frost
         )
         for ((backdrop, glass) in glasses) for (radius in listOf(16f, 0f)) {
             val parts = painter.parts(softLogo, seeThrough = true, look = TileLook(backdrop))
@@ -182,6 +182,97 @@ class TilePainterTest {
         val canvas = CountingCanvas(Bitmap.createBitmap(300, 170, Bitmap.Config.ARGB_8888))
         painter.draw(canvas, parts, radius, focus, focused = focus > 0f, framed = true, held = false)
         return canvas.draws
+    }
+
+    // Frosted: the wallpaper's frosted copy behind the tile, as it shows on the screen.
+
+    /**
+     * A frosted copy of a 1920 x 1080 screen, an eighth of its size, sharp, so its part is easy to
+     * tell: blue from the screen's middle column on (x 960), green from its middle row on (y 544).
+     */
+    private val frost = TileFrost(
+        Bitmap.createBitmap(240, 135, Bitmap.Config.ARGB_8888).apply {
+            for (x in 0 until 240) for (y in 0 until 135) setPixel(x, y, Color.rgb(0, if (y >= 68) 200 else 0, if (x >= 120) 200 else 0))
+        },
+        1920, 1080,
+    )
+
+    private val frostedParts get() = painter.parts(logo, seeThrough = true, look = TileLook(TileBackdrop.FROSTED))
+
+    /** The tile drawn with its corner at ([x], [y]) on the screen, zoomed by [zoom], as focused as [focus] says. */
+    private fun frosted(x: Float, y: Float, zoom: Float = 1f, focus: Float = 0f, radius: Float = 16f): Bitmap =
+        Bitmap.createBitmap(300, 170, Bitmap.Config.ARGB_8888).also {
+            painter.frost = frost
+            painter.draw(Canvas(it), frostedParts, radius, focus, focused = focus > 0f, framed = true, held = false, x = x, y = y, zoom = zoom)
+        }
+
+    /** [color] under white of [strength], as the frost's tint is. */
+    private fun tinted(color: Int, strength: Float): Int {
+        fun channel(value: Int) = (value * (1 - strength) + 255 * strength).toInt()
+        return Color.rgb(channel(Color.red(color)), channel(Color.green(color)), channel(Color.blue(color)))
+    }
+
+    private fun assertNear(expected: Int, actual: Int, tolerance: Int = 2, message: String = "") {
+        val apart = listOf(Color::red, Color::green, Color::blue, Color::alpha).maxOf { abs(it(expected) - it(actual)) }
+        assertTrue("$message ${Integer.toHexString(actual)} is ${Integer.toHexString(expected)}", apart <= tolerance)
+    }
+
+    private val tint = (TilePainter.FROST_TINT * 255).toInt() / 255f
+    private val black = Color.BLACK
+    private val blue = Color.rgb(0, 0, 200)
+    private val green = Color.rgb(0, 200, 0)
+
+    @Test
+    fun `a Frosted tile shows the frost behind it where it is on the screen, tinted, the picture over it`() {
+        // Its left part left of the screen's middle, the rest right of it.
+        val left = frosted(x = 940f, y = 400f)
+        assertNear(tinted(black, tint), left.getPixel(12, 85), message = "left of the middle")
+        assertNear(tinted(blue, tint), left.getPixel(28, 85), message = "right of it")
+        assertEquals(Color.RED, left.getPixel(150, 85))
+        // Lower, below the screen's middle row.
+        assertNear(tinted(green, tint), frosted(x = 100f, y = 500f).getPixel(40, 85), message = "below the middle row")
+        // Square corners: the same.
+        assertNear(tinted(blue, tint), frosted(x = 940f, y = 400f, radius = 0f).getPixel(28, 85), message = "square")
+    }
+
+    @Test
+    fun `a zoomed Frosted tile shows what's behind it as it shows, its zoom undone around its middle`() {
+        // Zoomed 1.15 around its middle (1090 on the screen), the tile's x 28 shows at 950, left of the screen's middle.
+        val zoomed = frosted(x = 940f, y = 400f, zoom = 1.15f)
+
+        assertNear(tinted(black, tint), zoomed.getPixel(28, 85))
+        assertNear(tinted(blue, tint), zoomed.getPixel(50, 85))
+        // The frost fills the tile to its edges: what's behind the tile zoomed is the tile's whole shape.
+        assertNear(tinted(black, tint), zoomed.getPixel(2, 85), message = "left edge")
+        assertNear(tinted(blue, tint), zoomed.getPixel(297, 85), message = "right edge")
+    }
+
+    @Test
+    fun `a Frosted tile's tint grows as the focus comes, to its focused strength`() {
+        for (focus in listOf(0.5f, 1f)) {
+            val strength = TilePainter.FROST_TINT + (TilePainter.FROST_TINT_FOCUSED - TilePainter.FROST_TINT) * focus
+            assertNear(tinted(blue, strength), frosted(x = 1200f, y = 100f, focus = focus).getPixel(40, 85), tolerance = 3, message = "at $focus")
+        }
+    }
+
+    @Test
+    fun `a Frosted tile is drawn in two passes at rest, the frost with its tint, then the picture`() {
+        painter.frost = frost
+        for (radius in listOf(16f, 0f)) {
+            assertEquals("at rest, corners $radius", 2, passes(frostedParts, radius, focus = 0f))
+            assertEquals("halfway, corners $radius: frost, more tint, picture, frame", 4, passes(frostedParts, radius, focus = 0.5f))
+        }
+        // The frost is only for Frosted tiles.
+        assertEquals(1, passes(painter.parts(logo, seeThrough = true, look = TileLook(TileBackdrop.LIGHT_GLASS)), 16f, focus = 0f))
+    }
+
+    @Test
+    fun `without a frost, a Frosted tile is Light glass`() {
+        painter.frost = null
+        val asFrosted = drawn(frostedParts, 0.5f)
+        val asLight = drawn(painter.parts(logo, seeThrough = true, look = TileLook(TileBackdrop.LIGHT_GLASS)), 0.5f)
+
+        assertTrue(asFrosted.sameAs(asLight))
     }
 
     // An opaque picture, or an app's own image, has no look: none drawn, whatever is stored.

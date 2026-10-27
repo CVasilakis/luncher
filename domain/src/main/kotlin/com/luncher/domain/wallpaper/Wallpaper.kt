@@ -22,6 +22,10 @@ import com.luncher.domain.pictures.withoutPictures
  * wins. A drawing that has started runs to its end, even if no screen waits for it any more.
  * Without a picture, or with one that's gone, there's no wallpaper, and none is kept.
  *
+ * With the wallpaper comes its frosted copy ([WallpaperFrost]), the backdrop of the tiles whose
+ * look is Frosted: made in the same job, right after the wallpaper is drawn, kept with it and read
+ * with it, so a wallpaper is never ready without it.
+ *
  * A new background is [save]d through it, not written to [settings] directly: the picture is
  * drawn and kept first, and only then is the background stored, so the setting never names a
  * wallpaper that isn't drawn, and the home screen always has one to show.
@@ -32,16 +36,20 @@ import com.luncher.domain.pictures.withoutPictures
 class Wallpaper<Image>(
     private val stored: StoredWallpaper<Image>,
     private val images: PictureImages<Image>,
+    private val frosts: WallpaperFrost<Image>,
     private val settings: AppearanceSettings,
     private val jobs: Jobs,
     onMain: (() -> Unit) -> Unit,
 ) {
 
-    /** What the home screen shows: no picture, the picture, or its plain background while the picture is drawn. */
+    /**
+     * What the home screen shows: no picture, the picture (its [image][Ready.image], and its
+     * [frost][Ready.frost] for the frosted tiles), or its plain background while the picture is drawn.
+     */
     sealed interface State<out Image> {
         data object None : State<Nothing>
 
-        data class Ready<Image>(val image: Image) : State<Image>
+        data class Ready<Image>(val image: Image, val frost: Image) : State<Image>
 
         data class Drawing(val cause: DrawingCause) : State<Nothing>
     }
@@ -83,9 +91,9 @@ class Wallpaper<Image>(
         drawing.stop()
         if (wanted == null) return clear()
         val kept = kept(wanted)
-        if (kept != null) return set(State.Ready(kept))
+        if (kept != null) return set(ready(kept))
         set(State.Drawing(whyDraw(stored.drawing(), wanted) ?: DrawingCause.OUTDATED))   // or kept, but its pixels can't be read
-        draw(wanted, keepIfGone = false) { image -> set(if (image != null) State.Ready(image) else State.None) }
+        draw(wanted, keepIfGone = false) { drawn -> set(if (drawn != null) ready(drawn) else State.None) }
     }
 
     /**
@@ -103,16 +111,16 @@ class Wallpaper<Image>(
         val kept = wanted?.let(::kept)
         if (wanted == null || kept != null) {
             store(background)
-            if (kept != null) set(State.Ready(kept)) else clear()
+            if (kept != null) set(ready(kept)) else clear()
             return done()
         }
         saving = true
         set(State.Drawing(DrawingCause.SAVING))
-        draw(wanted, keepIfGone = true) { image ->
+        draw(wanted, keepIfGone = true) { drawn ->
             saving = false
-            if (image != null) {
+            if (drawn != null) {
                 store(background)
-                set(State.Ready(image))
+                set(ready(drawn))
             } else {
                 shown = Unknown
                 show(settings.read().background, width, height)
@@ -146,22 +154,28 @@ class Wallpaper<Image>(
         listeners -= listener
     }
 
-    /** The image kept, if it was drawn from [wanted]. */
-    private fun kept(wanted: WallpaperDrawing): Image? =
+    /** The wallpaper kept, if it was drawn from [wanted]. */
+    private fun kept(wanted: WallpaperDrawing): DrawnWallpaper<Image>? =
         if (whyDraw(stored.drawing(), wanted) == null) stored.read(wanted) else null
 
     /**
-     * Draws [wanted] in the background and keeps it, then [done] with it, or with null if its
-     * picture is gone: then the one kept is deleted, unless [keepIfGone] (a save, which changes
-     * nothing when it fails).
+     * Draws [wanted] in the background, then its frosted copy, and keeps both, then [done] with
+     * them, or with null if its picture is gone: then the one kept is deleted, unless [keepIfGone]
+     * (a save, which changes nothing when it fails).
      */
-    private fun draw(wanted: WallpaperDrawing, keepIfGone: Boolean, done: (Image?) -> Unit) {
+    private fun draw(wanted: WallpaperDrawing, keepIfGone: Boolean, done: (DrawnWallpaper<Image>?) -> Unit) {
         drawing.load({
-            images.render(wanted.picture, wanted.width, wanted.height, wanted.style).also { image ->
-                if (image != null) stored.store(wanted, image) else if (!keepIfGone) stored.delete()
+            val image = images.render(wanted.picture, wanted.width, wanted.height, wanted.style)
+            if (image == null) {
+                if (!keepIfGone) stored.delete()
+                null
+            } else {
+                DrawnWallpaper(image, frosts.frost(image)).also { stored.store(wanted, it) }
             }
         }, done)
     }
+
+    private fun ready(drawn: DrawnWallpaper<Image>) = State.Ready(drawn.image, drawn.frost)
 
     /** No wallpaper: none kept, deleted after a drawing that's still running, in the order they came. */
     private fun clear() {

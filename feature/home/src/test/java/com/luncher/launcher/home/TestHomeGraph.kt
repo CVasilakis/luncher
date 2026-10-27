@@ -38,10 +38,12 @@ import com.luncher.domain.pictures.PictureImages
 import com.luncher.domain.pictures.PicturePosition
 import com.luncher.domain.pictures.PictureStyle
 import com.luncher.domain.pictures.PreparedPictures
+import com.luncher.domain.wallpaper.DrawnWallpaper
 import com.luncher.domain.wallpaper.FakeStoredWallpaper
 import com.luncher.domain.wallpaper.Wallpaper
 import com.luncher.launcher.apps.BannerImages
 import com.luncher.launcher.apps.FilePreparedTiles
+import com.luncher.launcher.wallpaper.BlurredWallpaperFrost
 
 /**
  * The default tile size, in rows from the top left with the short row last, so a tile's index
@@ -93,8 +95,13 @@ open class TestHomeGraph(context: Context) : HomeGraph {
     open val jobs = ManualJobs()
 
     // Made on first use, from what a test's subclass gives.
-    override val wallpaper by lazy { Wallpaper(storedWallpaper, pictureImages, appearanceSettings, jobs) { Handler(Looper.getMainLooper()).post(it) } }
+    override val wallpaper by lazy {
+        Wallpaper(storedWallpaper, pictureImages, BlurredWallpaperFrost(), appearanceSettings, jobs) { Handler(Looper.getMainLooper()).post(it) }
+    }
 }
+
+/** [image] as a kept wallpaper, with its frosted copy made as the app makes it. */
+fun withFrost(image: Bitmap) = DrawnWallpaper(image, BlurredWallpaperFrost().frost(image))
 
 /**
  * A sample wallpaper: a gradient whose colors and direction tell the style apart, darker with its

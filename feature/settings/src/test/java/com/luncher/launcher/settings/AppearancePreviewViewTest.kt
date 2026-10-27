@@ -21,6 +21,7 @@ import com.luncher.domain.jobs.ManualJobs
 import com.luncher.domain.pictures.FakePictureImages
 import com.luncher.domain.pictures.PictureId
 import com.luncher.domain.wallpaper.FakeStoredWallpaper
+import com.luncher.domain.wallpaper.FakeWallpaperFrost
 import com.luncher.domain.wallpaper.Wallpaper
 import com.luncher.domain.wallpaper.WallpaperDrawing
 import com.luncher.launcher.testing.TV_1080P
@@ -46,7 +47,7 @@ class AppearancePreviewViewTest {
 
     /** The home screen's wallpaper: none until a test keeps one and shows it. */
     private val stored = FakeStoredWallpaper<Bitmap>()
-    private val home = Wallpaper(stored, FakePictureImages(::sampleWallpaper), FakeAppearanceSettings(), jobs) { it() }
+    private val home = Wallpaper(stored, FakePictureImages(::sampleWallpaper), FakeWallpaperFrost(::frostOf), FakeAppearanceSettings(), jobs) { it() }
 
     private val images = FakePictureImages(::sampleWallpaper)
 
@@ -244,7 +245,7 @@ class AppearancePreviewViewTest {
 
     /** The home screen showing [image] as [background]'s wallpaper, kept at 1080p. */
     private fun homeShows(background: Background, image: Bitmap) {
-        stored.kept = WallpaperDrawing(background.picture!!, background.style, 1920, 1080) to image
+        stored.kept = WallpaperDrawing(background.picture!!, background.style, 1920, 1080) to withFrost(image)
         home.show(background, 1920, 1080)
     }
 

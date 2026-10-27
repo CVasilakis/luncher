@@ -46,6 +46,7 @@ import com.luncher.launcher.testing.waitForHomeScreen
 import com.luncher.launcher.testing.waitUntilDestroyed
 import com.luncher.launcher.testing.waitUntilMatches
 import com.luncher.launcher.ui.ListEntry
+import com.luncher.launcher.wallpaper.BlurredWallpaperFrost
 import org.hamcrest.Matcher
 import org.hamcrest.Matchers.allOf
 import org.junit.After
@@ -157,7 +158,7 @@ class AppearanceActivityTest {
             // In memory, every picture prepared: no window over the background editor as it opens.
             override val preparedPictures: PreparedPictures = FakePreparedPictures()
             // Not the device's kept wallpaper: one in memory, drawn as a plain color.
-            override val wallpaper = Wallpaper(FakeStoredWallpaper(), plainImages, settings, jobs) { Handler(Looper.getMainLooper()).post(it) }
+            override val wallpaper = Wallpaper(FakeStoredWallpaper(), plainImages, BlurredWallpaperFrost(), settings, jobs) { Handler(Looper.getMainLooper()).post(it) }
         }
         ActivityScenario.launch(AppearanceActivity::class.java).use {
             waitUntil(group(R.string.settings_appearance_tiles), hasFocus())

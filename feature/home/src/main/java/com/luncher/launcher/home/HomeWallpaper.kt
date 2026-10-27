@@ -6,6 +6,7 @@ import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.ColorDrawable
 import com.luncher.domain.appearance.Background
 import com.luncher.domain.wallpaper.Wallpaper
+import com.luncher.launcher.ui.TileFrost
 import com.luncher.launcher.ui.color
 import com.luncher.launcher.ui.screenSize
 import com.luncher.launcher.ui.R as UiR
@@ -18,12 +19,15 @@ import com.luncher.launcher.ui.R as UiR
  *
  * A start reads a wallpaper kept on the main thread (in [Wallpaper.show]), so the first frame has
  * it, as the tiles' images. A drawing goes on when the home screen stops, and shows when it's back.
- * [onPicture] is told whether a picture shows, the first time and whenever that changes.
+ * [onPicture] is told whether a picture shows, the first time and whenever that changes;
+ * [onFrost], the frosted copy of the picture shown, the Frosted tiles' backdrop, or none, whenever
+ * it changes.
  */
 internal class HomeWallpaper(
     private val activity: Activity,
     private val wallpaper: Wallpaper<Bitmap>,
     private val onPicture: (Boolean) -> Unit,
+    private val onFrost: (TileFrost?) -> Unit,
 ) {
 
     private val plain = ColorDrawable(activity.color(UiR.color.background))
@@ -50,15 +54,18 @@ internal class HomeWallpaper(
     }
 
     private fun apply(state: Wallpaper.State<Bitmap>) {
-        setImage((state as? Wallpaper.State.Ready)?.image)
+        val ready = state as? Wallpaper.State.Ready
+        setImage(ready?.image, ready?.frost)
     }
 
-    private fun setImage(image: Bitmap?) {
+    private fun setImage(image: Bitmap?, frost: Bitmap?) {
         if (applied && image === shown) return
         val pictureChanged = !applied || (image == null) != (shown == null)
         applied = true
         shown = image
         activity.window.setBackgroundDrawable(if (image == null) plain else BitmapDrawable(activity.resources, image))
         if (pictureChanged) onPicture(image != null)
+        // The frost covers what the wallpaper does: the window, which it fills at its size, the screen's.
+        onFrost(if (image != null && frost != null) TileFrost(frost, image.width, image.height) else null)
     }
 }

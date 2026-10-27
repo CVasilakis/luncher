@@ -856,7 +856,7 @@ class BackgroundActivityTest {
     @Test
     fun `Save with no picture stores it at once, deletes the wallpaper kept, and closes`() {
         graph(sunset, background = Background(sunset.id, dim = 20))
-        graph.storedWallpaper.kept = WallpaperDrawing(sunset.id, PictureStyle(dim = 20), 1920, 1080) to sample("kept", 4, 4)
+        graph.storedWallpaper.kept = WallpaperDrawing(sunset.id, PictureStyle(dim = 20), 1920, 1080) to withFrost(sample("kept", 4, 4))
         val activity = start().get()
 
         activity.ok("No picture")
@@ -1009,7 +1009,7 @@ class BackgroundActivityTest {
     @Test
     fun `deleting the wallpaper's picture says so, and leaves no wallpaper at once`() {
         graph(beach, sunset, background = Background(beach.id, dim = 40))
-        graph.storedWallpaper.kept = WallpaperDrawing(beach.id, PictureStyle(dim = 40), 1920, 1080) to sample("kept", 4, 4)
+        graph.storedWallpaper.kept = WallpaperDrawing(beach.id, PictureStyle(dim = 40), 1920, 1080) to withFrost(sample("kept", 4, 4))
         val activity = start().get()
 
         activity.longPress("beach.png", "Delete")
@@ -1118,7 +1118,7 @@ class BackgroundActivityTest {
     @Test
     fun `Delete all with the wallpaper's picture says so, and leaves no wallpaper at once`() {
         graph(beach, sunset, background = Background(beach.id, dim = 40))
-        graph.storedWallpaper.kept = WallpaperDrawing(beach.id, PictureStyle(dim = 40), 1920, 1080) to sample("kept", 4, 4)
+        graph.storedWallpaper.kept = WallpaperDrawing(beach.id, PictureStyle(dim = 40), 1920, 1080) to withFrost(sample("kept", 4, 4))
         val activity = start().get()
 
         activity.deleteAll().performClick()

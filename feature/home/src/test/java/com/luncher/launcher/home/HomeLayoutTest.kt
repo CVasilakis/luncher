@@ -337,7 +337,7 @@ class HomeLayoutTest(private val screen: TvScreen) {
     fun `the window saying the wallpaper is drawn again fits`() {
         val sunset = PictureId("sunset")
         appearance.appearance = Appearance(background = Background(sunset))
-        for (kept in listOf(null, WallpaperDrawing(sunset, PictureStyle(), 1, 1) to Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888))) {
+        for (kept in listOf(null, WallpaperDrawing(sunset, PictureStyle(), 1, 1) to withFrost(Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888)))) {
             stored.kept = kept
             val activity = start()
             shadowOf(Looper.getMainLooper()).idle()

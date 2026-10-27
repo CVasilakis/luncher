@@ -48,6 +48,11 @@ import com.luncher.launcher.ui.TilePainter
  * A tile's picture of the library is prepared ahead, and only read here ([PreparedTileImages]): one
  * not prepared for this tile shows its app's own image until it is, then is drawn again with it
  * ([followPreparing]).
+ *
+ * A Frosted tile ([TileParts.frosted]) shows the wallpaper behind it, blurred, from where it is in
+ * the window and its zoom, as it's drawn. Android doesn't draw a view again when it only moves or
+ * zooms (scrolling, the focus's zoom, the held tile's, an app moved), so the tile draws itself
+ * again then ([placeChanged], [setScaleX], its zoom's animation, [onLayout]); the others don't.
  */
 @SuppressLint("ViewConstructor") // Created in code only, never from XML.
 internal class AppTileView(
@@ -94,6 +99,9 @@ internal class AppTileView(
     /** How strong the lifted tile's shadow is, cast by its outline ([TilePaints.tileOutline]). */
     val outlineAlpha: Float get() = parts?.outlineAlpha ?: 1f
 
+    /** Whether the tile's backdrop is the wallpaper behind it: drawn again whenever it moves or zooms. */
+    private val frosted: Boolean get() = parts?.frosted == true
+
     /** The user holds this tile, to move it. */
     var held = false
         set(value) {
@@ -115,7 +123,30 @@ internal class AppTileView(
         isClickable = true
         contentDescription = app.name
         outlineProvider = paints.tileOutline
+        // The held tile's zoom (animate(), in held) changes the zoom without drawing the tile again.
+        animate().setUpdateListener { placeChanged() }
         restyle()
+    }
+
+    /** It moved on the screen, or its zoom changed, or what's behind it: a Frosted tile draws again. */
+    fun placeChanged() {
+        if (frosted) invalidate()
+    }
+
+    // The state animator zooms the tile through these, which don't draw it again.
+    override fun setScaleX(scaleX: Float) {
+        super.setScaleX(scaleX)
+        placeChanged()
+    }
+
+    override fun setScaleY(scaleY: Float) {
+        super.setScaleY(scaleY)
+        placeChanged()
+    }
+
+    override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
+        // Placed elsewhere (an app moved, another layout) without a new size, it isn't drawn again.
+        if (changed) placeChanged()
     }
 
     /**
@@ -187,7 +218,13 @@ internal class AppTileView(
 
     override fun onDraw(canvas: Canvas) {
         val parts = parts
-        if (parts != null) {
+        if (parts != null && parts.frosted) {
+            // Where it is in the window, before its zoom: the frost covers the window.
+            val origin = (parent as AppTilesView).origin
+            val x = (origin[0] + left).toFloat()
+            val y = (origin[1] + top).toFloat()
+            paints.painter.draw(canvas, parts, paints.cornerRadius(height), focus(), isFocused, paints.framed, held, x, y, scaleX)
+        } else if (parts != null) {
             paints.painter.draw(canvas, parts, paints.cornerRadius(height), focus(), isFocused, paints.framed, held)
         }
         if (paints.showsNames) drawName(canvas)

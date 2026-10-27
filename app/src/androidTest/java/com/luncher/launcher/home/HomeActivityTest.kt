@@ -61,6 +61,7 @@ import com.luncher.launcher.testing.waitForHomeScreen
 import com.luncher.launcher.testing.waitUntilDestroyed
 import com.luncher.launcher.testing.waitUntilMatches
 import com.luncher.launcher.ui.ListEntry
+import com.luncher.launcher.wallpaper.BlurredWallpaperFrost
 import com.luncher.launcher.ui.R as UiR
 import org.hamcrest.Matcher
 import org.hamcrest.Matchers.allOf
@@ -100,6 +101,7 @@ class HomeActivityTest {
                 FakePictureImages { _, width, height, _ ->
                     Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888).apply { eraseColor(WALLPAPER) }
                 },
+                BlurredWallpaperFrost(),
                 appearanceSettings,
                 jobs,
             ) { Handler(Looper.getMainLooper()).post(it) }

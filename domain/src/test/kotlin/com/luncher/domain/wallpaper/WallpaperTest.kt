@@ -22,11 +22,18 @@ class WallpaperTest {
     private val stored = FakeStoredWallpaper<String>()
     private val images = FakePictureImages { picture, width, height, style -> "${picture.value} ${width}x$height dim ${style.dim}" }
     private val jobs = ManualJobs()
+    private val frosts = FakeWallpaperFrost<String> { "$it frosted" }
     private val settings = FakeAppearanceSettings(Appearance(background = background))
 
     /** Results the main thread hasn't run yet, as a Handler would queue them. */
     private val onMain = mutableListOf<() -> Unit>()
-    private val wallpaper = Wallpaper(stored, images, settings, jobs) { onMain += it }
+    private val wallpaper = Wallpaper(stored, images, frosts, settings, jobs) { onMain += it }
+
+    /** The wallpaper [image] as drawn, with its frosted copy, as [frosts] makes it. */
+    private fun drawn(image: String) = DrawnWallpaper(image, "$image frosted")
+
+    /** [image] ready to show, with its frosted copy. */
+    private fun ready(image: String) = State.Ready(image, "$image frosted")
 
     /** Every state the listeners were told of, in order. */
     private val told = mutableListOf<State<String>>().also { told -> wallpaper.addListener { told += wallpaper.state } }
@@ -41,11 +48,11 @@ class WallpaperTest {
 
     @Test
     fun `shows the one kept at once, read on the main thread, when it was drawn from what's wanted`() {
-        stored.kept = drawing to "kept"
+        stored.kept = drawing to drawn("kept")
 
         wallpaper.show(background, 1920, 1080)
 
-        assertEquals(State.Ready("kept"), wallpaper.state)
+        assertEquals(ready("kept"), wallpaper.state)
         assertEquals(0, jobs.pending)
     }
 
@@ -57,38 +64,71 @@ class WallpaperTest {
 
         drawInTheBackground()
 
-        assertEquals(State.Ready("sunset 1920x1080 dim 20"), wallpaper.state)
-        assertEquals(drawing to "sunset 1920x1080 dim 20", stored.kept)
-        assertEquals(listOf(State.Drawing(DrawingCause.OUTDATED), State.Ready("sunset 1920x1080 dim 20")), told)
+        assertEquals(ready("sunset 1920x1080 dim 20"), wallpaper.state)
+        assertEquals(drawing to drawn("sunset 1920x1080 dim 20"), stored.kept)
+        assertEquals(listOf(State.Drawing(DrawingCause.OUTDATED), ready("sunset 1920x1080 dim 20")), told)
+    }
+
+    @Test
+    fun `makes the frosted copy in the drawing's job, from the wallpaper drawn, and keeps both together`() {
+        wallpaper.show(background, 1920, 1080)
+        assertEquals("nothing frosted before the job runs", emptyList<String>(), frosts.frosted)
+
+        jobs.runAll()
+        assertEquals(listOf("sunset 1920x1080 dim 20"), frosts.frosted)
+        assertEquals(drawing to drawn("sunset 1920x1080 dim 20"), stored.kept)
+        drawInTheBackground()
+
+        assertEquals("sunset 1920x1080 dim 20 frosted", (wallpaper.state as State.Ready).frost)
+    }
+
+    @Test
+    fun `reads the frosted copy kept with the wallpaper at once, making none`() {
+        stored.kept = drawing to DrawnWallpaper("kept", "kept frost")
+
+        wallpaper.show(background, 1920, 1080)
+
+        assertEquals(State.Ready("kept", "kept frost"), wallpaper.state)
+        assertEquals(emptyList<String>(), frosts.frosted)
+    }
+
+    @Test
+    fun `makes no frosted copy of a picture that's gone`() {
+        images.missing += sunset
+
+        wallpaper.show(background, 1920, 1080)
+        drawInTheBackground()
+
+        assertEquals(emptyList<String>(), frosts.frosted)
     }
 
     @Test
     fun `draws one kept for another screen size again, saying the screen changed`() {
-        stored.kept = drawing.copy(width = 1280, height = 720) to "small"
+        stored.kept = drawing.copy(width = 1280, height = 720) to drawn("small")
 
         wallpaper.show(background, 1920, 1080)
         assertEquals(State.Drawing(DrawingCause.SCREEN_CHANGED), wallpaper.state)
         drawInTheBackground()
 
-        assertEquals(State.Ready("sunset 1920x1080 dim 20"), wallpaper.state)
+        assertEquals(ready("sunset 1920x1080 dim 20"), wallpaper.state)
         assertEquals(drawing, stored.kept?.first)
     }
 
     @Test
     fun `draws again one whose header reads but whose pixels don't`() {
-        stored.kept = drawing to "damaged"
+        stored.kept = drawing to drawn("damaged")
         stored.unreadable = true
 
         wallpaper.show(background, 1920, 1080)
         assertEquals(State.Drawing(DrawingCause.OUTDATED), wallpaper.state)
         drawInTheBackground()
 
-        assertEquals(State.Ready("sunset 1920x1080 dim 20"), wallpaper.state)
+        assertEquals(ready("sunset 1920x1080 dim 20"), wallpaper.state)
     }
 
     @Test
     fun `without a picture shows none, and deletes the one kept`() {
-        stored.kept = drawing to "kept"
+        stored.kept = drawing to drawn("kept")
 
         wallpaper.show(Background(), 1920, 1080)
         assertEquals(State.None, wallpaper.state)
@@ -100,7 +140,7 @@ class WallpaperTest {
 
     @Test
     fun `a picture that's gone is no wallpaper, and nothing of it is kept`() {
-        stored.kept = drawing.copy(style = PictureStyle()) to "older"
+        stored.kept = drawing.copy(style = PictureStyle()) to drawn("older")
         images.missing += sunset
 
         wallpaper.show(background, 1920, 1080)
@@ -133,7 +173,7 @@ class WallpaperTest {
         drawInTheBackground()
 
         assertEquals(listOf(forest), images.rendered.map { it.first })   // the first one never started
-        assertEquals(State.Ready("forest 1920x1080 dim 0"), wallpaper.state)
+        assertEquals(ready("forest 1920x1080 dim 0"), wallpaper.state)
         assertEquals(forest, stored.kept?.first?.picture)
     }
 
@@ -145,7 +185,7 @@ class WallpaperTest {
 
         drawInTheBackground()
 
-        assertEquals(State.Ready("forest 1920x1080 dim 0"), wallpaper.state)
+        assertEquals(ready("forest 1920x1080 dim 0"), wallpaper.state)
         assertEquals(listOf(drawing, WallpaperDrawing(forest, PictureStyle(), 1920, 1080)), stored.stored)
         assertEquals(forest, stored.kept?.first?.picture)
     }
@@ -192,7 +232,7 @@ class WallpaperTest {
         drawInTheBackground()
 
         assertEquals(chosen, settings.appearance.background)
-        assertEquals(State.Ready("forest 1920x1080 dim 40"), wallpaper.state)
+        assertEquals(ready("forest 1920x1080 dim 40"), wallpaper.state)
         assertEquals(1, done)
     }
 
@@ -207,12 +247,12 @@ class WallpaperTest {
         assertEquals(listOf(forest), images.rendered.map { it.first })
         assertEquals(chosen, settings.appearance.background)
         wallpaper.show(chosen, 1920, 1080)
-        assertEquals(State.Ready("forest 1920x1080 dim 0"), wallpaper.state)
+        assertEquals(ready("forest 1920x1080 dim 0"), wallpaper.state)
     }
 
     @Test
     fun `saving no picture stores it at once, and deletes the one kept`() {
-        stored.kept = drawing to "kept"
+        stored.kept = drawing to drawn("kept")
         var done = 0
 
         wallpaper.save(Background(dim = 40), 1920, 1080) { done++ }
@@ -226,20 +266,20 @@ class WallpaperTest {
 
     @Test
     fun `saving what's kept already stores it at once, drawing nothing`() {
-        stored.kept = WallpaperDrawing(forest, PictureStyle(), 1920, 1080) to "kept forest"
+        stored.kept = WallpaperDrawing(forest, PictureStyle(), 1920, 1080) to drawn("kept forest")
         var done = 0
 
         wallpaper.save(Background(forest), 1920, 1080) { done++ }
 
         assertEquals(Background(forest), settings.appearance.background)
-        assertEquals(State.Ready("kept forest"), wallpaper.state)
+        assertEquals(ready("kept forest"), wallpaper.state)
         assertEquals(1, done)
         assertEquals(0, jobs.pending)
     }
 
     @Test
     fun `saving a picture that's gone meanwhile changes nothing, the stored background's showing, kept`() {
-        stored.kept = drawing to "kept"
+        stored.kept = drawing to drawn("kept")
         images.missing += forest
         var done = 0
 
@@ -248,15 +288,15 @@ class WallpaperTest {
 
         assertEquals(background, settings.appearance.background)
         assertEquals(1, done)
-        assertEquals(State.Ready("kept"), wallpaper.state)
-        assertEquals(drawing to "kept", stored.kept)
+        assertEquals(ready("kept"), wallpaper.state)
+        assertEquals(drawing to drawn("kept"), stored.kept)
     }
 
     // What a preview draws at once (readyFor).
 
     @Test
     fun `gives a preview the image it shows, for its background only`() {
-        stored.kept = drawing to "kept"
+        stored.kept = drawing to drawn("kept")
         wallpaper.show(background, 1920, 1080)
 
         assertEquals("kept", wallpaper.readyFor(background))
@@ -278,7 +318,7 @@ class WallpaperTest {
 
     @Test
     fun `gives a preview the background saved once it's drawn, not the one it replaces meanwhile`() {
-        stored.kept = drawing to "kept"
+        stored.kept = drawing to drawn("kept")
         wallpaper.show(background, 1920, 1080)
         val forestBackground = Background(forest)
 
@@ -295,7 +335,7 @@ class WallpaperTest {
 
     @Test
     fun `forgetting the wallpaper's picture stores no picture at once, then deletes the one kept`() {
-        stored.kept = drawing to "kept"
+        stored.kept = drawing to drawn("kept")
         wallpaper.show(background, 1920, 1080)
 
         wallpaper.forget(setOf(sunset))
@@ -309,13 +349,13 @@ class WallpaperTest {
 
     @Test
     fun `forgetting other pictures changes nothing`() {
-        stored.kept = drawing to "kept"
+        stored.kept = drawing to drawn("kept")
         wallpaper.show(background, 1920, 1080)
 
         wallpaper.forget(setOf(forest))
 
         assertEquals(background, settings.appearance.background)
-        assertEquals(State.Ready("kept"), wallpaper.state)
+        assertEquals(ready("kept"), wallpaper.state)
         assertEquals(0, jobs.pending)
     }
 }

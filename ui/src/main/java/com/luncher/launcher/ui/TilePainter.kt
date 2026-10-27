@@ -46,8 +46,14 @@ import com.luncher.domain.appearance.colorRoles
  * glass is drawn on its own again: its strength follows the focus, and the band and the shape's
  * shadow go between it and the picture.
  *
+ * A Frosted tile's backdrop is the wallpaper behind it, blurred: its part of the screen's [frost],
+ * the wallpaper's frosted copy, its light tint composed in, then the picture over it, two passes,
+ * at rest too (below API 28 a shader can't compose two bitmaps). [draw] takes where the tile is in
+ * the frost's space and how much it's zoomed, so the part drawn is what's behind the tile as it
+ * shows. Without a frost (no wallpaper), Frosted is drawn as Light glass.
+ *
  * Drawing allocates nothing (docs/ARCHITECTURE.md, rule 5): the paints and the glasses' shaders
- * are made once, a tile's shaders and its masks' matrices with its parts.
+ * are made once, the frost's with it, a tile's shaders and its masks' matrices with its parts.
  */
 class TilePainter(context: Context) {
 
@@ -80,8 +86,19 @@ class TilePainter(context: Context) {
     private val lightGlass = glass(Color.WHITE, LIGHT_GLASS)
     private val darkGlass = glass(Color.BLACK, DARK_GLASS)
 
+    /** Fills a Frosted tile's shape with its part of the frost, through the frost's shader. */
+    private val frostPaint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
+
+    /**
+     * The backdrop of the screen's Frosted tiles: its wallpaper's frosted copy; none without a
+     * wallpaper, when they're drawn as Light glass. The screen sets it as its wallpaper comes and
+     * goes, and draws its Frosted tiles again.
+     */
+    var frost: TileFrost? = null
+
     private val bounds = RectF()
     private val frameBounds = RectF()
+    private val frostBounds = RectF()
 
     /**
      * What [draw] draws a tile with: [image], at the tile's size; whether it's [seeThrough], so its
@@ -94,7 +111,7 @@ class TilePainter(context: Context) {
         shape: ShapeMasks<Bitmap>? = null,
         look: TileLook = TileLook(),
     ): TileParts {
-        // Frosted is drawn as light glass for now.
+        // Frosted is drawn as light glass at rest while the screen has no frost.
         val glass = when {
             !seeThrough -> null
             look.backdrop == TileBackdrop.DARK_GLASS -> darkGlass
@@ -108,16 +125,31 @@ class TilePainter(context: Context) {
      * Draws the tile of [parts] at (0, 0), its corners [radius] px round (0, square), as focused as
      * [focus] says (0 at rest to 1, as its animation goes), with the frame while [focused], the
      * appearance's frame if [framed], else as lifted; [held]: its app being moved. Its zoom and
-     * its lift are the view's.
+     * its lift are the view's. A Frosted tile ([TileParts.frosted]) needs where its top left corner
+     * is in [frost]'s space, ([x], [y]) px, before its zoom, and the [zoom] around its middle.
      */
-    fun draw(canvas: Canvas, parts: TileParts, radius: Float, focus: Float, focused: Boolean, framed: Boolean, held: Boolean) {
+    fun draw(
+        canvas: Canvas,
+        parts: TileParts,
+        radius: Float,
+        focus: Float,
+        focused: Boolean,
+        framed: Boolean,
+        held: Boolean,
+        x: Float = 0f,
+        y: Float = 0f,
+        zoom: Float = 1f,
+    ) {
         val image = parts.image
         bounds.set(0f, 0f, image.width.toFloat(), image.height.toFloat())
         val band = parts.band
         val shadow = parts.shadow
+        val frost = frost.takeIf { parts.frosted }
         // At rest nothing goes between the glass and the picture: one pass draws both.
-        val resting = parts.restingWithGlass.takeIf { focus <= 0f }
-        if (parts.backdrop != null && resting == null) {
+        val resting = parts.restingWithGlass.takeIf { focus <= 0f && frost == null }
+        if (frost != null) {
+            drawFrost(canvas, frost, radius, focus, x, y, zoom)
+        } else if (parts.backdrop != null && resting == null) {
             drawBackdrop(canvas, parts.backdrop, radius, focus, lifted = !framed && parts.castsOutlineShadow)
         }
         if (shadow != null && !framed && focus > 0f) {
@@ -163,7 +195,7 @@ class TilePainter(context: Context) {
 
     /**
      * The glass behind a see-through picture, stronger as the focus comes; Frosted is drawn as
-     * light glass for now. Without one, a [lifted] tile gets a light card that comes with the
+     * light glass without a frost. Without one, a [lifted] tile gets a light card that comes with the
      * focus: Android's shadow of the tile would otherwise show through it, a dark box behind
      * nothing. At rest the glass is in the picture's pass instead ([TileParts.restingWithGlass]).
      */
@@ -177,6 +209,45 @@ class TilePainter(context: Context) {
         glassPaint.color = if (backdrop == TileBackdrop.DARK_GLASS) Color.BLACK else Color.WHITE
         glassPaint.alpha = (strength * OPAQUE).toInt()
         canvas.drawRoundRect(bounds, radius, radius, glassPaint)
+    }
+
+    /**
+     * A Frosted tile's backdrop: its part of [frost], tinted, then, as the focus comes, more tint.
+     * The canvas is moved and scaled so its space is the frost's, the tile's zoom undone around
+     * its middle, and the tile's shape drawn there, where the tile shows on the screen: the
+     * frost's shader stays as it was made, as its matrix changed at each draw makes Android build
+     * the shader again (from API 26 on), which made scrolling 2 to 3 times slower on API 36.
+     */
+    private fun drawFrost(canvas: Canvas, frost: TileFrost, radius: Float, focus: Float, x: Float, y: Float, zoom: Float) {
+        val width = bounds.right
+        val height = bounds.bottom
+        val middleX = x + width / 2
+        val middleY = y + height / 2
+        canvas.save()
+        canvas.translate(width / 2, height / 2)
+        canvas.scale(1 / zoom, 1 / zoom)
+        canvas.translate(-middleX, -middleY)
+        canvas.scale(1 / frost.scaleX, 1 / frost.scaleY)
+        // The tile as it shows on the screen, zoomed around its middle, in the frost's pixels.
+        val halfWidth = width * zoom / 2
+        val halfHeight = height * zoom / 2
+        frostBounds.set(
+            (middleX - halfWidth) * frost.scaleX, (middleY - halfHeight) * frost.scaleY,
+            (middleX + halfWidth) * frost.scaleX, (middleY + halfHeight) * frost.scaleY,
+        )
+        frostPaint.shader = frost.shader
+        if (radius == 0f) {
+            canvas.drawRect(frostBounds, frostPaint)
+        } else {
+            canvas.drawRoundRect(frostBounds, radius * zoom * frost.scaleX, radius * zoom * frost.scaleY, frostPaint)
+        }
+        frostPaint.shader = null
+        canvas.restore()
+        if (focus <= 0f) return
+        // White over the tint at rest, as much as brings it to the focused tint's strength.
+        glassPaint.color = Color.WHITE
+        glassPaint.alpha = ((FROST_TINT_FOCUSED - FROST_TINT) * focus / (1 - FROST_TINT) * OPAQUE).toInt()
+        if (radius == 0f) canvas.drawRect(bounds, glassPaint) else canvas.drawRoundRect(bounds, radius, radius, glassPaint)
     }
 
     private fun frame(color: Int, context: Context) = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -203,6 +274,10 @@ class TilePainter(context: Context) {
         const val LIGHT_GLASS_FOCUSED = 0.26f
         const val DARK_GLASS = 0.30f
         const val DARK_GLASS_FOCUSED = 0.45f
+
+        /** The white tint over a Frosted tile's frost, at rest and focused. */
+        const val FROST_TINT = 0.10f
+        const val FROST_TINT_FOCUSED = 0.20f
 
         /** The light card a lifted tile without a backdrop gets, focused. */
         const val LIFT_CARD = 0.22f
@@ -269,6 +344,32 @@ class TileParts internal constructor(
     /** Whether the tile looks different as the focus comes and goes, besides its zoom and frame. */
     val followsFocus: Boolean = seeThrough
 
+    /**
+     * Whether its backdrop is Frosted: the wallpaper behind it, so it's drawn again whenever it
+     * moves on the screen, or its zoom changes, which otherwise redraw nothing.
+     */
+    val frosted: Boolean = seeThrough && backdrop == TileBackdrop.FROSTED
+
+}
+
+/**
+ * The backdrop of a screen's Frosted tiles ([TilePainter.frost]): [image], its wallpaper's frosted
+ * copy, which covers a space of [width] x [height] px, the window the wallpaper fills; with its
+ * shader, the light tint composed over it (a one-color gradient: a bitmap's shader composes only
+ * with one of another kind below API 28), made once with it.
+ */
+class TileFrost(val image: Bitmap, width: Int, height: Int) {
+    internal val scaleX = image.width.toFloat() / width
+    internal val scaleY = image.height.toFloat() / height
+
+    internal val shader: Shader = run {
+        val frost = BitmapShader(image, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP).apply {
+            // On API 36 a bitmap inside a ComposeShader is sampled without the paint's filtering, blocky stretched.
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) filterMode = BitmapShader.FILTER_MODE_LINEAR
+        }
+        val tint = Color.argb((TilePainter.FROST_TINT * 255).toInt(), 255, 255, 255)
+        ComposeShader(frost, LinearGradient(0f, 0f, 1f, 0f, tint, tint, Shader.TileMode.CLAMP), PorterDuff.Mode.SRC_OVER)
+    }
 }
 
 /** A mask of a picture's shape, at half the tile's scale, and the [matrix] that draws it in place at the tile's. */

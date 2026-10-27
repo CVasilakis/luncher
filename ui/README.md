@@ -54,7 +54,7 @@ ui/
     │   │   │                     below a tile; the home screen's, and the room the appearance preview leaves
     │   │   ├── TileShapes.kt     a see-through picture's shape on its tile, made as the tile is prepared: a band
     │   │   │                     around its outline and its soft shadow, at half the tile's scale
-    │   │   ├── TilePainter.kt    draws a home tile from its parts (TileParts): its image, a see-through picture's look
+    │   │   ├── TilePainter.kt    draws a home tile from its parts (TileParts): its image, a see-through picture's look; the Frosted tiles' frost (TileFrost)
     │   │   │                     (backdrop, a focus that follows the tile or the picture's shape), the focus and held
     │   │   │                     frames; the home screen's tiles, and the tile banner picker's preview of one
     │   │   ├── WallpaperOutline.kt  the dark edge around what's drawn on the wallpaper, on the home screen
@@ -116,6 +116,13 @@ gradient rather than a bitmap of the color. The focused tile, and the one the fo
 glass on its own: its strength follows the focus, and the band or the shadow of the picture's shape
 goes between it and the picture. From API 33 the picture's shader is told to filter itself: on
 API 36 a bitmap inside a composed shader isn't filtered by the paint.
+
+A Frosted tile draws its part of the screen's frost (`TileFrost`, the wallpaper's frosted copy and
+the space it covers, set on the painter by the screen), then the picture: two passes at rest, as a
+shader can't compose two bitmaps below API 28. The frost's tint is composed into its shader, as
+the glass is into the picture's. The tile's place on the screen and its zoom move and scale the
+canvas, not the shader, whose matrix stays as made: changed at each draw, it makes Android build
+the shader again (from API 26 on), which made scrolling 2 to 3 times slower on API 36.
 
 ## The design system
 

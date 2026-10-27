@@ -12,6 +12,7 @@ import com.luncher.domain.layout.TileFocus
 import com.luncher.domain.layout.TileLayout
 import com.luncher.domain.layout.TileLayouts
 import com.luncher.domain.layout.TileMoves
+import com.luncher.launcher.ui.TileFrost
 
 /**
  * The home screen's app tiles, placed where a [TileLayout] says, scrolled so the focused tile stays
@@ -61,6 +62,28 @@ internal class AppTilesView(context: Context, attrs: AttributeSet?) : ViewGroup(
             field = value
             paints.painter.accent = value
             for (i in 0 until childCount) getChildAt(i).invalidate()
+        }
+
+    /** Where this view is in the window, found as it's laid out: the views around it don't move it on the home screen otherwise. */
+    private val placeInWindow = IntArray(2)
+
+    /**
+     * Where the tiles' origin is in the window, this view's place less its scroll: a tile at
+     * (left, top) shows that much further. Kept as this view is laid out and scrolled, so a Frosted
+     * tile, drawn, knows where it is without asking Android up the views at each frame.
+     */
+    val origin = IntArray(2)
+
+    /**
+     * The Frosted tiles' backdrop, the wallpaper's frosted copy; none without a wallpaper, when
+     * they're drawn as Light glass. A new one redraws them.
+     */
+    var frost: TileFrost?
+        get() = paints.painter.frost
+        set(value) {
+            if (value === paints.painter.frost) return
+            paints.painter.frost = value
+            placesChanged()
         }
 
     /**
@@ -129,6 +152,11 @@ internal class AppTilesView(context: Context, attrs: AttributeSet?) : ViewGroup(
     }
 
     override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
+        // It may have moved in the window (the top bar's height changed, say), its tiles with it.
+        getLocationInWindow(placeInWindow)
+        origin[0] = placeInWindow[0] - scrollX
+        origin[1] = placeInWindow[1] - scrollY
+        if (changed) placesChanged()
         for (i in 0 until childCount) {
             val left = paddingLeft + tileLayout.left(i)
             val top = paddingTop + tileLayout.top(i)
@@ -173,6 +201,19 @@ internal class AppTilesView(context: Context, attrs: AttributeSet?) : ViewGroup(
         if (dx == 0 && dy == 0) return
         scroller.startScroll(scrollX, scrollY, dx, dy, SCROLL_DURATION_MS)
         postInvalidateOnAnimation()
+    }
+
+    override fun onScrollChanged(l: Int, t: Int, oldl: Int, oldt: Int) {
+        super.onScrollChanged(l, t, oldl, oldt)
+        origin[0] = placeInWindow[0] - l
+        origin[1] = placeInWindow[1] - t
+        // Scrolling moves the tiles without drawing them again.
+        placesChanged()
+    }
+
+    /** Tells every tile it moved on the screen, or that what's behind it changed: the Frosted ones draw again. */
+    private fun placesChanged() {
+        for (i in 0 until childCount) (getChildAt(i) as AppTileView).placeChanged()
     }
 
     override fun computeScroll() {

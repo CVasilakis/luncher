@@ -8,6 +8,7 @@ import com.luncher.domain.pictures.Framing
 import com.luncher.domain.pictures.PictureId
 import com.luncher.domain.pictures.PicturePosition
 import com.luncher.domain.pictures.PictureStyle
+import com.luncher.domain.wallpaper.DrawnWallpaper
 import com.luncher.domain.wallpaper.StoredWallpaper
 import com.luncher.domain.wallpaper.WallpaperDrawing
 import com.luncher.launcher.images.PixelFiles
@@ -20,8 +21,9 @@ import java.io.IOException
 /**
  * [StoredWallpaper] as one file, [file], in the app's private files, which Android doesn't delete
  * on its own as it may a cache. The format: [PixelFiles], its header what the wallpaper was drawn
- * from and how ([FilePictureImages.DRAWING]): one drawn by another version reads as none, and is
- * drawn again. [store] writes a new file that then replaces the old one at once, so there's never
+ * from and how ([FilePictureImages.DRAWING]), and its frosted copy's size; then the wallpaper's
+ * pixels and the frosted copy's, so the two are kept and replaced together. One drawn by another
+ * version, or of an older format (without a frosted copy), reads as none, and is drawn again. [store] writes a new file that then replaces the old one at once, so there's never
  * half a wallpaper, nor two; a write cut short (the process killed) leaves its unfinished file,
  * which the next [store] writes over and [delete] deletes.
  *
@@ -35,12 +37,24 @@ class FileStoredWallpaper(context: Context, private val file: File = File(contex
 
     override fun drawing(): WallpaperDrawing? = pixelFiles.header(file, ::readDrawing)
 
-    override fun read(drawing: WallpaperDrawing): Bitmap? =
-        pixelFiles.read(file, drawing.width, drawing.height) { input -> readDrawing(input) == drawing }
+    override fun read(drawing: WallpaperDrawing): DrawnWallpaper<Bitmap>? {
+        val images = pixelFiles.readAll(file) { input ->
+            if (readDrawing(input) != drawing) return@readAll null
+            val frostWidth = input.readInt()
+            val frostHeight = input.readInt()
+            if (frostWidth <= 0 || frostHeight <= 0) return@readAll null
+            listOf(PixelFiles.Shape(drawing.width, drawing.height), PixelFiles.Shape(frostWidth, frostHeight))
+        } ?: return null
+        return DrawnWallpaper(images[0], images[1])
+    }
 
-    override fun store(drawing: WallpaperDrawing, image: Bitmap) {
+    override fun store(drawing: WallpaperDrawing, wallpaper: DrawnWallpaper<Bitmap>) {
         // Only for writing: the reading buffers stay the main thread's.
-        PixelFiles(MAGIC, FORMAT).write(file, image) { output -> writeDrawing(output, drawing) }
+        PixelFiles(MAGIC, FORMAT).writeAll(file, listOf(wallpaper.image, wallpaper.frost)) { output ->
+            writeDrawing(output, drawing)
+            output.writeInt(wallpaper.frost.width)
+            output.writeInt(wallpaper.frost.height)
+        }
     }
 
     override fun delete() {
@@ -78,7 +92,7 @@ class FileStoredWallpaper(context: Context, private val file: File = File(contex
         /** "LWAL": the kept wallpaper. */
         const val MAGIC = 0x4C57414C
 
-        /** The file format's version; the drawing's is in the header. */
-        const val FORMAT = 1
+        /** The file format's version; the drawing's is in the header. 2: the frosted copy after the wallpaper. */
+        const val FORMAT = 2
     }
 }

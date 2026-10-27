@@ -78,7 +78,7 @@ class HomeWallpaperTest {
     @Test
     fun `shows the wallpaper kept at once, read on the main thread, with no window over it`() {
         val kept = wallpaper(sunset, 1920, 1080, drawing.style)
-        stored.kept = drawing to kept
+        stored.kept = drawing to withFrost(kept)
 
         val activity = start().get()
 
@@ -131,7 +131,7 @@ class HomeWallpaperTest {
 
     @Test
     fun `says the screen changed when the one kept is for a screen of another size`() {
-        stored.kept = drawing.copy(width = 1280, height = 720) to wallpaper(sunset, 1280, 720, drawing.style)
+        stored.kept = drawing.copy(width = 1280, height = 720) to withFrost(wallpaper(sunset, 1280, 720, drawing.style))
 
         start()
 
