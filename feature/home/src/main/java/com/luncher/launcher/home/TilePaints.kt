@@ -63,16 +63,15 @@ internal class TilePaints(context: Context) {
     val nameHeight: Int = name.room(AppTileView.LARGEST_ZOOM)
 
     /**
-     * The shape a lifted tile's shadow takes: the tile's, with its corners, as strong as the tile's
-     * parts say on this screen ([AppTileView.outlineAlpha]: lighter under a see-through picture's
-     * glass, whole under a Frosted tile's frost). Shared by every
-     * tile; Android asks it again when a tile's size changes, or the tile asks with a new radius,
-     * new parts or, Frosted, a new frost.
+     * The shape a lifted tile's shadow takes: the tile's, with its corners, as the painter gives it
+     * ([TilePainter.outline]: a pixel inside its edge, as strong as the tile's parts say on this
+     * screen, lighter under a see-through picture's glass, whole under a Frosted tile's frost).
+     * Shared by every tile; Android asks it again when a tile's size changes, or the tile asks with
+     * a new radius, new parts or, Frosted, a new frost.
      */
     val tileOutline = object : ViewOutlineProvider() {
         override fun getOutline(view: View, outline: Outline) {
-            outline.setRoundRect(0, 0, view.width, view.height, cornerRadius(view.height))
-            outline.alpha = (view as? AppTileView)?.outlineAlpha ?: 1f
+            painter.outline(outline, view.width, view.height, cornerRadius(view.height), (view as? AppTileView)?.parts)
         }
     }
 

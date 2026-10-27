@@ -65,8 +65,12 @@ internal class AppTileView(
     private val paints: TilePaints,
 ) : View(context) {
 
-    /** What the tile is drawn with: its image, its picture's look; none while it has no size. */
-    private var parts: TileParts? = null
+    /**
+     * What the tile is drawn with: its image, its picture's look; none while it has no size. Its
+     * outline ([TilePaints.tileOutline]) is as strong as they say.
+     */
+    var parts: TileParts? = null
+        private set
 
     private val banner = bannerFor(app)
 
@@ -95,9 +99,6 @@ internal class AppTileView(
 
     /** Whether the state animator lifts the tile; null before the first. */
     private var lifts: Boolean? = null
-
-    /** How strong the lifted tile's shadow is, cast by its outline ([TilePaints.tileOutline]). */
-    val outlineAlpha: Float get() = parts?.let(paints.painter::outlineAlpha) ?: 1f
 
     /** Whether the tile's backdrop is the wallpaper behind it: drawn again whenever it moves or zooms. */
     private val frosted: Boolean get() = parts?.frosted == true

@@ -258,10 +258,16 @@ The focused tile zooms by 1.15 (`home_tile_focus.xml`). With the focus frame on
 With the frame off, it rises toward the viewer instead, at the same zoom (`translationZ`,
 `home_tile_lift`, in `home_tile_lift.xml`), so
 Android's renderer casts its shadow from its outline, a rounded rectangle with the tiles' corners
-(`TilePaints.tileOutline`). The shadow is the GPU's, as for any raised view since Android 5: no
-blurred bitmap, no software layer, nothing drawn per frame in Luncher's code; `AppTilesView` doesn't
-clip its tiles, so it shows past the tile. A held tile has a white frame, with the frame on or off,
-and the same zoom: the white frame tells it apart from one only focused.
+(`TilePaints.tileOutline`, from :ui's `TilePainter.outline`), a pixel inside the tile's edge, its
+radius a pixel less. Under an opaque outline Android leaves the shadow out up to the outline's edge
+(from API 28 on, as a rectangle with square corners), so an outline exactly the tile's left the
+pixels its anti-aliased edge only partly covers over bare wallpaper: a bright sliver along the
+bottom edge and in the bottom corners, up to 62 levels in 255 on API 28 to 36. A pixel inside,
+the shadow is whole up to the edge and a pixel smaller, which doesn't show. The shadow is the
+GPU's, as for any raised view since Android 5: no blurred bitmap, no software layer, nothing drawn
+per frame in Luncher's code; `AppTilesView` doesn't clip its tiles, so it shows past the tile. A
+held tile has a white frame, with the frame on or off, and the same zoom: the white frame tells it
+apart from one only focused.
 
 A see-through picture of the library has the tile's look (`TileLook`, set in the [tile banner
 picker](../settings/README.md#tile-banner)), which the painter draws; an opaque picture, or an

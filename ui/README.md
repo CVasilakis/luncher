@@ -124,6 +124,11 @@ the glass is into the picture's. The tile's place on the screen and its zoom mov
 canvas, not the shader, whose matrix stays as made: changed at each draw, it makes Android build
 the shader again (from API 26 on), which made scrolling 2 to 3 times slower on API 36.
 
+A lifted tile's shadow is Android's, cast from its view's outline; the painter gives that outline
+(`TilePainter.outline`), its shape and its strength, so every screen that lifts a tile casts the
+same shadow: the tile's rounded shape a pixel inside its edge (`SHADOW_INSET`), as strong as the
+tile's parts say ([`../feature/home/README.md`](../feature/home/README.md#appearance)).
+
 ## The design system
 
 The menus and the settings (a tile's menu, the settings panels, the editors, the picture screens,

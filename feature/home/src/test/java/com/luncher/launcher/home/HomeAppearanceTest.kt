@@ -217,7 +217,8 @@ class HomeAppearanceTest {
         return alpha
     }
 
-    // The shadow is cast by the outline: the tile's shape, its round ends too.
+    // The shadow is cast by the outline: the tile's shape, its round ends too, a pixel inside its
+    // edge (TilePainter.SHADOW_INSET), so Android's shadow reaches under the tile's soft edge.
     @Test
     fun `the lifted tile's shadow has the tiles' corners`() {
         appearance.appearance = Appearance(tileStyle = TileStyle(Corners.Pill, focusFrame = false))
@@ -227,10 +228,10 @@ class HomeAppearanceTest {
         val tile = activity.tiles().first()
         val outline = Outline()
         tile.outlineProvider.getOutline(tile, outline)
-        assertEquals(tile.height / 2f, outline.radius)
+        assertEquals((tile.height - 2) / 2f, outline.radius)
         val bounds = Rect()
         assertTrue(outline.getRect(bounds))
-        assertEquals(Rect(0, 0, tile.width, tile.height), bounds)
+        assertEquals(Rect(1, 1, tile.width - 1, tile.height - 1), bounds)
     }
 
     // Framed, the focused tile is as big as lifted: its frame takes no room outside it.

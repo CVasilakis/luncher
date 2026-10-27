@@ -8,6 +8,7 @@ import android.graphics.Color
 import android.graphics.ComposeShader
 import android.graphics.LinearGradient
 import android.graphics.Matrix
+import android.graphics.Outline
 import android.graphics.Paint
 import android.graphics.PorterDuff
 import android.graphics.RectF
@@ -20,6 +21,7 @@ import com.luncher.domain.apps.TileLook
 import com.luncher.domain.apps.TileMask
 import com.luncher.domain.appearance.ThemeAppearance
 import com.luncher.domain.appearance.colorRoles
+import kotlin.math.max
 
 /**
  * Draws a tile: its image, and, for a see-through picture of the library, its look ([TileLook]):
@@ -32,7 +34,7 @@ import com.luncher.domain.appearance.colorRoles
  * says what it follows:
  * - **Framed:** a frame in the accent ([accent]) inside the tile's edge, or, for a picture whose
  *   focus follows its shape, a band in the accent around the shape.
- * - **Lifted:** the view casts Android's shadow from its outline, as strong as
+ * - **Lifted:** the view casts Android's shadow from the outline [outline] gives it, as strong as
  *   [outlineAlpha] says; where the focus follows the picture's shape, the picture casts
  *   its own soft shadow instead ([TileParts.castsOutlineShadow] false), drawn here under it.
  *
@@ -129,6 +131,24 @@ class TilePainter(context: Context) {
      */
     fun outlineAlpha(parts: TileParts): Float =
         if (parts.frosted && parts.castsOutlineShadow && frost != null) 1f else parts.outlineAlpha
+
+    /**
+     * Sets [outline] to the one a lifted tile of [width] x [height] px casts its shadow from, its
+     * corners [radius] px round: the tile's rounded shape, [SHADOW_INSET] inside its edge, as
+     * strong as [outlineAlpha] says for its [parts] (whole without parts yet, as an opaque tile's).
+     * Every screen that lifts a tile gives its view's outline through this, so the shadow is the
+     * same everywhere.
+     */
+    fun outline(outline: Outline, width: Int, height: Int, radius: Float, parts: TileParts?) {
+        outline.setRoundRect(
+            SHADOW_INSET,
+            SHADOW_INSET,
+            width - SHADOW_INSET,
+            height - SHADOW_INSET,
+            max(radius - SHADOW_INSET, 0f),
+        )
+        outline.alpha = parts?.let(::outlineAlpha) ?: 1f
+    }
 
     /**
      * Draws the tile of [parts] at (0, 0), its corners [radius] px round (0, square), as focused as
@@ -293,6 +313,19 @@ class TilePainter(context: Context) {
 
         /** How strong Android's shadow of a see-through tile is, lifted: lighter, behind glass. */
         const val SEE_THROUGH_OUTLINE = 0.3f
+
+        /**
+         * How far inside the tile's edge, in px, its outline is ([outline]), on every side, its
+         * radius that much less. Android leaves out the shadow under a caster whose outline is
+         * opaque (alpha exactly 1): on API 22 to 27 cut along the outline itself, on 28 to 36 a
+         * rectangle with square corners whose bottom edge falls on the outline's. An outline
+         * exactly the tile's left the pixels its anti-aliased edge only partly covers, along the
+         * bottom and in the bottom corners, over unshadowed wallpaper: a bright sliver. A pixel
+         * inside, what's left out falls under what the tile covers, at any density; the shadow is
+         * a pixel smaller, which doesn't show. An alpha just under 1 would have kept the shadow
+         * whole too, but drawn all of it, under the tile, through an app's own banner's clear parts.
+         */
+        const val SHADOW_INSET = 1
 
         /** How dark the shadow of a picture's shape is, focused. */
         const val SHAPE_SHADOW = 0.6f

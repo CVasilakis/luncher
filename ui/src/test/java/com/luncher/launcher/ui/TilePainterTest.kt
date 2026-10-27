@@ -5,7 +5,9 @@ import android.graphics.BitmapShader
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Matrix
+import android.graphics.Outline
 import android.graphics.Paint
+import android.graphics.Rect
 import android.graphics.RectF
 import android.graphics.Shader
 import com.luncher.domain.apps.TileBackdrop
@@ -279,6 +281,37 @@ class TilePainterTest {
         assertEquals("glass, frost or not", TilePainter.SEE_THROUGH_OUTLINE, painter.outlineAlpha(light))
         assertEquals("the picture casts its own", 0f, painter.outlineAlpha(shaped))
         assertEquals("an opaque image", 1f, painter.outlineAlpha(painter.parts(logo)))
+    }
+
+    // Android leaves out the shadow under an opaque outline up to its edge: a pixel inside, the
+    // tile's anti-aliased edge is over the shadow, not over bare wallpaper.
+    @Test
+    fun `a lifted tile's outline is its shape a pixel inside its edge, as strong as its parts say`() {
+        val outline = Outline()
+        val bounds = Rect()
+        for ((radius, inset) in listOf(16f to 15f, 85f to 84f, 0.5f to 0f, 0f to 0f)) {
+            painter.outline(outline, 300, 170, radius, painter.parts(logo))
+            assertTrue(outline.getRect(bounds))
+            assertEquals("corners $radius", Rect(1, 1, 299, 169), bounds)
+            assertEquals("corners $radius", inset, outline.radius)
+        }
+
+        val light = painter.parts(logo, seeThrough = true, look = TileLook(TileBackdrop.LIGHT_GLASS))
+        val shaped = painter.parts(logo, seeThrough = true, shape = shape, look = TileLook(TileBackdrop.FROSTED, TileFocusShape.SHAPE))
+        val alphas = listOf(
+            "an opaque image" to (painter.parts(logo) to 1f),
+            "glass" to (light to TilePainter.SEE_THROUGH_OUTLINE),
+            "the picture casts its own" to (shaped to 0f),
+            "no parts yet" to (null to 1f),
+        )
+        for (screenFrost in listOf(null, frost)) {
+            painter.frost = screenFrost
+            val frosted = if (screenFrost == null) TilePainter.SEE_THROUGH_OUTLINE else 1f
+            for ((name, expected) in alphas + ("Frosted" to (frostedParts to frosted))) {
+                painter.outline(outline, 300, 170, 16f, expected.first)
+                assertEquals("$name, with a frost: ${screenFrost != null}", expected.second, outline.alpha)
+            }
+        }
     }
 
     @Test
