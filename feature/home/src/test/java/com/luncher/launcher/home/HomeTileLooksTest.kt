@@ -6,6 +6,7 @@ import android.graphics.Color
 import android.graphics.Outline
 import android.os.Looper
 import android.view.View
+import android.view.ViewOutlineProvider
 import com.luncher.domain.appearance.Appearance
 import com.luncher.domain.appearance.Background
 import com.luncher.domain.appearance.FakeAppearanceSettings
@@ -293,6 +294,35 @@ class HomeTileLooksTest {
         assertEquals(tiles[0].resources.getDimension(R.dimen.home_tile_lift), tiles[0].translationZ)
         assertEquals(TilePainter.SEE_THROUGH_OUTLINE, outline(tiles[0]).alpha)
         assertEquals(TilePainter.SEE_THROUGH_OUTLINE, outline(tiles[1]).alpha)
+    }
+
+    // A Frosted tile's frost is opaque: lifted, it rises as an opaque tile does, while the wallpaper
+    // is there; without it, it's Light glass, with the glass's lighter shadow.
+    @Test
+    fun `lifted, a Frosted tile casts its outline's whole shadow over a wallpaper, the glass's without one`() {
+        val activity = start(TileLook(TileBackdrop.FROSTED), TileLook(), style = TileStyle(focusFrame = false), wallpaper = stripes())
+        val tiles = activity.tiles()
+        assertEquals(1f, outline(tiles[0]).alpha)
+        assertEquals(TilePainter.SEE_THROUGH_OUTLINE, outline(tiles[1]).alpha)
+        // Android asks a view for its outline again only when told: count who's asked as the frost goes.
+        val asked = mutableListOf<String>()
+        for (tile in tiles) {
+            val provider = tile.outlineProvider
+            tile.outlineProvider = object : ViewOutlineProvider() {
+                override fun getOutline(view: View, outline: Outline) {
+                    asked += tile.app.name
+                    provider.getOutline(view, outline)
+                }
+            }
+        }
+        asked.clear()
+
+        // Another wallpaper, not kept: drawn in the background, meanwhile none.
+        appearance.write(appearance.appearance.copy(background = Background(PictureId("sea"))))
+        idle()
+
+        assertEquals("the Frosted tile's outline asked again, the other's not", listOf(tiles[0].app.name), asked.distinct())
+        assertEquals(TilePainter.SEE_THROUGH_OUTLINE, outline(tiles[0]).alpha)
     }
 
     // An opaque picture, and an app's own image, look as every tile always did, whatever the look stored.

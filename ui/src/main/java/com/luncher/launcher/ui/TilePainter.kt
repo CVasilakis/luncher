@@ -33,7 +33,7 @@ import com.luncher.domain.appearance.colorRoles
  * - **Framed:** a frame in the accent ([accent]) inside the tile's edge, or, for a picture whose
  *   focus follows its shape, a band in the accent around the shape.
  * - **Lifted:** the view casts Android's shadow from its outline, as strong as
- *   [TileParts.outlineAlpha] says; where the focus follows the picture's shape, the picture casts
+ *   [outlineAlpha] says; where the focus follows the picture's shape, the picture casts
  *   its own soft shadow instead ([TileParts.castsOutlineShadow] false), drawn here under it.
  *
  * The backdrop, the band and the shadow follow the focus as its animation goes (`focus`, 0 to 1);
@@ -120,6 +120,15 @@ class TilePainter(context: Context) {
         }
         return TileParts(image, seeThrough, if (seeThrough && look.focus == TileFocusShape.SHAPE) shape else null, look.backdrop, glass)
     }
+
+    /**
+     * How strong the shadow of [parts]' outline is on this screen, lifted: as the parts say
+     * ([TileParts.outlineAlpha]), but whole under a Frosted tile while the screen has a frost. The
+     * frost is opaque, so the shadow can't show through it as it would through glass, and the tile
+     * rises as an opaque one does. Without a frost it's drawn as Light glass, and lighter with it.
+     */
+    fun outlineAlpha(parts: TileParts): Float =
+        if (parts.frosted && parts.castsOutlineShadow && frost != null) 1f else parts.outlineAlpha
 
     /**
      * Draws the tile of [parts] at (0, 0), its corners [radius] px round (0, square), as focused as
@@ -333,7 +342,8 @@ class TileParts internal constructor(
 
     /**
      * How strong that shadow is: whole under an opaque image, lighter under a see-through picture,
-     * whose glass it shows through, none where the picture casts its own.
+     * whose glass it shows through, none where the picture casts its own. A Frosted tile's is whole
+     * while the screen has a frost: [TilePainter.outlineAlpha] says.
      */
     val outlineAlpha: Float = when {
         !castsOutlineShadow -> 0f

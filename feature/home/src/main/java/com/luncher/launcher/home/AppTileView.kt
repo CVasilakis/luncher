@@ -97,7 +97,7 @@ internal class AppTileView(
     private var lifts: Boolean? = null
 
     /** How strong the lifted tile's shadow is, cast by its outline ([TilePaints.tileOutline]). */
-    val outlineAlpha: Float get() = parts?.outlineAlpha ?: 1f
+    val outlineAlpha: Float get() = parts?.let(paints.painter::outlineAlpha) ?: 1f
 
     /** Whether the tile's backdrop is the wallpaper behind it: drawn again whenever it moves or zooms. */
     private val frosted: Boolean get() = parts?.frosted == true
@@ -128,9 +128,19 @@ internal class AppTileView(
         restyle()
     }
 
-    /** It moved on the screen, or its zoom changed, or what's behind it: a Frosted tile draws again. */
+    /** It moved on the screen, or its zoom changed: a Frosted tile draws again. */
     fun placeChanged() {
         if (frosted) invalidate()
+    }
+
+    /**
+     * The screen's frost came or went: a Frosted tile draws again, with its new backdrop, and its
+     * outline's shadow is asked again, whole over a frost, lighter without ([TilePainter.outlineAlpha]).
+     */
+    fun frostChanged() {
+        if (!frosted) return
+        invalidateOutline()
+        invalidate()
     }
 
     // The state animator zooms the tile through these, which don't draw it again.

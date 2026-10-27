@@ -64,9 +64,10 @@ internal class TilePaints(context: Context) {
 
     /**
      * The shape a lifted tile's shadow takes: the tile's, with its corners, as strong as the tile's
-     * parts say ([AppTileView.outlineAlpha]: lighter under a see-through picture). Shared by every
-     * tile; Android asks it again when a tile's size changes, or the tile asks with a new radius or
-     * new parts.
+     * parts say on this screen ([AppTileView.outlineAlpha]: lighter under a see-through picture's
+     * glass, whole under a Frosted tile's frost). Shared by every
+     * tile; Android asks it again when a tile's size changes, or the tile asks with a new radius,
+     * new parts or, Frosted, a new frost.
      */
     val tileOutline = object : ViewOutlineProvider() {
         override fun getOutline(view: View, outline: Outline) {

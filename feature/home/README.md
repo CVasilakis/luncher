@@ -272,7 +272,8 @@ behind the tile, blurred, under 10 % white, 20 % focused (Frosted; without a wal
 glass). Its **focus** follows the tile, as every tile's, or the picture's shape:
 - **Tile, framed:** the frame inside the tile's edge, as on every tile, around the glass.
 - **Tile, lifted:** Android's shadow of the tile's outline, lighter (the outline's alpha at 0.3),
-  since it shows through the glass. Without a backdrop, a light card (22 % white) comes with the
+  since it shows through the glass; Frosted's whole, as an opaque tile's, while there's a
+  wallpaper: its frost is opaque, so nothing shows through it. Without a backdrop, a light card (22 % white) comes with the
   focus: Android's shadow would otherwise show through the picture's see-through parts as a dark
   box behind nothing.
 - **Shape, framed:** no frame inside the edge; a band in the accent around the picture's shape,

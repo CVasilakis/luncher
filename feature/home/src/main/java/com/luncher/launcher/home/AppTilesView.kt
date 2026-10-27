@@ -76,14 +76,14 @@ internal class AppTilesView(context: Context, attrs: AttributeSet?) : ViewGroup(
 
     /**
      * The Frosted tiles' backdrop, the wallpaper's frosted copy; none without a wallpaper, when
-     * they're drawn as Light glass. A new one redraws them.
+     * they're drawn as Light glass. A new one redraws them, and their outline's shadow.
      */
     var frost: TileFrost?
         get() = paints.painter.frost
         set(value) {
             if (value === paints.painter.frost) return
             paints.painter.frost = value
-            placesChanged()
+            for (i in 0 until childCount) (getChildAt(i) as AppTileView).frostChanged()
         }
 
     /**
@@ -211,7 +211,7 @@ internal class AppTilesView(context: Context, attrs: AttributeSet?) : ViewGroup(
         placesChanged()
     }
 
-    /** Tells every tile it moved on the screen, or that what's behind it changed: the Frosted ones draw again. */
+    /** Tells every tile it moved on the screen: the Frosted ones draw again. */
     private fun placesChanged() {
         for (i in 0 until childCount) (getChildAt(i) as AppTileView).placeChanged()
     }

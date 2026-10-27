@@ -266,6 +266,21 @@ class TilePainterTest {
         assertEquals(1, passes(painter.parts(logo, seeThrough = true, look = TileLook(TileBackdrop.LIGHT_GLASS)), 16f, focus = 0f))
     }
 
+    // The frost is opaque: lifted, a Frosted tile rises as an opaque one, its outline's shadow whole.
+    @Test
+    fun `a Frosted tile's outline casts a whole shadow while there's a frost, the glass's lighter one without`() {
+        val light = painter.parts(logo, seeThrough = true, look = TileLook(TileBackdrop.LIGHT_GLASS))
+        val shaped = painter.parts(logo, seeThrough = true, shape = shape, look = TileLook(TileBackdrop.FROSTED, TileFocusShape.SHAPE))
+
+        painter.frost = null
+        assertEquals(TilePainter.SEE_THROUGH_OUTLINE, painter.outlineAlpha(frostedParts))
+        painter.frost = frost
+        assertEquals(1f, painter.outlineAlpha(frostedParts))
+        assertEquals("glass, frost or not", TilePainter.SEE_THROUGH_OUTLINE, painter.outlineAlpha(light))
+        assertEquals("the picture casts its own", 0f, painter.outlineAlpha(shaped))
+        assertEquals("an opaque image", 1f, painter.outlineAlpha(painter.parts(logo)))
+    }
+
     @Test
     fun `without a frost, a Frosted tile is Light glass`() {
         painter.frost = null
