@@ -5,10 +5,14 @@ import android.graphics.Bitmap
 import android.graphics.BitmapShader
 import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.ComposeShader
+import android.graphics.LinearGradient
 import android.graphics.Matrix
 import android.graphics.Paint
+import android.graphics.PorterDuff
 import android.graphics.RectF
 import android.graphics.Shader
+import android.os.Build
 import com.luncher.domain.apps.ShapeMasks
 import com.luncher.domain.apps.TileBackdrop
 import com.luncher.domain.apps.TileFocusShape
@@ -36,8 +40,14 @@ import com.luncher.domain.appearance.colorRoles
  * the frame shows while the tile has focus, at once, as it always did. A held tile (its app being
  * moved) has a white frame inside its edge, in place of the accent's frame or band.
  *
- * Drawing allocates nothing (docs/ARCHITECTURE.md, rule 5): the paints are made once, a tile's
- * shader and its masks' matrices with its parts.
+ * A see-through tile at rest is drawn in one pass, its glass composed under the picture in one
+ * shader ([TileParts]); drawn as a pass of its own, the glass would cost a second fill of the
+ * whole tile at every frame, for every see-through tile on the screen. Once the focus comes, the
+ * glass is drawn on its own again: its strength follows the focus, and the band and the shape's
+ * shadow go between it and the picture.
+ *
+ * Drawing allocates nothing (docs/ARCHITECTURE.md, rule 5): the paints and the glasses' shaders
+ * are made once, a tile's shaders and its masks' matrices with its parts.
  */
 class TilePainter(context: Context) {
 
@@ -66,20 +76,33 @@ class TilePainter(context: Context) {
     /** The masks of a picture's shape, drawn twice their size, in the band's or the shadow's color. */
     private val maskPaint = Paint(Paint.FILTER_BITMAP_FLAG)
 
+    /** The glasses at their resting strength, shared by the tiles that compose them under their picture. */
+    private val lightGlass = glass(Color.WHITE, LIGHT_GLASS)
+    private val darkGlass = glass(Color.BLACK, DARK_GLASS)
+
     private val bounds = RectF()
     private val frameBounds = RectF()
 
     /**
      * What [draw] draws a tile with: [image], at the tile's size; whether it's [seeThrough], so its
      * [look] applies; and, where the look's focus follows the picture's shape, the shape's masks.
-     * Allocates (a shader, the masks' matrices): made with each new image, never as it's drawn.
+     * Allocates (shaders, the masks' matrices): made with each new image, never as it's drawn.
      */
     fun parts(
         image: Bitmap,
         seeThrough: Boolean = false,
         shape: ShapeMasks<Bitmap>? = null,
         look: TileLook = TileLook(),
-    ): TileParts = TileParts(image, seeThrough, if (seeThrough && look.focus == TileFocusShape.SHAPE) shape else null, look.backdrop)
+    ): TileParts {
+        // Frosted is drawn as light glass for now.
+        val glass = when {
+            !seeThrough -> null
+            look.backdrop == TileBackdrop.DARK_GLASS -> darkGlass
+            look.backdrop == TileBackdrop.NONE -> null
+            else -> lightGlass
+        }
+        return TileParts(image, seeThrough, if (seeThrough && look.focus == TileFocusShape.SHAPE) shape else null, look.backdrop, glass)
+    }
 
     /**
      * Draws the tile of [parts] at (0, 0), its corners [radius] px round (0, square), as focused as
@@ -92,7 +115,11 @@ class TilePainter(context: Context) {
         bounds.set(0f, 0f, image.width.toFloat(), image.height.toFloat())
         val band = parts.band
         val shadow = parts.shadow
-        if (parts.backdrop != null) drawBackdrop(canvas, parts.backdrop, radius, focus, lifted = !framed && parts.castsOutlineShadow)
+        // At rest nothing goes between the glass and the picture: one pass draws both.
+        val resting = parts.restingWithGlass.takeIf { focus <= 0f }
+        if (parts.backdrop != null && resting == null) {
+            drawBackdrop(canvas, parts.backdrop, radius, focus, lifted = !framed && parts.castsOutlineShadow)
+        }
         if (shadow != null && !framed && focus > 0f) {
             // Darker and lower as the focus comes in.
             maskPaint.color = Color.BLACK
@@ -108,12 +135,10 @@ class TilePainter(context: Context) {
             // The band is a blur's soft edge: laid on a few times, it's as clear as a frame.
             repeat(BAND_COATS) { canvas.drawBitmap(band.image, band.matrix, maskPaint) }
         }
-        if (radius == 0f) {
-            canvas.drawBitmap(image, 0f, 0f, null)
-        } else {
-            imagePaint.shader = parts.shader
-            canvas.drawRoundRect(bounds, radius, radius, imagePaint)
-            imagePaint.shader = null
+        when {
+            resting != null -> fill(canvas, resting, radius)
+            radius == 0f -> canvas.drawBitmap(image, 0f, 0f, null)
+            else -> fill(canvas, parts.shader, radius)
         }
         val frame = when {
             held -> heldFrame
@@ -129,11 +154,18 @@ class TilePainter(context: Context) {
         }
     }
 
+    /** Fills the tile's shape, its corners [radius] px round, through [shader]. */
+    private fun fill(canvas: Canvas, shader: Shader, radius: Float) {
+        imagePaint.shader = shader
+        if (radius == 0f) canvas.drawRect(bounds, imagePaint) else canvas.drawRoundRect(bounds, radius, radius, imagePaint)
+        imagePaint.shader = null
+    }
+
     /**
      * The glass behind a see-through picture, stronger as the focus comes; Frosted is drawn as
      * light glass for now. Without one, a [lifted] tile gets a light card that comes with the
      * focus: Android's shadow of the tile would otherwise show through it, a dark box behind
-     * nothing.
+     * nothing. At rest the glass is in the picture's pass instead ([TileParts.restingWithGlass]).
      */
     private fun drawBackdrop(canvas: Canvas, backdrop: TileBackdrop, radius: Float, focus: Float, lifted: Boolean) {
         val strength = when (backdrop) {
@@ -151,6 +183,16 @@ class TilePainter(context: Context) {
         style = Paint.Style.STROKE
         strokeWidth = context.resources.getDimension(R.dimen.tile_frame)
         this.color = color
+    }
+
+    /**
+     * A glass of [color] at [strength], as [drawBackdrop] draws it at rest, as a shader: a gradient of
+     * one color, since Android has no public shader of a color, and below API 28 composes a bitmap's
+     * shader only with one of another kind.
+     */
+    private fun glass(color: Int, strength: Float): Shader {
+        val glass = Color.argb((strength * OPAQUE).toInt(), Color.red(color), Color.green(color), Color.blue(color))
+        return LinearGradient(0f, 0f, 1f, 0f, glass, glass, Shader.TileMode.CLAMP)
     }
 
     companion object {
@@ -186,8 +228,21 @@ class TileParts internal constructor(
     seeThrough: Boolean,
     shape: ShapeMasks<Bitmap>?,
     backdrop: TileBackdrop,
+    /** The see-through picture's glass at its resting strength, as a shader; none without glass. */
+    restingGlass: Shader?,
 ) {
-    internal val shader = BitmapShader(image, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP)
+    internal val shader = BitmapShader(image, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP).apply {
+        // On API 36 a bitmap inside a ComposeShader is sampled without the paint's filtering; the
+        // shader can be told itself from API 33. The same as the paint's for the picture alone.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) filterMode = BitmapShader.FILTER_MODE_LINEAR
+    }
+
+    /**
+     * The picture over its glass at rest, in one shader: the tile drawn in one pass, as an opaque
+     * one is. Not while the focus comes: the glass grows stronger with it, and the band and the
+     * shape's shadow go between it and the picture.
+     */
+    internal val restingWithGlass: Shader? = restingGlass?.let { ComposeShader(it, shader, PorterDuff.Mode.SRC_OVER) }
 
     internal val backdrop: TileBackdrop? = if (seeThrough) backdrop else null
 

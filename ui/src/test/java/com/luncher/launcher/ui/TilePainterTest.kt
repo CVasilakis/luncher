@@ -1,8 +1,13 @@
 package com.luncher.launcher.ui
 
 import android.graphics.Bitmap
+import android.graphics.BitmapShader
 import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.Matrix
+import android.graphics.Paint
+import android.graphics.RectF
+import android.graphics.Shader
 import com.luncher.domain.apps.TileBackdrop
 import com.luncher.domain.apps.TileFocusShape
 import com.luncher.domain.apps.TileLook
@@ -15,6 +20,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
+import kotlin.math.abs
 
 /**
  * The tile painter on its own: what a tile's parts say of its look, and the look drawn as far as
@@ -97,6 +103,87 @@ class TilePainterTest {
         assertTrue(shapeless.castsOutlineShadow)
     }
 
+    /** A logo with soft edges: a red square, fading out to its left, over nothing. */
+    private val softLogo = Bitmap.createBitmap(300, 170, Bitmap.Config.ARGB_8888).apply {
+        for (x in 60 until 180) for (y in 60 until 110) setPixel(x, y, Color.argb(minOf(255, (x - 60) * 4), 255, 0, 0))
+    }
+
+    /** A sharp background, as stripes.jpg: stripes of strong colors, black and white. */
+    private val stripes = Bitmap.createBitmap(300, 170, Bitmap.Config.ARGB_8888).apply {
+        val colors = intArrayOf(Color.BLACK, Color.WHITE, Color.rgb(200, 30, 40), Color.rgb(20, 90, 200), Color.rgb(250, 200, 30))
+        for (x in 0 until width) for (y in 0 until height) setPixel(x, y, colors[((x + y) / 12) % colors.size])
+    }
+
+    /** The resting tile of [parts] drawn over [stripes]. */
+    private fun restingOverStripes(parts: TileParts, radius: Float): Bitmap = stripes.copy(Bitmap.Config.ARGB_8888, true).also {
+        painter.draw(Canvas(it), parts, radius, focus = 0f, focused = false, framed = true, held = false)
+    }
+
+    /** [image] over its glass, [color] at [strength], each in a pass of its own over [stripes], as before the glass was composed. */
+    private fun twoPasses(image: Bitmap, color: Int, strength: Float, radius: Float): Bitmap = stripes.copy(Bitmap.Config.ARGB_8888, true).also {
+        val canvas = Canvas(it)
+        val bounds = RectF(0f, 0f, image.width.toFloat(), image.height.toFloat())
+        val glass = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            this.color = color
+            alpha = (strength * 255).toInt()
+        }
+        canvas.drawRoundRect(bounds, radius, radius, glass)
+        if (radius == 0f) {
+            canvas.drawBitmap(image, 0f, 0f, null)
+        } else {
+            val picture = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
+            picture.shader = BitmapShader(image, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP)
+            canvas.drawRoundRect(bounds, radius, radius, picture)
+        }
+    }
+
+    /** How far apart [a] and [b] are: the most any color of any pixel differs. */
+    private fun levelsApart(a: Bitmap, b: Bitmap): Int {
+        var most = 0
+        for (x in 0 until a.width) for (y in 0 until a.height) {
+            val p = a.getPixel(x, y)
+            val q = b.getPixel(x, y)
+            for (channel in listOf(Color::red, Color::green, Color::blue)) most = maxOf(most, abs(channel(p) - channel(q)))
+        }
+        return most
+    }
+
+    // At rest the glass is composed under the picture, in one shader: the same look as the glass
+    // drawn first, then the picture, within a blend's rounding.
+    @Test
+    fun `a resting see-through tile looks as its glass drawn under it, round and square`() {
+        val glasses = mapOf(
+            TileBackdrop.LIGHT_GLASS to (Color.WHITE to TilePainter.LIGHT_GLASS),
+            TileBackdrop.DARK_GLASS to (Color.BLACK to TilePainter.DARK_GLASS),
+            TileBackdrop.FROSTED to (Color.WHITE to TilePainter.LIGHT_GLASS),   // as light glass, for now
+        )
+        for ((backdrop, glass) in glasses) for (radius in listOf(16f, 0f)) {
+            val parts = painter.parts(softLogo, seeThrough = true, look = TileLook(backdrop))
+            val apart = levelsApart(twoPasses(softLogo, glass.first, glass.second, radius), restingOverStripes(parts, radius))
+            assertTrue("$backdrop, corners $radius: $apart levels apart", apart <= 2)
+        }
+    }
+
+    @Test
+    fun `a resting see-through tile with glass is drawn in one pass, a focused one in its glass's, the picture's and the frame's`() {
+        for (backdrop in listOf(TileBackdrop.LIGHT_GLASS, TileBackdrop.DARK_GLASS, TileBackdrop.FROSTED)) {
+            val parts = painter.parts(logo, seeThrough = true, look = TileLook(backdrop))
+            for (radius in listOf(16f, 0f)) {
+                assertEquals("$backdrop at rest, corners $radius", 1, passes(parts, radius, focus = 0f))
+                assertEquals("$backdrop halfway, corners $radius", 3, passes(parts, radius, focus = 0.5f))
+            }
+        }
+        // As before: no glass, or an opaque image, is the picture alone at rest.
+        assertEquals(1, passes(painter.parts(logo, seeThrough = true, look = TileLook(TileBackdrop.NONE)), 16f, focus = 0f))
+        assertEquals(1, passes(painter.parts(logo, look = TileLook(TileBackdrop.DARK_GLASS)), 16f, focus = 0f))
+    }
+
+    private fun passes(parts: TileParts, radius: Float, focus: Float): Int {
+        val canvas = CountingCanvas(Bitmap.createBitmap(300, 170, Bitmap.Config.ARGB_8888))
+        painter.draw(canvas, parts, radius, focus, focused = focus > 0f, framed = true, held = false)
+        return canvas.draws
+    }
+
     // An opaque picture, or an app's own image, has no look: none drawn, whatever is stored.
     @Test
     fun `an opaque image is drawn without the look`() {
@@ -105,5 +192,30 @@ class TilePainterTest {
 
         assertTrue(plain.sameAs(looked))
         assertEquals(0, Color.alpha(plain.getPixel(40, 85)))
+    }
+}
+
+/** A canvas that counts what's drawn on it, each draw still drawn. */
+private class CountingCanvas(bitmap: Bitmap) : Canvas(bitmap) {
+    var draws = 0
+
+    override fun drawRect(rect: RectF, paint: Paint) {
+        draws++
+        super.drawRect(rect, paint)
+    }
+
+    override fun drawRoundRect(rect: RectF, rx: Float, ry: Float, paint: Paint) {
+        draws++
+        super.drawRoundRect(rect, rx, ry, paint)
+    }
+
+    override fun drawBitmap(bitmap: Bitmap, left: Float, top: Float, paint: Paint?) {
+        draws++
+        super.drawBitmap(bitmap, left, top, paint)
+    }
+
+    override fun drawBitmap(bitmap: Bitmap, matrix: Matrix, paint: Paint?) {
+        draws++
+        super.drawBitmap(bitmap, matrix, paint)
     }
 }

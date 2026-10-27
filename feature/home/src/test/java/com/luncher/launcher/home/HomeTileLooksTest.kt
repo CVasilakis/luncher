@@ -310,13 +310,14 @@ class HomeTileLooksTest {
     private fun outline(tile: AppTileView) = Outline().also { tile.outlineProvider.getOutline(tile, it) }
 
     // Rule 5 (docs/ARCHITECTURE.md): a see-through tile's look, its band and its shape's shadow,
-    // allocates nothing as it's drawn, as the focus comes too.
+    // allocates nothing as it's drawn, as the focus comes too; nor do the tiles at rest beside the
+    // one it comes to, their glass in their picture's pass.
     @Test
     fun `drawing see-through tiles allocates nothing, framed or lifted, as the focus comes`() {
         for (style in listOf(TileStyle(), TileStyle(focusFrame = false))) {
             val activity = start(
                 TileLook(TileBackdrop.NONE, TileFocusShape.SHAPE), TileLook(TileBackdrop.DARK_GLASS), TileLook(TileBackdrop.NONE),
-                TileLook(TileBackdrop.FROSTED, TileFocusShape.SHAPE),
+                TileLook(TileBackdrop.FROSTED, TileFocusShape.SHAPE), TileLook(),
                 style = style,
             )
             val grid = activity.findViewById<AppTilesView>(R.id.home_apps)

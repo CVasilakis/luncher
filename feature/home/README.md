@@ -195,7 +195,9 @@ What keeps it light:
 
 - **One bitmap per tile, at the tile's size.** A banner resource is usually 640×360 px or more;
   only the scaled copy is kept, and drawing a tile copies it once. A see-through picture whose
-  focus follows its shape adds its two masks, at half the tile's scale, one byte a pixel.
+  focus follows its shape adds its two masks, at half the tile's scale, one byte a pixel. Its
+  glass costs no pass of its own at rest: it's in the picture's pass, so only the focused tile,
+  and the one the focus leaves, draw it apart.
 - **Only new apps cost a bitmap.** Coming back to the home screen, or an app changing while it's
   shown, reads the app list again, but keeps the tiles, their bitmaps and the focus when it's the
   same; when an app was installed or updated, only its tile is new. Changes are heard from
@@ -282,7 +284,8 @@ through the animator the name fades with: made once per tile, and run only for a
 follows the focus, or whose name fades. The frame shows at once, as it always did. A held tile has
 its white frame, not the band. The masks, at half the tile's scale, are drawn twice their size,
 filtered, through matrices made with the tile's parts; the glass is a rounded rectangle in a paint
-kept for it: drawing a look allocates nothing either. The tile's look changes how its state animator lifts it, so it's chosen again with a
+kept for it, and at rest, in the picture's own pass, through a shader made with the parts
+([`../../ui/README.md`](../../ui/README.md#layout)): drawing a look allocates nothing either. The tile's look changes how its state animator lifts it, so it's chosen again with a
 new style and with a new bitmap (the picture prepared, which the app's own image stood in for).
 
 With the app name shown (`TileGeometry.appName`, Off by default), a tile draws its app's name

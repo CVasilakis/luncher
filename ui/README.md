@@ -107,6 +107,16 @@ made with each image: the shader that rounds it, its shape's masks placed at the
 the look as it applies (none for an opaque image). Drawing allocates nothing. What each look
 draws: [`../feature/home/README.md`](../feature/home/README.md#appearance).
 
+A see-through tile with glass at rest is drawn in one pass, as an opaque one is: its parts compose
+the glass at its resting strength under the picture, in one shader (a gradient of one color, which
+the painter shares between its tiles, under the picture's bitmap shader). Drawn on its own, the
+glass would fill the whole tile a second time at every frame, for every see-through tile on the
+screen. Below API 28 Android composes a bitmap's shader only with one of another kind, hence the
+gradient rather than a bitmap of the color. The focused tile, and the one the focus leaves, draw the
+glass on its own: its strength follows the focus, and the band or the shadow of the picture's shape
+goes between it and the picture. From API 33 the picture's shader is told to filter itself: on
+API 36 a bitmap inside a composed shader isn't filtered by the paint.
+
 ## The design system
 
 The menus and the settings (a tile's menu, the settings panels, the editors, the picture screens,
