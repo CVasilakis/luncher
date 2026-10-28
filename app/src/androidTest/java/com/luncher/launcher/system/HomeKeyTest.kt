@@ -21,6 +21,7 @@ import com.luncher.launcher.testing.resolvedHome
 import com.luncher.launcher.testing.waitForDialogFocus
 import com.luncher.launcher.testing.waitForFocus
 import com.luncher.launcher.testing.waitForHomeScreen
+import com.luncher.launcher.testing.waitUntil
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -286,12 +287,12 @@ class HomeKeyTest {
         val settings = checkNotNull(resolvedActivity(Settings.ACTION_SETTINGS)) { "nothing opens the device's settings" }
             .substringBefore('/')
         device.executeShellCommand("am start -W -a ${Settings.ACTION_SETTINGS}")
-        assertTrue("Settings didn't open", device.wait(Until.hasObject(By.pkg(settings)), TIMEOUT_MS))
+        device.waitUntil(Until.hasObject(By.pkg(settings)), TIMEOUT_MS) { "Settings didn't open" }
         waitForFocus(settings)   // so Home comes from there
 
         device.pressHome()
 
-        assertTrue("Luncher isn't in front", device.wait(Until.hasObject(By.pkg(LUNCHER)), TIMEOUT_MS))
+        device.waitUntil(Until.hasObject(By.pkg(LUNCHER)), TIMEOUT_MS) { "Luncher isn't in front" }
     }
 
     // Not moving an app: the menu offers Move only with another app shown, and the device's apps
@@ -303,16 +304,16 @@ class HomeKeyTest {
         // the menu the long press opens. Seen with a focused tile, so it's laid out (its window
         // can get the focus before that, and a long press sent then was lost), and its window has
         // the focus: keys go there.
-        assertTrue("Luncher isn't in front", device.wait(Until.hasObject(By.pkg(LUNCHER).focused(true)), TIMEOUT_MS))
+        device.waitUntil(Until.hasObject(By.pkg(LUNCHER).focused(true)), TIMEOUT_MS) { "Luncher isn't in front" }
         waitForFocus(HomeActivity::class.java)
         val home = focus()
         longPressOk()   // on the focused app
-        assertTrue("The tile's menu didn't open", device.wait(Until.hasObject(TILE_MENU), TIMEOUT_MS))
+        device.waitUntil(Until.hasObject(TILE_MENU), TIMEOUT_MS) { "The tile's menu didn't open" }
         waitForDialogFocus(home)
 
         device.pressHome()
 
-        assertTrue("The tile's menu didn't close", device.wait(Until.gone(TILE_MENU), TIMEOUT_MS))
+        device.waitUntil(Until.gone(TILE_MENU), TIMEOUT_MS) { "The tile's menu didn't close" }
         assertTrue("The settings entry isn't there", device.hasObject(By.res(LUNCHER, "home_settings")))
     }
 

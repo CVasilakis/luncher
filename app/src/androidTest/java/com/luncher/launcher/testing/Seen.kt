@@ -2,6 +2,7 @@ package com.luncher.launcher.testing
 
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.By
+import androidx.test.uiautomator.SearchCondition
 import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.Until
 
@@ -18,6 +19,16 @@ fun waitUntilSeen(text: String, focused: Boolean = false, timeoutMs: Long = SEEN
     if (!device.wait(Until.hasObject(wanted), timeoutMs)) {
         throw AssertionError("\"$text\"${if (focused) ", focused," else ""} not seen in ${timeoutMs / 1000} s").also(FailureCapture::dump)
     }
+}
+
+/**
+ * Waits until UI Automator's [condition] holds (`Until.hasObject`, `Until.gone`), as the system
+ * tests look at another app's screens; fails after [timeoutMs] with the message [failure] gives,
+ * and [FailureCapture]'s dump. A bare `assertTrue(device.wait(…))` fails without one, and the screen
+ * it failed on is gone once the test has ended.
+ */
+fun UiDevice.waitUntil(condition: SearchCondition<Boolean>, timeoutMs: Long, failure: () -> String) {
+    if (!wait(condition, timeoutMs)) throw AssertionError(failure()).also(FailureCapture::dump)
 }
 
 private const val SEEN_TIMEOUT_MS = 10_000L

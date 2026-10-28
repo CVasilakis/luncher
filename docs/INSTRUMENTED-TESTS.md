@@ -170,8 +170,9 @@ each test class's `waitUntil` calls with its own limit and window).
   and a screenshot `….png` in the test storage's output folder, next to Espresso's
   `view-op-error-<n>.png` and `view-hierarchy-<n>.txt`. It's the runner's `listener`
   (`app/build.gradle.kts`), so every test class has it: it handles every Espresso failure, and the
-  waits without Espresso (`waitForFocus()`, `waitUntilSeen()`, `waitUntilDestroyed()`) call it
-  before they fail. The device's log says where each was saved (tag `FailureCapture`).
+  waits without Espresso (`waitForFocus()`, `waitUntilSeen()`, `waitUntil()`,
+  `waitUntilDestroyed()`) call it before they fail: a system test waits for a screen with
+  `device.waitUntil(…)`, not `assertTrue(device.wait(…))`, which fails without one. The device's log says where each was saved (tag `FailureCapture`).
 - After a local run, AGP copies the files to
   `app/build/outputs/connected_android_test_additional_output/debugAndroidTest/connected/<device>/`,
   except on API 22 and 23, where its copy fails (below); they stay on the device too, in the

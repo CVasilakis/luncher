@@ -18,8 +18,8 @@ import com.luncher.launcher.testing.resolvedActivity
 import com.luncher.launcher.testing.sayingWhetherItCrashed
 import com.luncher.launcher.testing.waitForFocus
 import com.luncher.launcher.testing.waitForHomeScreen
+import com.luncher.launcher.testing.waitUntil
 import org.junit.After
-import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -58,7 +58,7 @@ class SystemSettingsTest {
         val settings = checkNotNull(resolvedActivity(Settings.ACTION_SETTINGS)) { "nothing opens the device's settings" }
             .substringBefore('/')
         application.startActivity(Intent(application, SettingsActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-        assertTrue("The settings panel didn't open", device.wait(Until.hasObject(systemSettingsEntry), TIMEOUT_MS))
+        device.waitUntil(Until.hasObject(systemSettingsEntry), TIMEOUT_MS) { "The settings panel didn't open" }
         waitForFocus(SettingsActivity::class.java)   // shown isn't enough: keys go where the focus is
 
         device.pressDPadDown()      // past Hide apps
@@ -66,13 +66,13 @@ class SystemSettingsTest {
         device.pressDPadCenter()
 
         sayingWhetherItCrashed(settings, startedAt) {
-            assertTrue("The device's settings didn't open", device.wait(Until.hasObject(By.pkg(settings)), TIMEOUT_MS))
+            device.waitUntil(Until.hasObject(By.pkg(settings)), TIMEOUT_MS) { "The device's settings didn't open" }
             waitForFocus(settings)                   // Back goes there
         }
 
         device.pressBack()
 
-        assertTrue("Back didn't return to the panel", device.wait(Until.hasObject(systemSettingsEntry), TIMEOUT_MS))
+        device.waitUntil(Until.hasObject(systemSettingsEntry), TIMEOUT_MS) { "Back didn't return to the panel" }
     }
 
     private companion object {

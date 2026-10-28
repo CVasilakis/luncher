@@ -33,9 +33,9 @@ import org.junit.runner.notification.RunListener
  *
  * Espresso's failures come here through [handler], installed for every look as the run starts;
  * [waitUntilMatches] uses it for its last look only. The helpers that wait without Espresso
- * ([waitForFocus], [waitUntilSeen], [waitUntilDestroyed]) call [dump] before they fail. A JUnit
- * `RunListener` (the runner's `listener` argument, in `app/build.gradle.kts`), so it's installed
- * once for every test class, and knows each test's name for the files.
+ * ([waitForFocus], [waitUntilSeen], [waitUntil], [waitUntilDestroyed]) call [dump] before they
+ * fail. A JUnit `RunListener` (the runner's `listener` argument, in `app/build.gradle.kts`), so
+ * it's installed once for every test class, and knows each test's name for the files.
  */
 class FailureCapture : RunListener() {
 

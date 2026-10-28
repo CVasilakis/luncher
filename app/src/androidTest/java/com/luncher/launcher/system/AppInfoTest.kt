@@ -1,6 +1,7 @@
 package com.luncher.launcher.system
 
 import android.content.Intent
+import android.os.Build
 import android.provider.Settings
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -20,16 +21,18 @@ import com.luncher.launcher.testing.sayingWhetherItCrashed
 import com.luncher.launcher.testing.waitForDialogFocus
 import com.luncher.launcher.testing.waitForFocus
 import com.luncher.launcher.testing.waitForHomeScreen
+import com.luncher.launcher.testing.waitUntil
 import org.junit.After
-import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.util.regex.Pattern
 
 /**
  * App info in a tile's menu: the app's page in the device's settings, and back. Luncher isn't the
- * home app in this tier, so the test starts the home screen itself, as an app.
+ * home app in this tier, so the test starts the home screen itself, as an app, and on API 29 Back
+ * returns to the device's home screen instead.
  */
 @RunWith(AndroidJUnit4::class)
 class AppInfoTest {
@@ -65,31 +68,41 @@ class AppInfoTest {
         val startedAt = System.currentTimeMillis()
         application.startActivity(Intent(application, HomeActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
         // A focused tile: laid out, so a long press reaches it (HomeKeyTest's homeKey_closesTheTilesMenu).
-        assertTrue("No tile has the focus", device.wait(Until.hasObject(By.pkg(LUNCHER).res(LUNCHER, "home_apps").hasDescendant(By.focused(true))), TIMEOUT_MS))
+        device.waitUntil(Until.hasObject(By.pkg(LUNCHER).res(LUNCHER, "home_apps").hasDescendant(By.focused(true))), TIMEOUT_MS) { "No tile has the focus" }
         waitForFocus(HomeActivity::class.java)
         val label = checkNotNull(device.findObject(By.pkg(LUNCHER).focused(true)).contentDescription) { "the focused tile has no name" }
         val app = packageOf(label)
         val home = focus()
 
         longPressOk()   // on the focused tile
-        assertTrue("The tile's menu didn't open", device.wait(Until.hasObject(TILE_MENU), TIMEOUT_MS))
+        device.waitUntil(Until.hasObject(TILE_MENU), TIMEOUT_MS) { "The tile's menu didn't open" }
         waitForDialogFocus(home)
         // Past Hide, Rename and Tile banner, and Move, offered only with another app shown: the device's apps are what they are.
         repeat(if (device.hasObject(entry(R.string.home_menu_move))) 4 else 3) { device.pressDPadDown() }
         // The entry has the focus, not its label.
-        assertTrue("App info didn't get the focus", device.wait(Until.hasObject(By.pkg(LUNCHER).focused(true).hasChild(entry(R.string.home_menu_info))), TIMEOUT_MS))
+        device.waitUntil(Until.hasObject(By.pkg(LUNCHER).focused(true).hasChild(entry(R.string.home_menu_info))), TIMEOUT_MS) { "App info didn't get the focus" }
         device.pressDPadCenter()
 
         sayingWhetherItCrashed(settings, startedAt) {
-            // Its page, which lists its package below its version. Not by its name: the page's title
-            // is the application's label, the tile's its activity's ("Play Games", "Google Play Games").
-            assertTrue("The page of $app didn't open", device.wait(Until.hasObject(By.pkg(settings).text(app)), TIMEOUT_MS))
+            // Its page, which lists its package below its version: a text of its own, or on Google
+            // TV 36 the version's second line ("Version 1.24-asop\ncom.android.tv"). Not by its name:
+            // the page's title is the application's label, the tile's its activity's ("Play Games",
+            // "Google Play Games").
+            device.waitUntil(Until.hasObject(By.pkg(settings).text(lineOfItsOwn(app))), TIMEOUT_MS) { "The page of $app didn't open" }
             waitForFocus(settings)                   // Back goes there
         }
 
         device.pressBack()
 
-        assertTrue("Back didn't return to the home screen", device.wait(Until.hasObject(By.pkg(LUNCHER).res(LUNCHER, "home_apps")), TIMEOUT_MS))
+        if (Build.VERSION.SDK_INT == Build.VERSION_CODES.Q) {
+            // API 29 closed the home screen's task as the page opened (logged as "Trimming
+            // out-of-range visible task"): while Luncher isn't the home app, an activity excluded
+            // from Recents keeps its task only while it's the latest (feature/settings/README.md,
+            // "Adding a picture"). As the home app, it stays.
+            waitForHomeScreen()
+            return
+        }
+        device.waitUntil(Until.hasObject(By.pkg(LUNCHER).res(LUNCHER, "home_apps")), TIMEOUT_MS) { "Back didn't return to the home screen" }
         waitForFocus(HomeActivity::class.java)
     }
 
@@ -99,6 +112,9 @@ class AppInfoTest {
         val tvApps = packages.queryIntentActivities(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LEANBACK_LAUNCHER), 0)
         return tvApps.first { it.loadLabel(packages).toString() == label }.activityInfo.packageName
     }
+
+    /** A text that is [text], or has it as one of its lines. */
+    private fun lineOfItsOwn(text: String): Pattern = Pattern.compile("(?s)(.*\n)?${Pattern.quote(text)}(\n.*)?")
 
     private fun entry(label: Int): BySelector = By.pkg(LUNCHER).text(application.getString(label))
 
