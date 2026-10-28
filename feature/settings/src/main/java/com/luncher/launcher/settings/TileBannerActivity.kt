@@ -141,8 +141,9 @@ class TileBannerActivity : Activity() {
         opened = true
         setContentView(R.layout.settings_tile_banner_activity)
         preview = findViewById(R.id.settings_tile_banner_preview)
-        // The app's tile twice, at rest and focused, side by side.
-        findViewById<PictureStartColumn>(R.id.settings_tile_banner_start).hold(preview) { preview.shape() }
+        // The app's tile twice, at rest and focused, side by side; gone where they'd be too small to show anything.
+        val least = resources.getDimensionPixelSize(R.dimen.settings_pictures_preview_least)
+        findViewById<PictureStartColumn>(R.id.settings_tile_banner_start).hold(preview, least) { preview.shape() }
         name = findViewById(R.id.settings_tile_banner_name)
 
         // Its picture's shape is known once the library is read, as it starts (showLibrary).

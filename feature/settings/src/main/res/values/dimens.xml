@@ -100,8 +100,9 @@
     <dimen name="settings_pictures_tile_text_gap">8dp</dimen>
     <dimen name="settings_pictures_tile_corner">8dp</dimen>
     <dimen name="settings_pictures_row_height">64dp</dimen>
-    <!-- The least height of Add from folder's preview: shorter than a row of the list, it goes,
-         with its label and name. -->
+    <!-- The least height of a picture screen's preview: shorter than a row of the list, it goes;
+         Add from folder's with its label and name, the tile banner picker's panels (its app's name
+         stays). -->
     <dimen name="settings_pictures_preview_least">64dp</dimen>
     <dimen name="settings_pictures_side_gap">32dp</dimen>
     <dimen name="settings_pictures_warning">48dp</dimen>

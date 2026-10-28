@@ -76,8 +76,8 @@ internal class TilePreviewView(context: Context, attrs: AttributeSet?) : ViewGro
     private val pixelsPerDp = resources.displayMetrics.density
     private val screen: ScreenSize = context.screenSize()
 
-    /** Between the panels, as between the fields below them, so they line up with the fields' two columns. */
-    private val gap = resources.getDimensionPixelSize(R.dimen.settings_fields_gap)
+    /** Between the panels, as between the fields below them (EntriesRow's), so they line up with the fields' two columns. */
+    private val gap = resources.getDimensionPixelSize(UiR.dimen.buttons_gap)
 
     /** Around the focused tile, zoomed, in its panel: room for its frame, its band or its shadow. */
     private val room = resources.getDimensionPixelSize(R.dimen.settings_tile_preview_room)

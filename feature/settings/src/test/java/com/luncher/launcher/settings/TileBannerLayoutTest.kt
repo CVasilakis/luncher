@@ -11,7 +11,10 @@ import com.luncher.domain.apps.AppCustomization
 import com.luncher.domain.apps.FakeAppCustomizations
 import com.luncher.domain.apps.FakeInstalledApps
 import com.luncher.domain.apps.FakeInstalledApps.Companion.app
+import com.luncher.domain.apps.TileBackdrop
+import com.luncher.domain.apps.TileFocusShape
 import com.luncher.domain.apps.TileImage
+import com.luncher.domain.apps.TileLook
 import com.luncher.domain.apps.tileImageOptions
 import com.luncher.domain.pictures.FakePictures
 import com.luncher.domain.pictures.FakePictures.Companion.picture
@@ -27,6 +30,7 @@ import com.luncher.launcher.testing.assertZoomShown
 import com.luncher.launcher.testing.bounds
 import com.luncher.launcher.testing.floatResource
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -94,11 +98,11 @@ class TileBannerLayoutTest(private val screen: TvScreen) {
     }
 
     /** The picker for the movies app's tile, showing [chosen] as stored, with [pictures], every thumbnail drawn. */
-    private fun start(vararg pictures: Picture, chosen: Picture? = pictures.firstOrNull()): TileBannerActivity {
+    private fun start(vararg pictures: Picture, chosen: Picture? = pictures.firstOrNull(), look: TileLook = TileLook()): TileBannerActivity {
         val graph = object : TestPicturesGraph(FakePictures(*pictures)) {
             override val installedApps = FakeInstalledApps(movies)
             override val appCustomizations = FakeAppCustomizations(
-                chosen?.let { mapOf(movies.launchable to AppCustomization(image = TileImage(it.id))) } ?: emptyMap(),
+                chosen?.let { mapOf(movies.launchable to AppCustomization(image = TileImage(it.id, look = look))) } ?: emptyMap(),
             )
         }
         application.graph = graph
@@ -127,20 +131,20 @@ class TileBannerLayoutTest(private val screen: TvScreen) {
         val end = activity.findViewById<View>(R.id.settings_pictures_column)
         val metrics = activity.resources.displayMetrics
 
-        activity.assertShown("preview", preview)
+        val shows = preview.visibility == View.VISIBLE
+        if (shows) activity.assertShown("preview", preview)
         activity.assertShown("the app's name", activity.findViewById(R.id.settings_tile_banner_name))
         activity.assertShown("Save", activity.findViewById(R.id.settings_picture_editor_save))
         activity.assertShown("hint", activity.findViewById(R.id.settings_pictures_hint))
-        assertApart(screen, "preview and pictures", bounds(preview), bounds(end))
-        // The two panels' shape, to a pixel's rounding; as tall as the room left, a quarter of its height at the column's width at least.
-        val shape = (preview as TilePreviewView).shape()
-        assertTrue(
-            "preview ${preview.width} x ${preview.height} on $screen",
-            abs(preview.width * shape.height - preview.height * shape.width) < shape.width + shape.height,
-        )
-        val column = activity.findViewById<View>(R.id.settings_tile_banner_start)
-        val natural = (column.width - column.paddingLeft - column.paddingRight - 2 * activity.resources.getDimensionPixelSize(R.dimen.settings_container_padding)) * shape.height / shape.width
-        assertTrue("preview ${preview.height} px tall on $screen, ${natural / 4} at least", preview.height >= natural / 4)
+        // The two panels' shape, to a pixel's rounding, as tall as the room left; or gone (below).
+        if (shows) {
+            assertApart(screen, "preview and pictures", bounds(preview), bounds(end))
+            val shape = (preview as TilePreviewView).shape()
+            assertTrue(
+                "preview ${preview.width} x ${preview.height} on $screen",
+                abs(preview.width * shape.height - preview.height * shape.width) < shape.width + shape.height,
+            )
+        }
         // Save above the overscan margin without scrolling, where the screen is as tall as 1080p's
         // 540 dp or more; a shorter one scrolls the column instead.
         if (metrics.heightPixels / metrics.density >= 540) {
@@ -205,6 +209,63 @@ class TileBannerLayoutTest(private val screen: TvScreen) {
         assertTrue("$option's list at $area, outside the margin on $screen", area.top >= margin - 1 && area.bottom <= metrics.heightPixels - margin + 1)
         for (index in 0 until list.childCount) assertWhole(screen, list.getChildAt(index).findViewById(R.id.settings_option_list_value))
         return list
+    }
+
+    /** Where each field is laid out: its row's top, then its own left, top and width in the row; its zoom aside. */
+    private fun Activity.fieldPlaces(): List<List<Int>> = fields().map { listOf((it.parent as View).top, it.left, it.top, it.width) }
+
+    // Each field as wide as its widest value: two share a row only where every value of both fits,
+    // so the fields are where they are whatever values the picker opens on (where Light glass doesn't
+    // fit half the column, Backdrop and Focus are a row each, whatever the backdrop).
+    @Test
+    fun `the options are where they are, whatever values they show`() {
+        val places = TileBackdrop.entries.flatMap { backdrop ->
+            TileFocusShape.entries.map { focus -> start(panorama, *library, look = TileLook(backdrop, focus)).fieldPlaces() }
+        }
+
+        assertEquals("on $screen", 1, places.distinct().size)
+    }
+
+    // As Add from folder's preview: shorter than a row of the list, the panels would show nothing,
+    // and they go, the others getting their room; the app's name stays.
+    @Test
+    fun `the preview is as tall as a row of the list at least, or gone`() {
+        val activity = start(panorama, *library)
+        val preview = activity.findViewById<View>(R.id.settings_tile_banner_preview)
+        val least = activity.resources.getDimensionPixelSize(R.dimen.settings_pictures_preview_least)
+
+        if (preview.visibility == View.VISIBLE) {
+            assertTrue("preview ${preview.height} px tall on $screen, $least at least", preview.height >= least)
+        } else {
+            assertEquals("gone, not invisible, on $screen", View.GONE, preview.visibility)
+            // Not for want of room it would have had: shown, it would have been shorter than that.
+            val column = activity.findViewById<View>(R.id.settings_tile_banner_start)
+            val content = (column as ViewGroup).getChildAt(0)
+            val room = column.height - column.paddingTop - column.paddingBottom
+            assertTrue("gone with $room px of room and ${content.height} taken on $screen", room - content.height < least)
+        }
+        activity.assertShown("the app's name", activity.findViewById(R.id.settings_tile_banner_name))
+        // Laid out again, it stays as it is: its going, which leaves more room, doesn't bring it back.
+        val column = activity.findViewById<View>(R.id.settings_tile_banner_start)
+        val before = visibility(preview.visibility)
+        repeat(2) {
+            column.requestLayout()
+            idle()
+            assertEquals("laid out again on $screen", before, visibility(preview.visibility))
+        }
+        assertFalse("still laying out on $screen", column.isLayoutRequested)
+    }
+
+    private fun visibility(value: Int) = if (value == View.VISIBLE) "shown" else "gone"
+
+    // The screens a TV most often is: the panels show.
+    @Test
+    fun `the preview shows on a 1080p screen and on 720p`() {
+        if (screen.toString().substringBefore(",") !in setOf("1080p", "720p")) return
+
+        val preview = start(panorama, *library).findViewById<View>(R.id.settings_tile_banner_preview)
+
+        assertEquals("on $screen", View.VISIBLE, preview.visibility)
     }
 
     @Test

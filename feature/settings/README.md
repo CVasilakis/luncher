@@ -43,7 +43,7 @@ feature/settings/
     │   │   ├── PicturePreparing.kt   the pictures not prepared for the screen, prepared at its start behind a window
     │   │   ├── PictureDraft.kt   a picture editor's draft: its values offered, changed as Save counts it, Back's question, the instance state
     │   │   ├── OptionGrid.kt     a picture editor's options, of any catalog, as a grid of fields, two a row
-    │   │   ├── PictureStartColumn.kt  a picture editor's start: the preview it's given, options, Save and Delete all, the preview as large as the room left
+    │   │   ├── PictureStartColumn.kt  a picture editor's start: the preview it's given, options, Save and Delete all, the preview as large as the room left, or gone below a least height if given
     │   │   ├── TileBannerActivity.kt  the tile banner picker: the picture editors' parts, a preview of the app's tile, Save through the per-app port
     │   │   ├── TilePreviewView.kt    its preview: the app's tile at rest and focused, as the home screen draws it, at its place there
     │   │   ├── AddFromFolderActivity.kt  the drop folders' pictures, a preview of the selected one; OK adds it, then returns it; Add all
@@ -295,7 +295,10 @@ with no label, a preview of the home screen with the chosen background, of the
 TV's shape with rounded corners, the background's options (Blur and Position, then Dim and Fit) as a 2 × 2
 grid of fields, each its name above its value, and Save (filled) with Delete all (outlined, in
 the error color) beside it, half the row each; two fields, or the buttons, go one below the other
-when either doesn't fit its half (`:ui`'s `EntriesRow`: a long translation on a narrow screen). There's no
+when either doesn't fit its half (`:ui`'s `EntriesRow`: a long translation on a narrow screen). A
+field is as wide as its option's widest value, whichever it shows (`OptionRow`), so whether two
+share a row doesn't depend on the values: the fields don't move with the draft, nor between two
+openings of the screen. There's no
 title, nor a label above the preview: the preview gets that room.
 The preview is as large as the room the others leave (`PictureStartColumn`), at most as tall
 as its screen at the column's width, at least a quarter of that, so Save and Delete all show without scrolling on a 1080p screen;
@@ -474,6 +477,9 @@ screen's plain color, edged in the theme's outline color; the wallpaper is the h
 (`TilePreviewView.shape`) is two panels each the zoomed tile with room around it
 (`settings_tile_preview_room`); `PictureStartColumn` gives it the height the others leave, and
 where that's less than the tile needs, both panels show the tile and the wallpaper smaller alike.
+Shorter than a row of the list (`settings_pictures_preview_least`, as Add from folder's preview),
+they'd show nothing to judge a look by, and they go, the others getting their room; the app's name
+stays (on a 640 x 360 dp screen, 720p at 320 dpi, in every language; on 4:3 in Greek).
 Left to right in every language, the resting tile at the left, as the home screen doesn't mirror.
 
 The options are the tile image's catalog (`TileImageOption`, with its own context,

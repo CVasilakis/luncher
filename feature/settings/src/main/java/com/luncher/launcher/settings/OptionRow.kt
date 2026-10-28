@@ -1,6 +1,7 @@
 package com.luncher.launcher.settings
 
 import android.graphics.drawable.GradientDrawable
+import android.text.Layout
 import android.view.KeyEvent
 import android.view.View
 import android.widget.ImageView
@@ -11,6 +12,7 @@ import com.luncher.domain.appearance.AppearanceOption
 import com.luncher.domain.options.Option
 import com.luncher.domain.options.step
 import com.luncher.launcher.ui.R as UiR
+import kotlin.math.ceil
 
 /**
  * An option's row, of any catalog: its name, and its value, as the catalog's [labels] say. It shows
@@ -47,6 +49,10 @@ internal class OptionRow<M, C, O : Option<M, C, *>>(
         view.findViewById<TextView>(R.id.settings_option_label).setText(labels.label(option))
         if (opens != null) {
             view.setOnClickListener { open(opens) }
+            // As wide as its widest value, whichever it shows: the grid puts two fields side by side
+            // only where every value of both fits (EntriesRow measures them), so the fields, and what's
+            // below them, don't move as a value changes.
+            value.minWidth = widestValue()
         } else {
             view.setOnKeyListener(this)
         }
@@ -101,10 +107,17 @@ internal class OptionRow<M, C, O : Option<M, C, *>>(
         return true
     }
 
+    /** The width the value line takes for the widest of the option's values, whatever the context offers. */
+    private fun widestValue(): Int =
+        option.withEach(model()).maxOf { ceil(Layout.getDesiredWidth(labels.value(option, it, view.context), value.paint)).toInt() }
+
     private companion object {
         const val DIMMED = 0.4f
     }
 }
+
+/** [model] with each of the option's values, in order. */
+private fun <M, C, T> Option<M, C, T>.withEach(model: M): List<M> = values.map { set(model, it) }
 
 /** A row of the appearance's options, in the appearance editor or the background editor. */
 internal typealias AppearanceRow = OptionRow<Appearance, AppearanceContext, AppearanceOption<*>>
