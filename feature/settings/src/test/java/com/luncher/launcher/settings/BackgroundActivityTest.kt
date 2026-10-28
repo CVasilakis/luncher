@@ -39,6 +39,7 @@ import com.luncher.domain.pictures.PictureStyle
 import com.luncher.domain.wallpaper.Wallpaper
 import com.luncher.domain.wallpaper.WallpaperDrawing
 import com.luncher.launcher.testing.TV_1080P
+import com.luncher.launcher.testing.bounds
 import com.luncher.launcher.ui.WorkingDialog
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -293,6 +294,20 @@ class BackgroundActivityTest {
         val list = activity.findViewById<LinearLayout>(R.id.settings_pictures_list)
         val howTo = list.getChildAt(list.childCount - 1) as TextView
         assertTrue(howTo.text.contains("Android/media/${activity.packageName}"))
+    }
+
+    // Down to the bottom margin however few the pictures, as the appearance editor's options.
+    @Test
+    fun `the pictures' container reaches the bottom margin, with a single picture`() {
+        graph(beach, background = Background(beach.id))
+
+        val activity = start().get()
+
+        val scroll = activity.findViewById<View>(R.id.settings_pictures_list_scroll)
+        val container = scroll.parent as View
+        val column = activity.findViewById<View>(R.id.settings_pictures_column)
+        assertTrue("the pictures, ${scroll.height} px, fill their container", scroll.height < container.height)
+        assertEquals(bounds(column).bottom - column.paddingBottom, bounds(container).bottom, 1f)
     }
 
     @Test

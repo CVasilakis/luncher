@@ -9,8 +9,8 @@ import android.widget.LinearLayout
 /**
  * The appearance editor's two columns: the title, the preview and the buttons, centered together
  * in the height, and the groups' container, whose top is level with the title's, and which reaches
- * down to the bottom margin from the start, as the side sheets' lists do, whether its groups are
- * open or not; its groups scroll once they're taller.
+ * down to the bottom margin from the start, as the side sheets' lists and the picture screens'
+ * containers do, whether its groups are open or not; its groups scroll once they're taller.
  *
  * The container is measured for the room below the title as the columns are measured: where the
  * title will be follows from the start column's measures, centered as that column centers its

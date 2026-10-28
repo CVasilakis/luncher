@@ -57,6 +57,7 @@ import com.luncher.domain.pictures.Picture
 import com.luncher.domain.pictures.PicturePosition
 import com.luncher.domain.pictures.PictureStyle
 import com.luncher.launcher.testing.TV_1080P
+import com.luncher.launcher.testing.bounds
 import com.luncher.launcher.ui.WorkingDialog
 import com.luncher.launcher.ui.homeTileSize
 import org.junit.Assert.assertEquals
@@ -274,6 +275,20 @@ class TileBannerActivityTest {
         assertEquals(listOf("Original banner", "beach.png", "sunset.jpg ✓", "Add from folder"), activity.list())
         assertEquals("sunset.jpg", activity.focused())
         assertEquals("Hold OK on a picture to rename or delete it", activity.findViewById<TextView>(R.id.settings_pictures_hint).text.toString())
+    }
+
+    // Down to the bottom margin however few the pictures, as the background editor's.
+    @Test
+    fun `the pictures' container reaches the bottom margin, with a single picture`() {
+        graph(logo, onTiles = mapOf(movies.launchable to image(logo)))
+
+        val activity = start().get()
+
+        val scroll = activity.findViewById<View>(R.id.settings_pictures_list_scroll)
+        val container = scroll.parent as View
+        val column = activity.findViewById<View>(R.id.settings_pictures_column)
+        assertTrue("the pictures, ${scroll.height} px, fill their container", scroll.height < container.height)
+        assertEquals(bounds(column).bottom - column.paddingBottom, bounds(container).bottom, 1f)
     }
 
     @Test

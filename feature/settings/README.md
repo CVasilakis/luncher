@@ -284,7 +284,8 @@ options' rows are views; the preview is one view. Nothing of the home screen run
 The background editor (`BackgroundActivity`) is where the wallpaper is chosen and saved, opened
 from the appearance editor's Background button, full-screen like it. At the end, below their
 label (Pictures), Luncher's picture library as a list in its container (a `ListFrame`: cut along
-its rounded corners, fading out where there's more, scrolling a row ahead of the focus): No picture, the pictures by
+its rounded corners, fading out where there's more, scrolling a row ahead of the focus), which reaches down to the
+bottom margin however few the pictures, as the appearance editor's options: No picture, the pictures by
 name, as the device's language sorts words, each with its thumbnail, its name on one line, cut with "…" where it doesn't fit, and below it its
 size in px and its file's size (as in Add from folder, without where: it's in Luncher's storage), then Add from folder
 ([below](#adding-a-picture)); a hint at the label's end says a long press of OK renames or
@@ -658,7 +659,7 @@ its path.
 one line, the folder last, so where it doesn't fit (the smallest screens) only its start is cut;
 listed together by name, as the
 device's language sorts words (`inListOrder`), below their label and how many there are, in a
-container like the editor's pictures; each row with an icon of where it is (a TV or a USB drive),
+container like the editor's pictures, down to the bottom margin however few they are, or while there are none; each row with an icon of where it is (a TV or a USB drive),
 its name, then where it is ("Local" or "USB drive") and its size. Beside them, below its label, a
 preview of the selected one, rounded, of the TV's shape as the wallpaper fills it, drawn in the
 background, a spinning wheel in its place meanwhile; no name below it, as the list's selected row shows it. The

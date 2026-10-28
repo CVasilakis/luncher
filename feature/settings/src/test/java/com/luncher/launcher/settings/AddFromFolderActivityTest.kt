@@ -19,6 +19,7 @@ import com.luncher.domain.pictures.FakePictures
 import com.luncher.domain.pictures.PictureFormat
 import androidx.test.platform.app.InstrumentationRegistry
 import com.luncher.launcher.testing.TV_1080P
+import com.luncher.launcher.testing.bounds
 import com.luncher.domain.appearance.ThemeAppearance
 import com.luncher.domain.appearance.colorRoles
 import org.junit.Assert.assertEquals
@@ -106,6 +107,22 @@ class AddFromFolderActivityTest {
         val state = activity.findViewById<TextView>(R.id.settings_pictures_folder_state)
         assertEquals(View.VISIBLE, state.visibility)
         assertEquals("No pictures in the folder yet", state.text.toString())
+    }
+
+    // Down to the bottom margin however few the pictures, or none, as the editor's pictures.
+    @Test
+    fun `the list's container reaches the bottom margin, with a single picture or none`() {
+        for (pictures in listOf(arrayOf(holiday), emptyArray())) {
+            graph(*pictures)
+
+            val activity = start()
+
+            val list = activity.list()
+            val container = list.parent as View
+            val column = activity.findViewById<View>(R.id.settings_pictures_folder_list_column)
+            assertTrue("the pictures, ${list.height} px, fill their container", list.height < container.height)
+            assertEquals(bounds(column).bottom, bounds(container).bottom, 1f)
+        }
     }
 
     @Test

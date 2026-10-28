@@ -75,11 +75,13 @@
                     app:colorRole="onSurfaceVariant" />
             </LinearLayout>
 
-            <!-- Down past the last picture stays there, not to Add all. Cut along its corners,
+            <!-- Down to the bottom margin, however few the pictures, as the editor's pictures.
+                 Down past the last picture stays there, not to Add all. Cut along its corners,
                  fading out where there's more; it scrolls a row ahead of the selection. -->
             <com.luncher.launcher.settings.ListFrame
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="0dp"
+                android:layout_weight="1"
                 app:fill="surface">
 
                 <!-- A pictures_folder_row per picture; the selected one looks focused while the
