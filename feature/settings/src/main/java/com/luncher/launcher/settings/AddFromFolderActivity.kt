@@ -10,7 +10,6 @@ import android.os.Looper
 import android.text.SpannableStringBuilder
 import android.text.Spanned
 import android.text.style.ForegroundColorSpan
-import android.util.TypedValue
 import android.view.View
 import android.view.ViewGroup
 import android.widget.AdapterView
@@ -38,7 +37,6 @@ import com.luncher.launcher.ui.styleAll
 import com.luncher.launcher.ui.styleScreen
 import com.luncher.launcher.ui.R as UiR
 import java.util.Locale
-import kotlin.math.ceil
 
 /**
  * The pictures in Luncher's drop folders, on the TV and on USB drives ([FolderPictures][graph]):
@@ -139,11 +137,10 @@ class AddFromFolderActivity : Activity() {
         count = findViewById(R.id.settings_pictures_folder_count)
         addAll = findViewById(R.id.settings_pictures_folder_add_all)
         addAll.setOnClickListener { addAll() }
-        shareTheWidth()
         // A screen opened anew starts with none kept (one killed while it showed left them); made
         // anew by a configuration change, it finds them.
         if (savedInstanceState == null) folders.forgetPreviews()
-        findViewById<TextView>(R.id.settings_pictures_folder_where).text = getString(R.string.settings_pictures_folder_where, dropFolder())
+        findViewById<FolderLine>(R.id.settings_pictures_folder_where).show(getString(R.string.settings_pictures_folder_where, dropFolder()), dropFolder())
         list.adapter = rows
         list.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) = showPreview(pictures[position])
@@ -156,18 +153,6 @@ class AddFromFolderActivity : Activity() {
         show(emptyList(), looking = true)
         window.styleScreen(theme.roles)
         stylePreview(theme.roles)
-    }
-
-    /** The list and the preview's column share the width, the preview's [SIDE] of it, a gap between them. */
-    private fun shareTheWidth() {
-        val margin = resources.getDimensionPixelSize(R.dimen.settings_pictures_margin_horizontal)
-        val gap = resources.getDimensionPixelSize(R.dimen.settings_pictures_side_gap)
-        val width = ((resources.displayMetrics.widthPixels - 2 * margin - gap) * SIDE).toInt()
-        findViewById<View>(R.id.settings_pictures_folder_side_column).layoutParams.width = width
-        (findViewById<View>(R.id.settings_pictures_folder_list_column).layoutParams as ViewGroup.MarginLayoutParams).marginEnd = width + gap
-        // Room at both sides for Add all's zoom, as wide as the column, and its shadow.
-        val zoom = TypedValue().also { resources.getValue(UiR.dimen.button_zoom, it, true) }.float
-        side.leaveRoom(ceil(width * (zoom - 1) / 2).toInt() + resources.getDimensionPixelSize(UiR.dimen.button_lift))
     }
 
     /** The preview's corners, rounded, and its color while there's none. */
@@ -445,9 +430,6 @@ class AddFromFolderActivity : Activity() {
         const val EXTRA_ADDED_ALL = "com.luncher.launcher.settings.ADDED_ALL"
 
         private const val DIMMED = 0.4f
-
-        /** The preview's column's share of the width; the list has the rest. */
-        private const val SIDE = 0.41f
     }
 
     /**

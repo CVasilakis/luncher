@@ -49,7 +49,9 @@ feature/settings/
     │   │   ├── AddFromFolderActivity.kt  the drop folders' pictures, a preview of the selected one; OK adds it, then returns it; Add all
     │   │   ├── SharePictureActivity.kt   where another app's share arrives: opens the home screen and the window, no screen
     │   │   ├── PictureReceivedActivity.kt the window over the home screen after a share: shows the pictures being added, then their uses, or how many were saved and why the others weren't
-    │   │   ├── PreviewColumn.kt  Add from folder's preview, Add all and note, the preview smaller on a short screen, gone below a row's height
+    │   │   ├── FolderColumns.kt  Add from folder's list and preview's column: the column as wide as its views need to reach the bottom, at most the list's width
+    │   │   ├── PreviewColumn.kt  Add from folder's preview, Add all and note: the width they need, the note gone on a short screen, the preview gone below a row's height
+    │   │   ├── FolderLine.kt     Add from folder's line below the title: where the pictures are, or the folder alone where that doesn't fit
     │   │   ├── ListFrame.kt      a list's frame (a :ui ScrollFrame): Down past its last row stays there, not on the column beside it
     │   │   └── PictureTexts.kt   what the picture screens call things: sizes, names, why a picture wasn't added
     │   └── res/                  the themes (Theme.Luncher.Settings, .Panel, .FullScreen, .Pictures,
@@ -658,15 +660,18 @@ its path.
 
 **From a drop folder** (`AddFromFolderActivity`): the pictures a file manager or a computer put in
 `Android/media/<applicationId>`, on the TV or a USB drive, which a line below the title says, on
-one line, the folder last, so where it doesn't fit (the smallest screens) only its start is cut;
+one line; where the sentence doesn't fit (the smallest screens), the folder alone, as the title and
+the rows say the rest, cut at its start where even it doesn't (`FolderLine`);
 listed together by name, as the
 device's language sorts words (`inListOrder`), below their label and how many there are, in a
 container like the editor's pictures, down to the bottom margin however few they are, or while there are none; each row with an icon of where it is (a TV or a USB drive),
 its name, then where it is ("Local" or "USB drive") and its size. Beside them, below its label, a
 preview of the selected one, rounded, of the TV's shape as the wallpaper fills it, drawn in the
 background, a spinning wheel in its place meanwhile; no name below it, as the list's selected row shows it. The
-column takes 41 % of the width (`shareTheWidth`, set in code, as nested weights would measure the
-list twice);
+column is as wide as the preview, Add all and the note below it need to reach the bottom, at most as
+wide as the list, which has the rest (`FolderColumns`, set as they're measured, since the width
+depends on the height they get, and nested weights would measure the list twice); the rows' lines
+cut with "…" where they don't fit;
 moving on stops the one being drawn at once
 ([`ARCHITECTURE.md`](../../docs/ARCHITECTURE.md#background-work-and-changes-while-shown), point 4).
 Once it's drawn, the others' are drawn ahead, one at a time, the nearest first (after it, then
@@ -700,14 +705,15 @@ says at once that the file isn't a picture or is damaged. Add all passes the mar
 counted among those not added; one not tried yet is refused as it's added, and counted the same.
 In place of a preview that isn't drawn, or can't be, a warning mark shows, so nobody waits for
 one. Anything else that isn't a picture isn't listed. The folders are read again each time the screen
-shows, so a USB drive plugged in meanwhile counts. On a screen too short for the preview, Add all
-and the note, the preview gets smaller (`PreviewColumn`); where it would be shorter than a row of
-the list (64 dp: the smallest screens, large text, a long translation), the preview goes, with
-its label, and none is drawn: Add all and the note are the column. Where
-even they don't fit, the column scrolls, to its end while Add all has the focus, so the note
-shows too. The 64 dp were chosen from the preview's heights measured on screens 360 to 540 dp
-tall in each language, with normal and large text: the room left to it depends as much on the
-text as on the screen.
+shows, so a USB drive plugged in meanwhile counts. On a screen too short for a column of 41 % of
+the width with the note (`PreviewColumn`), the note goes, as the preview shows what OK adds, and
+the column is as wide as the preview and Add all need to reach the bottom, at most as wide as the
+list; where even then the preview would be shorter than a row of the list (64 dp: the smallest
+screens, large text, a long translation), the preview goes, with its label, and none is drawn:
+Add all and the note are the column, 41 % of the width. Where even they don't fit, the column
+scrolls, to its end while Add all has the focus, so the note shows too. The 64 dp were chosen
+from the preview's heights measured on screens 360 to 540 dp tall in each language, with normal
+and large text: the room left to it depends as much on the text as on the screen.
 
 The list scrolls a row ahead of the selection, as the editor's does. Down past its last picture
 leaves the focus there, as in the editor's list (`ListFrame`), not on Add all; Right goes to it.

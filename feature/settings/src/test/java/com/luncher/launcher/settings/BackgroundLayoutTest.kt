@@ -320,13 +320,15 @@ class BackgroundLayoutTest(private val screen: TvScreen) {
         val margin = activity.resources.getDimension(R.dimen.settings_pictures_margin_vertical)
 
         activity.assertShown("title", activity.findViewById(R.id.settings_pictures_folder_title))
-        // One line, cut at its start at most: the folder, at its end, stays whole.
+        // One line: the sentence whole, else the folder alone, cut at its start at most.
         val where = activity.findViewById<TextView>(R.id.settings_pictures_folder_where)
         assertInside(screen, activity.inside(), "where", bounds(where))
         assertEquals("where on $screen", 1, where.layout.lineCount)
-        val folder = where.text.indexOf("Android/media/")
-        assertTrue("\"${where.text}\" cut past its start on $screen: ${where.layout.getEllipsisCount(0)} letters", where.layout.getEllipsisStart(0) == 0 && where.layout.getEllipsisCount(0) <= folder)
-        activity.assertShown("note", activity.findViewById(R.id.settings_pictures_folder_note))
+        if (where.text.toString() != activity.dropFolder()) {
+            assertEquals("\"${where.text}\" cut on $screen", 0, where.layout.getEllipsisCount(0))
+        }
+        val note = activity.findViewById<TextView>(R.id.settings_pictures_folder_note)
+        if (note.visibility == View.VISIBLE) activity.assertShown("note", note)
         // The preview with its label, as tall as a row of the list at least; else none of them, and none drawn.
         val label = activity.findViewById<TextView>(R.id.settings_pictures_folder_preview_label)
         graph.jobs.runAll()
@@ -344,8 +346,17 @@ class BackgroundLayoutTest(private val screen: TvScreen) {
             )
             assertEquals("previews drawn on $screen", listOf("holiday.jpg"), graph.folderPictures.previewed.map { it.name })
             assertTrue("holiday.jpg previewed on $screen", (preview as android.widget.ImageView).drawable != null)
+            // As wide as the list at most, and short of that, its last view reaching the bottom.
+            val side = bounds(activity.findViewById(R.id.settings_pictures_folder_side_column))
+            val listSide = bounds(activity.findViewById(R.id.settings_pictures_folder_list_column))
+            assertTrue("the preview's column ${side.width()} px wide on $screen, the list's ${listSide.width()}", side.width() <= listSide.width() + 1)
+            if (side.width() < listSide.width() - 1) {
+                val last = bounds(if (note.visibility == View.VISIBLE) note else activity.findViewById(R.id.settings_pictures_folder_add_all))
+                assertTrue("the preview's column ends ${side.bottom - last.bottom} px above the bottom on $screen", side.bottom - last.bottom <= 2)
+            }
         } else {
             assertEquals("the preview's label on $screen", View.GONE, label.visibility)
+            assertEquals("the note on $screen, with no preview", View.VISIBLE, note.visibility)
             assertEquals("previews drawn on $screen", emptyList<String>(), graph.folderPictures.previewed.map { it.name })
         }
         // On the smallest screens the column scrolls: to its end, the note, as Add all takes the focus.
@@ -355,13 +366,13 @@ class BackgroundLayoutTest(private val screen: TvScreen) {
         activity.assertShown("Add all", addAll)
         assertZoomShown(screen, "Add all", addAll, addAll.floatResource(UiR.dimen.button_zoom), activity.resources.getDimension(UiR.dimen.button_lift))
         assertTrue("Add all below the screen on $screen", bounds(addAll).bottom <= metrics.heightPixels - margin)
-        assertTrue("note below the screen on $screen", bounds(activity.findViewById(R.id.settings_pictures_folder_note)).bottom <= metrics.heightPixels - margin)
-        // Every row one height, its details whole; why a picture can't be added on a line of its own,
-        // which may end in "…" (OK on the row tells it whole).
+        if (note.visibility == View.VISIBLE) assertTrue("note below the screen on $screen", bounds(note).bottom <= metrics.heightPixels - margin)
+        // Every row one height; its details, and why a picture can't be added on a line of its
+        // own, may end in "…" (OK on the row tells it whole).
         val rows = (0 until list.childCount).map { list.getChildAt(it) }
         assertEquals("rows' heights on $screen", 1, rows.map { it.height }.distinct().size)
         for (row in rows) {
-            activity.assertShown("a picture's details", row.findViewById(R.id.settings_pictures_folder_details))
+            assertInside(screen, activity.inside(), "a picture's details", bounds(row.findViewById(R.id.settings_pictures_folder_details)))
             val why = row.findViewById<TextView>(R.id.settings_pictures_folder_why)
             if (why.visibility == View.VISIBLE) assertInside(screen, activity.inside(), "why a picture can't be added", bounds(why))
         }

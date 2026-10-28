@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Add from folder: the title and where the pictures are, then the list of them below its label,
-     and beside it, below its label, a preview of the selected one, Add all and what OK does. -->
+     and beside it, below its label, a preview of the selected one, Add all and what OK does (but
+     on the smallest screens). -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
@@ -23,9 +24,9 @@
         android:text="@string/settings_pictures_add_from_folder"
         android:textSize="@dimen/text_display" />
 
-    <!-- One line, cut at its start where it doesn't fit (the smallest screens): the folder, at
-         the sentence's end, stays in sight. -->
-    <com.luncher.launcher.ui.ThemedText
+    <!-- One line: the folder alone where the sentence doesn't fit (the smallest screens), cut at
+         its start where even it doesn't (FolderLine). -->
+    <com.luncher.launcher.settings.FolderLine
         android:id="@+id/settings_pictures_folder_where"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -39,9 +40,9 @@
         android:textSize="@dimen/settings_pictures_where_text"
         app:colorRole="onSurfaceVariant" />
 
-    <!-- The list, and the preview's column at its end; AddFromFolderActivity shares the width
-         between them, the list the larger part. -->
-    <FrameLayout
+    <!-- The list, and the preview's column at its end, as wide as its views need to reach the
+         bottom, at most as wide as the list; the list has the rest (FolderColumns). -->
+    <com.luncher.launcher.settings.FolderColumns
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
@@ -108,9 +109,10 @@
             </com.luncher.launcher.settings.ListFrame>
         </LinearLayout>
 
-        <!-- The preview's column: its label, then the preview, smaller on a short screen, so Add
-             all and the note fit below it; where it would be smaller than a row of the list, no
-             label nor preview; where even then they don't fit, the column scrolls
+        <!-- The preview's column: its label, then the preview, as wide as the column, and Add all
+             and the note below it; where the column would be narrow, no note, the preview larger;
+             where the preview would be smaller than a row of the list even then, no label nor
+             preview, the note back; where even then they don't fit, the column scrolls
              (PreviewColumn). -->
         <LinearLayout
             android:id="@+id/settings_pictures_folder_side_column"
@@ -123,8 +125,7 @@
             <com.luncher.launcher.settings.PreviewColumn
                 android:id="@+id/settings_pictures_folder_side"
                 android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1"
+                android:layout_height="match_parent"
                 android:clipToPadding="false"
                 android:scrollbars="none">
 
@@ -196,5 +197,5 @@
                 </LinearLayout>
             </com.luncher.launcher.settings.PreviewColumn>
         </LinearLayout>
-    </FrameLayout>
+    </com.luncher.launcher.settings.FolderColumns>
 </LinearLayout>
