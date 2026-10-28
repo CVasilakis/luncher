@@ -3,6 +3,7 @@ package com.luncher.launcher.settings
 import android.app.Activity
 import android.os.Looper
 import android.view.FocusFinder
+import android.view.Gravity
 import android.view.KeyEvent
 import java.time.Duration
 import com.luncher.domain.pictures.ImportResult
@@ -109,6 +110,24 @@ class AddFromFolderActivityTest {
         val state = activity.findViewById<TextView>(R.id.settings_pictures_folder_state)
         assertEquals(View.VISIBLE, state.visibility)
         assertEquals("No pictures in the folder yet", state.text.toString())
+    }
+
+    @Test
+    fun `without pictures, the list's container has the whole width, the message in its middle`() {
+        graph()
+
+        val activity = start()
+
+        val column = activity.findViewById<View>(R.id.settings_pictures_folder_list_column)
+        val columns = column.parent as View
+        assertEquals(View.GONE, activity.findViewById<View>(R.id.settings_pictures_folder_side).visibility)
+        assertEquals(columns.width - columns.paddingLeft - columns.paddingRight, column.width)
+        val state = activity.findViewById<TextView>(R.id.settings_pictures_folder_state)
+        val container = state.parent as View
+        assertEquals(container.width, state.width)
+        assertEquals(container.height, state.height)
+        assertEquals(Gravity.CENTER, state.gravity and Gravity.CENTER)
+        assertEquals(View.TEXT_ALIGNMENT_CENTER, state.textAlignment)
     }
 
     // Down to the bottom margin however few the pictures, or none, as the editor's pictures.

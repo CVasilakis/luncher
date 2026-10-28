@@ -112,6 +112,13 @@ class BackgroundLayoutTest(private val screen: TvScreen) {
 
     private fun Activity.children(id: Int): List<View> = findViewById<ViewGroup>(id).let { group -> (0 until group.childCount).map(group::getChildAt) }
 
+    /** [view]'s texts, itself if it's one. */
+    private fun texts(view: View): List<TextView> = when (view) {
+        is TextView -> listOf(view)
+        is ViewGroup -> (0 until view.childCount).flatMap { texts(view.getChildAt(it)) }
+        else -> emptyList()
+    }
+
     // Every position: left and right with a wide picture, top and bottom with a tall one.
     @Test
     fun `the background editor fits, with every value of every option`() {
@@ -209,7 +216,7 @@ class BackgroundLayoutTest(private val screen: TvScreen) {
         val rows = activity.children(R.id.settings_pictures_list)
 
         for (row in rows) activity.assertAcross("a row of the list", row)
-        assertWhole(screen, rows.last() as TextView)   // how to add a picture
+        for (text in texts(rows.last())) assertWhole(screen, text)   // how to add a picture
     }
 
     @Test

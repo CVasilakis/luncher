@@ -287,7 +287,9 @@ class TileBannerActivityTest {
         val scroll = activity.findViewById<View>(R.id.settings_pictures_list_scroll)
         val container = scroll.parent as View
         val column = activity.findViewById<View>(R.id.settings_pictures_column)
-        assertTrue("the pictures, ${scroll.height} px, fill their container", scroll.height < container.height)
+        val rows = activity.findViewById<ViewGroup>(R.id.settings_pictures_list)
+        val end = rows.getChildAt(rows.childCount - 1).bottom
+        assertTrue("the pictures, $end px, fill their container", end < container.height)
         assertEquals(bounds(column).bottom - column.paddingBottom, bounds(container).bottom, 1f)
     }
 

@@ -41,7 +41,8 @@
         app:colorRole="onSurfaceVariant" />
 
     <!-- The list, and the preview's column at its end, as wide as its views need to reach the
-         bottom, at most as wide as the list; the list has the rest (FolderColumns). -->
+         bottom, at most as wide as the list; the list has the rest, all of it without pictures
+         (FolderColumns). -->
     <com.luncher.launcher.settings.FolderColumns
         android:layout_width="match_parent"
         android:layout_height="0dp"
@@ -98,19 +99,22 @@
                     android:padding="@dimen/settings_container_padding"
                     android:scrollbars="none" />
 
-                <!-- Looking for them, or none there. -->
+                <!-- Looking for them, or none there: in the middle of the container, which has
+                     the width of the screen then, no preview beside it. -->
                 <com.luncher.launcher.ui.ThemedText
                     android:id="@+id/settings_pictures_folder_state"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
                     android:padding="@dimen/entry_padding"
+                    android:textAlignment="center"
                     android:textSize="@dimen/text_entry"
                     app:colorRole="onSurfaceVariant" />
             </com.luncher.launcher.settings.ListFrame>
         </LinearLayout>
 
-        <!-- The preview's column: its label, then the preview, as wide as the column, and Add all
-             and the note below it; where the column would be narrow, no note, the preview larger;
+        <!-- The preview's column, gone while the list has no pictures: its label, then the
+             preview, as wide as the column, and Add all and the note below it; where the column would be narrow, no note, the preview larger;
              where the preview would be smaller than a row of the list even then, no label nor
              preview, the note back; where even then they don't fit, the column scrolls
              (PreviewColumn). -->

@@ -292,8 +292,26 @@ class BackgroundActivityTest {
 
         assertEquals(listOf("No picture ✓", "Add from folder"), activity.list())
         val list = activity.findViewById<LinearLayout>(R.id.settings_pictures_list)
-        val howTo = list.getChildAt(list.childCount - 1) as TextView
-        assertTrue(howTo.text.contains("Android/media/${activity.packageName}"))
+        val path = list.getChildAt(list.childCount - 1).findViewById<TextView>(R.id.settings_pictures_how_path)
+        assertEquals("Android/media/${activity.packageName}", path.text.toString())
+    }
+
+    @Test
+    fun `how to add a picture is in the middle of the room below Add from folder`() {
+        graph()
+
+        val activity = start().get()
+
+        val list = activity.findViewById<LinearLayout>(R.id.settings_pictures_list)
+        val howTo = list.getChildAt(list.childCount - 1) as ViewGroup
+        val add = list.getChildAt(list.childCount - 2)
+        val room = list.height - list.paddingBottom - add.bottom
+        val content = howTo.getChildAt(howTo.childCount - 1).bottom - howTo.getChildAt(0).top
+        assertEquals(add.bottom, howTo.top)
+        assertTrue("how to add a picture, $content px, in $room px", content < room)
+        val above = howTo.top + howTo.getChildAt(0).top - add.bottom
+        val below = list.height - list.paddingBottom - (howTo.top + howTo.getChildAt(howTo.childCount - 1).bottom)
+        assertTrue("$above px above how to add a picture, $below px below", kotlin.math.abs(above - below) <= 1)
     }
 
     // Down to the bottom margin however few the pictures, as the appearance editor's options.
@@ -306,7 +324,9 @@ class BackgroundActivityTest {
         val scroll = activity.findViewById<View>(R.id.settings_pictures_list_scroll)
         val container = scroll.parent as View
         val column = activity.findViewById<View>(R.id.settings_pictures_column)
-        assertTrue("the pictures, ${scroll.height} px, fill their container", scroll.height < container.height)
+        val rows = activity.findViewById<ViewGroup>(R.id.settings_pictures_list)
+        val end = rows.getChildAt(rows.childCount - 1).bottom
+        assertTrue("the pictures, $end px, fill their container", end < container.height)
         assertEquals(bounds(column).bottom - column.paddingBottom, bounds(container).bottom, 1f)
     }
 

@@ -78,8 +78,8 @@
 
     <string name="settings_pictures_adding">Προσθήκη της εικόνας…</string>
     <string name="settings_pictures_how">Για να προσθέσετε μια εικόνα:</string>
-    <string name="settings_pictures_how_share">• Σε μια διαχείριση αρχείων ή συλλογή, επιλέξτε Κοινοποίηση σε μια εικόνα και μετά Luncher.</string>
-    <string name="settings_pictures_how_folder">• Ή αντιγράψτε εικόνες σε αυτόν τον φάκελο, στην τηλεόραση ή σε ένα USB, και μετά επιλέξτε Προσθήκη από φάκελο:</string>
+    <string name="settings_pictures_how_share">Σε μια διαχείριση αρχείων ή συλλογή, επιλέξτε Κοινοποίηση σε μια εικόνα και μετά Luncher.</string>
+    <string name="settings_pictures_how_folder">Ή αντιγράψτε εικόνες στον φάκελο που ακολουθεί, στην τηλεόραση ή σε ένα USB, και μετά επιλέξτε Προσθήκη από φάκελο:</string>
     <string name="settings_pictures_add_from_folder">Προσθήκη από φάκελο</string>
     <string name="settings_pictures_details"><xliff:g id="width" example="1920">%1$d</xliff:g> × <xliff:g id="height" example="1080">%2$d</xliff:g> · <xliff:g id="size" example="3,1 MB">%3$s</xliff:g></string>
     <string name="settings_pictures_no_picture">Χωρίς εικόνα</string>

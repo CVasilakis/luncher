@@ -86,8 +86,8 @@
 
     <string name="settings_pictures_adding">جارٍ إضافة الصورة…</string>
     <string name="settings_pictures_how">لإضافة صورة:</string>
-    <string name="settings_pictures_how_share">• في مدير ملفات أو معرض، اختر «مشاركة» على صورة، ثم Luncher.</string>
-    <string name="settings_pictures_how_folder">• أو انسخ الصور إلى هذا المجلد، على التلفزيون أو على وحدة USB، ثم اختر «إضافة من مجلد»:</string>
+    <string name="settings_pictures_how_share">في مدير ملفات أو معرض، اختر «مشاركة» على صورة، ثم Luncher.</string>
+    <string name="settings_pictures_how_folder">أو انسخ الصور إلى المجلد التالي، على التلفزيون أو على وحدة USB، ثم اختر «إضافة من مجلد»:</string>
     <string name="settings_pictures_add_from_folder">إضافة من مجلد</string>
     <string name="settings_pictures_details">⁦<xliff:g id="width" example="1920">%1$d</xliff:g> × <xliff:g id="height" example="1080">%2$d</xliff:g>⁩ · <xliff:g id="size" example="3.1 MB">%3$s</xliff:g></string>
     <string name="settings_pictures_no_picture">بلا صورة</string>

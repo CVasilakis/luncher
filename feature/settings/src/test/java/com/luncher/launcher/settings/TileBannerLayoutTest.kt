@@ -115,6 +115,13 @@ class TileBannerLayoutTest(private val screen: TvScreen) {
 
     private fun Activity.children(id: Int): List<View> = findViewById<ViewGroup>(id).let { group -> (0 until group.childCount).map(group::getChildAt) }
 
+    /** [view]'s texts, itself if it's one. */
+    private fun texts(view: View): List<TextView> = when (view) {
+        is TextView -> listOf(view)
+        is ViewGroup -> (0 until view.childCount).flatMap { texts(view.getChildAt(it)) }
+        else -> emptyList()
+    }
+
     private fun Activity.fields(): List<View> =
         children(R.id.settings_picture_editor_options).flatMap { line -> (0 until (line as ViewGroup).childCount).map(line::getChildAt) }
 
@@ -275,7 +282,7 @@ class TileBannerLayoutTest(private val screen: TvScreen) {
 
         for (row in rows) activity.assertAcross("a row of the list", row)
         assertWhole(screen, rows.first().findViewById(R.id.settings_pictures_name))   // Original banner
-        assertWhole(screen, rows.last() as TextView)   // how to add a picture
+        for (text in texts(rows.last())) assertWhole(screen, text)   // how to add a picture
     }
 
     @Test

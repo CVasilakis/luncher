@@ -238,10 +238,12 @@
     <string name="settings_pictures_adding">Adding the picture…</string>
     <!-- While the library is empty, the steps to add a picture: the heading. -->
     <string name="settings_pictures_how">To add a picture:</string>
-    <!-- The first way: sharing from another app. "Share" and "Luncher" are what those apps show. -->
-    <string name="settings_pictures_how_share">• In a file manager or gallery, choose Share on a picture, then Luncher.</string>
-    <!-- The second way: a folder on the TV or on a USB drive, whose path is shown below this. -->
-    <string name="settings_pictures_how_folder">• Or copy pictures into this folder, on the TV or a USB drive, then choose Add from folder:</string>
+    <!-- The first way, after a bullet: sharing from another app. "Share" and "Luncher" are what
+         those apps show. -->
+    <string name="settings_pictures_how_share">In a file manager or gallery, choose Share on a picture, then Luncher.</string>
+    <!-- The second way, after a bullet: a folder on the TV or on a USB drive, whose path is shown
+         below this. -->
+    <string name="settings_pictures_how_folder">Or copy pictures into the following folder, on the TV or a USB drive, then choose Add from folder:</string>
     <!-- The folder Luncher reads pictures from, the same in every language; %1$s is Luncher's
          package name, e.g. com.luncher.launcher. -->
     <string name="settings_pictures_folder_path" translatable="false">Android/media/%1$s</string>

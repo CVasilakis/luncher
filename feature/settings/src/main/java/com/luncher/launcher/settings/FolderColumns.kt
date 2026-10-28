@@ -9,8 +9,9 @@ import android.widget.FrameLayout
 /**
  * Add from folder's two columns: the list, and at its end the preview's ([PreviewColumn]), a gap
  * between them. The preview's column is as wide as its preview, Add all and the note need to reach
- * the bottom ([PreviewColumn.widthFor]), at most as wide as the list; the list has the rest. Set
- * here, as the height the columns get is known only as they're measured, and nested weights would
+ * the bottom ([PreviewColumn.widthFor]), at most as wide as the list; the list has the rest, and
+ * all of it while the preview's column is gone (no pictures, so the message saying so has the
+ * screen's width, not a column beside an empty one). Set here, as the height the columns get is known only as they're measured, and nested weights would
  * measure the list twice.
  */
 internal class FolderColumns(context: Context, attrs: AttributeSet?) : FrameLayout(context, attrs) {
@@ -23,11 +24,12 @@ internal class FolderColumns(context: Context, attrs: AttributeSet?) : FrameLayo
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         val shared = MeasureSpec.getSize(widthMeasureSpec) - paddingLeft - paddingRight - gap
         val height = MeasureSpec.getSize(heightMeasureSpec) - paddingTop - paddingBottom
-        val width = side.widthFor(height, shared / 2, (shared * SIDE).toInt())
+        val gone = side.visibility == View.GONE
+        val width = if (gone) 0 else side.widthFor(height, shared / 2, (shared * SIDE).toInt())
         sideColumn.layoutParams.width = width
         // Resolved to a side at once: the measure reads the side, resolved only once otherwise.
         (listColumn.layoutParams as ViewGroup.MarginLayoutParams).apply {
-            marginEnd = width + gap
+            marginEnd = if (gone) 0 else width + gap
             resolveLayoutDirection(layoutDirection)
         }
         super.onMeasure(widthMeasureSpec, heightMeasureSpec)

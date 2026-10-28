@@ -9,7 +9,6 @@ import android.graphics.drawable.Drawable
 import android.graphics.drawable.GradientDrawable
 import android.os.Handler
 import android.os.Looper
-import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.ImageView
@@ -25,7 +24,6 @@ import com.luncher.domain.pictures.PictureId
 import com.luncher.domain.pictures.PictureImages
 import com.luncher.domain.pictures.PictureLibrary
 import com.luncher.domain.pictures.PictureStyle
-import com.luncher.launcher.ui.ThemedText
 import com.luncher.launcher.ui.roundRect
 import com.luncher.launcher.ui.stateColors
 import com.luncher.launcher.ui.styleAll
@@ -37,7 +35,8 @@ import java.util.Locale
  * (settings_pictures_column): a first row the screen names ([first]: No picture), the pictures in
  * the library's order, each with its thumbnail, its name on one line, cut with "…" where it
  * doesn't fit, and below it its size in px and its file's size, then Add from folder; while the
- * library is empty, how to add a picture follows. A see-through picture's thumbnail shows over the
+ * library is empty, how to add a picture follows, in the middle of the room left below
+ * (settings_pictures_how). A see-through picture's thumbnail shows over the
  * row, without the card behind the others, and a hairline around it keeps its shape in the column.
  * The draft's picture is marked ([markChosen]). OK on a row, a long press of OK on a picture, and
  * the pictures Add from folder added, go to the screen's [listener].
@@ -82,7 +81,7 @@ internal class LibraryList(
     private val list: LinearLayout = column.findViewById(R.id.settings_pictures_list)
     private val firstRow: View
     private val addRow: View
-    private val howTo: ThemedText
+    private val howTo: View
     private val thumbnailWidth = activity.resources.getDimensionPixelSize(R.dimen.settings_pictures_thumbnail_width)
     private val thumbnailHeight = activity.resources.getDimensionPixelSize(R.dimen.settings_pictures_thumbnail_height)
     private val thumbnailCorner = activity.resources.getDimension(R.dimen.settings_pictures_tile_corner)
@@ -127,18 +126,8 @@ internal class LibraryList(
             setImageResource(UiR.drawable.icon_plus)
             scaleType = ImageView.ScaleType.CENTER
         }
-        howTo = ThemedText(activity).apply {
-            role = ThemedText.ON_SURFACE_VARIANT
-            setTextSize(TypedValue.COMPLEX_UNIT_PX, resources.getDimension(UiR.dimen.text_supporting))
-            val padding = resources.getDimensionPixelSize(UiR.dimen.entry_padding)
-            setPadding(padding, padding, padding, 0)
-            text = listOf(
-                activity.getString(R.string.settings_pictures_how),
-                activity.getString(R.string.settings_pictures_how_share),
-                activity.getString(R.string.settings_pictures_how_folder),
-                "   " + activity.dropFolder(),
-            ).joinToString("\n")
-        }
+        howTo = inflater.inflate(R.layout.settings_pictures_how, list, false)
+        howTo.findViewById<TextView>(R.id.settings_pictures_how_path).text = activity.dropFolder()
     }
 
     /**
@@ -209,7 +198,7 @@ internal class LibraryList(
         firstRow.styleAll(roles)
         addRow.styleAll(roles)
         for (row in rows.values) row.styleAll(roles)
-        howTo.style(roles)
+        howTo.styleAll(roles)
         addRow.findViewById<ImageView>(R.id.settings_pictures_thumbnail).apply {
             background = roundRect(roles.surfaceHighest, resources.getDimension(UiR.dimen.corner_picture))
             imageTintList = ColorStateList.valueOf(roles.primary)

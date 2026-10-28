@@ -195,7 +195,7 @@ class AddFromFolderActivity : Activity() {
         mark()
         state.visibility = if (found.isEmpty()) View.VISIBLE else View.GONE
         state.setText(if (looking) R.string.settings_pictures_folder_looking else R.string.settings_pictures_folder_empty)
-        side.visibility = if (found.isEmpty()) View.INVISIBLE else View.VISIBLE
+        side.visibility = if (found.isEmpty()) View.GONE else View.VISIBLE
         count.text = if (looking) "" else resources.getQuantityString(R.plurals.settings_pictures_folder_count, found.size, found.size)
         if (found.isEmpty()) return showPreview(null)
         list.setSelection(found.indexOfFirst { it.source == selected }.coerceAtLeast(0))

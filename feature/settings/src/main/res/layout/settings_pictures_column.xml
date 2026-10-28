@@ -45,7 +45,8 @@
     <!-- Down to the bottom margin, however few the pictures, as the appearance editor's options;
          they scroll there, a row ahead of the focus, cut along the container's corners, fading
          out where there's more. Down past the last picture stays there, not to Save or Delete
-         all. -->
+         all. The list fills it where its rows don't, so how to add a picture has the room
+         below them. -->
     <com.luncher.launcher.settings.ListFrame
         android:layout_width="match_parent"
         android:layout_height="0dp"
@@ -55,7 +56,8 @@
         <com.luncher.launcher.ui.LookAheadScrollView
             android:id="@+id/settings_pictures_list_scroll"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
+            android:fillViewport="true"
             android:scrollbars="none">
 
             <!-- The first row (the screen names it: No picture), the library's pictures, Add

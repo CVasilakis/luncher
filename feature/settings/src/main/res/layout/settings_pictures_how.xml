@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- While the library is empty, below Add from folder in a picture editor's list (LibraryList):
+     how to add a picture, in the middle of the room left below the rows (the list fills its
+     container then), or below them where there's none. Its heading, then the two ways, each
+     after a bullet, its lines lined up after it; below the second, the folder, lined up with it. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="0dp"
+    android:layout_weight="1"
+    android:gravity="center_vertical"
+    android:orientation="vertical"
+    android:padding="@dimen/entry_padding">
+
+    <com.luncher.launcher.ui.ThemedText
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/settings_pictures_how"
+        android:textSize="@dimen/text_supporting"
+        app:colorRole="onSurfaceVariant" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/settings_label_gap"
+        android:orientation="horizontal">
+
+        <com.luncher.launcher.ui.ThemedText
+            style="@style/Widget.Luncher.Settings.HowBullet" />
+
+        <com.luncher.launcher.ui.ThemedText
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/settings_pictures_how_share"
+            android:textSize="@dimen/text_supporting"
+            app:colorRole="onSurfaceVariant" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/settings_label_gap"
+        android:orientation="horizontal">
+
+        <com.luncher.launcher.ui.ThemedText
+            style="@style/Widget.Luncher.Settings.HowBullet" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <com.luncher.launcher.ui.ThemedText
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/settings_pictures_how_folder"
+                android:textSize="@dimen/text_supporting"
+                app:colorRole="onSurfaceVariant" />
+
+            <!-- LibraryList sets it. -->
+            <com.luncher.launcher.ui.ThemedText
+                android:id="@+id/settings_pictures_how_path"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/settings_pictures_tile_text_gap"
+                android:textSize="@dimen/text_supporting"
+                app:colorRole="onSurfaceVariant" />
+        </LinearLayout>
+    </LinearLayout>
+</LinearLayout>

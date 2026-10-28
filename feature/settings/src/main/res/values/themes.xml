@@ -54,4 +54,16 @@
         <item name="android:textSize">@dimen/text_label</item>
         <item name="colorRole">onSurfaceVariant</item>
     </style>
+
+    <!-- The bullet before each way to add a picture, in a column of its own, so a way's lines
+         line up after it (settings_pictures_how). -->
+    <style name="Widget.Luncher.Settings.HowBullet" parent="">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginEnd">@dimen/icon_gap</item>
+        <item name="android:importantForAccessibility">no</item>
+        <item name="android:text">•</item>
+        <item name="android:textSize">@dimen/text_supporting</item>
+        <item name="colorRole">onSurfaceVariant</item>
+    </style>
 </resources>
