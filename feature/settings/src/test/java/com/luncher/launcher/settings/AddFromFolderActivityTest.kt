@@ -36,6 +36,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
+import org.robolectric.annotation.GraphicsMode
 import org.robolectric.shadows.ShadowDialog
 
 @RunWith(RobolectricTestRunner::class)
@@ -814,4 +815,51 @@ class AddFromFolderActivityTest {
         assertEquals(emptyList<Any>(), graph.folderPictures.previewed.filter { it.name == "2.jpg" })
     }
 
+    // On a 720p screen at the 1080p density, rows of three lines (a picture can't be added) leave
+    // room for two: the window starts at the list's margin, and ends on a whole row. Down keeps the
+    // selection on the top row, the list sliding a row under it, until the last row shows; Up
+    // keeps it on the bottom row the same way. One thing moves at a time: the selection, or the
+    // list by a row.
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)   // real text: the rows' heights
+    @Config(qualifiers = "+w640dp-h360dp")
+    fun `with two rows in sight, scrolls a row at a time, the selected row whole, from the list's margin`() {
+        graph(huge, holiday, phone, logo, wallpaper)
+        val activity = start()
+        val list = activity.list()
+        val pitch = list.getChildAt(1).top - list.getChildAt(0).top
+        val last = list.count - 1
+
+        fun scrolled() = list.firstVisiblePosition * pitch + list.paddingTop - list.getChildAt(0).top
+
+        // Which row of the window the selection is on: 0 the top one, 1 the bottom one.
+        fun slot(): Int {
+            val top = list.selectedView.top - list.paddingTop
+            assertEquals("the selected row ${list.selectedItemPosition + 1} on a row of the window", 0, top % pitch)
+            return top / pitch
+        }
+
+        fun press(keyCode: Int, position: Int, slot: Int) {
+            val before = scrolled()
+            val beforeSlot = slot()
+            activity.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, keyCode))
+            activity.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_UP, keyCode))
+            shadowOf(Looper.getMainLooper()).idleFor(Duration.ofSeconds(1))   // the slide
+            assertEquals(position, list.selectedItemPosition)
+            assertEquals("row ${position + 1}'s place in the window", slot, slot())
+            val slid = scrolled() - before
+            assertTrue("to row ${position + 1}: the selection moved or the list slid ($slid px), one of them", (slot != beforeSlot) != (slid != 0))
+            if (slid != 0) assertEquals("the list slid by a row", pitch, kotlin.math.abs(slid))
+        }
+
+        assertEquals("rows in sight", 2 * pitch, list.height - list.paddingTop - list.paddingBottom + list.dividerHeight)
+        assertEquals("the first row at the list's margin", list.paddingTop, list.getChildAt(0).top)
+        assertEquals(0, slot())
+        for (position in 1 until last) press(KeyEvent.KEYCODE_DPAD_DOWN, position, slot = 0)
+        press(KeyEvent.KEYCODE_DPAD_DOWN, last, slot = 1)
+        assertFalse("the last row at the edge, no more below", list.canScrollVertically(1))
+        for (position in last - 1 downTo 1) press(KeyEvent.KEYCODE_DPAD_UP, position, slot = 1)
+        press(KeyEvent.KEYCODE_DPAD_UP, 0, slot = 0)
+        assertEquals("the first row at the list's margin again", list.paddingTop, list.getChildAt(0).top)
+    }
 }

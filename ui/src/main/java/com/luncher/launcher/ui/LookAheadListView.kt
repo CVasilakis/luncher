@@ -99,9 +99,19 @@ open class LookAheadListView @JvmOverloads constructor(context: Context, attrs: 
     override fun setSelection(position: Int) {
         slide.finish()
         val shown = if (pitch == 0) 0 else (height - paddingTop - paddingBottom + dividerHeight) / pitch
-        if (shown == 0 || isInTouchMode) return super.setSelection(position)
+        if (shown == 0 || isInTouchMode) return selectFromTop(position, 0)
         val first = (position - 1).coerceIn(0, (count - shown).coerceAtLeast(0))
-        setSelectionFromTop(position, (position - first) * pitch)
+        selectFromTop(position, (position - first) * pitch)
+    }
+
+    /**
+     * Selects [position], its row [y] px below the list's top padding. `ListView` adds the padding
+     * as it was at its last measure: none before the first one, which put the row at the list's top
+     * edge, its margin left out, until something scrolled it (Add from folder, whose rows don't
+     * all show).
+     */
+    private fun selectFromTop(position: Int, y: Int) {
+        setSelectionFromTop(position, y + paddingTop - listPaddingTop)
     }
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
@@ -153,7 +163,7 @@ open class LookAheadListView @JvmOverloads constructor(context: Context, attrs: 
      * not at the next frame, so OK right after the arrow is on that row.
      */
     private fun select(position: Int, top: Int) {
-        setSelectionFromTop(position, top - paddingTop)
+        selectFromTop(position, top - paddingTop)
         layoutChildren()
     }
 
