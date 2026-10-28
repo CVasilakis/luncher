@@ -200,9 +200,11 @@ columns are measured, where the title's place follows from the start column's me
 are in groups (Tiles, Time and date, Theme), each an entry of its own with its icon and a mark
 pointing down, or up while it's open, closed at first: OK on one shows its options below it and
 closes the group that was open, so the list stays short; OK again closes it. Each option shows its
-value in a chip between arrows, beside its name or, where that leaves the name too little room,
-below it (`StepperRow`); Left and Right step it through its values, around from the last to the
-first, and each change is stored at once, the preview following.
+value in a chip between arrows, beside its name or, where that leaves any option's name too little
+room with its widest value, below it, in every option alike (`StepperRow`): the rows look alike,
+and a row doesn't change its height or wrap its name anew as its value changes; Left and Right
+step it through its values, around from the last to the first, and each change is stored at
+once, the preview following.
 
 The Theme group holds the accent color (Orange, the default, Pink, Purple, Blue, Teal, Green,
 Amber, Gray; each value with its swatch) and the mode, Dark or Light. They change the menus and

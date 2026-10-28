@@ -20,7 +20,8 @@ import kotlin.math.ceil
  * once, the background editor keeps it as its draft. In the appearance editor
  * (settings_appearance_option) the value is in a chip between arrows, which Left and Right step
  * through, toward the arrow on that side, around from the last value to the first; the swatch the
- * labels give before it, for the accent color.
+ * labels give before it, for the accent color. The row lays itself out for the widest value
+ * ([StepperRow.widestValue]).
  * With [opens], in the background editor (settings_option_field, a field), OK opens the
  * values in a list ([OptionList]) instead, beside the field, the field outlined and its mark
  * pointing there while it shows; Left and Right move the focus, as on any other entry: the
@@ -79,6 +80,9 @@ internal class OptionRow<M, C, O : Option<M, C, *>>(
 
     fun show() {
         val model = model()
+        // The chip's row goes by the widest value, so it doesn't change its layout as the value
+        // changes (StepperRow). Once: the values' names don't change.
+        if (view is StepperRow && view.widestValue == 0) view.widestValue = widestValue()
         val applies = option.appliesTo(model, context())
         value.text = labels.value(option, model, view.context)
         val color = labels.swatch(option, model)

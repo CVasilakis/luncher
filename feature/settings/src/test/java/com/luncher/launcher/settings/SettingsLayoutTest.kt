@@ -202,6 +202,8 @@ class SettingsLayoutTest(private val screen: TvScreen) {
         val next = if (options.layoutDirection == View.LAYOUT_DIRECTION_RTL) KeyEvent.KEYCODE_DPAD_LEFT else KeyEvent.KEYCODE_DPAD_RIGHT
         // The background's group is one entry, edited in its own screen (BackgroundLayoutTest).
         val catalog = appearanceOptions().groups.filter { !it.editedApart }
+        // Every option's chip on the same side, beside its name or below it, whatever its value.
+        val chipsBelow = mutableSetOf<Boolean>()
         for ((index, group) in groups.withIndex()) {
             assertTrue(group.requestFocus())
             activity.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DPAD_CENTER))
@@ -218,9 +220,12 @@ class SettingsLayoutTest(private val screen: TvScreen) {
             for ((i, pair) in rows.zip(catalog[index].options).withIndex()) {
                 val (row, option) = pair
                 assertTrue("${row.label().text} can't take the focus on $screen", row.requestFocus())
+                val height = row.height
                 repeat(option.values.size) { step ->
                     assertWhole(screen, row.label())
                     assertWhole(screen, row.value())
+                    assertEquals("${row.label().text}'s height with ${row.value().text} on $screen", height, row.height)
+                    chipsBelow += (row.value().parent as View).top >= row.label().bottom
                     if (step < option.values.lastIndex) {
                         activity.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, next))
                         shadowOf(Looper.getMainLooper()).idle()   // the layout pass
@@ -232,6 +237,7 @@ class SettingsLayoutTest(private val screen: TvScreen) {
                 }
             }
         }
+        assertEquals("chips below their names on $screen: $chipsBelow", 1, chipsBelow.size)
     }
 
     private fun View.label() = findViewById<TextView>(R.id.settings_option_label)
