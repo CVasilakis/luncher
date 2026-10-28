@@ -465,8 +465,10 @@ Delete all. The panels line up with the fields' two columns, the gap between the
 
 Each panel shows the tile at the home tile's size (`homeTileSize`), over the part of the wallpaper
 around the tile's place on the home screen, at the screen's size: so it's the home screen there,
-pixel for pixel. The place is the home screen's to tell, as it opens the picker
-(`TileBannerActivity.intent`'s `TilePlace`, `:domain`): only it knows where its tiles are, as its
+pixel for pixel, but for a lifted tile's shadow, which Android casts from a light above the
+screen's top middle, so it falls a little differently at the panel's place. The place is the
+home screen's to tell, as it opens the picker (`TileBannerActivity.intent`'s `TilePlace`,
+`:domain`): only it knows where its tiles are, as its
 top bar is as tall as its text and its scroll is where the focus went; it gives the tile's place
 in its window, scrolled as it shows, before its zoom (`AppTilesView.placeOf`). Without one, or
 with one given on a screen of another size (`TilePlace.on`), the tile is in the screen's middle.

@@ -55,9 +55,10 @@ ui/
     │   │   │                     below a tile; the home screen's, and the room the appearance preview leaves
     │   │   ├── TileShapes.kt     a see-through picture's shape on its tile, made as the tile is prepared: a band
     │   │   │                     around its outline and its soft shadow, at half the tile's scale
-    │   │   ├── TilePainter.kt    draws a home tile from its parts (TileParts): its image, a see-through picture's look; the Frosted tiles' frost (TileFrost)
-    │   │   │                     (backdrop, a focus that follows the tile or the picture's shape), the focus and held
-    │   │   │                     frames; the home screen's tiles, and the tile banner picker's preview of one
+    │   │   ├── TilePainter.kt    draws a home tile from its parts (TileParts): its image, a see-through picture's look
+    │   │   │                     (backdrop, a focus that follows the tile or the picture's shape), the Frosted tiles'
+    │   │   │                     frost (TileFrost), the focus and held frames, a lifted tile's outline; the home
+    │   │   │                     screen's tiles, and the tile banner picker's preview of one at rest and focused
     │   │   ├── WallpaperOutline.kt  the dark edge around what's drawn on the wallpaper, on the home screen
     │   │   │                     and in the previews of it
     │   │   └── WorkingDialog.kt  a floating panel in the theme's colors, a spinning wheel and a message, taking every key,
@@ -84,7 +85,9 @@ ui/
     │                             (smaller on 720p at 1080p density)
     ├── test/java/com/luncher/launcher/ui/
     │   ├── WholeRowsTest.kt      the lists' rules, on the JVM alone
-    │   └── LookAheadScrollViewTest.kt  rows of a little different heights made one, a taller one kept (Robolectric)
+    │   ├── LookAheadScrollViewTest.kt  rows of a little different heights made one, a taller one kept (Robolectric)
+    │   └── TilePainterTest.kt    each look drawn as the focus comes, in as few passes as it needs, the frost where
+    │                             the tile is, the lifted outline (Robolectric)
     └── testFixtures/java/com/luncher/launcher/testing/
         ├── TvDevice.kt           the TV screens the JVM tests run on (TV_1080P, TV_SCREENS)
         ├── LayoutChecks.kt       the layout tests' checks: bounds, inside, apart, whole text, a zoom not cut
@@ -223,8 +226,8 @@ theme), never while drawing or for a key press; a theme the screen has already i
 skipped. A shadow is the GPU's, cast from a view's outline. A fade is one gradient over the list.
 A list's slide makes nothing for a key press or a frame: its animator and the two focused looks
 are kept for the next slides, and dropped as the list leaves its window. The looks are recorded,
-not drawn into bitmaps, from API 23 on: bitmaps sent to the GPU took a slide's frames from about
-15 to about 90 ms on tv_api28. With animations off, the list moves at once.
+not drawn into bitmaps, from API 23 on: bitmaps sent to the GPU made a slide's frames about 6
+times slower on tv_api28. With animations off, the list moves at once.
 
 ## The theme
 

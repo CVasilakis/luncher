@@ -279,9 +279,9 @@ glass). Its **focus** follows the tile, as every tile's, or the picture's shape:
 - **Tile, framed:** the frame inside the tile's edge, as on every tile, around the glass.
 - **Tile, lifted:** Android's shadow of the tile's outline, lighter (the outline's alpha at 0.3),
   since it shows through the glass; Frosted's whole, as an opaque tile's, while there's a
-  wallpaper: its frost is opaque, so nothing shows through it. Without a backdrop, a light card (22 % white) comes with the
-  focus: Android's shadow would otherwise show through the picture's see-through parts as a dark
-  box behind nothing.
+  wallpaper: its frost is opaque, so nothing shows through it. Without a backdrop, a light card
+  (22 % white) comes with the focus: Android's shadow would otherwise show through the picture's
+  see-through parts as a dark box behind nothing.
 - **Shape, framed:** no frame inside the edge; a band in the accent around the picture's shape,
   drawn from the shape's band mask, prepared with the tile.
 - **Shape, lifted:** the tile zooms, but doesn't rise (`home_tile_focus`, no outline shadow): the
@@ -294,8 +294,9 @@ follows the focus, or whose name fades. The frame shows at once, as it always di
 its white frame, not the band. The masks, at half the tile's scale, are drawn twice their size,
 filtered, through matrices made with the tile's parts; the glass is a rounded rectangle in a paint
 kept for it, and at rest, in the picture's own pass, through a shader made with the parts
-([`../../ui/README.md`](../../ui/README.md#layout)): drawing a look allocates nothing either. The tile's look changes how its state animator lifts it, so it's chosen again with a
-new style and with a new bitmap (the picture prepared, which the app's own image stood in for).
+([`../../ui/README.md`](../../ui/README.md#layout)): drawing a look allocates nothing either.
+The tile's look changes how its state animator lifts it, so it's chosen again with a new style
+and with a new bitmap (the picture prepared, which the app's own image stood in for).
 
 A Frosted tile draws its part of the wallpaper's frosted copy ([below](#the-wallpaper)), which
 covers the window as the wallpaper does: the painter moves and scales the canvas so its space is

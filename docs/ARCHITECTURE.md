@@ -46,9 +46,9 @@ activity's `intent`, below).
 Features don't depend on each other, with one exception: a feature may start another feature's
 activity by its class (`Intent(this, SettingsActivity::class.java)`), and use nothing else of it,
 which the other's `internal` enforces. The compiler then checks the link, which an intent action
-string wouldn't. An activity that must be told what it's for (the tile banner picker: which app)
-has one public function that makes the intent, its extras' keys its own
-(`TileBannerActivity.intent(context, app)`), so the compiler checks those too, and the starting
+string wouldn't. An activity that must be told what it's for (the tile banner picker: which app,
+and where its tile is) has one public function that makes the intent, its extras' keys its own
+(`TileBannerActivity.intent(context, app, place)`), so the compiler checks those too, and the starting
 feature uses that, not the extras. Such links go one way; one that would close a cycle goes through an interface
 `:app` implements instead. What two features share is either domain (a model or port in
 `:domain`), or UI-only (`:ui`).
@@ -296,6 +296,7 @@ is a role in `ColorRoles`, with its value in each mode and a contrast check
 | Where a moved app goes, which key does what to it | `MoveSession` in `:domain`'s `arrange/`, with unit tests; `MoveMode` in `:feature:home` turns keys into its moves ([`feature/home/README.md`](../feature/home/README.md#moving-an-app)) |
 | Something the home screen's top bar shows (the clock, the settings entry; later status indicators) | a view in `:feature:home`, placed in the bar, with the wallpaper outline (`:ui`'s `WallpaperOutline`) so it reads on any picture; device state it shows (the time, the network) comes from a port you can watch ([above](#background-work-and-changes-while-shown)). Details: [`feature/home/README.md`](../feature/home/README.md#the-top-bar) |
 | Something the user can change about how the home screen looks (the tiles' alignment, corner radius, a color) | a value in `Appearance` and an option in its catalog, in `:domain`; the steps and what checks each: [Appearance](#appearance) |
+| Something the user can change about how one app's tile shows its picture (its backdrop, what its focus follows; later, say, a color of its own) | a value of `TileLook` and an option of the tile image's catalog (`TileImageOption`), in `:domain`'s `apps/`, applying only where it changes something (`lookApplies`, `counted`); its label in the tile banner picker (`TileImageLabels`), stored by `PreferencesAppCustomizations`; drawn live by `:ui`'s `TilePainter`, so the home screen and the picker's preview draw it alike, and prepared ahead (`TileDrawing`) only if it changes what the tile's picture is drawn from, as Focus Shape's masks do: else saving it prepares nothing ([`feature/settings/README.md`](../feature/settings/README.md#tile-banner), [`feature/home/README.md`](../feature/home/README.md#appearance)) |
 | A new setting | its entry: `settingsMenu` in `:domain`'s `settings/`, and its label and action in `:feature:settings`; a value it stores comes through a port you can watch, so the screens it affects update while it changes; a screen of its own (a list, like Hide apps) is another activity in `:feature:settings`. Steps: [`feature/settings/README.md`](../feature/settings/README.md#the-settings-panel) |
 | A new screen of its own, which no feature's screens open or share anything with | a new feature module (below) |
 | A shared view, style or UI helper | `:ui`, resources without a prefix |
