@@ -327,15 +327,14 @@
     <!-- Where a picture of that list is: the TV's own storage, or a USB drive (or a memory card). -->
     <string name="settings_pictures_folder_local">Local</string>
     <string name="settings_pictures_folder_usb">USB drive</string>
-    <!-- Below a picture's name in that list: where it is, then its size, or why it can't be added. -->
+    <!-- Below a picture's name in that list: where it is, then its size (where alone, for a picture
+         in a format this TV can't show: its size is unknown). -->
     <string name="settings_pictures_folder_row"><xliff:g id="where" example="USB drive">%1$s</xliff:g> · <xliff:g id="details" example="4000 × 3000 · 2.4 MB">%2$s</xliff:g></string>
-    <!-- Below a picture of that list in a format this TV can't show, in the accent color; %1$s is
-         the format's name. -->
+    <!-- A picture of that list is in a format this TV can't show; %1$s is the format's name. -->
     <string name="settings_pictures_folder_unsupported"><xliff:g id="format" example="HEIF (HEIC)">%1$s</xliff:g> not supported on this TV</string>
-    <!-- Below a picture of that list that can't be added, as the list already tells: its size and
-         file size (%1$s, as settings_pictures_details writes them), then why (%2$s, in the accent
-         color: one of the four below, or settings_pictures_already). -->
-    <string name="settings_pictures_folder_refused"><xliff:g id="details" example="4000 × 3000 · 3.1 MB">%1$s</xliff:g> · <xliff:g id="why" example="Too large (over 50 MB)">%2$s</xliff:g></string>
+    <!-- Why a picture of that list can't be added, as the list already tells, on a line of its own
+         below its size, in the accent color: the one above, one of the four below, or
+         settings_pictures_already. -->
     <!-- Its file is larger than the most a picture can be: %1$s, e.g. 50 MB. -->
     <string name="settings_pictures_folder_too_large_bytes">Too large (over <xliff:g id="size" example="50 MB">%1$s</xliff:g>)</string>
     <!-- It has more pixels than a picture can have: %d, in millions, 64. -->

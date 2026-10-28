@@ -50,7 +50,8 @@ import com.luncher.launcher.ui.R as UiR
  * [TV_SCREENS], in every language:
  * everything inside the TV's overscan margin across, no text of Luncher's own cut, the dialogs a
  * margin from the screen's edges. A picture's name may end in "…": it's the user's, and can be any
- * length.
+ * length; so may why Add from folder can't add a picture, on a line of its own below it: OK on it
+ * tells why whole.
  */
 @RunWith(ParameterizedRobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)   // real text widths; without it a character is 1 px wide
@@ -299,10 +300,12 @@ class BackgroundLayoutTest(private val screen: TvScreen) {
 
     @Test
     fun `Add from folder fits, the preview beside the list`() {
-        val graph = object : TestPicturesGraph() {
+        // The library has a "logo.png" of another size: the folder's can't be added.
+        val graph = object : TestPicturesGraph(FakePictures(picture("logo.png", bytes = 99_000))) {
             override val folderPictures = FakeFolderPictures(
                 folderPicture("holiday.jpg", removable = true),
                 folderPicture("IMG_0001.HEIC", unsupported = PictureFormat.HEIF),
+                folderPicture("logo.png"),
                 draw = { picture, width, height -> sample(picture.name, width, height) },
             )
         }
@@ -353,6 +356,14 @@ class BackgroundLayoutTest(private val screen: TvScreen) {
         assertZoomShown(screen, "Add all", addAll, addAll.floatResource(UiR.dimen.button_zoom), activity.resources.getDimension(UiR.dimen.button_lift))
         assertTrue("Add all below the screen on $screen", bounds(addAll).bottom <= metrics.heightPixels - margin)
         assertTrue("note below the screen on $screen", bounds(activity.findViewById(R.id.settings_pictures_folder_note)).bottom <= metrics.heightPixels - margin)
-        for (i in 0 until list.childCount) activity.assertShown("a picture's details", list.getChildAt(i).findViewById(R.id.settings_pictures_folder_details))
+        // Every row one height, its details whole; why a picture can't be added on a line of its own,
+        // which may end in "…" (OK on the row tells it whole).
+        val rows = (0 until list.childCount).map { list.getChildAt(it) }
+        assertEquals("rows' heights on $screen", 1, rows.map { it.height }.distinct().size)
+        for (row in rows) {
+            activity.assertShown("a picture's details", row.findViewById(R.id.settings_pictures_folder_details))
+            val why = row.findViewById<TextView>(R.id.settings_pictures_folder_why)
+            if (why.visibility == View.VISIBLE) assertInside(screen, activity.inside(), "why a picture can't be added", bounds(why))
+        }
     }
 }

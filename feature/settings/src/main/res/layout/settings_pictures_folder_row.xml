@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- A picture of the drop folders: a USB drive or the TV, where it is, then its name, and below it
-     where it is again in words and its size, or why it can't be added, in the error color, on more
-     lines where it needs them. Not focusable: the list moves its selection; the selected row looks
+<!-- A picture of the drop folders: a USB drive or the TV, where it is, then its name, below it
+     where it is again in words and its size, and below that, on a line of its own, why it can't be
+     added, in the error color. Every line one line, cut with "…" where it must; while a picture of
+     the list can't be added, every row is as tall as three lines, its lines centered in it
+     (AddFromFolderActivity). Not focusable: the list moves its selection; the selected row looks
      focused. -->
 <com.luncher.launcher.ui.ListEntry xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -48,8 +50,20 @@
             android:layout_marginTop="@dimen/settings_entry_line_gap"
             android:duplicateParentState="true"
             android:ellipsize="end"
-            android:maxLines="3"
+            android:singleLine="true"
             android:textSize="@dimen/text_supporting"
             app:colorRole="onSurfaceVariant" />
+
+        <com.luncher.launcher.ui.ThemedText
+            android:id="@+id/settings_pictures_folder_why"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/settings_entry_line_gap"
+            android:duplicateParentState="true"
+            android:ellipsize="end"
+            android:singleLine="true"
+            android:textSize="@dimen/text_supporting"
+            android:visibility="gone"
+            app:colorRole="error" />
     </LinearLayout>
 </com.luncher.launcher.ui.ListEntry>

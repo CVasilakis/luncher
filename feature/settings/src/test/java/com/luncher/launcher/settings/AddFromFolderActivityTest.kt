@@ -75,8 +75,9 @@ class AddFromFolderActivityTest {
         val list = list()
         return (0 until list.adapter.count).map { position ->
             val row = list.adapter.getView(position, null, list)
+            val why = row.findViewById<TextView>(R.id.settings_pictures_folder_why).takeIf { it.visibility == View.VISIBLE }?.text
             row.findViewById<TextView>(R.id.settings_pictures_folder_name).text.toString() + " | " +
-                row.findViewById<TextView>(R.id.settings_pictures_folder_details).text
+                row.findViewById<TextView>(R.id.settings_pictures_folder_details).text + (why?.let { " | $it" } ?: "")
         }
     }
 
@@ -89,7 +90,7 @@ class AddFromFolderActivityTest {
         assertEquals(
             listOf(
                 "holiday.jpg | USB drive · 4000 × 3000 · 2.4 MB",
-                "IMG_0001.HEIC | Local · HEIF (HEIC) not supported on this TV",
+                "IMG_0001.HEIC | Local | HEIF (HEIC) not supported on this TV",
                 "logo.png | USB drive · 4000 × 3000 · 2.4 MB",
                 "wallpaper-4k.jpg | Local · 4000 × 3000 · 2.4 MB",
             ),
@@ -330,7 +331,7 @@ class AddFromFolderActivityTest {
         graph.jobs.runAll()
         idle()
 
-        assertEquals(listOf("damaged.jpg | Local · 4000 × 3000 · 2.4 MB · Damaged", "wallpaper-4k.jpg | Local · 4000 × 3000 · 2.4 MB"), activity.rows())
+        assertEquals(listOf("damaged.jpg | Local · 4000 × 3000 · 2.4 MB | Damaged", "wallpaper-4k.jpg | Local · 4000 × 3000 · 2.4 MB"), activity.rows())
         activity.list().performItemClick(null, 0, 0)
         idle()
         val (title, text) = message()
@@ -349,7 +350,7 @@ class AddFromFolderActivityTest {
         graph.next()   // the selected one's
         graph.next()   // the other's, ahead
         assertEquals(listOf("wallpaper-4k.jpg", "zoo.jpg"), graph.folderPictures.previewed.map { it.name })
-        assertEquals("zoo.jpg | Local · 4000 × 3000 · 2.4 MB · Damaged", activity.rows()[1])
+        assertEquals("zoo.jpg | Local · 4000 × 3000 · 2.4 MB | Damaged", activity.rows()[1])
         graph.folderPictures.previewed.clear()
         activity.list().setSelection(1)
         idle()
@@ -372,7 +373,7 @@ class AddFromFolderActivityTest {
         activity.list().performItemClick(null, 0, 0)
         shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(WorkingDialog.SHORTEST))
 
-        assertEquals(listOf("holiday.jpg | USB drive · 4000 × 3000 · 2.4 MB · Damaged"), activity.rows())
+        assertEquals(listOf("holiday.jpg | USB drive · 4000 × 3000 · 2.4 MB | Damaged"), activity.rows())
         assertFalse("nothing left to add", activity.addAll().isFocusable)
     }
 
@@ -614,9 +615,9 @@ class AddFromFolderActivityTest {
 
         assertEquals(
             listOf(
-                "aerial.jpg | Local · 21621 × 7004 · 184 MB · Too large (over 50 MB)",
-                "holiday.jpg | USB drive · 4000 × 3000 · 2.4 MB · Already in Luncher's pictures",
-                "logo.png | USB drive · 4000 × 3000 · 2.4 MB · Name already used in Luncher's pictures",
+                "aerial.jpg | Local · 21621 × 7004 · 184 MB | Too large (over 50 MB)",
+                "holiday.jpg | USB drive · 4000 × 3000 · 2.4 MB | Already in Luncher's pictures",
+                "logo.png | USB drive · 4000 × 3000 · 2.4 MB | Name already used in Luncher's pictures",
                 "wallpaper-4k.jpg | Local · 4000 × 3000 · 2.4 MB",
             ),
             activity.rows(),
@@ -627,7 +628,7 @@ class AddFromFolderActivityTest {
     fun `a picture over the pixels alone is said to be, its file small`() {
         graph(folderPicture("wide.jpg", bytes = 458_000, width = 9000, height = 8000))
 
-        assertEquals(listOf("wide.jpg | Local · 9000 × 8000 · 458 kB · Too large (over 64 megapixels)"), start().rows())
+        assertEquals(listOf("wide.jpg | Local · 9000 × 8000 · 458 kB | Too large (over 64 megapixels)"), start().rows())
     }
 
     @Test
@@ -638,7 +639,7 @@ class AddFromFolderActivityTest {
         val list = activity.list()
 
         fun colored(position: Int): List<String> {
-            val text = list.adapter.getView(position, null, list).findViewById<TextView>(R.id.settings_pictures_folder_details).text
+            val text = list.adapter.getView(position, null, list).findViewById<TextView>(R.id.settings_pictures_folder_why).text
             val spanned = text as? android.text.Spanned ?: return emptyList()
             return spanned.getSpans(0, text.length, android.text.style.ForegroundColorSpan::class.java)
                 .filter { it.foregroundColor == accent }
@@ -812,4 +813,5 @@ class AddFromFolderActivityTest {
 
         assertEquals(emptyList<Any>(), graph.folderPictures.previewed.filter { it.name == "2.jpg" })
     }
+
 }

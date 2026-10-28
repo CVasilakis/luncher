@@ -684,8 +684,10 @@ focuses it: the user waits in one place, and nothing moves under them. Refused, 
 why (`ImportResult`, an exhaustive `when` in `whyNotAdded`) and stays, for another choice.
 Closing it while it adds (Home) stops the adding. What the listing
 and the library already tell can't be added (`whyRefused`, in `:domain`) is marked in the list,
-after where it is, why in the error color so it stands out, and OK on it says why at once, reading
-nothing: a file in a format this TV can't show ([which](../../platform/README.md#pictures)), one
+why on a line of its own below where it is and its size, in the error color so it stands out, cut
+with "…" where the line is too short (the list's rows stay one height: while any picture is
+marked, each is as tall as three lines, the two of the others centered in it), and OK on it says
+why at once, whole, reading nothing: a file in a format this TV can't show ([which](../../platform/README.md#pictures)), one
 over 50 MB or over 64 megapixels (`PictureLimits`), which have no preview either, and one named as
 a picture of the library, the same file (the same name and size: "Already in Luncher's pictures")
 or another. The listing goes by names: a file whose picture was renamed in the library isn't

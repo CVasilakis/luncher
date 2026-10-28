@@ -450,8 +450,16 @@ class AddFromFolderActivity : Activity() {
         private const val SIDE = 0.41f
     }
 
-    /** The rows of [pictures], reusing the views of rows scrolled away. */
+    /**
+     * The rows of [pictures], reusing the views of rows scrolled away. Every row the same height,
+     * so the list's window stays whole rows: while a picture can't be added, as tall as three
+     * lines, its name, its size and why on a line of its own, the lines of the others centered in
+     * it; else as tall as two.
+     */
     private inner class Rows : BaseAdapter() {
+
+        /** As tall as a row with a line of why, at the text size the TV has; measured as the first row is made. */
+        private var threeLines = 0
 
         override fun getCount() = pictures.size
 
@@ -460,29 +468,45 @@ class AddFromFolderActivity : Activity() {
         override fun getItemId(position: Int) = position.toLong()
 
         override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
+            if (threeLines == 0) threeLines = threeLines(parent)
             val view = convertView ?: layoutInflater.inflate(R.layout.settings_pictures_folder_row, parent, false)
             val picture = pictures[position]
             val where = getString(if (picture.removable) R.string.settings_pictures_folder_usb else R.string.settings_pictures_folder_local)
             view.findViewById<ImageView>(R.id.settings_pictures_folder_where_icon).setImageResource(if (picture.removable) UiR.drawable.icon_usb else UiR.drawable.icon_tv)
             view.findViewById<TextView>(R.id.settings_pictures_folder_name).text = picture.name
+            // Its size unknown: where alone.
+            view.findViewById<TextView>(R.id.settings_pictures_folder_details).text = if (picture.unsupported != null) where
+            else getString(R.string.settings_pictures_folder_row, where, details(picture.width, picture.height, picture.bytes))
             val why = refusal(refused[picture.source])
-            val details = when {
-                // Its size unknown: only why.
-                picture.unsupported != null -> why.orEmpty()
-                why != null -> getString(R.string.settings_pictures_folder_refused, details(picture.width, picture.height, picture.bytes), why)
-                else -> details(picture.width, picture.height, picture.bytes)
+            view.findViewById<TextView>(R.id.settings_pictures_folder_why).apply {
+                text = why?.let(::inError)
+                visibility = if (why != null) View.VISIBLE else View.GONE
             }
-            view.findViewById<TextView>(R.id.settings_pictures_folder_details).text = withError(getString(R.string.settings_pictures_folder_row, where, details), why)
+            val height = if (refused.isEmpty()) resources.getDimensionPixelSize(R.dimen.settings_pictures_row_height) else threeLines
+            if (view.minimumHeight != height) view.minimumHeight = height
             view.styleAll(theme.roles)
             return view
         }
 
-        /** [text] with its [part] (why the picture can't be added: its end) in the error color, so it stands out. */
-        private fun withError(text: String, part: String?): CharSequence {
-            val start = part?.let { text.lastIndexOf(it) }?.takeIf { it >= 0 } ?: return text
-            return SpannableStringBuilder(text).apply {
-                setSpan(ForegroundColorSpan(theme.roles.error), start, start + part.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        /**
+         * A row's height with its three lines, measured on a row of samples: in the language's
+         * script as well as Latin, whose line may be taller (Arabic's, in its own font). At least a
+         * usual row.
+         */
+        private fun threeLines(parent: ViewGroup): Int {
+            val row = layoutInflater.inflate(R.layout.settings_pictures_folder_row, parent, false)
+            val sample = "Ag " + getString(R.string.settings_pictures_folder_damaged)
+            for (id in intArrayOf(R.id.settings_pictures_folder_name, R.id.settings_pictures_folder_details, R.id.settings_pictures_folder_why)) {
+                row.findViewById<TextView>(id).apply { text = sample; visibility = View.VISIBLE }
             }
+            val unspecified = View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
+            row.measure(unspecified, unspecified)
+            return row.measuredHeight
+        }
+
+        /** [text], why the picture can't be added, in the error color, so it stands out, the row focused too. */
+        private fun inError(text: String): CharSequence = SpannableStringBuilder(text).apply {
+            setSpan(ForegroundColorSpan(theme.roles.error), 0, text.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
         }
     }
 }

@@ -123,7 +123,6 @@
     <string name="settings_pictures_folder_usb">USB</string>
     <string name="settings_pictures_folder_row"><xliff:g id="where" example="USB">%1$s</xliff:g> · <xliff:g id="details" example="4000 × 3000 · 2.4 MB">%2$s</xliff:g></string>
     <string name="settings_pictures_folder_unsupported">Το <xliff:g id="format" example="HEIF (HEIC)">%1$s</xliff:g> δεν υποστηρίζεται σε αυτή την τηλεόραση</string>
-    <string name="settings_pictures_folder_refused"><xliff:g id="details" example="4000 × 3000 · 3,1 MB">%1$s</xliff:g> · <xliff:g id="why" example="Πολύ μεγάλη (πάνω από 50 MB)">%2$s</xliff:g></string>
     <string name="settings_pictures_folder_too_large_bytes">Πολύ μεγάλη (πάνω από <xliff:g id="size" example="50 MB">%1$s</xliff:g>)</string>
     <plurals name="settings_pictures_folder_too_large_pixels">
         <item quantity="one">Πολύ μεγάλη (πάνω από <xliff:g id="megapixels" example="1">%d</xliff:g> megapixel)</item>
