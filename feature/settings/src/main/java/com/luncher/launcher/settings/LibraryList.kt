@@ -111,11 +111,6 @@ internal class LibraryList(
     private var focusedIndex = -1
 
     init {
-        // Its width, or on a narrow screen half of it, so the preview keeps the other half.
-        column.layoutParams.width = minOf(
-            activity.resources.getDimensionPixelSize(R.dimen.settings_appearance_options_width),
-            activity.resources.displayMetrics.widthPixels / 2,
-        )
         firstRow = row(first) { listener.chosen(null) }
         firstRow.findViewById<ImageView>(R.id.settings_pictures_thumbnail).apply {
             setImageDrawable(firstThumbnail)

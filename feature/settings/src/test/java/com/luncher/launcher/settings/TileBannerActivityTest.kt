@@ -487,7 +487,7 @@ class TileBannerActivityTest {
         val activity = start().get()
         drawInTheBackground()
 
-        activity.set("Backdrop", "Dark glass")
+        activity.set("Backdrop", "Dark")
         drawInTheBackground()
         assertEquals(listOf(tileDrawing(logo)), graph.preparedTiles.made)
 
@@ -645,9 +645,9 @@ class TileBannerActivityTest {
         val options = activity.findViewById<LinearLayout>(R.id.settings_picture_editor_options)
         val rows = (0 until options.childCount).map { line -> (options.getChildAt(line) as LinearLayout).let { row -> (0 until row.childCount).map { row.getChildAt(it).findViewById<TextView>(R.id.settings_option_label).text.toString() } } }
         assertEquals(listOf(listOf("Fit", "Position"), listOf("Backdrop", "Focus")), rows)
-        assertEquals("Light glass", activity.value("Backdrop"))
+        assertEquals("Light", activity.value("Backdrop"))
         assertEquals("Tile", activity.value("Focus"))
-        assertEquals(listOf("None", "Light glass", "Dark glass", "Frosted"), activity.values("Backdrop"))
+        assertEquals(listOf("None", "Light", "Dark", "Blurred"), activity.values("Backdrop"))
         assertEquals(listOf("Tile", "Shape"), activity.values("Focus"))
     }
 
@@ -688,13 +688,13 @@ class TileBannerActivityTest {
         val activity = start().get()
 
         activity.ok("other-logo.png")
-        activity.set("Backdrop", "Dark glass")
+        activity.set("Backdrop", "Dark")
         activity.set("Focus", "Shape")
         activity.ok("Original banner")
         activity.ok("logo.png")
 
         assertEquals("Right", activity.value("Position"))
-        assertEquals("Dark glass", activity.value("Backdrop"))
+        assertEquals("Dark", activity.value("Backdrop"))
         assertEquals("Shape", activity.value("Focus"))
         activity.save()
         assertEquals(TileImage(logo.id, Framing(Fit.FILL, PicturePosition.RIGHT), TileLook(TileBackdrop.DARK_GLASS, TileFocusShape.SHAPE)), stored)
@@ -725,7 +725,7 @@ class TileBannerActivityTest {
         val activity = start().get()
 
         activity.ok("logo.png")
-        activity.set("Backdrop", "Frosted")
+        activity.set("Backdrop", "Blurred")
         activity.ok("panorama.jpg")
         activity.back()
 
@@ -734,7 +734,7 @@ class TileBannerActivityTest {
         assertSame(before, customizations.customizations)
         val again = start().get()
         again.ok("logo.png")
-        again.set("Backdrop", "Frosted")
+        again.set("Backdrop", "Blurred")
         again.ok("panorama.jpg")
         again.save()
         assertSame("nothing stored", before, customizations.customizations)
@@ -746,10 +746,10 @@ class TileBannerActivityTest {
         val activity = start().get()
 
         activity.ok("logo.png")
-        activity.set("Backdrop", "Dark glass")
+        activity.set("Backdrop", "Dark")
         activity.ok("portrait.jpg")
         assertTrue(activity.dimmed("Backdrop"))
-        assertEquals("Dark glass", activity.value("Backdrop"))
+        assertEquals("Dark", activity.value("Backdrop"))
         activity.save()
 
         assertEquals(TileImage(portrait.id, look = TileLook(TileBackdrop.DARK_GLASS)), stored)
@@ -805,7 +805,7 @@ class TileBannerActivityTest {
         graph.preparedTiles.kept[movies.launchable] = tileDrawing(logo)   // as the home screen had it prepared
         val activity = start().get()
 
-        activity.set("Backdrop", "Frosted")
+        activity.set("Backdrop", "Blurred")
         activity.save()
 
         assertEquals(TileImage(logo.id, look = TileLook(TileBackdrop.FROSTED)), stored)
@@ -1102,14 +1102,14 @@ class TileBannerActivityTest {
     fun `after a configuration change, the draft's look stays`() {
         graph(logo, onTiles = mapOf(movies.launchable to image(logo)))
         val controller = start()
-        controller.get().set("Backdrop", "Frosted")
+        controller.get().set("Backdrop", "Blurred")
         controller.get().set("Focus", "Shape")
 
         RuntimeEnvironment.setQualifiers("+tvdpi")
         controller.configurationChange()
         idle()
 
-        assertEquals("Frosted", controller.get().value("Backdrop"))
+        assertEquals("Blurred", controller.get().value("Backdrop"))
         assertEquals("Shape", controller.get().value("Focus"))
         controller.get().save()
         assertEquals(TileImage(logo.id, look = TileLook(TileBackdrop.FROSTED, TileFocusShape.SHAPE)), stored)

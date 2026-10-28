@@ -13,6 +13,9 @@
     <dimen name="settings_sheet_padding_bottom">16dp</dimen>
     <dimen name="settings_zoom_room_horizontal">10dp</dimen>
     <dimen name="settings_zoom_room_vertical">4dp</dimen>
+    <!-- A picture editor's scrolling options reach out by that room above and below (margins), so
+         the room, inside them, doesn't move them. -->
+    <dimen name="settings_zoom_room_vertical_less">-4dp</dimen>
     <!-- Hide apps' "No apps" below the hint: below the empty list's margin above and below its
          rows, where it has always been (2 x settings_zoom_room_vertical). -->
     <dimen name="settings_hide_apps_empty_top">8dp</dimen>

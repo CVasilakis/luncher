@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The background editor: at the start the preview, with no label above it, so it's larger, the
-     background's options in a 2 x 2 grid of fields, Save and Delete all, which scroll on the
-     smallest screens; at the end, below their label and the hint, the pictures to choose from in
-     their container.
+<!-- The background editor: at the start its title, the preview, the background's options in a
+     2 x 2 grid of fields, Save and Delete all, which scroll on the smallest screens; at the end,
+     below their label and the hint, the pictures to choose from in their container, as wide as
+     the start leaves them (PictureEditorColumns).
      Mirrored in a right-to-left language, like the other settings screens; the preview's content
      isn't. -->
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<com.luncher.launcher.settings.PictureEditorColumns xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:baselineAligned="false"
@@ -13,10 +13,10 @@
     android:orientation="horizontal">
 
     <!-- The overscan margin at the start, less the room the content keeps for a focused entry's
-         zoom; the gap to the pictures at the end. The preview as tall as the room left
-         (PictureStartColumn); on the smallest screens, moving the focus scrolls it. It cuts
-         its content neither at its padding nor at the content's edges, which end at Save and
-         Delete all: their zoom and shadow reach past them. -->
+         zoom; the gap to the pictures at the end. The title, then the preview, as tall as the
+         room left, and the options, which scroll where they don't fit above Save and Delete all
+         (PictureStartColumn). It cuts nothing at its padding: Save and Delete all's zoom and
+         shadow reach past it. -->
     <com.luncher.launcher.settings.PictureStartColumn
         android:id="@+id/settings_background_start"
         android:layout_width="0dp"
@@ -24,34 +24,65 @@
         android:layout_weight="1"
         android:clipChildren="false"
         android:clipToPadding="false"
+        android:orientation="vertical"
         android:paddingStart="@dimen/settings_screen_margin_less_room"
         android:paddingTop="@dimen/settings_appearance_margin_vertical"
         android:paddingEnd="@dimen/settings_screen_gap_less_room"
-        android:paddingBottom="@dimen/settings_appearance_margin_vertical"
-        android:scrollbars="none">
+        android:paddingBottom="@dimen/settings_appearance_margin_vertical">
 
-        <LinearLayout
+        <!-- The editor's name, as the pictures' label beside it, on its line: what's below it
+             level with the pictures' container. Gone where it would leave the preview too small
+             (PictureEditorColumns); in its place, the app's name where a screen gives one and
+             the preview is gone (PictureStartColumn). -->
+        <com.luncher.launcher.ui.ThemedText
+            android:id="@+id/settings_picture_editor_title"
+            style="@style/Widget.Luncher.Settings.Label"
+            android:layout_width="match_parent"
+            android:layout_marginLeft="@dimen/settings_container_padding"
+            android:layout_marginRight="@dimen/settings_container_padding"
+            android:text="@string/settings_background_title" />
+
+        <!-- What scrolls, where it doesn't all fit above Save and Delete all (PictureStartColumn),
+             cut at its edges, fading out where there's more. Out by the room for a focused
+             field's zoom above and below, which its content keeps inside (its padding: a
+             scrolling view cuts its content at the content's edges), so they don't move. -->
+        <com.luncher.launcher.settings.PictureEditorScroll
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:clipChildren="false"
-            android:clipToPadding="false"
-            android:orientation="vertical"
-            android:paddingLeft="@dimen/settings_container_padding"
-            android:paddingRight="@dimen/settings_container_padding">
+            android:layout_marginTop="@dimen/settings_zoom_room_vertical_less"
+            android:layout_marginBottom="@dimen/settings_zoom_room_vertical_less"
+            android:fadingEdgeLength="@dimen/settings_screen_gap"
+            android:requiresFadingEdge="vertical"
+            android:scrollbars="none">
 
-            <!-- The home screen with the draft's background, its size set by
-                 PictureStartColumn, its corners rounded. Not focusable. -->
-            <com.luncher.launcher.settings.AppearancePreviewView
-                android:id="@+id/settings_background_preview"
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_gravity="center_horizontal" />
+                android:layout_height="wrap_content"
+                android:clipChildren="false"
+                android:clipToPadding="false"
+                android:orientation="vertical"
+                android:paddingLeft="@dimen/settings_container_padding"
+                android:paddingTop="@dimen/settings_zoom_room_vertical"
+                android:paddingRight="@dimen/settings_container_padding"
+                android:paddingBottom="@dimen/settings_zoom_room_vertical">
 
-            <!-- The options, Save and Delete all. -->
-            <include layout="@layout/settings_picture_editor_controls" />
-        </LinearLayout>
+                <!-- The home screen with the draft's background, its size set by
+                     PictureStartColumn, its corners rounded. Not focusable. -->
+                <com.luncher.launcher.settings.AppearancePreviewView
+                    android:id="@+id/settings_background_preview"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_gravity="center_horizontal" />
+
+                <!-- The options. -->
+                <include layout="@layout/settings_picture_editor_controls" />
+            </LinearLayout>
+        </com.luncher.launcher.settings.PictureEditorScroll>
+
+        <!-- Save and Delete all, below the options, at the bottom where they don't all fit. -->
+        <include layout="@layout/settings_picture_editor_buttons" />
     </com.luncher.launcher.settings.PictureStartColumn>
 
     <!-- The pictures to choose from. -->
     <include layout="@layout/settings_pictures_column" />
-</LinearLayout>
+</com.luncher.launcher.settings.PictureEditorColumns>

@@ -134,18 +134,25 @@ class BackgroundLayoutTest(private val screen: TvScreen) {
 
         activity.assertShown("preview", preview)
         activity.assertShown("Save", activity.findViewById(R.id.settings_picture_editor_save))
-        activity.assertShown("hint", activity.findViewById(R.id.settings_pictures_hint))
+        activity.assertHintAndButtons(screen, R.id.settings_background_start)
         assertApart(screen, "preview and pictures", bounds(preview), bounds(end))
         // As tall as the room left, of the TV's shape, a quarter of its height at the column's width at least.
         val column = activity.findViewById<View>(R.id.settings_background_start)
         val natural = activity.screenSize().heightAt(column.width - column.paddingLeft - column.paddingRight - 2 * activity.resources.getDimensionPixelSize(R.dimen.settings_container_padding))
         assertTrue("preview ${preview.height} px tall on $screen, ${natural / 4} at least", preview.height >= natural / 4)
-        // Save above the overscan margin without scrolling, where the screen is as tall as 1080p's
-        // 540 dp or more; a shorter one scrolls the column instead.
-        if (metrics.heightPixels / metrics.density >= 540) {
-            val margin = activity.resources.getDimension(R.dimen.settings_appearance_margin_vertical)
-            val save = bounds(activity.findViewById(R.id.settings_picture_editor_save))
-            assertTrue("Save at $save, below the margin on $screen", save.bottom <= metrics.heightPixels - margin + 1)
+        // With the title, the pictures wider than their own width only for Save and Delete all to
+        // end level with their container; without it, the pictures at their own width.
+        val title = activity.findViewById<View>(R.id.settings_picture_editor_title)
+        val own = minOf(activity.resources.getDimensionPixelSize(R.dimen.settings_appearance_options_width), metrics.widthPixels / 2)
+        if (title.visibility == View.VISIBLE) {
+            activity.assertShown("title", title)
+            if (end.width > own) {
+                val save = bounds(activity.findViewById(R.id.settings_picture_editor_save))
+                val container = bounds(activity.findViewById<View>(R.id.settings_pictures_list_scroll).parent as View)
+                assertTrue("Save ends at ${save.bottom}, the pictures at ${container.bottom} on $screen", abs(save.bottom - container.bottom) <= 2)
+            }
+        } else {
+            assertEquals("the pictures' width without the title on $screen", own, end.width)
         }
         // Each focused, zoomed whole, a button with its shadow, as the column scrolls to it. (The
         // pictures' rows don't zoom.)
@@ -176,6 +183,9 @@ class BackgroundLayoutTest(private val screen: TvScreen) {
         val options = activity.children(R.id.settings_picture_editor_options).flatMap { line -> (0 until (line as ViewGroup).childCount).map(line::getChildAt) }
         val catalog = appearanceOptions().groups.single { it.editedApart }.options
         for ((row, option) in options.zip(catalog)) {
+            // Focused first: where the options don't all fit, they scroll to the focused one.
+            row.requestFocus()
+            idle()
             activity.assertShown("an option", row)
             val value = row.findViewById<TextView>(R.id.settings_option_value)
             val first = value.text.toString()

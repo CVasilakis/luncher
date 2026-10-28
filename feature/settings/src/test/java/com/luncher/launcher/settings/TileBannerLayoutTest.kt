@@ -140,9 +140,11 @@ class TileBannerLayoutTest(private val screen: TvScreen) {
 
         val shows = preview.visibility == View.VISIBLE
         if (shows) activity.assertShown("preview", preview)
-        activity.assertShown("the app's name", activity.findViewById(R.id.settings_tile_banner_name))
+        activity.assertNamed()
+        val title = activity.findViewById<View>(R.id.settings_picture_editor_title)
+        if (title.visibility == View.VISIBLE) activity.assertShown("title", title)
         activity.assertShown("Save", activity.findViewById(R.id.settings_picture_editor_save))
-        activity.assertShown("hint", activity.findViewById(R.id.settings_pictures_hint))
+        activity.assertHintAndButtons(screen, R.id.settings_tile_banner_start)
         // The two panels' shape, to a pixel's rounding, as tall as the room left; or gone (below).
         if (shows) {
             assertApart(screen, "preview and pictures", bounds(preview), bounds(end))
@@ -151,13 +153,6 @@ class TileBannerLayoutTest(private val screen: TvScreen) {
                 "preview ${preview.width} x ${preview.height} on $screen",
                 abs(preview.width * shape.height - preview.height * shape.width) < shape.width + shape.height,
             )
-        }
-        // Save above the overscan margin without scrolling, where the screen is as tall as 1080p's
-        // 540 dp or more; a shorter one scrolls the column instead.
-        if (metrics.heightPixels / metrics.density >= 540) {
-            val margin = activity.resources.getDimension(R.dimen.settings_appearance_margin_vertical)
-            val save = bounds(activity.findViewById(R.id.settings_picture_editor_save))
-            assertTrue("Save at $save, below the margin on $screen", save.bottom <= metrics.heightPixels - margin + 1)
         }
         val entryZoom = preview.floatResource(UiR.dimen.entry_zoom)
         val buttonZoom = preview.floatResource(UiR.dimen.button_zoom)
@@ -183,6 +178,9 @@ class TileBannerLayoutTest(private val screen: TvScreen) {
         // Each option's list whole on the screen, inside the margins, and each value it offers
         // chosen in turn, the one it showed last again, so the fit is back to filling for the position.
         for ((row, option) in activity.fields().zip(tileImageOptions)) {
+            // Focused first: where the options don't all fit, they scroll to the focused one.
+            row.requestFocus()
+            idle()
             activity.assertShown("an option", row)
             val value = row.findViewById<TextView>(R.id.settings_option_value)
             val first = value.text.toString()
@@ -222,8 +220,8 @@ class TileBannerLayoutTest(private val screen: TvScreen) {
     private fun Activity.fieldPlaces(): List<List<Int>> = fields().map { listOf((it.parent as View).top, it.left, it.top, it.width) }
 
     // Each field as wide as its widest value: two share a row only where every value of both fits,
-    // so the fields are where they are whatever values the picker opens on (where Light glass doesn't
-    // fit half the column, Backdrop and Focus are a row each, whatever the backdrop).
+    // so the fields are where they are whatever values the picker opens on (where a backdrop's name
+    // doesn't fit half the column, Backdrop and Focus are a row each, whatever the backdrop).
     @Test
     fun `the options are where they are, whatever values they show`() {
         val places = TileBackdrop.entries.flatMap { backdrop ->
@@ -245,13 +243,20 @@ class TileBannerLayoutTest(private val screen: TvScreen) {
             assertTrue("preview ${preview.height} px tall on $screen, $least at least", preview.height >= least)
         } else {
             assertEquals("gone, not invisible, on $screen", View.GONE, preview.visibility)
-            // Not for want of room it would have had: shown, it would have been shorter than that.
+            // Not for want of room it would have had: shown, it would have been shorter than that,
+            // the app's name below it rather than on the title's line, the options' gap above them.
             val column = activity.findViewById<View>(R.id.settings_tile_banner_start)
-            val content = (column as ViewGroup).getChildAt(0)
+            val title = activity.findViewById<View>(R.id.settings_picture_editor_title)
+            val name = activity.findViewById<View>(R.id.settings_tile_banner_name)
+            val buttons = activity.findViewById<View>(R.id.settings_picture_editor_save).parent as View
+            name.measure(View.MeasureSpec.makeMeasureSpec(column.width, View.MeasureSpec.AT_MOST), View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED))
+            val gap = activity.resources.getDimensionPixelSize(R.dimen.settings_label_gap)
             val room = column.height - column.paddingTop - column.paddingBottom
-            assertTrue("gone with $room px of room and ${content.height} taken on $screen", room - content.height < least)
+            val options = activity.resources.getDimensionPixelSize(R.dimen.settings_screen_gap)
+            val taken = buttons.bottom - column.paddingTop - (title.height + gap) + name.measuredHeight + gap + options
+            assertTrue("gone with $room px of room and $taken taken on $screen", room - taken < least)
         }
-        activity.assertShown("the app's name", activity.findViewById(R.id.settings_tile_banner_name))
+        activity.assertNamed()
         // Laid out again, it stays as it is: its going, which leaves more room, doesn't bring it back.
         val column = activity.findViewById<View>(R.id.settings_tile_banner_start)
         val before = visibility(preview.visibility)
@@ -261,6 +266,18 @@ class TileBannerLayoutTest(private val screen: TvScreen) {
             assertEquals("laid out again on $screen", before, visibility(preview.visibility))
         }
         assertFalse("still laying out on $screen", column.isLayoutRequested)
+    }
+
+    /** The app's name below the preview, or on the title's line where the preview is gone. */
+    private fun TileBannerActivity.assertNamed() {
+        val name = findViewById<TextView>(R.id.settings_tile_banner_name)
+        if (findViewById<View>(R.id.settings_tile_banner_preview).visibility == View.VISIBLE) {
+            assertShown("the app's name", name)
+        } else {
+            val title = findViewById<TextView>(R.id.settings_picture_editor_title)
+            assertEquals("the title's line on $screen", name.text.toString(), title.text.toString())
+            assertShown("the app's name on the title's line", title)
+        }
     }
 
     private fun visibility(value: Int) = if (value == View.VISIBLE) "shown" else "gone"

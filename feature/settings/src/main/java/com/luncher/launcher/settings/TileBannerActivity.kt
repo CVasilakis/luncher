@@ -141,10 +141,11 @@ class TileBannerActivity : Activity() {
         opened = true
         setContentView(R.layout.settings_tile_banner_activity)
         preview = findViewById(R.id.settings_tile_banner_preview)
-        // The app's tile twice, at rest and focused, side by side; gone where they'd be too small to show anything.
+        // The app's tile twice, at rest and focused, side by side; gone where they'd be too small to show
+        // anything, the app's name then on the title's line.
         val least = resources.getDimensionPixelSize(R.dimen.settings_pictures_preview_least)
-        findViewById<PictureStartColumn>(R.id.settings_tile_banner_start).hold(preview, least) { preview.shape() }
         name = findViewById(R.id.settings_tile_banner_name)
+        findViewById<PictureStartColumn>(R.id.settings_tile_banner_start).hold(preview, least, name) { preview.shape() }
 
         // Its picture's shape is known once the library is read, as it starts (showLibrary).
         draft = PictureDraft(

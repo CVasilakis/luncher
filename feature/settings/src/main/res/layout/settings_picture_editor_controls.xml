@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Below a picture editor's preview, in its start column (PictureStartColumn): the options, a grid
-     of fields, then Save and Delete all. The background editor's and the tile banner picker's.
-     Merged into the column's content, so it adds no view of its own. -->
-<merge xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+     of fields; Save and Delete all follow below what scrolls (settings_picture_editor_buttons).
+     The background editor's and the tile banner picker's. Merged into the column's content, so
+     it adds no view of its own. -->
+<merge xmlns:android="http://schemas.android.com/apk/res/android">
 
     <!-- The screen's options, two fields a row (OptionGrid). -->
     <LinearLayout
@@ -13,29 +13,4 @@
         android:layout_marginTop="@dimen/settings_screen_gap"
         android:clipChildren="false"
         android:orientation="vertical" />
-
-    <!-- Save at the start, Delete all at the end, half the row each; one below the other
-         when either doesn't fit its half (EntriesRow). -->
-    <com.luncher.launcher.ui.EntriesRow
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/settings_screen_gap"
-        android:baselineAligned="false"
-        android:clipChildren="false"
-        android:orientation="horizontal">
-
-        <com.luncher.launcher.ui.PillButton
-            android:id="@+id/settings_picture_editor_save"
-            style="@style/Widget.Luncher.Button"
-            android:drawableStart="@drawable/icon_check"
-            android:text="@string/settings_picture_editor_save" />
-
-        <!-- In the error color: it deletes every picture. Dimmed, and passed by, while there's none. -->
-        <com.luncher.launcher.ui.PillButton
-            android:id="@+id/settings_picture_editor_delete_all"
-            style="@style/Widget.Luncher.Button"
-            android:drawableStart="@drawable/icon_trash"
-            android:text="@string/settings_picture_editor_delete_all"
-            app:kind="danger" />
-    </com.luncher.launcher.ui.EntriesRow>
 </merge>

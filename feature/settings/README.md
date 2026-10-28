@@ -43,7 +43,9 @@ feature/settings/
     │   │   ├── PicturePreparing.kt   the pictures not prepared for the screen, prepared at its start behind a window
     │   │   ├── PictureDraft.kt   a picture editor's draft: its values offered, changed as Save counts it, Back's question, the instance state
     │   │   ├── OptionGrid.kt     a picture editor's options, of any catalog, as a grid of fields, two a row
-    │   │   ├── PictureStartColumn.kt  a picture editor's start: the preview it's given, options, Save and Delete all, the preview as large as the room left, or gone below a least height if given
+    │   │   ├── PictureEditorColumns.kt  a picture editor's two columns: the pictures' as wide as the start one leaves them, their hint only with its title
+    │   │   ├── PictureStartColumn.kt  a picture editor's start: its title, the preview it's given, options, Save and Delete all, the preview as large as the room left, or gone below a least height if given
+    │   │   ├── PictureEditorScroll.kt  what scrolls in it, between the title's line and Save with Delete all
     │   │   ├── TileBannerActivity.kt  the tile banner picker: the picture editors' parts, a preview of the app's tile, Save through the per-app port
     │   │   ├── TilePreviewView.kt    its preview: the app's tile at rest and focused, as the home screen draws it, at its place there
     │   │   ├── AddFromFolderActivity.kt  the drop folders' pictures, a preview of the selected one; OK adds it, then returns it; Add all
@@ -296,18 +298,27 @@ size in px and its file's size (as in Add from folder, without where: it's in Lu
 deletes a picture, as the home screen's says what the keys do while moving an app. While the library is empty, how to add
 a picture follows: a share from another app, or the drop folder
 ([`platform/README.md`](../../platform/README.md#the-drop-folders)), with its path. At the start,
-with no label, a preview of the home screen with the chosen background, of the
+below its title (Background editor, in capitals as the pictures' label beside it, on its line), a
+preview of the home screen with the chosen background, of the
 TV's shape with rounded corners, the background's options (Blur and Position, then Dim and Fit) as a 2 × 2
 grid of fields, each its name above its value, and Save (filled) with Delete all (outlined, in
 the error color) beside it, half the row each; two fields, or the buttons, go one below the other
 when either doesn't fit its half (`:ui`'s `EntriesRow`: a long translation on a narrow screen). A
 field is as wide as its option's widest value, whichever it shows (`OptionRow`), so whether two
 share a row doesn't depend on the values: the fields don't move with the draft, nor between two
-openings of the screen. There's no
-title, nor a label above the preview: the preview gets that room.
-The preview is as large as the room the others leave (`PictureStartColumn`), at most as tall
-as its screen at the column's width, at least a quarter of that, so Save and Delete all show without scrolling on a 1080p screen;
-on the smallest screens the column scrolls. In a right-to-left language it mirrors like the other
+openings of the screen. The preview is as wide as the column, so the column is as narrow as the preview needs for Save
+and Delete all to end at the bottom, level with the pictures' container, the pictures' column
+taking the width it leaves (`PictureEditorColumns`); it's never wider than with the pictures at
+`settings_appearance_options_width`, or half a narrow screen. Narrower than 35 % of the width (a
+short screen, large text, a long translation: the preview small already), the title goes, the
+pictures keep their width and lose their hint, the room going to them, and the preview gets the
+room the others leave (`PictureStartColumn`), at most as tall as its screen at the column's width,
+at least a quarter of that. The title shows on every screen the layout tests check but 720p at 320
+dpi, Greek on 4:3 and Greek in large text. Where even then the options don't fit, the preview and
+the options scroll between the title's line and Save with Delete all, cut at their edges and
+fading out where there's more, a focused field shown whole (`PictureEditorScroll`); Save and
+Delete all stay at the bottom, level with the pictures' container. Where everything fits they're
+right below the options, and never below the container's bottom. In a right-to-left language it mirrors like the other
 settings screens; the preview's content and the pictures don't.
 
 The editor opens with the focus on the chosen picture, or No picture. Down past the list's last
@@ -413,7 +424,8 @@ the preview (`settings_picture_editor_controls`) are theirs, included by the scr
 | `PictureActions` | the library read with each picture's uses, the wallpaper and the installed apps' tiles; a picture's Rename and Delete, Delete all, their questions, and deleting: the uses forgotten first (the tiles' through `AppCustomizations`, the wallpaper's through `Wallpaper.forget`), then the pictures |
 | `PicturePreparing` | the pictures not prepared for the screen, prepared at its start behind the working window, stopped with the screen and gone on with as it comes back |
 | `PictureDraft` | the draft: only the values its picture offers on the screen, whether it changed as Save counts it (each side as the screen's `counted` says: the background's as offered, a tile's without a look that changes nothing), Back's question, and the draft kept in the instance state (`DraftState`: the background's dim and blur, a tile's look, beside the picture and framing every draft has) |
-| `PictureStartColumn` | the preview the screen gives, at the shape it gives (here the TV's), as large as the room the options, Save and Delete all leave |
+| `PictureEditorColumns` | the two columns' widths: the start one as narrow as its preview, with the title, needs for it to end at the bottom, else the title gone, and the pictures' hint with it |
+| `PictureStartColumn` | the title, and the preview the screen gives, at the shape it gives (here the TV's), as large as the room the options, Save and Delete all leave; the options scrolling above Save and Delete all where they don't fit (`PictureEditorScroll`) |
 | `BackgroundActivity` | what's the wallpaper's alone: the background's options, the preview of the home screen, Save and its window; the parts above put together |
 
 **Prepared once, then at once.** Each picture of the library has a working copy
@@ -460,11 +472,13 @@ language but for the preview's content and the pictures.
 
 At the end, the list's first row is "Original banner": no picture, the tile showing
 its app's own image (its banner, or for an app without one its icon card), its thumbnail that
-image. At the start, a preview of the app's tile with the draft (`TilePreviewView`), what the
+image. At the start, below its title (Tile banner editor, shown or gone by the background editor's
+rule, the hint with it; the start column is never wider for it, so where the tile needs less
+height than the room, Save and Delete all end above the bottom), a preview of the app's tile with the draft (`TilePreviewView`), what the
 home screen will show: the tile twice, side by side, each in a panel with the design system's
 corners, at rest and focused (zoomed by `:ui`'s `FOCUSED_TILE_ZOOM`, framed or lifted as the
 appearance's Focus frame says); below it the app's name as the home screen shows it, centered,
-so the screen says which app's tile it is with no title; then the tile image's options, two
+so the screen says which app's tile it is; then the tile image's options, two
 rows of two fields: Fit and Position, then the tile's look, Backdrop and Focus; then Save and
 Delete all. The panels line up with the fields' two columns, the gap between them the fields'.
 
@@ -486,7 +500,10 @@ screen's plain color, edged in the theme's outline color; the wallpaper is the h
 where that's less than the tile needs, both panels show the tile and the wallpaper smaller alike.
 Shorter than a row of the list (`settings_pictures_preview_least`, as Add from folder's preview),
 they'd show nothing to judge a look by, and they go, the others getting their room; the app's name
-stays (on a 640 x 360 dp screen, 720p at 320 dpi, in every language; on 4:3 in Greek).
+goes to the title's line, in the label's capitals, so the options start level with the pictures'
+container (on a 640 x 360 dp screen, 720p at 320 dpi, in every language; on 4:3 in Greek). There,
+in English, Save and Delete all end inside the container without scrolling; in Greek
+the options scroll above them.
 Left to right in every language, the resting tile at the left, as the home screen doesn't mirror.
 
 The options are the tile image's catalog (`TileImageOption`, with its own context,
@@ -495,14 +512,15 @@ picture, not the screen: Left and Right for a picture wider than a tile, Top and
 taller one, both dimmed for a picture of a tile's shape (a 1920 x 1080 one), and without a
 picture; the position also while stretched. Their names and values are the background's
 (`TileImageLabels`). The look (`TileLook`) is for a picture with see-through parts (a logo cut out
-of its background): **Backdrop**, what's behind it in the tile (None, Light glass, the default,
-Dark glass, or Frosted), and **Focus**, what the focus frame, or the lifted tile's shadow, follows
+of its background): **Backdrop**, what's behind it in the tile (None, Light, the default, and
+Dark, a translucent card like glass, or Blurred, the wallpaper behind the tile frosted: `TileBackdrop`'s
+`LIGHT_GLASS`, `DARK_GLASS` and `FROSTED`, the names the code uses), and **Focus**, what the focus frame, or the lifted tile's shadow, follows
 (the Tile's shape, the default, or the picture's own Shape); the focus style itself stays the
 appearance's Focus frame, for every tile. Both are dimmed without a picture, and for a picture
 that isn't see-through, or isn't known to be yet (`Picture.seeThrough`, learned as its working
 copy is made, which the picker's start does where it's missing: the options follow as the library
 tells). The home screen draws the look ([`../home/README.md`](../home/README.md#appearance)), and
-the preview draws it as the home screen does, with `:ui`'s `TilePainter`: the backdrop (Frosted,
+the preview draws it as the home screen does, with `:ui`'s `TilePainter`: the backdrop (Blurred,
 the wallpaper's frosted copy behind the tile's place), the frame or the band around the picture's
 shape, the lifted tile's shadow (Android's, from the outline the painter gives the home screen's
 tiles, `TilePainter.outline`; the picture's own soft shadow for Focus Shape). The draft's tile is

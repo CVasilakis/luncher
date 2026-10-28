@@ -56,6 +56,8 @@
     <string name="settings_system_unavailable">لا يوجد تطبيق إعدادات على هذا الجهاز</string>
 
     <string name="settings_pictures_hint">اضغط مطولًا على OK فوق صورة لإعادة تسميتها أو حذفها</string>
+    <string name="settings_background_title">محرر الخلفية</string>
+    <string name="settings_tile_banner_title">محرر لافتة المربع</string>
     <string name="settings_picture_editor_save">حفظ</string>
     <string name="settings_picture_editor_delete_all">حذف الكل</string>
     <string name="settings_pictures_delete_all_question">حذف كل الصور؟</string>
@@ -94,9 +96,9 @@
     <string name="settings_tile_banner_original">اللافتة الأصلية</string>
     <string name="settings_tile_banner_backdrop">الأرضية</string>
     <string name="settings_tile_banner_none">لا شيء</string>
-    <string name="settings_tile_banner_light_glass">زجاج فاتح</string>
-    <string name="settings_tile_banner_dark_glass">زجاج داكن</string>
-    <string name="settings_tile_banner_frosted">ضبابي</string>
+    <string name="settings_tile_banner_light_glass">فاتح</string>
+    <string name="settings_tile_banner_dark_glass">داكن</string>
+    <string name="settings_tile_banner_frosted">مموّه</string>
     <string name="settings_tile_banner_focus">التحديد</string>
     <string name="settings_tile_banner_tile">المربع</string>
     <string name="settings_tile_banner_shape">الشكل</string>

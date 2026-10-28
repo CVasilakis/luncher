@@ -56,6 +56,8 @@
     <string name="settings_system_unavailable">Καμία εφαρμογή ρυθμίσεων σε αυτή τη συσκευή</string>
 
     <string name="settings_pictures_hint">Κρατήστε πατημένο το OK σε μια εικόνα για να τη μετονομάσετε ή να τη διαγράψετε</string>
+    <string name="settings_background_title">Επεξεργασία φόντου</string>
+    <string name="settings_tile_banner_title">Επεξεργασία banner πλακιδίου</string>
     <string name="settings_picture_editor_save">Αποθήκευση</string>
     <string name="settings_picture_editor_delete_all">Διαγραφή όλων</string>
     <string name="settings_pictures_delete_all_question">Διαγραφή όλων των εικόνων;</string>
@@ -86,9 +88,9 @@
     <string name="settings_tile_banner_original">Αρχικό banner</string>
     <string name="settings_tile_banner_backdrop">Υπόβαθρο</string>
     <string name="settings_tile_banner_none">Κανένα</string>
-    <string name="settings_tile_banner_light_glass">Ανοιχτό γυαλί</string>
-    <string name="settings_tile_banner_dark_glass">Σκούρο γυαλί</string>
-    <string name="settings_tile_banner_frosted">Θαμπό γυαλί</string>
+    <string name="settings_tile_banner_light_glass">Ανοιχτό</string>
+    <string name="settings_tile_banner_dark_glass">Σκούρο</string>
+    <string name="settings_tile_banner_frosted">Θολό</string>
     <string name="settings_tile_banner_focus">Επιλογή</string>
     <string name="settings_tile_banner_tile">Πλακίδιο</string>
     <string name="settings_tile_banner_shape">Σχήμα</string>

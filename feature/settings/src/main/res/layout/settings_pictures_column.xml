@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- A picture editor's end column (LibraryList): below their label and, at its end, the hint that a
      long press of OK renames or deletes a picture, the library's pictures to choose from, in their
-     container. LibraryList sets the width: settings_appearance_options_width, or half the screen.
+     container. PictureEditorColumns sets the width: settings_appearance_options_width, or half the
+     screen, or more where the start column's title needs the room.
      The overscan margin at the end only (lint's RtlSymmetry wants both sides set). -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
