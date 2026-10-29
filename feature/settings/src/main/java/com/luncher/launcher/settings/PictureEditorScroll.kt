@@ -15,6 +15,14 @@ import android.widget.ScrollView
  */
 internal class PictureEditorScroll(context: Context, attrs: AttributeSet?) : ScrollView(context, attrs) {
 
+    // Never focused itself: a ScrollView takes the focus while it holds nothing that can (every
+    // option dimmed, as with No picture), where nothing shows it. Left from the pictures goes on
+    // to Save instead, and Up from Save stays there. Set here, as ScrollView sets it after the
+    // layout's attributes.
+    init {
+        isFocusable = false
+    }
+
     // Inside the content's padding, and the fade where there's more beyond it. [rect] is in the
     // content's place without the scroll.
     override fun computeScrollDeltaToGetChildRectOnScreen(rect: Rect): Int {

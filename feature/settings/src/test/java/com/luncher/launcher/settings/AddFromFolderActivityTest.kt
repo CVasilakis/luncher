@@ -592,6 +592,7 @@ class AddFromFolderActivityTest {
 
         assertFalse(activity.addAll().isFocusable)
         assertTrue(activity.addAll().alpha < 1f)
+        assertNull("not the column around Add all", activity.list().focusSearch(View.FOCUS_RIGHT))
     }
 
     @Test

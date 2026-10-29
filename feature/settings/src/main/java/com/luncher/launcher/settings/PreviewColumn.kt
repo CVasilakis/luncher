@@ -34,6 +34,13 @@ internal class PreviewColumn(context: Context, attrs: AttributeSet?) : ScrollVie
     private val lift = resources.getDimensionPixelSize(UiR.dimen.button_lift)
     private val least = resources.getDimensionPixelSize(R.dimen.settings_pictures_preview_least)
 
+    // Never focused itself: a ScrollView takes the focus while it holds nothing that can (Add all
+    // dimmed), where nothing shows it, and Right from the list went there. Set here, as ScrollView
+    // sets it after the layout's attributes.
+    init {
+        isFocusable = false
+    }
+
     /** Whether the preview shows, with its label, as last measured. */
     val showsPreview: Boolean get() = frame.visibility == VISIBLE
 

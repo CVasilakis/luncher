@@ -306,6 +306,17 @@ class TileBannerActivityTest {
     }
 
     @Test
+    fun `with the options and Delete all dimmed, Left from the pictures goes to Save, and Up from Save to the pictures`() {
+        graph()
+
+        val activity = start().get()
+
+        val save = activity.findViewById<View>(R.id.settings_picture_editor_save)
+        assertSame("not the scroll around the options", save, activity.row("Original banner").focusSearch(View.FOCUS_LEFT))
+        assertTrue("a picture's row, the nearest above", save.focusSearch(View.FOCUS_UP) in activity.listRows())
+    }
+
+    @Test
     fun `the Original banner row shows the app's own image, drawn at the row's size, nothing kept`() {
         graph(beach, onTiles = mapOf(movies.launchable to image(beach)))
         val width = application.resources.getDimensionPixelSize(R.dimen.settings_pictures_thumbnail_width)
