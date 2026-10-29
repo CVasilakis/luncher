@@ -506,6 +506,16 @@ class BackgroundActivityTest {
         assertFalse(activity.option("Dim").isActivated)
     }
 
+    // As a dialog: a short fade in and out of Luncher's own, not none.
+    @Test
+    fun `an option's list comes and goes with a short fade`() {
+        graph(beach, background = Background(beach.id))
+        val list = start().get().open("Dim")
+
+        assertEquals(UiR.style.Animation_Luncher_Panel, list.animationStyle)
+        list.dismiss()
+    }
+
     // Beside the field, so it covers neither the field nor the preview: a field at the start
     // (Blur, Dim) has its list over the other column, to its end, from its first value down, so
     // it covers what's below the field whole, not the preview above; a field at the end

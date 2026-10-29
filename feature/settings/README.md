@@ -122,7 +122,9 @@ screen where the home screen's gear is, so it opens beside it (`placeAsSheet`: a
 `settings_sheet_width` wide, as tall as the screen less its margin; at the right by default, at
 the left once the clock is moved to the right; the screen's side in any language, as the home
 screen doesn't mirror, though the panel's content does), its theme, `Theme.Luncher.Settings`, a platform
-dialog theme. Each entry is one line: its icon, its name, centered in the entry's height, and at
+dialog theme, with the floating panels' short fade in and out of Luncher's own
+([`ui/`](../../ui/README.md#the-design-system)), as the panels opened in its place and the window
+after a share have. Each entry is one line: its icon, its name, centered in the entry's height, and at
 its end where it goes: a chevron to a panel of Luncher's, an arrow out of it to another app. On a screen too short for them all, the entries
 would scroll a row ahead of the focus in whole rows, fading out where there's more (a
 `LookAheadScrollView` in a `ScrollFrame`); the three of them fit on every TV screen the layout
@@ -166,10 +168,10 @@ it's started, as it stays behind the floating panels. The list itself follows th
 while it shows: an app installed or removed meanwhile appears in it, or leaves it, at once.
 
 A panel of its own is another activity in this module, started from the settings panel with
-`openOwnPanel`. The settings panel's window stays behind it, invisible (its alpha is 0 until it
-resumes), since a smaller panel would show it around its edges; the dimming of the home screen is
-that window's too, which is why the other panel's theme, `Theme.Luncher.Settings.Panel`, dims
-nothing itself.
+`openOwnPanel`. It's the same side sheet (`placeAsSheet`), so it covers the settings panel, whose
+window stays shown under it: as it fades in and out, the settings panel shows under it, never an
+empty moment. The dimming of the home screen is that window's too, which is why the other panel's
+theme, `Theme.Luncher.Settings.Panel`, dims nothing itself.
 
 | Part | Job |
 |---|---|
@@ -342,7 +344,7 @@ the grid's end edge, its first value level with the field whatever the value, so
 beside and below the field whole (the other column's fields, Save and Delete all), never a part
 of them, nor the preview above. Either is moved up or down only to stay inside the overscan
 margin. The value it has focused and checked; the field outlined in the accent meanwhile
-(activated). In a right-to-left language it opens on the other side. The preview shows each value
+(activated). It fades in and out as a dialog does ([`ui/`](../../ui/README.md#the-design-system)). In a right-to-left language it opens on the other side. The preview shows each value
 the focus comes to; OK keeps it, and so does Left, the arrow back toward the field (Right in a
 right-to-left language), while Back closes the list (not the editor) with the value from before. Left and Right on the fields don't
 change anything: they move the focus, as on the other entries, so Right goes from the second

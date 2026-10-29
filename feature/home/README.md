@@ -488,14 +488,15 @@ The menu comes out of its tile: as it opens, it fades in while it grows from 92%
 of the middle of its edge that faces the tile (its bottom edge above the tile, its left edge right
 of it, also where it lines up with a row's first or last tile), in 100 ms; as it closes, it fades
 out in 80 ms, which delays nothing, as an entry's action starts at once. These are window
-animations of its own (`anim/home_menu_*`, a style for each side, `Animation.Luncher.Home.Menu.*`),
+animations of its own (`anim/home_menu_enter_*`, a style for each side, `Animation.Luncher.Home.Menu.*`;
+its exit is every floating panel's, `:ui`'s `anim/panel_exit`, [`ui/`](../../ui/README.md#the-design-system)),
 which `TileMenu.placeAt` chooses from the side `tileMenuPlacement` gives, in an exhaustive `when`:
 the theme's own would grow every menu from the same edge. They replace Android's dialog fade,
 which is slower, and slides too on Android 16.
 
 Android 5.1 and 6.0 play no app dialog's window entrance (their exit, yes), so with a window
 animation alone the menu would pop in there. On those, the menu plays the same entrance in its
-window (`WindowEntrance`), on its decor, which draws the panel's background too, starting as it's
+window (`:ui`'s `WindowEntrance`, as the dialogs do), on its decor, which draws the panel's background too, starting as it's
 first drawn: on a slow TV the first frame of a process can come after the animation would have
 ended. Its window keeps the exit.
 

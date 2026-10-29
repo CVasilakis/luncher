@@ -39,7 +39,10 @@ ui/
     │   │   │                     question or a message (MessageDialog), a menu of actions on one thing (MenuDialog), a
     │   │   │                     new name (NameDialog: a note below the field, a third button, dimmed where it can't be
     │   │   │                     chosen, a length limit; above the keyboard while it shows); the features give their
-    │   │   │                     texts and what each button does
+    │   │   │                     texts and what each button does. PanelDialog, their base and WorkingDialog's window:
+    │   │   │                     how a floating panel comes and goes
+    │   │   ├── WindowEntrance.kt a floating window's entrance played in the window, where Android plays none
+    │   │   │                     (Android 5.1 and 6.0): the dialogs', a tile's menu's
     │   │   ├── NameField.kt      a new name's field, outlined in the accent while focused, in the error color once refused
     │   │   ├── Badge.kt          a dialog's mark beside its title: done, danger or info
     │   │   ├── EntriesRow.kt     buttons (or fields) side by side, or one below the other when one doesn't fit
@@ -65,6 +68,7 @@ ui/
     │   │                         shown half a second at least: for work the user waits for (the wallpaper drawn,
     │   │                         a picture added); Cancel too, and Back, for work that can be stopped
     │   └── res/
+    │       ├── anim/             panel_enter, panel_exit: a floating panel's fade in and out; panel_none
     │       ├── animator/         entry_zoom, button_zoom: a focused field's zoom, a button's zoom and lift
     │       ├── drawable/         icon_…, the line icons (white, tinted where they're used); panel_background,
     │       │                     a floating panel's window before it's styled
@@ -175,6 +179,25 @@ can, the focused thing stands out from afar, and every color comes from the user
   corners, and its entries with it (`ListEntry.corner`, `ScrollFrame.corner`,
   [`feature/home/`](../feature/home/README.md#a-tiles-menu)). An entry far from its container's
   corners (a side sheet's, a dialog's) keeps `corner_entry` (12 dp).
+- **A floating panel comes and goes quickly.** A dialog, the working window, the settings panel
+  and the panels opened in its place, the window after a share and an option's list fade in in
+  100 ms (`decelerate_cubic`) and out in 80 ms (`anim/panel_enter`, `panel_exit`, in the style
+  `Animation.Luncher.Panel`), as a tile's menu does, which grows out of its tile too
+  ([`feature/home/`](../feature/home/README.md#how-the-menu-comes-and-goes)). Android's own
+  animations, which the dialog themes would leave them, are slower and slide on Android 16, where a
+  dialog-themed activity (the settings panel) gets none at all and pops in and out. A dialog's or a
+  list's window plays the style's window items, an activity's window its activity items, so the
+  style has both. Android 5.1 and 6.0 play no app dialog's window entrance: there `PanelDialog`
+  (every dialog of `Dialogs.kt`, and `WorkingDialog`'s window) plays it in the window
+  (`WindowEntrance`), started at its first draw, as on a slow TV that can come after the animation
+  would have ended; the window keeps its exit, with an entrance that changes nothing
+  (`panel_none`), not none: with none, Android 5.1 played no exit either for a dialog that dims the
+  screen. An activity's and a list's entrances play there. Each follows Android's animation
+  settings: a dialog's and a list's the window animation scale, an activity's the transition
+  animation scale, the entrance in the window the animator duration scale; with animations off,
+  none. Nothing waits for an exit: what closed the panel acts as it starts fading. A window
+  coming from another app (the window after a share) comes with Android's task animation, the
+  home screen with it.
 - **The keyboard covers no dialog's field, and moves no screen.** A dialog with a field (`NameDialog`) is
   centered, and near the top of the screen, `dialog_margin` from its edge, while the keyboard
   shows. The screen that opens one declares `windowSoftInputMode="adjustNothing"`: by default

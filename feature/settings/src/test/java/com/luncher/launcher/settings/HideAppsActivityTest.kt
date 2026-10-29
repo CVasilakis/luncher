@@ -52,6 +52,12 @@ class HideAppsActivityTest {
 
     private fun HideAppsActivity.list() = findViewById<ListView>(R.id.settings_apps)
 
+    // As the settings panel, whose place it takes.
+    @Test
+    fun `it comes and goes with a short fade of Luncher's own`() {
+        assertEquals(UiR.style.Animation_Luncher_Panel, start().window.attributes.windowAnimations)
+    }
+
     /** Each row as "Label" or "Label (hidden)". */
     private fun HideAppsActivity.rows(): List<String> {
         val list = list()

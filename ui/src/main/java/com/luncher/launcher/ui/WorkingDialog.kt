@@ -1,6 +1,5 @@
 package com.luncher.launcher.ui
 
-import android.app.Dialog
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
@@ -19,7 +18,7 @@ import com.luncher.domain.appearance.ColorRoles
  */
 class WorkingDialog(context: Context, roles: ColorRoles) {
 
-    private val dialog = Dialog(context, R.style.Theme_Luncher_Working).apply {
+    private val dialog = PanelDialog(context, R.style.Theme_Luncher_Working).apply {
         setContentView(R.layout.working_dialog)
         setCancelable(false)
         checkNotNull(window).stylePanel(roles)

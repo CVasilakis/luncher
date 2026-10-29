@@ -2,6 +2,7 @@ package com.luncher.launcher.ui
 
 import android.app.Activity
 import android.app.Dialog
+import android.content.Context
 import android.os.Build
 import android.text.InputFilter
 import android.view.Gravity
@@ -26,6 +27,27 @@ class DialogButton(val label: CharSequence, val kind: Kind, val icon: Int = 0, v
 class MenuAction(val label: CharSequence, val icon: Int, val deletes: Boolean = false, val action: () -> Unit)
 
 /**
+ * A dialog's window that comes and goes as a floating panel: a short fade in and out
+ * (`Animation.Luncher.Panel`, its [theme]'s), its entrance played in the window where Android plays
+ * no app dialog's ([WindowEntrance.NEEDED]); there the window only fades as it goes. Every dialog of
+ * the menus and settings is one, and [WorkingDialog]'s window.
+ */
+open class PanelDialog(context: Context, theme: Int) : Dialog(context, theme) {
+
+    private var entrance: WindowEntrance? = null
+
+    override fun show() {
+        if (WindowEntrance.NEEDED && !isShowing) {
+            val window = checkNotNull(window)
+            val entrance = entrance ?: WindowEntrance(window.decorView).also { entrance = it }
+            entrance.prepare()
+            window.attributes = window.attributes.apply { windowAnimations = R.style.Animation_Luncher_Panel_ExitOnly }
+        }
+        super.show()
+    }
+}
+
+/**
  * A dialog over a screen of the menus and settings (a question, a message), a floating panel like
  * the settings panel, in the theme's colors ([roles]): its [mark] beside its [title] (a
  * [Badge.Kind] and an icon; none for none), a [text] below, starting below the mark, and [buttons]
@@ -39,7 +61,7 @@ class MessageDialog(
     text: CharSequence?,
     buttons: List<DialogButton>,
     mark: Pair<Badge.Kind, Int>? = null,
-) : Dialog(activity, R.style.Theme_Luncher_Dialog) {
+) : PanelDialog(activity, R.style.Theme_Luncher_Dialog) {
 
     init {
         setContentView(R.layout.dialog)
@@ -78,7 +100,7 @@ class MenuDialog(
     title: CharSequence,
     text: CharSequence?,
     actions: List<MenuAction>,
-) : Dialog(activity, R.style.Theme_Luncher_Dialog) {
+) : PanelDialog(activity, R.style.Theme_Luncher_Dialog) {
 
     init {
         setContentView(R.layout.dialog)
@@ -131,7 +153,7 @@ class NameDialog(
     extra: DialogButton? = null,
     maxLength: Int = 0,
     rename: (String) -> CharSequence?,
-) : Dialog(activity, R.style.Theme_Luncher_Dialog) {
+) : PanelDialog(activity, R.style.Theme_Luncher_Dialog) {
 
     init {
         setContentView(R.layout.dialog)

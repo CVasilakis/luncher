@@ -13,10 +13,13 @@
         <!-- The dialog theme's minimum width is a share of the screen; the layout sets the width. -->
         <item name="android:windowMinWidthMajor">0dp</item>
         <item name="android:windowMinWidthMinor">0dp</item>
+        <!-- As the dialogs: a short fade in and out, never Android's animations, which the dialog
+             theme leaves to the device (none on Android 16: the panel popped in and out). -->
+        <item name="android:windowAnimationStyle">@style/Animation.Luncher.Panel</item>
     </style>
 
     <!-- A panel the settings panel opens in its place (Hide apps): the settings panel's window
-         stays behind it, invisible, and already dims the home screen. -->
+         stays behind it, covered, and already dims the home screen. -->
     <style name="Theme.Luncher.Settings.Panel">
         <item name="android:backgroundDimEnabled">false</item>
     </style>

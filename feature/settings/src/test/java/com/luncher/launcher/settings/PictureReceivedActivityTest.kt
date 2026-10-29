@@ -4,6 +4,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Looper
 import com.luncher.launcher.ui.Badge
+import com.luncher.launcher.ui.R as UiR
 import java.time.Duration
 import com.luncher.launcher.ui.ShortestShowing
 import android.view.View
@@ -58,6 +59,14 @@ class PictureReceivedActivityTest {
 
     private fun PictureReceivedActivity.entries(): List<TextView> =
         findViewById<LinearLayout>(R.id.settings_received_entries).let { list -> (0 until list.childCount).map { list.getChildAt(it) as TextView } }
+
+    // As the settings panel: Luncher's short fade, not what the dialog theme leaves to Android.
+    @Test
+    fun `the window comes and goes with a short fade of Luncher's own`() {
+        library.results[shared] = ImportResult.Added(holiday)
+
+        assertEquals(UiR.style.Animation_Luncher_Panel, receive().window.attributes.windowAnimations)
+    }
 
     @Test
     fun `says it's adding the picture, with a spinning wheel and Cancel, focused, until it's done`() {

@@ -10,6 +10,7 @@ import com.luncher.domain.appearance.Appearance
 import com.luncher.domain.appearance.Side
 import com.luncher.domain.appearance.TopBarAppearance
 import com.luncher.launcher.testing.TV_1080P
+import com.luncher.launcher.ui.R as UiR
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -80,26 +81,35 @@ class SettingsActivityTest {
         assertEquals(HideAppsActivity::class.java.name, shadowOf(activity).nextStartedActivity.component?.className)
     }
 
+    // Hide apps is the same side sheet, so it covers the panel, which stays shown under it as it
+    // fades in and out: never a moment with neither.
     @Test
-    fun `the panel disappears while Hide apps is open in its place, and comes back after`() {
-        val controller = Robolectric.buildActivity(SettingsActivity::class.java).setup()
+    fun `the panel stays shown under Hide apps, which covers it, the same side sheet in its place`() {
+        val panel = start()
+        val hideApps = Robolectric.buildActivity(HideAppsActivity::class.java).setup().get()
 
-        controller.get().press(KeyEvent.KEYCODE_DPAD_CENTER)
-        assertEquals(0f, controller.get().window.attributes.alpha)
+        panel.press(KeyEvent.KEYCODE_DPAD_CENTER)
 
-        controller.pause().resume()                 // Hide apps closed
-        assertEquals(1f, controller.get().window.attributes.alpha)
+        assertEquals(1f, panel.window.attributes.alpha)
+        val sheet = { attributes: android.view.WindowManager.LayoutParams -> listOf(attributes.gravity, attributes.x, attributes.y, attributes.width, attributes.height) }
+        assertEquals(sheet(panel.window.attributes), sheet(hideApps.window.attributes))
     }
 
     @Test
-    fun `OK on Appearance opens the editor, and the panel disappears meanwhile`() {
+    fun `OK on Appearance opens the editor, over the panel`() {
         val activity = start()
 
         activity.entries()[1].requestFocus()
         activity.press(KeyEvent.KEYCODE_DPAD_CENTER)
 
         assertEquals(AppearanceActivity::class.java.name, shadowOf(activity).nextStartedActivity.component?.className)
-        assertEquals(0f, activity.window.attributes.alpha)
+        assertEquals(1f, activity.window.attributes.alpha)
+    }
+
+    // Luncher's short fade, not what the dialog theme leaves to Android (none on Android 16).
+    @Test
+    fun `the panel comes and goes with a short fade of Luncher's own`() {
+        assertEquals(UiR.style.Animation_Luncher_Panel, start().window.attributes.windowAnimations)
     }
 
     @Test

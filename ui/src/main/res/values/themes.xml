@@ -31,6 +31,27 @@
         <!-- The dialog theme's minimum width is a share of the screen; the layout sets the width. -->
         <item name="android:windowMinWidthMajor">0dp</item>
         <item name="android:windowMinWidthMinor">0dp</item>
+        <!-- Never Android's dialog animation, which is slower (PanelDialog). -->
+        <item name="android:windowAnimationStyle">@style/Animation.Luncher.Panel</item>
+    </style>
+
+    <!-- How a floating panel comes and goes: a short fade in (anim/panel_enter) and out
+         (anim/panel_exit), in place of Android's slower dialog and activity animations. The
+         window's items for a dialog's window or a list's (a PopupWindow); the activity's for an
+         activity (the settings panel), whose window plays only its activity's opening and closing:
+         a dialog theme has none, so Android's played, the panel popping in and out on Android 16. -->
+    <style name="Animation.Luncher.Panel" parent="">
+        <item name="android:windowEnterAnimation">@anim/panel_enter</item>
+        <item name="android:windowExitAnimation">@anim/panel_exit</item>
+        <item name="android:activityOpenEnterAnimation">@anim/panel_enter</item>
+        <item name="android:activityCloseExitAnimation">@anim/panel_exit</item>
+    </style>
+    <!-- Android 5.1 and 6.0 play no app dialog's window entrance: there the dialog plays it in its
+         window (PanelDialog, WindowEntrance), and the window only fades as it goes. An entrance
+         that changes nothing, so a device that would play one doesn't play it twice; not @null,
+         with which Android 5.1 played no exit either for a dialog that dims the screen. -->
+    <style name="Animation.Luncher.Panel.ExitOnly">
+        <item name="android:windowEnterAnimation">@anim/panel_none</item>
     </style>
 
     <!-- WorkingDialog: a floating panel as the dialogs are. -->

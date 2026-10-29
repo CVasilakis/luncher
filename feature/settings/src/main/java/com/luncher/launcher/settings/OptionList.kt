@@ -13,6 +13,7 @@ import com.luncher.domain.appearance.ColorRoles
 import com.luncher.domain.options.Option
 import com.luncher.launcher.ui.roundRect
 import com.luncher.launcher.ui.styleAll
+import com.luncher.launcher.ui.R as UiR
 
 /**
  * An option's values in a list beside its [row], at the row's end edge, opened by OK on it, the
@@ -88,7 +89,8 @@ internal class OptionList<M, C, O : Option<M, C, *>>(
         window = PopupWindow(list, width, ViewGroup.LayoutParams.WRAP_CONTENT, true).apply {
             setBackgroundDrawable(roundRect(roles.surfaceHigh, resources.getDimension(R.dimen.settings_option_list_corner)))
             elevation = resources.getDimension(R.dimen.settings_option_list_elevation)
-            animationStyle = 0
+            // A short fade in and out, as a dialog's.
+            animationStyle = UiR.style.Animation_Luncher_Panel
             setOnDismissListener(this@OptionList)
         }
 

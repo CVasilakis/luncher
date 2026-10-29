@@ -47,11 +47,6 @@ class SettingsActivity : Activity() {
         theme.stop()
     }
 
-    override fun onResume() {
-        super.onResume()
-        showPanel(true)   // back from a panel of its own, such as Hide apps
-    }
-
     private fun show(menu: List<SettingsEntry>) {
         for (entry in menu) {
             val view = layoutInflater.inflate(R.layout.settings_entry, entries, false)
@@ -89,18 +84,11 @@ class SettingsActivity : Activity() {
 
     /**
      * Opens a panel of its own over this one (its theme is `Theme.Luncher.Settings.Panel`), in its
-     * place: this panel disappears meanwhile, since the other one may be smaller and would show
-     * it around its edges. Its window stays, and with it the dimming of the home screen behind.
-     * The appearance editor is full-screen, and covers both.
+     * place: the same side sheet ([placeAsSheet]), so it covers this one, which stays shown under
+     * it as it fades in and out, and with it the dimming of the home screen behind. The appearance
+     * editor is full-screen, and covers both.
      */
-    private fun openOwnPanel(intent: Intent) {
-        startActivity(intent)
-        showPanel(false)
-    }
-
-    private fun showPanel(shown: Boolean) {
-        window.attributes = window.attributes.apply { alpha = if (shown) 1f else 0f }
-    }
+    private fun openOwnPanel(intent: Intent) = startActivity(intent)
 
     /** In a task of its own, like any other app; Back from it returns to this panel. */
     private fun openSystemSettings() {

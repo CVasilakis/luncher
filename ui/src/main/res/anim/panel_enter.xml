@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A floating panel coming in (a dialog, the settings panel and those opened in its place, the
+     window after a share, an option's list): a short fade, quicker than Android's dialog and
+     activity animations, which it replaces (Animation.Luncher.Panel). A tile's menu fades in as
+     quickly, growing out of its tile too (feature/home's anim/home_menu_enter_*). -->
+<alpha xmlns:android="http://schemas.android.com/apk/res/android"
+    android:duration="100"
+    android:fromAlpha="0"
+    android:interpolator="@android:interpolator/decelerate_cubic"
+    android:toAlpha="1" />

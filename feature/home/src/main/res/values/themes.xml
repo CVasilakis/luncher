@@ -19,7 +19,7 @@
     <!-- A tile's menu comes out of its tile, from the side it's on (anim/home_menu_enter_*), and
          fades as it goes; TileMenu.placeAt chooses one as the menu opens. -->
     <style name="Animation.Luncher.Home.Menu" parent="">
-        <item name="android:windowExitAnimation">@anim/home_menu_exit</item>
+        <item name="android:windowExitAnimation">@anim/panel_exit</item>
     </style>
     <style name="Animation.Luncher.Home.Menu.Above">
         <item name="android:windowEnterAnimation">@anim/home_menu_enter_above</item>
