@@ -11,5 +11,32 @@
         <!-- The dialog theme's minimum width is a share of the screen; the layout sets the width. -->
         <item name="android:windowMinWidthMajor">0dp</item>
         <item name="android:windowMinWidthMinor">0dp</item>
+        <!-- Never Android's dialog animation, which is slower: TileMenu.placeAt sets the one of
+             the side the menu is on as it opens; this is the most common one. -->
+        <item name="android:windowAnimationStyle">@style/Animation.Luncher.Home.Menu.Above</item>
+    </style>
+
+    <!-- A tile's menu comes out of its tile, from the side it's on (anim/home_menu_enter_*), and
+         fades as it goes; TileMenu.placeAt chooses one as the menu opens. -->
+    <style name="Animation.Luncher.Home.Menu" parent="">
+        <item name="android:windowExitAnimation">@anim/home_menu_exit</item>
+    </style>
+    <style name="Animation.Luncher.Home.Menu.Above">
+        <item name="android:windowEnterAnimation">@anim/home_menu_enter_above</item>
+    </style>
+    <style name="Animation.Luncher.Home.Menu.Below">
+        <item name="android:windowEnterAnimation">@anim/home_menu_enter_below</item>
+    </style>
+    <style name="Animation.Luncher.Home.Menu.Left">
+        <item name="android:windowEnterAnimation">@anim/home_menu_enter_left</item>
+    </style>
+    <style name="Animation.Luncher.Home.Menu.Right">
+        <item name="android:windowEnterAnimation">@anim/home_menu_enter_right</item>
+    </style>
+    <!-- Android 5.1 and 6.0 play no app dialog's window entrance: there the menu plays it in its
+         window (TileMenu's WindowEntrance), and the window only fades as it goes. No entrance
+         here, so a device that would play one doesn't play it twice. -->
+    <style name="Animation.Luncher.Home.Menu.ExitOnly">
+        <item name="android:windowEnterAnimation">@null</item>
     </style>
 </resources>

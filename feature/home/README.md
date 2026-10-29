@@ -35,8 +35,8 @@ feature/home/
     │   │   │                     dimmed, in a window above, below or beside it, its corners following the tiles'
     │   │   └── MoveMode.kt       moving an app: keys to the domain's MoveSession, the top bar's title and hint
     │   └── res/                  the focused tile's zoom, or zoom and lift (animator/), the settings gear (its focus
-    │                             disc is set in code, in the accent), home_activity.xml, the tile menu's layouts and theme
-    │                             (Theme.Luncher.Home.Menu), home_* dimensions and strings, and their
+    │                             disc is set in code, in the accent), home_activity.xml, the tile menu's layouts, theme
+    │                             (Theme.Luncher.Home.Menu) and animations (anim/), home_* dimensions and strings, and their
     │                             translations in values-el/ and values-ar/ (docs/TRANSLATIONS.md)
     └── test/
         ├── java/…/home/          JVM tests; TestHomeGraph.kt: the ports a test gives the screen, and
@@ -433,7 +433,7 @@ panel follows the tiles.
 | `AppInfoScreen` (`:domain`), `PackageManagerAppInfoScreen` (`:platform`) | whether the device has the page App info opens, asked as each menu opens, since a settings app can be disabled meanwhile |
 | `tileMenuPlacement` (`:domain`) | where the menu goes: above the tile as it's drawn (zoomed, its name below it), below where there's no room, across centered, or in line with the tile's edge where centered would leave the room; beside it, level with it, where it fits neither above nor below; `tileMenuHeight`: how tall it may be, the most room there is where it fits whole nowhere |
 | `AppTileView.focusedBounds` | where the tile is drawn on the screen while it has focus, for that rule |
-| `TileMenu` | the menu's window: an entry for each action with its icon and label from exhaustive `when`s over `AppAction`, dimmed and out of the focus's way where it isn't available, placed where the rule says; in the theme's colors, its corners following the tiles' (`style`, `menuCorner`) |
+| `TileMenu` | the menu's window: an entry for each action with its icon and label from exhaustive `when`s over `AppAction`, dimmed and out of the focus's way where it isn't available, placed where the rule says, with the animation of the side it's on ([below](#how-the-menu-comes-and-goes)); in the theme's colors, its corners following the tiles' (`style`, `menuCorner`) |
 | `HomeActivity` | opens the menu on a long press, and does what an entry says, in an exhaustive `when` too: Move starts `MoveMode`, Hide stores the arrangement with the app hidden, which shows as any change of it does, Rename asks for the name (`:ui`'s `NameDialog`) and stores it, Tile banner starts the picker for the app and the tile's place (`TileBannerActivity.intent`), App info starts the device's page for the app |
 
 A new action is a type of `AppAction`, listed by
@@ -461,6 +461,27 @@ press.
 
 The menu is made the first time it opens, and kept for the next ones, which only add its entries
 again: nothing is made before the user asks for it.
+
+### How the menu comes and goes
+
+The menu comes out of its tile: as it opens, it fades in while it grows from 92% of its size out
+of the middle of its edge that faces the tile (its bottom edge above the tile, its left edge right
+of it, also where it lines up with a row's first or last tile), in 100 ms; as it closes, it fades
+out in 80 ms, which delays nothing, as an entry's action starts at once. These are window
+animations of its own (`anim/home_menu_*`, a style for each side, `Animation.Luncher.Home.Menu.*`),
+which `TileMenu.placeAt` chooses from the side `tileMenuPlacement` gives, in an exhaustive `when`:
+the theme's own would grow every menu from the same edge. They replace Android's dialog fade,
+which is slower, and slides too on Android 16.
+
+Android 5.1 and 6.0 play no app dialog's window entrance (their exit, yes), so with a window
+animation alone the menu would pop in there. On those, the menu plays the same entrance in its
+window (`WindowEntrance`), on its decor, which draws the panel's background too, starting as it's
+first drawn: on a slow TV the first frame of a process can come after the animation would have
+ended. Its window keeps the exit.
+
+Both follow Android's animation settings: the window's animations the window animation scale,
+the entrance in the window the animator duration scale. With animations off, the menu shows and
+goes at once.
 
 ### Renaming an app
 

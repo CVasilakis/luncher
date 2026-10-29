@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A tile's menu above its tile, coming in: it fades in while it grows a little out of the
+     middle of its bottom edge, the one facing the tile, so it seems to come out of the tile; quicker
+     than Android's dialog fade, which it replaces. TileMenu.placeAt chooses it by the side the
+     menu is on (Animation.Luncher.Home.Menu.*). -->
+<set xmlns:android="http://schemas.android.com/apk/res/android"
+    android:interpolator="@android:interpolator/decelerate_cubic"
+    android:shareInterpolator="true">
+    <alpha
+        android:duration="100"
+        android:fromAlpha="0"
+        android:toAlpha="1" />
+    <scale
+        android:duration="100"
+        android:fromXScale="0.92"
+        android:fromYScale="0.92"
+        android:pivotX="50%"
+        android:pivotY="100%"
+        android:toXScale="1"
+        android:toYScale="1" />
+</set>

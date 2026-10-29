@@ -1,11 +1,17 @@
 package com.luncher.launcher.home
 
+import android.animation.Animator
+import android.animation.AnimatorListenerAdapter
+import android.animation.ObjectAnimator
+import android.animation.PropertyValuesHolder
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.Dialog
 import android.os.Build
 import android.view.Gravity
 import android.view.View
+import android.view.ViewTreeObserver
+import android.view.animation.AnimationUtils
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -14,6 +20,7 @@ import com.luncher.domain.appearance.Corners
 import com.luncher.domain.apps.AppAction
 import com.luncher.domain.apps.AppMenuEntry
 import com.luncher.domain.apps.HomeApp
+import com.luncher.domain.layout.MenuSide
 import com.luncher.domain.layout.PixelBounds
 import com.luncher.domain.layout.tileMenuHeight
 import com.luncher.domain.layout.tileMenuPlacement
@@ -34,7 +41,8 @@ import com.luncher.launcher.ui.R as UiR
  *
  * A window of its own, so Android keeps the keys and the focus in it while it shows, and the tile
  * under it keeps its focus, zoomed as it is. Made once, the first time it's needed, and shown again
- * for each tile, with that tile's actions.
+ * for each tile, with that tile's actions. It comes out of the tile, from the side it's on, and
+ * fades as it goes: animations of its own, quicker than Android's dialog fade ([placeAt]).
  */
 internal class TileMenu(private val activity: Activity) : Dialog(activity, R.style.Theme_Luncher_Home_Menu) {
 
@@ -61,6 +69,13 @@ internal class TileMenu(private val activity: Activity) : Dialog(activity, R.sty
         panel = findViewById(R.id.home_tile_menu_frame)
         setOnDismissListener { app = null }
     }
+
+    /**
+     * The menu's entrance, played in its window, where Android plays no app dialog's window
+     * entrance: Android 5.1 and 6.0 (seen on the tv_api22 and tv_api23 emulators, which play its
+     * exit; tv_api24 plays both). Null where the window's animation plays it.
+     */
+    private val entrance = if (Build.VERSION.SDK_INT <= 23) WindowEntrance(checkNotNull(window).decorView) else null
 
     /**
      * In the theme's colors, [roles], its corners following the tiles' [corners] (see
@@ -122,6 +137,10 @@ internal class TileMenu(private val activity: Activity) : Dialog(activity, R.sty
      * they fit nowhere whole beside the tile, as tall as the most room there is, the entries
      * scrolling in it ([tileMenuHeight]). At the screen's left and top, in any language: the home
      * screen doesn't mirror, so neither does where the tile is.
+     *
+     * With the window's animation of the side it's on: it grows out of the middle of its edge that
+     * faces the tile (`anim/home_menu_enter_*`), so the theme's alone isn't enough; or, where
+     * Android plays no dialog's entrance, the window's exit only, and the [entrance] in it.
      */
     @SuppressLint("RtlHardcoded")
     private fun placeAt(tile: AppTileView) {
@@ -143,6 +162,7 @@ internal class TileMenu(private val activity: Activity) : Dialog(activity, R.sty
         val height = tileMenuHeight(bounds, panel.measuredWidth, panel.measuredHeight, room, gap, least)
         if (height < panel.measuredHeight) measurePanel(room.right - room.left, height)   // whole rows that fit, scrolling
         val placement = tileMenuPlacement(bounds, panel.measuredWidth, panel.measuredHeight, room, gap)
+        entrance?.prepare(placement.side, panel.measuredWidth, panel.measuredHeight)
         window.attributes = window.attributes.apply {
             gravity = Gravity.TOP or Gravity.LEFT
             x = placement.left
@@ -150,6 +170,16 @@ internal class TileMenu(private val activity: Activity) : Dialog(activity, R.sty
             // As measured, so the window's own layout gives the list the same room.
             width = panel.measuredWidth
             this.height = panel.measuredHeight
+            windowAnimations = if (entrance != null) {
+                R.style.Animation_Luncher_Home_Menu_ExitOnly
+            } else {
+                when (placement.side) {
+                    MenuSide.ABOVE -> R.style.Animation_Luncher_Home_Menu_Above
+                    MenuSide.BELOW -> R.style.Animation_Luncher_Home_Menu_Below
+                    MenuSide.LEFT -> R.style.Animation_Luncher_Home_Menu_Left
+                    MenuSide.RIGHT -> R.style.Animation_Luncher_Home_Menu_Right
+                }
+            }
         }
     }
 
@@ -207,4 +237,66 @@ internal fun entryCorner(menu: Float, padding: Float, least: Float, pixelsPerDp:
     if (menu <= 0f) return 0f
     val third = kotlin.math.floor(menu / pixelsPerDp / 3) * pixelsPerDp
     return maxOf(menu - padding, third, least)
+}
+
+/**
+ * A tile's menu's entrance, played in its window, for where Android plays no dialog window's
+ * entrance: the same as `anim/home_menu_enter_*`, on the window's [decor], which draws the panel's
+ * background too. Made once with the menu; an opening only starts it again. An animator, so it
+ * follows Android's "Animator duration scale", where the window's animations follow the "Window
+ * animation scale".
+ */
+private class WindowEntrance(private val decor: View) : ViewTreeObserver.OnPreDrawListener {
+
+    private val animator = ObjectAnimator.ofPropertyValuesHolder(
+        decor,
+        PropertyValuesHolder.ofFloat(View.ALPHA, 0f, 1f),
+        PropertyValuesHolder.ofFloat(View.SCALE_X, FROM, 1f),
+        PropertyValuesHolder.ofFloat(View.SCALE_Y, FROM, 1f),
+    ).apply {
+        duration = DURATION
+        interpolator = AnimationUtils.loadInterpolator(decor.context, android.R.interpolator.decelerate_cubic)
+        // Faded in a layer, which the window's animation has too, rather than each part on its own.
+        addListener(object : AnimatorListenerAdapter() {
+            override fun onAnimationStart(animation: Animator) = decor.setLayerType(View.LAYER_TYPE_HARDWARE, null)
+            override fun onAnimationEnd(animation: Animator) = decor.setLayerType(View.LAYER_TYPE_NONE, null)
+        })
+    }
+
+    /**
+     * Readies the menu, [width] by [height] px, on [side] of its tile, to come out of the middle of
+     * its edge that faces the tile, as it's first drawn: started at once, it could be over before
+     * the first frame of a slow TV.
+     */
+    fun prepare(side: MenuSide, width: Int, height: Int) {
+        animator.cancel()
+        decor.pivotX = when (side) {
+            MenuSide.ABOVE, MenuSide.BELOW -> width / 2f
+            MenuSide.LEFT -> width.toFloat()
+            MenuSide.RIGHT -> 0f
+        }
+        decor.pivotY = when (side) {
+            MenuSide.ABOVE -> height.toFloat()
+            MenuSide.BELOW -> 0f
+            MenuSide.LEFT, MenuSide.RIGHT -> height / 2f
+        }
+        decor.alpha = 0f
+        decor.scaleX = FROM
+        decor.scaleY = FROM
+        // Once, though a menu closed before it was drawn left it there.
+        decor.viewTreeObserver.removeOnPreDrawListener(this)
+        decor.viewTreeObserver.addOnPreDrawListener(this)
+    }
+
+    override fun onPreDraw(): Boolean {
+        decor.viewTreeObserver.removeOnPreDrawListener(this)
+        animator.start()
+        return true
+    }
+
+    private companion object {
+        /** As `anim/home_menu_enter_*`'s. */
+        const val DURATION = 100L
+        const val FROM = 0.92f
+    }
 }

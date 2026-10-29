@@ -513,4 +513,53 @@ class TileMenuTest {
         assertEquals((tile.left + tile.right) / 2.0, center.toDouble(), 1.0)
         assertNotNull(menu.entries().first().label.text)
     }
+
+    private fun TileMenu.windowAnimations() = checkNotNull(window).attributes.windowAnimations
+
+    // Its own animation, which grows out of the middle of its edge facing the tile.
+    @Test
+    fun `the menu comes out of its tile, below it and above it`() {
+        installedApps.apps = ('a'..'q').map { app(it.toString()) } + app("x")
+        val activity = start().get()
+
+        assertEquals(R.style.Animation_Luncher_Home_Menu_Below, activity.longPress("b").windowAnimations())
+        shownMenu()!!.press(KeyEvent.KEYCODE_BACK)
+        assertEquals(R.style.Animation_Luncher_Home_Menu_Above, activity.longPress("p").windowAnimations())
+    }
+
+    // Three tiles a row: the second row's first tile has more room on its right, its last on its left.
+    @Test
+    @Config(qualifiers = "en-rUS-w640dp-h360dp-land-television-xhdpi-notouch-dpad")
+    fun `the menu comes out of its tile, beside it on either side`() {
+        val activity = start().get()
+        val secondTop = activity.tiles().first { it.top > activity.tiles().first().top }.top
+        val secondRow = activity.tiles().filter { it.top == secondTop }
+
+        assertEquals(R.style.Animation_Luncher_Home_Menu_Right, activity.longPress(secondRow.first().app.name.lowercase()).windowAnimations())
+        shownMenu()!!.press(KeyEvent.KEYCODE_BACK)
+        assertEquals(R.style.Animation_Luncher_Home_Menu_Left, activity.longPress(secondRow.last().app.name.lowercase()).windowAnimations())
+    }
+
+    // Android 5.1 and 6.0 play no app dialog's window entrance: the menu plays it in its window,
+    // starting as it's first drawn, and the window only fades as it goes.
+    @Test
+    @Config(sdk = [23])
+    fun `where Android plays no dialog's entrance, the menu plays it in its window`() {
+        val activity = start().get()
+        activity.tile("b").requestFocus()
+        activity.tile("b").performLongClick()
+        val menu = checkNotNull(shownMenu()) { "no menu" }
+        val decor = checkNotNull(menu.window).decorView
+
+        assertEquals(R.style.Animation_Luncher_Home_Menu_ExitOnly, menu.windowAnimations())
+        assertEquals("not drawn yet", 0f, decor.alpha)
+        assertEquals(0.92f, decor.scaleX)
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofSeconds(1))
+        assertEquals(1f, decor.alpha)
+        assertEquals(1f, decor.scaleX)
+        assertEquals(1f, decor.scaleY)
+        // Below its tile: out of the middle of its top edge.
+        assertEquals(decor.width / 2f, decor.pivotX)
+        assertEquals(0f, decor.pivotY)
+    }
 }
