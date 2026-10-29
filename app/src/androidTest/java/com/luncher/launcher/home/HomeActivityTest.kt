@@ -52,6 +52,7 @@ import com.luncher.launcher.LuncherApplication
 import com.luncher.launcher.settings.HideAppsActivity
 import com.luncher.launcher.settings.R as SettingsR
 import com.luncher.launcher.settings.SettingsActivity
+import com.luncher.launcher.testing.FailureCapture
 import com.luncher.launcher.testing.RetryWhenCovered
 import com.luncher.launcher.testing.focus
 import com.luncher.launcher.testing.longPressOk
@@ -60,6 +61,7 @@ import com.luncher.launcher.testing.resolvedHome
 import com.luncher.launcher.testing.waitForHomeScreen
 import com.luncher.launcher.testing.waitUntilDestroyed
 import com.luncher.launcher.testing.waitUntilMatches
+import com.luncher.launcher.ui.FOCUSED_TILE_ZOOM
 import com.luncher.launcher.ui.ListEntry
 import com.luncher.launcher.wallpaper.BlurredWallpaperFrost
 import com.luncher.launcher.ui.R as UiR
@@ -364,6 +366,31 @@ class HomeActivityTest {
         }
     }
 
+    /**
+     * Waits until the tile labeled [label] is no longer pressed and has the focused tile's zoom,
+     * read on the main thread: Espresso looks only in a window that has the focus, and the menu
+     * over the home screen has it. Fails after [TIMEOUT_MS], saying where it was left, with
+     * [FailureCapture]'s dump.
+     */
+    private fun ActivityScenario<HomeActivity>.waitUntilFocusedZoom(label: String) {
+        val deadline = SystemClock.uptimeMillis() + TIMEOUT_MS
+        while (true) {
+            var pressed = false
+            var zoom = 0f
+            onActivity { activity ->
+                val tiles = activity.findViewById<ViewGroup>(R.id.home_apps)
+                val tile = (0 until tiles.childCount).map { tiles.getChildAt(it) }.single { it.contentDescription == label }
+                pressed = tile.isPressed
+                zoom = tile.scaleX
+            }
+            if (!pressed && zoom == FOCUSED_TILE_ZOOM) return
+            if (SystemClock.uptimeMillis() > deadline) {
+                throw AssertionError("$label still pressed ($pressed) or zoomed to $zoom after ${TIMEOUT_MS / 1000} s").also(FailureCapture::dump)
+            }
+            SystemClock.sleep(50)
+        }
+    }
+
     /** The labels of the tiles, in order. */
     private fun ActivityScenario<HomeActivity>.labels(): List<String> {
         var labels = emptyList<String>()
@@ -388,6 +415,20 @@ class HomeActivityTest {
             waitUntilTile("Games", hasFocus())
             assertEquals(listOf("Games", "Movies", "Music"), scenario.labels())
             assertEquals(Lifecycle.State.RESUMED, scenario.state)
+        }
+    }
+
+    // The tile dips while OK is held (the JVM tests check it); as the menu takes the focus, Android
+    // ends the tile's press, and it zooms back. Robolectric moves no focus to a dialog: only here.
+    @Test
+    fun longPressOk_theTileZoomsBackAsTheMenuOpens() {
+        launchWith("games", "movies", "music").use { scenario ->
+            waitUntilTile("Games", hasFocus())
+
+            longPressOk()
+            waitUntilMenuEntryFocused(R.string.home_menu_move)
+
+            scenario.waitUntilFocusedZoom("Games")
         }
     }
 

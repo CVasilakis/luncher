@@ -132,6 +132,81 @@ class TileMenuTest {
         assertNull(shadowOf(activity).nextStartedActivity)
     }
 
+    /** Puts OK down on the tile of [name] and holds it for [ms], not letting go. */
+    private fun HomeActivity.holdOk(name: String, ms: Long) {
+        tile(name).requestFocus()
+        dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DPAD_CENTER))
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(ms))
+    }
+
+    private fun HomeActivity.releaseOk() = dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_DPAD_CENTER))
+
+    // Luncher's own hold is 350 ms (menuHold), Robolectric's long-press timeout Android's 500.
+    @Test
+    fun `OK held a little less than the hold opens no menu, and released opens the app`() {
+        val activity = start().get()
+
+        activity.holdOk("b", 340)
+
+        assertNull(shownMenu())
+        assertNull(shadowOf(activity).nextStartedActivity)
+        activity.releaseOk()
+        assertEquals("com.example.b", shadowOf(activity).nextStartedActivity.component?.packageName)
+    }
+
+    @Test
+    fun `OK held for the hold opens the menu, before Android's long press`() {
+        val activity = start().get()
+        assertTrue(ViewConfiguration.getLongPressTimeout() > 360)
+
+        activity.holdOk("b", 360)
+
+        assertNotNull(shownMenu())
+        assertEquals(listOf("Move", "Hide", "Rename", "Tile banner", "App info"), shownMenu()!!.labels())
+    }
+
+    // On Android 12 and later, OK let go before the menu's first frame comes to the tile, whose
+    // window still has the focus: Robolectric never moves it to the menu, so it always comes there.
+    @Test
+    fun `OK released on the tile after the hold opened the menu opens nothing`() {
+        val activity = start().get()
+        activity.holdOk("b", 360)
+
+        activity.releaseOk()
+
+        assertNull(shadowOf(activity).nextStartedActivity)
+        assertFalse(activity.tile("b").isPressed)
+        assertTrue(shownMenu()!!.isShowing)
+    }
+
+    // Android's own long press, still timed as OK went down, would open the menu again, at its
+    // first entry.
+    @Test
+    fun `the menu the hold opened isn't opened again by Android's long press`() {
+        val activity = start().get()
+        activity.holdOk("b", 360)
+        val menu = checkNotNull(shownMenu())
+        menu.press(KeyEvent.KEYCODE_DPAD_DOWN)
+
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(ViewConfiguration.getLongPressTimeout().toLong()))
+
+        assertTrue("Hide, where Down took the focus, keeps it", menu.entries()[1].isFocused)
+    }
+
+    // A timeout longer than Android's defaults is the user's, from the accessibility settings.
+    @Test
+    @Config(shadows = [LongerLongPressTimeout::class])
+    fun `with a longer long-press timeout than Android's, OK held for the hold opens nothing`() {
+        assertEquals(1000, ViewConfiguration.getLongPressTimeout())
+        val activity = start().get()
+
+        activity.holdOk("b", 360)
+
+        assertNull(shownMenu())
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(700))
+        assertNotNull("Android's long press opens it", shownMenu())
+    }
+
     @Test
     fun `with no other app shown, the menu offers no move`() {
         installedApps.apps = listOf(app("a"), app("x"))
@@ -563,3 +638,4 @@ class TileMenuTest {
         assertEquals(0f, decor.pivotY)
     }
 }
+

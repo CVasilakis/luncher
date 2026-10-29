@@ -3,6 +3,24 @@
      (home_tile_lift.xml), which this one isn't. Declared once per tile, so a key press starts
      existing animators instead of creating new ones. -->
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- OK held: the tile dips a little at once, so the press shows before the app or the menu
+         opens; back in the focused item's time once it ends. As home_tile_lift.xml's dip. -->
+    <item android:state_pressed="true" android:state_focused="true">
+        <set>
+            <objectAnimator
+                android:duration="80"
+                android:interpolator="@android:interpolator/decelerate_quad"
+                android:propertyName="scaleX"
+                android:valueTo="1.1"
+                android:valueType="floatType" />
+            <objectAnimator
+                android:duration="80"
+                android:interpolator="@android:interpolator/decelerate_quad"
+                android:propertyName="scaleY"
+                android:valueTo="1.1"
+                android:valueType="floatType" />
+        </set>
+    </item>
     <item android:state_focused="true">
         <set>
             <objectAnimator

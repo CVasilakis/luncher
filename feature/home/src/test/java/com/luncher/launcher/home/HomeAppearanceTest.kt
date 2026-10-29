@@ -7,6 +7,7 @@ import android.graphics.Paint
 import android.graphics.Rect
 import android.graphics.RectF
 import android.os.Looper
+import android.view.KeyEvent
 import android.view.View
 import com.luncher.domain.appearance.AppName
 import com.luncher.domain.appearance.Appearance
@@ -254,6 +255,44 @@ class HomeAppearanceTest {
         tile.draw(canvas)
         val half = focusFrame.strokeWidth / 2
         assertEquals(RectF(half, half, tile.width - half, tile.height - half), frame)
+    }
+
+    // OK held: the press shows at once, before the app opens, or the menu after the hold (350 ms).
+    @Test
+    fun `while OK is held, the framed tile dips, and zooms back once it's let go`() {
+        val activity = start().get()
+        idle()
+        val tile = activity.tiles().first()
+
+        activity.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DPAD_CENTER))
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(200))   // the dip's frames, short of the hold
+
+        assertEquals(DIPPED_ZOOM, tile.scaleX)
+        assertEquals(DIPPED_ZOOM, tile.scaleY)
+        assertEquals(0f, tile.translationZ)
+        activity.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_DPAD_CENTER))
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(300))
+        assertEquals(AppTileView.FOCUSED_ZOOM, tile.scaleX)
+        assertEquals(AppTileView.FOCUSED_ZOOM, tile.scaleY)
+    }
+
+    @Test
+    fun `while OK is held, the lifted tile dips and comes down to half its lift, and rises back once it's let go`() {
+        appearance.appearance = Appearance(tileStyle = TileStyle(focusFrame = false))
+        val activity = start().get()
+        idle()
+        val tile = activity.tiles().first()
+        val lift = activity.resources.getDimension(UiR.dimen.tile_lift)
+
+        activity.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DPAD_CENTER))
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(200))
+
+        assertEquals(DIPPED_ZOOM, tile.scaleX)
+        assertEquals(lift / 2, tile.translationZ)
+        activity.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_DPAD_CENTER))
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(300))
+        assertEquals(AppTileView.FOCUSED_ZOOM, tile.scaleX)
+        assertEquals(lift, tile.translationZ)
     }
 
     // The frame turned on only swaps the tiles' animators: the tile is framed and down again at once.
@@ -525,5 +564,10 @@ class HomeAppearanceTest {
         shadowOf(Looper.getMainLooper()).idleFor(Duration.ofSeconds(1))   // layout, and the focused tile's zoom
         val window = activity.window.decorView
         return Bitmap.createBitmap(window.width, window.height, Bitmap.Config.ARGB_8888).also { window.draw(Canvas(it)) }
+    }
+
+    private companion object {
+        /** The focused tile's zoom while OK is held on it: home_tile_focus.xml's and home_tile_lift.xml's pressed item. */
+        const val DIPPED_ZOOM = 1.1f
     }
 }

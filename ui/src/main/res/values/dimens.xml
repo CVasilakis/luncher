@@ -102,6 +102,9 @@
          Android casts from its outline. The home screen's (feature/home's home_tile_lift.xml), and
          the tile banner picker's preview's. -->
     <dimen name="tile_lift">12dp</dimen>
+    <!-- How high a lifted tile stays while OK is held on it: half of tile_lift, the tile coming
+         down a little as it dips (feature/home's home_tile_lift.xml). -->
+    <dimen name="tile_lift_pressed">6dp</dimen>
     <!-- The app's name below the focused tile (TileName), and the gap between the two, both before
          the tile's zoom, which they're drawn with: the home screen's, and the room the appearance
          editor's preview leaves it. -->
