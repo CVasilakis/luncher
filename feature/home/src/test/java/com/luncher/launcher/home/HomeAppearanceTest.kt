@@ -295,6 +295,27 @@ class HomeAppearanceTest {
         assertEquals(lift, tile.translationZ)
     }
 
+    // The gear in the top bar answers the press too, as the tiles do: the panel opens as OK is let go.
+    @Test
+    fun `while OK is held, the settings gear dips, and comes back once it's let go`() {
+        val activity = start().get()
+        idle()
+        val gear = activity.findViewById<View>(R.id.home_settings)
+        gear.requestFocus()
+        idle()
+        assertEquals(1f, gear.scaleX)
+
+        activity.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DPAD_CENTER))
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(200))
+
+        assertEquals(DIPPED_GEAR, gear.scaleX)
+        assertEquals(DIPPED_GEAR, gear.scaleY)
+        activity.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_DPAD_CENTER))
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(300))
+        assertEquals(1f, gear.scaleX)
+        assertEquals(1f, gear.scaleY)
+    }
+
     // The frame turned on only swaps the tiles' animators: the tile is framed and down again at once.
     @Test
     fun `the focus frame turned on lays nothing out again, and puts the focused tile down`() {
@@ -569,5 +590,6 @@ class HomeAppearanceTest {
     private companion object {
         /** The focused tile's zoom while OK is held on it: home_tile_focus.xml's and home_tile_lift.xml's pressed item. */
         const val DIPPED_ZOOM = 1.1f
+        const val DIPPED_GEAR = 0.88f
     }
 }

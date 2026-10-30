@@ -45,6 +45,8 @@ internal const val ROLE_ERROR = 3
 // Focused while its window has the focus: a dialog or a list over a screen takes the keys, and
 // what had the focus there no longer looks focused meanwhile.
 private val FOCUSED = intArrayOf(android.R.attr.state_focused, android.R.attr.state_window_focused)
+private val PRESSED_FOCUSED = intArrayOf(android.R.attr.state_pressed, android.R.attr.state_focused, android.R.attr.state_window_focused)
+private val PRESSED_SELECTED = intArrayOf(android.R.attr.state_pressed, android.R.attr.state_selected)
 private val SELECTED = intArrayOf(android.R.attr.state_selected)
 private val ACTIVATED = intArrayOf(android.R.attr.state_activated)
 private val ANY = intArrayOf()
@@ -65,11 +67,16 @@ fun roundRect(color: Int, radius: Float, stroke: Int = 0, strokeColor: Int = 0):
     }
 
 /**
- * What's behind an entry: [focused] while it has the focus or is a list's selected row,
- * [activated] while it's chosen, else [rest] (null: nothing).
+ * What's behind an entry: [focused] while it has the focus or is a list's selected row, [pressed]
+ * while OK is held on it then (null: [focused] stays), [activated] while it's chosen, else [rest]
+ * (null: nothing). Only a state change picks among them: nothing costs while a list scrolls.
  */
-internal fun stateBackground(focused: Drawable, activated: Drawable?, rest: Drawable?): StateListDrawable =
+internal fun stateBackground(focused: Drawable, activated: Drawable?, rest: Drawable?, pressed: Drawable? = null): StateListDrawable =
     StateListDrawable().apply {
+        if (pressed != null) {
+            addState(PRESSED_FOCUSED, pressed)
+            addState(PRESSED_SELECTED, pressed)
+        }
         addState(FOCUSED, focused)
         addState(SELECTED, focused)
         if (activated != null) addState(ACTIVATED, activated)

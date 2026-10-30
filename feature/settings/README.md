@@ -378,7 +378,10 @@ through the process's `Wallpaper` ([`feature/home/README.md`](../home/README.md#
   it. If the user goes home meanwhile, the drawing goes on, and the home screen says so instead.
 
 A **long press of OK** on a picture offers Rename and Delete (in the error color), each with its
-icon, under its name and size (`:ui`'s `MenuDialog`).
+icon, under its name and size (`:ui`'s `MenuDialog`). The press is Luncher's own hold, 350 ms, as a
+tile's menu opens ([`:ui`'s `OkHold`](../../ui/README.md#the-design-system), which every row has
+where it has a long-click listener): the row shows it, darker, while OK is held. OK let go before
+that chooses the picture.
 
 **Rename** asks for the new name in a field holding the old one, the TV's keyboard up, the cursor
 at the end (where the keyboard puts it anyway; `:ui`'s `NameDialog` and `NameField`, outlined in the accent while it has

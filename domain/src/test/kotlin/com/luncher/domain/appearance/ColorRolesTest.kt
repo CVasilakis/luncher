@@ -27,6 +27,7 @@ class ColorRolesTest {
             text(roles.error, roles.onError, "onError on error")
             text(roles.errorContainer, roles.onErrorContainer, "onErrorContainer on errorContainer")
             text(roles.inverseSurface, roles.inverseOnSurface, "inverseOnSurface on inverseSurface")
+            text(roles.inverseSurfacePressed, roles.inverseOnSurface, "inverseOnSurface on inverseSurfacePressed")
             text(roles.surface, roles.error, "error on surface")
             text(roles.screen, roles.error, "error on screen")
             // The chosen picture's name, and the check beside it.
@@ -41,6 +42,17 @@ class ColorRolesTest {
         for (theme in themes) {
             val roles = colorRoles(theme)
             assertContrast(theme, "inverseSurface on surface", roles.inverseSurface, roles.surface, 7.0)
+        }
+    }
+
+    // OK held on an entry: its fill changes by a step that shows from afar, in a light theme as in a dark one.
+    @Test
+    fun `the pressed entry's fill differs from the focused one's by a step that shows`() {
+        for (theme in themes) {
+            val roles = colorRoles(theme)
+            assertContrast(theme, "inverseSurfacePressed against inverseSurface", roles.inverseSurfacePressed, roles.inverseSurface, 1.4)
+            // Still the focus's own kind of fill: it stands out from its panel.
+            assertContrast(theme, "inverseSurfacePressed on surface", roles.inverseSurfacePressed, roles.surface, 3.0)
         }
     }
 

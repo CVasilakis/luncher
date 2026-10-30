@@ -1,9 +1,11 @@
 package com.luncher.domain.apps
 
 /**
- * How long OK is held on a tile before its menu opens, in ms, for Android's long-press timeout
+ * How long OK is held before what a long press opens (a tile's menu, a picture's menu in the
+ * editors) opens, in ms, for Android's long-press timeout
  * [system] (`ViewConfiguration.getLongPressTimeout()`): Luncher's own [MENU_HOLD] while [system] is
- * one of Android's defaults ([LONGEST_DEFAULT_LONG_PRESS] at most), so the menu opens sooner; a
+ * one of Android's defaults ([LONGEST_DEFAULT_LONG_PRESS] at most), so the menu opens sooner,
+ * wherever Luncher needs a long press; a
  * longer one is the user's, from the accessibility settings, and is kept. Never longer than
  * [system].
  */

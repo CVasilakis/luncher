@@ -31,6 +31,11 @@
     <item name="entry_zoom" format="float" type="dimen">1.03</item>
     <item name="button_zoom" format="float" type="dimen">1.06</item>
     <dimen name="button_lift">4dp</dimen>
+    <!-- While OK is held (80 ms): a button dips under its resting size and sets its shadow down, a
+         field under its resting size too, as the focused zoom is undone and a little more
+         (button_zoom.xml, entry_zoom.xml). -->
+    <item name="button_zoom_pressed" format="float" type="dimen">0.98</item>
+    <item name="entry_zoom_pressed" format="float" type="dimen">0.97</item>
     <!-- A button: its height at least, its padding at the sides, the gap after its icon. An
          icon's size; a small one, beside a line of text. -->
     <dimen name="button_height">48dp</dimen>

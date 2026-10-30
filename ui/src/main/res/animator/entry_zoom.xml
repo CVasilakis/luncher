@@ -1,10 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Zooms a field in a little while it has the focus (a ListEntry with zooms="true"); a list's
-     rows don't zoom.
+<!-- Zooms a field in a little while it has the focus (a ListEntry with zooms="true"), and dips it
+     while OK is held on it; a list's rows don't zoom.
      Not lifted: entries sit close, and a shadow would fall on the next one; the inverse color
      sets it off. Made once per entry, so a key press starts animators that exist instead of
      making new ones. -->
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- OK held: the field dips under its resting size at once, so the press shows before its
+         list opens; back in the focused item's time once it ends. As button_zoom.xml's dip. -->
+    <item android:state_pressed="true" android:state_focused="true">
+        <set>
+            <objectAnimator
+                android:duration="80"
+                android:interpolator="@android:interpolator/decelerate_quad"
+                android:propertyName="scaleX"
+                android:valueTo="@dimen/entry_zoom_pressed"
+                android:valueType="floatType" />
+            <objectAnimator
+                android:duration="80"
+                android:interpolator="@android:interpolator/decelerate_quad"
+                android:propertyName="scaleY"
+                android:valueTo="@dimen/entry_zoom_pressed"
+                android:valueType="floatType" />
+        </set>
+    </item>
     <item android:state_focused="true">
         <set>
             <objectAnimator

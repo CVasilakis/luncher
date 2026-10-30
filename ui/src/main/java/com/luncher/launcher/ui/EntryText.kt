@@ -7,7 +7,8 @@ import com.luncher.domain.appearance.ColorRoles
 /**
  * An entry of one line, a [ListEntry] made of its text alone, its icon before it if it has one
  * (`drawableStart`, taking the text's colors): a menu's entries (a tile's, a picture's actions).
- * The inverse color while it has the focus; no zoom, as a list's rows. Its corners are
+ * The inverse color while it has the focus, a step away from it while OK is held; no zoom, as a
+ * list's rows. Its corners are
  * `corner_entry`'s, or `entryCorner`'s in a container, concentric with the container's.
  */
 open class EntryText @JvmOverloads constructor(context: Context, attrs: AttributeSet? = null) : ThemedText(context, attrs) {
@@ -28,6 +29,11 @@ open class EntryText @JvmOverloads constructor(context: Context, attrs: Attribut
         super.style(roles)
         if (roles == entryStyled) return
         entryStyled = roles
-        background = stateBackground(roundRect(roles.inverseSurface, corner), activated = null, rest = null)
+        background = stateBackground(
+            focused = roundRect(roles.inverseSurface, corner),
+            activated = null,
+            rest = null,
+            pressed = roundRect(roles.inverseSurfacePressed, corner),
+        )
     }
 }

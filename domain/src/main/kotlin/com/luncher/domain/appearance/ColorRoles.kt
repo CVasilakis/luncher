@@ -34,6 +34,12 @@ data class ColorRoles(
     /** The focused entry or button: light on a dark theme, dark on a light one, so it stands out from afar. */
     val inverseSurface: Int,
     val inverseOnSurface: Int,
+    /**
+     * The focused entry while OK is held on it: a step away from [inverseSurface] that shows on it
+     * whatever the mode (a little darker where that is light, a little lighter where it's dark),
+     * and still reads under [inverseOnSurface].
+     */
+    val inverseSurfacePressed: Int,
     /** The accent on the home screen, which is always dark: a focused tile's frame. */
     val homeAccent: Int,
 )
@@ -61,6 +67,7 @@ fun colorRoles(theme: ThemeAppearance): ColorRoles {
             onErrorContainer = 0xFFFFDAD6.toInt(),
             inverseSurface = 0xFFEEF1F5.toInt(),
             inverseOnSurface = 0xFF1C232B.toInt(),
+            inverseSurfacePressed = 0xFFC4CAD2.toInt(),
             homeAccent = accent.vivid,
         )
         ThemeMode.LIGHT -> ColorRoles(
@@ -82,6 +89,7 @@ fun colorRoles(theme: ThemeAppearance): ColorRoles {
             onErrorContainer = 0xFF410002.toInt(),
             inverseSurface = 0xFF1F252D.toInt(),
             inverseOnSurface = 0xFFEEF1F5.toInt(),
+            inverseSurfacePressed = 0xFF4A535E.toInt(),
             homeAccent = accent.vivid,
         )
     }

@@ -11,17 +11,16 @@ import android.graphics.Rect
 import android.text.TextUtils
 import android.view.KeyEvent
 import android.view.View
-import android.view.ViewConfiguration
 import com.luncher.domain.appearance.AppName
 import com.luncher.domain.apps.AppImages
 import com.luncher.domain.apps.Banner
 import com.luncher.domain.apps.HomeApp
 import com.luncher.domain.apps.PreparedTileImages
 import com.luncher.domain.apps.bannerFor
-import com.luncher.domain.apps.menuHold
 import com.luncher.domain.layout.PixelBounds
 import com.luncher.domain.layout.TileSize
 import com.luncher.launcher.ui.FOCUSED_TILE_ZOOM
+import com.luncher.launcher.ui.OkHold
 import com.luncher.launcher.ui.TileParts
 import com.luncher.launcher.ui.TilePainter
 
@@ -48,7 +47,7 @@ import com.luncher.launcher.ui.TilePainter
  *
  * While OK is held on the focused tile, it dips a little (its state animator's pressed item), so the
  * press shows at once, before the app or the menu opens. The menu opens after a hold of Luncher's
- * own ([menuHold]), shorter than Android's long press, which the tile times itself ([hold]).
+ * own ([OkHold], 350 ms), shorter than Android's long press.
  *
  * While the user moves its app, a [held] tile has a white frame, and the focused one's zoom: the
  * frame tells it apart from one only focused.
@@ -125,19 +124,8 @@ internal class AppTileView(
             invalidate()
         }
 
-    /**
-     * Luncher's own hold run out with OK still down: Android's own long press, still to come, is
-     * cancelled, as it would open the menu again, and the tile is long-clicked, which opens the
-     * menu. Posted as OK goes down, made once, so a press allocates nothing.
-     */
-    private val hold = Runnable {
-        if (!isPressed) return@Runnable
-        cancelLongPress()
-        holdOpened = performLongClick()
-    }
-
-    /** The hold long-clicked the tile: OK's release, if it comes here, opens nothing. */
-    private var holdOpened = false
+    /** OK's hold, which opens the tile's menu sooner than Android's long press ([OkHold]); made once, so a press allocates nothing. */
+    private val okHold = OkHold(this)
 
     init {
         isFocusable = true
@@ -178,41 +166,25 @@ internal class AppTileView(
     }
 
     // OK down on the tile, Android pressing it (its long press timed from now): the hold starts,
-    // where it's shorter than Android's. Read at each press, as the user may change Android's.
+    // where it's shorter than Android's.
     override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
         val handled = super.onKeyDown(keyCode, event)
-        if (isConfirmKey(keyCode) && event.repeatCount == 0 && isPressed) {
-            holdOpened = false
-            removeCallbacks(hold)
-            val system = ViewConfiguration.getLongPressTimeout()
-            val time = menuHold(system)
-            if (time < system) postDelayed(hold, time.toLong())
-        }
+        okHold.down(keyCode, event)
         return handled
     }
 
     // OK released before the hold ran out: Android's, which clicks the tile (opens the app). After
-    // the hold opened the menu, the release goes to the menu once it has the focus, or comes here
-    // cancelled; but from Android 12 on, the menu takes the focus only once it's drawn, and a
-    // release before that comes here as it is: it ends the press and opens nothing, as after
-    // Android's own long press.
-    override fun onKeyUp(keyCode: Int, event: KeyEvent): Boolean {
-        if (!isConfirmKey(keyCode)) return super.onKeyUp(keyCode, event)
-        removeCallbacks(hold)
-        if (!holdOpened) return super.onKeyUp(keyCode, event)
-        holdOpened = false
-        isPressed = false
-        return true
-    }
+    // the hold opened the menu, the release is consumed (OkHold.up).
+    override fun onKeyUp(keyCode: Int, event: KeyEvent): Boolean = okHold.up(keyCode) || super.onKeyUp(keyCode, event)
 
     override fun onWindowFocusChanged(hasWindowFocus: Boolean) {
         super.onWindowFocusChanged(hasWindowFocus)
-        if (!hasWindowFocus) removeCallbacks(hold)
+        if (!hasWindowFocus) okHold.cancel()
     }
 
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
-        removeCallbacks(hold)
+        okHold.cancel()
     }
 
     override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
@@ -327,7 +299,7 @@ internal class AppTileView(
 
     override fun onFocusChanged(gainFocus: Boolean, direction: Int, previouslyFocusedRect: Rect?) {
         super.onFocusChanged(gainFocus, direction, previouslyFocusedRect)
-        if (!gainFocus) removeCallbacks(hold)
+        if (!gainFocus) okHold.cancel()
         if (paints.names == AppName.WHEN_FOCUSED || parts?.followsFocus == true) {
             // Back the way it came if it's still fading, else in from nothing or out from whole.
             if (focusFade.isRunning || !gainFocus) focusFade.reverse() else focusFade.start()
@@ -354,15 +326,6 @@ internal class AppTileView(
     }
 
     companion object {
-        /**
-         * The keys Android presses a view with, as its hidden `KeyEvent.isConfirmKey` says on some
-         * version: OK and Enter on Android 6, Space and the keypad's Enter too on 16. Whether it
-         * did on this one, the press says ([onKeyDown]).
-         */
-        private fun isConfirmKey(keyCode: Int) =
-            keyCode == KeyEvent.KEYCODE_DPAD_CENTER || keyCode == KeyEvent.KEYCODE_ENTER ||
-                keyCode == KeyEvent.KEYCODE_NUMPAD_ENTER || keyCode == KeyEvent.KEYCODE_SPACE
-
         /** The focused tile's zoom, framed (home_tile_focus.xml) or lifted (home_tile_lift.xml): :ui's. */
         const val FOCUSED_ZOOM = FOCUSED_TILE_ZOOM
 

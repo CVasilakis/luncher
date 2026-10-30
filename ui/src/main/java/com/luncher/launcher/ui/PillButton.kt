@@ -15,7 +15,8 @@ import com.luncher.domain.appearance.ColorRoles
  * (`drawableStart`, one of the `icon_…` drawings, tinted with the text), the two centered together.
  * Its `kind`: filled with the accent (Save, OK), tonal (Cancel, Add all), or the error color's edge
  * (Delete all, Reset to defaults). Focused, every kind turns to the inverse color (a danger one to
- * the error color), and it grows and is lifted ([R.animator.button_zoom]). Where its text doesn't
+ * the error color), and it grows and is lifted ([R.animator.button_zoom]); while OK is held it dips
+ * under its resting size and its shadow is set down, by the same animator. Where its text doesn't
  * fit with the icon (a long translation, a narrow screen), the icon gives way, so the text shows
  * whole. It draws the icon itself, so whether it shows never changes the layout.
  */

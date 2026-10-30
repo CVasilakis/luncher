@@ -7,6 +7,7 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.os.Looper
+import android.view.KeyEvent
 import android.view.View
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -34,6 +35,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
+import java.time.Duration
 import java.util.Locale
 
 /**
@@ -222,6 +224,45 @@ class LibraryListTest {
         row("Waves").performLongClick()
 
         assertEquals(listOf(beach.copy(name = "Waves")), longPressed)
+    }
+
+    private fun key(action: Int) = activity.dispatchKeyEvent(KeyEvent(action, KeyEvent.KEYCODE_DPAD_CENTER))
+
+    private fun idle(ms: Long) = shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(ms))
+
+    // The picture's menu opens after Luncher's own hold, 350 ms, as a tile's menu does, not after
+    // Android's long press (500 ms under Robolectric): OK let go after it chooses nothing.
+    @Test
+    fun `OK held on a picture goes to the screen after the hold of 350 ms, before Android's long press, and its release chooses nothing`() {
+        show(beach, sunset)
+        row("sunset.jpg").requestFocus()
+        idle(100)   // laid out, as the window is
+
+        key(KeyEvent.ACTION_DOWN)
+        idle(340)
+        assertEquals(emptyList<Picture>(), longPressed)
+        idle(20)
+
+        assertEquals(listOf(sunset), longPressed)
+        key(KeyEvent.ACTION_UP)
+        idle(600)
+        assertEquals(listOf(sunset), longPressed)
+        assertEquals(emptyList<PictureId?>(), chosen)
+    }
+
+    @Test
+    fun `OK let go on a picture before the hold ran out chooses it, and opens nothing`() {
+        show(beach, sunset)
+        row("sunset.jpg").requestFocus()
+        idle(100)
+
+        key(KeyEvent.ACTION_DOWN)
+        idle(340)
+        key(KeyEvent.ACTION_UP)
+        idle(600)
+
+        assertEquals(listOf<PictureId?>(sunset.id), chosen)
+        assertEquals(emptyList<Picture>(), longPressed)
     }
 
     @Test

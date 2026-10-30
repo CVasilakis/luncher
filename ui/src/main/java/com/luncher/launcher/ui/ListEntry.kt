@@ -11,6 +11,7 @@ import android.graphics.RectF
 import android.graphics.drawable.Drawable
 import android.os.Build
 import android.util.AttributeSet
+import android.view.KeyEvent
 import android.view.View
 import android.widget.LinearLayout
 import com.luncher.domain.appearance.ColorRoles
@@ -18,11 +19,14 @@ import com.luncher.domain.appearance.ColorRoles
 /**
  * An entry of a panel or a list, Material for TV's list item: nothing behind it (or a field's
  * color, `fill="high"`, an option of the background editor), the inverse color while it has the
- * focus or is a list's selected row, so it stands out from afar, and a tint of the accent while
+ * focus or is a list's selected row, so it stands out from afar, a step away from that
+ * (`inverseSurfacePressed`) while OK is held on it, and a tint of the accent while
  * it's chosen (`activated`); a field, outlined in the accent while it's open (`activated`: its
- * values' list shows). A row of a list stays its size while focused; a field (`zooms="true"`)
- * grows a little ([R.animator.entry_zoom]), with no shadow, so whatever holds it leaves room
- * around it for that (docs: ui/README.md). Its corners are `corner_entry`'s, or `entryCorner`'s
+ * values' list shows). A row of a list stays its size while focused or pressed; a field
+ * (`zooms="true"`) grows a little ([R.animator.entry_zoom]) and dips under its resting size while
+ * pressed, keeping its fill, with no shadow, so whatever holds it leaves room around it for that
+ * (docs: ui/README.md). A row that has a long-click listener opens what it opens after Luncher's own
+ * hold ([OkHold]). Its corners are `corner_entry`'s, or `entryCorner`'s
  * in a container, concentric with the container's. Its texts and icons are [ThemedText]s and
  * [ThemedIcon]s that take its state (`duplicateParentState`).
  *
@@ -35,6 +39,9 @@ import com.luncher.domain.appearance.ColorRoles
 open class ListEntry @JvmOverloads constructor(context: Context, attrs: AttributeSet? = null) : LinearLayout(context, attrs), Themed {
 
     private val fill: Int
+
+    /** A field that zooms: it dips while pressed ([R.animator.entry_zoom]) rather than changing its fill. */
+    private val zooms: Boolean
     private var styled: ColorRoles? = null
 
     /**
@@ -47,6 +54,21 @@ open class ListEntry @JvmOverloads constructor(context: Context, attrs: Attribut
             field = value
             styled?.let { styled = null; style(it) }
         }
+
+    /** The hold of OK, where the entry opens something on a long press (a picture's row): made at the first press. */
+    private var hold: OkHold? = null
+
+    // A row that opens something on a long press (setOnLongClickListener) opens it after Luncher's
+    // own hold, as a tile's menu does.
+    override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
+        val handled = super.onKeyDown(keyCode, event)
+        if (isLongClickable) (hold ?: OkHold(this).also { hold = it }).down(keyCode, event)
+        return handled
+    }
+
+    // Losing the focus, the window losing its own, or leaving the window, ends the press (Android's),
+    // and the hold acts only while the row is pressed: nothing to cancel on those.
+    override fun onKeyUp(keyCode: Int, event: KeyEvent): Boolean = hold?.up(keyCode) == true || super.onKeyUp(keyCode, event)
 
     /** The focused fill alone, drawn by its list where the focus is while the list slides. */
     private var focusFill: Drawable? = null
@@ -70,7 +92,8 @@ open class ListEntry @JvmOverloads constructor(context: Context, attrs: Attribut
         val a = context.obtainStyledAttributes(attrs, R.styleable.ListEntry)
         fill = a.getInt(R.styleable.ListEntry_fill, FILL_NONE)
         corner = a.getDimension(R.styleable.ListEntry_entryCorner, resources.getDimension(R.dimen.corner_entry))
-        if (a.getBoolean(R.styleable.ListEntry_zooms, false)) {
+        zooms = a.getBoolean(R.styleable.ListEntry_zooms, false)
+        if (zooms) {
             stateListAnimator = AnimatorInflater.loadStateListAnimator(context, R.animator.entry_zoom)
         }
         a.recycle()
@@ -87,6 +110,7 @@ open class ListEntry @JvmOverloads constructor(context: Context, attrs: Attribut
         focusFill = roundRect(roles.inverseSurface, radius)
         background = stateBackground(
             focused = roundRect(roles.inverseSurface, radius),
+            pressed = if (zooms) null else roundRect(roles.inverseSurfacePressed, radius),
             activated = when (fill) {
                 FILL_HIGH -> roundRect(roles.surfaceHigh, radius, resources.getDimensionPixelSize(R.dimen.open_field_edge), roles.primary)
                 else -> roundRect(withAlpha(roles.primary, CHOSEN), radius)

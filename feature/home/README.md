@@ -35,7 +35,7 @@ feature/home/
     │   │   │                     dimmed, in a window above, below or beside it, its corners following the tiles'
     │   │   └── MoveMode.kt       moving an app: keys to the domain's MoveSession, the top bar's title and hint
     │   └── res/                  the focused tile's zoom, or zoom and lift (animator/), the settings gear (its focus
-    │                             disc is set in code, in the accent), home_activity.xml, the tile menu's layouts, theme
+    │                             disc is set in code, in the accent; its dip while pressed, animator/), home_activity.xml, the tile menu's layouts, theme
     │                             (Theme.Luncher.Home.Menu) and animations (anim/), home_* dimensions and strings, and their
     │                             translations in values-el/ and values-ar/ (docs/TRANSLATIONS.md)
     └── test/
@@ -206,7 +206,7 @@ What keeps it light:
   updates) reads the list once.
 - **Nothing allocated per key press in Luncher's code.** `TileFocus` keeps its last move in place;
   the zoom (and the lift), and its dip while OK is held, is a state animator created with each
-  tile, as are the name's fade and the hold that opens the menu; scrolling reuses one `Scroller`.
+  tile (the gear's, with the view), as are the name's fade and the hold that opens the menu; scrolling reuses one `Scroller`.
   Android 5 still allocates inside its animators each time they start, about 2 KB a focus move.
 - **Layout passes only when the tiles change.** Focus, zoom and scrolling redraw without
   measuring or laying out again. The clock's text changes once a minute, which lays out the top
@@ -276,7 +276,9 @@ hold, the menu ([A tile's menu](#a-tiles-menu)): without it, the tile showed not
 It's an item of each state animator, for the pressed state, so a press only starts animators made
 with the tile. A short press opens the app as OK is released, the dip shown by then; on a long
 press, the menu takes the focus, Android ends the tile's press, and the tile zooms back while the
-menu grows out of it. Only the tiles dip, not the settings gear.
+menu grows out of it. The settings gear in the top bar dips too (to 0.88, `home_settings_press.xml`,
+a state animator of the gear's view), so a press of OK on it shows before the panel opens; the
+Menu key, which also opens the panel, presses nothing.
 
 A see-through picture of the library has the tile's look (`TileLook`, set in the [tile banner
 picker](../settings/README.md#tile-banner)), which the painter draws; an opaque picture, or an
@@ -441,8 +443,8 @@ panel follows the tiles.
 | `appName`, `ArrangedApps.renamed` (`:domain`) | the name a renamed app keeps, or none; what to store of what the user set for the apps with it |
 | `AppInfoScreen` (`:domain`), `PackageManagerAppInfoScreen` (`:platform`) | whether the device has the page App info opens, asked as each menu opens, since a settings app can be disabled meanwhile |
 | `tileMenuPlacement` (`:domain`) | where the menu goes: above the tile as it's drawn (zoomed, its name below it), below where there's no room, across centered, or in line with the tile's edge where centered would leave the room; beside it, level with it, where it fits neither above nor below; `tileMenuHeight`: how tall it may be, the most room there is where it fits whole nowhere |
-| `menuHold` (`:domain`) | how long OK is held on a tile before its menu opens: Luncher's own 350 ms, or Android's long press where the user lengthened it |
-| `AppTileView` | times that hold, from OK down on the tile, and long-clicks itself; `focusedBounds`: where the tile is drawn on the screen while it has focus, for `tileMenuPlacement`, at the focused zoom, not the dip it has while OK is held |
+| `menuHold` (`:domain`) | how long OK is held before what a long press opens opens (a tile's menu here, a picture's menu in the editors): Luncher's own 350 ms, or Android's long press where the user lengthened it |
+| `AppTileView` | times that hold, from OK down on the tile (`:ui`'s `OkHold`, the same hold a picture's row has), and long-clicks itself; `focusedBounds`: where the tile is drawn on the screen while it has focus, for `tileMenuPlacement`, at the focused zoom, not the dip it has while OK is held |
 | `TileMenu` | the menu's window: an entry for each action with its icon and label from exhaustive `when`s over `AppAction`, dimmed and out of the focus's way where it isn't available, placed where the rule says, with the animation of the side it's on ([below](#how-the-menu-comes-and-goes)); in the theme's colors, its corners following the tiles' (`style`, `menuCorner`) |
 | `HomeActivity` | opens the menu on a long press, and does what an entry says, in an exhaustive `when` too: Move starts `MoveMode`, Hide stores the arrangement with the app hidden, which shows as any change of it does, Rename asks for the name (`:ui`'s `NameDialog`) and stores it, Tile banner starts the picker for the app and the tile's place (`TileBannerActivity.intent`), App info starts the device's page for the app |
 
@@ -471,7 +473,8 @@ too.
 The long press is Luncher's own, 350 ms (`menuHold`, `:domain`): sooner than Android's (500 ms, and
 400 from Android 11 on), and still well over a short press of OK on a remote, which opens the app.
 Where the user lengthened Android's long press in the accessibility settings, theirs is kept. The
-tile times it (`AppTileView`): as OK goes down, it posts a runnable made with it; when that runs,
+tile times it (`AppTileView`, with `:ui`'s `OkHold`, which a picture's row in the editors uses the same
+way): as OK goes down, it posts a runnable made with it; when that runs,
 with OK still down, it cancels Android's own long press, still to come, which would open the menu a
 second time, and long-clicks the tile. Leaving the tile, the window losing the focus or the tile's
 release cancel it. The long press's release opens nothing: it mostly goes to the menu's window,

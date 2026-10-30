@@ -24,9 +24,11 @@ ui/
     │   │   │                     the state colors and backgrounds its views share
     │   │   ├── ThemedText.kt     a text in a role of the theme, inverse on a focused entry, its icon too
     │   │   ├── ThemedIcon.kt     an icon (icon_…) in a role of the theme
-    │   │   ├── ListEntry.kt      an entry: inverse while focused, tinted while chosen, outlined while open; a field zoomed;
+    │   │   ├── ListEntry.kt      an entry: inverse while focused (a step away while OK is held), tinted while chosen, outlined while open; a field zoomed;
     │   │   │                     in a list, as tall as the list makes its rows, its focused look drawn by the list as it slides
     │   │   ├── EntryText.kt      an entry of one line, its icon before it: a picture's actions (Rename, Delete)
+    │   │   ├── OkHold.kt         OK held on a view that opens something on a long press: Luncher's own hold, 350 ms, a
+    │   │   │                     tile's menu, a picture's menu
     │   │   ├── PillButton.kt     a button: filled, tonal or danger, its icon beside its text, giving way
     │   │   ├── ScrollFrame.kt    a scrolling list's frame: cut along its rounded corners, fading out where there's more
     │   │   ├── LookAheadListView.kt, LookAheadScrollView.kt  lists that scroll a row ahead of the focus, their
@@ -70,7 +72,7 @@ ui/
     │   └── res/
     │       ├── anim/             panel_enter, panel_exit: a floating panel's fade in and out; panel_none; screen_hold_open, screen_hold_close:
     │       │                     the screen under a full-screen one, held still
-    │       ├── animator/         entry_zoom, button_zoom: a focused field's zoom, a button's zoom and lift
+    │       ├── animator/         entry_zoom, button_zoom: a field's, and a button's, zoom and lift (and their dip while OK is held)
     │       ├── drawable/         icon_…, the line icons (white, tinted where they're used); panel_background,
     │       │                     a floating panel's window before it's styled
     │       ├── layout/           working_dialog: WorkingDialog's wheel and message, and its Cancel; dialog: the
@@ -90,6 +92,7 @@ ui/
     │                             (smaller on 720p at 1080p density)
     ├── test/java/com/luncher/launcher/ui/
     │   ├── WholeRowsTest.kt      the lists' rules, on the JVM alone
+    │   ├── PressedLooksTest.kt   what a press looks like (an entry's fill, a button's and a field's dip) and the hold of a row (Robolectric)
     │   ├── LookAheadScrollViewTest.kt  rows of a little different heights made one, a taller one kept (Robolectric)
     │   └── TilePainterTest.kt    each look drawn as the focus comes, in as few passes as it needs, the frost where
     │                             the tile is, the lifted outline (Robolectric)
@@ -166,6 +169,31 @@ can, the focused thing stands out from afar, and every color comes from the user
   view looks focused only while its window has the focus: a dialog or a list over a screen takes
   the keys, and what had the focus under it looks as it is otherwise. A list's selected row
   (`ListView`, which moves a selection, not the focus) looks focused while the list has the focus.
+- **A press shows at once, as OK goes down.** Without it, nothing showed until the release, when the action
+  ran. A view's pressed state is an item in the state list or the state animator it already has, so a
+  press only changes a state: nothing is made for a press or a frame, and **nothing is added to a focus
+  move or a list's slide** (the lists draw the focused look themselves while they slide, and a row they
+  hold at rest looks at rest, pressed or not). One rule: *what zooms when focused dips when pressed;
+  what doesn't gets a darker fill.*
+  - A **row or an entry** (`ListEntry`, `EntryText`: the menus' entries, the panel's, a list's rows,
+    an option's values, the pictures' rows) changes its fill while OK is held on it focused, or on a
+    list's selected row, to `inverseSurfacePressed`: a step away from the focused one that shows in
+    both modes (a little darker where the focused fill is light, a little lighter where it's dark,
+    checked in `ColorRolesTest`). It lasts while OK is down.
+  - A **button** (`PillButton`, every kind) dips under its resting size, to 0.98, its shadow set
+    down, in 80 ms (`button_zoom.xml`), and zooms back in the focus's time as OK is let go; a danger
+    button, which has an edge and no fill, shows it by its size.
+  - A **field** (`zooms="true"`) dips to 0.97 the same way (`entry_zoom.xml`), keeping its fill.
+  - The **gear** on the home screen and the **tiles** dip too
+    ([`feature/home/`](../feature/home/README.md#appearance)).
+  A quick press (100 ms) shows its look in two to four frames; a fill is on screen only while OK is
+  down, a dip also as it comes back.
+- **A hold of OK opens a menu after 350 ms, wherever Luncher has one.** A tile's menu and a picture's
+  menu in the editors open after Luncher's own hold (`OkHold`, `menuHold` in `:domain`), sooner than
+  Android's long press (500 ms, 400 from Android 11), where the user hasn't lengthened that in the
+  accessibility settings. A view calls `OkHold` from its key handlers; `ListEntry` does for a row
+  that has a long-click listener, so the pictures' rows have it with no code of their own. The view
+  stays pressed meanwhile, which shows as above.
 - **What can be pressed looks like it.** Buttons have round ends: `filled` with the accent for the
   action of a screen or dialog (Save, OK), `tonal` for the others (Cancel, Add all), `danger`, an
   edge of the error color, for what deletes or resets. A button's icon sits beside its text, the
