@@ -260,6 +260,16 @@ can, the focused thing stands out from afar, and every color comes from the user
   Once closed, a window handed over has its keys and animations back: a tile's menu and the working
   window are shown again later.
   Cancel on the working window closes it at once, before what it does.
+- **A window shown is never left deaf (Android 9).** There a window that gets a key in the few ms
+  after Android adds it (OK released just as a tile's menu opens, a key that came with the one
+  opening a dialog) may never get its window focus on the app's side: Android sends it every key and
+  its view root drops them all, Back too, so only Home leaves it. A dialog's window (`PanelDialog`) and
+  a tile's menu call `WindowFocus.checkAfterShow` once they show: a short while later a window still
+  without the window focus is made unfocusable and, at the main thread's next turn, focusable again,
+  which has Android give it the focus (the two in one turn, or its attributes set again, don't); a few
+  tries at most. A window that has the focus, or that another app's window in front rightly has it
+  over, is left as it is. Only from Android 8.0 to 10 (`WindowFocus.NEEDED`): seen on 9; not on 7.0,
+  11 or 16.
 - **The keyboard covers no dialog's field, and moves no screen.** A dialog with a field (`NameDialog`) is
   centered, and near the top of the screen, `dialog_margin` from its edge, while the keyboard
   shows. The screen that opens one declares `windowSoftInputMode="adjustNothing"`: by default

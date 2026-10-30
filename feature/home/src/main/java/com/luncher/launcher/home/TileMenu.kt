@@ -23,6 +23,7 @@ import com.luncher.launcher.ui.ListEntry
 import com.luncher.launcher.ui.LookAheadScrollView
 import com.luncher.launcher.ui.ScrollFrame
 import com.luncher.launcher.ui.WindowEntrance
+import com.luncher.launcher.ui.WindowFocus
 import com.luncher.launcher.ui.stylePanel
 import com.luncher.launcher.ui.R as UiR
 
@@ -105,6 +106,7 @@ internal class TileMenu(private val activity: Activity) : Dialog(activity, R.sty
         placeAt(tile)
         app = tile.app
         show()
+        WindowFocus.checkAfterShow(this)
         for (i in 0 until this.entries.childCount) if (this.entries.getChildAt(i).requestFocus()) break
     }
 

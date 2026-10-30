@@ -8,6 +8,8 @@ import android.provider.Settings
 import android.view.KeyEvent
 import android.view.View
 import android.view.ViewConfiguration
+import android.view.Window
+import android.view.WindowManager
 import android.widget.TextView
 import com.luncher.domain.appearance.Corners
 import com.luncher.domain.appearance.FakeAppearanceSettings
@@ -27,6 +29,8 @@ import com.luncher.domain.pictures.Framing
 import com.luncher.domain.pictures.PictureId
 import com.luncher.launcher.settings.TileBannerActivity
 import com.luncher.launcher.testing.TV_1080P
+import com.luncher.launcher.ui.WindowFocus
+import java.time.Duration
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -42,7 +46,6 @@ import org.robolectric.Shadows.shadowOf
 import org.robolectric.android.controller.ActivityController
 import org.robolectric.annotation.Config
 import org.robolectric.shadows.ShadowToast
-import java.time.Duration
 
 /** A tile's menu, through the home screen: apps a to g (a row of five, then f and g), and x hidden. */
 @RunWith(RobolectricTestRunner::class)
@@ -759,5 +762,28 @@ class TileMenuTest {
         menu.press(KeyEvent.KEYCODE_DPAD_DOWN)
 
         assertTrue(menu.entries()[1].isFocused)
+    }
+
+    // Android 9 can leave a menu whose window got a key as it was added (OK released just as it
+    // opens) without its window focus, deaf to every key, Back too: it asks Android for it again.
+    @Test
+    @Config(sdk = [28])
+    fun `a menu left without the window focus asks Android for it again`() {
+        val home = start().get()
+        val menu = home.longPress("b")
+        val window = checkNotNull(menu.window)
+        var madeUnfocusable = false
+        val callback = checkNotNull(window.callback)
+        window.callback = object : Window.Callback by callback {
+            override fun onWindowAttributesChanged(attrs: WindowManager.LayoutParams) {
+                callback.onWindowAttributesChanged(attrs)
+                if (attrs.flags and WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE != 0) madeUnfocusable = true
+            }
+        }
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(WindowFocus.CHECK_AFTER))
+
+        assertTrue("Robolectric gives a dialog no window focus", !window.decorView.hasWindowFocus())
+        assertTrue(madeUnfocusable)
+        assertEquals("focusable again", 0, window.attributes.flags and WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
     }
 }

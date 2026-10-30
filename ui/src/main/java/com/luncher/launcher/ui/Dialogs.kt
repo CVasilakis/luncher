@@ -105,6 +105,7 @@ open class PanelDialog(context: Context, theme: Int) : Dialog(context, theme) {
             old.window?.attributes?.flags?.and(WindowManager.LayoutParams.FLAG_DIM_BEHIND) != 0
         if (dimless) checkNotNull(window).clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
         super.show()
+        WindowFocus.checkAfterShow(this)
         if (old != null) takeOver(old, dimless)
     }
 

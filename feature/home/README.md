@@ -513,6 +513,10 @@ Both follow Android's animation settings: the window's animations the window ani
 the entrance in the window the animator duration scale. With animations off, the menu shows and
 goes at once.
 
+On Android 9, a menu whose window gets a key as it's added (OK released just as it opens) can be
+left without its window focus, deaf even to Back; `TileMenu.show` has `:ui`'s `WindowFocus` ask
+Android for it again a moment later, as the dialogs do ([`ui/`](../../ui/README.md#the-design-system)).
+
 ### Renaming an app
 
 Rename asks for the app's new name in a dialog in the middle of the screen, over the home screen
