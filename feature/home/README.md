@@ -435,7 +435,7 @@ panel follows the tiles.
 | Hide | hides the app at once, first among the hidden apps; the [Hide apps](../settings/README.md#hidden-apps) list shows it again |
 | Rename | asks for a name of the user's own for the app, which the home screen shows wherever it names the app ([below](#renaming-an-app)) |
 | Tile banner | opens the tile banner picker ([`settings/README.md`](../settings/README.md#tile-banner)), full-screen over the home screen, where a picture of the library is chosen for the tile and framed, its preview showing the tile where it is here (`AppTilesView.placeOf`, a `TilePlace`: its place in the window, scrolled as it shows); the home screen, stopped meanwhile, shows the tile as stored once it's back ([above](#a-tiles-picture)) |
-| App info | opens the app's page in the device's settings (its storage, permissions, force stop, uninstall), in a task of its own, as another app; Back returns to the home screen, which shows what changed there (an app uninstalled or disabled) as any change of the apps. Dimmed where the device has no such page, as on the Android TV 5.1 (API 22) emulator, whose settings have only the list of all apps. A settings app gone since the menu opened gets a message instead |
+| App info | opens the app's page in the device's settings (its storage, permissions, force stop, uninstall), in a task of its own, as another app; Back returns to the home screen (with the menu still open where the page is a side panel over it, [below](#how-the-menu-comes-and-goes)), which shows what changed there (an app uninstalled or disabled) as any change of the apps. Dimmed where the device has no such page, as on the Android TV 5.1 (API 22) emulator, whose settings have only the list of all apps. A settings app gone since the menu opened gets a message instead |
 
 | Part | Job |
 |---|---|
@@ -490,7 +490,13 @@ again: nothing is made before the user asks for it.
 The menu comes out of its tile: as it opens, it fades in while it grows from 92% of its size out
 of the middle of its edge that faces the tile (its bottom edge above the tile, its left edge right
 of it, also where it lines up with a row's first or last tile), in 100 ms; as it closes, it fades
-out in 80 ms, which delays nothing, as an entry's action starts at once. These are window
+out in 80 ms, which delays nothing, as an entry's action starts at once. Tile banner and App info,
+which start a screen, keep it up meanwhile (`Handover.toScreen`, [`ui/`](../../ui/README.md#the-design-system)),
+taking no key but Back: closed at once, it would leave the home screen bare until the screen comes,
+longer for the device's settings, another app. The picker covers the home screen, and the menu
+closes unseen once it has; App info is a side panel over the home screen on Android TV, so there the
+menu stays under it, and is there as it was when the user comes back; where App info covers the
+screen whole, the menu is gone by then. These are window
 animations of its own (`anim/home_menu_enter_*`, a style for each side, `Animation.Luncher.Home.Menu.*`;
 its exit is every floating panel's, `:ui`'s `anim/panel_exit`, [`ui/`](../../ui/README.md#the-design-system)),
 which `TileMenu.placeAt` chooses from the side `tileMenuPlacement` gives, in an exhaustive `when`:

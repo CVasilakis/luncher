@@ -222,7 +222,7 @@ class TileMenuTest {
 
         menu.choose("App info")
 
-        assertFalse(menu.isShowing)
+        assertTrue("the menu stays until the page has come", menu.isShowing)
         val intent = shadowOf(activity).nextStartedActivity
         assertEquals(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, intent.action)
         assertEquals(Uri.parse("package:${app("b").launchable.packageName}"), intent.data)
@@ -236,7 +236,7 @@ class TileMenuTest {
 
         menu.choose("Tile banner")
 
-        assertFalse(menu.isShowing)
+        assertTrue("the menu stays until the picker has come", menu.isShowing)
         val intent = shadowOf(activity).nextStartedActivity
         // Where the tile is in the window, which covers the screen, scrolled as it shows, before its zoom.
         val tile = activity.tile("b")
@@ -280,6 +280,18 @@ class TileMenuTest {
 
         assertNull(shadowOf(activity).nextStartedActivity)
         assertEquals("App info isn't available on this device", ShadowToast.getTextOfLatestToast())
+    }
+
+    // Nothing comes over the home screen: nothing to wait for.
+    @Test
+    fun `App info closes the menu at once when nothing opens the app's page`() {
+        val activity = start().get()
+        shadowOf(activity.application).checkActivities(true)
+        val menu = activity.longPress("b")
+
+        menu.choose("App info")
+
+        assertFalse(menu.isShowing)
     }
 
     @Test
@@ -670,5 +682,82 @@ class TileMenuTest {
 
         assertFalse(menu.isShowing)
         assertEquals(fade, menu.windowAnimations())
+    }
+
+    // Closed at once, it would leave the home screen bare for the time the picker takes to start.
+    @Test
+    fun `Tile banner keeps the menu up, taking no key but Back, until the picker covers the home screen`() {
+        val controller = start()
+        val activity = controller.get()
+        val menu = activity.longPress("b")
+        val tile = menu.entries().single { it.label.text == "Tile banner" }
+
+        menu.choose("Tile banner")
+        menu.press(KeyEvent.KEYCODE_DPAD_UP)
+        controller.pause()
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofSeconds(5))
+
+        assertTrue("up while the picker comes", menu.isShowing)
+        assertTrue("its keys go nowhere", tile.isFocused)
+        controller.stop()
+        assertFalse("gone once the home screen is covered", menu.isShowing)
+    }
+
+    @Test
+    fun `Back closes the menu while the picker starts`() {
+        val activity = start().get()
+        val menu = activity.longPress("b")
+        menu.choose("Tile banner")
+
+        menu.press(KeyEvent.KEYCODE_BACK)
+
+        assertFalse(menu.isShowing)
+    }
+
+    // Android TV's App info is a side panel: the home screen shows under it, paused only.
+    @Test
+    fun `App info over part of the home screen leaves the menu as it was for when the user comes back`() {
+        val controller = start()
+        val activity = controller.get()
+        val menu = activity.longPress("b")
+        val info = menu.entries().last()
+
+        menu.choose("App info")
+        controller.pause()
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofSeconds(5))
+        controller.resume()
+
+        assertTrue(menu.isShowing)
+        assertTrue(info.isFocused)
+        menu.press(KeyEvent.KEYCODE_DPAD_UP)
+        assertTrue("its keys are its own again", menu.entries()[3].isFocused)
+    }
+
+    // Where App info is a screen of its own, covering the home screen whole.
+    @Test
+    fun `App info covering the home screen whole closes the menu, gone when the user comes back`() {
+        val controller = start()
+        val activity = controller.get()
+        val menu = activity.longPress("b")
+
+        menu.choose("App info")
+        controller.pause().stop()
+        controller.restart().resume()
+
+        assertFalse(menu.isShowing)
+    }
+
+    // The menu is made once and shown again for each tile: after a handover it takes its keys again.
+    @Test
+    fun `after Rename, the next menu takes its keys`() {
+        val activity = start().get()
+        activity.longPress("a").choose("Rename")
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofSeconds(1))
+        org.robolectric.shadows.ShadowDialog.getLatestDialog().dismiss()
+
+        val menu = activity.longPress("b")
+        menu.press(KeyEvent.KEYCODE_DPAD_DOWN)
+
+        assertTrue(menu.entries()[1].isFocused)
     }
 }

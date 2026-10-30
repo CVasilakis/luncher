@@ -3,6 +3,7 @@ package com.luncher.launcher.ui
 import android.app.Activity
 import android.app.Dialog
 import android.content.Context
+import android.content.DialogInterface.OnKeyListener
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
@@ -55,6 +56,24 @@ open class PanelDialog(context: Context, theme: Int) : Dialog(context, theme) {
     /** Whether the window plays its entrance in itself now, its own style having none. */
     private var entranceInWindow = false
 
+    /**
+     * The key listener its screen gave it ([WorkingDialog]'s), and the one a [Handover] has in its
+     * place while it holds the window's keys: the window gets its own back after, as it may show again.
+     */
+    private var ownKeys: OnKeyListener? = null
+    private var heldKeys: OnKeyListener? = null
+
+    override fun setOnKeyListener(onKeyListener: OnKeyListener?) {
+        ownKeys = onKeyListener
+        if (heldKeys == null) super.setOnKeyListener(onKeyListener)
+    }
+
+    /** [held] has the keys instead of the screen's own listener; null gives them back. */
+    internal fun holdKeys(held: OnKeyListener?) {
+        heldKeys = held
+        super.setOnKeyListener(held ?: ownKeys)
+    }
+
     override fun show() {
         leaving = false
         val old = Handover.claim(this)
@@ -104,6 +123,7 @@ open class PanelDialog(context: Context, theme: Int) : Dialog(context, theme) {
         closeUnderneath()
         underneath = old
         dimmedByUnderneath = dimless
+        animationsUnderneath = old.window?.attributes?.windowAnimations ?: 0
         old.window?.setWindowAnimations(0)
         // Before Android 11 the new window shows some frames before its panel does (its first frame
         // is rendered late) and dims the old one's panel, which would hang there, dimmed and stuck:
@@ -111,7 +131,7 @@ open class PanelDialog(context: Context, theme: Int) : Dialog(context, theme) {
         if (Build.VERSION.SDK_INT < 30) {
             old.window?.decorView?.animate()?.alpha(0f)?.setDuration(FADE_OUT)?.setInterpolator(LinearInterpolator())?.start()
         }
-        old.setOnKeyListener { _, _, _ -> true }
+        Handover.holdKeys(old, Handover.NO_KEY)
         if (old is PanelDialog) old.leaving = true
         val decor = checkNotNull(window).decorView
         val closeAfterFrame = {
@@ -173,6 +193,9 @@ open class PanelDialog(context: Context, theme: Int) : Dialog(context, theme) {
         const val FADE_OUT = 80L
     }
 
+    /** The window animations [underneath] had, given back once it's closed: it may be shown again. */
+    private var animationsUnderneath = 0
+
     private fun closeUnderneath() {
         val old = underneath ?: return
         underneath = null
@@ -181,10 +204,12 @@ open class PanelDialog(context: Context, theme: Int) : Dialog(context, theme) {
         dimmedByUnderneath = false
         val decor = old.window?.decorView
         old.dismiss()
-        // Gone: whole again for when it's shown later, as a tile's menu is. Not before, or it would
-        // show for a frame.
+        // Gone: as it was again, for when it's shown later, as a tile's menu or the working window
+        // is: whole, with its animations and keys. Not before, or it would show for a frame.
         decor?.animate()?.cancel()
         decor?.alpha = 1f
+        old.window?.setWindowAnimations(animationsUnderneath)
+        Handover.holdKeys(old, null)
     }
 }
 

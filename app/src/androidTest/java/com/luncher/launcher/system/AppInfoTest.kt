@@ -30,7 +30,8 @@ import org.junit.runner.RunWith
 import java.util.regex.Pattern
 
 /**
- * App info in a tile's menu: the app's page in the device's settings, and back. Luncher isn't the
+ * App info in a tile's menu: the app's page in the device's settings, and back, to the menu where
+ * the page was a side panel over the home screen, else to the home screen. Luncher isn't the
  * home app in this tier, so the test starts the home screen itself, as an app, and on API 29 Back
  * returns to the device's home screen instead.
  */
@@ -101,6 +102,16 @@ class AppInfoTest {
             // "Adding a picture"). As the home app, it stays.
             waitForHomeScreen()
             return
+        }
+        // Where the page is a side panel over the home screen (Android TV's), which it only paused, the
+        // tile's menu is there as the user left it; where it covered the home screen whole, the menu is
+        // gone. A dialog's window has the activity's name: only its own identity tells the two apart.
+        waitForFocus(LUNCHER)
+        if (focus().windowId != home.windowId) {
+            device.waitUntil(Until.hasObject(By.pkg(LUNCHER).focused(true).hasChild(entry(R.string.home_menu_info))), TIMEOUT_MS) {
+                "Back returned to a window over the home screen that isn't the tile's menu with App info focused"
+            }
+            device.pressBack()
         }
         device.waitUntil(Until.hasObject(By.pkg(LUNCHER).res(LUNCHER, "home_apps")), TIMEOUT_MS) { "Back didn't return to the home screen" }
         waitForFocus(HomeActivity::class.java)

@@ -32,7 +32,8 @@ import com.luncher.launcher.ui.R as UiR
  * above nor below ([tileMenuPlacement]), listing what the user can do to the app (the domain's
  * [AppAction]s), each with its icon, the first one focused. No title: the tile under it, focused
  * and zoomed, says which app it's for. One the device can't do is dimmed, and the focus passes it by. OK on one closes the
- * menu and does it; Back closes it, as any dialog. In the theme's colors, its corners as round as
+ * menu and does it (one that opens a screen keeps it up until the screen comes over it:
+ * [Handover.toScreen]); Back closes it, as any dialog. In the theme's colors, its corners as round as
  * the tiles' up to a panel's ([style], [menuCorner]).
  *
  * A window of its own, so Android keeps the keys and the focus in it while it shows, and the tile

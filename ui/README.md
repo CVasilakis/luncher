@@ -250,7 +250,15 @@ can, the focused thing stands out from afar, and every color comes from the user
   second at the latest) and the first dialog of a process, which is slow to make, doesn't leave
   the screen bare. If the action opens no window, `old` closes as it would alone, with its fade, unless the action finishes its
   screen: then it stays, and goes with the screen's own exit, as closed first it would fade away alone and
-  leave the screen under it bright until Android starts that exit.
+  leave the screen under it bright until Android starts that exit. If the action starts a screen
+  (`Handover.toScreen`, inside `from`: a tile's menu opening the tile banner picker or App info), `old`
+  stays, taking no key but Back, as closed at once it would leave the screen under it bare for as long as
+  the next one takes to start (another app's, longer): until its screen is stopped, covered whole, when it
+  closes unseen, with no animation; or comes back without having been, from a screen over part of it
+  (Android TV's side panels), when it's there as the user left it. A screen that couldn't start closes
+  it as usual; one that isn't on its way (its screen not paused) within a second, with its fade.
+  Once closed, a window handed over has its keys and animations back: a tile's menu and the working
+  window are shown again later.
   Cancel on the working window closes it at once, before what it does.
 - **The keyboard covers no dialog's field, and moves no screen.** A dialog with a field (`NameDialog`) is
   centered, and near the top of the screen, `dialog_margin` from its edge, while the keyboard

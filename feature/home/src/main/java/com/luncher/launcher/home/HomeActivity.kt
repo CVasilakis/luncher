@@ -28,6 +28,7 @@ import com.luncher.domain.apps.homeApps
 import com.luncher.launcher.settings.R as SettingsR
 import com.luncher.launcher.settings.SettingsActivity
 import com.luncher.launcher.settings.TileBannerActivity
+import com.luncher.launcher.ui.Handover
 import com.luncher.launcher.ui.DialogButton
 import com.luncher.launcher.ui.NameDialog
 import com.luncher.launcher.ui.color
@@ -266,10 +267,15 @@ class HomeActivity : Activity() {
             // Stored, and shown as any change of the arrangement is (showArrangement).
             AppAction.Hide -> arrangements.save(arranged.hide(tile.app).arrangement)
             AppAction.Rename -> askName(tile.app)
+            // The two screens keep the menu up until they come over it (Handover.toScreen): the home
+            // screen isn't left bare while they start.
             // Full-screen, so the home screen is stopped meanwhile, and shows the tile as stored once
             // it's back (onStart). Its preview shows the tile where it is here, over that part of the wallpaper.
-            AppAction.TileBanner -> startActivity(TileBannerActivity.intent(this, tile.app.launchable, tiles.placeOf(tile)))
-            AppAction.Info -> openAppInfo(tile.app)
+            AppAction.TileBanner -> Handover.toScreen {
+                startActivity(TileBannerActivity.intent(this, tile.app.launchable, tiles.placeOf(tile)))
+                true
+            }
+            AppAction.Info -> Handover.toScreen { openAppInfo(tile.app) }
         }
     }
 
@@ -311,15 +317,18 @@ class HomeActivity : Activity() {
     /**
      * The app's page in the device's settings, in a task of its own, as any other app; Back from it
      * returns here. The menu offered it only if the page exists (AppInfoScreen), which the
-     * intent's action and Uri must match; a settings app disabled since gets a message.
+     * intent's action and Uri must match; a settings app disabled since gets a message. Whether it
+     * opened.
      */
-    private fun openAppInfo(app: HomeApp) {
+    private fun openAppInfo(app: HomeApp): Boolean {
         val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", app.launchable.packageName, null))
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         try {
             startActivity(intent)
+            return true
         } catch (e: ActivityNotFoundException) {
             Toast.makeText(this, R.string.home_menu_info_unavailable, Toast.LENGTH_SHORT).show()
+            return false
         }
     }
 

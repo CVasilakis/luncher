@@ -20,7 +20,8 @@ import java.time.Duration
 @RunWith(RobolectricTestRunner::class)
 class HandoverTest {
 
-    private val activity = Robolectric.buildActivity(Activity::class.java).setup().get()
+    private val controller = Robolectric.buildActivity(Activity::class.java).setup()
+    private val activity = controller.get()
     private val roles = colorRoles(ThemeAppearance())
 
     private fun message(title: String, action: () -> Unit = {}) =
@@ -186,4 +187,114 @@ class HandoverTest {
 
     private var holder: Dialog? = null
     private fun old() = checkNotNull(holder)
+
+    private fun MessageDialog.choose() =
+        findViewById<android.view.View>(R.id.dialog_entries).let { (it as android.view.ViewGroup).getChildAt(0).performClick() }
+
+    private fun key(keyCode: Int) = KeyEvent(KeyEvent.ACTION_DOWN, keyCode)
+
+    /** A window whose entry starts a screen, as [Handover.toScreen] does, which starts if [starts]; its animations as it closed. */
+    private inner class Starting(private val starts: Boolean = true) {
+        var closedWith: Int? = null
+        val dialog = object : PanelDialog(activity, R.style.Theme_Luncher_Dialog) {
+            override fun dismiss() {
+                if (isShowing) closedWith = animations()
+                super.dismiss()
+            }
+        }.apply {
+            setContentView(android.view.View(context))
+            show()
+            // Attached to its window, as a window the user chose in is.
+            shadowOf(Looper.getMainLooper()).idle()
+        }
+
+        fun choose() = Handover.from(dialog) { Handover.toScreen { starts } }
+    }
+
+    // Closed at once, it would leave the screen under it bare while the next one starts.
+    @Test
+    fun `a window that starts a screen stays, taking no key but Back, until its screen is covered, then goes unseen`() {
+        val old = Starting()
+
+        old.choose()
+        controller.pause()
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofSeconds(5))
+
+        assertTrue("stays while the screen comes", old.dialog.isShowing)
+        assertTrue("takes no key", old.dialog.dispatchKeyEvent(key(KeyEvent.KEYCODE_DPAD_DOWN)))
+        controller.stop()
+        assertFalse(old.dialog.isShowing)
+        assertEquals("with no animation", 0, old.closedWith)
+        assertEquals("its own again for its next showing", R.style.Animation_Luncher_Panel, old.dialog.animations())
+    }
+
+    // Android TV's side panels (App info, the system settings) cover part of the screen, which is paused only.
+    @Test
+    fun `a screen over part of the window's leaves it there, its keys its own again when the user comes back`() {
+        val old = Starting()
+
+        old.choose()
+        controller.pause()
+        controller.resume()
+
+        assertTrue(old.dialog.isShowing)
+        assertFalse(old.dialog.dispatchKeyEvent(key(KeyEvent.KEYCODE_DPAD_DOWN)))
+    }
+
+    @Test
+    fun `a window whose screen doesn't come goes after a second, with its animation`() {
+        val old = Starting()
+
+        old.choose()
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(900))
+        assertTrue(old.dialog.isShowing)
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(200))
+
+        assertFalse(old.dialog.isShowing)
+        assertEquals(R.style.Animation_Luncher_Panel, old.closedWith)
+    }
+
+    @Test
+    fun `a window whose screen couldn't start closes at once, with its animation`() {
+        val old = Starting(starts = false)
+
+        old.choose()
+
+        assertFalse(old.dialog.isShowing)
+        assertEquals(R.style.Animation_Luncher_Panel, old.closedWith)
+    }
+
+    // Robolectric's dialogs don't close on Back's keys: cancel, as Back does.
+    @Test
+    fun `a window closed while its screen starts, as Back does, takes keys again when shown again`() {
+        val old = Starting()
+        old.choose()
+
+        old.dialog.cancel()
+        assertFalse(old.dialog.isShowing)
+
+        old.dialog.show()
+        assertFalse(old.dialog.dispatchKeyEvent(key(KeyEvent.KEYCODE_DPAD_DOWN)))
+    }
+
+    // A tile's menu and the working window are shown again later: they must not stay deaf or pop in.
+    @Test
+    fun `a window handed over from takes its keys, its own listener's too, and its animations again when shown again`() {
+        val next = message("Next")
+        val old = message("Old") { next.show() }
+        var heard = 0
+        old.setOnKeyListener { _, _, _ -> heard++; false }
+        old.show()
+        old.choose()
+        old.dispatchKeyEvent(key(KeyEvent.KEYCODE_DPAD_DOWN))
+        assertEquals("not while it's handed over", 0, heard)
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofSeconds(2))
+        next.dismiss()
+
+        old.show()
+
+        assertFalse(old.dispatchKeyEvent(key(KeyEvent.KEYCODE_DPAD_DOWN)))
+        assertEquals("its screen's listener hears it", 1, heard)
+        assertEquals(R.style.Animation_Luncher_Panel, old.animations())
+    }
 }
