@@ -4,13 +4,20 @@ import android.app.Activity
 import android.app.Dialog
 import android.content.Context
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.text.InputFilter
 import android.view.Gravity
 import android.view.KeyEvent
+import android.view.Choreographer
 import android.view.View
 import android.view.ViewGroup
+import android.view.FrameMetrics
+import android.view.ViewTreeObserver
+import android.view.Window
 import android.view.WindowInsets
 import android.view.WindowManager
+import android.view.animation.LinearInterpolator
 import android.view.inputmethod.EditorInfo
 import android.widget.TextView
 import com.luncher.domain.appearance.ColorRoles
@@ -36,14 +43,148 @@ open class PanelDialog(context: Context, theme: Int) : Dialog(context, theme) {
 
     private var entrance: WindowEntrance? = null
 
+    /** The window this one replaces and that stays under it until this one is drawn ([Handover]). */
+    private var underneath: Dialog? = null
+
+    /** Whether this one is replaced by the next, and closes with it: [dismiss] then leaves it. */
+    internal var leaving = false
+
+    /** Whether this window's own dim waits for the one under it to close. */
+    private var dimmedByUnderneath = false
+
+    /** Whether the window plays its entrance in itself now, its own style having none. */
+    private var entranceInWindow = false
+
     override fun show() {
-        if (WindowEntrance.NEEDED && !isShowing) {
+        leaving = false
+        val old = Handover.claim(this)
+        if (!isShowing) {
             val window = checkNotNull(window)
-            val entrance = entrance ?: WindowEntrance(window.decorView).also { entrance = it }
-            entrance.prepare()
-            window.attributes = window.attributes.apply { windowAnimations = R.style.Animation_Luncher_Panel_ExitOnly }
+            // Before Android 11 a window's dim fades with its window animation: handed over to,
+            // a window that faded in so would leave the dim to ramp up from nothing as the old
+            // one's goes. So it plays its entrance in itself, as where Android plays none, and its
+            // dim is whole as it comes.
+            if (WindowEntrance.NEEDED || (old != null && Build.VERSION.SDK_INT < 30)) {
+                val entrance = entrance ?: WindowEntrance(window.decorView).also { entrance = it }
+                entrance.prepare()
+                window.attributes = window.attributes.apply { windowAnimations = R.style.Animation_Luncher_Panel_ExitOnly }
+                entranceInWindow = true
+            } else if (entranceInWindow) {
+                entrance?.cancel()
+                window.decorView.alpha = 1f
+                window.attributes = window.attributes.apply { windowAnimations = R.style.Animation_Luncher_Panel }
+                entranceInWindow = false
+            }
         }
+        // Both would dim the screen, the two darker than one while they overlap: the one under it
+        // dims alone, until it closes. Before Android 11 it's the other way round, the new one
+        // dimming from the start, its dim whole as it comes (it plays its entrance in itself), and
+        // the old one's going with its window: a dim added to a window that shows already comes
+        // some frames late, and the screen would show bare meanwhile; and the old one's dim stays
+        // while its window does, so clearing it changed nothing but the timing.
+        val dimless = old != null && Build.VERSION.SDK_INT >= 30 &&
+            old.window?.attributes?.flags?.and(WindowManager.LayoutParams.FLAG_DIM_BEHIND) != 0
+        if (dimless) checkNotNull(window).clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
         super.show()
+        if (old != null) takeOver(old, dimless)
+    }
+
+    override fun dismiss() {
+        if (leaving) return
+        super.dismiss()
+        closeUnderneath()
+    }
+
+    /**
+     * Takes the place of [old], which is a window of the same screen: it stays, with no animation
+     * and no key, until this one has drawn its first frame, and then closes at once, so the dim
+     * under the two never drops between them, nor the screen shows bare in the time this one is made.
+     */
+    private fun takeOver(old: Dialog, dimless: Boolean) {
+        closeUnderneath()
+        underneath = old
+        dimmedByUnderneath = dimless
+        old.window?.setWindowAnimations(0)
+        // Before Android 11 the new window shows some frames before its panel does (its first frame
+        // is rendered late) and dims the old one's panel, which would hang there, dimmed and stuck:
+        // it fades out as the exit does, its window's dim, which is the screen's, staying.
+        if (Build.VERSION.SDK_INT < 30) {
+            old.window?.decorView?.animate()?.alpha(0f)?.setDuration(FADE_OUT)?.setInterpolator(LinearInterpolator())?.start()
+        }
+        old.setOnKeyListener { _, _, _ -> true }
+        if (old is PanelDialog) old.leaving = true
+        val decor = checkNotNull(window).decorView
+        val closeAfterFrame = {
+            // After this frame is handed on, and not inside the dispatch of the listeners.
+            decor.post { Choreographer.getInstance().postFrameCallback { closeUnderneath() } }
+        }
+        if (Build.VERSION.SDK_INT >= 30) {
+            decor.viewTreeObserver.addOnPreDrawListener(object : ViewTreeObserver.OnPreDrawListener {
+                override fun onPreDraw(): Boolean {
+                    decor.viewTreeObserver.removeOnPreDrawListener(this)
+                    closeAfterFrame()
+                    return true
+                }
+            })
+        } else if (Build.VERSION.SDK_INT >= 24) {
+            // Before Android 11 the window's first draw says little: the main thread is done long
+            // before the first frame of the first window of a process is rendered and shown (some
+            // frames later), and the old window would go to a bare screen. The frame's metrics come
+            // once it's rendered.
+            val window = checkNotNull(window)
+            window.addOnFrameMetricsAvailableListener(object : Window.OnFrameMetricsAvailableListener {
+                override fun onFrameMetricsAvailable(w: Window, metrics: FrameMetrics, dropCountSinceLastInvocation: Int) {
+                    if (metrics.getMetric(FrameMetrics.FIRST_DRAW_FRAME) != 1L) return
+                    val listener = this
+                    decor.post { window.removeOnFrameMetricsAvailableListener(listener) }
+                    closeAfterFrame()
+                }
+            }, Handler(Looper.getMainLooper()))
+        } else {
+            // Android 5.1 and 6.0: its first draw, which in the first traversal doesn't come (it
+            // only lays out), added from its first pre-draw, when the window is attached: a
+            // listener added before drops out as it attaches.
+            decor.viewTreeObserver.addOnPreDrawListener(object : ViewTreeObserver.OnPreDrawListener {
+                override fun onPreDraw(): Boolean {
+                    decor.viewTreeObserver.removeOnPreDrawListener(this)
+                    decor.viewTreeObserver.addOnDrawListener(object : ViewTreeObserver.OnDrawListener {
+                        private var seen = false
+
+                        override fun onDraw() {
+                            if (seen) return
+                            seen = true
+                            decor.post { decor.viewTreeObserver.removeOnDrawListener(this) }
+                            closeAfterFrame()
+                        }
+                    })
+                    return true
+                }
+            })
+        }
+        // Whatever happens to the window's drawing, the old one doesn't stay for good.
+        decor.postDelayed({ closeUnderneath() }, GIVE_UP)
+    }
+
+    private companion object {
+        /** How long the window under a new one stays at most, in ms: the new one draws within a frame or two. */
+        const val GIVE_UP = 1000L
+
+        /** As `anim/panel_exit`'s, in ms. */
+        const val FADE_OUT = 80L
+    }
+
+    private fun closeUnderneath() {
+        val old = underneath ?: return
+        underneath = null
+        if (old is PanelDialog) old.leaving = false
+        if (dimmedByUnderneath && isShowing) checkNotNull(window).addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
+        dimmedByUnderneath = false
+        val decor = old.window?.decorView
+        old.dismiss()
+        // Gone: whole again for when it's shown later, as a tile's menu is. Not before, or it would
+        // show for a frame.
+        decor?.animate()?.cancel()
+        decor?.alpha = 1f
     }
 }
 
@@ -78,10 +219,7 @@ class MessageDialog(
             }
         }
         for (button in buttons) {
-            addButton(button.label, button.kind, button.icon, button.available) {
-                dismiss()
-                button.action()
-            }
+            addButton(button.label, button.kind, button.icon, button.available) { Handover.from(this) { button.action() } }
         }
         fitToScreen()
         checkNotNull(window).stylePanel(roles)
@@ -119,10 +257,7 @@ class MenuDialog(
             entry.text = action.label
             entry.setCompoundDrawablesRelativeWithIntrinsicBounds(action.icon, 0, 0, 0)
             if (action.deletes) entry.changeRole(ThemedText.ERROR)
-            entry.setOnClickListener {
-                dismiss()
-                action.action()
-            }
+            entry.setOnClickListener { Handover.from(this) { action.action() } }
             list.addView(entry)
         }
         fitToScreen()
@@ -194,10 +329,7 @@ class NameDialog(
         }
         addButton(cancel, DialogButton.Kind.TONAL) { dismiss() }
         if (extra != null) {
-            addButton(extra.label, extra.kind, extra.icon, extra.available) {
-                dismiss()
-                extra.action()
-            }
+            addButton(extra.label, extra.kind, extra.icon, extra.available) { Handover.from(this) { extra.action() } }
         }
         addButton(confirm, DialogButton.Kind.FILLED, R.drawable.icon_check, action = done)
         fitToScreen()

@@ -29,8 +29,7 @@ class WorkingDialog(context: Context, roles: ColorRoles) {
     private val main = Handler(Looper.getMainLooper())
     private var afterClosing: () -> Unit = {}
     private val closing = Runnable {
-        dialog.dismiss()
-        afterClosing().also { afterClosing = {} }
+        Handover.from(dialog) { afterClosing().also { afterClosing = {} } }
     }
     private val showing = ShortestShowing()
 

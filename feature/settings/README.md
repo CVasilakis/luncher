@@ -124,7 +124,8 @@ the left once the clock is moved to the right; the screen's side in any language
 screen doesn't mirror, though the panel's content does), its theme, `Theme.Luncher.Settings`, a platform
 dialog theme, with the floating panels' short fade in and out of Luncher's own
 ([`ui/`](../../ui/README.md#the-design-system)), as the panels opened in its place and the window
-after a share have. Each entry is one line: its icon, its name, centered in the entry's height, and at
+after a share have (the appearance editor, the background editor, Add from folder and the tile banner
+picker, full-screen, the same fade, `Animation.Luncher.Screen`). Each entry is one line: its icon, its name, centered in the entry's height, and at
 its end where it goes: a chevron to a panel of Luncher's, an arrow out of it to another app. On a screen too short for them all, the entries
 would scroll a row ahead of the focus in whole rows, fading out where there's more (a
 `LookAheadScrollView` in a `ScrollFrame`); the three of them fit on every TV screen the layout

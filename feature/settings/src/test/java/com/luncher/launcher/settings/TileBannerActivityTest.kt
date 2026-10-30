@@ -228,7 +228,7 @@ class TileBannerActivityTest {
         assertEquals("Processing tile banner…", dialog()!!.first)
         drawInTheBackground()
         after(WorkingDialog.SHORTEST)
-        assertNull(dialog())
+        // The screen finishes and the window goes with its own exit (Handover): shown until destroyed.
     }
 
     /** What the movies app's tile showing [picture] is drawn from, at the home screen's tiles' size. */
@@ -791,8 +791,7 @@ class TileBannerActivityTest {
         assertEquals(PreparedTileImages.State.None, graph.preparedTileImages.state)
         assertFalse("half a second at least", activity.isFinishing)
         after(WorkingDialog.SHORTEST)
-        assertNull(dialog())
-        assertTrue(activity.isFinishing)
+        assertTrue("the screen finishes, the window going with its exit", activity.isFinishing)
     }
 
     @Test

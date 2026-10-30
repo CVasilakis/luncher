@@ -637,5 +637,38 @@ class TileMenuTest {
         assertEquals(decor.width / 2f, decor.pivotX)
         assertEquals(0f, decor.pivotY)
     }
-}
 
+    // The menu stays under the rename dialog until it has drawn: the first one of a process is made
+    // then, and the screen would show bare meanwhile.
+    @Test
+    fun `Rename shows its dialog first, and the menu closes at once, with no key and no fade, once it has drawn`() {
+        val activity = start().get()
+        val menu = activity.longPress("a")
+
+        menu.choose("Rename")
+
+        val dialog = org.robolectric.shadows.ShadowDialog.getLatestDialog()
+        org.junit.Assert.assertNotSame(menu, dialog)
+        assertTrue("the dialog shows", dialog.isShowing)
+        assertTrue("the menu stays", menu.isShowing)
+        assertEquals("with no exit animation", 0, menu.windowAnimations())
+        assertTrue("and takes no key", menu.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DPAD_CENTER)))
+
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofSeconds(1))
+
+        assertFalse("closed once the dialog has drawn", menu.isShowing)
+        assertTrue(dialog.isShowing)
+    }
+
+    @Test
+    fun `an entry that opens no window closes the menu with its fade, as before`() {
+        val activity = start().get()
+        val menu = activity.longPress("a")
+        val fade = menu.windowAnimations()
+
+        menu.choose("Hide")
+
+        assertFalse(menu.isShowing)
+        assertEquals(fade, menu.windowAnimations())
+    }
+}

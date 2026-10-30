@@ -68,7 +68,8 @@ ui/
     │   │                         shown half a second at least: for work the user waits for (the wallpaper drawn,
     │   │                         a picture added); Cancel too, and Back, for work that can be stopped
     │   └── res/
-    │       ├── anim/             panel_enter, panel_exit: a floating panel's fade in and out; panel_none
+    │       ├── anim/             panel_enter, panel_exit: a floating panel's fade in and out; panel_none; screen_hold_open, screen_hold_close:
+    │       │                     the screen under a full-screen one, held still
     │       ├── animator/         entry_zoom, button_zoom: a focused field's zoom, a button's zoom and lift
     │       ├── drawable/         icon_…, the line icons (white, tinted where they're used); panel_background,
     │       │                     a floating panel's window before it's styled
@@ -197,7 +198,32 @@ can, the focused thing stands out from afar, and every color comes from the user
   animation scale, the entrance in the window the animator duration scale; with animations off,
   none. Nothing waits for an exit: what closed the panel acts as it starts fading. A window
   coming from another app (the window after a share) comes with Android's task animation, the
-  home screen with it.
+  home screen with it; while a screen of Luncher's is in front (`Foreground`), the share window
+  has `panel_enter` instead, as Android's task switch played nothing of its own there (it popped in
+  on Android 16).
+- **A full-screen screen comes and goes as quickly.** The appearance editor, the background editor,
+  Add from folder and the tile banner picker fade in in 100 ms and out in 80 ms too, in place of
+  Android's cross-fade of about 350 ms, and the screen under holds still meanwhile
+  (`Animation.Luncher.Screen`: `panel_enter` and `panel_exit` for the screen, `screen_hold_open` and
+  `screen_hold_close` for the one under it, which would otherwise fade or slide with Android's own).
+  Set in those screens' themes, not in `Theme.Luncher`, which is also the home screen's: how it
+  opens an app and comes back from one stays Android's.
+- **One window handing over to the next doesn't drop the dim.** A dialog's button or entry that
+  opens another window, the working window closing into its message, a tile's menu into the rename
+  dialog: `Handover.from(old) { open next }` shows the next first; `old` stays, with no animation and
+  no key, until the next has drawn its first frame, then closes at once, so the dim, which each
+  window has of its own, never drops between them (the next waits to dim until `old` goes, the two
+  would be darker than one; before Android 11 it is the other way round: a window's dim fades with its
+  window animation there, so the window handed over to plays its entrance in itself (`WindowEntrance`, as
+  where Android plays none), its dim whole as it comes, and the old one's dim goes with its window; "drawn"
+  is the first draw from Android 11, and from Android 7.0 before it the first frame rendered, as the first
+  window of a process shows some frames after the main thread has drawn it, so meanwhile the old panel,
+  dimmed by the new window, fades out with its window and dim staying; the old one goes after one
+  second at the latest) and the first dialog of a process, which is slow to make, doesn't leave
+  the screen bare. If the action opens no window, `old` closes as it would alone, with its fade, unless the action finishes its
+  screen: then it stays, and goes with the screen's own exit, as closed first it would fade away alone and
+  leave the screen under it bright until Android starts that exit.
+  Cancel on the working window closes it at once, before what it does.
 - **The keyboard covers no dialog's field, and moves no screen.** A dialog with a field (`NameDialog`) is
   centered, and near the top of the screen, `dialog_margin` from its edge, while the keyboard
   shows. The screen that opens one declares `windowSoftInputMode="adjustNothing"`: by default

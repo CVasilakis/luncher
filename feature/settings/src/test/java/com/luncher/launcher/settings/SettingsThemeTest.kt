@@ -8,7 +8,10 @@ import com.luncher.domain.appearance.AppearanceTopic
 import com.luncher.domain.appearance.FakeAppearanceSettings
 import com.luncher.domain.appearance.appearanceChanges
 import com.luncher.domain.appearance.appearanceOptions
+import android.view.ContextThemeWrapper
 import com.luncher.launcher.testing.TV_1080P
+import com.luncher.launcher.ui.R as UiR
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -57,5 +60,30 @@ class SettingsThemeTest {
     fun `only the theme's options leave the home screen as it is`() {
         val theme = appearanceOptions().groups.single { it.topic == AppearanceTopic.THEME }.options
         assertFalse(appearanceOptions().all.any { !it.showsOnHome && it !in theme })
+    }
+
+    private fun animationStyle(theme: Int): Int {
+        val styled = ContextThemeWrapper(RuntimeEnvironment.getApplication(), theme).theme.obtainStyledAttributes(intArrayOf(android.R.attr.windowAnimationStyle))
+        return styled.getResourceId(0, 0).also { styled.recycle() }
+    }
+
+    // The same short fade as the panels', whole screens too, with the screen under holding still;
+    // never Theme.Luncher's own, which is the home screen's as well.
+    @Test
+    fun `the full-screen screens come and go with Luncher's short fade, the home screen's theme stays Android's`() {
+        assertEquals(UiR.style.Animation_Luncher_Screen, animationStyle(R.style.Theme_Luncher_Settings_FullScreen))
+        assertEquals(UiR.style.Animation_Luncher_Screen, animationStyle(R.style.Theme_Luncher_Settings_Pictures))
+        assertFalse(animationStyle(UiR.style.Theme_Luncher) == UiR.style.Animation_Luncher_Screen)
+        assertEquals("no window at all, so none to animate", 0, animationStyle(R.style.Theme_Luncher_Settings_Pictures_NoDisplay))
+    }
+
+    @Test
+    fun `the appearance editor's window plays that fade`() {
+        val application = RuntimeEnvironment.getApplication() as SettingsTestApplication
+        application.graph = object : TestSettingsGraph() {
+            override val appearanceSettings = this@SettingsThemeTest.settings
+        }
+        val activity = Robolectric.buildActivity(AppearanceActivity::class.java).setup().get()
+        assertEquals(UiR.style.Animation_Luncher_Screen, activity.window.attributes.windowAnimations)
     }
 }

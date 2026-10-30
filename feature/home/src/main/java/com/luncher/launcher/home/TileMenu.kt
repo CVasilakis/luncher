@@ -18,6 +18,7 @@ import com.luncher.domain.layout.MenuSide
 import com.luncher.domain.layout.PixelBounds
 import com.luncher.domain.layout.tileMenuHeight
 import com.luncher.domain.layout.tileMenuPlacement
+import com.luncher.launcher.ui.Handover
 import com.luncher.launcher.ui.ListEntry
 import com.luncher.launcher.ui.LookAheadScrollView
 import com.luncher.launcher.ui.ScrollFrame
@@ -113,10 +114,7 @@ internal class TileMenu(private val activity: Activity) : Dialog(activity, R.sty
         view.findViewById<TextView>(R.id.home_tile_menu_label).setText(label(entry.action))
         view.findViewById<ImageView>(R.id.home_tile_menu_icon).setImageResource(icon(entry.action))
         if (entry.available) {
-            view.setOnClickListener {
-                dismiss()
-                act(entry.action)
-            }
+            view.setOnClickListener { Handover.from(this) { act(entry.action) } }
         } else {
             view.alpha = DIMMED
             view.isFocusable = false

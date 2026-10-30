@@ -2,6 +2,7 @@ package com.luncher.launcher.settings
 
 import android.app.Activity
 import android.app.ActivityManager
+import android.app.ActivityOptions
 import android.content.ClipData
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -10,6 +11,8 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Process
 import com.luncher.domain.pictures.PictureLimits
+import com.luncher.launcher.ui.Foreground
+import com.luncher.launcher.ui.R as UiR
 
 /**
  * Where another app's Share of pictures (`SEND`, or `SEND_MULTIPLE` for several) or "Set as"
@@ -129,7 +132,11 @@ class SharePictureActivity : Activity() {
      */
     private fun openOver(home: Intent?, window: Intent) {
         window.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        if (home != null) startActivities(arrayOf(home, window)) else startActivity(window)
+        // While a screen of Luncher's is in front, Android opens the window with a task switch that
+        // plays no animation of its own (it popped in on Android 16): the window's short fade.
+        // From another app, Android's own task animation, home screen and window together.
+        val options = if (Foreground.inFront) ActivityOptions.makeCustomAnimation(this, UiR.anim.panel_enter, 0).toBundle() else null
+        if (home != null) startActivities(arrayOf(home, window), options) else startActivity(window, options)
     }
 
     /**

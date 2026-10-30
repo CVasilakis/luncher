@@ -7,7 +7,10 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.net.Uri
 import com.luncher.launcher.testing.TV_1080P
+import com.luncher.launcher.ui.Foreground
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -265,5 +268,33 @@ class SharePictureActivityTest {
 
     private companion object {
         const val HOME = "com.luncher.launcher.home.HomeActivity"
+    }
+
+    /** The options the share window was started with, sharing a picture as another app does. */
+    private fun optionsOfTheWindow(): android.os.Bundle? {
+        val intent = Intent(Intent.ACTION_SEND).setType("image/jpeg").putExtra(Intent.EXTRA_STREAM, android.net.Uri.parse("content://x/y.jpg"))
+        val activity = Robolectric.buildActivity(SharePictureActivity::class.java, intent).create().get()
+        return generateSequence { shadowOf(activity).nextStartedActivityForResult }.toList()
+            .single { it.intent.component?.className == PictureReceivedActivity::class.java.name }.options
+    }
+
+    // Android's own task animation, home screen and window together, as before.
+    @Test
+    fun `a share from another app gives the window no animation of its own`() {
+        assertNull(optionsOfTheWindow())
+    }
+
+    // Android's task switch plays none while Luncher is in front: the window pops in.
+    @Test
+    fun `a share while a screen of Luncher's is in front fades the window in`() {
+        Foreground.register(context as android.app.Application)
+        val screen = Robolectric.buildActivity(android.app.Activity::class.java).setup()
+        try {
+            val options = optionsOfTheWindow()
+            assertNotNull(options)
+            assertEquals(com.luncher.launcher.ui.R.anim.panel_enter, options!!.getInt("android:activity.animEnterRes"))
+        } finally {
+            screen.stop()
+        }
     }
 }

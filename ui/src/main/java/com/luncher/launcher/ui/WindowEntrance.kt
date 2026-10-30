@@ -55,6 +55,12 @@ class WindowEntrance(private val decor: View, private val from: Float = 1f) : Vi
         decor.viewTreeObserver.addOnPreDrawListener(this)
     }
 
+    /** Ends what [prepare] readied, if it hasn't started: the window shows as it is. */
+    fun cancel() {
+        animator.cancel()
+        decor.viewTreeObserver.removeOnPreDrawListener(this)
+    }
+
     override fun onPreDraw(): Boolean {
         decor.viewTreeObserver.removeOnPreDrawListener(this)
         animator.start()

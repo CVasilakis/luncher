@@ -46,6 +46,18 @@
         <item name="android:activityOpenEnterAnimation">@anim/panel_enter</item>
         <item name="android:activityCloseExitAnimation">@anim/panel_exit</item>
     </style>
+    <!-- How a full-screen screen (the appearance editor, the background editor, Add from folder,
+         the tile banner picker) comes and goes: the same short fade, whole screens too, in place of
+         Android's cross-fade of about 350 ms; the screen under it holds still meanwhile. Set in
+         those screens' themes, never in Theme.Luncher's, which is also the home screen's: how the
+         home screen opens an app and comes back from one stays Android's. -->
+    <style name="Animation.Luncher.Screen" parent="">
+        <item name="android:activityOpenEnterAnimation">@anim/panel_enter</item>
+        <item name="android:activityOpenExitAnimation">@anim/screen_hold_open</item>
+        <item name="android:activityCloseEnterAnimation">@anim/screen_hold_close</item>
+        <item name="android:activityCloseExitAnimation">@anim/panel_exit</item>
+    </style>
+
     <!-- Android 5.1 and 6.0 play no app dialog's window entrance: there the dialog plays it in its
          window (PanelDialog, WindowEntrance), and the window only fades as it goes. An entrance
          that changes nothing, so a device that would play one doesn't play it twice; not @null,

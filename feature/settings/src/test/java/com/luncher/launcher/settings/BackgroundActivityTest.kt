@@ -943,8 +943,7 @@ class BackgroundActivityTest {
         assertFalse("the window shows half a second at least", activity.isFinishing)
 
         shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(WorkingDialog.SHORTEST))
-        assertNull(dialog())
-        assertTrue(activity.isFinishing)
+        assertTrue("the screen finishes, the window going with its exit (Handover)", activity.isFinishing)
     }
 
     @Test

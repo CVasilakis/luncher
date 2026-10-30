@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The screen under a full-screen screen that opens (Animation.Luncher.Screen): it stays as it is
+     while the new one fades in over it, for as long as that takes (anim/panel_enter's). -->
+<alpha xmlns:android="http://schemas.android.com/apk/res/android"
+    android:duration="100"
+    android:fromAlpha="1"
+    android:toAlpha="1" />
