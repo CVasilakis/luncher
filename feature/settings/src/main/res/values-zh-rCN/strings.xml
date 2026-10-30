@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="settings_title">设置</string>
+    <string name="settings_hide_apps">隐藏应用</string>
+    <string name="settings_hidden">已隐藏</string>
+    <string name="settings_app_renamed">已重命名为 \u2068%1$s\u2069</string>
+    <string name="settings_no_apps">未安装电视应用</string>
+    <string name="settings_appearance">外观</string>
+    <string name="settings_appearance_tiles">应用卡片</string>
+    <string name="settings_appearance_top_bar">时间和日期</string>
+    <string name="settings_appearance_vertical_alignment">上下位置</string>
+    <string name="settings_appearance_top">顶部</string>
+    <string name="settings_appearance_bottom">底部</string>
+    <string name="settings_appearance_center">居中</string>
+    <string name="settings_appearance_horizontal_alignment">左右对齐</string>
+    <string name="settings_appearance_full_bottom_row">优先排满底行</string>
+    <string name="settings_appearance_corner_radius">圆角大小</string>
+    <string name="settings_appearance_radius_dp"><xliff:g id="radius" example="8">%1$d</xliff:g> dp</string>
+    <string name="settings_appearance_pill">胶囊形</string>
+    <string name="settings_appearance_focus_frame">高亮边框</string>
+    <string name="settings_appearance_app_name">应用名称</string>
+    <string name="settings_appearance_when_focused">仅当前项</string>
+    <string name="settings_appearance_always">全部显示</string>
+    <string name="settings_appearance_time">时间</string>
+    <string name="settings_appearance_date">日期</string>
+    <string name="settings_appearance_shown">显示</string>
+    <string name="settings_appearance_hidden">隐藏</string>
+    <string name="settings_appearance_clock_side">显示位置</string>
+    <string name="settings_appearance_left">左侧</string>
+    <string name="settings_appearance_right">右侧</string>
+    <string name="settings_appearance_time_side">排列顺序</string>
+    <string name="settings_appearance_time_first">时间在左</string>
+    <string name="settings_appearance_date_first">日期在左</string>
+    <string name="settings_appearance_background">背景</string>
+    <string name="settings_appearance_fit">显示方式</string>
+    <string name="settings_appearance_fill">填充</string>
+    <string name="settings_appearance_stretch">拉伸</string>
+    <string name="settings_appearance_position">位置</string>
+    <string name="settings_appearance_dim">调暗</string>
+    <string name="settings_appearance_dim_light">弱</string>
+    <string name="settings_appearance_dim_medium">中</string>
+    <string name="settings_appearance_dim_strong">强</string>
+    <string name="settings_appearance_blur">模糊</string>
+    <string name="settings_appearance_light">弱</string>
+    <string name="settings_appearance_medium">中</string>
+    <string name="settings_appearance_strong">强</string>
+    <string name="settings_appearance_on">开启</string>
+    <string name="settings_appearance_off">关闭</string>
+    <string name="settings_appearance_reset">恢复默认设置</string>
+    <string name="settings_appearance_reset_question">恢复默认外观</string>
+    <string name="settings_appearance_reset_text">所有外观设置将恢复默认</string>
+    <string name="settings_appearance_reset_text_background">所有外观设置将恢复默认，主页将不再显示背景图片。图片仍保留在图片库中。</string>
+    <string name="settings_appearance_reset_confirm">恢复</string>
+    <string name="settings_system">系统设置</string>
+    <string name="settings_system_unavailable">未找到系统设置</string>
+    <string name="settings_pictures_hint">长按 OK 可重命名或删除图片</string>
+    <string name="settings_background_title">编辑背景</string>
+    <string name="settings_tile_banner_title">编辑卡片封面</string>
+    <string name="settings_picture_editor_save">保存</string>
+    <string name="settings_picture_editor_delete_all">全部删除</string>
+    <string name="settings_pictures_delete_all_question">删除所有图片</string>
+    <plurals name="settings_pictures_delete_all_used_background">
+        <item quantity="other">有图片正用作背景，删除后主页将不再显示背景图片。</item>
+    </plurals>
+    <plurals name="settings_pictures_delete_all_text">
+        <item quantity="other">仅删除图片库中的 <xliff:g id="count" example="9">%d</xliff:g> 张图片，不影响原文件。</item>
+    </plurals>
+    <string name="settings_picture_editor_discard_question">放弃更改</string>
+    <string name="settings_background_discard_text">背景更改尚未保存</string>
+    <string name="settings_tile_banner_discard_text">卡片封面更改尚未保存</string>
+    <string name="settings_picture_editor_discard">放弃</string>
+    <string name="settings_background_applying">正在处理背景</string>
+    <string name="settings_tile_banner_saving">正在处理卡片封面</string>
+    <string name="settings_pictures_preparing">正在准备图片</string>
+    <string name="settings_pictures_preparing_count">正在准备第 <xliff:g id="number" example="3">%1$d</xliff:g> 张，共 <xliff:g id="total" example="10">%2$d</xliff:g> 张</string>
+    <string name="settings_received_adding">正在添加图片</string>
+    <string name="settings_received_saved">图片已添加</string>
+    <string name="settings_received_adding_count">正在添加第 <xliff:g id="number" example="3">%1$d</xliff:g> 张，共 <xliff:g id="total" example="10">%2$d</xliff:g> 张</string>
+    <plurals name="settings_received_saved_count">
+        <item quantity="other">已添加 <xliff:g id="count" example="9">%d</xliff:g> 张图片</item>
+    </plurals>
+    <string name="settings_received_none_added">未添加图片</string>
+    <string name="settings_received_nothing">没有可添加的图片</string>
+    <string name="settings_received_nothing_text">分享内容中没有图片</string>
+    <plurals name="settings_received_already_count">
+        <item quantity="other"><xliff:g id="count" example="2">%d</xliff:g> 张图片已存在</item>
+    </plurals>
+    <plurals name="settings_received_not_a_picture_count">
+        <item quantity="other"><xliff:g id="count" example="2">%d</xliff:g> 个文件不是图片或已损坏</item>
+    </plurals>
+    <plurals name="settings_received_unsupported_count">
+        <item quantity="other"><xliff:g id="count" example="2">%d</xliff:g> 张图片的格式不受本机支持</item>
+    </plurals>
+    <plurals name="settings_received_too_large_bytes_count">
+        <item quantity="other"><xliff:g id="count" example="2">%1$d</xliff:g> 张图片的文件大小超过 <xliff:g id="size" example="50 MB">%2$s</xliff:g></item>
+    </plurals>
+    <plurals name="settings_received_too_large_pixels_count">
+        <item quantity="other"><xliff:g id="count" example="2">%1$d</xliff:g> 张图片的像素数超过 <xliff:g id="megapixels" example="64">%2$d</xliff:g> 百万</item>
+    </plurals>
+    <plurals name="settings_received_name_taken_count">
+        <item quantity="other"><xliff:g id="count" example="2">%d</xliff:g> 张图片与已有图片同名</item>
+    </plurals>
+    <plurals name="settings_received_unreadable_count">
+        <item quantity="other"><xliff:g id="count" example="2">%d</xliff:g> 张图片无法读取</item>
+    </plurals>
+    <plurals name="settings_received_no_space_count">
+        <item quantity="other">存储空间不足，<xliff:g id="count" example="2">%d</xliff:g> 张图片未添加</item>
+    </plurals>
+    <plurals name="settings_received_cancelled_count">
+        <item quantity="other">已取消添加，<xliff:g id="count" example="2">%d</xliff:g> 张图片未添加</item>
+    </plurals>
+    <plurals name="settings_received_too_many">
+        <item quantity="other">每次最多添加 <xliff:g id="most" example="100">%d</xliff:g> 张图片，请减少数量后重试。</item>
+    </plurals>
+    <string name="settings_pictures_adding">正在添加图片</string>
+    <string name="settings_pictures_how">添加图片</string>
+    <string name="settings_pictures_how_share">在文件管理器或图库中分享图片，然后选择 Luncher</string>
+    <string name="settings_pictures_how_folder">也可将图片复制到本机或 USB 存储设备上的以下文件夹，再选择从文件夹添加</string>
+    <string name="settings_pictures_add_from_folder">从文件夹添加</string>
+    <string name="settings_pictures_details"><xliff:g id="width" example="1920">%1$d</xliff:g> × <xliff:g id="height" example="1080">%2$d</xliff:g> · <xliff:g id="size" example="3.1 MB">%3$s</xliff:g></string>
+    <string name="settings_pictures_no_picture">不使用图片</string>
+    <string name="settings_tile_banner_original">默认封面</string>
+    <string name="settings_tile_banner_backdrop">封面背景</string>
+    <string name="settings_tile_banner_none">无</string>
+    <string name="settings_tile_banner_light_glass">浅色</string>
+    <string name="settings_tile_banner_dark_glass">深色</string>
+    <string name="settings_tile_banner_frosted">模糊</string>
+    <string name="settings_tile_banner_focus">高亮轮廓</string>
+    <string name="settings_tile_banner_tile">卡片轮廓</string>
+    <string name="settings_tile_banner_shape">图片轮廓</string>
+    <string name="settings_pictures_unnamed">图片</string>
+    <string name="settings_pictures_delete">删除</string>
+    <string name="settings_pictures_delete_question">删除 <xliff:g id="name" example="beach.png">%1$s</xliff:g></string>
+    <string name="settings_pictures_delete_used_background">这张图片正用作背景，删除后主页将不再显示背景图片。</string>
+    <plurals name="settings_pictures_delete_used_tiles">
+        <item quantity="other"><xliff:g id="count" example="3">%d</xliff:g> 张应用卡片将恢复默认封面。</item>
+    </plurals>
+    <string name="settings_pictures_delete_text">仅删除图片库中的副本，不影响原文件。</string>
+    <string name="settings_pictures_rename">重命名</string>
+    <string name="settings_pictures_rename_title">重命名图片</string>
+    <string name="settings_pictures_rename_no_name">请输入名称</string>
+    <string name="settings_pictures_cancel">取消</string>
+    <string name="settings_pictures_ok">确定</string>
+    <string name="settings_pictures_not_added">未添加图片</string>
+    <string name="settings_pictures_already">图片已存在</string>
+    <string name="settings_pictures_not_a_picture">文件不是图片或已损坏</string>
+    <string name="settings_pictures_unsupported">本机不支持 <xliff:g id="format" example="HEIF (HEIC)">%1$s</xliff:g> 格式的图片，请另存为 JPEG 或 PNG 后重新添加。</string>
+    <string name="settings_pictures_too_large_bytes">文件大小超过 <xliff:g id="size" example="50 MB">%1$s</xliff:g></string>
+    <plurals name="settings_pictures_too_large_pixels">
+        <item quantity="other">像素数超过 <xliff:g id="megapixels" example="64">%d</xliff:g> 百万</item>
+    </plurals>
+    <string name="settings_pictures_unreadable">无法读取文件。请将文件复制到本机或 USB 存储设备上的 <xliff:g id="folder" example="Android/media/com.luncher.launcher">%1$s</xliff:g> 文件夹，再选择从文件夹添加。</string>
+    <string name="settings_pictures_no_space">本机存储空间不足，请释放空间后重试。</string>
+    <string name="settings_pictures_name_taken">图片库中已有名为 <xliff:g id="name" example="holiday.jpg">%1$s</xliff:g> 的图片。请重命名或删除已有图片，或修改待添加文件的名称后重试。</string>
+    <string name="settings_pictures_folder_where">本机或 USB 存储设备上 <xliff:g id="folder" example="Android/media/com.luncher.launcher">%1$s</xliff:g> 文件夹中的图片</string>
+    <string name="settings_pictures_folder_local">本机</string>
+    <string name="settings_pictures_folder_usb">USB 存储设备</string>
+    <string name="settings_pictures_folder_row"><xliff:g id="where" example="USB drive">%1$s</xliff:g> · <xliff:g id="details" example="4000 × 3000 · 2.4 MB">%2$s</xliff:g></string>
+    <string name="settings_pictures_folder_unsupported">本机不支持 <xliff:g id="format" example="HEIF (HEIC)">%1$s</xliff:g> 格式</string>
+    <string name="settings_pictures_folder_too_large_bytes">文件大小超过 <xliff:g id="size" example="50 MB">%1$s</xliff:g></string>
+    <plurals name="settings_pictures_folder_too_large_pixels">
+        <item quantity="other">像素数超过 <xliff:g id="megapixels" example="64">%d</xliff:g> 百万</item>
+    </plurals>
+    <string name="settings_pictures_folder_damaged">已损坏</string>
+    <string name="settings_pictures_folder_name_taken">已有同名图片</string>
+    <string name="settings_pictures_folder_add_all">全部添加</string>
+    <string name="settings_pictures_folder_note">按 OK 将图片复制到图片库。添加后无需保留原文件，也无需保持 USB 存储设备连接。</string>
+    <string name="settings_pictures_folder_looking">正在查找图片</string>
+    <string name="settings_pictures_folder_empty">文件夹中暂无图片</string>
+    <string name="settings_hide_apps_hint">按 OK 隐藏或显示应用</string>
+    <string name="settings_appearance_theme">主题</string>
+    <string name="settings_appearance_accent">强调色</string>
+    <string name="settings_appearance_mode">模式</string>
+    <string name="settings_appearance_orange">橙色</string>
+    <string name="settings_appearance_pink">粉色</string>
+    <string name="settings_appearance_purple">紫色</string>
+    <string name="settings_appearance_blue">蓝色</string>
+    <string name="settings_appearance_teal">蓝绿色</string>
+    <string name="settings_appearance_green">绿色</string>
+    <string name="settings_appearance_amber">琥珀色</string>
+    <string name="settings_appearance_gray">灰色</string>
+    <string name="settings_appearance_dark">深色</string>
+    <string name="settings_appearance_light_mode">浅色</string>
+    <string name="settings_pictures_label">图片库</string>
+    <string name="settings_pictures_folder_label">文件夹中的图片</string>
+    <plurals name="settings_pictures_folder_count">
+        <item quantity="other"><xliff:g id="count" example="5">%d</xliff:g> 张图片</item>
+    </plurals>
+    <string name="settings_pictures_folder_preview_label">预览</string>
+</resources>

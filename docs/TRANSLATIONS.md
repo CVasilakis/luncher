@@ -1,6 +1,6 @@
 # Translations
 
-Luncher's texts are in English, Greek and Arabic. This covers where they are, how they're worded,
+Luncher's texts are in English, Greek, Arabic and Simplified Chinese. This covers where they are, how they're worded,
 how a string is written so that it translates well, and what a new string or language needs.
 
 - **Greek** is kept by the project's maintainer.
@@ -11,7 +11,7 @@ how a string is written so that it translates well, and what a new string or lan
 
 | Module | Texts | Languages |
 |---|---|---|
-| `:feature:home` | the home screen, a tile's menu and moving an app | `res/values/strings.xml` (English), `res/values-el/` (Greek), `res/values-ar/` (Arabic) |
+| `:feature:home` | the home screen, a tile's menu and moving an app | `res/values/strings.xml` (English), `res/values-el/` (Greek), `res/values-ar/` (Arabic), `res/values-zh-rCN/` (Simplified Chinese) |
 | `:feature:settings` | the settings panels, the appearance and background editors, the tile banner picker, Add from folder, the window after a share | the same |
 | `:app` | the app's name | `translatable="false"`: a name, the same in every language |
 

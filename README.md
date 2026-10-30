@@ -11,6 +11,8 @@
   <img src="https://img.shields.io/badge/Android_TV-5.1%2B-3DDC84?logo=android&logoColor=white" alt="Android TV 5.1+">
 </p>
 
+[简体中文](README.zh-CN.md)
+
 It's made with performance in mind, to run smoothly even on old and weak Android TV devices, and still gives you plenty of customization options to shape it to your taste.
 
 ## Screenshots
