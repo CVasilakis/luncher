@@ -51,7 +51,7 @@ internal fun Context.whyNotAdded(result: ImportResult): String? = when (result) 
     is ImportResult.UnsupportedFormat -> getString(R.string.settings_pictures_unsupported, formatName(result.format))
     is ImportResult.TooLarge -> when (result.limit) {
         SizeLimit.BYTES -> getString(R.string.settings_pictures_too_large_bytes, size(PictureLimits.MAX_BYTES))
-        SizeLimit.PIXELS -> resources.getQuantityString(R.plurals.settings_pictures_too_large_pixels, MEGAPIXELS, MEGAPIXELS)
+        SizeLimit.PIXELS -> resources.getQuantityString(R.plurals.settings_pictures_too_large_pixels, pixelLimit, pixelLimit)
     }
     ImportResult.Unreadable -> getString(R.string.settings_pictures_unreadable, dropFolder())
     ImportResult.NoSpace -> getString(R.string.settings_pictures_no_space)
@@ -68,7 +68,7 @@ internal fun Context.refusal(result: ImportResult?): String? = when (result) {
     is ImportResult.UnsupportedFormat -> getString(R.string.settings_pictures_folder_unsupported, formatName(result.format))
     is ImportResult.TooLarge -> when (result.limit) {
         SizeLimit.BYTES -> getString(R.string.settings_pictures_folder_too_large_bytes, size(PictureLimits.MAX_BYTES))
-        SizeLimit.PIXELS -> resources.getQuantityString(R.plurals.settings_pictures_folder_too_large_pixels, MEGAPIXELS, MEGAPIXELS)
+        SizeLimit.PIXELS -> resources.getQuantityString(R.plurals.settings_pictures_folder_too_large_pixels, pixelLimit, pixelLimit)
     }
     is ImportResult.SameFile -> getString(R.string.settings_pictures_already)
     is ImportResult.NameTaken -> getString(R.string.settings_pictures_folder_name_taken)
@@ -89,7 +89,7 @@ internal fun Context.notAddedLines(outcome: Outcome.Several): List<String> {
         count(R.plurals.settings_received_not_a_picture_count, results.count { it == ImportResult.NotAPicture }),
         count(R.plurals.settings_received_unsupported_count, results.count { it is ImportResult.UnsupportedFormat }),
         count(R.plurals.settings_received_too_large_bytes_count, results.count { it == ImportResult.TooLarge(SizeLimit.BYTES) }, size(PictureLimits.MAX_BYTES)),
-        count(R.plurals.settings_received_too_large_pixels_count, results.count { it == ImportResult.TooLarge(SizeLimit.PIXELS) }, MEGAPIXELS),
+        count(R.plurals.settings_received_too_large_pixels_count, results.count { it == ImportResult.TooLarge(SizeLimit.PIXELS) }, pixelLimit),
         count(R.plurals.settings_received_name_taken_count, results.count { it is ImportResult.NameTaken }),
         count(R.plurals.settings_received_unreadable_count, results.count { it == ImportResult.Unreadable }),
         count(R.plurals.settings_received_no_space_count, results.count { it == ImportResult.NoSpace }),
@@ -98,8 +98,9 @@ internal fun Context.notAddedLines(outcome: Outcome.Several): List<String> {
     )
 }
 
-/** The most pixels a picture can have, in millions, as the texts say it. */
-private val MEGAPIXELS = (PictureLimits.MAX_PIXELS / 1_000_000).toInt()
+/** The pixel limit in the unit the current language uses; resources change with the app locale. */
+private val Context.pixelLimit: Int
+    get() = (PictureLimits.MAX_PIXELS / resources.getInteger(R.integer.settings_pictures_pixels_per_unit)).toInt()
 
 /**
  * What deleting a picture with [uses] does, said before deleting: a sentence for each kind of use

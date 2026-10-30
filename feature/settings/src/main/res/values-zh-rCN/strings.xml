@@ -95,7 +95,7 @@
         <item quantity="other"><xliff:g id="count" example="2">%1$d</xliff:g> 张图片的文件大小超过 <xliff:g id="size" example="50 MB">%2$s</xliff:g></item>
     </plurals>
     <plurals name="settings_received_too_large_pixels_count">
-        <item quantity="other"><xliff:g id="count" example="2">%1$d</xliff:g> 张图片的像素数超过 <xliff:g id="megapixels" example="64">%2$d</xliff:g> 百万</item>
+        <item quantity="other"><xliff:g id="count" example="2">%1$d</xliff:g> 张图片的像素数超过 <xliff:g id="megapixels" example="6400">%2$d</xliff:g> 万</item>
     </plurals>
     <plurals name="settings_received_name_taken_count">
         <item quantity="other"><xliff:g id="count" example="2">%d</xliff:g> 张图片与已有图片同名</item>
@@ -147,7 +147,7 @@
     <string name="settings_pictures_unsupported">本机不支持 <xliff:g id="format" example="HEIF (HEIC)">%1$s</xliff:g> 格式的图片，请另存为 JPEG 或 PNG 后重新添加。</string>
     <string name="settings_pictures_too_large_bytes">文件大小超过 <xliff:g id="size" example="50 MB">%1$s</xliff:g></string>
     <plurals name="settings_pictures_too_large_pixels">
-        <item quantity="other">像素数超过 <xliff:g id="megapixels" example="64">%d</xliff:g> 百万</item>
+        <item quantity="other">像素数超过 <xliff:g id="megapixels" example="6400">%d</xliff:g> 万</item>
     </plurals>
     <string name="settings_pictures_unreadable">无法读取文件。请将文件复制到本机或 USB 存储设备上的 <xliff:g id="folder" example="Android/media/com.luncher.launcher">%1$s</xliff:g> 文件夹，再选择从文件夹添加。</string>
     <string name="settings_pictures_no_space">本机存储空间不足，请释放空间后重试。</string>
@@ -159,7 +159,7 @@
     <string name="settings_pictures_folder_unsupported">本机不支持 <xliff:g id="format" example="HEIF (HEIC)">%1$s</xliff:g> 格式</string>
     <string name="settings_pictures_folder_too_large_bytes">文件大小超过 <xliff:g id="size" example="50 MB">%1$s</xliff:g></string>
     <plurals name="settings_pictures_folder_too_large_pixels">
-        <item quantity="other">像素数超过 <xliff:g id="megapixels" example="64">%d</xliff:g> 百万</item>
+        <item quantity="other">像素数超过 <xliff:g id="megapixels" example="6400">%d</xliff:g> 万</item>
     </plurals>
     <string name="settings_pictures_folder_damaged">已损坏</string>
     <string name="settings_pictures_folder_name_taken">已有同名图片</string>

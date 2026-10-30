@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Pixels per displayed unit in the picture-size limit; English uses megapixels. -->
+    <integer name="settings_pictures_pixels_per_unit">1000000</integer>
+</resources>

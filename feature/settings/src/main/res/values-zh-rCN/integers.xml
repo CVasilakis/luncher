@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Chinese writes the picture-size limit in ten-thousands of pixels. -->
+    <integer name="settings_pictures_pixels_per_unit">10000</integer>
+</resources>
