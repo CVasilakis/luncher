@@ -296,6 +296,10 @@
         <item quantity="other">Used on <xliff:g id="count" example="3">%d</xliff:g> tiles: they will show their apps\' own images again.</item>
     </plurals>
     <string name="settings_pictures_delete_text">The picture is deleted from Luncher\'s pictures only.</string>
+    <!-- Two sentences of these messages (the ones above, and Delete all's) one after the other:
+         the first, then the next, with a space between, as English sets sentences apart; a
+         language whose sentences follow each other without one (Chinese) leaves it out. -->
+    <string name="settings_pictures_sentences"><xliff:g id="first" example="Used on a tile.">%1$s</xliff:g> <xliff:g id="next" example="The picture is deleted.">%2$s</xliff:g></string>
     <!-- An action on a picture, beside Delete, and the answer that confirms the new name. -->
     <string name="settings_pictures_rename">Rename</string>
     <!-- The title above the field where the user types a picture's new name. -->

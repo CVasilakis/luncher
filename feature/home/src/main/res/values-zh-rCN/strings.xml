@@ -10,16 +10,16 @@
     <string name="home_menu_info">应用信息</string>
     <string name="home_menu_info_unavailable">本机无法打开应用信息</string>
     <string name="home_rename_title">重命名应用</string>
-    <string name="home_rename_original">原名 \u2068<xliff:g id="name" example="YouTube">%1$s</xliff:g>\u2069</string>
+    <string name="home_rename_original">原名：\u2068<xliff:g id="name" example="YouTube">%1$s</xliff:g>\u2069</string>
     <string name="home_rename_cancel">取消</string>
     <string name="home_rename_reset">恢复</string>
     <string name="home_rename_confirm">重命名</string>
     <string name="home_move_title">移动应用</string>
     <string name="home_move_hint"><xliff:g id="arrows" example="↑↓←→">↑↓←→</xliff:g> 移动 · OK 完成</string>
-    <string name="home_wallpaper_screen_changed">正在调整背景尺寸</string>
-    <string name="home_wallpaper_outdated">正在更新背景</string>
-    <string name="home_wallpaper_saving">正在处理背景</string>
-    <string name="home_tile_images_screen_changed">正在调整卡片封面尺寸</string>
-    <string name="home_tile_images_outdated">正在更新卡片封面</string>
-    <string name="home_tile_images_saving">正在处理卡片封面</string>
+    <string name="home_wallpaper_screen_changed">正在调整背景尺寸…</string>
+    <string name="home_wallpaper_outdated">正在更新背景…</string>
+    <string name="home_wallpaper_saving">正在处理背景…</string>
+    <string name="home_tile_images_screen_changed">正在调整卡片封面尺寸…</string>
+    <string name="home_tile_images_outdated">正在更新卡片封面…</string>
+    <string name="home_tile_images_saving">正在处理卡片封面…</string>
 </resources>

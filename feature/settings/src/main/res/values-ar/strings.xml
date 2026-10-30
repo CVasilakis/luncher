@@ -106,6 +106,7 @@
     <string name="settings_pictures_delete">حذف</string>
     <string name="settings_pictures_delete_question">حذف <xliff:g id="name" example="beach.png">%1$s</xliff:g>؟</string>
     <string name="settings_pictures_delete_text">تُحذف الصورة من صور Luncher فقط.</string>
+    <string name="settings_pictures_sentences"><xliff:g id="first" example="Used on a tile.">%1$s</xliff:g> <xliff:g id="next" example="The picture is deleted.">%2$s</xliff:g></string>
     <string name="settings_pictures_delete_used_background">مستخدمة كخلفية: لن تعرض الشاشة الرئيسية أي صورة.</string>
     <plurals name="settings_pictures_delete_used_tiles">
         <item quantity="zero">مستخدمة في <xliff:g id="count" example="0">%d</xliff:g> مربع: ستعرض صور تطبيقاتها مرة أخرى.</item>

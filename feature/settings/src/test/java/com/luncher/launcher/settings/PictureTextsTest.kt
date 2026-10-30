@@ -1,7 +1,9 @@
 package com.luncher.launcher.settings
 
+import com.luncher.domain.apps.LaunchableApp
 import com.luncher.domain.pictures.ImportResult
 import com.luncher.domain.pictures.PictureLimits
+import com.luncher.domain.pictures.PictureUse
 import com.luncher.domain.pictures.ReceivedPictures.Outcome
 import com.luncher.domain.pictures.SizeLimit
 import org.junit.Assert.assertEquals
@@ -11,7 +13,10 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 
-/** Picture limits use the language's unit in every message, without changing the accepted image size. */
+/**
+ * Picture limits use the language's unit in every message, without changing the accepted image size;
+ * a deletion's sentences follow each other as the language sets sentences apart.
+ */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [33, Config.TARGET_SDK], qualifiers = "en-rUS")
 class PictureTextsTest {
@@ -19,12 +24,13 @@ class PictureTextsTest {
     private val context = RuntimeEnvironment.getApplication()
     private val tooManyPixels = ImportResult.TooLarge(SizeLimit.PIXELS)
     private val twoTooLarge = Outcome.Several(listOf(tooManyPixels, tooManyPixels))
+    private val onATile = PictureUse.Tile(LaunchableApp("com.example.app", "com.example.app.Main"))
 
     @Test
     fun `Chinese uses ten thousands in single, folder and batch messages`() {
         RuntimeEnvironment.setQualifiers("zh-rCN")
 
-        assertEquals("像素数超过 6400 万", context.whyNotAdded(tooManyPixels))
+        assertEquals("像素数超过 6400 万。", context.whyNotAdded(tooManyPixels))
         assertEquals("像素数超过 6400 万", context.refusal(tooManyPixels))
         assertEquals(listOf("2 张图片的像素数超过 6400 万"), context.notAddedLines(twoTooLarge))
         assertEquals(PictureLimits.MAX_PIXELS, 6400L * context.resources.getInteger(R.integer.settings_pictures_pixels_per_unit))
@@ -41,7 +47,7 @@ class PictureTextsTest {
     fun `changing the app language changes the unit on the existing context`() {
         assertEquals("Too large: over 64 megapixels.", context.whyNotAdded(tooManyPixels))
         RuntimeEnvironment.setQualifiers("zh-rCN")
-        assertEquals("像素数超过 6400 万", context.whyNotAdded(tooManyPixels))
+        assertEquals("像素数超过 6400 万。", context.whyNotAdded(tooManyPixels))
         RuntimeEnvironment.setQualifiers("en-rUS")
         assertEquals("Too large: over 64 megapixels.", context.whyNotAdded(tooManyPixels))
     }
@@ -56,5 +62,25 @@ class PictureTextsTest {
             assertEquals(language, resources.getQuantityString(R.plurals.settings_pictures_folder_too_large_pixels, 64, 64), context.refusal(tooManyPixels))
             assertEquals(language, listOf(resources.getQuantityString(R.plurals.settings_received_too_large_pixels_count, 2, 2, 64)), context.notAddedLines(twoTooLarge))
         }
+    }
+
+    @Test
+    fun `Chinese sets a deletion's sentences one after the other, with no space after the full stop`() {
+        RuntimeEnvironment.setQualifiers("zh-rCN")
+
+        assertEquals("1 张应用卡片将恢复默认封面。仅删除图片库中的副本，不影响原文件。", context.deleteText(listOf(onATile)))
+        assertEquals(
+            "有图片正用作背景，删除后主页将不再显示背景图片。1 张应用卡片将恢复默认封面。仅删除图片库中的 5 张图片，不影响原文件。",
+            context.deleteAllText(5, listOf(PictureUse.Wallpaper, onATile)),
+        )
+    }
+
+    @Test
+    fun `English keeps a space between a deletion's sentences`() {
+        assertEquals(
+            "One is used as the background: the home screen will have no picture. Used on a tile: it will show its app's own image again. " +
+                "The 5 pictures are deleted from Luncher's pictures only.",
+            context.deleteAllText(5, listOf(PictureUse.Wallpaper, onATile)),
+        )
     }
 }

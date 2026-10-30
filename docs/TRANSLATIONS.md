@@ -1,11 +1,13 @@
 # Translations
 
-Luncher's texts are in English, Greek, Arabic and Simplified Chinese. This covers where they are, how they're worded,
-how a string is written so that it translates well, and what a new string or language needs.
+Luncher's texts are in English, Greek, Arabic and Simplified Chinese. This covers where they are,
+how they're worded, how a string is written so that it translates well, and what a new string or
+language needs.
 
 - **Greek** is kept by the project's maintainer.
 - **Arabic** is there so a right-to-left translation is tested on every change, and for users who
   want it. No native speaker has reviewed it yet; corrections are welcome.
+- **Simplified Chinese** came from a contributor; corrections are welcome.
 
 ## Where the texts are
 
@@ -64,6 +66,10 @@ The English follows these rules; a translation keeps them as its language allows
 - **No semicolons:** two sentences, or a colon when the second part explains the first.
 - **Periods end a message's sentences only:** titles, entries, values, count lines and a text in
   place of a list have none ("No pictures in the folder yet").
+- **In Chinese,** the marks are full-width (，。？：), and end a string where the English has its
+  own: "。" for a message's period, "？" for a question (删除所有图片？), "…" for something
+  under way (正在添加图片…), "：" for what follows (原名：). Sentences follow each other without a
+  space.
 
 ## Writing a string
 
@@ -74,7 +80,9 @@ The English follows these rules; a translation keeps them as its language allows
 - **One string for each sentence,** never one built from pieces in code: a translation may need
   the parts in another order. What a sentence takes from elsewhere is a format argument
   (`%1$s`). `home_all_hidden` takes the settings panel's title and its Hide apps entry that way,
-  from `:feature:settings`, so the message and the panel always name them alike.
+  from `:feature:settings`, so the message and the panel always name them alike. Sentences that
+  code puts one after the other go through a string too (`settings_pictures_sentences`): English
+  sets them apart with a space, Chinese with none.
 - **Counts** go in `<plurals>`: many languages have more than two forms.
 - **Room for longer text.** A translation often runs a third longer than the English, Greek's
   move title more than twice. Where text can't grow, the layout says what gives way: the move
@@ -105,6 +113,7 @@ The English follows these rules; a translation keeps them as its language allows
   ```bash
   adb shell cmd locale set-app-locales com.luncher.launcher.debug --locales el   # Greek
   adb shell cmd locale set-app-locales com.luncher.launcher.debug --locales ar   # Arabic
+  adb shell cmd locale set-app-locales com.luncher.launcher.debug --locales zh-CN   # Simplified Chinese
   adb shell cmd locale set-app-locales com.luncher.launcher.debug --locales ""   # the device's again
   ```
 

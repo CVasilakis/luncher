@@ -98,6 +98,7 @@
     <string name="settings_pictures_delete">Διαγραφή</string>
     <string name="settings_pictures_delete_question">Διαγραφή του <xliff:g id="name" example="beach.png">%1$s</xliff:g>;</string>
     <string name="settings_pictures_delete_text">Η εικόνα διαγράφεται μόνο από τις εικόνες του Luncher.</string>
+    <string name="settings_pictures_sentences"><xliff:g id="first" example="Used on a tile.">%1$s</xliff:g> <xliff:g id="next" example="The picture is deleted.">%2$s</xliff:g></string>
     <string name="settings_pictures_delete_used_background">Χρησιμοποιείται ως φόντο: η αρχική οθόνη θα μείνει χωρίς εικόνα.</string>
     <plurals name="settings_pictures_delete_used_tiles">
         <item quantity="one">Χρησιμοποιείται σε ένα πλακίδιο: θα δείξει ξανά την εικόνα της εφαρμογής του.</item>

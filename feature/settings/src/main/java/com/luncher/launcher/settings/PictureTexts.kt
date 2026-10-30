@@ -107,15 +107,21 @@ private val Context.pixelLimit: Int
  * it has, then what deleting does and doesn't do; whole sentences, each a string of its own.
  */
 internal fun Context.deleteText(uses: List<PictureUse>): String =
-    (usesText(uses) { getString(R.string.settings_pictures_delete_used_background) } + getString(R.string.settings_pictures_delete_text))
-        .joinToString(" ")
+    sentences(usesText(uses) { getString(R.string.settings_pictures_delete_used_background) } + getString(R.string.settings_pictures_delete_text))
 
 /** What deleting all [count] pictures does, as [deleteText] says it of one, [uses] being all of theirs. */
 internal fun Context.deleteAllText(count: Int, uses: List<PictureUse>): String =
-    (
+    sentences(
         usesText(uses) { resources.getQuantityString(R.plurals.settings_pictures_delete_all_used_background, count) } +
-            resources.getQuantityString(R.plurals.settings_pictures_delete_all_text, count, count)
-        ).joinToString(" ")
+            resources.getQuantityString(R.plurals.settings_pictures_delete_all_text, count, count),
+    )
+
+/**
+ * The sentences of [parts] one after the other, as the language sets them apart: English with a
+ * space, Chinese with none, after its own full stop.
+ */
+private fun Context.sentences(parts: List<String>): String =
+    parts.reduce { text, next -> getString(R.string.settings_pictures_sentences, text, next) }
 
 /** A sentence for each kind of use in [uses] that deleting changes: the background's, [background]; the tiles', with how many. */
 private fun Context.usesText(uses: List<PictureUse>, background: () -> String): List<String> {
