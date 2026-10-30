@@ -186,7 +186,7 @@ can, the focused thing stands out from afar, and every color comes from the user
   - A **field** (`zooms="true"`) dips to 0.97 the same way (`entry_zoom.xml`), keeping its fill.
   - The **gear** on the home screen and the **tiles** dip too
     ([`feature/home/`](../feature/home/README.md#appearance)).
-  A quick press (100 ms) shows its look in two to four frames; a fill is on screen only while OK is
+  Even a quick press shows its look, at the key's going down; a fill is on screen only while OK is
   down, a dip also as it comes back.
 - **A hold of OK opens a menu after 350 ms, wherever Luncher has one.** A tile's menu and a picture's
   menu in the editors open after Luncher's own hold (`OkHold`, `menuHold` in `:domain`), sooner than
