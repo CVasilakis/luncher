@@ -1,7 +1,9 @@
 package com.luncher.launcher.ui
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class WholeRowsTest {
@@ -76,5 +78,34 @@ class WholeRowsTest {
         val most = intArrayOf(106, 106, 104)
         assertEquals(106, usualHeight(most.size) { most[it] })
         assertEquals(0, usualHeight(0) { 0 })
+    }
+
+    @Test
+    fun `a list that scrolls shows two rows at least, squeezed however little room there is`() {
+        val fit = fitRows(room = 120, content = 1000, row = 100, gap = 10)!!
+        assertEquals(2, fit.shown)
+        assertEquals(-45, fit.extra)
+        assertEquals(120, fit.window)
+    }
+
+    @Test
+    fun `a single row taller than the room stays one row`() {
+        assertEquals(1, fitRows(room = 80, content = 100, row = 100, gap = 10)!!.shown)
+    }
+
+    @Test
+    fun `a window of two rows turns round when the next row is past its end`() {
+        assertTrue(turnsRound(shown = 2, nextEnd = 401, windowEnd = 400))
+    }
+
+    @Test
+    fun `a window of two rows doesn't turn round while the next row shows whole`() {
+        assertFalse(turnsRound(shown = 2, nextEnd = 400, windowEnd = 400))
+    }
+
+    @Test
+    fun `a window of three rows or more never turns round`() {
+        assertFalse(turnsRound(shown = 3, nextEnd = 500, windowEnd = 400))
+        assertFalse(turnsRound(shown = 0, nextEnd = 500, windowEnd = 400))
     }
 }

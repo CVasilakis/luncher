@@ -43,6 +43,7 @@ internal class FocusSlide(private val list: View, private val scrollTo: (Int) ->
     private var target: ListEntry? = null
     private var distance = 0
     private var offset = 0
+    private var sameRow = false
 
     private val animator = ValueAnimator.ofFloat(0f, 1f).apply {
         duration = DURATION_MS
@@ -56,14 +57,21 @@ internal class FocusSlide(private val list: View, private val scrollTo: (Int) ->
     /** Whether the list is sliding: it doesn't scroll to show the focus meanwhile, it slides. */
     val running: Boolean get() = target != null
 
+    /** Where the bar's top is now, in the list's window. */
+    val barTop: Int get() = lerp(from.top, to.top - distance, fraction)
+
+    private val fraction: Float get() = if (distance == 0) 1f else offset.toFloat() / distance
+
     /**
      * Slides the list [distance] px, the focus going from [fromEntry], now at [fromBounds], to
      * [toEntry], now at [toBounds] (in the list's window, its top at 0), which takes the focus
-     * (the list moves it) as this starts.
+     * (the list moves it) as this starts. The same entry twice: the list turns round
+     * ([turnsRound]), and the bar goes with its row.
      */
     fun start(fromEntry: ListEntry, fromBounds: Rect, toEntry: ListEntry, toBounds: Rect, distance: Int) {
         finish()
-        fromLook.take(fromEntry)
+        sameRow = fromEntry === toEntry
+        if (!sameRow) fromLook.take(fromEntry)
         toLook.take(toEntry)
         from.set(fromBounds)
         to.set(toBounds)
@@ -97,6 +105,7 @@ internal class FocusSlide(private val list: View, private val scrollTo: (Int) ->
         target = null
         entry.lookHeld = false
         list.invalidate()
+        (list.parent as? ScrollFrame)?.showFades()
     }
 
     /**
@@ -106,7 +115,7 @@ internal class FocusSlide(private val list: View, private val scrollTo: (Int) ->
      */
     fun draw(canvas: Canvas, top: Int) {
         val entry = target ?: return
-        val f = if (distance == 0) 1f else offset.toFloat() / distance
+        val f = fraction
         bar.set(
             lerp(from.left, to.left, f),
             lerp(from.top, to.top - distance, f),
@@ -117,7 +126,7 @@ internal class FocusSlide(private val list: View, private val scrollTo: (Int) ->
         canvas.translate(0f, top.toFloat())
         entry.drawFocusFill(canvas, bar)
         canvas.clipRect(bar)
-        fromLook.draw(canvas, from.left, from.top - offset)
+        if (!sameRow) fromLook.draw(canvas, from.left, from.top - offset)
         toLook.draw(canvas, to.left, to.top - offset)
         canvas.restore()
     }

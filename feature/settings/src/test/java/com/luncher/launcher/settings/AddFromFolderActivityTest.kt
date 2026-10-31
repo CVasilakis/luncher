@@ -1,6 +1,7 @@
 package com.luncher.launcher.settings
 
 import android.app.Activity
+import android.graphics.Rect
 import android.os.Looper
 import android.view.FocusFinder
 import android.view.Gravity
@@ -881,5 +882,64 @@ class AddFromFolderActivityTest {
         for (position in last - 1 downTo 1) press(KeyEvent.KEYCODE_DPAD_UP, position, slot = 1)
         press(KeyEvent.KEYCODE_DPAD_UP, 0, slot = 0)
         assertEquals("the first row at the list's margin again", list.paddingTop, list.getChildAt(0).top)
+    }
+
+    // Android selects the row nearest to where the focus comes from, and counts the list's top
+    // padding again as it places it: the list moved down by it each time, and stayed there.
+    @Test
+    fun `back from Add all, the same row is selected and the list is where it was`() {
+        graph(*Array(30) { folderPicture("picture%02d.jpg".format(it)) })
+        val activity = start()
+        val list = activity.list()
+        fun press(keyCode: Int) {
+            activity.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, keyCode))
+            activity.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_UP, keyCode))
+            shadowOf(Looper.getMainLooper()).idleFor(Duration.ofSeconds(1))
+        }
+        repeat(6) { press(KeyEvent.KEYCODE_DPAD_DOWN) }
+        val selected = list.selectedItemPosition
+        val top = list.selectedView.top
+
+        // As Android moves the focus for Left, which a key sent to the activity doesn't do: it
+        // gives the list the rectangle that had the focus.
+        val addAll = activity.findViewById<View>(R.id.settings_pictures_folder_add_all)
+        val root = activity.window.decorView as ViewGroup
+        repeat(3) {
+            assertTrue("Add all takes the focus", addAll.requestFocus())
+            val from = Rect().also(addAll::getFocusedRect)
+            root.offsetDescendantRectToMyCoords(addAll, from)
+            root.offsetRectIntoDescendantCoords(list, from)
+            assertTrue("the list takes the focus", list.requestFocus(View.FOCUS_LEFT, from))
+            shadowOf(Looper.getMainLooper()).idle()
+
+            assertEquals(selected, list.selectedItemPosition)
+            assertEquals(top, list.selectedView.top)
+        }
+    }
+
+    // The rows grow to three lines as the first mark comes, after the list has shown: fitted to the
+    // first row as it was, they were a few px too tall, and jumped at the next measure, the first key.
+    @Test
+    fun `a first picture found damaged after the list shows leaves its rows as they stay`() {
+        val damaged = folderPicture("a damaged.jpg")
+        val others = Array(30) { folderPicture("picture%02d.jpg".format(it)) }
+        val graph = graphWithDamaged(damaged, damaged, *others)
+        val activity = start()
+        val list = activity.list()
+        fun heights() = (0 until list.childCount).map { list.getChildAt(it).height }.distinct()
+        graph.jobs.runAll()
+        idle()
+        assertEquals("the first row marked", "a damaged.jpg | Local · 4000 × 3000 · 2.4 MB | Damaged", activity.rows()[0])
+        val tops = (0 until list.childCount).map { list.getChildAt(it).top }
+        val height = list.height
+        assertEquals("one height", 1, heights().size)
+
+        activity.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DPAD_DOWN))
+        activity.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_DPAD_DOWN))
+        list.requestLayout()   // the list's next measure, whatever brings it
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofSeconds(1))
+
+        assertEquals(height, list.height)
+        assertEquals(tops, (0 until list.childCount).map { list.getChildAt(it).top })
     }
 }

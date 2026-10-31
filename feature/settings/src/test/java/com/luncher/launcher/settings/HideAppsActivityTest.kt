@@ -274,6 +274,41 @@ class HideAppsActivityTest {
         }
     }
 
+    // Android remembers where the selected row is as the data changes, and puts it back there at
+    // the next layout. A slide that ended by then left the list off whole rows, by what it had left
+    // to go, until an end of the list. So the data changing ends the slide first.
+    @Test
+    fun `OK during a slide ends it at once, the list on whole rows`() {
+        installedApps.apps = List(40) { app("app%02d".format(it)) }
+        val activity = start()
+        val list = activity.list()
+        val looper = shadowOf(Looper.getMainLooper())
+        ShadowChoreographer.setPaused(true)
+        ShadowChoreographer.setFrameDelay(Duration.ofMillis(16))
+        try {
+            fun frames(count: Int) = repeat(count) { looper.idleFor(Duration.ofMillis(16)) }
+            while (!list.canScrollVertically(-1)) {
+                activity.press(KeyEvent.KEYCODE_DPAD_DOWN)
+                frames(30)
+            }
+            val row = list.selectedView.top
+            val pitch = list.getChildAt(1).top - list.getChildAt(0).top
+            activity.press(KeyEvent.KEYCODE_DPAD_DOWN)
+            frames(3)
+            assertFalse("the list on its way", android.R.attr.state_selected in list.selectedView.drawableState)
+
+            activity.press(KeyEvent.KEYCODE_DPAD_CENTER)
+
+            assertTrue("the slide ended", android.R.attr.state_selected in list.selectedView.drawableState)
+            assertEquals("the selected row where the focus stays", row, list.selectedView.top)
+            frames(30)
+            assertEquals("still there", row, list.selectedView.top)
+            assertEquals("whole rows", 0, (list.getChildAt(1).top - list.paddingTop) % pitch)
+        } finally {
+            ShadowChoreographer.setPaused(false)
+        }
+    }
+
     // Unlike the home screen (HomeActivityTest), which stays left to right.
     @Test
     @Config(qualifiers = "ar-rEG-$TV_1080P")

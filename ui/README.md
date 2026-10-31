@@ -321,9 +321,19 @@ can, the focused thing stands out from afar, and every color comes from the user
   and icons as they look focused, drawn once as the slide starts, apart from the rows: recorded
   (a `Picture`) and played by the GPU as it draws the rows, or before API 23 into two bitmaps
   (the GPU keeps one drawing of a view a frame, its look at rest, which the rows keep meanwhile); at the end the
-  row looks focused itself, where the bar was. A key during a slide ends it at once. A focus moved
-  any other way (a screen giving a row the focus) shows the row a row ahead at once, the list
-  scrolled by whole rows.
+  row looks focused itself, where the bar was. A key during a slide ends it at once, and so does a
+  change of the list's data. A focus moved any other way (a screen giving a row the focus) shows
+  the row a row ahead at once, the list scrolled by whole rows. Back from a column beside it, a
+  list keeps its selection and its place.
+- **A window of two rows has no room for a row on each side of the focus,** so the row ahead is
+  the one the way the arrows go. Going down, the focus is at the window's top, whole and not
+  faded, and the row below it fades while there's more; going up, at the bottom, the row above it
+  fading. An arrow the other way turns the window round: the list and the focus move a row
+  together, in the slide's 150 ms, the same row keeping the focus, and the next press moves on
+  (`turnsRound`). The margin beyond the focused row is covered, so what's past it doesn't peek
+  in, and the fades follow the focus as it moves (`FittedRows.focusAlong`). A list that scrolls
+  never shows fewer than two rows: however little room there is, they share it, giving up their
+  padding, then their content.
 - **Sizes.** Android TV's 960 x 540 dp canvas, the 48 dp margin at the sides and 27 to 32 dp above
   and below, an 8 dp grid; Material for TV's type, a little larger for the distance (an entry's 18
   sp, a line below it 14 sp, a screen's title 34 sp, smaller below 450 dp tall). Icons are line

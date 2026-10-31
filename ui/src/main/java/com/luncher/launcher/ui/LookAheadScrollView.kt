@@ -20,9 +20,10 @@ import android.widget.ScrollView
  * Its window ends on a whole row: while the rows don't all fit, each is a little taller or
  * shorter, the same for all, so a whole number of them fill the room ([fitRows]), and the view is
  * that tall. Up and Down move the focus while the row beyond the next one shows whole; else the
- * column slides a row under the focus, which stays where it is ([FocusSlide], [slideFor]). Moved
- * any other way (a screen giving a row the focus), the focus is shown a row ahead at once, the
- * column scrolled by whole rows.
+ * column slides a row under the focus, which stays where it is ([FocusSlide], [slideFor]). In a
+ * window of two rows the row ahead is the one the way the arrows go, and an arrow the other way
+ * turns the column round first ([turnsRound]). Moved any other way (a screen giving a row the
+ * focus), the focus is shown a row ahead at once, the column scrolled by whole rows.
  */
 open class LookAheadScrollView @JvmOverloads constructor(context: Context, attrs: AttributeSet? = null) :
     ScrollView(context, attrs), FittedRows {
@@ -33,6 +34,27 @@ open class LookAheadScrollView @JvmOverloads constructor(context: Context, attrs
         private set
     final override var fadeLength = 0
         private set
+
+    override val focusAlong: Float
+        get() {
+            val column = column
+            if (shown != TWO_ROWS || column == null || rowHeight == 0) return -1f
+            val windowTop = paddingTop + column.paddingTop
+            val top = if (slide.running) {
+                slide.barTop
+            } else {
+                val row = findFocus()?.let { rowOf(it, column) } ?: return lastAlong
+                column.top - scrollY + row.top
+            }
+            lastAlong = ((top - windowTop).toFloat() / rowHeight).coerceIn(0f, 1f)
+            return lastAlong
+        }
+
+    /** Where the focus was in a window of two rows, while it's elsewhere on the screen. */
+    private var lastAlong = 0f
+
+    /** How many rows the window shows; 0 while all rows show. */
+    private var shown = 0
 
     private val ahead = Rect()
     private val fromBounds = Rect()
@@ -48,20 +70,30 @@ open class LookAheadScrollView @JvmOverloads constructor(context: Context, attrs
         val column = column ?: return
         val margin = column.paddingTop + column.paddingBottom
         val room = MeasureSpec.getSize(heightMeasureSpec) - paddingTop - paddingBottom - margin
-        // The rows as they are, without what this gave them.
-        var added = 0
+        // The rows as they are, without what this gave them, and not what fillViewport stretched the column to.
+        var content = 0
         for (i in 0 until column.childCount) {
             val row = column.getChildAt(i)
-            if (row is ListEntry && row.visibility != View.GONE) added += row.measuredHeight - row.naturalHeight
+            if (row.visibility == View.GONE) continue
+            val params = row.layoutParams as? MarginLayoutParams
+            content += (if (row is ListEntry) row.naturalHeight else row.measuredHeight) + (params?.topMargin ?: 0) + (params?.bottomMargin ?: 0)
         }
         val usual = usualHeight(column.childCount) { i ->
             val row = column.getChildAt(i)
             if (row is ListEntry && row.visibility != View.GONE) row.naturalHeight else 0
         }
         val fit = if (usual == 0 || MeasureSpec.getMode(heightMeasureSpec) == MeasureSpec.UNSPECIFIED) null
-        else fitRows(room, column.measuredHeight - margin - added, usual, 0)
+        else fitRows(room, content, usual, 0)
+        shown = fit?.shown ?: 0
         if (fitTo(fit, usual)) super.onMeasure(widthMeasureSpec, heightMeasureSpec)
-        if (fit != null) setMeasuredDimension(measuredWidth, fit.window + margin + paddingTop + paddingBottom)
+        if (fit == null) return
+        val whole = fit.window + margin + paddingTop + paddingBottom
+        // Stretched to the room (fillViewport), the column is a few px taller than the window of
+        // whole rows: that much to scroll, and a fade while every row shows.
+        if (isFillViewport && column.measuredHeight > whole - paddingTop - paddingBottom && column.measuredHeight <= MeasureSpec.getSize(heightMeasureSpec)) {
+            super.onMeasure(widthMeasureSpec, MeasureSpec.makeMeasureSpec(whole, MeasureSpec.EXACTLY))
+        }
+        setMeasuredDimension(measuredWidth, whole)
     }
 
     /** Gives the rows [fit]'s height, the usual row being [usual] px; whether it changed, so the column is to be measured again. */
@@ -102,12 +134,16 @@ open class LookAheadScrollView @JvmOverloads constructor(context: Context, attrs
         val top = column.top - scrollY
         val windowTop = paddingTop + column.paddingTop
         val windowBottom = height - paddingBottom - column.paddingBottom
-        val distance = if (down) {
-            val end = column.height - (height - paddingBottom - paddingTop)
-            slideFor(beyond?.let { top + it.bottom }, top + toRow.bottom, windowBottom, toRow.top - fromRow.top, end - scrollY)
-        } else {
-            slideFor(beyond?.let { height - (top + it.top) }, height - (top + toRow.top), height - windowTop, fromRow.top - toRow.top, scrollY)
+        val step = if (down) toRow.top - fromRow.top else fromRow.top - toRow.top
+        val left = if (down) column.height - (height - paddingBottom - paddingTop) - scrollY else scrollY
+        val nextEnd = if (down) top + toRow.bottom else height - (top + toRow.top)
+        val windowEnd = if (down) windowBottom else height - windowTop
+        val beyondEnd = beyond?.let { if (down) top + it.bottom else height - (top + it.top) }
+        if (turnsRound(shown, nextEnd, windowEnd)) {
+            val moved = step.coerceAtMost(left).coerceAtLeast(0)
+            return turn(fromRow, column, top, if (down) moved else -moved)
         }
+        val distance = slideFor(beyondEnd, nextEnd, windowEnd, step, left)
         val signed = if (down) distance else -distance
         if (distance != 0 && fromRow is ListEntry && toRow is ListEntry && isLaidOut) {
             fromBounds.set(column.left + fromRow.left, top + fromRow.top, column.left + fromRow.right, top + fromRow.bottom)
@@ -123,7 +159,20 @@ open class LookAheadScrollView @JvmOverloads constructor(context: Context, attrs
             return next.requestFocus(direction)
         } finally {
             moving = false
+            (parent as? ScrollFrame)?.showFades()
         }
+    }
+
+    /** Moves the column and the focus on [row] [distance] px together, the column's top being at [top], the row keeping the focus. */
+    private fun turn(row: View, column: ViewGroup, top: Int, distance: Int): Boolean {
+        if (distance != 0 && row is ListEntry && isLaidOut) {
+            fromBounds.set(column.left + row.left, top + row.top, column.left + row.right, top + row.bottom)
+            slideStart = scrollY
+            slide.start(row, fromBounds, row, fromBounds, distance)
+        } else {
+            scrollBy(0, distance)
+        }
+        return true
     }
 
     /** The row of [column] that [view] is, or is in. */
@@ -155,13 +204,20 @@ open class LookAheadScrollView @JvmOverloads constructor(context: Context, attrs
         if (slide.running || moving) return 0
         val column = column ?: return super.computeScrollDeltaToGetChildRectOnScreen(rect)
         val row = rect.height()
+        val before = if (shown == TWO_ROWS) 0 else row
         ahead.set(
             rect.left,
-            (rect.top - row - column.paddingTop).coerceAtLeast(0),
+            (rect.top - before - column.paddingTop).coerceAtLeast(0),
             rect.right,
             (rect.bottom + row + column.paddingBottom).coerceAtMost(column.height),
         )
         return super.computeScrollDeltaToGetChildRectOnScreen(ahead)
+    }
+
+    // A screen giving a row the focus, in a window of two rows: the fades go with it, without a scroll.
+    override fun requestChildFocus(child: View?, focused: View?) {
+        super.requestChildFocus(child, focused)
+        if (shown == TWO_ROWS) (parent as? ScrollFrame)?.showFades()
     }
 
     override fun dispatchDraw(canvas: Canvas) {
