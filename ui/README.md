@@ -71,7 +71,7 @@ ui/
     │   │                         shown half a second at least: for work the user waits for (the wallpaper drawn,
     │   │                         a picture added); Cancel too, and Back, for work that can be stopped
     │   └── res/
-    │       ├── anim/             panel_enter, panel_exit: a floating panel's fade in and out; panel_none; screen_hold_open, screen_hold_close:
+    │       ├── anim/             panel_enter, panel_exit: a floating panel's fade in and out; screen_hold_open, screen_hold_close:
     │       │                     the screen under a full-screen one, held still
     │       ├── animator/         entry_zoom, button_zoom: a field's, and a button's, zoom and lift (and their dip while OK is held)
     │       ├── drawable/         icon_…, the line icons (white, tinted where they're used); panel_background,
@@ -221,9 +221,7 @@ can, the focused thing stands out from afar, and every color comes from the user
   style has both. Android 5.1 and 6.0 play no app dialog's window entrance: there `PanelDialog`
   (every dialog of `Dialogs.kt`, and `WorkingDialog`'s window) plays it in the window
   (`WindowEntrance`), started at its first draw, as on a slow TV that can come after the animation
-  would have ended; the window keeps its exit, with an entrance that changes nothing
-  (`panel_none`), not none: with none, Android 5.1 played no exit either for a dialog with Android's
-  dim. An activity's and a list's entrances play there. Each follows Android's animation
+  would have ended; the window keeps its exit, and has no entrance of its own. An activity's and a list's entrances play there. Each follows Android's animation
   settings: a dialog's and a list's the window animation scale, an activity's the transition
   animation scale, the entrance in the window the animator duration scale; with animations off,
   none. Nothing waits for an exit: what closed the panel acts as it starts fading. A window

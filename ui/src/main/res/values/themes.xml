@@ -60,11 +60,10 @@
     </style>
 
     <!-- Android 5.1 and 6.0 play no app dialog's window entrance: there the dialog plays it in its
-         window (PanelDialog, WindowEntrance), and the window only fades as it goes. An entrance
-         that changes nothing, so a device that would play one doesn't play it twice; not @null,
-         with which Android 5.1 played no exit either for a dialog with Android's dim. -->
+         window (PanelDialog, WindowEntrance), and the window only fades as it goes. No entrance
+         here, so a device that would play one doesn't play it twice. -->
     <style name="Animation.Luncher.Panel.ExitOnly">
-        <item name="android:windowEnterAnimation">@anim/panel_none</item>
+        <item name="android:windowEnterAnimation">@null</item>
     </style>
 
     <!-- WorkingDialog: a floating panel as the dialogs are. -->
