@@ -12,12 +12,12 @@ import android.view.ViewTreeObserver
 
 /**
  * One window of a screen handing over to the next (a menu's entry opening a question, the working
- * window its message, a tile's menu the rename dialog). Each dims the screen with its own window,
- * so closing the first before the next shows drops the dim for a moment, and closing it as the next
- * shows leaves nothing on screen while the next is made. Here the next shows first, and the first
- * closes at once, with no animation, once the next has drawn ([PanelDialog.takeOver]); the next
- * fades in over it. What the first would do after closing is [from]'s `open`. A window that starts
- * a screen stays until that screen has come over it ([toScreen]).
+ * window its message, a tile's menu the rename dialog). Closing the first before the next shows
+ * would let the dim under them ([ScreenDim]) go, and closing it as the next shows leaves nothing on
+ * screen while the next is made. Here the next shows first, and the first closes at once, with no
+ * animation, once the next has drawn ([PanelDialog.takeOver]); the next fades in over it. What the
+ * first would do after closing is [from]'s `open`. A window that starts a screen stays until that
+ * screen has come over it ([toScreen]).
  */
 object Handover {
 
@@ -39,9 +39,9 @@ object Handover {
             if (leaving === old) {
                 leaving = null
                 if (old is PanelDialog) old.leaving = false
-                // As its screen finishes, the screen's own exit takes it along with the screen's:
-                // closed first, it would fade away alone, and the screen under show bright for
-                // the moment Android takes to start the screen's exit.
+                // As its screen finishes, the screen's own exit takes it and the dim along: closed
+                // first, they would fade away alone, and the screen under show bright for the
+                // moment Android takes to start the screen's exit.
                 if (!(old.context.activity()?.isFinishing ?: false)) old.dismiss()
             }
         }
@@ -151,7 +151,7 @@ object Handover {
     }
 }
 
-private fun Context.activity(): Activity? {
+internal fun Context.activity(): Activity? {
     var context: Context? = this
     while (context is ContextWrapper) {
         if (context is Activity) return context

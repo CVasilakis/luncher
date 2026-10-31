@@ -43,6 +43,7 @@ ui/
     │   │   │                     chosen, a length limit; above the keyboard while it shows); the features give their
     │   │   │                     texts and what each button does. PanelDialog, their base and WorkingDialog's window:
     │   │   │                     how a floating panel comes and goes
+    │   │   ├── ScreenDim.kt      the dim under a screen's dialogs, a window of the screen's that fades with it
     │   │   ├── WindowEntrance.kt a floating window's entrance played in the window, where Android plays none
     │   │   │                     (Android 5.1 and 6.0): the dialogs', a tile's menu's
     │   │   ├── NameField.kt      a new name's field, outlined in the accent while focused, in the error color once refused
@@ -86,6 +87,7 @@ ui/
     │       │   │                 tile name's text size and gap; the home screen's padding at the sides
     │       │   │                 (screen_padding_horizontal), which the home tile's size comes from; the tile
     │       │   │                 shape's band, shadow and its drop; the tile's frame and its lift (tile_lift)
+    │       │   ├── ids.xml       the tag that keeps a screen's dim on its window
     │       │   └── themes.xml    Theme.Luncher, the app's and the home screen's theme; Theme.Luncher.Dialog, the
     │       │                     dialogs', and Theme.Luncher.Working; Widget.Luncher.Button, a button's
     │       └── values-h450dp/    a screen's title, and the gap below a panel's, on a screen 450 dp tall or more
@@ -220,8 +222,8 @@ can, the focused thing stands out from afar, and every color comes from the user
   (every dialog of `Dialogs.kt`, and `WorkingDialog`'s window) plays it in the window
   (`WindowEntrance`), started at its first draw, as on a slow TV that can come after the animation
   would have ended; the window keeps its exit, with an entrance that changes nothing
-  (`panel_none`), not none: with none, Android 5.1 played no exit either for a dialog that dims the
-  screen. An activity's and a list's entrances play there. Each follows Android's animation
+  (`panel_none`), not none: with none, Android 5.1 played no exit either for a dialog with Android's
+  dim. An activity's and a list's entrances play there. Each follows Android's animation
   settings: a dialog's and a list's the window animation scale, an activity's the transition
   animation scale, the entrance in the window the animator duration scale; with animations off,
   none. Nothing waits for an exit: what closed the panel acts as it starts fading. A window
@@ -236,20 +238,23 @@ can, the focused thing stands out from afar, and every color comes from the user
   `screen_hold_close` for the one under it, which would otherwise fade or slide with Android's own).
   Set in those screens' themes, not in `Theme.Luncher`, which is also the home screen's: how it
   opens an app and comes back from one stays Android's.
-- **One window handing over to the next doesn't drop the dim.** A dialog's button or entry that
+- **A dialog's dim goes with what it dims.** The dialogs don't use Android's dim: it's a layer of its
+  own, outside the window it belongs to, so a screen's exit doesn't fade it, and once a screen has
+  called `finish()` Android no longer changes it. `ScreenDim` is a window of the screen's that
+  covers it and only draws the dim, 0.6 of black, below the screen's dialogs and taking no key and no focus, so
+  their windows work as they would alone. Being the screen's, it fades with the screen, and being one per screen, it
+  isn't touched as one dialog hands over to the next. Every `PanelDialog` holds it while it shows; it
+  comes and goes with the same fade as they do, with the last one. The panels that are activities (the settings
+  panel) keep Android's dim, which fades with their window. A tile's menu dims nothing.
+- **One window handing over to the next leaves the dim as it is.** A dialog's button or entry that
   opens another window, the working window closing into its message, a tile's menu into the rename
   dialog: `Handover.from(old) { open next }` shows the next first; `old` stays, with no animation and
-  no key, until the next has drawn its first frame, then closes at once, so the dim, which each
-  window has of its own, never drops between them (the next waits to dim until `old` goes, the two
-  would be darker than one; before Android 11 it is the other way round: a window's dim fades with its
-  window animation there, so the window handed over to plays its entrance in itself (`WindowEntrance`, as
-  where Android plays none), its dim whole as it comes, and the old one's dim goes with its window; "drawn"
-  is the first draw from Android 11, and from Android 7.0 before it the first frame rendered, as the first
-  window of a process shows some frames after the main thread has drawn it, so meanwhile the old panel,
-  dimmed by the new window, fades out with its window and dim staying; the old one goes after one
-  second at the latest) and the first dialog of a process, which is slow to make, doesn't leave
-  the screen bare. If the action opens no window, `old` closes as it would alone, with its fade, unless the action finishes its
-  screen: then it stays, and goes with the screen's own exit, as closed first it would fade away alone and
+  no key, until the next has drawn its first frame, then closes at once, so the dim never goes between
+  them and the first dialog of a process, which is slow to make, doesn't leave the screen bare ("drawn" is the
+  first draw from Android 11, and from Android 7.0 before it the first frame rendered, as the first
+  window of a process shows some frames after the main thread has drawn it; the old one goes after one
+  second at the latest). If the action opens no window, `old` closes as it would alone, with its fade, unless the action finishes its
+  screen: then it stays, and goes with the screen's own exit, dim and all, as closed first it would fade away alone and
   leave the screen under it bright until Android starts that exit. If the action starts a screen
   (`Handover.toScreen`, inside `from`: a tile's menu opening the tile banner picker or App info), `old`
   stays, taking no key but Back, as closed at once it would leave the screen under it bare for as long as

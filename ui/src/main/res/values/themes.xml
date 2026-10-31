@@ -21,12 +21,13 @@
     </style>
 
     <!-- A dialog over a screen of the menus and settings (Dialogs.kt: a question, a message, a
-         menu, a new name): a floating panel like the settings panel, over the dimmed screen. -->
+         menu, a new name): a floating panel like the settings panel, over the screen a window of
+         its own dims (ScreenDim), not Android's dim, which the screen's exit wouldn't fade. -->
     <style name="Theme.Luncher.Dialog" parent="@android:style/Theme.DeviceDefault.Dialog.NoActionBar">
         <item name="android:windowBackground">@drawable/panel_background</item>
         <item name="android:colorBackground">@color/panel</item>
         <item name="android:colorAccent">@color/accent</item>
-        <item name="android:backgroundDimAmount">0.6</item>
+        <item name="android:backgroundDimEnabled">false</item>
         <item name="android:textAlignment">viewStart</item>
         <!-- The dialog theme's minimum width is a share of the screen; the layout sets the width. -->
         <item name="android:windowMinWidthMajor">0dp</item>
@@ -61,7 +62,7 @@
     <!-- Android 5.1 and 6.0 play no app dialog's window entrance: there the dialog plays it in its
          window (PanelDialog, WindowEntrance), and the window only fades as it goes. An entrance
          that changes nothing, so a device that would play one doesn't play it twice; not @null,
-         with which Android 5.1 played no exit either for a dialog that dims the screen. -->
+         with which Android 5.1 played no exit either for a dialog with Android's dim. -->
     <style name="Animation.Luncher.Panel.ExitOnly">
         <item name="android:windowEnterAnimation">@anim/panel_none</item>
     </style>

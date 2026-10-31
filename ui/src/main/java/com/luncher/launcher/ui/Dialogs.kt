@@ -18,7 +18,6 @@ import android.view.ViewTreeObserver
 import android.view.Window
 import android.view.WindowInsets
 import android.view.WindowManager
-import android.view.animation.LinearInterpolator
 import android.view.inputmethod.EditorInfo
 import android.widget.TextView
 import com.luncher.domain.appearance.ColorRoles
@@ -37,8 +36,9 @@ class MenuAction(val label: CharSequence, val icon: Int, val deletes: Boolean = 
 /**
  * A dialog's window that comes and goes as a floating panel: a short fade in and out
  * (`Animation.Luncher.Panel`, its [theme]'s), its entrance played in the window where Android plays
- * no app dialog's ([WindowEntrance.NEEDED]); there the window only fades as it goes. Every dialog of
- * the menus and settings is one, and [WorkingDialog]'s window.
+ * no app dialog's ([WindowEntrance.NEEDED]); there the window only fades as it goes. The screen
+ * under it is dimmed by a window of the screen's ([ScreenDim]), not by Android's dim. Every dialog
+ * of the menus and settings is one, and [WorkingDialog]'s window.
  */
 open class PanelDialog(context: Context, theme: Int) : Dialog(context, theme) {
 
@@ -50,11 +50,8 @@ open class PanelDialog(context: Context, theme: Int) : Dialog(context, theme) {
     /** Whether this one is replaced by the next, and closes with it: [dismiss] then leaves it. */
     internal var leaving = false
 
-    /** Whether this window's own dim waits for the one under it to close. */
-    private var dimmedByUnderneath = false
-
-    /** Whether the window plays its entrance in itself now, its own style having none. */
-    private var entranceInWindow = false
+    /** The dim under this window, while it shows. */
+    private var dim: ScreenDim? = null
 
     /**
      * The key listener its screen gave it ([WorkingDialog]'s), and the one a [Handover] has in its
@@ -78,60 +75,37 @@ open class PanelDialog(context: Context, theme: Int) : Dialog(context, theme) {
         leaving = false
         val old = Handover.claim(this)
         if (!isShowing) {
-            val window = checkNotNull(window)
-            // Before Android 11 a window's dim fades with its window animation: handed over to,
-            // a window that faded in so would leave the dim to ramp up from nothing as the old
-            // one's goes. So it plays its entrance in itself, as where Android plays none, and its
-            // dim is whole as it comes.
-            if (WindowEntrance.NEEDED || (old != null && Build.VERSION.SDK_INT < 30)) {
+            if (WindowEntrance.NEEDED) {
+                val window = checkNotNull(window)
                 val entrance = entrance ?: WindowEntrance(window.decorView).also { entrance = it }
                 entrance.prepare()
                 window.attributes = window.attributes.apply { windowAnimations = R.style.Animation_Luncher_Panel_ExitOnly }
-                entranceInWindow = true
-            } else if (entranceInWindow) {
-                entrance?.cancel()
-                window.decorView.alpha = 1f
-                window.attributes = window.attributes.apply { windowAnimations = R.style.Animation_Luncher_Panel }
-                entranceInWindow = false
             }
+            dim = context.activity()?.let(ScreenDim::of)?.also { it.hold(this) }
         }
-        // Both would dim the screen, the two darker than one while they overlap: the one under it
-        // dims alone, until it closes. Before Android 11 it's the other way round, the new one
-        // dimming from the start, its dim whole as it comes (it plays its entrance in itself), and
-        // the old one's going with its window: a dim added to a window that shows already comes
-        // some frames late, and the screen would show bare meanwhile; and the old one's dim stays
-        // while its window does, so clearing it changed nothing but the timing.
-        val dimless = old != null && Build.VERSION.SDK_INT >= 30 &&
-            old.window?.attributes?.flags?.and(WindowManager.LayoutParams.FLAG_DIM_BEHIND) != 0
-        if (dimless) checkNotNull(window).clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
         super.show()
         WindowFocus.checkAfterShow(this)
-        if (old != null) takeOver(old, dimless)
+        if (old != null) takeOver(old)
     }
 
     override fun dismiss() {
         if (leaving) return
         super.dismiss()
+        dim?.release(this)
         closeUnderneath()
     }
 
     /**
      * Takes the place of [old], which is a window of the same screen: it stays, with no animation
-     * and no key, until this one has drawn its first frame, and then closes at once, so the dim
-     * under the two never drops between them, nor the screen shows bare in the time this one is made.
+     * and no key, until this one has drawn its first frame, and then closes at once, so the screen
+     * doesn't show bare in the time this one is made, and the dim under the two, which either holds,
+     * doesn't move.
      */
-    private fun takeOver(old: Dialog, dimless: Boolean) {
+    private fun takeOver(old: Dialog) {
         closeUnderneath()
         underneath = old
-        dimmedByUnderneath = dimless
         animationsUnderneath = old.window?.attributes?.windowAnimations ?: 0
         old.window?.setWindowAnimations(0)
-        // Before Android 11 the new window shows some frames before its panel does (its first frame
-        // is rendered late) and dims the old one's panel, which would hang there, dimmed and stuck:
-        // it fades out as the exit does, its window's dim, which is the screen's, staying.
-        if (Build.VERSION.SDK_INT < 30) {
-            old.window?.decorView?.animate()?.alpha(0f)?.setDuration(FADE_OUT)?.setInterpolator(LinearInterpolator())?.start()
-        }
         Handover.holdKeys(old, Handover.NO_KEY)
         if (old is PanelDialog) old.leaving = true
         val decor = checkNotNull(window).decorView
@@ -189,9 +163,6 @@ open class PanelDialog(context: Context, theme: Int) : Dialog(context, theme) {
     private companion object {
         /** How long the window under a new one stays at most, in ms: the new one draws within a frame or two. */
         const val GIVE_UP = 1000L
-
-        /** As `anim/panel_exit`'s, in ms. */
-        const val FADE_OUT = 80L
     }
 
     /** The window animations [underneath] had, given back once it's closed: it may be shown again. */
@@ -201,14 +172,9 @@ open class PanelDialog(context: Context, theme: Int) : Dialog(context, theme) {
         val old = underneath ?: return
         underneath = null
         if (old is PanelDialog) old.leaving = false
-        if (dimmedByUnderneath && isShowing) checkNotNull(window).addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
-        dimmedByUnderneath = false
-        val decor = old.window?.decorView
         old.dismiss()
         // Gone: as it was again, for when it's shown later, as a tile's menu or the working window
-        // is: whole, with its animations and keys. Not before, or it would show for a frame.
-        decor?.animate()?.cancel()
-        decor?.alpha = 1f
+        // is: with its animations and keys. Not before, or it would go with its fade.
         old.window?.setWindowAnimations(animationsUnderneath)
         Handover.holdKeys(old, null)
     }

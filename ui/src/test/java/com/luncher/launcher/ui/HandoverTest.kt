@@ -31,7 +31,7 @@ class HandoverTest {
 
     private fun Dialog.animations() = checkNotNull(window).attributes.windowAnimations
 
-    private fun Dialog.dims() = checkNotNull(window).attributes.flags and android.view.WindowManager.LayoutParams.FLAG_DIM_BEHIND != 0
+    private fun dimmed() = ScreenDim.of(activity).isShowing
 
     // The dim never drops, and nothing is bare while the next window is made.
     @Test
@@ -44,7 +44,7 @@ class HandoverTest {
         assertTrue("the next shows", next.isShowing)
         assertTrue("the old one stays until the next has drawn", old.isShowing)
         assertEquals("with no exit animation", 0, old.animations())
-        assertFalse("under the next, the dim is the old one's alone", next.dims())
+        assertTrue("the dim stays", dimmed())
         val key = KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DPAD_CENTER)
         assertTrue("the old one takes no key", old.dispatchKeyEvent(key))
 
@@ -52,7 +52,7 @@ class HandoverTest {
 
         assertFalse("closed once the next has drawn", old.isShowing)
         assertTrue(next.isShowing)
-        assertTrue("the next dims the screen on its own now", next.dims())
+        assertTrue("the dim stays under the next", dimmed())
     }
 
     @Test
@@ -65,6 +65,7 @@ class HandoverTest {
         assertTrue(done)
         assertFalse(old.isShowing)
         assertEquals(R.style.Animation_Luncher_Panel, old.animations())
+        assertFalse("the dim goes with it", dimmed())
     }
 
     // As its screen goes, the screen's own exit takes the window along; closed first, it would fade
@@ -78,6 +79,7 @@ class HandoverTest {
         assertTrue(activity.isFinishing)
         assertTrue("not closed on its own", old.isShowing)
         assertEquals("with its fade, were it closed", R.style.Animation_Luncher_Panel, old.animations())
+        assertTrue("the dim stays for the screen's exit too", dimmed())
     }
 
     @Test
@@ -90,6 +92,7 @@ class HandoverTest {
 
         assertFalse(next.isShowing)
         assertFalse(old.isShowing)
+        assertFalse("nothing holds the dim any more", dimmed())
     }
 
     @Test
@@ -107,31 +110,9 @@ class HandoverTest {
 
     private fun Dialog.alpha() = checkNotNull(window).decorView.alpha
 
-    // Before Android 11 a window's dim fades with its window animation: a window fading in so would
-    // leave the dim ramping up from nothing as the old one's goes. It plays its entrance in itself.
     @Test
-    @Config(sdk = [28])
-    fun `before Android 11 the window handed over to plays its entrance in itself, and only that one`() {
-        val next = message("Next")
-        val old = message("Old") { next.show() }.apply { show() }
-        assertEquals("a plain show keeps the window's own", R.style.Animation_Luncher_Panel, old.animations())
-        assertEquals(1f, old.alpha())
-
-        old.findViewById<android.view.View>(R.id.dialog_entries).let { (it as android.view.ViewGroup).getChildAt(0).performClick() }
-
-        assertEquals(R.style.Animation_Luncher_Panel_ExitOnly, next.animations())
-        assertEquals("not drawn yet", 0f, next.alpha())
-        idle()
-        assertEquals(1f, next.alpha())
-
-        next.dismiss()
-        next.show()
-        assertEquals("shown alone again: the window's own entrance", R.style.Animation_Luncher_Panel, next.animations())
-        assertEquals(1f, next.alpha())
-    }
-
-    @Test
-    fun `from Android 11 the window handed over to keeps the window's own entrance`() {
+    @Config(sdk = [28, 36])
+    fun `the window handed over to keeps the window's own entrance`() {
         val next = message("Next")
         val old = message("Old") { next.show() }.apply { show() }
         old.findViewById<android.view.View>(R.id.dialog_entries).let { (it as android.view.ViewGroup).getChildAt(0).performClick() }
@@ -156,31 +137,15 @@ class HandoverTest {
         assertTrue(next.isShowing)
     }
 
-    // Before Android 11 the window handed over to shows some frames before its panel does, dimming
-    // the old panel meanwhile: the old panel fades out as it would closing, its window and dim staying.
+    // The dim is under both, so the old panel isn't dimmed while the next is made: it stays as it is.
     @Test
-    @Config(sdk = [28])
-    fun `before Android 11 the old panel fades out meanwhile, the window staying, and is whole again once gone`() {
+    @Config(sdk = [28, 36])
+    fun `the old panel isn't faded`() {
         val next = message("Next")
         val old = message("Old") { next.show() }.apply { show() }
         old.findViewById<android.view.View>(R.id.dialog_entries).let { (it as android.view.ViewGroup).getChildAt(0).performClick() }
 
         shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(200))
-        assertTrue("its window, and so its dim, stays", old.isShowing)
-        assertEquals("the panel is gone", 0f, old.alpha())
-
-        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(1000))
-        assertFalse(old.isShowing)
-        assertEquals("whole for its next showing", 1f, old.alpha())
-    }
-
-    @Test
-    fun `from Android 11 the old panel isn't faded`() {
-        val next = message("Next")
-        val old = message("Old") { next.show() }.apply { show() }
-        old.findViewById<android.view.View>(R.id.dialog_entries).let { (it as android.view.ViewGroup).getChildAt(0).performClick() }
-
-        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(5))
 
         assertEquals(1f, old.alpha())
     }
