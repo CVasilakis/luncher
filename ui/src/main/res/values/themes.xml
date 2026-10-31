@@ -38,12 +38,19 @@
 
     <!-- How a floating panel comes and goes: a short fade in (anim/panel_enter) and out
          (anim/panel_exit), in place of Android's slower dialog and activity animations. The
-         window's items for a dialog's window or a list's (a PopupWindow); the activity's for an
-         activity (the settings panel), whose window plays only its activity's opening and closing:
+         window's items for a dialog's window or a list's (a PopupWindow); the activity's for a
+         floating activity (Hide apps), whose window plays only its activity's opening and closing:
          a dialog theme has none, so Android's played, the panel popping in and out on Android 16. -->
     <style name="Animation.Luncher.Panel" parent="">
         <item name="android:windowEnterAnimation">@anim/panel_enter</item>
         <item name="android:windowExitAnimation">@anim/panel_exit</item>
+        <item name="android:activityOpenEnterAnimation">@anim/panel_enter</item>
+        <item name="android:activityCloseExitAnimation">@anim/panel_exit</item>
+    </style>
+    <!-- The same fade for a panel that's a window covering the screen (Theme.Luncher.Settings): an
+         activity's items only. On Android 7.0 its window also played the window's exit, starting
+         two frames late, so the panel faded twice over and jumped back as the first fade ended. -->
+    <style name="Animation.Luncher.PanelActivity" parent="">
         <item name="android:activityOpenEnterAnimation">@anim/panel_enter</item>
         <item name="android:activityCloseExitAnimation">@anim/panel_exit</item>
     </style>

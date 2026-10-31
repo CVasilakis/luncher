@@ -1,12 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- The settings panel: a floating window over the dimmed home screen. -->
-    <style name="Theme.Luncher.Settings" parent="@android:style/Theme.DeviceDefault.Dialog.NoActionBar">
+    <!-- The settings panel and the window after a share: a see-through window over the home
+         screen that draws the dim itself, the panel a view in it. So the dim fades with the window:
+         Android's own (backgroundDimAmount) doesn't, nor comes back with it after a screen that
+         covered it. A short fade in and out, never Android's animations (none on Android 16, for a
+         dialog theme: the panel popped in and out). -->
+    <style name="Theme.Luncher.Settings" parent="@style/Theme.Luncher">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@color/dim</item>
+        <item name="android:colorBackground">@color/panel</item>
+        <item name="android:windowSplashScreenBackground" tools:targetApi="31">@color/panel</item>
+        <item name="android:windowAnimationStyle">@style/Animation.Luncher.PanelActivity</item>
+    </style>
+
+    <!-- A panel the settings panel opens in its place (Hide apps): a floating window, over the
+         settings panel's, which stays behind it, covered, and already dims the home screen. -->
+    <style name="Theme.Luncher.Settings.Panel" parent="@android:style/Theme.DeviceDefault.Dialog.NoActionBar">
         <item name="android:windowBackground">@drawable/panel_background</item>
         <item name="android:colorBackground">@color/panel</item>
         <item name="android:windowSplashScreenBackground" tools:targetApi="31">@color/panel</item>
         <item name="android:colorAccent">@color/accent</item>
-        <item name="android:backgroundDimAmount">0.6</item>
+        <item name="android:backgroundDimEnabled">false</item>
         <!-- As in Theme.Luncher: in a right-to-left language every text lines up at the right,
              an English one too. -->
         <item name="android:textAlignment">viewStart</item>
@@ -16,12 +30,6 @@
         <!-- As the dialogs: a short fade in and out, never Android's animations, which the dialog
              theme leaves to the device (none on Android 16: the panel popped in and out). -->
         <item name="android:windowAnimationStyle">@style/Animation.Luncher.Panel</item>
-    </style>
-
-    <!-- A panel the settings panel opens in its place (Hide apps): the settings panel's window
-         stays behind it, covered, and already dims the home screen. -->
-    <style name="Theme.Luncher.Settings.Panel">
-        <item name="android:backgroundDimEnabled">false</item>
     </style>
 
     <!-- The appearance editor: full-screen and opaque, unlike the panels, so the home screen

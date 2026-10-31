@@ -3,7 +3,6 @@ package com.luncher.launcher.ui
 import android.app.Activity
 import android.app.Application
 import android.app.Dialog
-import android.graphics.Color
 import android.graphics.PixelFormat
 import android.os.Build
 import android.os.Bundle
@@ -29,7 +28,7 @@ import android.view.WindowManager
  */
 internal class ScreenDim private constructor(private val activity: Activity) : Application.ActivityLifecycleCallbacks {
 
-    private val view = View(activity).apply { setBackgroundColor(COLOR) }
+    private val view = View(activity).apply { setBackgroundResource(R.color.dim) }
     private val entrance by lazy { WindowEntrance(view) }
     private val holders = HashSet<Dialog>()
 
@@ -87,9 +86,6 @@ internal class ScreenDim private constructor(private val activity: Activity) : A
     override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {}
 
     companion object {
-        /** 0.6 of black, the `backgroundDimAmount` of the panels that are activities (the settings panel). */
-        private val COLOR = Color.argb(153, 0, 0, 0)
-
         /** [activity]'s dim, kept on its window, so it lives as long as the screen and no longer. */
         fun of(activity: Activity): ScreenDim {
             val decor = activity.window.decorView

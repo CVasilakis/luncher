@@ -77,6 +77,19 @@ class SettingsThemeTest {
         assertEquals("no window at all, so none to animate", 0, animationStyle(R.style.Theme_Luncher_Settings_Pictures_NoDisplay))
     }
 
+    // Their windows play an activity's animation only: with a window's exit too, the fade played
+    // twice over on Android 7.0, and the panel jumped back as the first one ended.
+    @Test
+    fun `the panels that cover the screen have an activity's fade, and no window's`() {
+        val style = UiR.style.Animation_Luncher_PanelActivity
+        assertEquals(style, animationStyle(R.style.Theme_Luncher_Settings))
+        val attributes = intArrayOf(android.R.attr.windowEnterAnimation, android.R.attr.windowExitAnimation)
+        val items = RuntimeEnvironment.getApplication().obtainStyledAttributes(style, attributes)
+        assertEquals(0, items.getResourceId(0, 0))
+        assertEquals(0, items.getResourceId(1, 0))
+        items.recycle()
+    }
+
     @Test
     fun `the appearance editor's window plays that fade`() {
         val application = RuntimeEnvironment.getApplication() as SettingsTestApplication

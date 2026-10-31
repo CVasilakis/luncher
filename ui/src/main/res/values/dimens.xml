@@ -15,6 +15,8 @@
          chip have round ends. -->
     <dimen name="corner_entry">12dp</dimen>
     <dimen name="corner_panel">28dp</dimen>
+    <!-- As a floating window's (Android's floating_window_z), for a panel that's a view in a window covering the screen. -->
+    <dimen name="panel_elevation">16dp</dimen>
     <dimen name="corner_picture">8dp</dimen>
     <!-- A list's container (ScrollFrame, an option's list): its corners; an entry's in it,
          concentric with them: the container's less the 10 dp it leaves around its entries

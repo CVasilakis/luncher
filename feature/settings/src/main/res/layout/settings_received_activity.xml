@@ -8,8 +8,10 @@
     android:id="@+id/settings_received_panel"
     android:layout_width="@dimen/dialog_width"
     android:layout_height="wrap_content"
+    android:layout_gravity="center"
     android:clipChildren="false"
     android:clipToPadding="false"
+    android:elevation="@dimen/panel_elevation"
     android:orientation="vertical"
     android:padding="@dimen/dialog_padding">
 

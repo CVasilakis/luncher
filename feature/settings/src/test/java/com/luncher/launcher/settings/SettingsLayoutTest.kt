@@ -87,20 +87,19 @@ class SettingsLayoutTest(private val screen: TvScreen) {
      * its content, measured at the sheet's width as large as it is, fits the sheet's height. Last in
      * a test: measuring again changes the views' text layouts, and the list's rows.
      */
-    private fun assertPanelFits(activity: Activity) {
-        val window = activity.window.attributes
+    private fun assertPanelFits(activity: Activity, width: Int, height: Int) {
         val metrics = activity.resources.displayMetrics
         val margin = activity.resources.getDimensionPixelSize(R.dimen.settings_sheet_margin)
         assertTrue(
-            "sheet ${window.width} x ${window.height} on $screen, ${metrics.widthPixels} x ${metrics.heightPixels} less $margin around",
-            window.width <= metrics.widthPixels - 2 * margin && window.height <= metrics.heightPixels - 2 * margin,
+            "sheet $width x $height on $screen, ${metrics.widthPixels} x ${metrics.heightPixels} less $margin around",
+            width <= metrics.widthPixels - 2 * margin && height <= metrics.heightPixels - 2 * margin,
         )
         val panel = activity.findViewById<ViewGroup>(android.R.id.content).getChildAt(0)
         panel.measure(
-            View.MeasureSpec.makeMeasureSpec(window.width, View.MeasureSpec.EXACTLY),
+            View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
             View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
         )
-        assertTrue("content ${panel.measuredHeight} px in a sheet ${window.height} px tall on $screen", panel.measuredHeight <= window.height)
+        assertTrue("content ${panel.measuredHeight} px in a sheet $height px tall on $screen", panel.measuredHeight <= height)
     }
 
     @Test
@@ -111,7 +110,8 @@ class SettingsLayoutTest(private val screen: TvScreen) {
         for (i in 0 until entries.childCount) {
             assertWhole(screen, entries.getChildAt(i).findViewById(R.id.settings_entry_title))
         }
-        assertPanelFits(activity)
+        val place = activity.findViewById<View>(R.id.settings_panel).layoutParams
+        assertPanelFits(activity, place.width, place.height)
     }
 
     @Test
@@ -142,7 +142,7 @@ class SettingsLayoutTest(private val screen: TvScreen) {
         assertEquals("Zz last app", last.findViewById<TextView>(R.id.settings_app_label).text.toString())
         assertNamesFit(last)
         assertWhole(screen, last.findViewById(R.id.settings_app_hidden))
-        assertPanelFits(activity)
+        assertPanelFits(activity, sheet.width, sheet.height)
     }
 
     /** [row]'s names whole, the one the user gave too where it shows, and both inside the row. */

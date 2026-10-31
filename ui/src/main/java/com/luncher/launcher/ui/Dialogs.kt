@@ -382,14 +382,7 @@ private fun Dialog.addButton(label: CharSequence, kind: DialogButton.Kind, icon:
 }
 
 /** No wider than the screen leaves beside its margins, on a small or low-density one. */
-private fun Dialog.fitToScreen() {
-    val margin = context.resources.getDimensionPixelSize(R.dimen.dialog_margin)
-    val panel = findViewById<View>(R.id.dialog_panel)
-    panel.layoutParams.width = minOf(
-        context.resources.getDimensionPixelSize(R.dimen.dialog_width),
-        context.resources.displayMetrics.widthPixels - 2 * margin,
-    )
-}
+private fun Dialog.fitToScreen() = findViewById<View>(R.id.dialog_panel).fitPanelToScreen()
 
 /** A button that can't be chosen now: as the settings' dimmed entries (Delete all with no pictures). */
 private const val DIMMED = 0.4f

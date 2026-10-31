@@ -5,6 +5,7 @@ import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.os.Bundle
 import android.provider.Settings
+import android.view.View
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -24,16 +25,18 @@ import com.luncher.launcher.ui.R as UiR
  */
 class SettingsActivity : Activity() {
 
+    private lateinit var panel: View
     private lateinit var entries: LinearLayout
-    private val theme by lazy { ScreenTheme(graph.appearanceSettings) { checkNotNull(window).stylePanel(it) } }
+    private val theme by lazy { ScreenTheme(graph.appearanceSettings) { panel.stylePanel(it) } }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.settings_activity)
-        placeAsSheet(checkNotNull(window), graph.appearanceSettings.read().topBar)
+        panel = findViewById(R.id.settings_panel)
+        placeAsSheet(panel, graph.appearanceSettings.read().topBar)
         entries = findViewById(R.id.settings_entries)
         show(settingsMenu())
-        window.stylePanel(theme.roles)
+        panel.stylePanel(theme.roles)
         entries.getChildAt(0)?.requestFocus()
     }
 

@@ -168,61 +168,61 @@ class BackgroundScreenshotTest {
     }
 
     /** The window over the home screen after a share of [shared], which adds as [result]. */
-    private fun received(shared: Uri, result: ImportResult?) {
+    private fun received(shared: Uri, result: ImportResult?): PictureReceivedActivity {
         val graph = TestPicturesGraph(FakePictures(*library)).also { application.graph = it }
         if (result != null) graph.library.results[shared] = result else graph.library.answerLater = true
-        Robolectric.buildActivity(PictureReceivedActivity::class.java, Intent().putParcelableArrayListExtra(PictureReceivedActivity.EXTRA_PICTURES, arrayListOf(shared))).setup()
+        val activity = Robolectric.buildActivity(PictureReceivedActivity::class.java, Intent().putParcelableArrayListExtra(PictureReceivedActivity.EXTRA_PICTURES, arrayListOf(shared))).setup().get()
         idle()
+        return activity
     }
 
     // A photo shared from a file manager, saved: what to use it for.
     @Test
     fun pictureReceived() {
         val shared = Uri.parse("content://com.example.files/holiday.jpg")
-        received(shared, ImportResult.Added(picture("holiday.jpg", added = 9)))
-        captureScreenFocused("src/test/screenshots/settings/settings_received.png")
+        received(shared, ImportResult.Added(picture("holiday.jpg", added = 9))).capturePanel("src/test/screenshots/settings/settings_received.png")
     }
 
     // While it's added.
     @Test
     fun pictureReceivedAdding() {
-        received(Uri.parse("content://com.example.files/holiday.jpg"), null)
-        captureScreenFocused("src/test/screenshots/settings/settings_received_adding.png")
+        received(Uri.parse("content://com.example.files/holiday.jpg"), null).capturePanel("src/test/screenshots/settings/settings_received_adding.png")
     }
 
     /** The window after a share of four photos, the last not a picture, the second being added with [adding]. */
-    private fun receivedFour(adding: Boolean) {
+    private fun receivedFour(adding: Boolean): PictureReceivedActivity {
         val shared = (1..4).map { Uri.parse("content://com.example.files/IMG_000$it.jpg") }
         val graph = TestPicturesGraph(FakePictures(*library)).also { application.graph = it }
         graph.library.results[shared[0]] = ImportResult.Added(picture("IMG_0001.jpg", added = 9))
         graph.library.results[shared[1]] = ImportResult.AlreadyThere(library[0])
         graph.library.results[shared[2]] = ImportResult.Added(picture("IMG_0003.jpg", added = 10))
         graph.library.answerLater = adding
-        Robolectric.buildActivity(PictureReceivedActivity::class.java, Intent().putParcelableArrayListExtra(PictureReceivedActivity.EXTRA_PICTURES, ArrayList(shared))).setup()
+        val activity = Robolectric.buildActivity(PictureReceivedActivity::class.java, Intent().putParcelableArrayListExtra(PictureReceivedActivity.EXTRA_PICTURES, ArrayList(shared))).setup().get()
         if (adding) graph.library.finishAdding()
         idle()
+        return activity
     }
+
+    /** The window's panel, in a window that covers the screen and draws the dim. */
+    private fun PictureReceivedActivity.capturePanel(path: String) = findViewById<View>(R.id.settings_received_panel).captureFocused(path)
 
     // Four photos shared at once, the second being added.
     @Test
     fun picturesReceivedAdding() {
-        receivedFour(adding = true)
-        captureScreenFocused("src/test/screenshots/settings/settings_received_several_adding.png")
+        receivedFour(adding = true).capturePanel("src/test/screenshots/settings/settings_received_several_adding.png")
     }
 
     // Four photos shared at once, one of them not a picture: how many were saved, and how many not.
     @Test
     fun picturesReceived() {
-        receivedFour(adding = false)
-        captureScreenFocused("src/test/screenshots/settings/settings_received_several.png")
+        receivedFour(adding = false).capturePanel("src/test/screenshots/settings/settings_received_several.png")
     }
 
     // A shared iPhone photo on a TV that can't show HEIC.
     @Test
     fun pictureReceivedUnsupported() {
         val shared = Uri.parse("content://com.example.files/IMG_0001.HEIC")
-        received(shared, ImportResult.UnsupportedFormat(PictureFormat.HEIF))
-        captureScreenFocused("src/test/screenshots/settings/settings_received_unsupported.png")
+        received(shared, ImportResult.UnsupportedFormat(PictureFormat.HEIF)).capturePanel("src/test/screenshots/settings/settings_received_unsupported.png")
     }
 
     // 720p at the 1080p density, 640x360 dp: the pictures take half the screen; the start scrolls.

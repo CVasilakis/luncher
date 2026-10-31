@@ -86,7 +86,7 @@ feature opens the picker ([`ARCHITECTURE.md`](../../docs/ARCHITECTURE.md#feature
 | `AddFromFolderActivity`: `Theme.Luncher.Settings.Pictures` | Full-screen and opaque, on the home screen's background. |
 | `SharePictureActivity`: `exported="true"` | Other apps' shares arrive there. |
 | `<queries>` for `MAIN`+`HOME` | Package visibility (targetSdk 30+): `SharePictureActivity` tells whether Luncher is the device's home app by what a `HOME` intent resolves to ([below](#adding-a-picture)), which needs every home app visible. Without it, Android hides the stock launcher, and Luncher, the only home app left, seems the default: a share then opened a second home screen beside the stock launcher's (measured on API 30). |
-| `PictureReceivedActivity`: `Theme.Luncher.Settings` | A floating window over the dimmed home screen, like the settings panel. |
+| `PictureReceivedActivity`: `Theme.Luncher.Settings` | A window over the home screen that draws the dim, its panel a view in the middle of it, like the settings panel ([why](../../ui/README.md#the-design-system)). |
 | `PictureReceivedActivity`: `launchMode="singleTop"` | A share that arrives while it shows comes to it (`onNewIntent`), and its pictures join those being added ([below](#adding-a-picture)). A new window would replace it, as the home screen, `singleTask`, clears what's above it, and the pictures it was adding would stop. |
 | `SharePictureActivity`: `taskAffinity=""` | A share sent to a task of its own (`NEW_TASK`, as an app sends one from a notification or a service) opens in a task of no app, gone as it finishes, and the home screen and the window in Luncher's task, both sent there by its affinity (the window too: else it would join the share's task, where the home screen's, brought back, could come over it on API 28). With Luncher's affinity, the task the share made would be rooted at that share; Android would then only bring it back for the next share alike (a `SEND` of the same type, sent the same way, which it matches without the picture), and that picture would never arrive. Measured on API 22 to 36, where it happened whenever that task was in front, and on API 24 also with Luncher as the home app. Android also advises an empty affinity on an exported activity, so another app can't take over its task. |
 | `SharePictureActivity`: `Theme.Luncher.Settings.Pictures.NoDisplay`, `noHistory`, `excludeFromRecents` | It shows nothing, and finishes in `onCreate`, before `onResume`, as a `windowNoDisplay` activity must; its backgrounds are still the home screen's dark ones, in case a device shows one ([`ui/README.md`](../../ui/README.md#the-theme)). |
@@ -121,8 +121,8 @@ device's own settings. `SettingsActivity` is a side sheet over the dimmed home s
 screen where the home screen's gear is, so it opens beside it (`placeAsSheet`: at most
 `settings_sheet_width` wide, as tall as the screen less its margin; at the right by default, at
 the left once the clock is moved to the right; the screen's side in any language, as the home
-screen doesn't mirror, though the panel's content does), its theme, `Theme.Luncher.Settings`, a platform
-dialog theme, with the floating panels' short fade in and out of Luncher's own
+screen doesn't mirror, though the panel's content does), its theme, `Theme.Luncher.Settings`, a see-through
+window that covers the screen and draws the dim, the panel a view in it, with the floating panels' short fade in and out of Luncher's own
 ([`ui/`](../../ui/README.md#the-design-system)), as the panels opened in its place and the window
 after a share have (the appearance editor, the background editor, Add from folder and the tile banner
 picker, full-screen, the same fade, `Animation.Luncher.Screen`). Each entry is one line: its icon, its name, centered in the entry's height, and at

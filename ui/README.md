@@ -218,7 +218,14 @@ can, the focused thing stands out from afar, and every color comes from the user
   animations, which the dialog themes would leave them, are slower and slide on Android 16, where a
   dialog-themed activity (the settings panel) gets none at all and pops in and out. A dialog's or a
   list's window plays the style's window items, an activity's window its activity items, so the
-  style has both. Android 5.1 and 6.0 play no app dialog's window entrance: there `PanelDialog`
+  style has both. The panels whose window covers the screen have `Animation.Luncher.PanelActivity`,
+  the activity's items alone: on Android 7.0 such a window played its window exit too, two frames
+  late, so the panel faded twice over and jumped back as the first fade ended. How a panel closes is
+  read from the window under it, the top full-screen one of Android's transition, not from the panel
+  (seen on Android 7.0 to 13, not on 16), and that window's own animation is four times as long:
+  the home screen's window carries the panel's while the settings panel is over it
+  ([`feature/home/`](../feature/home/README.md#the-top-bar)), and the window after a share, which can come
+  over any app, names its fade as it finishes. Android 5.1 and 6.0 play no app dialog's window entrance: there `PanelDialog`
   (every dialog of `Dialogs.kt`, and `WorkingDialog`'s window) plays it in the window
   (`WindowEntrance`), started at its first draw, as on a slow TV that can come after the animation
   would have ended; the window keeps its exit, and has no entrance of its own. An activity's and a list's entrances play there. Each follows Android's animation
@@ -243,7 +250,11 @@ can, the focused thing stands out from afar, and every color comes from the user
   their windows work as they would alone. Being the screen's, it fades with the screen, and being one per screen, it
   isn't touched as one dialog hands over to the next. Every `PanelDialog` holds it while it shows; it
   comes and goes with the same fade as they do, with the last one. The panels that are activities (the settings
-  panel) keep Android's dim, which fades with their window. A tile's menu dims nothing.
+  panel, the window after a share) draw it in their own window: a window an activity adds goes above
+  the activity's, so `ScreenDim` can't go under them. Their window covers the screen with `@color/dim` as
+  its background, and the panel is a view in it (`View.stylePanel`), with the shadow a floating window
+  has (`panel_elevation`). Android's dim is used nowhere. Hide apps, over the settings panel, dims
+  nothing, and a tile's menu neither.
 - **One window handing over to the next leaves the dim as it is.** A dialog's button or entry that
   opens another window, the working window closing into its message, a tile's menu into the rename
   dialog: `Handover.from(old) { open next }` shows the next first; `old` stays, with no animation and

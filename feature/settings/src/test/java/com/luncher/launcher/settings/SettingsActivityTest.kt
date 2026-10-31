@@ -12,6 +12,7 @@ import com.luncher.domain.appearance.TopBarAppearance
 import com.luncher.launcher.testing.TV_1080P
 import com.luncher.launcher.ui.R as UiR
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -91,8 +92,9 @@ class SettingsActivityTest {
         panel.press(KeyEvent.KEYCODE_DPAD_CENTER)
 
         assertEquals(1f, panel.window.attributes.alpha)
-        val sheet = { attributes: android.view.WindowManager.LayoutParams -> listOf(attributes.gravity, attributes.x, attributes.y, attributes.width, attributes.height) }
-        assertEquals(sheet(panel.window.attributes), sheet(hideApps.window.attributes))
+        val window = hideApps.window.attributes
+        val place = panel.place()
+        assertEquals(listOf(window.gravity, window.x, window.width, window.height), listOf(place.gravity, place.leftMargin, place.width, place.height))
     }
 
     @Test
@@ -109,7 +111,7 @@ class SettingsActivityTest {
     // Luncher's short fade, not what the dialog theme leaves to Android (none on Android 16).
     @Test
     fun `the panel comes and goes with a short fade of Luncher's own`() {
-        assertEquals(UiR.style.Animation_Luncher_Panel, start().window.attributes.windowAnimations)
+        assertEquals(UiR.style.Animation_Luncher_PanelActivity, start().window.attributes.windowAnimations)
     }
 
     @Test
@@ -149,16 +151,32 @@ class SettingsActivityTest {
         assertEquals(entry.width.toFloat(), entry.getLineRight(0))
     }
 
+    private fun SettingsActivity.place() = findViewById<android.view.View>(R.id.settings_panel).layoutParams as android.widget.FrameLayout.LayoutParams
+
+    // Android's dim doesn't fade with a window that closes: the window draws it, and the panel is a view in it.
+    @Test
+    fun `its window covers the screen and draws the dim, the panel a view in it with a floating window's shadow`() {
+        val activity = start()
+        val window = activity.window
+        val panel = activity.findViewById<android.view.View>(R.id.settings_panel)
+
+        assertEquals(0, window.attributes.flags and android.view.WindowManager.LayoutParams.FLAG_DIM_BEHIND)
+        assertFalse(window.isFloating)
+        assertEquals(activity.getColor(UiR.color.dim), (window.decorView.background as android.graphics.drawable.ColorDrawable).color)
+        assertEquals(activity.resources.getDimension(UiR.dimen.panel_elevation), panel.elevation)
+        assertTrue("its own background, which the shadow follows", panel.background != null)
+    }
+
     // A side sheet beside the home screen's gear, at the right by default, a margin from its edges.
     @Test
     fun `is a side sheet at the right, as tall as the screen less its margins`() {
         val activity = start()
-        val window = activity.window.attributes
+        val place = activity.place()
         val margin = activity.resources.getDimensionPixelSize(R.dimen.settings_sheet_margin)
 
-        assertEquals(android.view.Gravity.RIGHT or android.view.Gravity.CENTER_VERTICAL, window.gravity)
-        assertEquals(margin, window.x)
-        assertEquals(activity.resources.displayMetrics.heightPixels - 2 * margin, window.height)
+        assertEquals(android.view.Gravity.RIGHT or android.view.Gravity.CENTER_VERTICAL, place.gravity)
+        assertEquals(margin, place.rightMargin)
+        assertEquals(activity.resources.displayMetrics.heightPixels - 2 * margin, place.height)
     }
 
     // The clock moved to the right puts the gear at the left: the panel opens beside it.
@@ -167,7 +185,7 @@ class SettingsActivityTest {
         val graph = (RuntimeEnvironment.getApplication() as SettingsTestApplication).graph as TestSettingsGraph
         graph.appearanceSettings.appearance = Appearance(topBar = TopBarAppearance(clockSide = Side.RIGHT))
 
-        assertEquals(android.view.Gravity.LEFT or android.view.Gravity.CENTER_VERTICAL, start().window.attributes.gravity)
+        assertEquals(android.view.Gravity.LEFT or android.view.Gravity.CENTER_VERTICAL, start().place().gravity)
     }
 
     // Without a clock, the gear is at the right, wherever the clock would be.
@@ -176,7 +194,7 @@ class SettingsActivityTest {
         val graph = (RuntimeEnvironment.getApplication() as SettingsTestApplication).graph as TestSettingsGraph
         graph.appearanceSettings.appearance = Appearance(topBar = TopBarAppearance(showTime = false, showDate = false, clockSide = Side.RIGHT))
 
-        assertEquals(android.view.Gravity.RIGHT or android.view.Gravity.CENTER_VERTICAL, start().window.attributes.gravity)
+        assertEquals(android.view.Gravity.RIGHT or android.view.Gravity.CENTER_VERTICAL, start().place().gravity)
     }
 
     // The home screen doesn't mirror in a right-to-left language, so its gear stays at the right,
@@ -184,6 +202,6 @@ class SettingsActivityTest {
     @Test
     @Config(qualifiers = "ar-$TV_1080P")
     fun `is beside the gear in a right-to-left language too`() {
-        assertEquals(android.view.Gravity.RIGHT or android.view.Gravity.CENTER_VERTICAL, start().window.attributes.gravity)
+        assertEquals(android.view.Gravity.RIGHT or android.view.Gravity.CENTER_VERTICAL, start().place().gravity)
     }
 }

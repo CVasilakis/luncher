@@ -31,6 +31,7 @@ import com.luncher.launcher.settings.SettingsActivity
 import com.luncher.launcher.testing.TV_1080P
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotSame
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
@@ -90,6 +91,27 @@ class HomeActivityTest {
     private fun HomeActivity.focusedLabel() = tiles().single { it.isFocused }.app.name
 
     private fun HomeActivity.settingsEntry() = findViewById<View>(R.id.home_settings)
+
+    // The panel closing takes its animation from this window, the top full-screen one in Android's
+    // transition: Android's, four times as long. Its own comes back after, as the Home key plays it
+    // coming back from an app.
+    @Test
+    fun `while the settings panel is over it, its window has the panel's closing animation, and its own again after`() {
+        val controller = start()
+        val activity = controller.get()
+        val own = activity.window.attributes.windowAnimations
+        assertNotEquals("the theme's own, which has to come back", 0, own)
+
+        activity.press(KeyEvent.KEYCODE_MENU)
+        assertEquals(R.style.Animation_Luncher_Home_UnderPanel, activity.window.attributes.windowAnimations)
+
+        controller.pause().resume()
+        assertEquals("not at once: Android's transition reads it as the home screen comes back",
+            R.style.Animation_Luncher_Home_UnderPanel, activity.window.attributes.windowAnimations)
+
+        shadowOf(android.os.Looper.getMainLooper()).idleFor(java.time.Duration.ofSeconds(2))
+        assertEquals(own, activity.window.attributes.windowAnimations)
+    }
 
     private fun HomeActivity.press(keyCode: Int) {
         dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, keyCode))
@@ -188,6 +210,19 @@ class HomeActivityTest {
         activity.press(KeyEvent.KEYCODE_DPAD_CENTER)
 
         assertEquals(SettingsActivity::class.java.name, shadowOf(activity).nextStartedActivity.component?.className)
+    }
+
+    @Test
+    fun `the settings panel opened again before its own animations are back keeps the panel's closing one`() {
+        val controller = start()
+        val activity = controller.get()
+        activity.press(KeyEvent.KEYCODE_MENU)
+        controller.pause().resume()
+
+        activity.press(KeyEvent.KEYCODE_MENU)
+        shadowOf(android.os.Looper.getMainLooper()).idleFor(java.time.Duration.ofSeconds(2))
+
+        assertEquals(R.style.Animation_Luncher_Home_UnderPanel, activity.window.attributes.windowAnimations)
     }
 
     @Test

@@ -99,6 +99,16 @@ class HomeActivity : Activity() {
     // A tile's picture prepared while shown: that tile drawn again with it, the others as they are.
     private val showTileImages: () -> Unit = { followTileImages() }
 
+    /**
+     * The settings panel closing takes its animation from the window under it, the top full-screen
+     * one of Android's transition (seen on Android 7.0 to 13, not on 16): Android's own, four times
+     * as long as the panel's fade. So this window has the panel's closing animation while the panel
+     * is over it, and its own again a moment after it's back, by when that transition has started:
+     * Android plays that one as the Home key comes back from an app.
+     */
+    private var animations = 0
+    private val ownAnimations = Runnable { window.setWindowAnimations(animations) }
+
     private val openApp = View.OnClickListener { open((it as AppTileView).app) }
 
     private val openMenu = View.OnLongClickListener {
@@ -113,6 +123,7 @@ class HomeActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.home_activity)
+        animations = window.attributes.windowAnimations   // the theme's, once the window has its content
         topBar = findViewById(R.id.home_top_bar)
         tiles = findViewById(R.id.home_apps)
         empty = findViewById(R.id.home_empty)
@@ -148,6 +159,11 @@ class HomeActivity : Activity() {
     // it was hidden (a picture deleted from the tiles that showed it) at once, not only once the
     // panel closes; and while it's started, the listeners show every change, so resuming needs no
     // read. Moving an app ended as it stopped.
+    override fun onResume() {
+        super.onResume()
+        window.decorView.postDelayed(ownAnimations, OWN_ANIMATIONS_AFTER)
+    }
+
     override fun onStart() {
         super.onStart()
         clockView.start(clock)
@@ -397,6 +413,8 @@ class HomeActivity : Activity() {
     }
 
     private fun openSettings() {
+        window.decorView.removeCallbacks(ownAnimations)
+        window.setWindowAnimations(R.style.Animation_Luncher_Home_UnderPanel)
         startActivity(Intent(this, SettingsActivity::class.java))
     }
 
@@ -422,3 +440,6 @@ class HomeActivity : Activity() {
     @Deprecated("Deprecated in Java")
     override fun onBackPressed() = move.back()
 }
+
+/** How long after the home screen is back its window has its own animations again, in ms: Android's transition starts well within it. */
+private const val OWN_ANIMATIONS_AFTER = 1000L

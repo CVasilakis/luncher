@@ -65,7 +65,43 @@ class PictureReceivedActivityTest {
     fun `the window comes and goes with a short fade of Luncher's own`() {
         library.results[shared] = ImportResult.Added(holiday)
 
-        assertEquals(UiR.style.Animation_Luncher_Panel, receive().window.attributes.windowAnimations)
+        assertEquals(UiR.style.Animation_Luncher_PanelActivity, receive().window.attributes.windowAnimations)
+    }
+
+    @Test
+    @Config(qualifiers = "en-rUS-w500dp-h400dp-land-television-mdpi")
+    fun `its panel is no wider than the screen leaves beside a dialog's margins`() {
+        library.results[shared] = ImportResult.Added(holiday)
+        val activity = receive()
+        val margin = activity.resources.getDimensionPixelSize(UiR.dimen.dialog_margin)
+
+        assertEquals(activity.resources.displayMetrics.widthPixels - 2 * margin, activity.findViewById<View>(R.id.settings_received_panel).layoutParams.width)
+    }
+
+    // The window under this one decides how it closes, and knows nothing of its fade: Android's own is four times as long.
+    @Test
+    fun `it closes with that fade, whatever window is under it`() {
+        library.results[shared] = ImportResult.Added(holiday)
+        val activity = receive()
+
+        activity.finish()
+
+        assertEquals(UiR.anim.panel_exit, shadowOf(activity).pendingTransitionExitAnimationResourceId)
+    }
+
+    // Android's dim doesn't fade with a window that closes: the window draws it, and the panel is a view in it.
+    @Test
+    fun `its window covers the screen and draws the dim, the panel in the middle of it, a dialog's width`() {
+        library.results[shared] = ImportResult.Added(holiday)
+        val activity = receive()
+        val panel = activity.findViewById<View>(R.id.settings_received_panel)
+
+        assertEquals(0, activity.window.attributes.flags and android.view.WindowManager.LayoutParams.FLAG_DIM_BEHIND)
+        assertFalse(activity.window.isFloating)
+        assertEquals(activity.getColor(UiR.color.dim), (activity.window.decorView.background as android.graphics.drawable.ColorDrawable).color)
+        assertEquals(android.view.Gravity.CENTER, (panel.layoutParams as android.widget.FrameLayout.LayoutParams).gravity)
+        assertEquals(activity.resources.getDimensionPixelSize(UiR.dimen.dialog_width), panel.layoutParams.width)
+        assertEquals(activity.resources.getDimension(UiR.dimen.panel_elevation), panel.elevation)
     }
 
     @Test

@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- The home screen's window while the settings panel is over it (HomeActivity): Android's
+         animations, as the Home key can bring it back then too, but for the one that closes the panel. -->
+    <style name="Animation.Luncher.Home.UnderPanel" parent="@android:style/Animation.Activity">
+        <item name="android:activityCloseExitAnimation">@anim/panel_exit</item>
+    </style>
+
     <!-- A tile's menu (TileMenu): a small floating panel like the settings panel, over the home
          screen, which isn't dimmed, so the tile it's for stays as it is. -->
     <style name="Theme.Luncher.Home.Menu" parent="@android:style/Theme.DeviceDefault.Dialog.NoActionBar">

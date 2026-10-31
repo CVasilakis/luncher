@@ -53,7 +53,7 @@ class SettingsScreenshotTest {
     fun settingsPanel() {
         val activity = Robolectric.buildActivity(SettingsActivity::class.java).setup().get()
 
-        activity.window.decorView.captureFocused("src/test/screenshots/settings/settings_panel.png")
+        activity.findViewById<View>(R.id.settings_panel).captureFocused("src/test/screenshots/settings/settings_panel.png")
     }
 
     // 720p at the 1080p density, 640x360 dp, the shortest TV screen: all three entries fit.
@@ -62,7 +62,7 @@ class SettingsScreenshotTest {
     fun settingsPanelOnASmallScreen() {
         val activity = Robolectric.buildActivity(SettingsActivity::class.java).setup().get()
 
-        activity.window.decorView.captureFocused("src/test/screenshots/settings/settings_panel_small_screen.png")
+        activity.findViewById<View>(R.id.settings_panel).captureFocused("src/test/screenshots/settings/settings_panel_small_screen.png")
     }
 
     // Nine apps, two of them hidden, and a name too long for its row: the list fills the sheet, the rest scroll.

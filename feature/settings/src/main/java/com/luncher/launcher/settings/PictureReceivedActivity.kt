@@ -18,6 +18,7 @@ import com.luncher.launcher.ui.Badge
 import com.luncher.launcher.ui.PillButton
 import com.luncher.launcher.ui.ShortestShowing
 import com.luncher.launcher.ui.styleAll
+import com.luncher.launcher.ui.fitPanelToScreen
 import com.luncher.launcher.ui.stylePanel
 import com.luncher.launcher.ui.R as UiR
 
@@ -69,7 +70,8 @@ class PictureReceivedActivity : Activity() {
     private lateinit var mark: Badge
     private lateinit var markPlace: View
     private lateinit var entries: LinearLayout
-    private val theme by lazy { ScreenTheme(graph.appearanceSettings) { checkNotNull(window).stylePanel(it) } }
+    private lateinit var panel: View
+    private val theme by lazy { ScreenTheme(graph.appearanceSettings) { panel.stylePanel(it) } }
 
     private val received get() = graph.receivedPictures
 
@@ -105,7 +107,9 @@ class PictureReceivedActivity : Activity() {
         mark = findViewById(R.id.settings_received_mark)
         markPlace = findViewById(R.id.settings_received_mark_place)
         entries = findViewById(R.id.settings_received_entries)
-        window.stylePanel(theme.roles)
+        panel = findViewById(R.id.settings_received_panel)
+        panel.fitPanelToScreen()
+        panel.stylePanel(theme.roles)
         val kept = savedInstanceState?.getInt(STATE_HOLD) ?: 0
         // Made anew after a configuration change, the window still holds the session, where it
         // was; after the process was gone, it's gone too, and the share is taken again.
@@ -179,7 +183,16 @@ class PictureReceivedActivity : Activity() {
     override fun finish() {
         close()
         super.finish()
+        closeWithPanelFade()
     }
+
+    /**
+     * The window under this one decides how it closes (seen on Android 7.0 to 13, not on 16), and
+     * neither the home screen nor another app knows of its fade: Android's own is four times as
+     * long. Deprecated on the levels that don't need it.
+     */
+    @Suppress("DEPRECATION")
+    private fun closeWithPanelFade() = overridePendingTransition(0, UiR.anim.panel_exit)
 
     override fun onDestroy() {
         super.onDestroy()

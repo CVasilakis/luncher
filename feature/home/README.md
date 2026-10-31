@@ -278,7 +278,10 @@ with the tile. A short press opens the app as OK is released, the dip shown by t
 press, the menu takes the focus, Android ends the tile's press, and the tile zooms back while the
 menu grows out of it. The settings gear in the top bar dips too (to 0.88, `home_settings_press.xml`,
 a state animator of the gear's view), so a press of OK on it shows before the panel opens; the
-Menu key, which also opens the panel, presses nothing.
+Menu key, which also opens the panel, presses nothing. While the panel is over it, the home
+screen's window has the panel's closing animation (`Animation.Luncher.Home.UnderPanel`), as Android
+reads it from there, and its own again a moment after it's back
+([why](../../ui/README.md#the-design-system)): that one is what the Home key plays, coming back from an app.
 
 A see-through picture of the library has the tile's look (`TileLook`, set in the [tile banner
 picker](../settings/README.md#tile-banner)), which the painter draws; an opaque picture, or an
