@@ -63,26 +63,26 @@ the `NOTICE`.
 
 ## Screenshots
 
-Taken on the `gtv_api34` emulator (Google TV) in English, of a release build
-(`assembleRelease`, signed with the debug key to install it), which carries Luncher's own name (a
-debug build is labeled "Luncher (debug)"), with the debug build uninstalled so that it doesn't
-appear among the apps. Not on `gtv_api36`: from Android 16 on, Luncher can't read a picture adb
-copied into its drop folder, so Add from folder would show none. Luncher's appearance settings are
-at their defaults, but for the background: a calm gradient made for the screenshots, a PNG with an
-ordered dither, so it shows no bands and the screenshots stay small (random grain made them 2 MB
-each). The emulator's own apps are turned off (`pm disable-user`), and nine others installed
-so that they fill the default layout (five in the bottom row, four above), ordered so that light
-and dark banners alternate: ERTFLIX, Jellyfin, Kodi, Launcher Manager, Material Files, NewPipe,
-Next Player, RadioDroid and Tailscale. Their banners belong to their owners. The library's photos
-are the author's own.
+Taken on an API 34 emulator in English, with Luncher as the home screen and the emulator's stock
+launcher turned off. Add from folder prints the package name, so that screenshot comes from a
+release build (`assembleRelease`, signed with the debug key to install it), and not on Android 16,
+where Luncher can't read a picture adb copied into its drop folder. The others come from a debug
+build.
+
+The home screen is the same in all of them: the Carina Nebula photo as the wallpaper, nine tiles
+(five in the bottom row, four above) with see-through banners on the Blurred backdrop, corners of
+24 dp, Focus frame Off and the Amber accent. The tiles belong to empty apps made for the
+screenshots, each showing the plain name of what it stands for (Movies, Music, News…) with a
+Material Symbol (Apache 2.0), so that no brand shows. The photo needs its credit, which the root
+README gives: NASA, ESA, CSA, STScI. The other pictures in the lists were drawn for the screenshots.
 
 1. The home screen.
 2. An app's menu (a long press of OK on its tile).
 3. The settings panel.
 4. Appearance, with Tiles open.
-5. Background, the gradient chosen, the photos listed below it.
+5. The background editor, the Carina Nebula chosen, the pictures listed beside it.
 6. Add from folder.
-7. The home screen with two options changed, Focus frame Off and App name Always, a tile selected.
+7. The tile banner editor, a see-through picture chosen for Music's tile, on the Blurred backdrop.
 8. Appearance with the theme changed, Mode Light and the Blue accent, Theme open.
 
 `screencap` saves PNGs with an alpha channel, which `convert` (ImageMagick) removes:

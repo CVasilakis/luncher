@@ -1,0 +1,5 @@
+- 100% of the home screen is now yours to customize
+- Set your own banners for app tiles, with transparency and Light, Dark or Blurred backdrops
+- Rename apps and open their details from the tile's menu
+- Quick, minimal animations for snappier navigation
+- Simplified Chinese translation

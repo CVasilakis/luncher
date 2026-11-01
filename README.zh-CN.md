@@ -1,50 +1,53 @@
-[English](README.md)
-
 <p align="center">
   <img src="docs/images/readme-banner.png" alt="Luncher" width="100%">
 </p>
 
-<p align="center"><b>一款离线、轻量、可自定义的 Android TV 桌面，启动迅速。</b></p>
+<p align="center"><b>一款零权限、轻量、可自定义的 Android TV 桌面，启动迅速。</b></p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/APK-~244_KB-blue" alt="APK ~244 KB">
+  <img src="https://img.shields.io/badge/APK-~310_KB-blue" alt="APK ~310 KB">
   <a href="https://f-droid.org/packages/com.luncher.launcher/"><img src="https://img.shields.io/f-droid/v/com.luncher.launcher?logo=fdroid" alt="F-Droid version"></a>
   <a href="https://github.com/CVasilakis/luncher/releases/latest"><img src="https://img.shields.io/github/v/release/CVasilakis/luncher?logo=github" alt="GitHub release"></a>
   <img src="https://img.shields.io/badge/Android_TV-5.1%2B-3DDC84?logo=android&logoColor=white" alt="Android TV 5.1+">
 </p>
 
-Luncher 注重性能，即使在较老、性能较弱的 Android TV 设备上也能流畅运行，同时提供丰富的自定义选项，让你按自己的喜好调整桌面。
+<p align="center">Luncher 注重隐私和性能，即使在较老、性能较弱的 Android TV 设备上也能流畅运行，同时提供丰富的自定义选项，让你按自己的喜好调整桌面。</p>
+
+<p align="center">其他语言版本：<a href="README.md">English</a></p>
 
 ## 截图
 
 | | |
 |---|---|
 | ![主页](fastlane/metadata/android/en-US/images/tvScreenshots/1.png) | ![应用菜单](fastlane/metadata/android/en-US/images/tvScreenshots/2.png) |
-| 应用、时间和日期 | 长按应用上的 OK 键，可移动或隐藏应用 |
+| 应用、时间和日期 | 长按应用上的 OK 键，查看更多选项 |
 | ![设置](fastlane/metadata/android/en-US/images/tvScreenshots/3.png) | ![外观设置](fastlane/metadata/android/en-US/images/tvScreenshots/4.png) |
-| 设置 | 自定义主页布局和卡片形状 |
+| 设置 | 自定义主页外观 |
 | ![背景设置](fastlane/metadata/android/en-US/images/tvScreenshots/5.png) | ![从文件夹添加图片](fastlane/metadata/android/en-US/images/tvScreenshots/6.png) |
 | 选择背景图片，并调整明暗或模糊程度 | 将图片添加到图片库 |
-| ![卡片下方的应用名称](fastlane/metadata/android/en-US/images/tvScreenshots/7.png) | ![浅色模式](fastlane/metadata/android/en-US/images/tvScreenshots/8.png) |
-| 显示应用名称 | 选择强调色，以及深色或浅色主题 |
+| ![选择卡片封面](fastlane/metadata/android/en-US/images/tvScreenshots/7.png) | ![浅色模式](fastlane/metadata/android/en-US/images/tvScreenshots/8.png) |
+| 为应用设置你自己的卡片封面 | 选择强调色和主题 |
 
 ## 功能
 
 - [x] 调整应用顺序
 - [x] 隐藏不常用的应用
-- [x] 自定义卡片形状，从方形到胶囊形
 - [x] 调整应用的对齐方式（顶部、底部、左侧、右侧或居中）
-- [x] 显示应用名称
+- [x] 显示应用名称，并可重命名
+- [x] 轻松查看应用详情
+- [x] 自定义卡片形状，从方形到胶囊形
 - [x] 使用自己的图片作为背景，并调整明暗或模糊程度
+- [x] 为应用卡片设置自己的封面（支持透明）
 - [x] 为菜单和设置选择强调色，以及深色或浅色主题
 
 **计划中的功能**
 
-- [ ] 自定义应用卡片封面
 - [ ] 更多外观设置，包括卡片大小、间距等
 - [ ] 在状态栏显示 Wi-Fi、VPN 和通知
 - [ ] 用文件夹整理应用
 - [ ] 屏幕保护设置
+- [ ] 备份和导入设置及图片库
+- [ ] 支持批量导入社区图标包
 - [ ] 轻量的动态背景（如可行）
 - [ ] CPU 温度等更多功能（如可行）
 
@@ -138,8 +141,20 @@ adb install luncher-vX.Y.Z.apk
 
 ## 开发者说明
 
-构建方法、代码组织和测试方式见 [`docs/`](docs/README.md)。如果使用 WSL2 开发，[android-tv-wsl-dev-tools](https://github.com/CVasilakis/android-tv-wsl-dev-tools) 提供了从命令行创建、启动和停止 Android TV 模拟器的脚本，无需 Android Studio。
+构建方法、代码组织和测试方式见 [`docs/`](docs/README.md)。如果使用 WSL2 开发，[android-tv-wsl-dev-tools](https://github.com/CVasilakis/android-tv-wsl-dev-tools) 提供了从命令行创建、启动和停止 Android TV 模拟器的脚本，无需 Android Studio。开发在 `beta` 分支上进行。欢迎提交新功能和翻译的 Pull Request，请以 `beta` 为目标分支。
 
 ## 许可协议
 
-Luncher 使用 MIT 许可证（[`LICENSE`](LICENSE)）。图标和应用横幅、应用商店页面的图片、本页横幅，以及归档的启动画面素材除外：这些素材衍生自 Android 开源项目的作品，使用 Apache License 2.0（[`app/README.md`](app/README.md#license)）。
+Luncher 使用 MIT 许可证（[`LICENSE`](LICENSE)）。图标和应用横幅、应用商店页面的图片、本页横幅，以及归档的启动画面素材除外：这些素材衍生自 Android 开源项目的作品，使用 Apache License 2.0（[`app/README.md`](app/README.md#license)）。太空背景图片来源：NASA、ESA、CSA、STScI。
+
+## Star 历史
+
+如果 Luncher 让你的电视重获新生，或者你只是喜欢它，欢迎点亮一颗星。
+
+<a href="https://www.star-history.com/?repos=cvasilakis%2Fluncher&type=date&legend=top-left">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=cvasilakis/luncher&type=date&theme=dark&legend=top-left" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=cvasilakis/luncher&type=date&legend=top-left" />
+   <img alt="Star 历史图表" src="https://api.star-history.com/chart?repos=cvasilakis/luncher&type=date&legend=top-left" />
+ </picture>
+</a>

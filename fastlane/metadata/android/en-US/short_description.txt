@@ -1,1 +1,1 @@
-An offline, lightweight, customizable Android TV launcher that starts instantly.
+A zero-permission, lightweight, customizable TV launcher that starts instantly.

@@ -1,22 +1,25 @@
-Luncher is made with performance in mind, to run smoothly even on old and weak Android TV devices, and still gives you plenty of customization options to shape it to your taste.
+Luncher is made with privacy and performance in mind, to run smoothly even on old and weak Android TV devices, and still gives you plenty of customization options to shape it to your taste.
 
 Features:
 
 - Reorder your apps
 - Hide the apps you don't use
-- Customize the tile shape, from square to pill-shaped
 - Change the apps' alignment (top / bottom / left / right / center)
-- Show the app names
+- Show the app names and rename them
+- Access app details easily
+- Customize the tile shape, from square to pill-shaped
 - Set your own pictures as wallpaper, with dim and blur options
-- Pick an accent color, and dark or light theme for menus and settings
+- Set your own custom banners for app tiles (transparency supported)
+- Pick an accent color and a dark or light theme for menus and settings
 
 On the way:
 
-- Your own custom banners for app tiles
 - More appearance settings: tile size, spacing and much more
 - Wi-Fi, VPN and notifications in the status bar
 - Folders to group your apps
 - Screensaver options
+- Backup and import functionality for settings and the gallery
+- Support batch import of community icon packs
 
 Application goals:
 

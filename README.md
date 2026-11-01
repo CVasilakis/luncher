@@ -2,49 +2,52 @@
   <img src="docs/images/readme-banner.png" alt="Luncher" width="100%">
 </p>
 
-<p align="center"><b>An offline, lightweight and customizable Android TV launcher that starts instantly.</b></p>
+<p align="center"><b>A zero-permission, lightweight and customizable Android TV launcher that starts instantly.</b></p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/APK-~244_KB-blue" alt="APK ~244 KB">
+  <img src="https://img.shields.io/badge/APK-~310_KB-blue" alt="APK ~310 KB">
   <a href="https://f-droid.org/packages/com.luncher.launcher/"><img src="https://img.shields.io/f-droid/v/com.luncher.launcher?logo=fdroid" alt="F-Droid version"></a>
   <a href="https://github.com/CVasilakis/luncher/releases/latest"><img src="https://img.shields.io/github/v/release/CVasilakis/luncher?logo=github" alt="GitHub release"></a>
   <img src="https://img.shields.io/badge/Android_TV-5.1%2B-3DDC84?logo=android&logoColor=white" alt="Android TV 5.1+">
 </p>
 
-[简体中文](README.zh-CN.md)
+<p align="center">It's made with privacy and performance in mind, to run smoothly even on old and weak Android TV devices, and still gives you plenty of customization options to shape it to your taste.</p>
 
-It's made with performance in mind, to run smoothly even on old and weak Android TV devices, and still gives you plenty of customization options to shape it to your taste.
+<p align="center">Also available in: <a href="README.zh-CN.md">简体中文</a></p>
 
 ## Screenshots
 
 | | |
 |---|---|
 | ![The home screen](fastlane/metadata/android/en-US/images/tvScreenshots/1.png) | ![An app's menu](fastlane/metadata/android/en-US/images/tvScreenshots/2.png) |
-| Your apps, the time and the date | Hold OK on an app to move or hide it |
+| Your apps, the time and the date | Hold OK on an app for more options |
 | ![The settings](fastlane/metadata/android/en-US/images/tvScreenshots/3.png) | ![The appearance settings](fastlane/metadata/android/en-US/images/tvScreenshots/4.png) |
-| Settings | Customize your home screen layout and tile shape |
+| Settings | Customize your home screen appearance |
 | ![The background settings](fastlane/metadata/android/en-US/images/tvScreenshots/5.png) | ![Adding a picture from a folder](fastlane/metadata/android/en-US/images/tvScreenshots/6.png) |
 | Pick a wallpaper, and dim or blur it | Add pictures to Luncher's gallery |
-| ![App names below the tiles](fastlane/metadata/android/en-US/images/tvScreenshots/7.png) | ![The light mode](fastlane/metadata/android/en-US/images/tvScreenshots/8.png) |
-| Show the app names | Pick an accent color, and dark or light themes |
+| ![Choosing a tile's banner](fastlane/metadata/android/en-US/images/tvScreenshots/7.png) | ![The light mode](fastlane/metadata/android/en-US/images/tvScreenshots/8.png) |
+| Give any app a banner of your own | Pick an accent color and a theme |
 
 ## Features
 
 - [x] Reorder your apps
 - [x] Hide the apps you don't use
-- [x] Customize the tile shape, from square to pill-shaped
 - [x] Change the apps' alignment (top / bottom / left / right / center)
-- [x] Show the app names
+- [x] Show the app names and rename them
+- [x] Access app details easily
+- [x] Customize the tile shape, from square to pill-shaped
 - [x] Set your own pictures as wallpaper, with dim and blur options
-- [x] Pick an accent color, and dark or light theme for menus and settings
+- [x] Set your own custom banners for app tiles (transparency supported)
+- [x] Pick an accent color and a dark or light theme for menus and settings
 
 **On the way**
 
-- [ ] Your own custom banners for app tiles
 - [ ] More appearance settings: tile size, spacing and much more
 - [ ] Wi-Fi, VPN and notifications in the status bar
 - [ ] Folders to group your apps
 - [ ] Screensaver options
+- [ ] Backup and import functionality for settings and the gallery
+- [ ] Support batch import of community icon packs
 - [ ] A lightweight animated background option (if possible)
 - [ ] More exotic features, such as the CPU temperature (if possible)
 
@@ -136,8 +139,20 @@ At that point I had two options: fork one of the existing open source launchers 
 
 ## For developers
 
-For how to build Luncher, how the code is organized and how it's tested, see [`docs/`](docs/README.md). If you're developing under WSL2, the [android-tv-wsl-dev-tools](https://github.com/CVasilakis/android-tv-wsl-dev-tools) scripts create, start and stop Android TV emulators from the command line, without the need for Android Studio.
+For how to build Luncher, how the code is organized and how it's tested, see [`docs/`](docs/README.md). If you're developing under WSL2, the [android-tv-wsl-dev-tools](https://github.com/CVasilakis/android-tv-wsl-dev-tools) scripts create, start and stop Android TV emulators from the command line, without the need for Android Studio. Development happens on the `beta` branch. Pull requests with new features and translations are welcome, targeting `beta`.
 
 ## License
 
-Luncher is under the MIT License ([`LICENSE`](LICENSE)), except its icon and banner, the store listing's images, this page's banner and the archived launch screen's graphics, which are derived from Android Open Source Project artwork and are under the Apache License 2.0 ([`app/README.md`](app/README.md#license)).
+Luncher is under the MIT License ([`LICENSE`](LICENSE)), except its icon and banner, the store listing's images, this page's banner and the archived launch screen's graphics, which are derived from Android Open Source Project artwork and are under the Apache License 2.0 ([`app/README.md`](app/README.md#license)). Space wallpaper credit: NASA, ESA, CSA, STScI.
+
+## Star History
+
+If Luncher gave your TV a second life, or you simply like it, consider leaving a star.
+
+<a href="https://www.star-history.com/?repos=cvasilakis%2Fluncher&type=date&legend=top-left">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=cvasilakis/luncher&type=date&theme=dark&legend=top-left" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=cvasilakis/luncher&type=date&legend=top-left" />
+   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=cvasilakis/luncher&type=date&legend=top-left" />
+ </picture>
+</a>
