@@ -67,19 +67,30 @@ fun resolvedHome(): String? {
  * (an app left open on someone's TV, a dialog), it fails, naming that screen, rather than make every
  * test wait the long limit on a device whose home screen can't come.
  *
+ * Nor is an activity on that way that Android has left `STOPPING` above the home screen, with the
+ * home app already focused ([HomeLook.leftStopping]): on API 22 one stayed so for good after a test
+ * closed it, in a new emulator's run, and at 600 s for each test that followed the job ran out of
+ * time with no results. It fails once the same one has stayed for [otherAppTimeoutMs], and every
+ * later call that finds it fails at once, so a run ends and reports the tests it did run.
+ *
  * The one key it presses is Back on [FIRST_BOOT_SCREENS], screens a first boot opens in front of
  * the home app, which stay until Back, and only while one of them has the focus. Nothing else
  * gets a key, on the stock launcher's own screens or any other: the tests can run on someone's TV.
  */
-fun waitForHomeScreen(timeoutMs: Long = HOME_TIMEOUT_MS, otherAppTimeoutMs: Long = OTHER_APP_TIMEOUT_MS) {
+fun waitForHomeScreen(timeoutMs: Long = HOME_TIMEOUT_MS, otherAppTimeoutMs: Long = OTHER_APP_TIMEOUT_MS) =
+    waitForHomeScreen(timeoutMs, otherAppTimeoutMs, ::lookAtTheDevice)
+
+/** The wait, with [lookNow] taking each look: `HomeLookTest` plays a stuck device through it. */
+internal fun waitForHomeScreen(timeoutMs: Long, otherAppTimeoutMs: Long, lookNow: () -> HomeLook) {
     val deadline = SystemClock.uptimeMillis() + timeoutMs
     var settled: Focus? = null
     var other: Focus? = null
     var otherSince = 0L
+    var stopping: String? = null
+    var stoppingSince = 0L
     var nextBack = 0L
     while (true) {
-        val home = if (Build.VERSION.SDK_INT >= 24) resolvedHomeActivity() else null
-        val look = HomeLook(Build.VERSION.SDK_INT, home, shell("dumpsys window"), shell("dumpsys activity activities"))
+        val look = lookNow()
         val focus = look.focus
         val now = SystemClock.uptimeMillis()
         if (look.isSettled) {
@@ -105,6 +116,17 @@ fun waitForHomeScreen(timeoutMs: Long = HOME_TIMEOUT_MS, otherAppTimeoutMs: Long
                         "so the home screen can't come; the tests press no key on it. Close it on the device. $look",
                 )
             }
+            val left = look.leftStopping
+            if (left != stopping) {
+                stopping = left
+                stoppingSince = now
+            } else if (left != null && (left == givenUpOn || now - stoppingSince >= otherAppTimeoutMs)) {
+                givenUpOn = left
+                throw AssertionError(
+                    "Android has left an activity STOPPING above the home screen, so the home screen can't settle; " +
+                        "cold-boot the device (docs/INSTRUMENTED-TESTS.md). $look",
+                )
+            }
         }
         if (now > deadline) {
             throw AssertionError("The home screen didn't settle in ${timeoutMs / 1000} s: $look")
@@ -112,6 +134,14 @@ fun waitForHomeScreen(timeoutMs: Long = HOME_TIMEOUT_MS, otherAppTimeoutMs: Long
         SystemClock.sleep(HOME_POLL_MS)
     }
 }
+
+private fun lookAtTheDevice(): HomeLook {
+    val home = if (Build.VERSION.SDK_INT >= 24) resolvedHomeActivity() else null
+    return HomeLook(Build.VERSION.SDK_INT, home, shell("dumpsys window"), shell("dumpsys activity activities"))
+}
+
+/** The activity [waitForHomeScreen] last gave up on: its record. Stays so for the process, the tests' whole run. */
+private var givenUpOn: String? = null
 
 /** The activity a HOME intent resolves to (API 24+), e.g. com.luncher.launcher/.home.HomeActivity. */
 private fun resolvedHomeActivity(): String? = resolvedActivity(Intent.ACTION_MAIN, Intent.CATEGORY_HOME)
@@ -172,6 +202,17 @@ internal class HomeLook(private val sdk: Int, private val home: String?, windows
     val anotherApp: Focus? = focus.takeIf {
         it.window != null && homePackages.isNotEmpty() && it.window.substringBefore('/') !in homePackages
     }
+
+    /**
+     * The record of the top activity when it's another app's, in another task, and `STOPPING` while
+     * a window of the home app has the focus: Android has moved on and not ended it. That lasts a
+     * moment after any screen closes; null otherwise. The home app's own screens aren't counted, as
+     * Google TV's DispatchActivity comes and goes in a task of its own.
+     */
+    val leftStopping: String? = top?.takeIf {
+        it.state == "STOPPING" && it.task !in homeTasks && it.component.substringBefore('/') !in homePackages &&
+            focus.window != null && focus.window.substringBefore('/') in homePackages
+    }?.record
 
     /**
      * Whether the top activity is in a task of the home app, resumed and idle, the focused
@@ -288,7 +329,8 @@ private const val FIRST_BOOT_BACK_INTERVAL_MS = 2_000L
 private const val HOME_TIMEOUT_MS = 600_000L
 
 /**
- * How long a screen of another app may keep the focus in [waitForHomeScreen]. Nothing on the way to
+ * How long a screen of another app may keep the focus in [waitForHomeScreen], or an activity stay
+ * left `STOPPING` above the home screen. Nothing on the way to
  * the home screen holds it long: a screen of the app closing after a test, or Luncher's home screen
  * while the stock launcher starts cold after `HomeKeyTest`, gives way within the whole wait, which
  * took 37.2 s at the longest on a starved emulator apart from Google TV's DispatchActivity (the home

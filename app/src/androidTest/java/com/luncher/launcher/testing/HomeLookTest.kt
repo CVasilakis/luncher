@@ -1,9 +1,11 @@
 package com.luncher.launcher.testing
 
+import android.os.SystemClock
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -460,6 +462,79 @@ class HomeLookTest {
         assertEquals("com.android.tv.settings/.MainSettings", look.anotherApp?.activity)
     }
 
+    /**
+     * API 22, in CI: a test's activity left STOPPING for good above the stock launcher, which has
+     * the focus (made up from what that run reported).
+     */
+    @Test
+    fun anActivityLeftStoppingAboveTheHomeApp_isSeen() {
+        val look = leftStopping("3b1a77e")
+        assertEquals(look.toString(), "3b1a77e", look.leftStopping)
+        assertFalse(look.toString(), look.isSettled)
+        assertNull(look.toString(), look.anotherApp)
+    }
+
+    /** The first wait that finds it gives up at the limit; the next, as each later test's would, at once. */
+    @Test
+    fun anActivityLeftStopping_failsTheWaitAtTheLimit_andTheNextAtOnce() {
+        val look = leftStopping("5e0c91a")
+        val limitMs = 1_500L
+        fun waitMs(): Long {
+            val start = SystemClock.uptimeMillis()
+            val failure = assertThrows(AssertionError::class.java) { waitForHomeScreen(60_000, limitMs) { look } }
+            assertTrue(failure.message, "STOPPING above the home screen" in failure.message.orEmpty())
+            return SystemClock.uptimeMillis() - start
+        }
+        val first = waitMs()
+        assertTrue("gave up after $first ms", first >= limitMs)
+        val next = waitMs()
+        assertTrue("gave up after $next ms", next < limitMs)
+    }
+
+    /** An activity still closing, its own window with the focus, hasn't been left (made up). */
+    @Test
+    fun anActivityStoppingWithTheFocus_isNotLeftStopping() {
+        val look = HomeLook(
+            36,
+            "com.google.android.tvlauncher/.MainActivity",
+            """
+            mCurrentFocus=Window{2f81404 u0 com.luncher.launcher/com.luncher.launcher.home.HomeActivity}
+            mFocusedApp=ActivityRecord{155463753 u0 com.luncher.launcher/.home.HomeActivity t269}
+            """,
+            """
+            * Hist  #0: ActivityRecord{155463753 u0 com.luncher.launcher/.home.HomeActivity t269}
+              state=STOPPING delayedResume=false finishing=true
+              keysPaused=false inHistory=true idle=true
+            * Hist  #0: ActivityRecord{110065534 u0 com.google.android.tvlauncher/.MainActivity t270}
+              state=RESUMED delayedResume=false finishing=false
+              keysPaused=false inHistory=true idle=true
+            """,
+        )
+        assertNull(look.toString(), look.leftStopping)
+    }
+
+    /** The home app's own screen in a task of its own, like Google TV's DispatchActivity, keeps the long limit (made up). */
+    @Test
+    fun theHomeAppsOwnScreenStopping_isNotLeftStopping() {
+        val look = HomeLook(
+            33,
+            LAUNCHERX_HOME,
+            """
+            mCurrentFocus=Window{7d3a1c0 u0 com.google.android.apps.tv.launcherx/com.google.android.apps.tv.launcherx.home.HomeActivity}
+            mFocusedApp=ActivityRecord{af5a038 u0 com.google.android.apps.tv.launcherx/.home.HomeActivity} t54}
+            """,
+            """
+            * Hist  #0: ActivityRecord{6e21b4f u0 com.google.android.apps.tv.launcherx/.dispatch.DispatchActivity} t53}
+              state=STOPPING stopped=false delayedResume=false finishing=true
+              keysPaused=false inHistory=true idle=true
+            * Hist  #0: ActivityRecord{af5a038 u0 com.google.android.apps.tv.launcherx/.home.HomeActivity} t54}
+              state=RESUMED stopped=false delayedResume=false finishing=false
+              keysPaused=false inHistory=true idle=true
+            """,
+        )
+        assertNull(look.toString(), look.leftStopping)
+    }
+
     /** API 22's "choose home app" dialog, of package android, in the task Home started: the home app's. */
     @Test
     fun chooseHomeAppDialog_isNotAnotherAppsScreen() {
@@ -542,6 +617,29 @@ class HomeLookTest {
             ),
         )
     }
+
+    /** The look of [anActivityLeftStoppingAboveTheHomeApp_isSeen]: [record] is the activity left. */
+    private fun leftStopping(record: String) = HomeLook(
+        22,
+        null,
+        """
+        mFocusedApp=Token{3d2f0934 ActivityRecord{c0d0407 u0 com.google.android.leanbacklauncher/.MainActivity t2}}
+        mCurrentFocus=Window{10d1f28a u0 com.google.android.leanbacklauncher/com.google.android.leanbacklauncher.MainActivity}
+        mFocusedApp=AppWindowToken{340cf35d token=Token{3d2f0934 ActivityRecord{c0d0407 u0 com.google.android.leanbacklauncher/.MainActivity t2}}}
+        """,
+        """
+        * TaskRecord{1d4c6b2 #79 A=com.luncher.launcher.debug U=0 sz=1}
+          intent={flg=0x10000000 cmp=com.luncher.launcher.debug/com.luncher.launcher.settings.TileBannerActivity}
+          * Hist #0: ActivityRecord{$record u0 com.luncher.launcher.debug/com.luncher.launcher.settings.TileBannerActivity t79 f}
+            state=STOPPING stopped=false delayedResume=false finishing=true
+            keysPaused=false inHistory=true visible=false sleeping=false idle=true
+        * TaskRecord{2ca1f04 #2 A=com.google.android.leanbacklauncher U=0 sz=1}
+          intent={act=android.intent.action.MAIN cat=[android.intent.category.HOME] flg=0x10000000 cmp=com.google.android.leanbacklauncher/.MainActivity}
+          * Hist #0: ActivityRecord{c0d0407 u0 com.google.android.leanbacklauncher/.MainActivity t2}
+            state=RESUMED stopped=false delayedResume=false finishing=false
+            keysPaused=false inHistory=true visible=true sleeping=false idle=true
+        """,
+    )
 
     private companion object {
         const val LAUNCHERX_HOME = "com.google.android.apps.tv.launcherx/.home.HomeActivity"

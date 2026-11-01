@@ -96,9 +96,11 @@ started meanwhile; after a boot, Google TV's launcher first shows a screen of it
 on a slow host. So settled is a state the device shows, not a time it has lasted: the home app's
 top activity, in its home task, resumed and idle, with the focus. The helper waits up to 10
 minutes while the device is on its way there, and fails at once, naming it, once a screen of
-another app has kept the focus for 60 s (an app left open on someone's TV, a dialog).
-`HomeLookTest` checks both decisions on dumps the emulators produced. The one key it presses is
-Back on "USB drive connected", named ([`EMULATORS.md`](EMULATORS.md#what-the-images-do-on-their-own)),
+another app has kept the focus for 60 s (an app left open on someone's TV, a dialog), or an
+activity has stayed `STOPPING` above the home screen that long
+([below](#messages-and-failures-that-arent-lunchers)); then every later test that finds it fails
+at once. `HomeLookTest` checks these decisions on dumps the emulators produced. The one key it
+presses is Back on "USB drive connected", named ([`EMULATORS.md`](EMULATORS.md#what-the-images-do-on-their-own)),
 and on no other screen, since the tests can run on someone's TV.
 
 ### When the stock launcher covers a test
@@ -288,12 +290,14 @@ as the home screen on API 22 and 23 is checked by hand
   `tv_api28`, the TV app `com.android.tv` (`SQLiteException: no such column: failed_reason`, in
   `AsyncDvrDbTask`); on `tv_api33`, `com.google.android.tv` (a `PendingIntent` made without
   `FLAG_IMMUTABLE`).
-- **Every test on `tv_api22` failing after 600 s,** "The home screen didn't settle", with the
-  stock launcher focused and an activity of Luncher left `STOPPING` above its task: seen after the
-  stock launcher had been disabled and enabled again by hand, or started by hand
-  (`am start -n …leanbacklauncher/.MainActivity`). The run then takes hours: stop it, and cold-boot
-  the emulator (`stop-emulator.sh`, then `start-emulator.sh`), or force-stop the stock launcher
-  and press Home.
+- **Tests on `tv_api22` failing with "Android has left an activity STOPPING above the home
+  screen",** the stock launcher focused and an activity of Luncher left `STOPPING` above its task:
+  seen after the stock launcher had been disabled and enabled again by hand, or started by hand
+  (`am start -n …leanbacklauncher/.MainActivity`), and once in CI on a new emulator, for no reason
+  found. The test whose activity it was fails first, as it closes: `Activity never becomes
+  requested state "[DESTROYED]"`, its checks having passed. The first test after it then fails
+  after 60 s, and the rest that need the home screen at once. Cold-boot the emulator
+  (`stop-emulator.sh`, then `start-emulator.sh`), or force-stop the stock launcher and press Home.
 - **Android TV 16's Settings crashing on `tv_api36` starved of CPU,** as it opens (a
   `NullPointerException` in `MainFragment.onSuggestionReady`, on a launch after the first, from
   its cached process), also without Luncher, opened from the shell. `SystemSettingsTest`, or
