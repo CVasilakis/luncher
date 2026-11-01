@@ -20,6 +20,7 @@ import org.robolectric.annotation.GraphicsMode
 import android.content.Intent
 import android.graphics.Outline
 import android.os.Looper
+import android.view.FocusFinder
 import android.view.KeyEvent
 import android.view.View
 import android.view.WindowManager
@@ -1157,5 +1158,39 @@ class TileBannerActivityTest {
         val start = activity.findViewById<View>(R.id.settings_tile_banner_start)
         assertTrue(pictures.right <= start.left)
         assertEquals(View.LAYOUT_DIRECTION_LTR, activity.preview().layoutDirection)
+    }
+
+    // Android counts every row of the list lower than the button, shown or not, as below it: a
+    // short list has none, so Down stayed there only with few pictures.
+    @Test
+    fun `Down from Save or Delete all stays there, however many pictures, which Right still leaves`() {
+        graph(*Array(20) { picture("picture%02d.jpg".format(it), added = it.toLong()) })
+        val activity = start().get()
+        val list = activity.findViewById<ViewGroup>(R.id.settings_pictures_list)
+        for (id in intArrayOf(R.id.settings_picture_editor_save, R.id.settings_picture_editor_delete_all)) {
+            val button = activity.findViewById<View>(id)
+            assertTrue(button.requestFocus())
+
+            val below = FocusFinder.getInstance().findNextFocus(activity.window.decorView as ViewGroup, button, View.FOCUS_DOWN)
+
+            assertTrue("Android alone goes to a row of the list", below?.parent === list)
+            assertSame(button, button.focusSearch(View.FOCUS_DOWN))
+        }
+        assertTrue("Right still reaches the list", activity.findViewById<View>(R.id.settings_picture_editor_delete_all).focusSearch(View.FOCUS_RIGHT)?.parent === list)
+    }
+
+    @Test
+    fun `Down from Save reaches Delete all below it, where the two don't fit side by side`() {
+        graph(*Array(20) { picture("picture%02d.jpg".format(it), added = it.toLong()) })
+        val activity = start().get()
+        val save = activity.findViewById<TextView>(R.id.settings_picture_editor_save)
+        val deleteAll = activity.findViewById<View>(R.id.settings_picture_editor_delete_all)
+        (save.parent as com.luncher.launcher.ui.EntriesRow).stacked = true
+        save.requestLayout()
+        shadowOf(Looper.getMainLooper()).idleFor(java.time.Duration.ofSeconds(1))
+        assertTrue("one below the other", deleteAll.top >= save.bottom)
+        assertTrue(save.requestFocus())
+
+        assertSame(deleteAll, save.focusSearch(View.FOCUS_DOWN))
     }
 }

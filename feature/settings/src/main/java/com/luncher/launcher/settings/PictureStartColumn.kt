@@ -21,7 +21,9 @@ import com.luncher.launcher.ui.ScreenSize
  * Add from folder's preview): shorter than that, too small to show anything, it goes, and the app's
  * name takes the title's line, so the options start level with the pictures' container. Where
  * even then they don't fit, they scroll, and Save and Delete all stay at the bottom, level with the
- * container's; else they're right below the options.
+ * container's; else they're right below the options. Down past what's lowest in the column stays
+ * there, not on a row of the pictures beside it, as Down past the pictures' last row does
+ * ([ListFrame]). Left and Right still leave it.
  */
 internal class PictureStartColumn(context: Context, attrs: AttributeSet?) : LinearLayout(context, attrs) {
 
@@ -37,6 +39,11 @@ internal class PictureStartColumn(context: Context, attrs: AttributeSet?) : Line
 
     /** Each of the content's views' top margin, as the layout gives it: the first one shown has none. */
     private val margins = HashMap<View, Int>()
+
+    override fun focusSearch(focused: View, direction: Int): View? {
+        val found = super.focusSearch(focused, direction)
+        return if (direction == FOCUS_DOWN) stayingInside(focused, found) else found
+    }
 
     /** Whether the title shows, as [widthFor] last decided. */
     var titled = true

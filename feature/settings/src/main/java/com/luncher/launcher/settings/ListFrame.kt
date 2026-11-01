@@ -3,6 +3,7 @@ package com.luncher.launcher.settings
 import android.content.Context
 import android.util.AttributeSet
 import android.view.View
+import android.view.ViewGroup
 import com.luncher.launcher.ui.ScrollFrame
 
 /**
@@ -16,16 +17,20 @@ internal class ListFrame(context: Context, attrs: AttributeSet?) : ScrollFrame(c
 
     override fun focusSearch(focused: View, direction: Int): View? {
         val found = super.focusSearch(focused, direction)
-        if (direction == FOCUS_DOWN && (found == null || !isInside(found))) return focused
-        return found
+        return if (direction == FOCUS_DOWN) stayingInside(focused, found) else found
     }
+}
 
-    private fun isInside(view: View): Boolean {
-        var parent = view.parent
-        while (parent != null) {
-            if (parent === this) return true
-            parent = parent.parent
-        }
-        return false
+/**
+ * [found], Android's choice for Down from [focused] in this view, if it's inside this view; else
+ * [focused]: Android would move it to the nearest view lower down anywhere on the screen, shown or
+ * scrolled away, in the column beside this one.
+ */
+internal fun ViewGroup.stayingInside(focused: View, found: View?): View {
+    var parent = found?.parent
+    while (parent != null) {
+        if (parent === this) return checkNotNull(found)
+        parent = parent.parent
     }
+    return focused
 }

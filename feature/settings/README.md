@@ -326,7 +326,10 @@ settings screens; the preview's content and the pictures don't.
 
 The editor opens with the focus on the chosen picture, or No picture. Down past the list's last
 entry leaves the focus there (`ListFrame`): Android would move it to the nearest entry below
-anywhere on the screen, an option, Save or Delete all; Left still goes to them. Coming back to it
+anywhere on the screen, an option, Save or Delete all; Left still goes to them. Down past what's
+lowest in the start column stays there too (`PictureStartColumn`), not on a row of the pictures,
+which Android counts as below it, shown or not, once there are many; Right still goes to them.
+Coming back to it
 (from Add from folder, another app, the TV's sleep), the focus is where it was, the list scrolled
 as it was: the list is made again only if pictures were added, deleted or moved meanwhile, and then
 the focus stays on what had it, unless that's a picture that's gone: then it goes to the one that
