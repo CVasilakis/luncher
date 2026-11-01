@@ -61,7 +61,7 @@ fun colorRoles(theme: ThemeAppearance): ColorRoles {
             onPrimary = accent.tone20,
             primaryContainer = accent.tone30,
             onPrimaryContainer = accent.tone90,
-            error = 0xFFFFB4AB.toInt(),
+            error = 0xFFFF897D.toInt(),
             onError = 0xFF690005.toInt(),
             errorContainer = 0xFF93000A.toInt(),
             onErrorContainer = 0xFFFFDAD6.toInt(),
