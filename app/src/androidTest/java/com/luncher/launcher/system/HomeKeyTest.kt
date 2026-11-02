@@ -237,7 +237,7 @@ class HomeKeyTest {
                         "stopped without shutting Android down (adb emu kill) boots without them, and so without its " +
                         "stock launcher. Don't stop it that way yet: Android writes them later by itself, which " +
                         "`adb logcat -b events -d -s $COMMIT_EVENT` shows as a new [$PACKAGE_STATES_FILE,…] line; " +
-                        "then run `adb shell sync`, or stop the emulator with android-tv-wsl-dev-tools' stop-emulator.sh.",
+                        "then run `adb shell sync`, or stop the emulator with android-tv-wsl-dev-tools' tv-stop-emulator.sh.",
                 )
             }
             SystemClock.sleep(POLL_MS)

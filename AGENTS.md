@@ -10,8 +10,9 @@ README of the folder you're working in. Docs you write follow
 
 ## Tools outside this repository
 
-The emulator scripts (`create-avd.sh`, `start-emulator.sh`, `stop-emulator.sh`, `remote.sh`) come
-from [android-tv-wsl-dev-tools](https://github.com/CVasilakis/android-tv-wsl-dev-tools), a separate
+The emulator scripts (`tv-create-avd.sh`, `tv-start-emulator.sh`, `tv-stop-emulator.sh`,
+`tv-remote.sh`) come from
+[android-tv-wsl-dev-tools](https://github.com/CVasilakis/android-tv-wsl-dev-tools), a separate
 repository that can live anywhere; its `bin/` must be on `PATH`
 ([`docs/EMULATORS.md`](docs/EMULATORS.md)). If the scripts aren't found, ask the user where that
 repository is rather than guessing a path.
@@ -22,7 +23,7 @@ Its `bin/README.md` is the reference for driving the emulator from a script:
 and [how API levels differ](https://github.com/CVasilakis/android-tv-wsl-dev-tools/blob/main/bin/README.md#differences-between-api-levels).
 
 Two things of the host that can stop the work:
-- **"No access to /dev/kvm"** from `start-emulator.sh`, although it worked before: under WSL,
+- **"No access to /dev/kvm"** from `tv-start-emulator.sh`, although it worked before: under WSL,
   booting another WSL distro can hand `/dev/kvm` to that distro's `kvm` group
   ([the tools' `SETUP.md`](https://github.com/CVasilakis/android-tv-wsl-dev-tools/blob/main/SETUP.md#make-devkvm-writable)).
   The fix needs `sudo`: stop and ask the user.
@@ -44,7 +45,7 @@ adb exec-out screencap -p > screen.png           # screenshot, to look at the UI
 adb logcat -b crash                              # crashes
 ```
 
-Stop an emulator with `stop-emulator.sh`, which has Android save a device setting changed by hand
+Stop an emulator with `tv-stop-emulator.sh`, which has Android save a device setting changed by hand
 first; any other way loses a change made less than 30 s before
 ([why](docs/EMULATORS.md#saving-a-change-to-the-device)).
 
@@ -53,19 +54,19 @@ tests, stop it, then start the next.
 
 ```bash
 for avd in tv_api22 tv_api24 tv_api28 tv_api30 tv_api33 tv_api36; do
-  start-emulator.sh "$avd" && ./gradlew connectedDebugAndroidTest; stop-emulator.sh "$avd"
+  tv-start-emulator.sh "$avd" && ./gradlew connectedDebugAndroidTest; tv-stop-emulator.sh "$avd"
 done
 ```
 
 **Waiting in commands.** A command that waits must end on its own, or it holds up the session
 until the tool's time limit:
 
-- Stop emulators with `stop-emulator.sh`. It waits until the emulator has exited, with a time
+- Stop emulators with `tv-stop-emulator.sh`. It waits until the emulator has exited, with a time
   limit, so don't wait for the emulator's process yourself. (A checkout of the tools older than
-  v1.3.0 lacks it: `adb emu kill; adb wait-for-disconnect`.)
+  v2.0.0 lacks it: `adb emu kill; adb wait-for-disconnect`.)
 - Never wait on `pgrep -f` or `pkill -f`: your command runs as `bash -c '<command>'`, whose
   command line holds the pattern too, so they always find it and the loop never ends
-  ([details](https://github.com/CVasilakis/android-tv-wsl-dev-tools/blob/main/bin/README.md#stop-emulatorsh)).
+  ([details](https://github.com/CVasilakis/android-tv-wsl-dev-tools/blob/main/bin/README.md#tv-stop-emulatorsh)).
 - Start any wait loop you write with `timeout <seconds>`, and `sleep` in its body, so a mistake
   ends in seconds and doesn't keep a CPU core busy.
 
@@ -130,7 +131,7 @@ Each of these fixes a real problem. Read the reason before changing anything.
 | `waitForTheSettingsPanel()` between the two Backs of `hidingAnAppInTheSettings_removesItsTile` | `app/src/androidTest/…/home/HomeActivityTest.kt` | its comment, [`docs/INSTRUMENTED-TESTS.md`](docs/INSTRUMENTED-TESTS.md#writing-them) |
 | The wait, before `coverWithTheStockLauncher()`'s HOME intent, until no "choose home app" dialog is left that isn't finishing (`homeChooserNotFinishing`), rather than re-sending the intent | `app/src/androidTest/…/testing/RetryWhenCoveredTest.kt` | `coverWithTheStockLauncher`'s KDoc, [`docs/INSTRUMENTED-TESTS.md`](docs/INSTRUMENTED-TESTS.md#writing-them) |
 | `RetryWhenCovered` in the test classes that open screens (a test the stock launcher covered runs twice), judging each look by the state when its read began; and `HideAppsActivityTest`'s `arrangements` made anew at each launch | `app/src/androidTest/…` | its KDoc, [`docs/INSTRUMENTED-TESTS.md`](docs/INSTRUMENTED-TESTS.md#writing-them) |
-| `start-emulator.sh --wait-for-home` in CI, although the tests wait for the home screen too | `.github/workflows/instrumented-tests.yml` | its comment |
+| `tv-start-emulator.sh --wait-for-home` in CI, although the tests wait for the home screen too | `.github/workflows/instrumented-tests.yml` | its comment |
 | `ListEntry`'s `onMeasure` `final`, a subclass measuring through `measureContent` | `ui/…/ListEntry.kt` | its comment, [`ui/README.md`](ui/README.md#the-design-system): a list gives its rows one height so its window is whole rows; `StepperRow` measuring itself left its rows out, and the window drifted by 2 px a row |
 | `FocusSlide` drawing the rows' focused looks once, apart from the rows, as a `Picture` from API 23 on and into kept bitmaps before, and the list redrawn as a slide starts and ends; `ListEntry.drawChild` cutting a child along its outline while it draws into them | `ui/…/FocusSlide.kt`, `ui/…/ListEntry.kt` | their KDoc: the GPU keeps one drawing of a view a frame, so a row can't look focused inside the bar and at rest outside it any other way; bitmaps sent to the GPU made a slide's frames 6 times slower (tv_api28), and API 22's GPU can't play a `Picture`; the GPU keeps the list's drawing, the bar in it, until the list itself changes; those canvases leave outlines (a thumbnail's rounded corners) to the GPU |
 | `LookAheadListView` selecting through `selectFromTop`, its padding less `listPaddingTop`, not `setSelectionFromTop` or `ListView`'s `setSelection` | `ui/…/LookAheadListView.kt` | `selectFromTop`'s KDoc: before its first measure `ListView` counts no padding, and Add from folder's first row sat on the list's top edge, the margin lost until it scrolled |

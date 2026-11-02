@@ -26,7 +26,7 @@ SDK (~147 MB).
 
 ```bash
 ./gradlew assembleDebug
-start-emulator.sh                                  # android-tv-wsl-dev-tools; returns once booted
+tv-start-emulator.sh                               # android-tv-wsl-dev-tools; returns once booted
 ./gradlew installDebug
 adb shell pm disable-user --user 0 com.google.android.leanbacklauncher   # make Luncher the home screen
 adb shell input keyevent HOME

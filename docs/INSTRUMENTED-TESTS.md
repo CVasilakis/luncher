@@ -69,15 +69,15 @@ tests run on six emulators:
 With several booted, one run covers them all, in parallel:
 
 ```bash
-for api in 22 24 28 30 33 36; do create-avd.sh --api $api; done   # once; needs the system images,
-                                                                   # see android-tv-wsl-dev-tools' SETUP.md, step 5
-for avd in tv_api22 tv_api24 tv_api28 tv_api30 tv_api33 tv_api36; do start-emulator.sh "$avd"; done
+for api in 22 24 28 30 33 36; do tv-create-avd.sh --api $api; done   # once; needs the system images,
+                                                                      # see android-tv-wsl-dev-tools' SETUP.md, step 5
+for avd in tv_api22 tv_api24 tv_api28 tv_api30 tv_api33 tv_api36; do tv-start-emulator.sh "$avd"; done
 ./gradlew connectedDebugAndroidTest                    # runs on every booted emulator
 ```
 
 How many run at once is up to you: an emulator takes ~2 GB of RAM on API 22, 24 and 28 and
 ~3.2–3.8 GB on 30, 33 and 36, so all six need ~17 GB. With less, boot them in batches (e.g. 22, 24
-and 36, then 28, 30 and 33) or one at a time, stopping each with `stop-emulator.sh <avd>` before
+and 36, then 28, 30 and 33) or one at a time, stopping each with `tv-stop-emulator.sh <avd>` before
 the next. The API 36 image also takes 8.2 GB of disk.
 
 ## Writing them
@@ -297,7 +297,8 @@ as the home screen on API 22 and 23 is checked by hand
   found. The test whose activity it was fails first, as it closes: `Activity never becomes
   requested state "[DESTROYED]"`, its checks having passed. The first test after it then fails
   after 60 s, and the rest that need the home screen at once. Cold-boot the emulator
-  (`stop-emulator.sh`, then `start-emulator.sh`), or force-stop the stock launcher and press Home.
+  (`tv-stop-emulator.sh`, then `tv-start-emulator.sh`), or force-stop the stock launcher and press
+  Home.
 - **Android TV 16's Settings crashing on `tv_api36` starved of CPU,** as it opens (a
   `NullPointerException` in `MainFragment.onSuggestionReady`, on a launch after the first, from
   its cached process), also without Luncher, opened from the shell. `SystemSettingsTest`, or
@@ -322,8 +323,8 @@ and Google TV image that release is tested with, from API 22 on, named `android_
 | `all` | both |
 | one name, e.g. `google_tv_api33` | that emulator only |
 
-It boots them with `start-emulator.sh --wait-for-home`, which returns once the home app's screen is
-in front, has finished starting and has the focus, rather than as soon as Android has booted: on
+It boots them with `tv-start-emulator.sh --wait-for-home`, which returns once the home app's screen
+is in front, has finished starting and has the focus, rather than as soon as Android has booted: on
 API 34, tests started right after the boot once found no window with the focus, ever.
 
 To find out why a job failed:

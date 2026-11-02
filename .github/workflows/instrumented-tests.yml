@@ -63,7 +63,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           repository: CVasilakis/android-tv-wsl-dev-tools
-          ref: v1.8.0
+          ref: v2.0.0
           path: .android-tv-wsl-dev-tools
       # adb too: the tools find it in the SDK by themselves, but the failure steps call it by name.
       - name: Put the tools and adb on PATH
@@ -145,8 +145,8 @@ jobs:
         run: |
           google_tv=()
           if [ "$TAG" = google-tv ]; then google_tv=(--google-tv); fi
-          create-avd.sh --api "$API" "${google_tv[@]}" --if-missing "$AVD"
-          serial="$(start-emulator.sh --wait-for-home "$AVD" -no-snapshot-save)"
+          tv-create-avd.sh --api "$API" "${google_tv[@]}" --if-missing "$AVD"
+          serial="$(tv-start-emulator.sh --wait-for-home "$AVD" -no-snapshot-save)"
           echo "ANDROID_SERIAL=$serial" >> "$GITHUB_ENV"
       # With each test as it starts, finishes or fails (the test runner's TestRunner lines in the
       # device's log), so a job that hangs or is cancelled shows which test it was in: AGP writes
