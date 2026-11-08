@@ -100,13 +100,19 @@ On Google's own system images, the stock launcher is:
 | Android TV 8.0 and newer | `com.google.android.tvlauncher` |
 | Google TV | `com.google.android.apps.tv.launcherx` |
 
-TV makers may replace it with their own, so check with the commands above. Disabling the stock launcher makes Home open Luncher:
+TV makers may replace it with their own, so check with the commands above. Disable the stock launcher so that Home opens Luncher:
 
 ```bash
 adb shell pm disable-user --user 0 <package>
 ```
 
-To undo it, run `adb shell pm enable <package>`. Don't uninstall Luncher while the stock launcher is disabled, or Home has nowhere to go.
+Then check that Home opens Luncher, with the `resolve-activity` command above. Some TVs have a fallback home screen that comes first once the stock launcher is disabled. If the command names another app, disable that one too. On some Google TV devices, it's the setup wizard's recovery screen:
+
+```bash
+adb shell pm disable-user --user 0 com.google.android.tungsten.setupwraith/.RecoveryActivity
+```
+
+To undo it, run `adb shell pm enable` with each name you disabled. Don't uninstall Luncher while the stock launcher is disabled, or Home has nowhere to go.
 
 </details>
 

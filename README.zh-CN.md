@@ -100,13 +100,19 @@ Google 原版系统镜像中的默认桌面如下：
 | Android TV 8.0 及更新版本 | `com.google.android.tvlauncher` |
 | Google TV | `com.google.android.apps.tv.launcherx` |
 
-电视厂商可能替换默认桌面，因此请先用上面的命令确认。停用系统桌面后，按主页键就会打开 Luncher：
+电视厂商可能替换默认桌面，因此请先用上面的命令确认。停用系统桌面，让主页键打开 Luncher：
 
 ```bash
 adb shell pm disable-user --user 0 <package>
 ```
 
-要恢复系统桌面，运行 `adb shell pm enable <package>`。系统桌面停用期间，请勿卸载 Luncher，否则主页键将没有可打开的桌面。
+然后用上面的 `resolve-activity` 命令确认按主页键会打开 Luncher。有些电视带有备用桌面，停用系统桌面后会优先打开它。如果命令显示的是其他应用，也将其停用。在部分 Google TV 设备上，它是设置向导的恢复界面：
+
+```bash
+adb shell pm disable-user --user 0 com.google.android.tungsten.setupwraith/.RecoveryActivity
+```
+
+要恢复，对每个停用过的名称运行 `adb shell pm enable`。系统桌面停用期间，请勿卸载 Luncher，否则主页键将没有可打开的桌面。
 
 </details>
 
