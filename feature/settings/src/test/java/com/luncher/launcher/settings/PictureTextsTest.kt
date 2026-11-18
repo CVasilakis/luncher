@@ -54,7 +54,7 @@ class PictureTextsTest {
 
     @Test
     fun `other existing languages retain the million pixel unit`() {
-        for (language in listOf("el", "ar")) {
+        for (language in listOf("el", "ar", "es")) {
             RuntimeEnvironment.setQualifiers(language)
             val resources = context.resources
             assertEquals(language, 1_000_000, resources.getInteger(R.integer.settings_pictures_pixels_per_unit))

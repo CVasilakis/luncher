@@ -27,6 +27,7 @@ val LANGUAGES = listOf(
     TvLanguage("Greek", "el-rGR"),
     TvLanguage("Arabic", "ar-rEG"),
     TvLanguage("Simplified Chinese", "zh-rCN"),
+    TvLanguage("Spanish", "es-rES"),
 )
 
 private fun tv(width: Int, height: Int, density: String) = "w${width}dp-h${height}dp-land-television-$density-notouch-dpad"
