@@ -1,19 +1,20 @@
 # Translations
 
-Luncher's texts are in English, Greek, Arabic and Simplified Chinese. This covers where they are,
-how they're worded, how a string is written so that it translates well, and what a new string or
-language needs.
+Luncher's texts are in English, Greek, Arabic, Simplified Chinese and Spanish. This covers where
+they are, how they're worded, how a string is written so that it translates well, and what a new
+string or language needs.
 
 - **Greek** is kept by the project's maintainer.
 - **Arabic** is there so a right-to-left translation is tested on every change, and for users who
   want it. No native speaker has reviewed it yet; corrections are welcome.
 - **Simplified Chinese** came from a contributor; corrections are welcome.
+- **Spanish** came from a contributor; corrections are welcome.
 
 ## Where the texts are
 
 | Module | Texts | Languages |
 |---|---|---|
-| `:feature:home` | the home screen, a tile's menu and moving an app | `res/values/strings.xml` (English), `res/values-el/` (Greek), `res/values-ar/` (Arabic), `res/values-zh-rCN/` (Simplified Chinese) |
+| `:feature:home` | the home screen, a tile's menu and moving an app | `res/values/strings.xml` (English), `res/values-el/` (Greek), `res/values-ar/` (Arabic), `res/values-zh-rCN/` (Simplified Chinese), `res/values-es/` (Spanish) |
 | `:feature:settings` | the settings panels, the appearance and background editors, the tile banner picker, Add from folder, the window after a share | the same |
 | `:app` | the app's name | `translatable="false"`: a name, the same in every language |
 
@@ -114,6 +115,7 @@ The English follows these rules; a translation keeps them as its language allows
   adb shell cmd locale set-app-locales com.luncher.launcher.debug --locales el   # Greek
   adb shell cmd locale set-app-locales com.luncher.launcher.debug --locales ar   # Arabic
   adb shell cmd locale set-app-locales com.luncher.launcher.debug --locales zh-CN   # Simplified Chinese
+  adb shell cmd locale set-app-locales com.luncher.launcher.debug --locales es   # Spanish
   adb shell cmd locale set-app-locales com.luncher.launcher.debug --locales ""   # the device's again
   ```
 

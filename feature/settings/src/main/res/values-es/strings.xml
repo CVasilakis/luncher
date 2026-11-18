@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Spanish. What each string is for: values/strings.xml. -->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="settings_title">Ajustes</string>
+    <string name="settings_hide_apps">Ocultar apps</string>
+    <string name="settings_hidden">Oculta</string>
+    <string name="settings_app_renamed">Nuevo nombre: \u2068%1$s\u2069</string>
+    <string name="settings_no_apps">No hay apps de TV instaladas</string>
+    <string name="settings_appearance">Apariencia</string>
+    <string name="settings_appearance_tiles">Mosaicos</string>
+    <string name="settings_appearance_top_bar">Hora y fecha</string>
+    <string name="settings_appearance_vertical_alignment">Alineación vertical</string>
+    <string name="settings_appearance_top">Arriba</string>
+    <string name="settings_appearance_bottom">Abajo</string>
+    <string name="settings_appearance_center">Centro</string>
+    <string name="settings_appearance_horizontal_alignment">Alineación horizontal</string>
+    <string name="settings_appearance_full_bottom_row">Fila inferior completa</string>
+    <string name="settings_appearance_corner_radius">Radio de las esquinas</string>
+    <string name="settings_appearance_radius_dp"><xliff:g id="radius" example="8">%1$d</xliff:g> dp</string>
+    <string name="settings_appearance_pill">Cápsula</string>
+    <string name="settings_appearance_focus_frame">Marco de enfoque</string>
+    <string name="settings_appearance_app_name">Nombre de la app</string>
+    <string name="settings_appearance_when_focused">Al enfocar</string>
+    <string name="settings_appearance_always">Siempre</string>
+    <string name="settings_appearance_time">Hora</string>
+    <string name="settings_appearance_date">Fecha</string>
+    <string name="settings_appearance_shown">Visible</string>
+    <string name="settings_appearance_hidden">Oculta</string>
+    <string name="settings_appearance_clock_side">Lado</string>
+    <string name="settings_appearance_left">Izquierda</string>
+    <string name="settings_appearance_right">Derecha</string>
+    <string name="settings_appearance_time_side">Orden</string>
+    <string name="settings_appearance_time_first">Primero la hora</string>
+    <string name="settings_appearance_date_first">Primero la fecha</string>
+    <string name="settings_appearance_background">Fondo</string>
+    <string name="settings_appearance_fit">Ajuste</string>
+    <string name="settings_appearance_fill">Rellenar</string>
+    <string name="settings_appearance_stretch">Estirar</string>
+    <string name="settings_appearance_position">Posición</string>
+    <string name="settings_appearance_dim">Atenuación</string>
+    <string name="settings_appearance_dim_light">Suave</string>
+    <string name="settings_appearance_dim_medium">Media</string>
+    <string name="settings_appearance_dim_strong">Intensa</string>
+    <string name="settings_appearance_blur">Desenfoque</string>
+    <string name="settings_appearance_light">Suave</string>
+    <string name="settings_appearance_medium">Medio</string>
+    <string name="settings_appearance_strong">Intenso</string>
+    <string name="settings_appearance_on">Sí</string>
+    <string name="settings_appearance_off">No</string>
+    <string name="settings_appearance_reset">Restablecer todo</string>
+    <string name="settings_appearance_reset_question">¿Restablecer la apariencia predeterminada?</string>
+    <string name="settings_appearance_reset_text">Todas las opciones vuelven a su valor predeterminado.</string>
+    <string name="settings_appearance_reset_text_background">Todas las opciones vuelven a su valor predeterminado: la pantalla de inicio se quedará sin imagen. La imagen sigue en las imágenes de Luncher.</string>
+    <string name="settings_appearance_reset_confirm">Restablecer</string>
+    <string name="settings_system">Ajustes del sistema</string>
+    <string name="settings_system_unavailable">No hay app de ajustes en este dispositivo</string>
+
+    <string name="settings_pictures_hint">Mantén pulsado OK en una imagen para cambiarle el nombre o eliminarla</string>
+    <string name="settings_background_title">Editor de fondo</string>
+    <string name="settings_tile_banner_title">Editor del banner</string>
+    <string name="settings_picture_editor_save">Guardar</string>
+    <string name="settings_picture_editor_delete_all">Eliminar todo</string>
+    <string name="settings_pictures_delete_all_question">¿Eliminar todas las imágenes?</string>
+    <plurals name="settings_pictures_delete_all_used_background">
+        <item quantity="one">Se usa como fondo: la pantalla de inicio se quedará sin imagen.</item>
+        <item quantity="many">Una se usa como fondo: la pantalla de inicio se quedará sin imagen.</item>
+        <item quantity="other">Una se usa como fondo: la pantalla de inicio se quedará sin imagen.</item>
+    </plurals>
+    <plurals name="settings_pictures_delete_all_text">
+        <item quantity="one">La imagen se elimina solo de las imágenes de Luncher.</item>
+        <item quantity="many">Las <xliff:g id="count" example="9">%d</xliff:g> imágenes se eliminan solo de las imágenes de Luncher.</item>
+        <item quantity="other">Las <xliff:g id="count" example="9">%d</xliff:g> imágenes se eliminan solo de las imágenes de Luncher.</item>
+    </plurals>
+    <string name="settings_picture_editor_discard_question">¿Descartar los cambios?</string>
+    <string name="settings_background_discard_text">Los cambios en el fondo no se han guardado.</string>
+    <string name="settings_tile_banner_discard_text">Los cambios en la imagen del mosaico no se han guardado.</string>
+    <string name="settings_picture_editor_discard">Descartar</string>
+    <string name="settings_background_applying">Procesando el fondo…</string>
+    <string name="settings_tile_banner_saving">Procesando el banner del mosaico…</string>
+    <string name="settings_pictures_preparing">Preparando la imagen…</string>
+    <string name="settings_pictures_preparing_count">Preparando la imagen <xliff:g id="number" example="3">%1$d</xliff:g> de <xliff:g id="total" example="10">%2$d</xliff:g>…</string>
+
+    <string name="settings_received_adding">Añadiendo la imagen…</string>
+    <string name="settings_received_saved">Imagen añadida</string>
+    <string name="settings_received_adding_count">Añadiendo la imagen <xliff:g id="number" example="3">%1$d</xliff:g> de <xliff:g id="total" example="10">%2$d</xliff:g>…</string>
+    <plurals name="settings_received_saved_count">
+        <item quantity="one"><xliff:g id="count" example="1">%d</xliff:g> imagen añadida</item>
+        <item quantity="many"><xliff:g id="count" example="9">%d</xliff:g> imágenes añadidas</item>
+        <item quantity="other"><xliff:g id="count" example="9">%d</xliff:g> imágenes añadidas</item>
+    </plurals>
+    <string name="settings_received_none_added">Imágenes no añadidas</string>
+    <string name="settings_received_nothing">Nada que añadir</string>
+    <string name="settings_received_nothing_text">La app no ha compartido ninguna imagen.</string>
+    <plurals name="settings_received_already_count">
+        <item quantity="one"><xliff:g id="count" example="1">%d</xliff:g> ya está en las imágenes de Luncher</item>
+        <item quantity="many"><xliff:g id="count" example="2">%d</xliff:g> ya están en las imágenes de Luncher</item>
+        <item quantity="other"><xliff:g id="count" example="2">%d</xliff:g> ya están en las imágenes de Luncher</item>
+    </plurals>
+    <plurals name="settings_received_not_a_picture_count">
+        <item quantity="one"><xliff:g id="count" example="1">%d</xliff:g> no es una imagen o está dañada</item>
+        <item quantity="many"><xliff:g id="count" example="2">%d</xliff:g> no son imágenes o están dañadas</item>
+        <item quantity="other"><xliff:g id="count" example="2">%d</xliff:g> no son imágenes o están dañadas</item>
+    </plurals>
+    <plurals name="settings_received_unsupported_count">
+        <item quantity="one"><xliff:g id="count" example="1">%d</xliff:g> tiene un formato que este televisor no puede mostrar</item>
+        <item quantity="many"><xliff:g id="count" example="2">%d</xliff:g> tienen un formato que este televisor no puede mostrar</item>
+        <item quantity="other"><xliff:g id="count" example="2">%d</xliff:g> tienen un formato que este televisor no puede mostrar</item>
+    </plurals>
+    <plurals name="settings_received_too_large_bytes_count">
+        <item quantity="one"><xliff:g id="count" example="1">%1$d</xliff:g> ocupa más de <xliff:g id="size" example="50 MB">%2$s</xliff:g></item>
+        <item quantity="many"><xliff:g id="count" example="2">%1$d</xliff:g> ocupan más de <xliff:g id="size" example="50 MB">%2$s</xliff:g></item>
+        <item quantity="other"><xliff:g id="count" example="2">%1$d</xliff:g> ocupan más de <xliff:g id="size" example="50 MB">%2$s</xliff:g></item>
+    </plurals>
+    <plurals name="settings_received_too_large_pixels_count">
+        <item quantity="one"><xliff:g id="count" example="1">%1$d</xliff:g> tiene más de <xliff:g id="megapixels" example="64">%2$d</xliff:g> megapíxeles</item>
+        <item quantity="many"><xliff:g id="count" example="2">%1$d</xliff:g> tienen más de <xliff:g id="megapixels" example="64">%2$d</xliff:g> megapíxeles</item>
+        <item quantity="other"><xliff:g id="count" example="2">%1$d</xliff:g> tienen más de <xliff:g id="megapixels" example="64">%2$d</xliff:g> megapíxeles</item>
+    </plurals>
+    <plurals name="settings_received_name_taken_count">
+        <item quantity="one"><xliff:g id="count" example="1">%d</xliff:g> tiene un nombre ya usado en las imágenes de Luncher</item>
+        <item quantity="many"><xliff:g id="count" example="2">%d</xliff:g> tienen un nombre ya usado en las imágenes de Luncher</item>
+        <item quantity="other"><xliff:g id="count" example="2">%d</xliff:g> tienen un nombre ya usado en las imágenes de Luncher</item>
+    </plurals>
+    <plurals name="settings_received_unreadable_count">
+        <item quantity="one"><xliff:g id="count" example="1">%d</xliff:g> no se ha podido leer</item>
+        <item quantity="many"><xliff:g id="count" example="2">%d</xliff:g> no se han podido leer</item>
+        <item quantity="other"><xliff:g id="count" example="2">%d</xliff:g> no se han podido leer</item>
+    </plurals>
+    <plurals name="settings_received_no_space_count">
+        <item quantity="one"><xliff:g id="count" example="1">%d</xliff:g> no añadida: no hay suficiente espacio libre</item>
+        <item quantity="many"><xliff:g id="count" example="2">%d</xliff:g> no añadidas: no hay suficiente espacio libre</item>
+        <item quantity="other"><xliff:g id="count" example="2">%d</xliff:g> no añadidas: no hay suficiente espacio libre</item>
+    </plurals>
+    <plurals name="settings_received_cancelled_count">
+        <item quantity="one"><xliff:g id="count" example="1">%d</xliff:g> no añadida: se ha cancelado</item>
+        <item quantity="many"><xliff:g id="count" example="2">%d</xliff:g> no añadidas: se ha cancelado</item>
+        <item quantity="other"><xliff:g id="count" example="2">%d</xliff:g> no añadidas: se ha cancelado</item>
+    </plurals>
+    <plurals name="settings_received_too_many">
+        <item quantity="one">Demasiadas imágenes: se puede añadir hasta <xliff:g id="most" example="1">%d</xliff:g> a la vez. Comparte menos y vuelve a intentarlo.</item>
+        <item quantity="many">Demasiadas imágenes: se pueden añadir hasta <xliff:g id="most" example="100">%d</xliff:g> a la vez. Comparte menos y vuelve a intentarlo.</item>
+        <item quantity="other">Demasiadas imágenes: se pueden añadir hasta <xliff:g id="most" example="100">%d</xliff:g> a la vez. Comparte menos y vuelve a intentarlo.</item>
+    </plurals>
+
+    <string name="settings_pictures_adding">Añadiendo la imagen…</string>
+    <string name="settings_pictures_how">Para añadir una imagen:</string>
+    <string name="settings_pictures_how_share">En un gestor de archivos o una galería, elige Compartir en una imagen y luego Luncher.</string>
+    <string name="settings_pictures_how_folder">O copia imágenes en la siguiente carpeta, en el televisor o en una memoria USB, y luego elige Añadir desde carpeta:</string>
+    <string name="settings_pictures_add_from_folder">Añadir desde carpeta</string>
+    <string name="settings_pictures_details"><xliff:g id="width" example="1920">%1$d</xliff:g> × <xliff:g id="height" example="1080">%2$d</xliff:g> · <xliff:g id="size" example="3,1 MB">%3$s</xliff:g></string>
+    <string name="settings_pictures_no_picture">Sin imagen</string>
+    <string name="settings_tile_banner_original">Banner original</string>
+    <string name="settings_tile_banner_backdrop">Base</string>
+    <string name="settings_tile_banner_none">Ninguna</string>
+    <string name="settings_tile_banner_light_glass">Clara</string>
+    <string name="settings_tile_banner_dark_glass">Oscura</string>
+    <string name="settings_tile_banner_frosted">Borrosa</string>
+    <string name="settings_tile_banner_focus">Enfoque</string>
+    <string name="settings_tile_banner_tile">Mosaico</string>
+    <string name="settings_tile_banner_shape">Forma</string>
+    <string name="settings_pictures_unnamed">Imagen</string>
+    <string name="settings_pictures_delete">Eliminar</string>
+    <string name="settings_pictures_delete_question">¿Eliminar <xliff:g id="name" example="beach.png">%1$s</xliff:g>?</string>
+    <string name="settings_pictures_delete_used_background">Se usa como fondo: la pantalla de inicio se quedará sin imagen.</string>
+    <plurals name="settings_pictures_delete_used_tiles">
+        <item quantity="one">Se usa en un mosaico: volverá a mostrar la imagen de su app.</item>
+        <item quantity="many">Se usa en <xliff:g id="count" example="3">%d</xliff:g> mosaicos: volverán a mostrar las imágenes de sus apps.</item>
+        <item quantity="other">Se usa en <xliff:g id="count" example="3">%d</xliff:g> mosaicos: volverán a mostrar las imágenes de sus apps.</item>
+    </plurals>
+    <string name="settings_pictures_delete_text">La imagen se elimina solo de las imágenes de Luncher.</string>
+    <string name="settings_pictures_sentences"><xliff:g id="first" example="Used on a tile.">%1$s</xliff:g> <xliff:g id="next" example="The picture is deleted.">%2$s</xliff:g></string>
+    <string name="settings_pictures_rename">Cambiar nombre</string>
+    <string name="settings_pictures_rename_title">Cambiar nombre de la imagen</string>
+    <string name="settings_pictures_rename_no_name">Escribe un nombre</string>
+    <string name="settings_pictures_cancel">Cancelar</string>
+    <string name="settings_pictures_ok">Aceptar</string>
+    <string name="settings_pictures_not_added">Imagen no añadida</string>
+    <string name="settings_pictures_already">Ya está en las imágenes de Luncher</string>
+    <string name="settings_pictures_not_a_picture">El archivo no es una imagen o está dañado.</string>
+    <string name="settings_pictures_unsupported">Este televisor no puede mostrar esta imagen <xliff:g id="format" example="HEIF (HEIC)">%1$s</xliff:g>. Guárdala como JPEG o PNG y vuelve a añadirla.</string>
+    <string name="settings_pictures_too_large_bytes">Demasiado grande: más de <xliff:g id="size" example="50 MB">%1$s</xliff:g>.</string>
+    <plurals name="settings_pictures_too_large_pixels">
+        <item quantity="one">Demasiado grande: más de <xliff:g id="megapixels" example="1">%d</xliff:g> megapíxel.</item>
+        <item quantity="many">Demasiado grande: más de <xliff:g id="megapixels" example="64">%d</xliff:g> megapíxeles.</item>
+        <item quantity="other">Demasiado grande: más de <xliff:g id="megapixels" example="64">%d</xliff:g> megapíxeles.</item>
+    </plurals>
+    <string name="settings_pictures_unreadable">El archivo no se puede leer. Cópialo en la carpeta <xliff:g id="folder" example="Android/media/com.luncher.launcher">%1$s</xliff:g> de este televisor o de una memoria USB y luego elige Añadir desde carpeta.</string>
+    <string name="settings_pictures_no_space">No hay suficiente espacio libre en este televisor. Libera espacio y vuelve a intentarlo.</string>
+    <string name="settings_pictures_name_taken">Ya hay otra imagen llamada <xliff:g id="name" example="holiday.jpg">%1$s</xliff:g> en las imágenes de Luncher. Cámbiale el nombre o elimínala en Luncher, o cambia el nombre de este archivo, y vuelve a añadirlo.</string>
+    <string name="settings_pictures_folder_where">Imágenes de este televisor o de una memoria USB, en la carpeta <xliff:g id="folder" example="Android/media/com.luncher.launcher">%1$s</xliff:g></string>
+    <string name="settings_pictures_folder_local">Local</string>
+    <string name="settings_pictures_folder_usb">Memoria USB</string>
+    <string name="settings_pictures_folder_row"><xliff:g id="where" example="Memoria USB">%1$s</xliff:g> · <xliff:g id="details" example="4000 × 3000 · 2,4 MB">%2$s</xliff:g></string>
+    <string name="settings_pictures_folder_unsupported"><xliff:g id="format" example="HEIF (HEIC)">%1$s</xliff:g> no es compatible con este televisor</string>
+    <string name="settings_pictures_folder_too_large_bytes">Demasiado grande (más de <xliff:g id="size" example="50 MB">%1$s</xliff:g>)</string>
+    <plurals name="settings_pictures_folder_too_large_pixels">
+        <item quantity="one">Demasiado grande (más de <xliff:g id="megapixels" example="1">%d</xliff:g> megapíxel)</item>
+        <item quantity="many">Demasiado grande (más de <xliff:g id="megapixels" example="64">%d</xliff:g> megapíxeles)</item>
+        <item quantity="other">Demasiado grande (más de <xliff:g id="megapixels" example="64">%d</xliff:g> megapíxeles)</item>
+    </plurals>
+    <string name="settings_pictures_folder_damaged">Dañada</string>
+    <string name="settings_pictures_folder_name_taken">Nombre ya usado en las imágenes de Luncher</string>
+    <string name="settings_pictures_folder_add_all">Añadir todas</string>
+    <string name="settings_pictures_folder_note">OK añade una copia a las imágenes de Luncher. Después, el archivo y la memoria USB ya no son necesarios.</string>
+    <string name="settings_pictures_folder_looking">Buscando imágenes…</string>
+    <string name="settings_pictures_folder_empty">Aún no hay imágenes en la carpeta</string>
+    <string name="settings_hide_apps_hint">OK oculta una app o la vuelve a mostrar</string>
+    <string name="settings_appearance_theme">Tema</string>
+    <string name="settings_appearance_accent">Color de énfasis</string>
+    <string name="settings_appearance_mode">Modo</string>
+    <string name="settings_appearance_orange">Naranja</string>
+    <string name="settings_appearance_pink">Rosa</string>
+    <string name="settings_appearance_purple">Morado</string>
+    <string name="settings_appearance_blue">Azul</string>
+    <string name="settings_appearance_teal">Verde azulado</string>
+    <string name="settings_appearance_green">Verde</string>
+    <string name="settings_appearance_amber">Ámbar</string>
+    <string name="settings_appearance_gray">Gris</string>
+    <string name="settings_appearance_dark">Oscuro</string>
+    <string name="settings_appearance_light_mode">Claro</string>
+    <string name="settings_pictures_label">Imágenes</string>
+    <string name="settings_pictures_folder_label">En la carpeta</string>
+    <plurals name="settings_pictures_folder_count">
+        <item quantity="one"><xliff:g id="count" example="1">%d</xliff:g> imagen</item>
+        <item quantity="many"><xliff:g id="count" example="5">%d</xliff:g> imágenes</item>
+        <item quantity="other"><xliff:g id="count" example="5">%d</xliff:g> imágenes</item>
+    </plurals>
+    <string name="settings_pictures_folder_preview_label">Vista previa</string>
+</resources>

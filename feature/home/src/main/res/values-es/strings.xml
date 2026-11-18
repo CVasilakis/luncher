@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Spanish. What each string is for: values/strings.xml. -->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="home_no_apps">No hay apps de TV instaladas</string>
+    <string name="home_all_hidden">Todas las apps están ocultas. Abre <xliff:g id="settings" example="Ajustes">%1$s</xliff:g> → <xliff:g id="hide_apps" example="Ocultar apps">%2$s</xliff:g> para volver a mostrarlas.</string>
+    <string name="home_settings">Ajustes</string>
+    <string name="home_menu_move">Mover</string>
+    <string name="home_menu_hide">Ocultar</string>
+    <string name="home_menu_rename">Cambiar nombre</string>
+    <string name="home_menu_tile_banner">Banner del mosaico</string>
+    <string name="home_menu_info">Información de la app</string>
+    <string name="home_menu_info_unavailable">La información de la app no está disponible en este dispositivo</string>
+    <string name="home_rename_title">Cambiar nombre de la app</string>
+    <string name="home_rename_original">Nombre original: \u2068<xliff:g id="name" example="YouTube">%1$s</xliff:g>\u2069</string>
+    <string name="home_rename_cancel">Cancelar</string>
+    <string name="home_rename_reset">Restaurar</string>
+    <string name="home_rename_confirm">Cambiar</string>
+    <string name="home_move_title">Mover app</string>
+    <string name="home_move_hint"><xliff:g id="arrows" example="↑↓←→">↑↓←→</xliff:g> Mover · OK Listo</string>
+    <string name="home_wallpaper_screen_changed">Ajustando el fondo a esta pantalla…</string>
+    <string name="home_wallpaper_outdated">Actualizando el fondo…</string>
+    <string name="home_wallpaper_saving">Procesando el fondo…</string>
+    <string name="home_tile_images_screen_changed">Ajustando los banners de los mosaicos a esta pantalla…</string>
+    <string name="home_tile_images_outdated">Actualizando los banners de los mosaicos…</string>
+    <string name="home_tile_images_saving">Procesando el banner del mosaico…</string>
+</resources>
